@@ -10,7 +10,7 @@ import { ListMusic } from "lucide-react-native";
 export default function PlaylistListItem() {
   return (
     <Link href="/playlists/1" className="mr-6">
-      <VStack className="gap-y-2 max-w-32">
+      <VStack className="gap-y-2 w-32">
         <Image
           source={require("@/assets/images/covers/gunship-unicorn.jpg")}
           className="w-32 h-32 rounded-md"

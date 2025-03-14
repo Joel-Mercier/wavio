@@ -1,3 +1,4 @@
+import LibraryListItem from "@/components/library/LibraryListItem";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -8,15 +9,37 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { ArrowDownUp, LayoutGrid, Plus, Search } from "lucide-react-native";
+import {
+  ArrowDownUp,
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+} from "lucide-react-native";
+import { useState } from "react";
+import type { LayoutChangeEvent } from "react-native";
+
+export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [layout, setLayout] = useState<LibraryLayout>("list");
   const tabBarHeight = useBottomTabBarHeight();
 
+  const handleHeaderLayout = (event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    console.log("header height is ", height);
+    setHeaderHeight(height);
+  };
+
+  const handleLayoutPress = () => {
+    setLayout(layout === "list" ? "grid" : "list");
+  };
+
   return (
-    <Box>
-      <SafeAreaView>
-        <HStack className="my-6 px-6 items-center justify-between">
+    <SafeAreaView>
+      <Box onLayout={handleHeaderLayout}>
+        <HStack className="mt-6 px-6 items-center justify-between">
           <Heading className="text-white" size="2xl">
             Library
           </Heading>
@@ -34,7 +57,7 @@ export default function LibraryScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="pl-6 gap-x-4"
+          className="pl-6 gap-x-4 my-6"
         >
           <Pressable>
             {({ pressed }) => (
@@ -55,7 +78,13 @@ export default function LibraryScreen() {
             )}
           </Pressable>
         </ScrollView>
-        <HStack className="px-6 py-6 items-center justify-between">
+      </Box>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: tabBarHeight + headerHeight + 16,
+        }}
+      >
+        <HStack className="px-6 pb-6 items-center justify-between">
           <Pressable>
             {({ pressed }) => (
               <HStack className="items-center gap-x-2">
@@ -64,13 +93,31 @@ export default function LibraryScreen() {
               </HStack>
             )}
           </Pressable>
-          <Pressable>
-            {({ pressed }) => (
-              <LayoutGrid size={16} color={themeConfig.theme.colors.white} />
-            )}
+          <Pressable onPress={handleLayoutPress}>
+            {({ pressed }) => {
+              return layout === "list" ? (
+                <LayoutGrid size={16} color={themeConfig.theme.colors.white} />
+              ) : (
+                <List size={16} color={themeConfig.theme.colors.white} />
+              );
+            }}
           </Pressable>
         </HStack>
-      </SafeAreaView>
-    </Box>
+        <Box className="px-6 gap-4">
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+          <LibraryListItem layout={layout} />
+        </Box>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

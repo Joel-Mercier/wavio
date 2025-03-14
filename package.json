@@ -48,6 +48,7 @@
     "@gluestack-ui/textarea": "^0.1.24",
     "@gluestack-ui/toast": "^1.0.9",
     "@gluestack-ui/tooltip": "^0.1.43",
+    "@gorhom/bottom-sheet": "^5.1.2",
     "@legendapp/motion": "^2.4.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",

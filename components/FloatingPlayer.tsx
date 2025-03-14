@@ -11,9 +11,9 @@ import MovingText from "./MovingText";
 export default function FloatingPlayer() {
   const activeTrack = useActiveTrack();
 
-  if (!activeTrack) {
-    return null;
-  }
+  // if (!activeTrack) {
+  //   return null;
+  // }
 
   return (
     <Pressable className="absolute bottom-14 right-0 left-0">
@@ -21,7 +21,7 @@ export default function FloatingPlayer() {
         <HStack className="items-center">
           <Image
             source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-            className="w-12 h-12 rounded-md"
+            className="w-12 h-12 rounded-md aspect-square"
             alt="Track cover"
           />
           <VStack className="ml-4 flex-1 overflow-hidden">

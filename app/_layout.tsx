@@ -15,8 +15,9 @@ import "react-native-reanimated";
 import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
 import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
 import PlaybackService from "@/services/playbackService";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import TrackPlayer from "@weights-ai/react-native-track-player";
-
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -46,26 +47,31 @@ export default function RootLayout() {
   return (
     <GluestackUIProvider mode="light">
       <ThemeProvider value={DarkTheme}>
-        <Stack
-          screenOptions={{
-            navigationBarColor: "rgb(24,23,25)",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="albums/[id]/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="playlists/[id]/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="artists/[id]/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <GestureHandlerRootView>
+          <BottomSheetModalProvider>
+            <Stack
+              screenOptions={{
+                navigationBarColor: "rgb(24,23,25)",
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="albums/[id]/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="playlists/[id]/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="artists/[id]/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="favorites" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
         <StatusBar style="dark" />
       </ThemeProvider>
     </GluestackUIProvider>

@@ -10,10 +10,10 @@ import { Disc3 } from "lucide-react-native";
 export default function AlbumListItem() {
   return (
     <Link href="/albums/1" className="mr-6">
-      <VStack className="gap-y-2 max-w-32">
+      <VStack className="gap-y-2 w-32">
         <Image
           source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-          className="w-32 h-32 rounded-md"
+          className="w-32 h-32 rounded-md aspect-square"
           alt="Album cover"
         />
         <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">
