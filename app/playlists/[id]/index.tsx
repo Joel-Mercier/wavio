@@ -9,7 +9,7 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
   Clock,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react-native";
 
 export default function PlaylistScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   return (
     <Box>

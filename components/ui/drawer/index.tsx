@@ -195,10 +195,10 @@ const DrawerBackdrop = React.forwardRef<
       transition={{
         type: "spring",
         damping: 18,
-        stiffness: 250,
+        stiffness: 50,
         opacity: {
           type: "timing",
-          duration: 250,
+          duration: 50,
         },
       }}
       {...props}
@@ -242,7 +242,7 @@ const DrawerContent = React.forwardRef<
       exit={exitObj}
       transition={{
         type: "timing",
-        duration: 300,
+        duration: 100,
       }}
       {...props}
       className={drawerContentStyle({

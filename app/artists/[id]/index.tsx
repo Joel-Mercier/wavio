@@ -10,7 +10,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
   EllipsisVertical,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react-native";
 
 export default function ArtistScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   return (
     <Box>

@@ -5,18 +5,27 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useActiveTrack } from "@weights-ai/react-native-track-player";
+import { useRouter } from "expo-router";
 import { Play } from "lucide-react-native";
 import MovingText from "./MovingText";
 
 export default function FloatingPlayer() {
   const activeTrack = useActiveTrack();
+  const router = useRouter();
+
+  const handlePress = () => {
+    router.navigate("/player");
+  };
 
   // if (!activeTrack) {
   //   return null;
   // }
 
   return (
-    <Pressable className="absolute bottom-14 right-0 left-0">
+    <Pressable
+      className="absolute bottom-14 right-0 left-0"
+      onPress={handlePress}
+    >
       <HStack className="h-16 px-2 py-2 bg-primary-500 rounded-md items-center justify-between">
         <HStack className="items-center">
           <Image

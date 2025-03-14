@@ -62,7 +62,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <FloatingPlayer />
     </>
   );
 }
