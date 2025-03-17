@@ -1,7 +1,7 @@
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 import type { Shares } from "./types";
 
-export const createShare = async (id: string, description?: string, expires?: number) => {
+export const createShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Shares>>(
     "/rest/createShare",
     {
@@ -36,7 +36,7 @@ export const getShares = async () => {
   return rsp.data;
 };
 
-export const updateShare = async (id: string, description?: string, expires?: number) => {
+export const updateShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
   const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<never>>(
     "/rest/updateShare",
     {

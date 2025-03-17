@@ -1,7 +1,7 @@
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 import type { Bookmarks, PlayQueue } from "./types";
 
-export const createBookmark = async (id: string, position: number, comment?: string) => {
+export const createBookmark = async (id: string, position: number, { comment }: { comment?: string }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
     "/rest/createBookmark",
     {
@@ -49,7 +49,7 @@ export const getPlayQueue = async () => {
   return rsp.data;
 };
 
-export const savePlayQueue = async (id?: string, current?: string, position?: number) => {
+export const savePlayQueue = async ({ id, current, position }: { id?: string, current?: string, position?: number }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<PlayQueue>>(
     "/rest/savePlayQueue",
     {

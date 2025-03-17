@@ -38,7 +38,7 @@ export const getCaptions = async (id: string, format: "srt" | "vvt") => {
   return rsp.data;
 };
 
-export const getCoverArt = async (id: string, size?: number) => {
+export const getCoverArt = async (id: string, { size }: { size?: number }) => {
   const rsp = await openSubsonicApiInstance.get<string>(
     "/rest/getCoverArt",
     {
@@ -51,7 +51,7 @@ export const getCoverArt = async (id: string, size?: number) => {
   return rsp.data;
 }
 
-export const getLyrics = async (artist?: string, title?: string) => {
+export const getLyrics = async ({ artist, title }: { artist?: string, title?: string }) => {
   const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Lyrics>>(
     "/rest/getLyrics",
     {
@@ -90,7 +90,7 @@ export const hls = async (id: string, bitRate: number, audioTrack: string) => {
   return rsp.data;
 };
 
-export const stream = async (id: string, maxBitRate?: number, format?: "mp3" | "flv" | "raw", timeOffset?: number, size?: string, estimateContentLength?: boolean, converted?: boolean) => {
+export const stream = async (id: string, { maxBitRate, format, timeOffset, size, estimateContentLength, converted }: { maxBitRate?: number, format?: "mp3" | "flv" | "raw", timeOffset?: number, size?: string, estimateContentLength?: boolean, converted?: boolean }) => {
   const rsp = await openSubsonicApiInstance.get<string>(
     "/rest/stream",
     {

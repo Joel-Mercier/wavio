@@ -1,6 +1,6 @@
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 
-export const scrobble = async (id: string, time?: number, submission?: boolean) => {
+export const scrobble = async (id: string, { time, submission }: { time?: number, submission?: boolean }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
     "/rest/scrobble",
     {
@@ -23,7 +23,7 @@ export const setRating = async (id: string, rating: number) => {
   return rsp.data;
 };
 
-export const star = async (id?: string, albumId?: string, artistId?: string) => {
+export const star = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
     "/rest/star",
     {
@@ -35,7 +35,7 @@ export const star = async (id?: string, albumId?: string, artistId?: string) => 
   return rsp.data;
 };
 
-export const unstar = async (id?: string, albumId?: string, artistId?: string) => {
+export const unstar = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
   const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
     "/rest/unstar",
     {

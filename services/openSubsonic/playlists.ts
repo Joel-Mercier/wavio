@@ -36,7 +36,7 @@ export const getPlaylist = async (id: string) => {
   return rsp.data;
 };
 
-export const getPlaylists = async (username?: string) => {
+export const getPlaylists = async ({ username }: { username?: string }) => {
   const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Playlists>>(
     "/rest/getPlaylists",
     {
@@ -48,7 +48,7 @@ export const getPlaylists = async (username?: string) => {
   return rsp.data;
 };
 
-export const updatePlaylist = async (id: string, name?: string, comment?: string, public?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[]) => {
+export const updatePlaylist = async (id: string, { name, comment, public, songIdToAdd, songIndexToRemove }: { name?: string, comment?: string, public?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
   const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<Playlist>>(
     "/rest/updatePlaylist",
     {
