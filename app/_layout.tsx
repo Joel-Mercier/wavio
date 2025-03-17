@@ -16,6 +16,8 @@ import FloatingPlayer from "@/components/FloatingPlayer";
 import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
 import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
 import PlaybackService from "@/services/playbackService";
+import { OverlayProvider } from "@gluestack-ui/overlay";
+import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import NetInfo from "@react-native-community/netinfo";
 import {
@@ -78,52 +80,59 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GluestackUIProvider mode="light">
         <ThemeProvider value={DarkTheme}>
-          <GestureHandlerRootView
-            style={{ flex: 1, backgroundColor: "#191A1F" }}
-          >
-            <BottomSheetModalProvider>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  navigationBarColor: "rgb(24,23,25)",
-                }}
+          <OverlayProvider>
+            <ToastProvider>
+              <GestureHandlerRootView
+                style={{ flex: 1, backgroundColor: "#191A1F" }}
               >
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="albums/[id]/index"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="playlists/[id]/index"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="artists/[id]/index"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="favorites"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{ headerShown: false }}
-                />
-                {/* <Stack.Screen
-                  name="player"
-                  options={{
-                    headerShown: false,
-                    presentation: "card",
-                    gestureEnabled: true,
-                    gestureDirection: "vertical",
-                    animationDuration: 400,
-                  }}
-                /> */}
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <FloatingPlayer />
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
+                <BottomSheetModalProvider>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      navigationBarColor: "rgb(24,23,25)",
+                    }}
+                  >
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="albums/[id]/index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="playlists/[id]/index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="artists/[id]/index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="favorites"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="settings"
+                      options={{ headerShown: false }}
+                    />
+                    {/* <Stack.Screen
+                        name="player"
+                        options={{
+                          headerShown: false,
+                          presentation: "card",
+                          gestureEnabled: true,
+                          gestureDirection: "vertical",
+                          animationDuration: 400,
+                        }}
+                      /> */}
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <FloatingPlayer />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
+            </ToastProvider>
+          </OverlayProvider>
           <StatusBar style="dark" />
         </ThemeProvider>
       </GluestackUIProvider>

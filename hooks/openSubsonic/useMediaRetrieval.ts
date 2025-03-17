@@ -37,7 +37,7 @@ export const useGetCoverArt = (id: string, params: { size?: number }) => {
   });
 };
 
-export const useGetLyrics = (params: { artist?: string, title?: string }) => {
+export const useGetLyrics = (params?: { artist?: string, title?: string }) => {
   return useQuery({
     queryKey: ["getLyrics", params],
     queryFn: () => {

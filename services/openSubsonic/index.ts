@@ -21,11 +21,16 @@ export type OpenSubsonicResponse<T> = {
     type: string;
     serverVersion: string;
     openSubsonic: boolean;
-
-  } & {
-    [key: string]: T;
-  }
+    error?: OpenSubsonicErrorResponse
+  } & T
 }
+
+export type OpenSubsonicErrorResponse = {
+  code: number;
+  message?: string;
+  helpUrl?: string;
+}
+
 const openSubsonicApiInstance = axios.create({
   baseURL: navidromeUrl,
   headers: { "Content-Type": "application/json" },

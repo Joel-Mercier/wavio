@@ -1,4 +1,5 @@
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic";
+import openSubsonicApiInstance, { OpenSubsonicErrorResponse, type OpenSubsonicResponse } from "@/services/openSubsonic";
+import axios, { AxiosError } from "axios";
 import type { AlbumInfo, AlbumWithSongsID3, Artist, ArtistInfo, ArtistInfo2, ArtistsID3, Child, Directory, Genres, Indexes, MusicFolder, MusicFolders, PodcastEpisode, SimilarSongs, SimilarSongs2, TopSongs, VideoInfo, Videos } from "./types";
 
 export const getMusicFolders = async () => {
@@ -12,19 +13,29 @@ export const getMusicFolders = async () => {
 };
 
 export const getAlbum = async (id: string) => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<AlbumWithSongsID3>>(
-    "/rest/getAlbum",
-    {
-      params: {
-        id
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ album: AlbumWithSongsID3 }>>(
+      "/rest/getAlbum",
+      {
+        params: {
+          id
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const getAlbumInfo = async (id: string) => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<AlbumInfo>>(
+  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ albumInfo: AlbumInfo }>>(
     "/rest/getAlbumInfo",
     {
       params: {

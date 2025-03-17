@@ -4,13 +4,25 @@ export interface AlbumID3 {
   coverArt?: string;
   created: Date;
   duration: number;
-  genre?: string;
+  genres?: Genre[];
   id: string;
   name: string;
   playCount?: number;
   songCount: number;
   starred?: Date;
   year?: number;
+  discTitles?: string[];
+  displayArtist?: string;
+  isCompilation?: boolean;
+  musicBrainzId?: string;
+  originalReleaseDate?: { day: number, month: number, year: number };
+  played?: Date;
+  recordLabels?: { name: string }[];
+  releaseDate?: { day: number, month: number, year: number };
+  sortName?: string;
+  userRating?: number;
+  version?: string;
+  artists?: { id: string, name: string }[];
 }
 
 export interface AlbumInfo {

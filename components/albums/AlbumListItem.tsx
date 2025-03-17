@@ -9,7 +9,7 @@ import { Disc3 } from "lucide-react-native";
 
 export default function AlbumListItem() {
   return (
-    <Link href="/albums/1" className="mr-6">
+    <Link href="/albums/32PmbrSn1mVFoJaFcwWAbL" className="mr-6">
       <VStack className="gap-y-2 w-32">
         <Image
           source={require("@/assets/images/covers/gunship-unicorn.jpg")}
