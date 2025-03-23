@@ -1,35 +1,66 @@
+import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 import type { License, OpenSubsonicExtensions } from "./types";
 
 export const getLicense = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<License>>(
-    "/rest/getLicense",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ license: License }>>(
+      "/rest/getLicense",
+      {
+        params: {
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const getOpenSubsonicExtensions = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<OpenSubsonicExtensions>>(
-    "/rest/getOpenSubsonicExtensions",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ openSubsonicExtensions: OpenSubsonicExtensions }>>(
+      "/rest/getOpenSubsonicExtensions",
+      {
+        params: {
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const ping = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<never>>(
-    "/rest/ping",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/ping",
+      {
+        params: {
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };

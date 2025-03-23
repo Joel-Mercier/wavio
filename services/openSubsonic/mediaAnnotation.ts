@@ -1,48 +1,89 @@
+import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 
 export const scrobble = async (id: string, { time, submission }: { time?: number, submission?: boolean }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
-    "/rest/scrobble",
-    {
-      id,
-      time,
-      submission
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/scrobble",
+      {
+        id,
+        time,
+        submission
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const setRating = async (id: string, rating: number) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
-    "/rest/setRating",
-    {
-      id,
-      rating
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/setRating",
+      {
+        id,
+        rating
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const star = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
-    "/rest/star",
-    {
-      id,
-      albumId,
-      artistId
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/star",
+      {
+        id,
+        albumId,
+        artistId
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const unstar = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
-    "/rest/unstar",
-    {
-      id,
-      albumId,
-      artistId
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/unstar",
+      {
+        id,
+        albumId,
+        artistId
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };

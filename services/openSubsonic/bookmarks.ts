@@ -1,62 +1,113 @@
+import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 import type { Bookmarks, PlayQueue } from "./types";
 
 export const createBookmark = async (id: string, position: number, { comment }: { comment?: string }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<never>>(
-    "/rest/createBookmark",
-    {
-      id,
-      position,
-      comment
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/createBookmark",
+      {
+        id,
+        position,
+        comment
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const deleteBookmark = async (id: string) => {
-  const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<never>>(
-    "/rest/deleteBookmark",
-    {
-      params: {
-        id
+  try {
+    const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/deleteBookmark",
+      {
+        params: {
+          id
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const getBookmarks = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Bookmarks>>(
-    "/rest/getBookmarks",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ bookmarks: Bookmarks }>>(
+      "/rest/getBookmarks",
+      {
+        params: {
 
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const getPlayQueue = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<PlayQueue>>(
-    "/rest/getPlayQueue",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ playQueue: PlayQueue }>>(
+      "/rest/getPlayQueue",
+      {
+        params: {
 
+        }
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };
 
 export const savePlayQueue = async ({ id, current, position }: { id?: string, current?: string, position?: number }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<PlayQueue>>(
-    "/rest/savePlayQueue",
-    {
-      id,
-      current,
-      position,
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/savePlayQueue",
+      {
+        id,
+        current,
+        position,
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };

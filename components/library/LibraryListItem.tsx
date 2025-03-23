@@ -34,7 +34,7 @@ export default function LibraryListItem({ layout }: LibraryListItemProps) {
             Favorite tracks
           </Heading>
           <Text numberOfLines={1} className="text-md text-primary-100">
-            Playlist ● 14 songs
+            Playlist ⦁ 14 songs
           </Text>
         </VStack>
       </HStack>

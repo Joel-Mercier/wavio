@@ -36,7 +36,7 @@ export default function AlbumScreen() {
   return (
     <Box>
       <SafeAreaView>
-        <ScrollView>
+        <ScrollView className="h-full" contentContainerClassName="flex-1">
           {error ? (
             <ErrorDisplay error={error} />
           ) : (

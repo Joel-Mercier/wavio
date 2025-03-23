@@ -1,51 +1,92 @@
+import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 import type { Shares } from "./types";
 
 export const createShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
-  const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Shares>>(
-    "/rest/createShare",
-    {
-      id,
-      description,
-      expires
-    }
-  );
-  return rsp.data;
-};
-
-export const deleteShare = async (id: string) => {
-  const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<never>>(
-    "/rest/deleteShare",
-    {
-      params: {
-        id
-      }
-    }
-  );
-  return rsp.data;
-};
-
-export const getShares = async () => {
-  const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Shares>>(
-    "/rest/getShares",
-    {
-      params: {
-      }
-    }
-  );
-  return rsp.data;
-};
-
-export const updateShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
-  const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<never>>(
-    "/rest/updateShare",
-    {
-      params: {
+  try {
+    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<{ shares: Shares }>>(
+      "/rest/createShare",
+      {
         id,
         description,
         expires
       }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
     }
-  );
-  return rsp.data;
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
+};
+
+export const deleteShare = async (id: string) => {
+  try {
+    const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/deleteShare",
+      {
+        params: {
+          id
+        }
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
+    }
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
+};
+
+export const getShares = async () => {
+  try {
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ shares: Shares }>>(
+      "/rest/getShares",
+      {
+        params: {
+        }
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
+    }
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
+};
+
+export const updateShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
+  try {
+    const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<Record<string, never>>>(
+      "/rest/updateShare",
+      {
+        params: {
+          id,
+          description,
+          expires
+        }
+      }
+    );
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error
+    }
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error
+    }
+    throw error
+  }
 };

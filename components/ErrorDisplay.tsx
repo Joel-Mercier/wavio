@@ -10,7 +10,7 @@ export default function ErrorDisplay({
   error,
 }: { error: OpenSubsonicErrorResponse }) {
   return (
-    <Box className="flex-1 items-center justify-center">
+    <Box className="flex-1 items-center justify-center self-center content-center">
       <Alert
         action="muted"
         variant="outline"

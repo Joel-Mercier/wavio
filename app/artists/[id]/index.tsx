@@ -92,7 +92,7 @@ export default function ArtistScreen() {
             <TrackListItem />
           </VStack>
           <VStack className="px-6 my-6">
-            <Text className="text-white font-bold">14 songs ● 45 min</Text>
+            <Text className="text-white font-bold">14 songs ⦁ 45 min</Text>
           </VStack>
         </SafeAreaView>
       </ScrollView>
