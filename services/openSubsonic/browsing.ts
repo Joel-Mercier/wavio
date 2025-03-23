@@ -1,6 +1,6 @@
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic";
 import axios from "axios";
-import type { AlbumInfo, AlbumWithSongsID3, Artist, ArtistInfo, ArtistInfo2, ArtistsID3, Child, Directory, Genres, Indexes, MusicFolders, PodcastEpisode, SimilarSongs, SimilarSongs2, TopSongs, VideoInfo, Videos } from "./types";
+import type { AlbumInfo, AlbumWithSongsID3, Artist, ArtistInfo, ArtistInfo2, ArtistWithAlbumsID3, ArtistsID3, Child, Directory, Genres, Indexes, MusicFolders, PodcastEpisode, SimilarSongs, SimilarSongs2, TopSongs, VideoInfo, Videos } from "./types";
 
 export const getMusicFolders = async () => {
   try {
@@ -90,7 +90,7 @@ export const getAlbumInfo2 = async (id: string) => {
 
 export const getArtist = async (id: string) => {
   try {
-    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ artist: Artist }>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ artist: ArtistWithAlbumsID3 }>>(
       "/rest/getArtist",
       {
         params: {

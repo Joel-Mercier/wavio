@@ -13,6 +13,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import { cn } from "@/utils/tailwind";
 import { format, parse } from "date-fns";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -31,12 +32,13 @@ export default function AlbumScreen() {
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(data?.album.coverArt, { size: 400 });
 
-  console.log(data?.album, error);
-
   return (
     <Box>
       <SafeAreaView>
-        <ScrollView className="h-full" contentContainerClassName="flex-1">
+        <ScrollView
+          className={cn({ "h-full": !!error })}
+          contentContainerClassName={cn({ "flex-1": !!error })}
+        >
           {error ? (
             <ErrorDisplay error={error} />
           ) : (

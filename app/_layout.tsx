@@ -29,6 +29,7 @@ import {
 import TrackPlayer from "@weights-ai/react-native-track-player";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { DevToolsBubble } from "react-native-react-query-devtools";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -136,6 +137,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
         </ThemeProvider>
       </GluestackUIProvider>
+      {__DEV__ && <DevToolsBubble />}
     </QueryClientProvider>
   );
 }

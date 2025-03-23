@@ -9,16 +9,16 @@ import { User } from "lucide-react-native";
 
 export default function ArtistListItem() {
   return (
-    <Link href="/artists/1" className="mr-6">
+    <Link href="/artists/3BZJ42JaXQg1bMCkvKo6ky" className="mr-6">
       <VStack className="gap-y-2 w-32">
         <Image
           source={require("@/assets/images/covers/gunship-unicorn.jpg")}
           className="w-32 h-32 rounded-full aspect-square"
           alt="Artist cover"
         />
-        <Box className="w-32 h-32 rounded-full bg-primary-600 items-center justify-center">
+        {/* <Box className="w-32 h-32 rounded-full bg-primary-600 items-center justify-center">
           <User size={48} color={themeConfig.theme.colors.white} />
-        </Box>
+        </Box> */}
         <Heading size="sm" className="text-white" numberOfLines={1}>
           Gunship
         </Heading>

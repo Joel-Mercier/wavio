@@ -23,9 +23,9 @@ export const useCreatePlaylist = () => {
 
 export const useUpdatePlaylist = () => {
   const query = useMutation({
-    mutationFn: (params: { id: string, name?: string, comment?: string, public?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
-      const { id, name, comment, public, songIdToAdd, songIndexToRemove } = params;
-      return updatePlaylist(id, { name, comment, public, songIdToAdd, songIndexToRemove });
+    mutationFn: (params: { id: string, name?: string, comment?: string, isPublic?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
+      const { id, name, comment, isPublic, songIdToAdd, songIndexToRemove } = params;
+      return updatePlaylist(id, { name, comment, isPublic, songIdToAdd, songIndexToRemove });
     },
   });
 
