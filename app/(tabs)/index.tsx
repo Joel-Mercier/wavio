@@ -34,12 +34,17 @@ export default function HomeScreen() {
     data: recentData,
     isLoading: isLoadingRecent,
     error: recentError,
-  } = useAlbumList2({ type: "recent", size: 12 });
+  } = useAlbumList2({ type: "newest", size: 12 });
   const {
     data: mostPlayedData,
     isLoading: isLoadingMostPlayed,
     error: mostPlayedError,
   } = useAlbumList2({ type: "frequent", size: 12 });
+  const {
+    data: highestRatedData,
+    isLoading: isLoadingHighestRated,
+    error: highestRatedError,
+  } = useAlbumList2({ type: "highest", size: 12 });
   const handleClose = () => setShowDrawer(false);
   useEffect(() => {
     TrackPlayer.add([
@@ -52,8 +57,6 @@ export default function HomeScreen() {
       },
     ]);
   }, []);
-
-  console.log(mostPlayedData?.albumList2, mostPlayedError);
 
   return (
     <>
@@ -108,8 +111,6 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   className="pl-6 mb-6"
                 >
-                  <ArtistListItem />
-                  <PlaylistListItem />
                   {recentData?.albumList2?.album?.map((album) => (
                     <AlbumListItem key={album.id} album={album} />
                   ))}
@@ -135,6 +136,30 @@ export default function HomeScreen() {
                   className="pl-6 mb-6"
                 >
                   {mostPlayedData?.albumList2?.album?.map((album) => (
+                    <AlbumListItem key={album.id} album={album} />
+                  ))}
+                </ScrollView>
+              )}
+            </>
+          )}
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              Top rated
+            </Heading>
+          </Box>
+          {highestRatedError ? (
+            <ErrorDisplay error={highestRatedError} />
+          ) : (
+            <>
+              {isLoadingHighestRated ? (
+                <Spinner size="large" />
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="pl-6 mb-6"
+                >
+                  {highestRatedData?.albumList2?.album?.map((album) => (
                     <AlbumListItem key={album.id} album={album} />
                   ))}
                 </ScrollView>

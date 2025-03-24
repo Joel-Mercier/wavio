@@ -14,7 +14,7 @@ interface AlbumListItemProps {
 }
 
 export default function AlbumListItem({ album }: AlbumListItemProps) {
-  const cover = useGetCoverArt(album.coverArt, { size: 100 });
+  const cover = useGetCoverArt(album.coverArt, { size: 200 });
   return (
     <Link href={`/albums/${album.id}`} className="mr-6">
       <VStack className="gap-y-2 w-32">

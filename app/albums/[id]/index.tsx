@@ -13,7 +13,9 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import type { Child } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
+import { FlashList } from "@shopify/flash-list";
 import { format, parse } from "date-fns";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -31,10 +33,40 @@ export default function AlbumScreen() {
   const router = useRouter();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(data?.album.coverArt, { size: 400 });
-
+  console.log(data?.album);
   return (
     <Box>
       <SafeAreaView>
+        <FlashList
+          data={data?.album.song}
+          renderItem={({ item, index }: { item: Child; index: number }) => (
+            <TrackListItem track={item} />
+          )}
+          estimatedItemSize={70}
+          ListHeaderComponent={() => (
+
+          )}
+          ListFooterComponent={() => (
+            <VStack className="px-6 my-6">
+              <Text className="text-white font-bold">
+                {data?.album.songCount +
+                  (data?.album.songCount || 0 > 1
+                    ? " song"
+                    : "songs")}{" "}
+                ⦁ {Math.round((data?.album.duration || 0) / 60)} min
+              </Text>
+              {data?.album.recordLabels?.map((recordLabel) => (
+                <Text
+                  className="text-primary-100 text-sm"
+                  key={recordLabel.name}
+                >
+                  © {recordLabel.name}
+                </Text>
+              ))}
+            </VStack>
+          )}
+          contentContainerStyle={{}}
+        />
         <ScrollView
           className={cn({ "h-full": !!error })}
           contentContainerClassName={cn({ "flex-1": !!error })}

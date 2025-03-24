@@ -1,5 +1,5 @@
 
-import { getAlbum, getAlbumInfo, getAlbumInfo2, getArtist, getArtistInfo, getArtistInfo2, getArtists, getIndexes, getMusicDirectory, getMusicFolders, getSimilarSongs, getSimilarSongs2, getTopSongs, getVideoInfo, getVideos } from "@/services/openSubsonic/browsing";
+import { getAlbum, getAlbumInfo, getAlbumInfo2, getArtist, getArtistInfo, getArtistInfo2, getArtists, getGenres, getIndexes, getMusicDirectory, getMusicFolders, getSimilarSongs, getSimilarSongs2, getTopSongs, getVideoInfo, getVideos } from "@/services/openSubsonic/browsing";
 import { useQuery } from "@tanstack/react-query";
 
 export const useMusicFolders = () => {
@@ -93,6 +93,17 @@ export const useIndexes = (params: { musicFolderId?: string, ifModifiedSince?: n
     queryKey: ["indexes", params],
     queryFn: () => {
       return getIndexes(params);
+    },
+  });
+
+  return query;
+};
+
+export const useGenres = () => {
+  const query = useQuery({
+    queryKey: ["genres"],
+    queryFn: () => {
+      return getGenres();
     },
   });
 
