@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import type { Child } from "@/services/openSubsonic/types";
+import { cn } from "@/utils/tailwind";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { AudioLines, EllipsisVertical } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
@@ -14,9 +15,16 @@ import { useCallback, useRef, useState } from "react";
 interface TrackListItemProps {
   track: Child;
   cover?: string;
+  index: number;
+  showIndex?: boolean;
 }
 
-export default function TrackListItem({ track, cover }: TrackListItemProps) {
+export default function TrackListItem({
+  track,
+  cover,
+  index,
+  showIndex = false,
+}: TrackListItemProps) {
   const [showActionsheet, setShowActionsheet] = useState<boolean>(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -28,10 +36,18 @@ export default function TrackListItem({ track, cover }: TrackListItemProps) {
   const handleClose = () => {
     setShowActionsheet(false);
   };
+
   return (
     <>
-      <HStack className="items-center justify-between">
+      <HStack
+        className={cn("items-center justify-between mb-4", {
+          "mt-6": index === 0,
+        })}
+      >
         <HStack className="items-center">
+          {showIndex && (
+            <Text className="text-sm text-white mr-4">{index + 1}</Text>
+          )}
           {cover ? (
             <Image
               source={{ uri: `data:image/jpeg;base64,${cover}` }}

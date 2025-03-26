@@ -111,8 +111,13 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   className="pl-6 mb-6"
                 >
-                  {recentData?.albumList2?.album?.map((album) => (
-                    <AlbumListItem key={album.id} album={album} />
+                  {recentData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
                   ))}
                 </ScrollView>
               )}
@@ -135,8 +140,13 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   className="pl-6 mb-6"
                 >
-                  {mostPlayedData?.albumList2?.album?.map((album) => (
-                    <AlbumListItem key={album.id} album={album} />
+                  {mostPlayedData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
                   ))}
                 </ScrollView>
               )}
@@ -159,8 +169,13 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   className="pl-6 mb-6"
                 >
-                  {highestRatedData?.albumList2?.album?.map((album) => (
-                    <AlbumListItem key={album.id} album={album} />
+                  {highestRatedData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
                   ))}
                 </ScrollView>
               )}

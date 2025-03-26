@@ -110,6 +110,10 @@ export default function RootLayout() {
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
+                      name="genres/[id]/index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
                       name="favorites"
                       options={{ headerShown: false }}
                     />

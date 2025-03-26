@@ -7,7 +7,7 @@ import { Pressable } from "../ui/pressable";
 
 export default function HomeShortcut() {
   return (
-    <Link href="/favorites" asChild>
+    <Link href="/playlists/ioPvinHgxnkBtdrCEuCYdp" asChild>
       <Pressable className="flex-1">
         <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
           <Image

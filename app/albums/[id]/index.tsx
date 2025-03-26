@@ -25,6 +25,7 @@ import {
   Heart,
   Play,
   Shuffle,
+  User,
 } from "lucide-react-native";
 import React from "react";
 
@@ -33,26 +34,119 @@ export default function AlbumScreen() {
   const router = useRouter();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(data?.album.coverArt, { size: 400 });
-  console.log(data?.album);
+
   return (
     <Box>
-      <SafeAreaView>
+      <SafeAreaView className="h-full">
         <FlashList
           data={data?.album.song}
           renderItem={({ item, index }: { item: Child; index: number }) => (
-            <TrackListItem track={item} />
+            <TrackListItem track={item} cover={cover?.data} index={index} />
           )}
           estimatedItemSize={70}
           ListHeaderComponent={() => (
-
+            <VStack>
+              <HStack className="mt-6 items-start justify-between">
+                <Pressable onPress={() => router.back()}>
+                  <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                </Pressable>
+                {cover.isLoading ? (
+                  <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+                    <Disc3 size={48} color={themeConfig.theme.colors.white} />
+                  </Box>
+                ) : (
+                  <Image
+                    source={{
+                      uri: `data:image/jpeg;base64,${cover?.data}`,
+                    }}
+                    className="w-[70%] aspect-square rounded-md"
+                    alt="Album cover"
+                  />
+                )}
+                <Box className="w-6" />
+              </HStack>
+              <VStack>
+                <HStack className="mt-5 items-center justify-between">
+                  <Heading numberOfLines={1} className="text-white" size="2xl">
+                    {data?.album.name}
+                  </Heading>
+                </HStack>
+                <HStack className="mt-4 items-center">
+                  <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
+                    <User size={16} color={themeConfig.theme.colors.white} />
+                  </Box>
+                  <Text
+                    className="ml-4 text-white text-md font-bold"
+                    numberOfLines={1}
+                  >
+                    {((data?.album?.artists?.length || 0) > 1 &&
+                      data?.album.artists?.map((artist) => (
+                        <Link key={artist.id} href={`/artists/${artist.id}`}>
+                          {artist.name}
+                        </Link>
+                      ))) || (
+                        <Link href={`/artists/${data?.album.artistId}`}>
+                          {data?.album.displayArtist}
+                        </Link>
+                      ) || (
+                        <Link href={`/artists/${data?.album.artistId}`}>
+                          {data?.album.artist}
+                        </Link>
+                      )}
+                  </Text>
+                </HStack>
+                <HStack className="mt-2 items-center">
+                  <Text className="text-primary-100">
+                    {data?.album.isCompilation ? "Compilation" : "Album"} ⦁{" "}
+                    {data?.album.originalReleaseDate &&
+                      format(
+                        parse(
+                          `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
+                          "d/M/yyyy",
+                          new Date(),
+                        ),
+                        "dd MMM yyyy",
+                      )}
+                  </Text>
+                </HStack>
+                <HStack className="mt-4 items-center justify-between">
+                  <HStack className="items-center gap-x-4">
+                    <Pressable>
+                      <Heart
+                        color={themeConfig.theme.colors.white}
+                        fill={themeConfig.theme.colors.white}
+                      />
+                    </Pressable>
+                    <Pressable>
+                      <EllipsisVertical
+                        color={themeConfig.theme.colors.white}
+                      />
+                    </Pressable>
+                  </HStack>
+                  <HStack className="items-center gap-x-4">
+                    <Pressable>
+                      <Shuffle color={themeConfig.theme.colors.white} />
+                    </Pressable>
+                    <Pressable>
+                      <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      </Box>
+                    </Pressable>
+                  </HStack>
+                </HStack>
+              </VStack>
+              {error && <ErrorDisplay error={error} />}
+              {isLoading && <Spinner size="large" />}
+            </VStack>
           )}
           ListFooterComponent={() => (
-            <VStack className="px-6 my-6">
+            <VStack className="my-6">
               <Text className="text-white font-bold">
-                {data?.album.songCount +
-                  (data?.album.songCount || 0 > 1
-                    ? " song"
-                    : "songs")}{" "}
+                {(data?.album.songCount || "0 ") +
+                  (data?.album.songCount || 0 > 1 ? " song" : "songs")}{" "}
                 ⦁ {Math.round((data?.album.duration || 0) / 60)} min
               </Text>
               {data?.album.recordLabels?.map((recordLabel) => (
@@ -65,162 +159,8 @@ export default function AlbumScreen() {
               ))}
             </VStack>
           )}
-          contentContainerStyle={{}}
+          contentContainerStyle={{ paddingHorizontal: 24 }}
         />
-        <ScrollView
-          className={cn({ "h-full": !!error })}
-          contentContainerClassName={cn({ "flex-1": !!error })}
-        >
-          {error ? (
-            <ErrorDisplay error={error} />
-          ) : (
-            <>
-              {isLoading ? (
-                <Spinner size="large" />
-              ) : (
-                <>
-                  <VStack>
-                    <HStack className="mt-6 px-6 items-start justify-between">
-                      <Pressable onPress={() => router.back()}>
-                        <ArrowLeft
-                          size={24}
-                          color={themeConfig.theme.colors.white}
-                        />
-                      </Pressable>
-                      {cover.isLoading ? (
-                        <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                          <Disc3
-                            size={48}
-                            color={themeConfig.theme.colors.white}
-                          />
-                        </Box>
-                      ) : (
-                        <Image
-                          source={{
-                            uri: `data:image/jpeg;base64,${cover?.data}`,
-                          }}
-                          className="w-[70%] aspect-square rounded-md"
-                          alt="Album cover"
-                        />
-                      )}
-                      <Box className="w-6" />
-                    </HStack>
-                    <VStack className="px-6">
-                      <HStack className="mt-5 items-center justify-between">
-                        <Heading
-                          numberOfLines={1}
-                          className="text-white"
-                          size="2xl"
-                        >
-                          {data?.album.name}
-                        </Heading>
-                      </HStack>
-                      <HStack className="mt-4 items-center">
-                        <Image
-                          source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-                          className="w-8 h-8 rounded-full"
-                          alt="Artist cover"
-                        />
-                        <Text
-                          className="ml-4 text-white text-md font-bold"
-                          numberOfLines={1}
-                        >
-                          {((data?.album?.artists?.length || 0) > 1 &&
-                            data?.album.artists?.map((artist) => (
-                              <Link
-                                key={artist.id}
-                                href={`/artists/${artist.id}`}
-                              >
-                                {artist.name}
-                              </Link>
-                            ))) || (
-                              <Link href={`/artists/${data?.album.artistId}`}>
-                                {data?.album.displayArtist}
-                              </Link>
-                            ) || (
-                              <Link href={`/artists/${data?.album.artistId}`}>
-                                {data?.album.artist}
-                              </Link>
-                            )}
-                        </Text>
-                      </HStack>
-                      <HStack className="mt-2 items-center">
-                        <Text className="text-primary-100">
-                          {data?.album.isCompilation ? "Compilation" : "Album"}{" "}
-                          ⦁{" "}
-                          {data?.album.originalReleaseDate &&
-                            format(
-                              parse(
-                                `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
-                                "d/M/yyyy",
-                                new Date(),
-                              ),
-                              "dd MMM yyyy",
-                            )}
-                        </Text>
-                      </HStack>
-                      <HStack className="mt-4 items-center justify-between">
-                        <HStack className="items-center gap-x-4">
-                          <Pressable>
-                            <Heart
-                              color={themeConfig.theme.colors.white}
-                              fill={themeConfig.theme.colors.white}
-                            />
-                          </Pressable>
-                          <Pressable>
-                            <EllipsisVertical
-                              color={themeConfig.theme.colors.white}
-                            />
-                          </Pressable>
-                        </HStack>
-                        <HStack className="items-center gap-x-4">
-                          <Pressable>
-                            <Shuffle color={themeConfig.theme.colors.white} />
-                          </Pressable>
-                          <Pressable>
-                            <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                              <Play
-                                color={themeConfig.theme.colors.white}
-                                fill={themeConfig.theme.colors.white}
-                              />
-                            </Box>
-                          </Pressable>
-                        </HStack>
-                      </HStack>
-                    </VStack>
-                  </VStack>
-                  <VStack className="mt-6 px-6 gap-y-4">
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                    <TrackListItem />
-                  </VStack>
-                  <VStack className="px-6 my-6">
-                    <Text className="text-white font-bold">
-                      {data?.album.songCount +
-                        (data?.album.songCount || 0 > 1
-                          ? " song"
-                          : "songs")}{" "}
-                      ⦁ {Math.round((data?.album.duration || 0) / 60)} min
-                    </Text>
-                    {data?.album.recordLabels?.map((recordLabel) => (
-                      <Text
-                        className="text-primary-100 text-sm"
-                        key={recordLabel.name}
-                      >
-                        © {recordLabel.name}
-                      </Text>
-                    ))}
-                  </VStack>
-                </>
-              )}
-            </>
-          )}
-        </ScrollView>
       </SafeAreaView>
     </Box>
   );
