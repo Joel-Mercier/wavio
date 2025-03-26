@@ -7,10 +7,10 @@ import {
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { themeConfig } from "@/config/theme";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Settings } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Avatar, AvatarFallbackText, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallbackText } from "../ui/avatar";
 import { HStack } from "../ui/hstack";
 import { Pressable } from "../ui/pressable";
 import { Text } from "../ui/text";
@@ -45,13 +45,10 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
         <DrawerHeader>
           <Pressable className="w-full">
             <HStack className="items-center m-1 p-4 border-b-2 border-primary-500 active:bg-primary-800">
-              <Avatar size="md" className="mr-4">
+              <Avatar size="md" className="mr-4 bg-primary-400">
                 <AvatarFallbackText className="font-body">
-                  Joel
+                  {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
                 </AvatarFallbackText>
-                <AvatarImage
-                  source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-                />
               </Avatar>
               <VStack>
                 <Heading
@@ -59,7 +56,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
                   size="xl"
                   className="text-white font-bold"
                 >
-                  Joel
+                  {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
                 </Heading>
                 <Text className="text-primary-100">See profile</Text>
               </VStack>

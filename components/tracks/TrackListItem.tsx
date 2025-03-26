@@ -6,10 +6,22 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import { AudioLines, EllipsisVertical } from "lucide-react-native";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import {
+  AudioLines,
+  EllipsisVertical,
+  ListPlus,
+  PlusCircle,
+  Share,
+  User,
+} from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 
 interface TrackListItemProps {
@@ -27,6 +39,8 @@ export default function TrackListItem({
 }: TrackListItemProps) {
   const [showActionsheet, setShowActionsheet] = useState<boolean>(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetModalRef);
 
   // callbacks
   const handlePresentModalPress = useCallback(() => {
@@ -36,6 +50,8 @@ export default function TrackListItem({
   const handleClose = () => {
     setShowActionsheet(false);
   };
+
+  console.log(themeConfig.theme.colors.primary[600]);
 
   return (
     <>
@@ -76,9 +92,97 @@ export default function TrackListItem({
             <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
           )}
         </Pressable>
-        <BottomSheetModal ref={bottomSheetModalRef}>
-          <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-            <Text>Awesome 🎉</Text>
+        <BottomSheetModal
+          ref={bottomSheetModalRef}
+          onChange={handleSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+            }}
+          >
+            <Box className="p-4 w-full">
+              <HStack className="items-center">
+                {cover ? (
+                  <Image
+                    source={{ uri: `data:image/jpeg;base64,${cover}` }}
+                    className="w-16 h-16 rounded-md aspect-square"
+                    alt="Track cover"
+                  />
+                ) : (
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                    <AudioLines
+                      size={24}
+                      color={themeConfig.theme.colors.white}
+                    />
+                  </Box>
+                )}
+                <VStack className="ml-4">
+                  <Heading
+                    className="text-white font-normal"
+                    size="lg"
+                    numberOfLines={1}
+                  >
+                    {track.title}
+                  </Heading>
+                  <Text numberOfLines={1} className="text-sm text-primary-100">
+                    {track.artist} ⦁ {track.album}
+                  </Text>
+                </VStack>
+              </HStack>
+              <VStack className="mt-4 gap-y-4">
+                <Pressable>
+                  <VStack className="">
+                    <PlusCircle
+                      size={24}
+                      color={themeConfig.theme.colors.primary[50]}
+                    />
+                    <Text className="ml-4 text-lg text-primary-50">
+                      Add to playlist
+                    </Text>
+                  </VStack>
+                </Pressable>
+                <Pressable>
+                  <VStack className="">
+                    <User
+                      size={24}
+                      color={themeConfig.theme.colors.primary[100]}
+                    />
+                    <Text className="ml-4 text-lg text-primary-50">
+                      Go to artist
+                    </Text>
+                  </VStack>
+                </Pressable>
+                <Pressable>
+                  <VStack className="">
+                    <ListPlus
+                      size={24}
+                      color={themeConfig.theme.colors.primary[100]}
+                    />
+                    <Text className="ml-4 text-lg text-primary-50">
+                      Add to queue
+                    </Text>
+                  </VStack>
+                </Pressable>
+                <Pressable>
+                  <VStack className="">
+                    <Share
+                      size={24}
+                      color={themeConfig.theme.colors.primary[100]}
+                    />
+                    <Text className="ml-4 text-lg text-primary-50">Share</Text>
+                  </VStack>
+                </Pressable>
+              </VStack>
+            </Box>
           </BottomSheetView>
         </BottomSheetModal>
       </HStack>

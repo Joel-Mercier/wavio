@@ -1,3 +1,4 @@
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -123,6 +124,9 @@ export default function ArtistScreen() {
                     index={index}
                   />
                 ))}
+                {!isLoadingTopSongs &&
+                  !topSongsError &&
+                  !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
               </VStack>
               <Heading className="text-white">Discography</Heading>
             </VStack>

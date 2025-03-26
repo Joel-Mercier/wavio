@@ -1,3 +1,4 @@
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import ArtistListItem from "@/components/artists/ArtistListItem";
@@ -5,11 +6,7 @@ import HomeDrawer from "@/components/home/HomeDrawer";
 import HomeShortcut from "@/components/home/HomeShortcut";
 import PlaylistListItem from "@/components/playlists/PlaylistListItem";
 import TrackListItem from "@/components/tracks/TrackListItem";
-import {
-  Avatar,
-  AvatarFallbackText,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -18,10 +15,6 @@ import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
-import {
-  useMusicDirectory,
-  useMusicFolders,
-} from "@/hooks/openSubsonic/useBrowsing";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import TrackPlayer from "@weights-ai/react-native-track-player";
@@ -123,6 +116,9 @@ export default function HomeScreen() {
               )}
             </>
           )}
+          {!isLoadingRecent &&
+            !recentError &&
+            !recentData?.albumList2?.album?.length && <EmptyDisplay />}
           <Box className="px-6 mt-4 mb-4">
             <Heading size="xl" className="text-white">
               Most played
@@ -152,6 +148,9 @@ export default function HomeScreen() {
               )}
             </>
           )}
+          {!isLoadingMostPlayed &&
+            !mostPlayedError &&
+            !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
           <Box className="px-6 mt-4 mb-4">
             <Heading size="xl" className="text-white">
               Top rated
@@ -181,6 +180,9 @@ export default function HomeScreen() {
               )}
             </>
           )}
+          {!isLoadingHighestRated &&
+            !highestRatedError &&
+            !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
         </ScrollView>
       </SafeAreaView>
       <HomeDrawer onClose={handleClose} showDrawer={showDrawer} />
