@@ -13,6 +13,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
+import Animated from "react-native-reanimated";
 
 export default function GenreScreen() {
   const router = useRouter();
@@ -39,12 +40,20 @@ export default function GenreScreen() {
                 <SafeAreaView>
                   <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
                     <Pressable onPress={() => router.back()}>
-                      <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                        <ArrowLeft
-                          size={24}
-                          color={themeConfig.theme.colors.white}
-                        />
-                      </Box>
+                      {({ pressed }) => (
+                        <Animated.View
+                          className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                          style={{
+                            transform: [{ scale: pressed ? 0.95 : 1 }],
+                            opacity: pressed ? 0.5 : 1,
+                          }}
+                        >
+                          <ArrowLeft
+                            size={24}
+                            color={themeConfig.theme.colors.white}
+                          />
+                        </Animated.View>
+                      )}
                     </Pressable>
                     <Heading numberOfLines={2} className="text-white" size="xl">
                       {id}

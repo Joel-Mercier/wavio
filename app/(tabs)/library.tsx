@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
+import Animated from "react-native-reanimated";
 
 export type LibraryLayout = "list" | "grid";
 
@@ -125,12 +126,26 @@ export default function LibraryScreen() {
                 <HStack className="items-center gap-x-4">
                   <Pressable>
                     {({ pressed }) => (
-                      <Search color={themeConfig.theme.colors.white} />
+                      <Animated.View
+                        style={{
+                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                          opacity: pressed ? 0.5 : 1,
+                        }}
+                      >
+                        <Search color={themeConfig.theme.colors.white} />
+                      </Animated.View>
                     )}
                   </Pressable>
                   <Pressable>
                     {({ pressed }) => (
-                      <Plus color={themeConfig.theme.colors.white} />
+                      <Animated.View
+                        style={{
+                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                          opacity: pressed ? 0.5 : 1,
+                        }}
+                      >
+                        <Plus color={themeConfig.theme.colors.white} />
+                      </Animated.View>
                     )}
                   </Pressable>
                 </HStack>
@@ -185,24 +200,42 @@ export default function LibraryScreen() {
             <HStack className="pb-6 items-center justify-between">
               <Pressable>
                 {({ pressed }) => (
-                  <HStack className="items-center gap-x-2">
+                  <Animated.View
+                    className="flex-row items-center gap-x-2"
+                    style={{
+                      transform: [{ scale: pressed ? 0.95 : 1 }],
+                      opacity: pressed ? 0.5 : 1,
+                    }}
+                  >
                     <ArrowDownUp
                       size={16}
                       color={themeConfig.theme.colors.white}
                     />
                     <Text className="text-white font-bold">Recent</Text>
-                  </HStack>
+                  </Animated.View>
                 )}
               </Pressable>
               <Pressable onPress={handleLayoutPress}>
                 {({ pressed }) => {
-                  return layout === "list" ? (
-                    <LayoutGrid
-                      size={16}
-                      color={themeConfig.theme.colors.white}
-                    />
-                  ) : (
-                    <List size={16} color={themeConfig.theme.colors.white} />
+                  return (
+                    <Animated.View
+                      style={{
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                        opacity: pressed ? 0.5 : 1,
+                      }}
+                    >
+                      {layout === "list" ? (
+                        <LayoutGrid
+                          size={16}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <List
+                          size={16}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      )}
+                    </Animated.View>
                   );
                 }}
               </Pressable>

@@ -30,6 +30,10 @@ import TrackPlayer from "@weights-ai/react-native-track-player";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DevToolsBubble } from "react-native-react-query-devtools";
+import {
+  ReanimatedLogLevel,
+  configureReanimatedLogger,
+} from "react-native-reanimated";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -37,6 +41,11 @@ SplashScreen.preventAutoHideAsync();
 TrackPlayer.registerPlaybackService(() => PlaybackService);
 
 const queryClient = new QueryClient();
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false, // Reanimated runs in strict mode by default
+});
 
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {

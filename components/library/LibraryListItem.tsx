@@ -1,7 +1,8 @@
 import type { LibraryLayout } from "@/app/(tabs)/library";
+import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
+import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
@@ -15,7 +16,7 @@ import { cn } from "@/utils/tailwind";
 import { Link } from "expo-router";
 import { Disc3, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
-import { Box } from "../ui/box";
+import Animated from "react-native-reanimated";
 
 interface LibraryListItemProps {
   item: Playlist & AlbumID3 & ArtistID3;
@@ -48,56 +49,65 @@ export default function LibraryListItem({
   }, [item]);
 
   return (
-    <Link href={`${type.url}/${item.id}`} className="mb-4">
-      <HStack
-        className={cn("items-center", {
-          "flex-col items-start": layout === "grid",
-        })}
-      >
-        {cover.data ? (
-          <Image
-            source={{
-              uri:
-                item.artistImageUrl || `data:image/jpeg;base64,${cover?.data}`,
-            }}
-            className={cn("rounded-md aspect-square", {
-              "w-full": layout === "grid",
-              "w-20 h-20": layout === "list",
+    <Link href={`${type.url}/${item.id}`} className="mb-4" asChild>
+      <Pressable>
+        {({ pressed }) => (
+          <Animated.View
+            className={cn("flex-row transition duration-100 items-center", {
+              "flex-col items-start": layout === "grid",
             })}
-            alt="Libray item cover"
-          />
-        ) : (
-          <Box
-            className={cn(
-              "rounded-md bg-primary-600 items-center justify-center",
-              {
-                "w-full": layout === "grid",
-                "w-20 h-20": layout === "list",
-              },
+            style={{
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+              opacity: pressed ? 0.5 : 1,
+            }}
+          >
+            {cover.data ? (
+              <Image
+                source={{
+                  uri:
+                    item.artistImageUrl ||
+                    `data:image/jpeg;base64,${cover?.data}`,
+                }}
+                className={cn("rounded-md aspect-square", {
+                  "w-full": layout === "grid",
+                  "w-20 h-20": layout === "list",
+                })}
+                alt="Libray item cover"
+              />
+            ) : (
+              <Box
+                className={cn(
+                  "rounded-md bg-primary-600 items-center justify-center",
+                  {
+                    "w-full": layout === "grid",
+                    "w-20 h-20": layout === "list",
+                  },
+                )}
+              >
+                <LibraryListItemIcon type={type.label} />
+              </Box>
             )}
-          >
-            <LibraryListItemIcon type={type.label} />
-          </Box>
+            <VStack className={cn("ml-4", { "ml-0 mt-2": layout === "grid" })}>
+              <Heading
+                numberOfLines={layout === "grid" ? 2 : 1}
+                className="text-white text-md font-normal capitalize"
+              >
+                {item.name}
+              </Heading>
+              <Text numberOfLines={1} className="text-md text-primary-100">
+                {type.label} ⦁ {item.albumCount || item.songCount}{" "}
+                {type.label === "Artist"
+                  ? item.albumCount > 1
+                    ? "albums"
+                    : "album"
+                  : item.songCount > 1
+                    ? "songs"
+                    : "song"}
+              </Text>
+            </VStack>
+          </Animated.View>
         )}
-        <VStack className={cn("ml-4", { "ml-0 mt-2": layout === "grid" })}>
-          <Heading
-            numberOfLines={layout === "grid" ? 2 : 1}
-            className="text-white text-md font-normal capitalize"
-          >
-            {item.name}
-          </Heading>
-          <Text numberOfLines={1} className="text-md text-primary-100">
-            {type.label} ⦁ {item.albumCount || item.songCount}{" "}
-            {type.label === "Artist"
-              ? item.albumCount > 1
-                ? "albums"
-                : "album"
-              : item.songCount > 1
-                ? "songs"
-                : "song"}
-          </Text>
-        </VStack>
-      </HStack>
+      </Pressable>
     </Link>
   );
 }

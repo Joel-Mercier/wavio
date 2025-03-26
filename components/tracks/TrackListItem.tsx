@@ -14,6 +14,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 import {
   AudioLines,
   EllipsisVertical,
@@ -22,7 +23,7 @@ import {
   Share,
   User,
 } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 
 interface TrackListItemProps {
   track: Child;
@@ -37,21 +38,19 @@ export default function TrackListItem({
   index,
   showIndex = false,
 }: TrackListItemProps) {
-  const [showActionsheet, setShowActionsheet] = useState<boolean>(false);
+  const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
 
-  // callbacks
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
 
-  const handleClose = () => {
-    setShowActionsheet(false);
+  const handleGoToArtistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate(`/artists/${track.artistId}`);
   };
-
-  console.log(themeConfig.theme.colors.primary[600]);
 
   return (
     <>
@@ -109,7 +108,7 @@ export default function TrackListItem({
               alignItems: "center",
             }}
           >
-            <Box className="p-4 w-full">
+            <Box className="p-6 w-full pb-12">
               <HStack className="items-center">
                 {cover ? (
                   <Image
@@ -118,7 +117,7 @@ export default function TrackListItem({
                     alt="Track cover"
                   />
                 ) : (
-                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
                     <AudioLines
                       size={24}
                       color={themeConfig.theme.colors.white}
@@ -133,53 +132,73 @@ export default function TrackListItem({
                   >
                     {track.title}
                   </Heading>
-                  <Text numberOfLines={1} className="text-sm text-primary-100">
+                  <Text numberOfLines={1} className="text-md text-primary-100">
                     {track.artist} ⦁ {track.album}
                   </Text>
                 </VStack>
               </HStack>
-              <VStack className="mt-4 gap-y-4">
+              <VStack className="mt-6 gap-y-8">
                 <Pressable>
-                  <VStack className="">
-                    <PlusCircle
-                      size={24}
-                      color={themeConfig.theme.colors.primary[50]}
-                    />
-                    <Text className="ml-4 text-lg text-primary-50">
-                      Add to playlist
-                    </Text>
-                  </VStack>
+                  {({ pressed }) => (
+                    <HStack
+                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
+                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
+                    >
+                      <PlusCircle
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        Add to playlist
+                      </Text>
+                    </HStack>
+                  )}
+                </Pressable>
+                <Pressable onPress={handleGoToArtistPress}>
+                  {({ pressed }) => (
+                    <HStack
+                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
+                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
+                    >
+                      <User
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        Go to artist
+                      </Text>
+                    </HStack>
+                  )}
                 </Pressable>
                 <Pressable>
-                  <VStack className="">
-                    <User
-                      size={24}
-                      color={themeConfig.theme.colors.primary[100]}
-                    />
-                    <Text className="ml-4 text-lg text-primary-50">
-                      Go to artist
-                    </Text>
-                  </VStack>
+                  {({ pressed }) => (
+                    <HStack
+                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
+                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
+                    >
+                      <ListPlus
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        Add to queue
+                      </Text>
+                    </HStack>
+                  )}
                 </Pressable>
-                <Pressable>
-                  <VStack className="">
-                    <ListPlus
-                      size={24}
-                      color={themeConfig.theme.colors.primary[100]}
-                    />
-                    <Text className="ml-4 text-lg text-primary-50">
-                      Add to queue
-                    </Text>
-                  </VStack>
-                </Pressable>
-                <Pressable>
-                  <VStack className="">
-                    <Share
-                      size={24}
-                      color={themeConfig.theme.colors.primary[100]}
-                    />
-                    <Text className="ml-4 text-lg text-primary-50">Share</Text>
-                  </VStack>
+                <Pressable onPress={() => console.log("share pressed")}>
+                  {({ pressed }) => (
+                    <HStack
+                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
+                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
+                    >
+                      <Share
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                    </HStack>
+                  )}
                 </Pressable>
               </VStack>
             </Box>
