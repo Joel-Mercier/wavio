@@ -1,9 +1,11 @@
-import LibraryListItem from "@/components/library/LibraryListItem";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import LibraryListItem, {
+  type Favorites,
+} from "@/components/library/LibraryListItem";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
@@ -27,7 +29,6 @@ import {
 } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
-import Animated from "react-native-reanimated";
 
 export type LibraryLayout = "list" | "grid";
 
@@ -72,6 +73,14 @@ export default function LibraryScreen() {
       return [];
     }
     let data = [];
+    if (!filter) {
+      data.push({
+        id: "favorites",
+        name: "Favorites",
+        isFavorites: true,
+        songCount: starredData?.starred2.song?.length || 0,
+      });
+    }
     if (!filter || filter === "artists") {
       data.push(starredData.starred2.artist);
     }
@@ -79,6 +88,14 @@ export default function LibraryScreen() {
       data.push(starredData.starred2.album);
     }
     if (!filter || filter === "playlists") {
+      if (filter === "playlists") {
+        data.push({
+          id: "favorites",
+          name: "Favorites",
+          isFavorites: true,
+          songCount: starredData?.starred2.song?.length || 0,
+        });
+      }
       data.push(playlistsData.playlists.playlist);
     }
     data = data.flat();
@@ -101,7 +118,7 @@ export default function LibraryScreen() {
           target,
           extraData,
         }: {
-          item: Playlist & AlbumID3 & ArtistID3;
+          item: Playlist & AlbumID3 & ArtistID3 & Favorites;
           index: number;
           target: string;
           extraData: { layout: LibraryLayout };
@@ -111,6 +128,7 @@ export default function LibraryScreen() {
               item={item}
               layout={extraData.layout}
               key={item.id}
+              index={index}
             />
           );
         }}
@@ -124,30 +142,12 @@ export default function LibraryScreen() {
                   Library
                 </Heading>
                 <HStack className="items-center gap-x-4">
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Search color={themeConfig.theme.colors.white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Plus color={themeConfig.theme.colors.white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
+                  <FadeOutScaleDown>
+                    <Search color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown>
+                    <Plus color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
                 </HStack>
               </HStack>
               <ScrollView
@@ -155,90 +155,63 @@ export default function LibraryScreen() {
                 showsHorizontalScrollIndicator={false}
                 className="gap-x-4 my-6"
               >
-                <Pressable onPress={() => handleFilterPress("playlists")}>
-                  {({ pressed }) => (
-                    <Badge
-                      className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                        "bg-emerald-500 text-primary-800":
-                          filter === "playlists",
-                      })}
-                    >
-                      <BadgeText className="normal-case text-md text-white">
-                        Playlists
-                      </BadgeText>
-                    </Badge>
-                  )}
-                </Pressable>
-                <Pressable onPress={() => handleFilterPress("albums")}>
-                  {({ pressed }) => (
-                    <Badge
-                      className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                        "bg-emerald-500 text-primary-800": filter === "albums",
-                      })}
-                    >
-                      <BadgeText className="normal-case text-md text-white">
-                        Albums
-                      </BadgeText>
-                    </Badge>
-                  )}
-                </Pressable>
-                <Pressable onPress={() => handleFilterPress("artists")}>
-                  {({ pressed }) => (
-                    <Badge
-                      className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                        "bg-emerald-500 text-primary-800": filter === "artists",
-                      })}
-                    >
-                      <BadgeText className="normal-case text-md text-white">
-                        Artists
-                      </BadgeText>
-                    </Badge>
-                  )}
-                </Pressable>
+                <FadeOutScaleDown
+                  onPress={() => handleFilterPress("playlists")}
+                >
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                      "bg-emerald-500 text-primary-800": filter === "playlists",
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      Playlists
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                      "bg-emerald-500 text-primary-800": filter === "albums",
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      Albums
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                      "bg-emerald-500 text-primary-800": filter === "artists",
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      Artists
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
               </ScrollView>
             </Box>
             <HStack className="pb-6 items-center justify-between">
-              <Pressable>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center gap-x-2"
-                    style={{
-                      transform: [{ scale: pressed ? 0.95 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <ArrowDownUp
-                      size={16}
-                      color={themeConfig.theme.colors.white}
-                    />
-                    <Text className="text-white font-bold">Recent</Text>
-                  </Animated.View>
+              <FadeOutScaleDown>
+                <HStack className="items-center gap-x-2">
+                  <ArrowDownUp
+                    size={16}
+                    color={themeConfig.theme.colors.white}
+                  />
+                  <Text className="text-white font-bold">Recent</Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleLayoutPress}>
+                {layout === "list" ? (
+                  <LayoutGrid
+                    size={16}
+                    color={themeConfig.theme.colors.white}
+                  />
+                ) : (
+                  <List size={16} color={themeConfig.theme.colors.white} />
                 )}
-              </Pressable>
-              <Pressable onPress={handleLayoutPress}>
-                {({ pressed }) => {
-                  return (
-                    <Animated.View
-                      style={{
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                        opacity: pressed ? 0.5 : 1,
-                      }}
-                    >
-                      {layout === "list" ? (
-                        <LayoutGrid
-                          size={16}
-                          color={themeConfig.theme.colors.white}
-                        />
-                      ) : (
-                        <List
-                          size={16}
-                          color={themeConfig.theme.colors.white}
-                        />
-                      )}
-                    </Animated.View>
-                  );
-                }}
-              </Pressable>
+              </FadeOutScaleDown>
             </HStack>
           </>
         )}

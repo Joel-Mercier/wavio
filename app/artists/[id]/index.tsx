@@ -1,5 +1,6 @@
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import { Box } from "@/components/ui/box";
@@ -44,7 +45,11 @@ export default function ArtistScreen() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
-  const cover = useGetCoverArt(data?.artist.coverArt, { size: 400 });
+  const cover = useGetCoverArt(
+    data?.artist.coverArt,
+    { size: 400 },
+    !!data?.artist.coverArt,
+  );
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
@@ -79,22 +84,14 @@ export default function ArtistScreen() {
                 <Box className="bg-black/25 flex-1">
                   <SafeAreaView>
                     <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                      <Pressable onPress={() => router.back()}>
-                        {({ pressed }) => (
-                          <Animated.View
-                            className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                            style={{
-                              transform: [{ scale: pressed ? 0.95 : 1 }],
-                              opacity: pressed ? 0.5 : 1,
-                            }}
-                          >
-                            <ArrowLeft
-                              size={24}
-                              color={themeConfig.theme.colors.white}
-                            />
-                          </Animated.View>
-                        )}
-                      </Pressable>
+                      <FadeOutScaleDown onPress={() => router.back()}>
+                        <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                          <ArrowLeft
+                            size={24}
+                            color={themeConfig.theme.colors.white}
+                          />
+                        </Box>
+                      </FadeOutScaleDown>
                       <Heading
                         numberOfLines={2}
                         className="text-white"
@@ -110,78 +107,28 @@ export default function ArtistScreen() {
             <VStack className="px-6">
               <HStack className="items-center justify-between my-4">
                 <HStack className="items-center gap-x-4">
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Heart color={themeConfig.theme.colors.white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Share color={themeConfig.theme.colors.white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Pressable onPress={handlePresentModalPress}>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <EllipsisVertical
-                          color={themeConfig.theme.colors.white}
-                        />
-                      </Animated.View>
-                    )}
-                  </Pressable>
+                  <FadeOutScaleDown>
+                    <Heart color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown>
+                    <Share color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Shuffle color={themeConfig.theme.colors.white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Pressable>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100 w-12 h-12 rounded-full bg-emerald-500 items-center justify-center"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
-                      </Animated.View>
-                    )}
-                  </Pressable>
+                  <FadeOutScaleDown>
+                    <Shuffle color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown>
+                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                      <Play
+                        color={themeConfig.theme.colors.white}
+                        fill={themeConfig.theme.colors.white}
+                      />
+                    </Box>
+                  </FadeOutScaleDown>
                 </HStack>
               </HStack>
               <Heading className="text-white">Top songs</Heading>
@@ -254,23 +201,12 @@ export default function ArtistScreen() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <Pressable onPress={() => console.log("share pressed")}>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center transition duration-100"
-                    style={{
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <Share
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
-                    <Text className="ml-4 text-lg text-gray-200">Share</Text>
-                  </Animated.View>
-                )}
-              </Pressable>
+              <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+                <HStack className=" items-center">
+                  <Share size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                </HStack>
+              </FadeOutScaleDown>
             </VStack>
           </Box>
         </BottomSheetView>

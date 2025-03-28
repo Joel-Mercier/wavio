@@ -130,16 +130,17 @@ export default function RootLayout() {
                       name="settings"
                       options={{ headerShown: false }}
                     />
-                    {/* <Stack.Screen
-                        name="player"
-                        options={{
-                          headerShown: false,
-                          presentation: "card",
-                          gestureEnabled: true,
-                          gestureDirection: "vertical",
-                          animationDuration: 400,
-                        }}
-                      /> */}
+                    <Stack.Screen
+                      name="player"
+                      options={{
+                        headerShown: false,
+                        gestureEnabled: true,
+                        fullScreenGestureEnabled: true,
+                        gestureDirection: "vertical",
+                        animationDuration: 300,
+                        animation: "fade_from_bottom",
+                      }}
+                    />
                     <Stack.Screen name="+not-found" />
                   </Stack>
                   <FloatingPlayer />

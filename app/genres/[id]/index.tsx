@@ -55,7 +55,11 @@ export default function GenreScreen() {
                         </Animated.View>
                       )}
                     </Pressable>
-                    <Heading numberOfLines={2} className="text-white" size="xl">
+                    <Heading
+                      numberOfLines={2}
+                      className="text-white"
+                      size="2xl"
+                    >
                       {id}
                     </Heading>
                   </VStack>

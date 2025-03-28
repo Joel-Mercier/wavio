@@ -28,16 +28,17 @@ export const useGetCaptions = (id: string, { format }: { format: "srt" | "vvt" }
   });
 };
 
-export const useGetCoverArt = (id: string, params: { size?: number }) => {
+export const useGetCoverArt = (id: string, params: { size?: number }, enabled = true) => {
   return useQuery({
     queryKey: ["getCoverArt", id, params],
     queryFn: () => {
       return getCoverArt(id, params);
     },
+    enabled,
   });
 };
 
-export const useGetLyrics = (params?: { artist?: string, title?: string }) => {
+export const useGetLyrics = (params: { artist?: string, title?: string }) => {
   return useQuery({
     queryKey: ["getLyrics", params],
     queryFn: () => {

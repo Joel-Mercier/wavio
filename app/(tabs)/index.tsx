@@ -1,5 +1,6 @@
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import ArtistListItem from "@/components/artists/ArtistListItem";
 import HomeDrawer from "@/components/home/HomeDrawer";
@@ -10,7 +11,7 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
+import { Image } from "@/components/ui/image";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
@@ -53,17 +54,23 @@ export default function HomeScreen() {
 
   return (
     <>
+      <Image
+        source={require("@/assets/images/home-bg-transparent.png")}
+        className="absolute right-0 top-0 w-60 h-60 aspect-square"
+        resizeMode="contain"
+        alt="home screen background"
+      />
       <SafeAreaView>
         <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight }}>
           <Box className="px-6 mt-6 mb-4">
             <HStack className="gap-x-4 items-center mb-4">
-              <Pressable onPress={() => setShowDrawer(true)}>
+              <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
                 <Avatar size="sm" className="border-emerald-500 border-2">
                   <AvatarFallbackText className="font-body ">
                     {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
                   </AvatarFallbackText>
                 </Avatar>
-              </Pressable>
+              </FadeOutScaleDown>
               <Heading size="2xl" className="text-white font-bold">
                 Hi {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
               </Heading>

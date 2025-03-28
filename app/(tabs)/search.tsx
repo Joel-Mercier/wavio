@@ -1,4 +1,5 @@
 import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import GenreListItem from "@/components/search/GenreListItem";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -42,23 +43,21 @@ export default function SearchScreen() {
                   Search
                 </Heading>
               </HStack>
-              <Pressable className="mb-6">
-                {({ pressed }) => (
-                  <Input
-                    size="xl"
-                    isReadOnly
-                    className="bg-white rounded-md border-0"
-                  >
-                    <InputSlot className="pl-3">
-                      <InputIcon
-                        as={Search}
-                        color={themeConfig.theme.colors.black}
-                      />
-                    </InputSlot>
-                    <InputField placeholder="What do you want to listen to ?" />
-                  </Input>
-                )}
-              </Pressable>
+              <FadeOutScaleDown className="mb-6">
+                <Input
+                  size="xl"
+                  isReadOnly
+                  className="bg-white rounded-md border-0"
+                >
+                  <InputSlot className="pl-3">
+                    <InputIcon
+                      as={Search}
+                      color={themeConfig.theme.colors.black}
+                    />
+                  </InputSlot>
+                  <InputField placeholder="What do you want to listen to ?" />
+                </Input>
+              </FadeOutScaleDown>
               <Heading size="lg" className="text-white mb-4">
                 Explore genres
               </Heading>

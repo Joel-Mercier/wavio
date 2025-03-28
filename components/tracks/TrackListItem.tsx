@@ -1,3 +1,4 @@
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -6,6 +7,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
@@ -42,7 +44,11 @@ export default function TrackListItem({
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-
+  const trackCover = useGetCoverArt(
+    track.coverArt,
+    { size: 200 },
+    !!(!cover && track.coverArt),
+  );
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
@@ -63,9 +69,11 @@ export default function TrackListItem({
           {showIndex && (
             <Text className="text-sm text-white mr-4">{index + 1}</Text>
           )}
-          {cover ? (
+          {cover || trackCover.data ? (
             <Image
-              source={{ uri: `data:image/jpeg;base64,${cover}` }}
+              source={{
+                uri: `data:image/jpeg;base64,${cover || trackCover.data}`,
+              }}
               className="w-16 h-16 rounded-md aspect-square"
               alt="Track cover"
             />
@@ -86,11 +94,9 @@ export default function TrackListItem({
             </Text>
           </VStack>
         </HStack>
-        <Pressable onPress={handlePresentModalPress}>
-          {({ pressed }) => (
-            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
-          )}
-        </Pressable>
+        <FadeOutScaleDown onPress={handlePresentModalPress}>
+          <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+        </FadeOutScaleDown>
         <BottomSheetModal
           ref={bottomSheetModalRef}
           onChange={handleSheetPositionChange}
@@ -138,68 +144,48 @@ export default function TrackListItem({
                 </VStack>
               </HStack>
               <VStack className="mt-6 gap-y-8">
-                <Pressable>
-                  {({ pressed }) => (
-                    <HStack
-                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
-                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
-                    >
-                      <PlusCircle
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        Add to playlist
-                      </Text>
-                    </HStack>
-                  )}
-                </Pressable>
-                <Pressable onPress={handleGoToArtistPress}>
-                  {({ pressed }) => (
-                    <HStack
-                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
-                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
-                    >
-                      <User
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        Go to artist
-                      </Text>
-                    </HStack>
-                  )}
-                </Pressable>
-                <Pressable>
-                  {({ pressed }) => (
-                    <HStack
-                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
-                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
-                    >
-                      <ListPlus
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        Add to queue
-                      </Text>
-                    </HStack>
-                  )}
-                </Pressable>
-                <Pressable onPress={() => console.log("share pressed")}>
-                  {({ pressed }) => (
-                    <HStack
-                      className={`items-center transition duration-100 ${pressed ? "opacity-50" : ""}`}
-                      style={{ transform: [{ scale: pressed ? 0.98 : 1 }] }}
-                    >
-                      <Share
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
-                      <Text className="ml-4 text-lg text-gray-200">Share</Text>
-                    </HStack>
-                  )}
-                </Pressable>
+                <FadeOutScaleDown>
+                  <HStack className="items-center">
+                    <PlusCircle
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Add to playlist
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleGoToArtistPress}>
+                  <HStack className="items-center">
+                    <User
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Go to artist
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown>
+                  <HStack className="items-center">
+                    <ListPlus
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Add to queue
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+                  <HStack className="items-center">
+                    <Share
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                  </HStack>
+                </FadeOutScaleDown>
               </VStack>
             </Box>
           </BottomSheetView>

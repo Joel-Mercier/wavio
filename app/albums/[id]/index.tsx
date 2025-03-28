@@ -1,10 +1,10 @@
 import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Pressable } from "@/components/ui/pressable";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
@@ -35,7 +35,6 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
-import Animated from "react-native-reanimated";
 
 export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,7 +43,11 @@ export default function AlbumScreen() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useAlbum(id);
-  const cover = useGetCoverArt(data?.album.coverArt, { size: 400 });
+  const cover = useGetCoverArt(
+    data?.album.coverArt,
+    { size: 400 },
+    !!data?.album.coverArt,
+  );
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -67,22 +70,9 @@ export default function AlbumScreen() {
           ListHeaderComponent={() => (
             <VStack>
               <HStack className="mt-6 items-start justify-between">
-                <Pressable onPress={() => router.back()}>
-                  {({ pressed }) => (
-                    <Animated.View
-                      className="transition duration-100"
-                      style={{
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                        opacity: pressed ? 0.5 : 1,
-                      }}
-                    >
-                      <ArrowLeft
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
-                    </Animated.View>
-                  )}
-                </Pressable>
+                <FadeOutScaleDown onPress={() => router.back()}>
+                  <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                </FadeOutScaleDown>
                 {cover.isLoading ? (
                   <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
                     <Disc3 size={48} color={themeConfig.theme.colors.white} />
@@ -144,68 +134,30 @@ export default function AlbumScreen() {
                 </HStack>
                 <HStack className="mt-4 items-center justify-between">
                   <HStack className="items-center gap-x-4">
-                    <Pressable>
-                      {({ pressed }) => (
-                        <Animated.View
-                          className="transition duration-100"
-                          style={{
-                            transform: [{ scale: pressed ? 0.95 : 1 }],
-                            opacity: pressed ? 0.5 : 1,
-                          }}
-                        >
-                          <Heart
-                            color={themeConfig.theme.colors.white}
-                            fill={themeConfig.theme.colors.white}
-                          />
-                        </Animated.View>
-                      )}
-                    </Pressable>
-                    <Pressable onPress={handlePresentModalPress}>
-                      {({ pressed }) => (
-                        <Animated.View
-                          className="transition duration-100"
-                          style={{
-                            transform: [{ scale: pressed ? 0.95 : 1 }],
-                            opacity: pressed ? 0.5 : 1,
-                          }}
-                        >
-                          <EllipsisVertical
-                            color={themeConfig.theme.colors.white}
-                          />
-                        </Animated.View>
-                      )}
-                    </Pressable>
+                    <FadeOutScaleDown>
+                      <Heart
+                        color={themeConfig.theme.colors.white}
+                        fill={themeConfig.theme.colors.white}
+                      />
+                    </FadeOutScaleDown>
+                    <FadeOutScaleDown onPress={handlePresentModalPress}>
+                      <EllipsisVertical
+                        color={themeConfig.theme.colors.white}
+                      />
+                    </FadeOutScaleDown>
                   </HStack>
                   <HStack className="items-center gap-x-4">
-                    <Pressable>
-                      {({ pressed }) => (
-                        <Animated.View
-                          className="transition duration-100"
-                          style={{
-                            transform: [{ scale: pressed ? 0.95 : 1 }],
-                            opacity: pressed ? 0.5 : 1,
-                          }}
-                        >
-                          <Shuffle color={themeConfig.theme.colors.white} />
-                        </Animated.View>
-                      )}
-                    </Pressable>
-                    <Pressable>
-                      {({ pressed }) => (
-                        <Animated.View
-                          className="transition duration-100 w-12 h-12 rounded-full bg-emerald-500 items-center justify-center"
-                          style={{
-                            transform: [{ scale: pressed ? 0.95 : 1 }],
-                            opacity: pressed ? 0.5 : 1,
-                          }}
-                        >
-                          <Play
-                            color={themeConfig.theme.colors.white}
-                            fill={themeConfig.theme.colors.white}
-                          />
-                        </Animated.View>
-                      )}
-                    </Pressable>
+                    <FadeOutScaleDown>
+                      <Shuffle color={themeConfig.theme.colors.white} />
+                    </FadeOutScaleDown>
+                    <FadeOutScaleDown>
+                      <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      </Box>
+                    </FadeOutScaleDown>
                   </HStack>
                 </HStack>
               </VStack>
@@ -277,80 +229,42 @@ export default function AlbumScreen() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <Pressable>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center transition duration-100"
-                    style={{
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <PlusCircle
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      Add to playlist
-                    </Text>
-                  </Animated.View>
-                )}
-              </Pressable>
-              <Pressable onPress={handleGoToArtistPress}>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center transition duration-100"
-                    style={{
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <User
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      Go to artist
-                    </Text>
-                  </Animated.View>
-                )}
-              </Pressable>
-              <Pressable>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center transition duration-100"
-                    style={{
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <ListPlus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      Add to queue
-                    </Text>
-                  </Animated.View>
-                )}
-              </Pressable>
-              <Pressable onPress={() => console.log("share pressed")}>
-                {({ pressed }) => (
-                  <Animated.View
-                    className="flex-row items-center transition duration-100"
-                    style={{
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  >
-                    <Share
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
-                    <Text className="ml-4 text-lg text-gray-200">Share</Text>
-                  </Animated.View>
-                )}
-              </Pressable>
+              <FadeOutScaleDown>
+                <HStack className="items-center">
+                  <PlusCircle
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Add to playlist
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleGoToArtistPress}>
+                <HStack className="items-center">
+                  <User size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Go to artist
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown>
+                <HStack className="items-center">
+                  <ListPlus
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Add to queue
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+                <HStack className="items-center">
+                  <Share size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                </HStack>
+              </FadeOutScaleDown>
             </VStack>
           </Box>
         </BottomSheetView>
