@@ -3,12 +3,14 @@ import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 
 export const scrobble = async (id: string, { time, submission }: { time?: number, submission?: boolean }) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/scrobble",
       {
-        id,
-        time,
-        submission
+        params: {
+          id,
+          time,
+          submission
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
@@ -25,11 +27,13 @@ export const scrobble = async (id: string, { time, submission }: { time?: number
 
 export const setRating = async (id: string, rating: number) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/setRating",
       {
-        id,
-        rating
+        params: {
+          id,
+          rating
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
@@ -46,12 +50,14 @@ export const setRating = async (id: string, rating: number) => {
 
 export const star = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/star",
       {
-        id,
-        albumId,
-        artistId
+        params: {
+          id,
+          albumId,
+          artistId
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
@@ -68,12 +74,14 @@ export const star = async ({ id, albumId, artistId }: { id?: string, albumId?: s
 
 export const unstar = async ({ id, albumId, artistId }: { id?: string, albumId?: string, artistId?: string }) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/unstar",
       {
-        id,
-        albumId,
-        artistId
+        params: {
+          id,
+          albumId,
+          artistId
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {

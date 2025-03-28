@@ -60,9 +60,9 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
-  // const trackPlayerLoaded = useSetupTrackPlayer();
-  // useLogTrackPlayerState();
-  const trackPlayerLoaded = true;
+  const trackPlayerLoaded = useSetupTrackPlayer();
+  useLogTrackPlayerState();
+  // const trackPlayerLoaded = true;
 
   const [loaded] = useFonts({
     Inter_400Regular,

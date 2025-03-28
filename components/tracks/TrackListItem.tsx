@@ -7,25 +7,32 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
+import { hlsStreamUrl, streamUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import TrackPlayer, {
+  useActiveTrack,
+} from "@weights-ai/react-native-track-player";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
   EllipsisVertical,
+  Heart,
   ListPlus,
   PlusCircle,
   Share,
   User,
 } from "lucide-react-native";
 import { useCallback, useRef } from "react";
+import { Toast, ToastDescription, ToastTitle, useToast } from "../ui/toast";
 
 interface TrackListItemProps {
   track: Child;
@@ -44,11 +51,16 @@ export default function TrackListItem({
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const activeTrack = useActiveTrack();
   const trackCover = useGetCoverArt(
     track.coverArt,
-    { size: 200 },
+    { size: 600 },
     !!(!cover && track.coverArt),
   );
+  const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
+  const toast = useToast();
+
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
@@ -58,8 +70,100 @@ export default function TrackListItem({
     router.navigate(`/artists/${track.artistId}`);
   };
 
+  const handleFavoritePress = () => {
+    doFavorite.mutate(
+      { id: track.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Track successfully added to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while adding track to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleUnfavoritePress = () => {
+    doUnfavorite.mutate(
+      { id: track.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Track successfully removed from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while removing the track from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleTrackPress = useCallback(async () => {
+    await TrackPlayer.stop();
+    await TrackPlayer.reset();
+    await TrackPlayer.add([
+      {
+        id: track.id,
+        url: streamUrl(track.id),
+        // type: TrackType.HLS,
+        title: track.title,
+        artist: track.artist,
+        album: track.album,
+        artwork: cover || trackCover.data,
+        genre: track.genre,
+        duration: track.duration,
+        contentType: track.contentType,
+        starred: track.starred,
+        artistId: track.artistId,
+        albumId: track.albumId,
+      },
+    ]);
+
+    await TrackPlayer.play();
+  }, [track, cover, trackCover]);
+
   return (
-    <>
+    <Pressable onPress={handleTrackPress}>
       <HStack
         className={cn("items-center justify-between mb-4", {
           "mt-6": index === 0,
@@ -84,7 +188,9 @@ export default function TrackListItem({
           )}
           <VStack className="ml-4">
             <Heading
-              className="text-white text-md font-normal capitalize"
+              className={cn("text-white text-md font-normal capitalize", {
+                "text-emerald-500": activeTrack?.title === track.title,
+              })}
               numberOfLines={1}
             >
               {track.title}
@@ -94,9 +200,20 @@ export default function TrackListItem({
             </Text>
           </VStack>
         </HStack>
-        <FadeOutScaleDown onPress={handlePresentModalPress}>
-          <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
-        </FadeOutScaleDown>
+        <HStack className="items-center">
+          {track.starred && (
+            <FadeOutScaleDown onPress={handleUnfavoritePress} className="mr-3">
+              <Heart
+                color={themeConfig.theme.colors.emerald[500]}
+                size={24}
+                fill={themeConfig.theme.colors.emerald[500]}
+              />
+            </FadeOutScaleDown>
+          )}
+          <FadeOutScaleDown onPress={handlePresentModalPress}>
+            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+          </FadeOutScaleDown>
+        </HStack>
         <BottomSheetModal
           ref={bottomSheetModalRef}
           onChange={handleSheetPositionChange}
@@ -144,6 +261,19 @@ export default function TrackListItem({
                 </VStack>
               </HStack>
               <VStack className="mt-6 gap-y-8">
+                {!track.starred && (
+                  <FadeOutScaleDown onPress={handleFavoritePress}>
+                    <HStack className="items-center">
+                      <Heart
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        Add to favorites
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown>
                   <HStack className="items-center">
                     <PlusCircle
@@ -191,6 +321,6 @@ export default function TrackListItem({
           </BottomSheetView>
         </BottomSheetModal>
       </HStack>
-    </>
+    </Pressable>
   );
 }

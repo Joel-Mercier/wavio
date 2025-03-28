@@ -13,14 +13,25 @@ import {
   SliderTrack,
 } from "@/components/ui/slider";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useRepeatMode } from "@/hooks/useRepeatMode";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import TrackPlayer, {
+  RepeatMode,
+  State,
+  useActiveTrack,
+  usePlaybackState,
+  useProgress,
+} from "@weights-ai/react-native-track-player";
+import { secondsToMinutes } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -29,22 +40,32 @@ import {
   EllipsisVertical,
   Heart,
   ListPlus,
+  Pause,
   Play,
   PlusCircle,
   Repeat,
+  Repeat1,
+  Repeat2,
   Share,
   Shuffle,
   SkipBack,
   SkipForward,
   User,
 } from "lucide-react-native";
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 export default function PlayerScreen() {
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const activeTrack = useActiveTrack();
+  const playbackState = usePlaybackState();
+  const { position, buffered, duration } = useProgress();
+  const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
+  const toast = useToast();
+  const { repeatMode, setRepeatMode } = useRepeatMode();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -53,6 +74,99 @@ export default function PlayerScreen() {
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate("/artists/1");
+  };
+
+  const handlePlayPausePress = () => {
+    if (playbackState.state === State.Playing) {
+      TrackPlayer.pause();
+    } else {
+      TrackPlayer.play();
+    }
+  };
+
+  const handleSliderChange = async (value: number) => {
+    await TrackPlayer.seekTo(value);
+  };
+
+  const handleNextPress = async () => {
+    await TrackPlayer.skipToNext();
+  };
+
+  const handlePreviousPress = async () => {
+    await TrackPlayer.skipToPrevious();
+  };
+
+  const handleFavoritePress = () => {
+    doFavorite.mutate(
+      { id: activeTrack.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Track successfully added to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while adding track to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleUnfavoritePress = () => {
+    doUnfavorite.mutate(
+      { id: activeTrack.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Track successfully removed from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while removing the track from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleRepeatModePress = async (repeatMode: RepeatMode) => {
+    await TrackPlayer.setRepeatMode(repeatMode);
+    setRepeatMode(repeatMode);
   };
 
   return (
@@ -76,33 +190,66 @@ export default function PlayerScreen() {
             </HStack>
             <VStack className="mt-12">
               <HStack className="mb-4">
-                <Image
-                  source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-                  className="w-full aspect-square rounded-md"
-                  alt="cover"
-                />
+                {activeTrack?.artwork ? (
+                  <Image
+                    source={{
+                      uri: `data:image/jpeg;base64,${activeTrack?.artwork}`,
+                    }}
+                    className="w-full aspect-square rounded-md"
+                    alt="cover"
+                  />
+                ) : (
+                  <Box className="w-full aspect-square rounded-md bg-primary-600 items-center justify-center">
+                    <AudioLines
+                      size={64}
+                      color={themeConfig.theme.colors.white}
+                    />
+                  </Box>
+                )}
               </HStack>
               <HStack className="items-center justify-between">
                 <VStack className="my-6">
                   <Heading className="text-white" size="xl">
-                    Unicorn
+                    {activeTrack?.title}
                   </Heading>
-                  <Text className="text-primary-100 text-lg">Artist</Text>
+                  <Text className="text-primary-100 text-lg">
+                    {activeTrack?.artist}
+                  </Text>
                 </VStack>
-                <FadeOut>
+                <FadeOut
+                  onPress={
+                    activeTrack?.starred
+                      ? handleUnfavoritePress
+                      : handleFavoritePress
+                  }
+                >
                   <Heart
                     size={24}
-                    fill={themeConfig.theme.colors.emerald[500]}
+                    color={
+                      activeTrack?.starred
+                        ? themeConfig.theme.colors.emerald[500]
+                        : "white"
+                    }
+                    fill={
+                      activeTrack?.starred
+                        ? themeConfig.theme.colors.emerald[500]
+                        : "transparent"
+                    }
                   />
                 </FadeOut>
               </HStack>
               <VStack className="mb-6">
                 <Slider
-                  defaultValue={30}
+                  defaultValue={0}
+                  value={position}
+                  step={1}
+                  minValue={0}
+                  maxValue={duration}
                   size="md"
                   orientation="horizontal"
                   isDisabled={false}
                   isReversed={false}
+                  onChange={handleSliderChange}
                 >
                   <SliderTrack className="bg-primary-400">
                     <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
@@ -110,32 +257,66 @@ export default function PlayerScreen() {
                   <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
                 </Slider>
                 <HStack className="mt-2 items-center justify-between">
-                  <Text className="text-primary-100 text-sm">0:30</Text>
-                  <Text className="text-primary-100 text-sm">2:45</Text>
+                  <Text className="text-primary-100 text-sm">{`${secondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {`${secondsToMinutes(activeTrack?.duration)}:${activeTrack?.duration % 60}`}
+                  </Text>
                 </HStack>
               </VStack>
               <HStack className="items-center justify-between">
                 <FadeOut>
                   <Shuffle size={24} color="white" />
                 </FadeOut>
-                <FadeOut>
+                <FadeOut onPress={handlePreviousPress}>
                   <SkipBack size={36} color="white" fill="white" />
                 </FadeOut>
-                <FadeOut>
+                <FadeOut onPress={handlePlayPausePress}>
                   <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                    <Play
-                      size={24}
-                      color={themeConfig.theme.colors.gray[800]}
-                      fill={themeConfig.theme.colors.gray[800]}
-                    />
+                    {playbackState.state === State.Playing ? (
+                      <Pause
+                        size={24}
+                        color={themeConfig.theme.colors.gray[800]}
+                        fill={themeConfig.theme.colors.gray[800]}
+                      />
+                    ) : (
+                      <Play
+                        size={24}
+                        color={themeConfig.theme.colors.gray[800]}
+                        fill={themeConfig.theme.colors.gray[800]}
+                      />
+                    )}
                   </Box>
                 </FadeOut>
-                <FadeOut>
+                <FadeOut onPress={handleNextPress}>
                   <SkipForward size={36} color="white" fill="white" />
                 </FadeOut>
-                <FadeOut>
-                  <Repeat size={24} color="white" />
-                </FadeOut>
+                {repeatMode === RepeatMode.Off && (
+                  <FadeOut
+                    onPress={() => handleRepeatModePress(RepeatMode.Queue)}
+                  >
+                    <Repeat size={24} color="white" />
+                  </FadeOut>
+                )}
+                {repeatMode === RepeatMode.Queue && (
+                  <FadeOut
+                    onPress={() => handleRepeatModePress(RepeatMode.Track)}
+                  >
+                    <Repeat2
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  </FadeOut>
+                )}
+                {repeatMode === RepeatMode.Track && (
+                  <FadeOut
+                    onPress={() => handleRepeatModePress(RepeatMode.Off)}
+                  >
+                    <Repeat1
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  </FadeOut>
+                )}
               </HStack>
             </VStack>
           </VStack>
@@ -159,9 +340,11 @@ export default function PlayerScreen() {
           >
             <Box className="p-6 w-full pb-12">
               <HStack className="items-center">
-                {true ? (
+                {activeTrack?.artwork ? (
                   <Image
-                    source={require("@/assets/images/covers/gunship-unicorn.jpg")}
+                    source={{
+                      uri: `data:image/jpeg;base64,${activeTrack?.artwork}`,
+                    }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
                   />

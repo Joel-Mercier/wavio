@@ -1,4 +1,3 @@
-import FloatingPlayer from "@/components/FloatingPlayer";
 import { Pressable } from "@/components/ui/pressable";
 import { themeConfig } from "@/config/theme";
 import { LinearGradient } from "expo-linear-gradient";

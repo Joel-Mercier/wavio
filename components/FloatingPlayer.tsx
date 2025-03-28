@@ -6,8 +6,9 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useActiveTrack } from "@weights-ai/react-native-track-player";
 import { useRouter } from "expo-router";
-import { Play } from "lucide-react-native";
+import { AudioLines, Play } from "lucide-react-native";
 import MovingText from "./MovingText";
+import { Box } from "./ui/box";
 
 export default function FloatingPlayer() {
   const activeTrack = useActiveTrack();
@@ -17,9 +18,9 @@ export default function FloatingPlayer() {
     router.navigate("/player");
   };
 
-  // if (!activeTrack) {
-  //   return null;
-  // }
+  if (!activeTrack) {
+    return null;
+  }
 
   return (
     <Pressable
@@ -28,18 +29,22 @@ export default function FloatingPlayer() {
     >
       <HStack className="h-16 px-2 py-2 bg-primary-500 rounded-md items-center justify-between">
         <HStack className="items-center">
-          <Image
-            source={require("@/assets/images/covers/gunship-unicorn.jpg")}
-            className="w-12 h-12 rounded-md aspect-square"
-            alt="Track cover"
-          />
-          <VStack className="ml-4 flex-1 overflow-hidden">
-            <MovingText
-              text="Everything in it's right place"
-              animationThreshold={45}
+          {activeTrack.artwork ? (
+            <Image
+              source={{ uri: `data:image/jpeg;base64,${activeTrack.artwork}` }}
+              className="w-12 h-12 rounded-md aspect-square"
+              alt="Track cover"
             />
+          ) : (
+            <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
+              <AudioLines size={24} color={themeConfig.theme.colors.white} />
+            </Box>
+          )}
+
+          <VStack className="ml-4 flex-1 overflow-hidden">
+            <MovingText text={activeTrack.title} animationThreshold={45} />
             <Text numberOfLines={1} className="text-primary-50">
-              Radiohead
+              {activeTrack.artist}
             </Text>
           </VStack>
         </HStack>

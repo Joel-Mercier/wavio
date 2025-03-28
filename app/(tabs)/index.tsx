@@ -2,11 +2,8 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AlbumListItem from "@/components/albums/AlbumListItem";
-import ArtistListItem from "@/components/artists/ArtistListItem";
 import HomeDrawer from "@/components/home/HomeDrawer";
 import HomeShortcut from "@/components/home/HomeShortcut";
-import PlaylistListItem from "@/components/playlists/PlaylistListItem";
-import TrackListItem from "@/components/tracks/TrackListItem";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -18,8 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import TrackPlayer from "@weights-ai/react-native-track-player";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function HomeScreen() {
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
@@ -40,17 +36,6 @@ export default function HomeScreen() {
     error: highestRatedError,
   } = useAlbumList2({ type: "highest", size: 12 });
   const handleClose = () => setShowDrawer(false);
-  useEffect(() => {
-    TrackPlayer.add([
-      {
-        url: "https://s3.amazonaws.com/citizen-dj-assets.labs.loc.gov/audio/items/loc-fma/fma-184032.mp3",
-        title: "Test",
-        artist: "Test",
-        artwork: "https://picsum.photos/200",
-        duration: 159,
-      },
-    ]);
-  }, []);
 
   return (
     <>
