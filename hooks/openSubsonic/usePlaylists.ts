@@ -12,7 +12,7 @@ export const usePlaylists = (params: { username?: string }) => {
 
 export const useCreatePlaylist = () => {
   const query = useMutation({
-    mutationFn: (params: { name: string, songId: string[] }) => {
+    mutationFn: (params: { name: string, songId?: string[] }) => {
       const { name, songId } = params;
       return createPlaylist(name, songId);
     },

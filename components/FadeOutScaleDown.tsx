@@ -4,7 +4,7 @@ import React, { type ComponentProps } from "react";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
 
 interface FadeOutScaleDownProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   href?: ComponentProps<typeof Link>["href"];
   onPress?: ComponentProps<typeof Pressable>["onPress"];

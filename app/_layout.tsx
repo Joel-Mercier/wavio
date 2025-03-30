@@ -13,9 +13,12 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import { storage } from "@/config/storage";
 import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
 import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
 import PlaybackService from "@/services/playbackService";
+import useRecentSearches from "@/stores/recentSearches";
+import { S } from "@expo/html-elements";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -60,10 +63,11 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
-  const trackPlayerLoaded = useSetupTrackPlayer();
-  useLogTrackPlayerState();
-  // const trackPlayerLoaded = true;
+  // const trackPlayerLoaded = useSetupTrackPlayer();
+  // useLogTrackPlayerState();
 
+  const trackPlayerLoaded = true;
+  const setRecentSearches = useRecentSearches.use.setRecentSearches();
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,
@@ -79,6 +83,12 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", onAppStateChange);
 
+    setRecentSearches(
+      JSON.parse(
+        storage.getString("recentSearches") ||
+          '[{ "id": "test", "title": "Test", "type": "query" }, { "id": "1", "title": "Album", "type": "album" }, { "id": "2", "title": "Artist", "type": "artist" }, { "id": "3", "title": "Playlist", "type": "playlist" }, { "id": "4", "title": "Song", "type": "song" }]',
+      ),
+    );
     return () => subscription.remove();
   }, []);
 
@@ -98,7 +108,6 @@ export default function RootLayout() {
                 <BottomSheetModalProvider>
                   <Stack
                     screenOptions={{
-                      headerShown: false,
                       navigationBarColor: "rgb(24,23,25)",
                     }}
                   >
@@ -108,6 +117,14 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="albums/[id]/index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="playlists/new"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="playlists/[id]/edit"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
@@ -125,6 +142,18 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="favorites"
                       options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="recent-searches"
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="search-results"
+                      options={{
+                        headerShown: false,
+                      }}
                     />
                     <Stack.Screen
                       name="settings"

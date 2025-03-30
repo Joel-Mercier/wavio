@@ -7,10 +7,12 @@ import {
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { themeConfig } from "@/config/theme";
+import * as Application from "expo-application";
 import { useRouter } from "expo-router";
 import { Settings } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText } from "../ui/avatar";
+import { Center } from "../ui/center";
 import { HStack } from "../ui/hstack";
 import { Pressable } from "../ui/pressable";
 import { Text } from "../ui/text";
@@ -73,6 +75,11 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
               Settings
             </Heading>
           </HStack>
+          <Center className="mt-4">
+            <Text className="text-primary-100">
+              version {Application.nativeApplicationVersion}
+            </Text>
+          </Center>
         </DrawerBody>
       </DrawerContent>
     </Drawer>

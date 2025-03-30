@@ -1,3 +1,4 @@
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -8,9 +9,11 @@ import { Image } from "@/components/ui/image";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
@@ -42,6 +45,9 @@ export default function AlbumScreen() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
+  const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(
     data?.album.coverArt,
@@ -56,6 +62,74 @@ export default function AlbumScreen() {
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/artists/${data?.album.artists[0].id}`);
+  };
+
+  const handleFavoritePress = () => {
+    doFavorite.mutate(
+      { id: data?.album.id, albumId: data?.album.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Album successfully added to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while adding album to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleUnfavoritePress = () => {
+    doUnfavorite.mutate(
+      { id: data?.album.id, albumId: data?.album.id },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Album successfully removed from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while removing the album from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -134,12 +208,18 @@ export default function AlbumScreen() {
                 </HStack>
                 <HStack className="mt-4 items-center justify-between">
                   <HStack className="items-center gap-x-4">
-                    <FadeOutScaleDown>
-                      <Heart
-                        color={themeConfig.theme.colors.white}
-                        fill={themeConfig.theme.colors.white}
-                      />
-                    </FadeOutScaleDown>
+                    {data?.album.starred ? (
+                      <FadeOutScaleDown onPress={handleUnfavoritePress}>
+                        <Heart
+                          color={themeConfig.theme.colors.emerald[500]}
+                          fill={themeConfig.theme.colors.emerald[500]}
+                        />
+                      </FadeOutScaleDown>
+                    ) : (
+                      <FadeOutScaleDown onPress={handleFavoritePress}>
+                        <Heart color={themeConfig.theme.colors.white} />
+                      </FadeOutScaleDown>
+                    )}
                     <FadeOutScaleDown onPress={handlePresentModalPress}>
                       <EllipsisVertical
                         color={themeConfig.theme.colors.white}
@@ -182,6 +262,7 @@ export default function AlbumScreen() {
               ))}
             </VStack>
           )}
+          ListEmptyComponent={() => <EmptyDisplay />}
           contentContainerStyle={{ paddingHorizontal: 24 }}
         />
       </SafeAreaView>

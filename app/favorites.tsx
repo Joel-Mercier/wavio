@@ -1,3 +1,4 @@
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import { Box } from "@/components/ui/box";
@@ -82,6 +83,7 @@ export default function FavoritesScreen() {
             </SafeAreaView>
           </>
         )}
+        ListEmptyComponent={() => <EmptyDisplay />}
       />
     </Box>
   );

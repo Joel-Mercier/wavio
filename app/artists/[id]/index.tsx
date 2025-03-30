@@ -158,6 +158,7 @@ export default function ArtistScreen() {
             <Text className="text-white font-bold">14 songs ⦁ 45 min</Text>
           </VStack>
         )}
+        ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{ paddingHorizontal: 0 }}
       />
       <BottomSheetModal

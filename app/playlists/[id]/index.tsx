@@ -27,6 +27,7 @@ import {
   Clock,
   EllipsisVertical,
   ListMusic,
+  Pencil,
   Play,
   Share,
   Shuffle,
@@ -50,6 +51,12 @@ export default function PlaylistScreen() {
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
+
+  const handlePlaylistUpdatePress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate(`/playlists/${id}/edit`);
+  };
+
   return (
     <Box>
       <SafeAreaView className="h-full">
@@ -59,6 +66,19 @@ export default function PlaylistScreen() {
             <TrackListItem track={item} index={index} />
           )}
           estimatedItemSize={70}
+          ListEmptyComponent={() => (
+            <VStack className="items-center justify-center my-6">
+              <Text className="text-white text-md">This playlist is empty</Text>
+              <FadeOutScaleDown
+                onPress={() => router.navigate("/(tabs)/search")}
+                className="bg-white rounded-full px-6 py-3 mt-4"
+              >
+                <Text className="text-primary-800 font-bold">
+                  Find songs to add to this playlist
+                </Text>
+              </FadeOutScaleDown>
+            </VStack>
+          )}
           ListHeaderComponent={() => (
             <VStack>
               <HStack className="mt-6 items-start justify-between">
@@ -183,6 +203,17 @@ export default function PlaylistScreen() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
+                <HStack className="items-center">
+                  <Pencil
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Edit this playlist
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
               <FadeOutScaleDown onPress={() => console.log("share pressed")}>
                 <HStack className="items-center">
                   <Share size={24} color={themeConfig.theme.colors.gray[200]} />

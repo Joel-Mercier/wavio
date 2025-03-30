@@ -1,0 +1,120 @@
+import { themeConfig } from "@/config/theme";
+import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import type { RecentSearch } from "@/stores/recentSearches";
+import { cn } from "@/utils/tailwind";
+import { type Href, Link } from "expo-router";
+import {
+  AudioLines,
+  Clock,
+  Disc3,
+  ListMusic,
+  User,
+  X,
+} from "lucide-react-native";
+import { useMemo } from "react";
+import FadeOutScaleDown from "../FadeOutScaleDown";
+import { Box } from "../ui/box";
+import { Heading } from "../ui/heading";
+import { HStack } from "../ui/hstack";
+import { Image } from "../ui/image";
+import { Text } from "../ui/text";
+import { VStack } from "../ui/vstack";
+
+function RecentSearchListItemIcon({ type }: { type: RecentSearch["type"] }) {
+  if (type === "song") {
+    return (
+      <AudioLines
+        size={24}
+        color={themeConfig.theme.colors.white}
+        fill={themeConfig.theme.colors.white}
+      />
+    );
+  }
+  if (type === "album") {
+    return <Disc3 size={24} color={themeConfig.theme.colors.white} />;
+  }
+  if (type === "artist") {
+    return <User size={24} color={themeConfig.theme.colors.white} />;
+  }
+  if (type === "playlist") {
+    return <ListMusic size={24} color={themeConfig.theme.colors.white} />;
+  }
+  return <Clock size={24} color={themeConfig.theme.colors.white} />;
+}
+
+export default function RecentSearchListItem({
+  recentSearch,
+  handleDeletePress,
+}: { recentSearch: RecentSearch; handleDeletePress: (id: string) => void }) {
+  const cover = useGetCoverArt(
+    recentSearch.coverArt,
+    { size: 200 },
+    !!recentSearch.coverArt,
+  );
+  const url = useMemo<Href>(() => {
+    if (recentSearch.type === "query") {
+      return `/search-results?query=${recentSearch.title}`;
+    }
+    if (recentSearch.type === "artist") {
+      return `/artists/${recentSearch.id}`;
+    }
+    if (recentSearch.type === "album") {
+      return `/albums/${recentSearch.id}`;
+    }
+    if (recentSearch.type === "playlist") {
+      return `/playlists/${recentSearch.id}`;
+    }
+    if (recentSearch.type === "song") {
+      return `/albums/${recentSearch.albumId}`;
+    }
+  }, [recentSearch]);
+
+  return (
+    <Link href={url} asChild>
+      <FadeOutScaleDown>
+        <HStack className="items-center justify-between mb-4">
+          <HStack className="items-center">
+            {cover.data ? (
+              <Image
+                source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+                className="w-16 h-16 rounded-md aspect-square"
+                alt="Recent search cover"
+              />
+            ) : (
+              <Box
+                className={cn(
+                  "w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center",
+                  {
+                    "rounded-full":
+                      recentSearch.type === "query" ||
+                      recentSearch.type === "artist",
+                  },
+                )}
+              >
+                <RecentSearchListItemIcon type={recentSearch.type} />
+              </Box>
+            )}
+            <VStack className="ml-4">
+              <Heading className="text-white font-normal" numberOfLines={1}>
+                {recentSearch.title}
+              </Heading>
+              {recentSearch.type !== "query" && (
+                <Text className="text-primary-100 capitalize" numberOfLines={1}>
+                  {recentSearch.type}
+                </Text>
+              )}
+              {recentSearch.artist && (
+                <Text className="text-primary-100" numberOfLines={1}>
+                  {recentSearch.artist}
+                </Text>
+              )}
+            </VStack>
+          </HStack>
+          <FadeOutScaleDown onPress={() => handleDeletePress(recentSearch.id)}>
+            <X size={24} color={themeConfig.theme.colors.gray[400]} />
+          </FadeOutScaleDown>
+        </HStack>
+      </FadeOutScaleDown>
+    </Link>
+  );
+}

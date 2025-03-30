@@ -7,12 +7,11 @@ const navidromePassword = process.env.EXPO_PUBLIC_NAVIDROME_PASSWORD || "";
 const navidromeSubsonicApiVersion = process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
 const navidromeClient = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "";
 
-console.log("NAVIDROME URL : ", navidromeUrl);
-console.log("NAVIDROME USERNAME : ", navidromeUsername);
-console.log("NAVIDROME PASSWORD : ", navidromePassword);
-console.log("NAVIDROME SUBSONIC API VERSION : ", navidromeSubsonicApiVersion);
-console.log("NAVIDROME CLIENT : ", navidromeClient);
-
+console.info("NAVIDROME URL : ", navidromeUrl);
+console.info("NAVIDROME USERNAME : ", navidromeUsername);
+console.info("NAVIDROME PASSWORD : ", navidromePassword);
+console.info("NAVIDROME SUBSONIC API VERSION : ", navidromeSubsonicApiVersion);
+console.info("NAVIDROME CLIENT : ", navidromeClient);
 
 export type OpenSubsonicResponse<T> = {
   "subsonic-response": {

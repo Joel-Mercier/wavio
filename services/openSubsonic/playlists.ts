@@ -1,14 +1,16 @@
 import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
-import type { Playlist, Playlists } from "./types";
+import type { Playlist, PlaylistWithSongs, Playlists } from "./types";
 
-export const createPlaylist = async (name: string, songId: string[]) => {
+export const createPlaylist = async (name: string, songId?: string[]) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<{ playlist: Playlist }>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ playlist: Playlist }>>(
       "/rest/createPlaylist",
       {
-        name,
-        songId
+        params: {
+          name,
+          songId
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
@@ -47,7 +49,7 @@ export const deletePlaylist = async (id: string) => {
 
 export const getPlaylist = async (id: string) => {
   try {
-    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ playlist: Playlist }>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ playlist: PlaylistWithSongs }>>(
       "/rest/getPlaylist",
       {
         params: {

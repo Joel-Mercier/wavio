@@ -9,36 +9,49 @@ import { HStack } from "@/components/ui/hstack";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type {
   AlbumID3,
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
 import {
   ArrowDownUp,
   LayoutGrid,
   List,
+  ListMusic,
   Plus,
   Search,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
+  const router = useRouter();
   const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | null
   >(null);
   const tabBarHeight = useBottomTabBarHeight();
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetModalRef);
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -63,6 +76,15 @@ export default function LibraryScreen() {
     setFilter(type === filter ? null : type);
   };
 
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+
+  const handleCreatePlaylistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate("playlists/new");
+  };
+
   const data = useMemo(() => {
     if (
       !starredData ||
@@ -81,10 +103,10 @@ export default function LibraryScreen() {
         songCount: starredData?.starred2.song?.length || 0,
       });
     }
-    if (!filter || filter === "artists") {
+    if ((!filter || filter === "artists") && starredData.starred2.artist) {
       data.push(starredData.starred2.artist);
     }
-    if (!filter || filter === "albums") {
+    if ((!filter || filter === "albums") && starredData.starred2.album) {
       data.push(starredData.starred2.album);
     }
     if (!filter || filter === "playlists") {
@@ -96,7 +118,9 @@ export default function LibraryScreen() {
           songCount: starredData?.starred2.song?.length || 0,
         });
       }
-      data.push(playlistsData.playlists.playlist);
+      if (playlistsData.playlists.playlist) {
+        data.push(playlistsData.playlists.playlist);
+      }
     }
     data = data.flat();
     return data.sort((a, b) => {
@@ -145,7 +169,7 @@ export default function LibraryScreen() {
                   <FadeOutScaleDown>
                     <Search color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePresentModalPress}>
                     <Plus color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
                 </HStack>
@@ -220,6 +244,43 @@ export default function LibraryScreen() {
           paddingBottom: tabBarHeight + headerHeight + 16,
         }}
       />
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        onChange={handleSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full pb-12">
+            <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
+                <HStack className="items-center">
+                  <ListMusic
+                    size={32}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <VStack className="ml-4">
+                    <Heading className="text-white">Playlist</Heading>
+                    <Text className="text-md text-gray-200">
+                      Create a playlist with songs or podcast episodes
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }

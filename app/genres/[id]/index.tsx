@@ -1,3 +1,4 @@
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import { Box } from "@/components/ui/box";
@@ -70,6 +71,7 @@ export default function GenreScreen() {
             </LinearGradient>
           </>
         )}
+        ListEmptyComponent={() => <EmptyDisplay />}
       />
     </Box>
   );
