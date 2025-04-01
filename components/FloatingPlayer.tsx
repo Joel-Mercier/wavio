@@ -42,7 +42,10 @@ export default function FloatingPlayer() {
           )}
 
           <VStack className="ml-4 flex-1 overflow-hidden">
-            <MovingText text={activeTrack.title} animationThreshold={45} />
+            <MovingText
+              text={activeTrack.title || ""}
+              animationThreshold={45}
+            />
             <Text numberOfLines={1} className="text-primary-50">
               {activeTrack.artist}
             </Text>

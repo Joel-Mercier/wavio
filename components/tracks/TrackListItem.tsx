@@ -5,13 +5,14 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
-import { hlsStreamUrl, streamUrl } from "@/utils/streaming";
+import { streamUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -32,7 +33,6 @@ import {
   User,
 } from "lucide-react-native";
 import { useCallback, useRef } from "react";
-import { Toast, ToastDescription, ToastTitle, useToast } from "../ui/toast";
 
 interface TrackListItemProps {
   track: Child;

@@ -1,3 +1,4 @@
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import LibraryListItem, {
   type Favorites,
@@ -8,6 +9,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
@@ -55,12 +57,16 @@ export default function LibraryScreen() {
   const {
     data: starredData,
     isLoading: isLoadingStarred,
+    isFetching: isFetchingStarred,
     error: starredError,
+    refetch: refetchStarred,
   } = useStarred2({});
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,
+    isFetching: isFetchingPlaylists,
     error: playlistsError,
+    refetch: refetchPlaylists,
   } = usePlaylists({});
 
   const handleHeaderLayout = (event: LayoutChangeEvent) => {
@@ -136,6 +142,14 @@ export default function LibraryScreen() {
         data={data}
         keyExtractor={(item) => item.id}
         numColumns={layout === "grid" ? 3 : 1}
+        refreshing={
+          (isFetchingStarred && !isLoadingStarred) ||
+          (isFetchingPlaylists && !isLoadingPlaylists)
+        }
+        onRefresh={() => {
+          refetchPlaylists();
+          refetchStarred();
+        }}
         renderItem={({
           item,
           index,
@@ -237,6 +251,12 @@ export default function LibraryScreen() {
                 )}
               </FadeOutScaleDown>
             </HStack>
+            {(isLoadingPlaylists || isLoadingStarred) && (
+              <Spinner size="large" />
+            )}
+            {(playlistsError || starredError) && (
+              <ErrorDisplay error={playlistsError || starredError} />
+            )}
           </>
         )}
         contentContainerStyle={{

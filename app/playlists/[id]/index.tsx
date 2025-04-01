@@ -1,18 +1,29 @@
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Pressable } from "@/components/ui/pressable";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
-import { usePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import {
+  useDeletePlaylist,
+  usePlaylist,
+} from "@/hooks/openSubsonic/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import {
@@ -21,6 +32,8 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
+import { set } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -31,17 +44,21 @@ import {
   Play,
   Share,
   Shuffle,
+  X,
 } from "lucide-react-native";
-import { useCallback, useRef } from "react";
-import Animated from "react-native-reanimated";
+import { useCallback, useRef, useState } from "react";
 
 export default function PlaylistScreen() {
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
+  const toast = useToast();
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = usePlaylist(id);
+  const doDeletePlaylist = useDeletePlaylist();
   const cover = useGetCoverArt(
     data?.playlist.coverArt,
     { size: 400 },
@@ -52,9 +69,49 @@ export default function PlaylistScreen() {
     bottomSheetModalRef.current?.present();
   }, []);
 
+  const handleCloseAlertDialog = () => setShowAlertDialog(false);
+
   const handlePlaylistUpdatePress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/edit`);
+  };
+
+  const handlePlaylistDeletePress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    doDeletePlaylist.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
+          router.back();
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Playlist successfully deleted
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while deleting the playlist
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -220,10 +277,57 @@ export default function PlaylistScreen() {
                   <Text className="ml-4 text-lg text-gray-200">Share</Text>
                 </HStack>
               </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() => {
+                  bottomSheetModalRef.current?.dismiss();
+                  setShowAlertDialog(true);
+                }}
+              >
+                <HStack className="items-center">
+                  <X size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Delete this playlist
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
             </VStack>
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
+      <AlertDialog
+        isOpen={showAlertDialog}
+        onClose={handleCloseAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              Are you sure you want to delete this playlist?
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              Deleting the playlist will remove it permanently and cannot be
+              undone. Please confirm if you want to proceed.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="">
+            <FadeOutScaleDown
+              onPress={handleCloseAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">Cancel</Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handlePlaylistDeletePress}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Box>
   );
 }

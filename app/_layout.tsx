@@ -12,13 +12,15 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import FadeOut from "@/components/FadeOut";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import { storage } from "@/config/storage";
+import { themeConfig } from "@/config/theme";
 import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
 import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
 import PlaybackService from "@/services/playbackService";
 import useRecentSearches from "@/stores/recentSearches";
-import { S } from "@expo/html-elements";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -30,6 +32,7 @@ import {
   onlineManager,
 } from "@tanstack/react-query";
 import TrackPlayer from "@weights-ai/react-native-track-player";
+import { X } from "lucide-react-native";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -125,7 +128,25 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="playlists/[id]/edit"
-                      options={{ headerShown: false }}
+                      options={({ navigation }) => ({
+                        headerShown: true,
+                        title: "Edit playlist",
+                        headerTitleAlign: "center",
+                        headerTitleStyle: {
+                          fontSize: 16,
+                          fontWeight: "bold",
+                        },
+                        headerLeft: () => (
+                          <FadeOutScaleDown onPress={() => navigation.goBack()}>
+                            <FadeOut>
+                              <X
+                                size={22}
+                                color={themeConfig.theme.colors.white}
+                              />
+                            </FadeOut>
+                          </FadeOutScaleDown>
+                        ),
+                      })}
                     />
                     <Stack.Screen
                       name="playlists/[id]/index"

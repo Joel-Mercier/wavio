@@ -1,13 +1,13 @@
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { ListMusic } from "lucide-react-native";
-import FadeOutScaleDown from "../FadeOutScaleDown";
-import { VStack } from "../ui/vstack";
 
 interface PlaylistListItemProps {
   playlist: Playlist;

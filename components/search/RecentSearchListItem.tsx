@@ -1,3 +1,10 @@
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { RecentSearch } from "@/stores/recentSearches";
@@ -12,13 +19,6 @@ import {
   X,
 } from "lucide-react-native";
 import { useMemo } from "react";
-import FadeOutScaleDown from "../FadeOutScaleDown";
-import { Box } from "../ui/box";
-import { Heading } from "../ui/heading";
-import { HStack } from "../ui/hstack";
-import { Image } from "../ui/image";
-import { Text } from "../ui/text";
-import { VStack } from "../ui/vstack";
 
 function RecentSearchListItemIcon({ type }: { type: RecentSearch["type"] }) {
   if (type === "song") {

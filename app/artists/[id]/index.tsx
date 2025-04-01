@@ -8,13 +8,14 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { ImageBackground } from "@/components/ui/image-background";
-import { Pressable } from "@/components/ui/pressable";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useArtist, useTopSongs } from "@/hooks/openSubsonic/useBrowsing";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -24,6 +25,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -36,11 +38,12 @@ import {
   User,
 } from "lucide-react-native";
 import { useCallback, useRef } from "react";
-import Animated from "react-native-reanimated";
 
 export default function ArtistScreen() {
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -55,10 +58,110 @@ export default function ArtistScreen() {
     isLoading: isLoadingTopSongs,
     error: topSongsError,
   } = useTopSongs(data?.artist.name, { count: 10 });
+  const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
+
+  const handleFavoritePress = () => {
+    queryClient.setQueryData(["artist", id], {
+      ...data,
+      artist: {
+        ...data?.artist,
+        starred: new Date().toISOString(),
+      },
+    });
+    doFavorite.mutate(
+      { id: data?.artist.id, artistId: data?.artist.id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["starred2"] });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Artist successfully added to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          queryClient.setQueryData(["artist", id], {
+            ...data,
+            artist: {
+              ...data?.artist,
+              starred: undefined,
+            },
+          });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while adding artist to favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleUnfavoritePress = () => {
+    queryClient.setQueryData(["artist", id], {
+      ...data,
+      artist: {
+        ...data?.artist,
+        starred: undefined,
+      },
+    });
+    doUnfavorite.mutate(
+      { id: data?.artist.id, artistId: data?.artist.id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["starred2"] });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Artist successfully removed from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          queryClient.setQueryData(["artist", id], {
+            ...data,
+            artist: {
+              ...data?.artist,
+              starred: new Date().toISOString(),
+            },
+          });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while removing the artist from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
 
   return (
     <Box className="h-full">
@@ -107,9 +210,19 @@ export default function ArtistScreen() {
             <VStack className="px-6">
               <HStack className="items-center justify-between my-4">
                 <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown>
-                    <Heart color={themeConfig.theme.colors.white} />
-                  </FadeOutScaleDown>
+                  {data?.artist?.starred ? (
+                    <FadeOutScaleDown onPress={handleUnfavoritePress}>
+                      <Heart
+                        color={themeConfig.theme.colors.emerald[500]}
+                        fill={themeConfig.theme.colors.emerald[500]}
+                      />
+                    </FadeOutScaleDown>
+                  ) : (
+                    <FadeOutScaleDown onPress={handleFavoritePress}>
+                      <Heart color={themeConfig.theme.colors.white} />
+                    </FadeOutScaleDown>
+                  )}
+
                   <FadeOutScaleDown>
                     <Share color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>

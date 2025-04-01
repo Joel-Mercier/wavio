@@ -1,6 +1,8 @@
 import type { LibraryLayout } from "@/app/(tabs)/library";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
@@ -15,8 +17,6 @@ import { cn } from "@/utils/tailwind";
 import { LinearGradient } from "expo-linear-gradient";
 import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
-import FadeOutScaleDown from "../FadeOutScaleDown";
-import { HStack } from "../ui/hstack";
 
 export type Favorites = {
   name: string;

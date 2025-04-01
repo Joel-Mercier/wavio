@@ -9,11 +9,13 @@ import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
 export default function NewPlaylistScreen() {
+  const queryClient = useQueryClient();
   const [name, setName] = useState<string>("");
   const router = useRouter();
   const toast = useToast();
@@ -32,7 +34,8 @@ export default function NewPlaylistScreen() {
       { name },
       {
         onSuccess: () => {
-          router.back();
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
+          router.navigate("/(tabs)/library");
           toast.show({
             placement: "top",
             duration: 3000,

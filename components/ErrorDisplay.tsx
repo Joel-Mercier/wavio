@@ -24,7 +24,7 @@ export default function ErrorDisplay({
       </Alert>
       <Center>
         <Link href={"/"} asChild>
-          <Button action="primary" size="lg" className="mt-6">
+          <Button action="primary" size="lg" className="mt-6 rounded-full">
             <ButtonText>Back to home</ButtonText>
           </Button>
         </Link>

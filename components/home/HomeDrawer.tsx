@@ -1,3 +1,5 @@
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Center } from "@/components/ui/center";
 import {
   Drawer,
   DrawerBackdrop,
@@ -6,17 +8,15 @@ import {
   DrawerHeader,
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Pressable } from "@/components/ui/pressable";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
 import { Settings } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Avatar, AvatarFallbackText } from "../ui/avatar";
-import { Center } from "../ui/center";
-import { HStack } from "../ui/hstack";
-import { Pressable } from "../ui/pressable";
-import { Text } from "../ui/text";
-import { VStack } from "../ui/vstack";
 
 interface HomeDrawerProps {
   showDrawer: boolean;

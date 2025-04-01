@@ -23,6 +23,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
 import { format, parse } from "date-fns";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -40,6 +41,7 @@ import {
 import React, { useCallback, useRef } from "react";
 
 export default function AlbumScreen() {
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -65,10 +67,18 @@ export default function AlbumScreen() {
   };
 
   const handleFavoritePress = () => {
+    queryClient.setQueryData(["album", id], {
+      ...data,
+      album: {
+        ...data?.album,
+        starred: new Date().toISOString(),
+      },
+    });
     doFavorite.mutate(
       { id: data?.album.id, albumId: data?.album.id },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
             duration: 3000,
@@ -82,6 +92,13 @@ export default function AlbumScreen() {
           });
         },
         onError: (error) => {
+          queryClient.setQueryData(["album", id], {
+            ...data,
+            album: {
+              ...data?.album,
+              starred: undefined,
+            },
+          });
           toast.show({
             placement: "top",
             duration: 3000,
@@ -99,10 +116,18 @@ export default function AlbumScreen() {
   };
 
   const handleUnfavoritePress = () => {
+    queryClient.setQueryData(["album", id], {
+      ...data,
+      album: {
+        ...data?.album,
+        starred: undefined,
+      },
+    });
     doUnfavorite.mutate(
       { id: data?.album.id, albumId: data?.album.id },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
             duration: 3000,
@@ -116,6 +141,13 @@ export default function AlbumScreen() {
           });
         },
         onError: (error) => {
+          queryClient.setQueryData(["album", id], {
+            ...data,
+            album: {
+              ...data?.album,
+              starred: new Date().toISOString(),
+            },
+          });
           toast.show({
             placement: "top",
             duration: 3000,
