@@ -8,13 +8,19 @@ import { Input, InputField } from "@/components/ui/input";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
-import { usePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import {
+  usePlaylist,
+  useUpdatePlaylist,
+} from "@/hooks/openSubsonic/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
+import { cn } from "@/utils/tailwind";
 import { FlashList } from "@shopify/flash-list";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useForm } from "@tanstack/react-form";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ListMusic } from "lucide-react-native";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { TouchableOpacity } from "react-native";
@@ -29,17 +35,61 @@ const NUM_ITEMS = 200;
 const ITEM_HEIGHT = 60;
 
 export default function EditPlaylistScreen() {
+  const router = useRouter();
   const navigation = useNavigation();
+  const toast = useToast();
   const [order, setOrder] = useState<Child[]>([]);
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
+  const doUpdatePlaylist = useUpdatePlaylist();
   const cover = useGetCoverArt(
     data?.playlist.coverArt,
     { size: 400 },
     !!data?.playlist.coverArt,
   );
+  const form = useForm({
+    defaultValues: {
+      name: data?.playlist.name ?? "",
+      description: data?.playlist?.comment ?? "",
+    },
+    onSubmit: async ({ value }) => {
+      // Do something with form data
+      console.log(value);
+      doUpdatePlaylist.mutate(
+        { id, ...value },
+        {
+          onSuccess: () => {
+            router.navigate(`/playlists/${id}`);
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastDescription>
+                    Playlist successfully updated
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: (error) => {
+            console.error(error);
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastDescription>
+                    An error occurred while updating the playlist
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+        },
+      );
+    },
+  });
   // const [order, setOrder] = useState(() => {
   //   return new Array(NUM_ITEMS).fill("").map((_, i) => {
   //     const colors = ["#493548", "#4B4E6D", "#6A8D92", "#80B192", "#A1E887"];
@@ -105,14 +155,6 @@ export default function EditPlaylistScreen() {
     );
   };
 
-  const handleNameChange = (text: string) => {
-    setName(text);
-  };
-
-  const handleDescriptionChange = (text: string) => {
-    setDescription(text);
-  };
-
   const handleListSort = (fromIndex: number, toIndex: number) => {
     const copy = [...order];
     const removed = copy.splice(fromIndex, 1);
@@ -123,22 +165,26 @@ export default function EditPlaylistScreen() {
   useEffect(() => {
     if (data?.playlist) {
       setOrder(data?.playlist.entry || []);
-      setName(data?.playlist.name);
-      setDescription(data?.playlist?.comment || "");
     }
   }, [data]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <FadeOutScaleDown onPress={() => navigation.goBack()}>
-          <Text className="text-emerald-500 opacity-75 font-bold text-lg">
+        <FadeOutScaleDown
+          onPress={form.state.isDirty ? form.handleSubmit : undefined}
+        >
+          <Text
+            className={cn("text-emerald-500 font-bold text-lg", {
+              "opacity-75": !form.state.isDirty,
+            })}
+          >
             Save
           </Text>
         </FadeOutScaleDown>
       ),
     });
-  }, []);
+  }, [form.state.isDirty]);
 
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} className="h-full flex-1">
@@ -163,22 +209,32 @@ export default function EditPlaylistScreen() {
                 </Box>
               )}
             </HStack>
-            <Input className="border-white my-6 h-16" variant="underlined">
-              <InputField
-                defaultValue={name}
-                onChangeText={handleNameChange}
-                className="text-3xl text-white text-center font-bold"
-                placeholder="Enter playlist name"
-              />
-            </Input>
-            <Textarea className="border-0 border-b border-b-white my-6">
-              <TextareaInput
-                value={description}
-                onChangeText={handleDescriptionChange}
-                className="text-md color-primary-100 font-normal"
-                placeholder="Describe your playlist"
-              />
-            </Textarea>
+            <form.Field name="name">
+              {(field) => (
+                <Input className="border-white my-6 h-16" variant="underlined">
+                  <InputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={field.handleBlur}
+                    className="text-3xl text-white text-center font-bold"
+                    placeholder="Enter playlist name"
+                  />
+                </Input>
+              )}
+            </form.Field>
+            <form.Field name="description">
+              {(field) => (
+                <Textarea className="border-0 border-b border-b-white my-6 text-white">
+                  <TextareaInput
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={field.handleBlur}
+                    className="text-md text-white font-normal"
+                    placeholder="Describe your playlist"
+                  />
+                </Textarea>
+              )}
+            </form.Field>
             {/* <Input
               className="border-white my-6 h-16 active:border-white focus:border-white"
               variant="underlined"

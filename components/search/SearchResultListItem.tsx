@@ -57,7 +57,7 @@ export default function SearchResultListItem({
         url: `/artists/${searchResult.id}`,
       };
     }
-    if (searchResult.year) {
+    if (searchResult.year && searchResult.name) {
       return { id: "album", label: "Album", url: `/albums/${searchResult.id}` };
     }
     if (searchResult.title) {
@@ -107,13 +107,12 @@ export default function SearchResultListItem({
                 <Text className="text-primary-100">{type.label}</Text>
                 {searchResult.artist && (
                   <Text className="text-primary-100">
-                    {searchResult.artist}
+                    {` ⦁ ${searchResult.artist}`}
                   </Text>
                 )}
               </HStack>
             </VStack>
           </HStack>
-          <FadeOutScaleDown></FadeOutScaleDown>
         </HStack>
       </FadeOutScaleDown>
     </Link>

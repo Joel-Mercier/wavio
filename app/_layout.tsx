@@ -165,6 +165,10 @@ export default function RootLayout() {
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
+                      name="library/search"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
                       name="recent-searches"
                       options={{
                         headerShown: false,

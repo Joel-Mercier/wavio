@@ -9,61 +9,60 @@ import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 
 export default function NewPlaylistScreen() {
   const queryClient = useQueryClient();
-  const [name, setName] = useState<string>("");
   const router = useRouter();
   const toast = useToast();
   const doCreatePlaylist = useCreatePlaylist();
+  const form = useForm({
+    defaultValues: {
+      name: "",
+    },
+    onSubmit: async ({ value }) => {
+      doCreatePlaylist.mutate(
+        { ...value },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+            router.navigate("/(tabs)/library");
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastDescription>
+                    Playlist successfully created
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: (error) => {
+            console.error(error);
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastDescription>
+                    An error occurred while creating the playlist
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+        },
+      );
+    },
+  });
 
   const handleCancelPress = () => {
     router.back();
-  };
-
-  const handleNameChange = (text: string) => {
-    setName(text);
-  };
-
-  const handleCreatePress = () => {
-    doCreatePlaylist.mutate(
-      { name },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["playlists"] });
-          router.navigate("/(tabs)/library");
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="success">
-                <ToastDescription>
-                  Playlist successfully created
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: (error) => {
-          console.error(error);
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="error">
-                <ToastDescription>
-                  An error occurred while creating the playlist
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
   };
 
   return (
@@ -78,15 +77,20 @@ export default function NewPlaylistScreen() {
               Give a name to your playlist
             </Heading>
           </Center>
-          <Input className="border-white my-6 h-16" variant="underlined">
-            <InputField
-              defaultValue={name}
-              onChangeText={handleNameChange}
-              autoFocus
-              className="text-3xl text-white text-center font-bold"
-              placeholder="My awesome playlist"
-            />
-          </Input>
+          <form.Field name="name">
+            {(field) => (
+              <Input className="border-white my-6 h-16" variant="underlined">
+                <InputField
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChangeText={field.handleChange}
+                  autoFocus
+                  className="text-3xl text-white text-center font-bold"
+                  placeholder="My awesome playlist"
+                />
+              </Input>
+            )}
+          </form.Field>
           <HStack className="mt-6 items-center justify-center">
             <FadeOutScaleDown
               onPress={handleCancelPress}
@@ -95,7 +99,7 @@ export default function NewPlaylistScreen() {
               <Text className="text-white font-bold text-lg">Cancel</Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
-              onPress={handleCreatePress}
+              onPress={form.handleSubmit}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
               <Text className="text-primary-800 font-bold text-lg">Create</Text>

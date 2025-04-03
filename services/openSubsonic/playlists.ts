@@ -27,7 +27,7 @@ export const createPlaylist = async (name: string, songId?: string[]) => {
 
 export const deletePlaylist = async (id: string) => {
   try {
-    const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/deletePlaylist",
       {
         params: {
@@ -93,7 +93,7 @@ export const getPlaylists = async ({ username }: { username?: string }) => {
 
 export const updatePlaylist = async (id: string, { name, comment, isPublic, songIdToAdd, songIndexToRemove }: { name?: string, comment?: string, isPublic?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
   try {
-    const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/updatePlaylist",
       {
         params: {

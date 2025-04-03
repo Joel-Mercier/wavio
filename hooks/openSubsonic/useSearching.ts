@@ -25,5 +25,6 @@ export const useSearch3 = (query: string, params: { artistCount?: number, artist
     queryFn: () => {
       return search3(query, params);
     },
+    enabled: query.length > 0,
   });
 };

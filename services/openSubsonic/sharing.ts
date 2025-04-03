@@ -4,12 +4,14 @@ import type { Shares } from "./types";
 
 export const createShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
   try {
-    const rsp = await openSubsonicApiInstance.post<OpenSubsonicResponse<{ shares: Shares }>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ shares: Shares }>>(
       "/rest/createShare",
       {
-        id,
-        description,
-        expires
+        params: {
+          id,
+          description,
+          expires
+        }
       }
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
@@ -26,7 +28,7 @@ export const createShare = async (id: string, { description, expires }: { descri
 
 export const deleteShare = async (id: string) => {
   try {
-    const rsp = await openSubsonicApiInstance.delete<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/deleteShare",
       {
         params: {
@@ -69,7 +71,7 @@ export const getShares = async () => {
 
 export const updateShare = async (id: string, { description, expires }: { description?: string, expires?: number }) => {
   try {
-    const rsp = await openSubsonicApiInstance.put<OpenSubsonicResponse<Record<string, never>>>(
+    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/updateShare",
       {
         params: {

@@ -32,6 +32,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import {
   ArrowDownUp,
+  Check,
   LayoutGrid,
   List,
   ListMusic,
@@ -46,14 +47,18 @@ export type LibraryLayout = "list" | "grid";
 export default function LibraryScreen() {
   const router = useRouter();
   const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [sort, setSort] = useState<"addedAt" | "alphabetical">("addedAt");
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | null
   >(null);
   const tabBarHeight = useBottomTabBarHeight();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const { handleSheetPositionChange: handleSheetPositionChangeSort } =
+    useBottomSheetBackHandler(bottomSheetModalSortRef);
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -86,9 +91,22 @@ export default function LibraryScreen() {
     bottomSheetModalRef.current?.present();
   }, []);
 
+  const handlePresentSortModalPress = useCallback(() => {
+    bottomSheetModalSortRef.current?.present();
+  }, []);
+
   const handleCreatePlaylistPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    router.navigate("playlists/new");
+    router.navigate("/playlists/new");
+  };
+
+  const handleSortPress = (type: typeof sort) => {
+    bottomSheetModalSortRef.current?.dismiss();
+    setSort(type);
+  };
+
+  const handleSearchPress = () => {
+    router.navigate("/library/search");
   };
 
   const data = useMemo(() => {
@@ -130,11 +148,16 @@ export default function LibraryScreen() {
     }
     data = data.flat();
     return data.sort((a, b) => {
-      return (
-        new Date(b.starred || b.created) - new Date(a.starred || a.created)
-      );
+      if (sort === "addedAt") {
+        return (
+          new Date(b.starred || b.created) - new Date(a.starred || a.created)
+        );
+      }
+      if (sort === "alphabetical") {
+        return a.name.localeCompare(b.name);
+      }
     });
-  }, [starredData, playlistsData, filter]);
+  }, [starredData, playlistsData, filter, sort]);
 
   return (
     <SafeAreaView className="h-full">
@@ -180,7 +203,7 @@ export default function LibraryScreen() {
                   Library
                 </Heading>
                 <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleSearchPress}>
                     <Search color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
@@ -231,13 +254,15 @@ export default function LibraryScreen() {
               </ScrollView>
             </Box>
             <HStack className="pb-6 items-center justify-between">
-              <FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handlePresentSortModalPress}>
                 <HStack className="items-center gap-x-2">
                   <ArrowDownUp
                     size={16}
                     color={themeConfig.theme.colors.white}
                   />
-                  <Text className="text-white font-bold">Recent</Text>
+                  <Text className="text-white font-bold">
+                    {sort === "addedAt" ? "Recent" : "Alphabetical"}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleLayoutPress}>
@@ -295,6 +320,55 @@ export default function LibraryScreen() {
                       Create a playlist with songs or podcast episodes
                     </Text>
                   </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetModalSortRef}
+        onChange={handleSheetPositionChangeSort}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full pb-12">
+            <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown onPress={() => handleSortPress("addedAt")}>
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">Recent</Text>
+                  </VStack>
+                  {sort === "addedAt" && (
+                    <Check
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleSortPress("alphabetical")}>
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">Alphabetical</Text>
+                  </VStack>
+                  {sort === "alphabetical" && (
+                    <Check
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
                 </HStack>
               </FadeOutScaleDown>
             </VStack>
