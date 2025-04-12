@@ -21,7 +21,7 @@ export const useDeleteShare = () => {
 
 export const useGetShares = () => {
   return useQuery({
-    queryKey: ["getShares"],
+    queryKey: ["shares"],
     queryFn: () => {
       return getShares();
     },

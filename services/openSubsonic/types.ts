@@ -158,6 +158,7 @@ export interface Child {
   type?: MediaType;
   userRating?: number;
   year?: number;
+  mediaType?: string
 }
 
 export interface Directory {

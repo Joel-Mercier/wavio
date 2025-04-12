@@ -222,10 +222,6 @@ export default function ArtistScreen() {
                       <Heart color={themeConfig.theme.colors.white} />
                     </FadeOutScaleDown>
                   )}
-
-                  <FadeOutScaleDown>
-                    <Share color={themeConfig.theme.colors.white} />
-                  </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
                     <EllipsisVertical color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
@@ -314,14 +310,7 @@ export default function ArtistScreen() {
                 </Heading>
               </VStack>
             </HStack>
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={() => console.log("share pressed")}>
-                <HStack className=" items-center">
-                  <Share size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">Share</Text>
-                </HStack>
-              </FadeOutScaleDown>
-            </VStack>
+            <VStack className="mt-6 gap-y-8"></VStack>
           </Box>
         </BottomSheetView>
       </BottomSheetModal>

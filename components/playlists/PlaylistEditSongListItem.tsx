@@ -12,7 +12,7 @@ export default function PlaylistEditSongListItem({
   item,
   beginDrag,
   isActive,
-}: { item: Child; beginDrag: () => any; isActive: boolean }) {
+}: { item: Child; beginDrag: () => void; isActive: boolean }) {
   return (
     <HStack
       className={cn("items-center justify-between px-6 py-4", {

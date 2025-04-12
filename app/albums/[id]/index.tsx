@@ -15,6 +15,7 @@ import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import {
@@ -35,6 +36,7 @@ import {
   Play,
   PlusCircle,
   Share,
+  Share2,
   Shuffle,
   User,
 } from "lucide-react-native";
@@ -49,6 +51,7 @@ export default function AlbumScreen() {
     useBottomSheetBackHandler(bottomSheetModalRef);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doShare = useCreateShare();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(
@@ -155,6 +158,40 @@ export default function AlbumScreen() {
               <Toast action="error">
                 <ToastDescription>
                   An error occurred while removing the album from favorites
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleSharePress = () => {
+    doShare.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["shares"] });
+          bottomSheetModalRef.current?.dismiss();
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>Album successfully shared</ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while sharing the album
                 </ToastDescription>
               </Toast>
             ),
@@ -372,9 +409,12 @@ export default function AlbumScreen() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+              <FadeOutScaleDown onPress={handleSharePress}>
                 <HStack className="items-center">
-                  <Share size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Share2
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
                   <Text className="ml-4 text-lg text-gray-200">Share</Text>
                 </HStack>
               </FadeOutScaleDown>

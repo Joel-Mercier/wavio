@@ -15,7 +15,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { Settings } from "lucide-react-native";
+import { Settings, Share2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface HomeDrawerProps {
@@ -29,6 +29,11 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
 
   const handleSettingsPress = () => {
     router.navigate("/settings");
+    onClose();
+  };
+
+  const handleSharesPress = () => {
+    router.navigate("/shares");
     onClose();
   };
 
@@ -73,6 +78,15 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
             <Settings size={24} color={themeConfig.theme.colors.white} />
             <Heading size="lg" className="text-white font-normal">
               Settings
+            </Heading>
+          </HStack>
+          <HStack
+            className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+            onPress={handleSharesPress}
+          >
+            <Share2 size={24} color={themeConfig.theme.colors.white} />
+            <Heading size="lg" className="text-white font-normal">
+              Shares
             </Heading>
           </HStack>
           <Center className="mt-4">

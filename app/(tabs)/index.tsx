@@ -14,12 +14,14 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import useRecentPlays from "@/stores/recentPlays";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useState } from "react";
 
 export default function HomeScreen() {
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const tabBarHeight = useBottomTabBarHeight();
+  const recentPlays = useRecentPlays.use.recentPlays();
   const {
     data: recentData,
     isLoading: isLoadingRecent,
@@ -61,22 +63,22 @@ export default function HomeScreen() {
               </Heading>
             </HStack>
             <VStack className="gap-y-4">
-              <HStack className="gap-x-4">
-                <HomeShortcut />
-                <HomeShortcut />
-              </HStack>
-              <HStack className="gap-x-4">
-                <HomeShortcut />
-                <HomeShortcut />
-              </HStack>
-              <HStack className="gap-x-4">
-                <HomeShortcut />
-                <HomeShortcut />
-              </HStack>
-              <HStack className="gap-x-4">
-                <HomeShortcut />
-                <HomeShortcut />
-              </HStack>
+              {recentPlays.reduce((rows: JSX.Element[], play, index) => {
+                if (index % 2 === 0) {
+                  rows.push(
+                    <HStack key={`row-${index}`} className="gap-x-4">
+                      <HomeShortcut key={play.id} recentPlay={play} />
+                      {recentPlays[index + 1] && (
+                        <HomeShortcut
+                          key={recentPlays[index + 1].id}
+                          recentPlay={recentPlays[index + 1]}
+                        />
+                      )}
+                    </HStack>,
+                  );
+                }
+                return rows;
+              }, [])}
             </VStack>
           </Box>
           <Box className="px-6 mt-4 mb-4">

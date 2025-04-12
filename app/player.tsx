@@ -47,6 +47,7 @@ import {
   Repeat1,
   Repeat2,
   Share,
+  Share2,
   Shuffle,
   SkipBack,
   SkipForward,
@@ -405,7 +406,7 @@ export default function PlayerScreen() {
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={() => console.log("share pressed")}>
                   <HStack className="items-center">
-                    <Share
+                    <Share2
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />

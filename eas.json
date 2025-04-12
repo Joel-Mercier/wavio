@@ -8,7 +8,7 @@
 			"developmentClient": true,
 			"distribution": "internal",
 			"env": {
-				"EXPO_PUBLIC_NAVIDROME_URL": "http://192.168.1.27:4533",
+				"EXPO_PUBLIC_NAVIDROME_URL": "http://192.168.249.12:4533",
 				"EXPO_PUBLIC_NAVIDROME_USERNAME": "joel",
 				"EXPO_PUBLIC_NAVIDROME_PASSWORD": "abcd1234",
 				"EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",
@@ -18,7 +18,7 @@
 		"preview": {
 			"distribution": "internal",
 			"env": {
-				"EXPO_PUBLIC_NAVIDROME_URL": "http://192.168.1.27:4533",
+				"EXPO_PUBLIC_NAVIDROME_URL": "http://192.168.249.12:4533",
 				"EXPO_PUBLIC_NAVIDROME_USERNAME": "joel",
 				"EXPO_PUBLIC_NAVIDROME_PASSWORD": "abcd1234",
 				"EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",

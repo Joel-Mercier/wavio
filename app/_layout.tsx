@@ -12,7 +12,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import { storage } from "@/config/storage";
@@ -20,6 +19,7 @@ import { themeConfig } from "@/config/theme";
 import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
 import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
 import PlaybackService from "@/services/playbackService";
+import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
@@ -32,7 +32,7 @@ import {
   onlineManager,
 } from "@tanstack/react-query";
 import TrackPlayer from "@weights-ai/react-native-track-player";
-import { X } from "lucide-react-native";
+import { ArrowLeft, X } from "lucide-react-native";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -71,6 +71,7 @@ export default function RootLayout() {
 
   const trackPlayerLoaded = true;
   const setRecentSearches = useRecentSearches.use.setRecentSearches();
+  const setRecentPlays = useRecentPlays.use.setRecentPlays();
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,
@@ -92,6 +93,13 @@ export default function RootLayout() {
           '[{ "id": "test", "title": "Test", "type": "query" }, { "id": "1", "title": "Album", "type": "album" }, { "id": "2", "title": "Artist", "type": "artist" }, { "id": "3", "title": "Playlist", "type": "playlist" }, { "id": "4", "title": "Song", "type": "song" }]',
       ),
     );
+    setRecentPlays(
+      JSON.parse(
+        storage.getString("recentPlays") ||
+          '[{ "id": "favorites", "title": "Favorites", "type": "favorites" }]',
+      ),
+    );
+
     return () => subscription.remove();
   }, []);
 
@@ -127,6 +135,26 @@ export default function RootLayout() {
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
+                      name="playlists/add-to-playlist"
+                      options={({ navigation }) => ({
+                        headerShown: true,
+                        title: "Add to playlist",
+                        headerTitleAlign: "center",
+                        headerTitleStyle: {
+                          fontSize: 16,
+                          fontWeight: "bold",
+                        },
+                        headerLeft: () => (
+                          <FadeOutScaleDown onPress={() => navigation.goBack()}>
+                            <ArrowLeft
+                              size={22}
+                              color={themeConfig.theme.colors.white}
+                            />
+                          </FadeOutScaleDown>
+                        ),
+                      })}
+                    />
+                    <Stack.Screen
                       name="playlists/[id]/edit"
                       options={({ navigation }) => ({
                         headerShown: true,
@@ -138,12 +166,10 @@ export default function RootLayout() {
                         },
                         headerLeft: () => (
                           <FadeOutScaleDown onPress={() => navigation.goBack()}>
-                            <FadeOut>
-                              <X
-                                size={22}
-                                color={themeConfig.theme.colors.white}
-                              />
-                            </FadeOut>
+                            <X
+                              size={22}
+                              color={themeConfig.theme.colors.white}
+                            />
                           </FadeOutScaleDown>
                         ),
                       })}
@@ -182,6 +208,10 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="settings"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="shares"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen

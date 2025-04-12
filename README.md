@@ -4,6 +4,7 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 
 ## TODO
 
+- [ ] Finish recent searches feature
 - [ ] Fix playlist edit drag and drop list (list header is ignored)
 - [x] Fix search performance issues
 - [x] Add proper form handling library and replace all forms with it

@@ -10,8 +10,10 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
+import { childToTrack } from "@/utils/childToTrack";
 import { streamUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
@@ -19,12 +21,15 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useRoute } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import TrackPlayer, {
   useActiveTrack,
 } from "@weights-ai/react-native-track-player";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
+  CircleX,
   EllipsisVertical,
   Heart,
   ListPlus,
@@ -47,7 +52,9 @@ export default function TrackListItem({
   index,
   showIndex = false,
 }: TrackListItemProps) {
+  const queryClient = useQueryClient();
   const router = useRouter();
+  const route = useRoute();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -59,6 +66,7 @@ export default function TrackListItem({
   );
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doShare = useCreateShare();
   const toast = useToast();
 
   const handlePresentModalPress = useCallback(() => {
@@ -138,26 +146,45 @@ export default function TrackListItem({
     );
   };
 
+  const handleSharePress = () => {
+    doShare.mutate(
+      { id: track.id },
+      {
+        onSuccess: () => {
+          bottomSheetModalRef.current?.dismiss();
+          queryClient.invalidateQueries({ queryKey: ["shares"] });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>Track successfully shared</ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while sharing the track
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
   const handleTrackPress = useCallback(async () => {
     await TrackPlayer.stop();
     await TrackPlayer.reset();
-    await TrackPlayer.add([
-      {
-        id: track.id,
-        url: streamUrl(track.id),
-        // type: TrackType.HLS,
-        title: track.title,
-        artist: track.artist,
-        album: track.album,
-        artwork: cover || trackCover.data,
-        genre: track.genre,
-        duration: track.duration,
-        contentType: track.contentType,
-        starred: track.starred,
-        artistId: track.artistId,
-        albumId: track.albumId,
-      },
-    ]);
+    await TrackPlayer.add([childToTrack(track, cover || trackCover.data)]);
 
     await TrackPlayer.play();
   }, [track, cover, trackCover]);
@@ -281,10 +308,25 @@ export default function TrackListItem({
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Add to playlist
+                      {route.name === "playlists/[id]/index"
+                        ? "Add to another playlist"
+                        : "Add to playlist"}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {route.name === "playlists/[id]/index" && (
+                  <FadeOutScaleDown>
+                    <HStack className="items-center">
+                      <CircleX
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        Remove from playlist
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleGoToArtistPress}>
                   <HStack className="items-center">
                     <User
@@ -307,7 +349,7 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+                <FadeOutScaleDown onPress={handleSharePress}>
                   <HStack className="items-center">
                     <Share
                       size={24}

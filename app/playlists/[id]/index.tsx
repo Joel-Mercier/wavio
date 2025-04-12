@@ -24,6 +24,7 @@ import {
   useDeletePlaylist,
   usePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import {
@@ -33,7 +34,6 @@ import {
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
-import { set } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -42,7 +42,7 @@ import {
   ListMusic,
   Pencil,
   Play,
-  Share,
+  Share2,
   Shuffle,
   X,
 } from "lucide-react-native";
@@ -59,6 +59,7 @@ export default function PlaylistScreen() {
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = usePlaylist(id);
   const doDeletePlaylist = useDeletePlaylist();
+  const doShare = useCreateShare();
   const cover = useGetCoverArt(
     data?.playlist.coverArt,
     { size: 400 },
@@ -105,6 +106,42 @@ export default function PlaylistScreen() {
               <Toast action="error">
                 <ToastDescription>
                   An error occurred while deleting the playlist
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleSharePress = () => {
+    doShare.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["shares"] });
+          bottomSheetModalRef.current?.dismiss();
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Playlist successfully shared
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while sharing the playlist
                 </ToastDescription>
               </Toast>
             ),
@@ -179,9 +216,6 @@ export default function PlaylistScreen() {
                 </HStack>
                 <HStack className="mt-4 items-center justify-between">
                   <HStack className="items-center gap-x-4">
-                    <FadeOutScaleDown>
-                      <Share color={themeConfig.theme.colors.white} />
-                    </FadeOutScaleDown>
                     <FadeOutScaleDown onPress={handlePresentModalPress}>
                       <EllipsisVertical
                         color={themeConfig.theme.colors.white}
@@ -271,9 +305,12 @@ export default function PlaylistScreen() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => console.log("share pressed")}>
+              <FadeOutScaleDown onPress={handleSharePress}>
                 <HStack className="items-center">
-                  <Share size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Share2
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
                   <Text className="ml-4 text-lg text-gray-200">Share</Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -312,7 +349,7 @@ export default function PlaylistScreen() {
               undone. Please confirm if you want to proceed.
             </Text>
           </AlertDialogBody>
-          <AlertDialogFooter className="">
+          <AlertDialogFooter className="items-center justify-center">
             <FadeOutScaleDown
               onPress={handleCloseAlertDialog}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"

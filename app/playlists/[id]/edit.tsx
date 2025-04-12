@@ -53,7 +53,6 @@ export default function EditPlaylistScreen() {
       description: data?.playlist?.comment ?? "",
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
       console.log(value);
       doUpdatePlaylist.mutate(
         { id, ...value },
@@ -144,7 +143,7 @@ export default function EditPlaylistScreen() {
     item: Child,
     index: number,
     isActive: boolean,
-    beginDrag: () => any,
+    beginDrag: () => void,
   ) => {
     return (
       <PlaylistEditSongListItem
@@ -194,7 +193,7 @@ export default function EditPlaylistScreen() {
         renderItem={renderItem}
         itemsSize={70}
         onSort={handleListSort}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <VStack className="px-6">
             <HStack className="items-center justify-center">
               {cover.data ? (
@@ -229,7 +228,7 @@ export default function EditPlaylistScreen() {
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
-                    className="text-md text-white font-normal"
+                    className="text-md font-normal color-white"
                     placeholder="Describe your playlist"
                   />
                 </Textarea>
@@ -247,7 +246,7 @@ export default function EditPlaylistScreen() {
               />
             </Input> */}
           </VStack>
-        )}
+        }
       />
     </SafeAreaView>
     // <FlashDragList
