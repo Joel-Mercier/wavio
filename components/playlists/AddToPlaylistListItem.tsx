@@ -1,14 +1,19 @@
+import FadeOut from "@/components/FadeOut";
+import { Box } from "@/components/ui/box";
+import {
+  Checkbox,
+  CheckboxIcon,
+  CheckboxIndicator,
+} from "@/components/ui/checkbox";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { Playlist } from "@/services/openSubsonic/types";
-import { ListMusic } from "lucide-react-native";
-import FadeOut from "../FadeOut";
-import { Box } from "../ui/box";
-import { Heading } from "../ui/heading";
-import { HStack } from "../ui/hstack";
-import { Image } from "../ui/image";
-import { Text } from "../ui/text";
-import { VStack } from "../ui/vstack";
+import { Check, ListMusic } from "lucide-react-native";
 
 export default function AddToPlaylistListItem({
   playlist,
@@ -44,6 +49,19 @@ export default function AddToPlaylistListItem({
             </Text>
           </VStack>
         </HStack>
+        <Checkbox
+          value={playlist.id}
+          isChecked={selected}
+          onChange={() => onPress(playlist.id)}
+          size="lg"
+          isInvalid={false}
+          isDisabled={false}
+          defaultIsChecked={false}
+        >
+          <CheckboxIndicator className="rounded-full border-2 border-primary-100 data-[checked=true]:bg-emerald-500 data-[checked=true]:border-emerald-500">
+            <CheckboxIcon as={Check} className="text-primary-800" />
+          </CheckboxIndicator>
+        </Checkbox>
       </HStack>
     </FadeOut>
   );

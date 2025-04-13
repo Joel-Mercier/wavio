@@ -181,6 +181,14 @@ export default function TrackListItem({
     );
   };
 
+  const handleAddToPlaylistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/playlists/add-to-playlist",
+      params: { ids: [track.id] },
+    });
+  };
+
   const handleTrackPress = useCallback(async () => {
     await TrackPlayer.stop();
     await TrackPlayer.reset();
@@ -301,7 +309,7 @@ export default function TrackListItem({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
                     <PlusCircle
                       size={24}

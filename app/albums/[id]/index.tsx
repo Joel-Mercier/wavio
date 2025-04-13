@@ -201,6 +201,14 @@ export default function AlbumScreen() {
     );
   };
 
+  const handleAddToPlaylistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/playlists/add-to-playlist",
+      params: { ids: data?.album.song?.map((song) => song.id) },
+    });
+  };
+
   return (
     <Box>
       <SafeAreaView className="h-full">
@@ -379,7 +387,7 @@ export default function AlbumScreen() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                 <HStack className="items-center">
                   <PlusCircle
                     size={24}

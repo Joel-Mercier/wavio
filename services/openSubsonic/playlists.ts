@@ -93,6 +93,7 @@ export const getPlaylists = async ({ username }: { username?: string }) => {
 
 export const updatePlaylist = async (id: string, { name, comment, isPublic, songIdToAdd, songIndexToRemove }: { name?: string, comment?: string, isPublic?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
   try {
+
     const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<Record<string, never>>>(
       "/rest/updatePlaylist",
       {
@@ -104,8 +105,11 @@ export const updatePlaylist = async (id: string, { name, comment, isPublic, song
           songIdToAdd,
           songIndexToRemove
 
+        },
+        paramsSerializer: {
+          indexes: null
         }
-      }
+      },
     );
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error

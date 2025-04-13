@@ -155,7 +155,7 @@ export default function PlaylistScreen() {
     <Box>
       <SafeAreaView className="h-full">
         <FlashList
-          data={data?.playlist.entry}
+          data={data?.playlist.entry?.reverse()}
           renderItem={({ item, index }: { item: Child; index: number }) => (
             <TrackListItem track={item} index={index} />
           )}
