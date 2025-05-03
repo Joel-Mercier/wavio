@@ -10,10 +10,12 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
+import { useUpdatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import { childToTrack } from "@/utils/childToTrack";
+import { niceBytes } from "@/utils/fileSize";
 import { streamUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
@@ -26,24 +28,40 @@ import { useQueryClient } from "@tanstack/react-query";
 import TrackPlayer, {
   useActiveTrack,
 } from "@weights-ai/react-native-track-player";
+import { formatDistanceToNow, secondsToMinutes } from "date-fns";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
+  Check,
   CircleX,
   EllipsisVertical,
   Heart,
+  Info,
   ListPlus,
   PlusCircle,
   Share,
   User,
+  X,
 } from "lucide-react-native";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Icon } from "../ui/icon";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "../ui/modal";
 
 interface TrackListItemProps {
   track: Child;
   cover?: string;
   index: number;
   showIndex?: boolean;
+  handleRemoveFromPlaylist?: (index: string) => void;
 }
 
 export default function TrackListItem({
@@ -51,10 +69,12 @@ export default function TrackListItem({
   cover,
   index,
   showIndex = false,
+  handleRemoveFromPlaylist,
 }: TrackListItemProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const route = useRoute();
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -68,6 +88,7 @@ export default function TrackListItem({
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const toast = useToast();
+  const insets = useSafeAreaInsets();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -189,6 +210,20 @@ export default function TrackListItem({
     });
   };
 
+  const handleRemoveFromPlaylistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (handleRemoveFromPlaylist) {
+      handleRemoveFromPlaylist(index.toString());
+    }
+  };
+
+  const handleInfoPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowInfoModal(true);
+  };
+
+  const handleCloseInfoModal = () => setShowInfoModal(false);
+
   const handleTrackPress = useCallback(async () => {
     await TrackPlayer.stop();
     await TrackPlayer.reset();
@@ -197,6 +232,7 @@ export default function TrackListItem({
     await TrackPlayer.play();
   }, [track, cover, trackCover]);
 
+  console.log(track);
   return (
     <Pressable onPress={handleTrackPress}>
       <HStack
@@ -323,7 +359,7 @@ export default function TrackListItem({
                   </HStack>
                 </FadeOutScaleDown>
                 {route.name === "playlists/[id]/index" && (
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleRemoveFromPlaylistPress}>
                     <HStack className="items-center">
                       <CircleX
                         size={24}
@@ -366,10 +402,145 @@ export default function TrackListItem({
                     <Text className="ml-4 text-lg text-gray-200">Share</Text>
                   </HStack>
                 </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleInfoPress}>
+                  <HStack className="items-center">
+                    <Info
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">Get info</Text>
+                  </HStack>
+                </FadeOutScaleDown>
               </VStack>
             </Box>
           </BottomSheetView>
         </BottomSheetModal>
+        <Modal
+          isOpen={showInfoModal}
+          onClose={handleCloseInfoModal}
+          closeOnOverlayClick
+        >
+          <ModalBackdrop />
+          <ModalContent
+            className="bg-primary-800 border-primary-600 max-h-[80%]"
+            style={{ marginBottom: insets.bottom, marginTop: insets.top }}
+          >
+            <ModalHeader>
+              <Heading className="text-white">Track info</Heading>
+              <ModalCloseButton>
+                <Icon as={X} size="md" className="color-white" />
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody>
+              <VStack className="gap-y-2">
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Title</Text>
+                  <Text className="text-white">{track.title}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Path</Text>
+                  <Text className="text-white">{track.path}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Album artist</Text>
+                  <Text className="text-white">{track.artist}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Artists</Text>
+                  <Text className="text-white">
+                    {track.artists?.map((artist) => artist.name).join(", ")}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Album</Text>
+                  <Text className="text-white">{track.album}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Disc</Text>
+                  <Text className="text-white">{track.discNumber}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Track</Text>
+                  <Text className="text-white">{track.track}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Release year</Text>
+                  <Text className="text-white">{track.year}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Genres</Text>
+                  <Text className="text-white">
+                    {track.genres?.map((genre) => genre.name)?.join(", ")}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Duration</Text>
+                  <Text className="text-white">
+                    {track.duration
+                      ? `${secondsToMinutes(track?.duration)}:${track?.duration % 60}`
+                      : "Unknown"}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Codec</Text>
+                  <Text className="text-white">{track.suffix}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Bitrate</Text>
+                  <Text className="text-white">{track.bitRate}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Channels</Text>
+                  <Text className="text-white">{track.channelCount}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Size</Text>
+                  <Text className="text-white">
+                    {niceBytes(track.size || 0)}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Favorite</Text>
+                  <Text className="text-white">
+                    {track.starred ? (
+                      <Check color={themeConfig.theme.colors.white} size={14} />
+                    ) : (
+                      <X color={themeConfig.theme.colors.white} size={14} />
+                    )}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Play count</Text>
+                  <Text className="text-white">{track.playCount}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Last played</Text>
+                  <Text className="text-white">
+                    {track.played
+                      ? `${formatDistanceToNow(new Date(track.played))} ago`
+                      : "Never"}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Modified</Text>
+                  <Text className="text-white">{track.genre}</Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Album peak</Text>
+                  <Text className="text-white">
+                    {track.replayGain?.albumPeak}
+                  </Text>
+                </VStack>
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">Track peak</Text>
+                  <Text className="text-white">
+                    {track.replayGain?.trackPeak}
+                  </Text>
+                </VStack>
+              </VStack>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </HStack>
     </Pressable>
   );

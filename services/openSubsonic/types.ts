@@ -158,7 +158,12 @@ export interface Child {
   type?: MediaType;
   userRating?: number;
   year?: number;
-  mediaType?: string
+  mediaType?: string;
+  channelCount?: number;
+  played?: Date;
+  genres?: { name: string }[];
+  replayGain?: { albumPeak: number, trackPeak: number };
+  artists?: { id: string, name: string }[];
 }
 
 export interface Directory {

@@ -10,6 +10,7 @@ import { AnimatePresence, Motion } from "@legendapp/motion";
 import { cssInterop } from "nativewind";
 import React from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const useToast = createToastHook(Motion.View, AnimatePresence);
 const SCOPE = "TOAST";
@@ -149,11 +150,13 @@ type IToastProps = React.ComponentProps<typeof Root> & {
 
 const Toast = React.forwardRef<React.ElementRef<typeof Root>, IToastProps>(
   ({ className, variant = "solid", action = "muted", ...props }, ref) => {
+    const insets = useSafeAreaInsets();
     return (
       <Root
         ref={ref}
         className={toastStyle({ variant, action, class: className })}
         context={{ variant, action }}
+        style={{ marginTop: insets.top }}
         {...props}
       />
     );

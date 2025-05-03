@@ -23,6 +23,11 @@ export default function HomeScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const recentPlays = useRecentPlays.use.recentPlays();
   const {
+    data: recentlyPlayedData,
+    isLoading: isLoadingRecentlyPlayed,
+    error: recentlyPlayedError,
+  } = useAlbumList2({ type: "recent", size: 12 });
+  const {
     data: recentData,
     isLoading: isLoadingRecent,
     error: recentError,
@@ -81,6 +86,40 @@ export default function HomeScreen() {
               }, [])}
             </VStack>
           </Box>
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              Recently played
+            </Heading>
+          </Box>
+          {recentlyPlayedError ? (
+            <ErrorDisplay error={recentlyPlayedError} />
+          ) : (
+            <>
+              {isLoadingRecentlyPlayed ? (
+                <Spinner size="large" />
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="pl-6 mb-6"
+                >
+                  {recentlyPlayedData?.albumList2?.album?.map(
+                    (album, index) => (
+                      <AlbumListItem
+                        key={album.id}
+                        album={album}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ),
+                  )}
+                </ScrollView>
+              )}
+            </>
+          )}
+          {!isLoadingRecentlyPlayed &&
+            !recentlyPlayedError &&
+            !recentlyPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
           <Box className="px-6 mt-4 mb-4">
             <Heading size="xl" className="text-white">
               Recently added

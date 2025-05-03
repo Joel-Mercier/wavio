@@ -23,6 +23,7 @@ import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import {
   useDeletePlaylist,
   usePlaylist,
+  useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -59,6 +60,7 @@ export default function PlaylistScreen() {
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = usePlaylist(id);
   const doDeletePlaylist = useDeletePlaylist();
+  const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
   const cover = useGetCoverArt(
     data?.playlist.coverArt,
@@ -151,13 +153,56 @@ export default function PlaylistScreen() {
     );
   };
 
+  const handleDeleteFromPlaylistPress = (index: string) => {
+    doUpdatePlaylist.mutate(
+      { id, songIndexToRemove: [index] },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["playlist", id] });
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastDescription>
+                  Track successfully removed from playlist
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastDescription>
+                  An error occurred while removing the track from this playlist
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  console.log(data?.playlist);
+
   return (
     <Box>
       <SafeAreaView className="h-full">
         <FlashList
           data={data?.playlist.entry?.reverse()}
           renderItem={({ item, index }: { item: Child; index: number }) => (
-            <TrackListItem track={item} index={index} />
+            <TrackListItem
+              track={item}
+              index={index}
+              handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
+            />
           )}
           estimatedItemSize={70}
           ListEmptyComponent={() => (
