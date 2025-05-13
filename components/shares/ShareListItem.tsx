@@ -42,7 +42,6 @@ import {
 import { useCallback, useRef, useState } from "react";
 
 export default function ShareListItem({ share }: { share: Share }) {
-  console.log(share);
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
@@ -63,7 +62,6 @@ export default function ShareListItem({ share }: { share: Share }) {
       expires: share.expires as string,
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
       doUpdateShare.mutate(
         {
           id: share.id,

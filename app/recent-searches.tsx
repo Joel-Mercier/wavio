@@ -72,7 +72,6 @@ export default function RecentSearchesScreen() {
     router.navigate(`/search-results?query=${query}`);
   };
 
-  console.log(query);
   return (
     <SafeAreaView className="h-full" edges={["bottom", "left", "right"]}>
       <FlashList

@@ -53,7 +53,6 @@ export default function EditPlaylistScreen() {
       description: data?.playlist?.comment ?? "",
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
       doUpdatePlaylist.mutate(
         { id, ...value },
         {

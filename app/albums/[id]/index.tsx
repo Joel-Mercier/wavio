@@ -17,6 +17,7 @@ import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import {
   BottomSheetBackdrop,
@@ -26,6 +27,7 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parse } from "date-fns";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -40,6 +42,7 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AlbumScreen() {
   const queryClient = useQueryClient();
@@ -52,12 +55,14 @@ export default function AlbumScreen() {
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const toast = useToast();
+  const insets = useSafeAreaInsets();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(
     data?.album.coverArt,
     { size: 400 },
     !!data?.album.coverArt,
   );
+  const colors = useImageColors(`data:image/jpeg;base64,${cover?.data}`);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -209,16 +214,29 @@ export default function AlbumScreen() {
   };
 
   return (
-    <Box>
-      <SafeAreaView className="h-full">
-        <FlashList
-          data={data?.album.song}
-          renderItem={({ item, index }: { item: Child; index: number }) => (
-            <TrackListItem track={item} cover={cover?.data} index={index} />
-          )}
-          estimatedItemSize={70}
-          ListHeaderComponent={() => (
-            <VStack>
+    <Box className="h-full w-full">
+      <FlashList
+        data={data?.album.song}
+        renderItem={({ item, index }: { item: Child; index: number }) => (
+          <TrackListItem
+            track={item}
+            cover={cover?.data}
+            index={index}
+            className="px-6"
+          />
+        )}
+        estimatedItemSize={70}
+        ListHeaderComponent={() => (
+          <LinearGradient
+            colors={[
+              (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+                "#000",
+              "#000",
+            ]}
+            locations={[0, 0.8]}
+            className="px-6"
+          >
+            <SafeAreaView>
               <HStack className="mt-6 items-start justify-between">
                 <FadeOutScaleDown onPress={() => router.back()}>
                   <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
@@ -319,29 +337,26 @@ export default function AlbumScreen() {
               </VStack>
               {error && <ErrorDisplay error={error} />}
               {isLoading && <Spinner size="large" />}
-            </VStack>
-          )}
-          ListFooterComponent={() => (
-            <VStack className="my-6">
-              <Text className="text-white font-bold">
-                {(data?.album.songCount || "0 ") +
-                  (data?.album.songCount || 0 > 1 ? " song" : "songs")}{" "}
-                ⦁ {Math.round((data?.album.duration || 0) / 60)} min
+            </SafeAreaView>
+          </LinearGradient>
+        )}
+        ListFooterComponent={() => (
+          <VStack className="my-6 px-6">
+            <Text className="text-white font-bold">
+              {(data?.album.songCount || "0 ") +
+                (data?.album.songCount || 0 > 1 ? " song" : "songs")}{" "}
+              ⦁ {Math.round((data?.album.duration || 0) / 60)} min
+            </Text>
+            {data?.album.recordLabels?.map((recordLabel) => (
+              <Text className="text-primary-100 text-sm" key={recordLabel.name}>
+                © {recordLabel.name}
               </Text>
-              {data?.album.recordLabels?.map((recordLabel) => (
-                <Text
-                  className="text-primary-100 text-sm"
-                  key={recordLabel.name}
-                >
-                  © {recordLabel.name}
-                </Text>
-              ))}
-            </VStack>
-          )}
-          ListEmptyComponent={() => <EmptyDisplay />}
-          contentContainerStyle={{ paddingHorizontal: 24 }}
-        />
-      </SafeAreaView>
+            ))}
+          </VStack>
+        )}
+        ListEmptyComponent={() => <EmptyDisplay />}
+        // contentContainerStyle={{ paddingHorizontal: 24 }}
+      />
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}

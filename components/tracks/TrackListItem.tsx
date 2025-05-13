@@ -62,6 +62,7 @@ interface TrackListItemProps {
   index: number;
   showIndex?: boolean;
   handleRemoveFromPlaylist?: (index: string) => void;
+  className?: string;
 }
 
 export default function TrackListItem({
@@ -70,6 +71,7 @@ export default function TrackListItem({
   index,
   showIndex = false,
   handleRemoveFromPlaylist,
+  className,
 }: TrackListItemProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -232,13 +234,16 @@ export default function TrackListItem({
     await TrackPlayer.play();
   }, [track, cover, trackCover]);
 
-  console.log(track);
   return (
     <Pressable onPress={handleTrackPress}>
       <HStack
-        className={cn("items-center justify-between mb-4", {
-          "mt-6": index === 0,
-        })}
+        className={cn(
+          "items-center justify-between mb-4",
+          {
+            "mt-6": index === 0,
+          },
+          className,
+        )}
       >
         <HStack className="items-center">
           {showIndex && (

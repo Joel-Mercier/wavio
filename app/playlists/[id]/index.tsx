@@ -190,8 +190,6 @@ export default function PlaylistScreen() {
     );
   };
 
-  console.log(data?.playlist);
-
   return (
     <Box>
       <SafeAreaView className="h-full">

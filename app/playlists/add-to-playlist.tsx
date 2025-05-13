@@ -95,8 +95,6 @@ export default function AddToPlaylistScreen() {
     }
   };
 
-  console.log(trackIds);
-
   return (
     <SafeAreaView className="h-full" edges={["bottom", "left", "right"]}>
       <FlashList

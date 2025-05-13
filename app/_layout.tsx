@@ -113,13 +113,11 @@ export default function RootLayout() {
         <ThemeProvider value={DarkTheme}>
           <OverlayProvider>
             <ToastProvider>
-              <GestureHandlerRootView
-                style={{ flex: 1, backgroundColor: "#191A1F" }}
-              >
+              <GestureHandlerRootView style={{ flex: 1 }}>
                 <BottomSheetModalProvider>
                   <Stack
                     screenOptions={{
-                      navigationBarColor: "rgb(24,23,25)",
+                      navigationBarColor: "#000",
                     }}
                   >
                     <Stack.Screen

@@ -83,6 +83,7 @@
     "react-native": "0.76.7",
     "react-native-css-interop": "^0.1.22",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-image-colors": "^2.4.0",
     "react-native-mmkv": "^3.2.0",
     "react-native-react-query-devtools": "^1.3.10",
     "react-native-reanimated": "~3.16.7",
