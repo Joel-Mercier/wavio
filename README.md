@@ -3,7 +3,7 @@
 Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 
 ## TODO
-- [ ] Add remove from playlist feature
+- [x] Add remove from playlist feature
 - [ ] Finish recent plays feature
 - [ ] Finish recent searches feature
 - [ ] Fix playlist edit drag and drop list (list header is ignored)
@@ -18,10 +18,11 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 ## Getting started
 
 1. Clone the repository
-2. Install dependencies with `npm install`
-3. Set environment variables in `.env` file
-4. Prebuild the native development app with `npx expo prebuild`
-5. Run the app with `npx expo start`
+2. Make sure you have pnpm installed (`npm i -g pnpm`)
+3. Install dependencies with `pnpm install`
+4. Set environment variables in `.env` file
+5. Prebuild the native development app with `npx expo prebuild`
+6. Run the app with `npx expo start`
 
 
 ## Building the app
@@ -45,8 +46,8 @@ TODO
 - `npx expo build:ios`: Build the app for iOS
 - `npx expo prebuild`: Prebuild the native development app
 - `npx expo doctor`: Check the app for any potential issues
-- `npm run lint`: Lint the codebase
-- `npm run lint:fix`: Fix linting issues
+- `pnpm run lint`: Lint the codebase
+- `pnpm run lint:fix`: Fix linting issues
 - `eas build --profile preview --platform android`: Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo
@@ -74,5 +75,4 @@ TODO
 
 ## Notes
 
-- Using https://github.com/weights-ai/react-native-track-player fork for React Native Track Player because the new architecture is not supported and project seems unmaintained.
-- Using override for `@react-aria/utils` to fix issue with current Gluestack UI version.
+- Using https://github.com/weights-ai/react-native-track-player fork for React Native Track Player because the new architecture is not supported and project seems unmaintained. Also using patch to fix issue with React Native 0.79+.

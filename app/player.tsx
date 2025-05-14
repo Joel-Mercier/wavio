@@ -24,13 +24,6 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import TrackPlayer, {
-  RepeatMode,
-  State,
-  useActiveTrack,
-  usePlaybackState,
-  useProgress,
-} from "@weights-ai/react-native-track-player";
 import { secondsToMinutes } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -54,6 +47,13 @@ import {
   User,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef } from "react";
+import TrackPlayer, {
+  RepeatMode,
+  State,
+  useActiveTrack,
+  usePlaybackState,
+  useProgress,
+} from "react-native-track-player";
 
 export default function PlayerScreen() {
   const router = useRouter();

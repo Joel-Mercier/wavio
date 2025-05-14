@@ -1,0 +1,21 @@
+diff --git a/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt b/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
+index baeebce2489e6f9e47ce2ebb9332072e31ba24d5..48693973b323e0dfd5d5868dc9c8a90b83a0db71 100644
+--- a/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
++++ b/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
+@@ -761,6 +761,16 @@ class MusicService : HeadlessJsTaskService() {
+     //    return binder
+     // }
+ 
++    @MainThread
++    override fun onBind(intent: Intent): IBinder {
++        return binder
++    }
++
++    @MainThread
++    override fun onUnbind(intent: Intent): Boolean {
++        return super.onUnbind(intent)
++    }
++
+     @MainThread
+     override fun onTaskRemoved(rootIntent: Intent?) {
+         super.onTaskRemoved(rootIntent)

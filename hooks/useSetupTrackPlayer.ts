@@ -1,9 +1,11 @@
-import TrackPlayer, { Capability, RepeatMode } from "@weights-ai/react-native-track-player";
 import { useEffect, useState } from "react";
+import TrackPlayer, { AndroidAudioContentType, Capability, RepeatMode } from "react-native-track-player";
 
 const setupTrackPlayer = async () => {
   await TrackPlayer.setupPlayer({
     maxCacheSize: 1024 * 10,
+    autoHandleInterruptions: true,
+    androidAudioContentType: AndroidAudioContentType.Music,
   });
   await TrackPlayer.updateOptions({
     capabilities: [
@@ -23,15 +25,18 @@ export const useSetupTrackPlayer = () => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    setupTrackPlayer()
-      .then(() => {
-        setIsInitialized(true);
-      })
-      .catch((error) => {
-        setIsInitialized(false);
-        console.error(error);
-      });
-  }, []);
+    if (!isInitialized) {
+      setupTrackPlayer()
+        .then(() => {
+          setIsInitialized(true);
+        })
+        .catch((error) => {
+          console.log(error)
+          setIsInitialized(false);
+          console.error(error);
+        });
+    }
+  }, [isInitialized]);
 
   return isInitialized;
 };

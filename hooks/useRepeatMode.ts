@@ -1,5 +1,5 @@
-import TrackPlayer, { type RepeatMode } from "@weights-ai/react-native-track-player";
 import { useEffect, useState } from "react";
+import TrackPlayer, { type RepeatMode } from "react-native-track-player";
 
 export const useRepeatMode = (): { repeatMode: RepeatMode | undefined, setRepeatMode: (repeatMode: RepeatMode) => void } => {
   const [repeatMode, setRepeatMode] = useState<RepeatMode | undefined>();

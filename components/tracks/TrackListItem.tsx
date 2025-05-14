@@ -25,9 +25,6 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import TrackPlayer, {
-  useActiveTrack,
-} from "@weights-ai/react-native-track-player";
 import { formatDistanceToNow, secondsToMinutes } from "date-fns";
 import { useRouter } from "expo-router";
 import {
@@ -45,6 +42,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import TrackPlayer, { useActiveTrack } from "react-native-track-player";
 import { Icon } from "../ui/icon";
 import {
   Modal,

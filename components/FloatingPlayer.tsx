@@ -4,9 +4,9 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useActiveTrack } from "@weights-ai/react-native-track-player";
 import { useRouter } from "expo-router";
 import { AudioLines, Play } from "lucide-react-native";
+import { useActiveTrack } from "react-native-track-player";
 import MovingText from "./MovingText";
 import { Box } from "./ui/box";
 

@@ -20,6 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "edgeToEdgeEnabled": true,
       "package": "com.jmercier.wavio"
     },
     "web": {
@@ -45,7 +46,18 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      [
+        "react-native-edge-to-edge",
+        {
+          "android": {
+            "parentTheme": "Default",
+            "enforceNavigationBarContrast": false
+          }
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

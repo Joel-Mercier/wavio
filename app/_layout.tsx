@@ -31,7 +31,6 @@ import {
   focusManager,
   onlineManager,
 } from "@tanstack/react-query";
-import TrackPlayer from "@weights-ai/react-native-track-player";
 import { ArrowLeft, X } from "lucide-react-native";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -40,6 +39,7 @@ import {
   ReanimatedLogLevel,
   configureReanimatedLogger,
 } from "react-native-reanimated";
+import TrackPlayer from "react-native-track-player";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -66,10 +66,10 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
-  // const trackPlayerLoaded = useSetupTrackPlayer();
-  // useLogTrackPlayerState();
+  const hasSetupPlayer = useSetupTrackPlayer();
+  useLogTrackPlayerState();
 
-  const trackPlayerLoaded = true;
+  // const trackPlayerLoaded = true;
   const setRecentSearches = useRecentSearches.use.setRecentSearches();
   const setRecentPlays = useRecentPlays.use.setRecentPlays();
   const [loaded] = useFonts({
@@ -79,10 +79,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded && trackPlayerLoaded) {
+    if (loaded && hasSetupPlayer) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, trackPlayerLoaded]);
+  }, [loaded, hasSetupPlayer]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", onAppStateChange);
@@ -103,7 +103,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  if (!loaded || !trackPlayerLoaded) {
+  if (!loaded || !hasSetupPlayer) {
     return null;
   }
 
@@ -225,7 +225,7 @@ export default function RootLayout() {
                     />
                     <Stack.Screen name="+not-found" />
                   </Stack>
-                  <FloatingPlayer />
+                  {/* <FloatingPlayer /> */}
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </ToastProvider>
@@ -233,7 +233,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
         </ThemeProvider>
       </GluestackUIProvider>
-      {__DEV__ && <DevToolsBubble />}
+      {/* {__DEV__ && <DevToolsBubble />} */}
     </QueryClientProvider>
   );
 }

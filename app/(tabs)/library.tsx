@@ -286,7 +286,7 @@ export default function LibraryScreen() {
         )}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingBottom: tabBarHeight + headerHeight + 16,
+          paddingBottom: tabBarHeight,
         }}
       />
       <BottomSheetModal

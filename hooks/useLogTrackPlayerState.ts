@@ -1,4 +1,4 @@
-import { Event, useTrackPlayerEvents } from "@weights-ai/react-native-track-player";
+import { Event, useTrackPlayerEvents } from "react-native-track-player";
 
 const events = [
   Event.PlaybackState,
@@ -17,7 +17,12 @@ export const useLogTrackPlayerState = () => {
     }
 
     if (event.type === Event.PlaybackActiveTrackChanged) {
-      console.log("Active track changed:", event.track);
+      if (event.track) {
+        const { artwork, ...track } = event.track;
+        console.log("Active track changed:", track);
+      } else {
+        console.log("No active track");
+      }
     }
   });
 };
