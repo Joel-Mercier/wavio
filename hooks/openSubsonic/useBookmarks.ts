@@ -1,16 +1,26 @@
-import { createBookmark, deleteBookmark, getBookmarks, getPlayQueue, savePlayQueue } from "@/services/openSubsonic/bookmarks";
+import {
+  createBookmark,
+  deleteBookmark,
+  getBookmarks,
+  getPlayQueue,
+  savePlayQueue,
+} from "@/services/openSubsonic/bookmarks";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useCreateBookmark = () => {
   const query = useMutation({
-    mutationFn: (params: { id: string, position: number, comment?: string }) => {
+    mutationFn: (params: {
+      id: string;
+      position: number;
+      comment?: string;
+    }) => {
       const { id, position, comment } = params;
       return createBookmark(id, position, { comment });
     },
   });
 
   return query;
-}
+};
 
 export const useDeleteBookmark = () => {
   const query = useMutation({
@@ -21,7 +31,7 @@ export const useDeleteBookmark = () => {
   });
 
   return query;
-}
+};
 
 export const useBookmarks = () => {
   const query = useQuery({
@@ -47,7 +57,11 @@ export const usePlayQueue = () => {
 
 export const useSavePlayQueue = () => {
   const query = useMutation({
-    mutationFn: (params: { id?: string, current?: string, position?: number }) => {
+    mutationFn: (params: {
+      id?: string;
+      current?: string;
+      position?: number;
+    }) => {
       return savePlayQueue(params);
     },
   });

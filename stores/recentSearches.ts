@@ -9,7 +9,7 @@ export type RecentSearch = {
   coverArt?: string;
   albumId?: string;
   artist?: string;
-}
+};
 
 interface RecentSearchesStore {
   recentSearches: RecentSearch[];

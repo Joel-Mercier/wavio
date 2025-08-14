@@ -19,6 +19,7 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
+import useRecentPlays from "@/stores/recentPlays";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -42,7 +43,6 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AlbumScreen() {
   const queryClient = useQueryClient();
@@ -55,7 +55,6 @@ export default function AlbumScreen() {
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const toast = useToast();
-  const insets = useSafeAreaInsets();
   const { data, isLoading, error } = useAlbum(id);
   const cover = useGetCoverArt(
     data?.album.coverArt,
@@ -63,6 +62,7 @@ export default function AlbumScreen() {
     !!data?.album.coverArt,
   );
   const colors = useImageColors(`data:image/jpeg;base64,${cover?.data}`);
+  const addRecentPlay = useRecentPlays.use.addRecentPlay();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -213,6 +213,17 @@ export default function AlbumScreen() {
     });
   };
 
+  const handleTrackPressCallback = () => {
+    if (data?.album) {
+      addRecentPlay({
+        id,
+        title: data?.album.name,
+        type: "album",
+        coverArt: cover?.data,
+      });
+    }
+  };
+
   return (
     <Box className="h-full w-full">
       <FlashList
@@ -223,9 +234,9 @@ export default function AlbumScreen() {
             cover={cover?.data}
             index={index}
             className="px-6"
+            onPlayCallback={handleTrackPressCallback}
           />
         )}
-        estimatedItemSize={70}
         ListHeaderComponent={() => (
           <LinearGradient
             colors={[

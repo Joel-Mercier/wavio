@@ -1,4 +1,10 @@
-import { createPlaylist, deletePlaylist, getPlaylist, getPlaylists, updatePlaylist } from "@/services/openSubsonic/playlists";
+import {
+  createPlaylist,
+  deletePlaylist,
+  getPlaylist,
+  getPlaylists,
+  updatePlaylist,
+} from "@/services/openSubsonic/playlists";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const usePlaylists = (params: { username?: string }) => {
@@ -12,7 +18,7 @@ export const usePlaylists = (params: { username?: string }) => {
 
 export const useCreatePlaylist = () => {
   const query = useMutation({
-    mutationFn: (params: { name: string, songId?: string[] }) => {
+    mutationFn: (params: { name: string; songId?: string[] }) => {
       const { name, songId } = params;
       return createPlaylist(name, songId);
     },
@@ -23,9 +29,23 @@ export const useCreatePlaylist = () => {
 
 export const useUpdatePlaylist = () => {
   const query = useMutation({
-    mutationFn: (params: { id: string, name?: string, comment?: string, isPublic?: boolean, songIdToAdd?: string[], songIndexToRemove?: string[] }) => {
-      const { id, name, comment, isPublic, songIdToAdd, songIndexToRemove } = params;
-      return updatePlaylist(id, { name, comment, isPublic, songIdToAdd, songIndexToRemove });
+    mutationFn: (params: {
+      id: string;
+      name?: string;
+      comment?: string;
+      isPublic?: boolean;
+      songIdToAdd?: string[];
+      songIndexToRemove?: string[];
+    }) => {
+      const { id, name, comment, isPublic, songIdToAdd, songIndexToRemove } =
+        params;
+      return updatePlaylist(id, {
+        name,
+        comment,
+        isPublic,
+        songIdToAdd,
+        songIndexToRemove,
+      });
     },
   });
 

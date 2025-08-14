@@ -9,8 +9,8 @@ import {
 } from "@expo-google-fonts/inter";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { SystemBars } from "react-native-edge-to-edge";
 import "react-native-reanimated";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
@@ -111,6 +111,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GluestackUIProvider mode="light">
         <ThemeProvider value={DarkTheme}>
+          <SystemBars
+            style="light"
+            hidden={{ statusBar: false, navigationBar: false }}
+          />
           <OverlayProvider>
             <ToastProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
@@ -221,16 +225,16 @@ export default function RootLayout() {
                         gestureDirection: "vertical",
                         animationDuration: 300,
                         animation: "fade_from_bottom",
+                        presentation: "formSheet",
                       }}
                     />
                     <Stack.Screen name="+not-found" />
                   </Stack>
-                  {/* <FloatingPlayer /> */}
+                  <FloatingPlayer />
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </ToastProvider>
           </OverlayProvider>
-          <StatusBar style="dark" />
         </ThemeProvider>
       </GluestackUIProvider>
       {/* {__DEV__ && <DevToolsBubble />} */}

@@ -28,6 +28,7 @@ import {
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
+import useRecentPlays from "@/stores/recentPlays";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -67,6 +68,7 @@ export default function PlaylistScreen() {
     { size: 400 },
     !!data?.playlist.coverArt,
   );
+  const addRecentPlay = useRecentPlays.use.addRecentPlay();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -190,6 +192,17 @@ export default function PlaylistScreen() {
     );
   };
 
+  const handleTrackPressCallback = () => {
+    if (data?.playlist) {
+      addRecentPlay({
+        id,
+        title: data?.playlist.name,
+        type: "playlist",
+        coverArt: cover?.data,
+      });
+    }
+  };
+
   return (
     <Box>
       <SafeAreaView className="h-full">
@@ -200,9 +213,9 @@ export default function PlaylistScreen() {
               track={item}
               index={index}
               handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
+              onPlayCallback={handleTrackPressCallback}
             />
           )}
-          estimatedItemSize={70}
           ListEmptyComponent={() => (
             <VStack className="items-center justify-center my-6">
               <Text className="text-white text-md">This playlist is empty</Text>

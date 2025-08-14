@@ -15,14 +15,14 @@ export interface AlbumID3 {
   displayArtist?: string;
   isCompilation?: boolean;
   musicBrainzId?: string;
-  originalReleaseDate?: { day: number, month: number, year: number };
+  originalReleaseDate?: { day: number; month: number; year: number };
   played?: Date;
   recordLabels?: { name: string }[];
-  releaseDate?: { day: number, month: number, year: number };
+  releaseDate?: { day: number; month: number; year: number };
   sortName?: string;
   userRating?: number;
   version?: string;
-  artists?: { id: string, name: string }[];
+  artists?: { id: string; name: string }[];
 }
 
 export interface AlbumInfo {
@@ -162,8 +162,8 @@ export interface Child {
   channelCount?: number;
   played?: Date;
   genres?: { name: string }[];
-  replayGain?: { albumPeak: number, trackPeak: number };
-  artists?: { id: string, name: string }[];
+  replayGain?: { albumPeak: number; trackPeak: number };
+  artists?: { id: string; name: string }[];
 }
 
 export interface Directory {
@@ -325,7 +325,13 @@ export interface Podcasts {
   channel?: PodcastChannel[];
 }
 
-export type PodcastStatus = "new" | "downloading" | "completed" | "error" | "deleted" | "skipped";
+export type PodcastStatus =
+  | "new"
+  | "downloading"
+  | "completed"
+  | "error"
+  | "deleted"
+  | "skipped";
 
 export interface BaseResponse {
   status: ResponseStatus;

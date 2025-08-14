@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import TrackPlayer, { AndroidAudioContentType, Capability, RepeatMode } from "react-native-track-player";
+import TrackPlayer, {
+  AndroidAudioContentType,
+  Capability,
+  RepeatMode,
+} from "react-native-track-player";
 
 const setupTrackPlayer = async () => {
   await TrackPlayer.setupPlayer({
@@ -14,12 +18,10 @@ const setupTrackPlayer = async () => {
       Capability.Stop,
       Capability.SkipToNext,
       Capability.SkipToPrevious,
-    ]
-  })
+    ],
+  });
   await TrackPlayer.setRepeatMode(RepeatMode.Off);
 };
-
-
 
 export const useSetupTrackPlayer = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -31,7 +33,7 @@ export const useSetupTrackPlayer = () => {
           setIsInitialized(true);
         })
         .catch((error) => {
-          console.log(error)
+          console.log(error);
           setIsInitialized(false);
           console.error(error);
         });

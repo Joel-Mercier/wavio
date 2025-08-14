@@ -30,7 +30,6 @@ export default function GenreScreen() {
         renderItem={({ item, index }: { item: AlbumID3; index: number }) => (
           <AlbumListItem album={item} index={index} />
         )}
-        estimatedItemSize={70}
         ListHeaderComponent={() => (
           <>
             <LinearGradient

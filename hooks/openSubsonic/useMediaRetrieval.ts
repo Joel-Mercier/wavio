@@ -1,4 +1,13 @@
-import { stream, download, getAvatar, getCaptions, getCoverArt, getLyrics, getLyricsBySongId, hls } from "@/services/openSubsonic/mediaRetrieval";
+import {
+  stream,
+  download,
+  getAvatar,
+  getCaptions,
+  getCoverArt,
+  getLyrics,
+  getLyricsBySongId,
+  hls,
+} from "@/services/openSubsonic/mediaRetrieval";
 import { useQuery } from "@tanstack/react-query";
 
 export const useDownload = (id: string) => {
@@ -19,7 +28,10 @@ export const useGetAvatar = (username: string) => {
   });
 };
 
-export const useGetCaptions = (id: string, { format }: { format: "srt" | "vvt" }) => {
+export const useGetCaptions = (
+  id: string,
+  { format }: { format: "srt" | "vvt" },
+) => {
   return useQuery({
     queryKey: ["getCaptions", id, format],
     queryFn: () => {
@@ -28,7 +40,11 @@ export const useGetCaptions = (id: string, { format }: { format: "srt" | "vvt" }
   });
 };
 
-export const useGetCoverArt = (id: string, params: { size?: number }, enabled = true) => {
+export const useGetCoverArt = (
+  id: string,
+  params: { size?: number },
+  enabled = true,
+) => {
   return useQuery({
     queryKey: ["getCoverArt", id, params],
     queryFn: () => {
@@ -38,7 +54,7 @@ export const useGetCoverArt = (id: string, params: { size?: number }, enabled = 
   });
 };
 
-export const useGetLyrics = (params: { artist?: string, title?: string }) => {
+export const useGetLyrics = (params: { artist?: string; title?: string }) => {
   return useQuery({
     queryKey: ["getLyrics", params],
     queryFn: () => {
@@ -65,7 +81,17 @@ export const useHls = (id: string, bitRate: number, audioTrack: string) => {
   });
 };
 
-export const useStream = (id: string, params: { maxBitRate?: number, format?: "mp3" | "flv" | "raw", timeOffset?: number, size?: string, estimateContentLength?: boolean, converted?: boolean }) => {
+export const useStream = (
+  id: string,
+  params: {
+    maxBitRate?: number;
+    format?: "mp3" | "flv" | "raw";
+    timeOffset?: number;
+    size?: string;
+    estimateContentLength?: boolean;
+    converted?: boolean;
+  },
+) => {
   return useQuery({
     queryKey: ["stream", id, params],
     queryFn: () => {

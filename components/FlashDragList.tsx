@@ -1,8 +1,4 @@
-import {
-  CellContainer,
-  FlashList,
-  type FlashListProps,
-} from "@shopify/flash-list";
+import { FlashList, type FlashListProps } from "@shopify/flash-list";
 import React, {
   type FunctionComponent,
   useCallback,
@@ -13,7 +9,12 @@ import React, {
   forwardRef,
   type PropsWithChildren,
 } from "react";
-import { type LayoutChangeEvent, Platform, type ViewStyle } from "react-native";
+import {
+  type LayoutChangeEvent,
+  Platform,
+  View,
+  type ViewStyle,
+} from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -31,7 +32,7 @@ import Animated, {
   useAnimatedReaction,
 } from "react-native-reanimated";
 
-const AnimatedCellContainer = Animated.createAnimatedComponent(CellContainer);
+const AnimatedCellContainer = Animated.createAnimatedComponent(View);
 
 type ItemWrapperProps = PropsWithChildren<{
   index: number;
@@ -354,7 +355,6 @@ const FlashDragList: FunctionComponent<FlashDragListProps> = (props) => {
               active={active}
             />
           )}
-          estimatedItemSize={props.estimatedItemSize ?? itemsSize}
           scrollEnabled={(props.scrollEnabled ?? true) && !active}
           onScroll={scrollHandler}
           scrollEventThrottle={16}

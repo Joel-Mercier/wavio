@@ -12,6 +12,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import type { Child } from "@/services/openSubsonic/types";
+import useRecentPlays from "@/stores/recentPlays";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -20,6 +21,11 @@ import { ArrowLeft, Play, Shuffle } from "lucide-react-native";
 export default function FavoritesScreen() {
   const router = useRouter();
   const { data, isLoading, error } = useStarred2({});
+  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+
+  const handleTrackPressCallback = () => {
+    addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
+  };
 
   return (
     <Box className="h-full">
@@ -27,10 +33,13 @@ export default function FavoritesScreen() {
         data={data?.starred2.song}
         renderItem={({ item, index }: { item: Child; index: number }) => (
           <Box className="px-6">
-            <TrackListItem track={item} index={index} />
+            <TrackListItem
+              track={item}
+              index={index}
+              onPlayCallback={handleTrackPressCallback}
+            />
           </Box>
         )}
-        estimatedItemSize={70}
         ListHeaderComponent={() => (
           <>
             <LinearGradient

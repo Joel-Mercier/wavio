@@ -6,4 +6,4 @@ export const arrayBufferToBase64 = (arrayBuffer: ArrayBuffer) => {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
-}
+};

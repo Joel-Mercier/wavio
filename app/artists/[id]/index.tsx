@@ -19,6 +19,7 @@ import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import useRecentPlays from "@/stores/recentPlays";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -60,6 +61,7 @@ export default function ArtistScreen() {
   } = useTopSongs(data?.artist.name, { count: 10 });
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const addRecentPlay = useRecentPlays.use.addRecentPlay();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -163,6 +165,17 @@ export default function ArtistScreen() {
     );
   };
 
+  const handleTrackPressCallback = () => {
+    if (data?.artist) {
+      addRecentPlay({
+        id,
+        title: data?.artist.name,
+        type: "artist",
+        coverArt: cover?.data,
+      });
+    }
+  };
+
   return (
     <Box className="h-full">
       <FlashList
@@ -171,7 +184,6 @@ export default function ArtistScreen() {
           <AlbumListItem album={item} index={index} />
         )}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={70}
         ListHeaderComponent={() => (
           <>
             <ImageBackground
@@ -250,6 +262,7 @@ export default function ArtistScreen() {
                     showIndex
                     track={song}
                     index={index}
+                    onPlayCallback={handleTrackPressCallback}
                   />
                 ))}
                 {!isLoadingTopSongs &&
@@ -264,7 +277,9 @@ export default function ArtistScreen() {
         )}
         ListFooterComponent={() => (
           <VStack className="px-6 my-6">
-            <Text className="text-white font-bold">14 songs ⦁ 45 min</Text>
+            <Text className="text-white font-bold">
+              {data?.artist.album?.length} albums
+            </Text>
           </VStack>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}

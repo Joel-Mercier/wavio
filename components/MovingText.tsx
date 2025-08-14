@@ -50,7 +50,7 @@ export default function MovingText({
     <Animated.Text
       numberOfLines={1}
       className="text-white font-bold text-md"
-      style={[animatedStyle, shouldAnimate && { width: 9999, paddingLeft: 10 }]}
+      style={[animatedStyle, shouldAnimate && { paddingLeft: 10 }]}
     >
       {text}
     </Animated.Text>

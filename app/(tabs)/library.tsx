@@ -194,7 +194,6 @@ export default function LibraryScreen() {
           );
         }}
         extraData={{ layout }}
-        estimatedItemSize={70}
         ListHeaderComponent={() => (
           <>
             <Box onLayout={handleHeaderLayout}>

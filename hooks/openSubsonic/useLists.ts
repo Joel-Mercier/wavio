@@ -1,7 +1,24 @@
-import { type AlbumListType, getAlbumList, getAlbumList2, getNowPlaying, getRandomSongs, getSongsByGenre, getStarred, getStarred2 } from "@/services/openSubsonic/lists";
+import {
+  type AlbumListType,
+  getAlbumList,
+  getAlbumList2,
+  getNowPlaying,
+  getRandomSongs,
+  getSongsByGenre,
+  getStarred,
+  getStarred2,
+} from "@/services/openSubsonic/lists";
 import { useQuery } from "@tanstack/react-query";
 
-export const useAlbumList = (params: { type: AlbumListType, size?: number, offset?: number, fromYear?: number, toYear?: number, genre?: string, musicFolderId?: string }) => {
+export const useAlbumList = (params: {
+  type: AlbumListType;
+  size?: number;
+  offset?: number;
+  fromYear?: number;
+  toYear?: number;
+  genre?: string;
+  musicFolderId?: string;
+}) => {
   return useQuery({
     queryKey: ["albumList", params],
     queryFn: () => {
@@ -11,7 +28,15 @@ export const useAlbumList = (params: { type: AlbumListType, size?: number, offse
   });
 };
 
-export const useAlbumList2 = (params: { type: AlbumListType, size?: number, offset?: number, fromYear?: number, toYear?: number, genre?: string, musicFolderId?: string }) => {
+export const useAlbumList2 = (params: {
+  type: AlbumListType;
+  size?: number;
+  offset?: number;
+  fromYear?: number;
+  toYear?: number;
+  genre?: string;
+  musicFolderId?: string;
+}) => {
   return useQuery({
     queryKey: ["albumList2", params],
     queryFn: () => {
@@ -30,7 +55,13 @@ export const usePlayNow = () => {
   });
 };
 
-export const useRandomSongs = (params: { size?: number, fromYear?: number, toYear?: number, genre?: string, musicFolderId?: string }) => {
+export const useRandomSongs = (params: {
+  size?: number;
+  fromYear?: number;
+  toYear?: number;
+  genre?: string;
+  musicFolderId?: string;
+}) => {
   return useQuery({
     queryKey: ["randomSongs", params],
     queryFn: () => {
@@ -39,7 +70,12 @@ export const useRandomSongs = (params: { size?: number, fromYear?: number, toYea
   });
 };
 
-export const useSongsByGenre = (params: { genre: string, count?: number, offset?: number, musicFolderId?: string }) => {
+export const useSongsByGenre = (params: {
+  genre: string;
+  count?: number;
+  offset?: number;
+  musicFolderId?: string;
+}) => {
   return useQuery({
     queryKey: ["songsByGenre", params],
     queryFn: () => {

@@ -61,6 +61,7 @@ interface TrackListItemProps {
   showIndex?: boolean;
   handleRemoveFromPlaylist?: (index: string) => void;
   className?: string;
+  onPlayCallback?: () => void;
 }
 
 export default function TrackListItem({
@@ -70,6 +71,7 @@ export default function TrackListItem({
   showIndex = false,
   handleRemoveFromPlaylist,
   className,
+  onPlayCallback,
 }: TrackListItemProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -230,6 +232,9 @@ export default function TrackListItem({
     await TrackPlayer.add([childToTrack(track, cover || trackCover.data)]);
 
     await TrackPlayer.play();
+    if (onPlayCallback) {
+      onPlayCallback();
+    }
   }, [track, cover, trackCover]);
 
   return (
@@ -280,6 +285,7 @@ export default function TrackListItem({
               <Heart
                 color={themeConfig.theme.colors.emerald[500]}
                 size={24}
+                stroke={undefined}
                 fill={themeConfig.theme.colors.emerald[500]}
               />
             </FadeOutScaleDown>

@@ -107,7 +107,6 @@ export default function AddToPlaylistScreen() {
           />
         )}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={75}
         extraData={{ selectedPlaylists }}
         ListHeaderComponent={
           <VStack className="px-6">

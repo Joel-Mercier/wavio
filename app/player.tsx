@@ -18,6 +18,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
 import { useRepeatMode } from "@/hooks/useRepeatMode";
 import {
   BottomSheetBackdrop,
@@ -61,6 +62,9 @@ export default function PlayerScreen() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const activeTrack = useActiveTrack();
+  const colors = useImageColors(
+    `data:image/jpeg;base64,${activeTrack?.artwork}`,
+  );
   const playbackState = usePlaybackState();
   const { position, buffered, duration } = useProgress();
   const doFavorite = useStar();
@@ -172,7 +176,11 @@ export default function PlayerScreen() {
 
   return (
     <LinearGradient
-      colors={[themeConfig.theme.colors.blue[500], "#191A1F"]}
+      colors={[
+        (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+          themeConfig.theme.colors.blue[500],
+        "#191A1F",
+      ]}
       locations={[0, 0.8]}
     >
       <SafeAreaView>

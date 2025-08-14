@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react"
-import { type ImageColorsResult, getColors } from 'react-native-image-colors'
+import { useEffect, useState } from "react";
+import { type ImageColorsResult, getColors } from "react-native-image-colors";
 
 const useImageColors = (url: string) => {
-  const [colors, setColors] = useState<ImageColorsResult | null>(null)
+  const [colors, setColors] = useState<ImageColorsResult | null>(null);
 
   useEffect(() => {
     getColors(url, {
-      fallback: '#fff',
+      fallback: "#fff",
       cache: true,
       key: url,
-    }).then(setColors)
-  }, [url])
+    }).then(setColors);
+  }, [url]);
 
-  return colors
-}
+  return colors;
+};
 
-export default useImageColors
+export default useImageColors;

@@ -42,7 +42,7 @@ export const getCoverArt = async (id: string, { size }: { size?: number }) => {
     },
   });
 
-  return arrayBufferToBase64(rsp.data)
+  return arrayBufferToBase64(rsp.data);
 };
 
 export const getLyrics = async ({
@@ -50,24 +50,23 @@ export const getLyrics = async ({
   title,
 }: { artist?: string; title?: string }) => {
   try {
-    const rsp = await openSubsonicApiInstance.get<OpenSubsonicResponse<{ lyrics: Lyrics }>>(
-      "/rest/getLyrics",
-      {
-        params: {
-          artist,
-          title,
-        },
+    const rsp = await openSubsonicApiInstance.get<
+      OpenSubsonicResponse<{ lyrics: Lyrics }>
+    >("/rest/getLyrics", {
+      params: {
+        artist,
+        title,
       },
-    );
+    });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error
+      throw rsp.data["subsonic-response"].error;
     }
     return rsp.data["subsonic-response"];
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw error
+      throw error;
     }
-    throw error
+    throw error;
   }
 };
 
@@ -81,14 +80,14 @@ export const getLyricsBySongId = async (id: string) => {
       },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error
+      throw rsp.data["subsonic-response"].error;
     }
     return rsp.data["subsonic-response"];
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw error
+      throw error;
     }
-    throw error
+    throw error;
   }
 };
 

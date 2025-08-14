@@ -16,5 +16,5 @@ export function childToTrack(child: Child, cover?: string) {
     starred: child.starred,
     artistId: child.artistId,
     albumId: child.albumId,
-  }
+  };
 }

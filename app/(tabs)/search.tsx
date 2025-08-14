@@ -41,7 +41,6 @@ export default function SearchScreen() {
             </Box>
           )}
           numColumns={2}
-          estimatedItemSize={98}
           ListHeaderComponent={() => (
             <>
               <HStack className="my-6 items-center justify-between">

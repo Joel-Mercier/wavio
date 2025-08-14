@@ -7,7 +7,7 @@ export type RecentPlay = {
   title: string;
   type: "album" | "artist" | "playlist" | "favorites";
   coverArt?: string;
-}
+};
 
 interface RecentPlaysStore {
   recentPlays: RecentPlay[];

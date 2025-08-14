@@ -78,13 +78,12 @@ export default function SearchResultsScreen() {
             <SearchResultListItem searchResult={item} />
           </Box>
         )}
-        estimatedItemSize={70}
         contentInsetAdjustmentBehavior="automatic"
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={
           <>
             <Box className="bg-primary-600 px-6 py-6 mb-6">
-              <SafeAreaView>
+              <SafeAreaView edges={["top"]}>
                 <HStack className="items-center">
                   <FadeOutScaleDown
                     className="mr-4"
