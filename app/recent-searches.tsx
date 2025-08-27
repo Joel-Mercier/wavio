@@ -22,7 +22,8 @@ import { useMemo, useState } from "react";
 export default function RecentSearchesScreen() {
   const router = useRouter();
   const recentSearches = useRecentSearches.use.recentSearches();
-  const setRecentSearches = useRecentSearches.use.setRecentSearches();
+  const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
+  const removeRecentSearch = useRecentSearches.use.removeRecentSearch();
   const form = useForm({
     defaultValues: {
       query: "",
@@ -45,23 +46,23 @@ export default function RecentSearchesScreen() {
 
     const searchData = [];
     if (data?.searchResult3?.album) {
-      searchData.push(...data?.searchResult3?.album);
+      searchData.push(...data.searchResult3.album);
     }
     if (data?.searchResult3?.artist) {
-      searchData.push(...data?.searchResult3?.artist);
+      searchData.push(...data.searchResult3.artist);
     }
     if (data?.searchResult3?.song) {
-      searchData.push(...data?.searchResult3?.song);
+      searchData.push(...data.searchResult3.song);
     }
     return searchData;
   }, [data]);
 
   const handleClearAllPress = () => {
-    setRecentSearches([]);
+    clearRecentSearches();
   };
 
   const handleRecentSearchDeletePress = (id: string) => {
-    setRecentSearches(recentSearches.filter((search) => search.id !== id));
+    removeRecentSearch(id);
   };
 
   const handleSearchClearPress = () => {

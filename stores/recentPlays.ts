@@ -1,6 +1,7 @@
-import { storage } from "@/config/storage";
+import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export type RecentPlay = {
   id: string;
@@ -11,32 +12,32 @@ export type RecentPlay = {
 
 interface RecentPlaysStore {
   recentPlays: RecentPlay[];
-  setRecentPlays: (recentPlays: RecentPlay[]) => void;
   addRecentPlay: (recentPlay: RecentPlay) => void;
 }
 
-const useRecentPlaysBase = create<RecentPlaysStore>()((set) => ({
-  recentPlays: [],
-  setRecentPlays: (recentPlays: RecentPlay[]) => {
-    set(() => {
-      storage.set("recentPlays", JSON.stringify(recentPlays));
-      return { recentPlays };
-    });
-  },
-  addRecentPlay: (recentPlay: RecentPlay) => {
-    set((state) => {
-      if (!state.recentPlays.includes(recentPlay)) {
-        const newRecentPlays = [recentPlay, ...state.recentPlays];
-        if (newRecentPlays.length > 8) {
-          newRecentPlays.length = 8;
-        }
-        storage.set("recentPlays", JSON.stringify(newRecentPlays));
-        return { recentPlays: newRecentPlays };
-      }
-      return { recentPlays: state.recentPlays };
-    });
-  },
-}));
+const useRecentPlaysBase = create<RecentPlaysStore>()(
+  persist(
+    (set) => ({
+      recentPlays: [],
+      addRecentPlay: (recentPlay: RecentPlay) => {
+        set((state) => {
+          if (!state.recentPlays.some((play) => play.id === recentPlay.id)) {
+            const newRecentPlays = [recentPlay, ...state.recentPlays];
+            if (newRecentPlays.length > 8) {
+              newRecentPlays.length = 8;
+            }
+            return { recentPlays: newRecentPlays };
+          }
+          return { recentPlays: state.recentPlays };
+        });
+      },
+    }),
+    {
+      name: "recentPlays",
+      storage: createJSONStorage(() => zustandStorage),
+    },
+  ),
+);
 
 const useRecentPlays = createSelectors(useRecentPlaysBase);
 

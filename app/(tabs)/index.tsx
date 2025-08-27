@@ -71,7 +71,7 @@ export default function HomeScreen() {
               {recentPlays.reduce((rows: JSX.Element[], play, index) => {
                 if (index % 2 === 0) {
                   rows.push(
-                    <HStack key={`row-${index}`} className="gap-x-4">
+                    <HStack key={`row-${play.id}`} className="gap-x-4">
                       <HomeShortcut key={play.id} recentPlay={play} />
                       {recentPlays[index + 1] && (
                         <HomeShortcut

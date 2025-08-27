@@ -69,9 +69,7 @@ export default function RootLayout() {
   const hasSetupPlayer = useSetupTrackPlayer();
   useLogTrackPlayerState();
 
-  // const trackPlayerLoaded = true;
-  const setRecentSearches = useRecentSearches.use.setRecentSearches();
-  const setRecentPlays = useRecentPlays.use.setRecentPlays();
+  // const hasSetupPlayer = true;
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,
@@ -86,19 +84,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", onAppStateChange);
-
-    setRecentSearches(
-      JSON.parse(
-        storage.getString("recentSearches") ||
-          '[{ "id": "test", "title": "Test", "type": "query" }, { "id": "1", "title": "Album", "type": "album" }, { "id": "2", "title": "Artist", "type": "artist" }, { "id": "3", "title": "Playlist", "type": "playlist" }, { "id": "4", "title": "Song", "type": "song" }]',
-      ),
-    );
-    setRecentPlays(
-      JSON.parse(
-        storage.getString("recentPlays") ||
-          '[{ "id": "favorites", "title": "Favorites", "type": "favorites" }]',
-      ),
-    );
 
     return () => subscription.remove();
   }, []);
