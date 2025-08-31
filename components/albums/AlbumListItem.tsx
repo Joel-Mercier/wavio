@@ -5,8 +5,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { Disc3 } from "lucide-react-native";
 
@@ -21,7 +21,6 @@ export default function AlbumListItem({
   index,
   layout = "vertical",
 }: AlbumListItemProps) {
-  const cover = useGetCoverArt(album.coverArt, { size: 200 }, !!album.coverArt);
   return (
     <FadeOutScaleDown
       href={`/albums/${album.id}`}
@@ -38,9 +37,9 @@ export default function AlbumListItem({
           "flex-row items-center": layout === "vertical",
         })}
       >
-        {cover.data ? (
+        {album.coverArt ? (
           <Image
-            source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+            source={{ uri: artworkUrl(album.coverArt) }}
             className="w-32 h-32 rounded-md aspect-square"
             alt="Album cover"
           />

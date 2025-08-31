@@ -5,8 +5,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { User } from "lucide-react-native";
 
 interface ArtistListItemProps {
@@ -14,17 +14,12 @@ interface ArtistListItemProps {
 }
 
 export default function ArtistListItem({ artist }: ArtistListItemProps) {
-  const cover = useGetCoverArt(
-    artist.coverArt,
-    { size: 200 },
-    !!artist.coverArt,
-  );
   return (
     <FadeOutScaleDown href={`/artists/${artist.id}`} className="mr-6">
       <VStack className="gap-y-2 w-32">
-        {cover.data ? (
+        {artist.coverArt ? (
           <Image
-            source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+            source={{ uri: artworkUrl(artist.coverArt) }}
             className="w-32 h-32 rounded-full aspect-square"
             alt="Artist cover"
           />

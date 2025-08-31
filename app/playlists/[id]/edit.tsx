@@ -11,12 +11,12 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import {
   usePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
@@ -42,11 +42,6 @@ export default function EditPlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
   const doUpdatePlaylist = useUpdatePlaylist();
-  const cover = useGetCoverArt(
-    data?.playlist.coverArt,
-    { size: 400 },
-    !!data?.playlist.coverArt,
-  );
   const form = useForm({
     defaultValues: {
       name: data?.playlist.name ?? "",
@@ -195,9 +190,9 @@ export default function EditPlaylistScreen() {
         ListHeaderComponent={
           <VStack className="px-6">
             <HStack className="items-center justify-center">
-              {cover.data ? (
+              {data?.playlist?.coverArt ? (
                 <Image
-                  source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                  source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
                   className="w-[50%] aspect-square rounded-md"
                   alt="Playlist cover"
                 />

@@ -5,8 +5,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { Playlist } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { ListMusic } from "lucide-react-native";
 
 interface PlaylistListItemProps {
@@ -14,18 +14,12 @@ interface PlaylistListItemProps {
 }
 
 export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
-  const cover = useGetCoverArt(
-    playlist.coverArt,
-    { size: 200 },
-    !!playlist.coverArt,
-  );
-
   return (
     <FadeOutScaleDown href={`/playlists/${playlist.id}`} className="mr-6">
       <VStack className="gap-y-2 w-32">
-        {cover.data ? (
+        {playlist.coverArt ? (
           <Image
-            source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+            source={{ uri: artworkUrl(playlist.coverArt) }}
             className="w-32 h-32 rounded-md"
             alt="Playlist cover"
           />

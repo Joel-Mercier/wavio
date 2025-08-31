@@ -6,18 +6,13 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { usePathname, useRouter } from "expo-router";
 import { AudioLines, Pause, Play } from "lucide-react-native";
-import TrackPlayer, {
-  State,
-  useActiveTrack,
-  usePlaybackState,
-} from "react-native-track-player";
+import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import FadeOut from "./FadeOut";
 import MovingText from "./MovingText";
 import { Box } from "./ui/box";
 
 export default function FloatingPlayer() {
-  const activeTrack = useActiveTrack();
-  const playbackState = usePlaybackState();
+  const { state, playingTrack } = useAudioPro();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,14 +21,14 @@ export default function FloatingPlayer() {
   };
 
   const handlePlayPausePress = () => {
-    if (playbackState.state === State.Playing) {
-      TrackPlayer.pause();
+    if (state === AudioProState.PLAYING) {
+      AudioPro.pause();
     } else {
-      TrackPlayer.play();
+      AudioPro.resume();
     }
   };
 
-  if (!activeTrack || pathname.startsWith("/player")) {
+  if (!playingTrack || pathname.startsWith("/player")) {
     return null;
   }
 
@@ -44,9 +39,9 @@ export default function FloatingPlayer() {
     >
       <HStack className="h-16 px-4 py-2 bg-primary-500 rounded-md items-center justify-between">
         <HStack className="items-center">
-          {activeTrack.artwork ? (
+          {playingTrack.artwork ? (
             <Image
-              source={{ uri: `data:image/jpeg;base64,${activeTrack.artwork}` }}
+              source={{ uri: playingTrack.artwork }}
               className="w-12 h-12 rounded-md aspect-square"
               alt="Track cover"
             />
@@ -62,16 +57,16 @@ export default function FloatingPlayer() {
               animationThreshold={45}
             /> */}
             <Text numberOfLines={1} className="text-white font-bold text-md">
-              {activeTrack.title}
+              {playingTrack.title}
             </Text>
             <Text numberOfLines={1} className="text-primary-50">
-              {activeTrack.artist}
+              {playingTrack.artist}
             </Text>
           </VStack>
         </HStack>
         <HStack className="items-center">
           <FadeOut onPress={handlePlayPausePress}>
-            {playbackState.state === State.Playing ? (
+            {state === AudioProState.PLAYING ? (
               <Pause
                 color={themeConfig.theme.colors.white}
                 stroke={undefined}

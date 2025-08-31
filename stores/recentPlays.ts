@@ -10,31 +10,80 @@ export type RecentPlay = {
   coverArt?: string;
 };
 
+// Default to Favorites to ensure it appears after hydration unless overridden
+let ensuredRecentPlayOnHydration: RecentPlay | null = {
+  id: "favorites",
+  title: "Favorites",
+  type: "favorites",
+};
+
+export const setEnsuredRecentPlayOnHydration = (
+  recentPlay: RecentPlay | null,
+) => {
+  ensuredRecentPlayOnHydration = recentPlay;
+};
+
 interface RecentPlaysStore {
   recentPlays: RecentPlay[];
   addRecentPlay: (recentPlay: RecentPlay) => void;
+  insertRecentPlayAtTop: (recentPlay: RecentPlay) => void;
 }
+
+// Capture store reference for use in persist callbacks
+let storeRef: { getState: () => RecentPlaysStore } | null = null;
 
 const useRecentPlaysBase = create<RecentPlaysStore>()(
   persist(
-    (set) => ({
-      recentPlays: [],
-      addRecentPlay: (recentPlay: RecentPlay) => {
-        set((state) => {
-          if (!state.recentPlays.some((play) => play.id === recentPlay.id)) {
-            const newRecentPlays = [recentPlay, ...state.recentPlays];
-            if (newRecentPlays.length > 8) {
-              newRecentPlays.length = 8;
+    (set, _get, store) => {
+      storeRef = store as unknown as { getState: () => RecentPlaysStore };
+      const pinFavoritesAndCap = (items: RecentPlay[]): RecentPlay[] => {
+        const capped = items.slice(0, 8);
+        const favIndex = capped.findIndex((p) => p.id === "favorites");
+        if (favIndex > 0) {
+          const [fav] = capped.splice(favIndex, 1);
+          capped.unshift(fav);
+        }
+        return capped;
+      };
+      return {
+        recentPlays: [],
+        addRecentPlay: (recentPlay: RecentPlay) => {
+          set((state) => {
+            if (state.recentPlays.some((play) => play.id === recentPlay.id)) {
+              return { recentPlays: pinFavoritesAndCap(state.recentPlays) };
             }
-            return { recentPlays: newRecentPlays };
-          }
-          return { recentPlays: state.recentPlays };
-        });
-      },
-    }),
+            const newRecentPlays = [recentPlay, ...state.recentPlays];
+            return { recentPlays: pinFavoritesAndCap(newRecentPlays) };
+          });
+        },
+        insertRecentPlayAtTop: (recentPlay: RecentPlay) => {
+          set((state) => {
+            const withoutDuplicate = state.recentPlays.filter(
+              (play) => play.id !== recentPlay.id,
+            );
+            const newRecentPlays = [recentPlay, ...withoutDuplicate];
+            return { recentPlays: pinFavoritesAndCap(newRecentPlays) };
+          });
+        },
+      };
+    },
     {
       name: "recentPlays",
       storage: createJSONStorage(() => zustandStorage),
+      onRehydrateStorage: () => {
+        return () => {
+          if (!ensuredRecentPlayOnHydration) return;
+          const state = (
+            storeRef as { getState: () => RecentPlaysStore }
+          ).getState();
+          const exists = state.recentPlays.some(
+            (play: RecentPlay) => play.id === ensuredRecentPlayOnHydration?.id,
+          );
+          if (!exists) {
+            state.insertRecentPlayAtTop(ensuredRecentPlayOnHydration);
+          }
+        };
+      },
     },
   ),
 );

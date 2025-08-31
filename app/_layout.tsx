@@ -14,13 +14,7 @@ import { SystemBars } from "react-native-edge-to-edge";
 import "react-native-reanimated";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
-import { storage } from "@/config/storage";
 import { themeConfig } from "@/config/theme";
-import { useLogTrackPlayerState } from "@/hooks/useLogTrackPlayerState";
-import { useSetupTrackPlayer } from "@/hooks/useSetupTrackPlayer";
-import PlaybackService from "@/services/playbackService";
-import useRecentPlays from "@/stores/recentPlays";
-import useRecentSearches from "@/stores/recentSearches";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -39,12 +33,9 @@ import {
   ReanimatedLogLevel,
   configureReanimatedLogger,
 } from "react-native-reanimated";
-import TrackPlayer from "react-native-track-player";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-TrackPlayer.registerPlaybackService(() => PlaybackService);
 
 const queryClient = new QueryClient();
 
@@ -66,10 +57,6 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
-  const hasSetupPlayer = useSetupTrackPlayer();
-  useLogTrackPlayerState();
-
-  // const hasSetupPlayer = true;
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,
@@ -77,10 +64,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded && hasSetupPlayer) {
+    if (loaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, hasSetupPlayer]);
+  }, [loaded]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", onAppStateChange);
@@ -88,7 +75,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  if (!loaded || !hasSetupPlayer) {
+  if (!loaded) {
     return null;
   }
 

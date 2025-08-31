@@ -6,8 +6,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { RecentSearch } from "@/stores/recentSearches";
+import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { type Href, Link } from "expo-router";
 import {
@@ -46,11 +46,6 @@ export default function RecentSearchListItem({
   recentSearch,
   handleDeletePress,
 }: { recentSearch: RecentSearch; handleDeletePress: (id: string) => void }) {
-  const cover = useGetCoverArt(
-    recentSearch.coverArt,
-    { size: 200 },
-    !!recentSearch.coverArt,
-  );
   const url = useMemo<Href>(() => {
     if (recentSearch.type === "query") {
       return `/search-results?query=${recentSearch.title}`;
@@ -74,9 +69,9 @@ export default function RecentSearchListItem({
       <FadeOutScaleDown>
         <HStack className="items-center justify-between mb-4">
           <HStack className="items-center">
-            {cover.data ? (
+            {recentSearch.coverArt ? (
               <Image
-                source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+                source={{ uri: artworkUrl(recentSearch.coverArt) }}
                 className="w-16 h-16 rounded-md aspect-square"
                 alt="Recent search cover"
               />

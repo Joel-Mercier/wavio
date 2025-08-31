@@ -19,7 +19,6 @@ import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import {
   useDeletePlaylist,
   usePlaylist,
@@ -29,6 +28,7 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -63,11 +63,6 @@ export default function PlaylistScreen() {
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
-  const cover = useGetCoverArt(
-    data?.playlist.coverArt,
-    { size: 400 },
-    !!data?.playlist.coverArt,
-  );
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
 
   const handlePresentModalPress = useCallback(() => {
@@ -198,7 +193,7 @@ export default function PlaylistScreen() {
         id,
         title: data?.playlist.name,
         type: "playlist",
-        coverArt: cover?.data,
+        coverArt: data?.playlist?.coverArt,
       });
     }
   };
@@ -236,9 +231,9 @@ export default function PlaylistScreen() {
                   <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
                 </FadeOutScaleDown>
                 {/* https://github.com/navidrome/navidrome/issues/406 */}
-                {cover.data ? (
+                {data?.playlist?.coverArt ? (
                   <Image
-                    source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                    source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
                     className="w-[70%] aspect-square rounded-md"
                     alt="Playlist cover"
                   />
@@ -328,11 +323,11 @@ export default function PlaylistScreen() {
         >
           <Box className="p-6 w-full pb-12">
             <HStack className="items-center">
-              {cover?.data ? (
+              {data?.playlist?.coverArt ? (
                 <Image
-                  source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                  source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
                   className="w-16 h-16 rounded-full aspect-square"
-                  alt="Track cover"
+                  alt="Playlist cover"
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">

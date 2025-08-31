@@ -5,6 +5,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { themeConfig } from "@/config/theme";
 import type { RecentPlay } from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
 import { LinearGradient } from "expo-linear-gradient";
 import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
 
@@ -31,7 +32,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
         {recentPlay.coverArt ? (
           <Image
-            source={{ uri: `data:image/jpeg;base64,${recentPlay.coverArt}` }}
+            source={{ uri: artworkUrl(recentPlay.coverArt) }}
             className="w-16 h-16 aspect-square"
             alt="Home shortcut cover"
           />

@@ -19,13 +19,13 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import {
   useDeleteShare,
   useUpdateShare,
 } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -51,11 +51,6 @@ export default function ShareListItem({ share }: { share: Share }) {
   const doDeleteShare = useDeleteShare();
   const doUpdateShare = useUpdateShare();
   const toast = useToast();
-  const cover = useGetCoverArt(
-    share.entry[0].coverArt,
-    { size: 400 },
-    !!share.entry[0].coverArt,
-  );
   const form = useForm({
     defaultValues: {
       description: share.description,
@@ -154,9 +149,9 @@ export default function ShareListItem({ share }: { share: Share }) {
       >
         <HStack className="items-center justify-between">
           <HStack className="items-center">
-            {cover?.data ? (
+            {share.entry[0]?.coverArt ? (
               <Image
-                source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                source={{ uri: artworkUrl(share.entry[0].coverArt) }}
                 className="w-16 h-16 rounded-md aspect-square"
                 alt="Share cover"
               />

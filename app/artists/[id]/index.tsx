@@ -16,10 +16,10 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useArtist, useTopSongs } from "@/hooks/openSubsonic/useBrowsing";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -49,11 +49,6 @@ export default function ArtistScreen() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
-  const cover = useGetCoverArt(
-    data?.artist.coverArt,
-    { size: 400 },
-    !!data?.artist.coverArt,
-  );
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
@@ -171,7 +166,7 @@ export default function ArtistScreen() {
         id,
         title: data?.artist.name,
         type: "artist",
-        coverArt: cover?.data,
+        coverArt: data?.artist?.coverArt,
       });
     }
   };
@@ -187,7 +182,7 @@ export default function ArtistScreen() {
         ListHeaderComponent={() => (
           <>
             <ImageBackground
-              source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+              source={{ uri: artworkUrl(data?.artist?.coverArt) }}
               alt="Artist cover"
               className="h-96"
               resizeMode="cover"
@@ -304,9 +299,9 @@ export default function ArtistScreen() {
         >
           <Box className="p-6 w-full pb-12">
             <HStack className="items-center">
-              {cover?.data ? (
+              {data?.artist?.coverArt ? (
                 <Image
-                  source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                  source={{ uri: artworkUrl(data?.artist?.coverArt) }}
                   className="w-16 h-16 rounded-full aspect-square"
                   alt="Track cover"
                 />

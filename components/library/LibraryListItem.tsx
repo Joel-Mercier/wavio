@@ -7,12 +7,12 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type {
   AlbumID3,
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { LinearGradient } from "expo-linear-gradient";
 import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
@@ -53,7 +53,6 @@ export default function LibraryListItem({
   layout,
   index,
 }: LibraryListItemProps) {
-  const cover = useGetCoverArt(item.coverArt, { size: 200 }, !!item.coverArt);
   const type = useMemo(() => {
     if (item.isFavorites) {
       return { id: "favorites", label: "Playlist", url: "/favorites" };
@@ -81,13 +80,11 @@ export default function LibraryListItem({
           "flex-col items-start": layout === "grid",
         })}
       >
-        {cover.data ? (
+        {item.coverArt ? (
           <HStack>
             <Image
               source={{
-                uri:
-                  item.artistImageUrl ||
-                  `data:image/jpeg;base64,${cover?.data}`,
+                uri: item.artistImageUrl || artworkUrl(item.coverArt),
               }}
               className={cn("rounded-md aspect-square", {
                 "w-full": layout === "grid",

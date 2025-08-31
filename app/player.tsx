@@ -19,7 +19,6 @@ import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useRepeatMode } from "@/hooks/useRepeatMode";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -48,29 +47,26 @@ import {
   User,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef } from "react";
-import TrackPlayer, {
-  RepeatMode,
-  State,
-  useActiveTrack,
-  usePlaybackState,
-  useProgress,
-} from "react-native-track-player";
+import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 
 export default function PlayerScreen() {
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-  const activeTrack = useActiveTrack();
-  const colors = useImageColors(
-    `data:image/jpeg;base64,${activeTrack?.artwork}`,
-  );
-  const playbackState = usePlaybackState();
-  const { position, buffered, duration } = useProgress();
+  const {
+    state,
+    position,
+    duration,
+    playingTrack,
+    playbackSpeed,
+    volume,
+    error,
+  } = useAudioPro();
+  const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const toast = useToast();
-  const { repeatMode, setRepeatMode } = useRepeatMode();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -82,28 +78,24 @@ export default function PlayerScreen() {
   };
 
   const handlePlayPausePress = () => {
-    if (playbackState.state === State.Playing) {
-      TrackPlayer.pause();
+    if (state === AudioProState.PLAYING) {
+      AudioPro.pause();
     } else {
-      TrackPlayer.play();
+      AudioPro.resume();
     }
   };
 
-  const handleSliderChange = async (value: number) => {
-    await TrackPlayer.seekTo(value);
+  const handleSliderChange = (value: number) => {
+    AudioPro.seekTo(value);
   };
 
-  const handleNextPress = async () => {
-    await TrackPlayer.skipToNext();
-  };
+  const handleNextPress = () => {};
 
-  const handlePreviousPress = async () => {
-    await TrackPlayer.skipToPrevious();
-  };
+  const handlePreviousPress = () => {};
 
   const handleFavoritePress = () => {
     doFavorite.mutate(
-      { id: activeTrack.id },
+      { id: playingTrack?.id },
       {
         onSuccess: () => {
           toast.show({
@@ -137,7 +129,7 @@ export default function PlayerScreen() {
 
   const handleUnfavoritePress = () => {
     doUnfavorite.mutate(
-      { id: activeTrack.id },
+      { id: playingTrack?.id },
       {
         onSuccess: () => {
           toast.show({
@@ -169,10 +161,7 @@ export default function PlayerScreen() {
     );
   };
 
-  const handleRepeatModePress = async (repeatMode: RepeatMode) => {
-    await TrackPlayer.setRepeatMode(repeatMode);
-    setRepeatMode(repeatMode);
-  };
+  const handleRepeatModePress = (repeatMode: any) => {};
 
   return (
     <LinearGradient
@@ -199,10 +188,11 @@ export default function PlayerScreen() {
             </HStack>
             <VStack className="mt-12">
               <HStack className="mb-4">
-                {activeTrack?.artwork ? (
+                {playingTrack?.artwork ? (
                   <Image
                     source={{
-                      uri: `data:image/jpeg;base64,${activeTrack?.artwork}`,
+                      // uri: `data:image/jpeg;base64,${playingTrack?.artwork}`,
+                      uri: playingTrack?.artwork,
                     }}
                     className="w-full aspect-square rounded-md"
                     alt="cover"
@@ -219,15 +209,15 @@ export default function PlayerScreen() {
               <HStack className="items-center justify-between">
                 <VStack className="my-6">
                   <Heading className="text-white" size="xl">
-                    {activeTrack?.title}
+                    {playingTrack?.title}
                   </Heading>
                   <Text className="text-primary-100 text-lg">
-                    {activeTrack?.artist}
+                    {playingTrack?.artist}
                   </Text>
                 </VStack>
                 <FadeOut
                   onPress={
-                    activeTrack?.starred
+                    playingTrack?.starred
                       ? handleUnfavoritePress
                       : handleFavoritePress
                   }
@@ -235,12 +225,12 @@ export default function PlayerScreen() {
                   <Heart
                     size={24}
                     color={
-                      activeTrack?.starred
+                      playingTrack?.starred
                         ? themeConfig.theme.colors.emerald[500]
                         : "white"
                     }
                     fill={
-                      activeTrack?.starred
+                      playingTrack?.starred
                         ? themeConfig.theme.colors.emerald[500]
                         : "transparent"
                     }
@@ -268,7 +258,7 @@ export default function PlayerScreen() {
                 <HStack className="mt-2 items-center justify-between">
                   <Text className="text-primary-100 text-sm">{`${secondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
                   <Text className="text-primary-100 text-sm">
-                    {`${secondsToMinutes(activeTrack?.duration)}:${activeTrack?.duration % 60}`}
+                    {`${secondsToMinutes(duration)}:${duration % 60}`}
                   </Text>
                 </HStack>
               </VStack>
@@ -281,7 +271,7 @@ export default function PlayerScreen() {
                 </FadeOut>
                 <FadeOut onPress={handlePlayPausePress}>
                   <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                    {playbackState.state === State.Playing ? (
+                    {state === AudioProState.PLAYING ? (
                       <Pause
                         size={24}
                         color={themeConfig.theme.colors.gray[800]}
@@ -299,7 +289,7 @@ export default function PlayerScreen() {
                 <FadeOut onPress={handleNextPress}>
                   <SkipForward size={36} color="white" fill="white" />
                 </FadeOut>
-                {repeatMode === RepeatMode.Off && (
+                {/* {repeatMode === RepeatMode.Off && (
                   <FadeOut
                     onPress={() => handleRepeatModePress(RepeatMode.Queue)}
                   >
@@ -325,7 +315,7 @@ export default function PlayerScreen() {
                       color={themeConfig.theme.colors.emerald[500]}
                     />
                   </FadeOut>
-                )}
+                )} */}
               </HStack>
             </VStack>
           </VStack>
@@ -349,10 +339,10 @@ export default function PlayerScreen() {
           >
             <Box className="p-6 w-full pb-12">
               <HStack className="items-center">
-                {activeTrack?.artwork ? (
+                {playingTrack?.artwork ? (
                   <Image
                     source={{
-                      uri: `data:image/jpeg;base64,${activeTrack?.artwork}`,
+                      uri: `data:image/jpeg;base64,${playingTrack?.artwork}`,
                     }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"

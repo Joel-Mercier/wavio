@@ -1,6 +1,6 @@
 {
   "name": "wavio",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -83,6 +83,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
+    "react-native-audio-pro": "^10.0.1",
     "react-native-css-interop": "^0.1.22",
     "react-native-edge-to-edge": "^1.6.2",
     "react-native-gesture-handler": "~2.28.0",
@@ -93,7 +94,6 @@
     "react-native-safe-area-context": "5.6.1",
     "react-native-screens": "~4.15.3",
     "react-native-svg": "15.12.1",
-    "react-native-track-player": "npm:@weights-ai/react-native-track-player@^4.1.4",
     "react-native-web": "^0.21.1",
     "react-native-webview": "13.16.0",
     "tailwind-merge": "^3.3.1",

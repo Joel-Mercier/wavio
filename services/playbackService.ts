@@ -1,14 +1,41 @@
-import TrackPlayer, { Event } from "react-native-track-player";
-const PlaybackService = async () => {
-  TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play());
-  TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause());
-  TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.stop());
-  TrackPlayer.addEventListener(Event.RemoteNext, () =>
-    TrackPlayer.skipToNext(),
-  );
-  TrackPlayer.addEventListener(Event.RemotePrevious, () =>
-    TrackPlayer.skipToPrevious(),
-  );
-};
+import {
+  AudioPro,
+  AudioProContentType,
+  AudioProEventType,
+} from "react-native-audio-pro";
 
-export default PlaybackService;
+export function setupAudio() {
+  // Configure audio settings
+  AudioPro.configure({
+    contentType: AudioProContentType.MUSIC,
+    debug: __DEV__,
+    debugIncludesProgress: false,
+    progressIntervalMs: 1000,
+    showNextPrevControls: true,
+    showSkipControls: true,
+  });
+
+  AudioPro.addEventListener((event) => {
+    switch (event.type) {
+      case AudioProEventType.TRACK_ENDED:
+        // Auto-play next track when current track ends
+        break;
+
+      case AudioProEventType.SEEK_COMPLETE:
+        // Handle seek complete event
+        break;
+
+      case AudioProEventType.PLAYBACK_ERROR:
+        // Handle playback error event
+        break;
+
+      case AudioProEventType.REMOTE_PREV:
+        // Handle previous button press from lock screen/notification
+        break;
+
+      case AudioProEventType.REMOTE_NEXT:
+        // Handle next button press from lock screen/notification
+        break;
+    }
+  });
+}

@@ -6,8 +6,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { type Href, Link } from "expo-router";
 import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
@@ -40,11 +40,6 @@ function SearchResultListItemIcon({
 export default function SearchResultListItem({
   searchResult,
 }: { searchResult: AlbumID3 & Child & ArtistID3 }) {
-  const cover = useGetCoverArt(
-    searchResult.coverArt,
-    { size: 200 },
-    !!searchResult.coverArt,
-  );
   const type = useMemo<{
     id: "artist" | "album" | "playlist" | "song";
     label: string;
@@ -79,9 +74,9 @@ export default function SearchResultListItem({
       <FadeOutScaleDown>
         <HStack className="items-center justify-between mb-4">
           <HStack className="items-center">
-            {cover.data ? (
+            {searchResult.coverArt ? (
               <Image
-                source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+                source={{ uri: artworkUrl(searchResult.coverArt) }}
                 className={cn("w-16 h-16 rounded-md aspect-square", {
                   "rounded-full": type.id === "artist",
                 })}

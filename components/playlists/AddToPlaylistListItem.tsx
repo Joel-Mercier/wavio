@@ -11,8 +11,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import type { Playlist } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { Check, ListMusic } from "lucide-react-native";
 
 export default function AddToPlaylistListItem({
@@ -20,18 +20,13 @@ export default function AddToPlaylistListItem({
   selected,
   onPress,
 }: { playlist: Playlist; selected: boolean; onPress: (id: string) => void }) {
-  const cover = useGetCoverArt(
-    playlist.coverArt,
-    { size: 400 },
-    !!playlist.coverArt,
-  );
   return (
     <FadeOut className="px-6 mb-4" onPress={() => onPress(playlist.id)}>
       <HStack className="items-center justify-between">
         <HStack className="items-center">
-          {cover?.data ? (
+          {playlist.coverArt ? (
             <Image
-              source={{ uri: `data:image/jpeg;base64,${cover?.data}` }}
+              source={{ uri: artworkUrl(playlist.coverArt) }}
               className="w-16 h-16 rounded-md aspect-square"
               alt="Playlist cover"
             />

@@ -1,7 +1,8 @@
 import type { Child } from "@/services/openSubsonic/types";
+import { artworkUrl } from "./artwork";
 import { streamUrl } from "./streaming";
 
-export function childToTrack(child: Child, cover?: string) {
+export function childToTrack(child: Child) {
   return {
     id: child.id,
     url: streamUrl(child.id),
@@ -9,7 +10,7 @@ export function childToTrack(child: Child, cover?: string) {
     title: child.title,
     artist: child.artist,
     album: child.album,
-    artwork: cover,
+    artwork: artworkUrl(child.coverArt),
     genre: child.genre,
     duration: child.duration,
     contentType: child.contentType,

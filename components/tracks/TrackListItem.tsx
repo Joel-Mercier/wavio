@@ -9,11 +9,11 @@ import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useUpdatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
+import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { niceBytes } from "@/utils/fileSize";
 import { streamUrl } from "@/utils/streaming";
@@ -41,8 +41,8 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
+import { AudioPro, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import TrackPlayer, { useActiveTrack } from "react-native-track-player";
 import { Icon } from "../ui/icon";
 import {
   Modal,
@@ -56,7 +56,6 @@ import {
 
 interface TrackListItemProps {
   track: Child;
-  cover?: string;
   index: number;
   showIndex?: boolean;
   handleRemoveFromPlaylist?: (index: string) => void;
@@ -66,7 +65,6 @@ interface TrackListItemProps {
 
 export default function TrackListItem({
   track,
-  cover,
   index,
   showIndex = false,
   handleRemoveFromPlaylist,
@@ -80,12 +78,7 @@ export default function TrackListItem({
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-  const activeTrack = useActiveTrack();
-  const trackCover = useGetCoverArt(
-    track.coverArt,
-    { size: 600 },
-    !!(!cover && track.coverArt),
-  );
+  const { playingTrack } = useAudioPro();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
@@ -226,16 +219,18 @@ export default function TrackListItem({
 
   const handleCloseInfoModal = () => setShowInfoModal(false);
 
-  const handleTrackPress = useCallback(async () => {
-    await TrackPlayer.stop();
-    await TrackPlayer.reset();
-    await TrackPlayer.add([childToTrack(track, cover || trackCover.data)]);
-
-    await TrackPlayer.play();
+  const handleTrackPress = () => {
+    // AudioPro.stop();
+    // AudioPro.clear();
+    // console.log(trackCover, cover);
+    const audioProTrack = childToTrack(track);
+    console.log("LOG URL", audioProTrack.artwork);
+    AudioPro.play(audioProTrack);
+    // AudioPro.resume();
     if (onPlayCallback) {
       onPlayCallback();
     }
-  }, [track, cover, trackCover]);
+  };
 
   return (
     <Pressable onPress={handleTrackPress}>
@@ -252,10 +247,10 @@ export default function TrackListItem({
           {showIndex && (
             <Text className="text-sm text-white mr-4">{index + 1}</Text>
           )}
-          {cover || trackCover.data ? (
+          {track.coverArt ? (
             <Image
               source={{
-                uri: `data:image/jpeg;base64,${cover || trackCover.data}`,
+                uri: artworkUrl(track.coverArt),
               }}
               className="w-16 h-16 rounded-md aspect-square"
               alt="Track cover"
@@ -268,7 +263,7 @@ export default function TrackListItem({
           <VStack className="ml-4">
             <Heading
               className={cn("text-white text-md font-normal capitalize", {
-                "text-emerald-500": activeTrack?.title === track.title,
+                "text-emerald-500": playingTrack?.title === track.title,
               })}
               numberOfLines={1}
             >
@@ -313,9 +308,9 @@ export default function TrackListItem({
           >
             <Box className="p-6 w-full pb-12">
               <HStack className="items-center">
-                {cover ? (
+                {track.coverArt ? (
                   <Image
-                    source={{ uri: `data:image/jpeg;base64,${cover}` }}
+                    source={{ uri: track.coverArt }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
                   />

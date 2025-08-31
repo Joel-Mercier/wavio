@@ -14,12 +14,12 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useGetCoverArt } from "@/hooks/openSubsonic/useMediaRetrieval";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -56,12 +56,7 @@ export default function AlbumScreen() {
   const doShare = useCreateShare();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
-  const cover = useGetCoverArt(
-    data?.album.coverArt,
-    { size: 400 },
-    !!data?.album.coverArt,
-  );
-  const colors = useImageColors(`data:image/jpeg;base64,${cover?.data}`);
+  const colors = useImageColors(data?.album?.coverArt);
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
 
   const handlePresentModalPress = useCallback(() => {
@@ -219,7 +214,7 @@ export default function AlbumScreen() {
         id,
         title: data?.album.name,
         type: "album",
-        coverArt: cover?.data,
+        coverArt: data?.album?.coverArt,
       });
     }
   };
@@ -231,7 +226,6 @@ export default function AlbumScreen() {
         renderItem={({ item, index }: { item: Child; index: number }) => (
           <TrackListItem
             track={item}
-            cover={cover?.data}
             index={index}
             className="px-6"
             onPlayCallback={handleTrackPressCallback}
@@ -252,14 +246,14 @@ export default function AlbumScreen() {
                 <FadeOutScaleDown onPress={() => router.back()}>
                   <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
                 </FadeOutScaleDown>
-                {cover.isLoading ? (
+                {!data?.album?.coverArt ? (
                   <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
                     <Disc3 size={48} color={themeConfig.theme.colors.white} />
                   </Box>
                 ) : (
                   <Image
                     source={{
-                      uri: `data:image/jpeg;base64,${cover?.data}`,
+                      uri: artworkUrl(data?.album?.coverArt),
                     }}
                     className="w-[70%] aspect-square rounded-md"
                     alt="Album cover"
@@ -387,11 +381,11 @@ export default function AlbumScreen() {
         >
           <Box className="p-6 w-full pb-12">
             <HStack className="items-center">
-              {cover?.data ? (
+              {data?.album?.coverArt ? (
                 <Image
-                  source={{ uri: `data:image/jpeg;base64,${cover.data}` }}
+                  source={{ uri: artworkUrl(data?.album?.coverArt) }}
                   className="w-16 h-16 rounded-md aspect-square"
-                  alt="Track cover"
+                  alt="Album cover"
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">

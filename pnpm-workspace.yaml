@@ -1,2 +1,0 @@
-patchedDependencies:
-  '@weights-ai/react-native-track-player': patches/@weights-ai__react-native-track-player.patch
