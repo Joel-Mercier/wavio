@@ -16,14 +16,17 @@ import { Input, InputField } from "@/components/ui/input";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { VStack } from "@/components/ui/vstack";
+import useApp from "@/stores/app";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const locale = useApp.use.locale();
+  const setLocale = useApp.use.setLocale();
   return (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <Box className="px-6 mt-6 mb-4">
           <HStack className="items-center">
             <FadeOutScaleDown onPress={() => router.back()}>

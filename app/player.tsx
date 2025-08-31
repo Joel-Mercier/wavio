@@ -170,10 +170,10 @@ export default function PlayerScreen() {
           themeConfig.theme.colors.blue[500],
         "#191A1F",
       ]}
-      locations={[0, 0.8]}
+      locations={[0, 0.7]}
     >
       <SafeAreaView>
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <VStack className="px-6 h-screen">
             <HStack className="items-center justify-between my-6">
               <FadeOutScaleDown onPress={() => router.back()}>

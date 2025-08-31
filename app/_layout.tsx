@@ -14,7 +14,12 @@ import { SystemBars } from "react-native-edge-to-edge";
 import "react-native-reanimated";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import i18n, {
+  SupportedLanguages,
+  type TSupportedLanguages,
+} from "@/config/i18n";
 import { themeConfig } from "@/config/theme";
+import useApp from "@/stores/app";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -25,6 +30,7 @@ import {
   focusManager,
   onlineManager,
 } from "@tanstack/react-query";
+import { getLocales } from "expo-localization";
 import { ArrowLeft, X } from "lucide-react-native";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -57,6 +63,8 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
+  const locale = useApp.use.locale();
+  const setLocale = useApp.use.setLocale();
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,
@@ -70,6 +78,29 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
+    if (locale) {
+      i18n.changeLanguage(locale);
+    } else {
+      const userLocales = getLocales();
+      if (
+        userLocales.some(
+          (userLocale) =>
+            userLocale.languageCode &&
+            (SupportedLanguages as string[]).includes(userLocale.languageCode),
+        )
+      ) {
+        const firstMatchingLocale = userLocales.filter(
+          (userLocale) =>
+            userLocale.languageCode &&
+            (SupportedLanguages as string[]).includes(userLocale.languageCode),
+        )[0].languageCode as TSupportedLanguages;
+        setLocale(firstMatchingLocale);
+        i18n.changeLanguage(firstMatchingLocale);
+      } else {
+        setLocale("en");
+        i18n.changeLanguage("en");
+      }
+    }
     const subscription = AppState.addEventListener("change", onAppStateChange);
 
     return () => subscription.remove();
@@ -100,10 +131,10 @@ export default function RootLayout() {
                       name="(tabs)"
                       options={{ headerShown: false }}
                     />
-                    <Stack.Screen
+                    {/* <Stack.Screen
                       name="albums/[id]/index"
                       options={{ headerShown: false }}
-                    />
+                    /> */}
                     <Stack.Screen
                       name="playlists/new"
                       options={{ headerShown: false }}
@@ -148,14 +179,14 @@ export default function RootLayout() {
                         ),
                       })}
                     />
-                    <Stack.Screen
+                    {/* <Stack.Screen
                       name="playlists/[id]/index"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="artists/[id]/index"
                       options={{ headerShown: false }}
-                    />
+                    /> */}
                     <Stack.Screen
                       name="genres/[id]/index"
                       options={{ headerShown: false }}

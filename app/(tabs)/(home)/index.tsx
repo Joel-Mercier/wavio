@@ -53,7 +53,10 @@ export default function HomeScreen() {
         alt="home screen background"
       />
       <SafeAreaView>
-        <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: tabBarHeight }}
+          showsVerticalScrollIndicator={false}
+        >
           <Box className="px-6 mt-6 mb-4">
             <HStack className="gap-x-4 items-center mb-4">
               <FadeOutScaleDown onPress={() => setShowDrawer(true)}>

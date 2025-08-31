@@ -23,7 +23,7 @@ export default function AlbumListItem({
 }: AlbumListItemProps) {
   return (
     <FadeOutScaleDown
-      href={`/albums/${album.id}`}
+      href={`/(tabs)/(home)/albums/${album.id}`}
       className={cn({
         "mt-6": layout === "vertical" && index === 0,
         "mt-4": layout === "vertical",
