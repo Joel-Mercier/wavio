@@ -1,5 +1,5 @@
-import AlbumDetail from "@/components/albums/AlbumDetail";
+import PlaylistDetail from "@/components/playlists/PlaylistDetail";
 
-export default function AlbumDetailScreen() {
-  return <AlbumDetail />;
+export default function PlaylistDetailScreen() {
+  return <PlaylistDetail />;
 }

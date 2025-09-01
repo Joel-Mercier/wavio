@@ -55,17 +55,32 @@ export default function LibraryListItem({
 }: LibraryListItemProps) {
   const type = useMemo(() => {
     if (item.isFavorites) {
-      return { id: "favorites", label: "Playlist", url: "/favorites" };
+      return {
+        id: "favorites",
+        label: "Playlist",
+        url: "/(tabs)/(library)/favorites",
+      };
     }
     if (item.albumCount) {
-      return { id: "artist", label: "Artist", url: `/artists/${item.id}` };
+      return {
+        id: "artist",
+        label: "Artist",
+        url: `/(tabs)/(library)/artists/${item.id}`,
+      };
     }
     if (item.year) {
-      return { id: "album", label: "Album", url: `/albums/${item.id}` };
+      return {
+        id: "album",
+        label: "Album",
+        url: `/(tabs)/(library)/albums/${item.id}`,
+      };
     }
-    return { id: "playlist", label: "Playlist", url: `/playlists/${item.id}` };
+    return {
+      id: "playlist",
+      label: "Playlist",
+      url: `/(tabs)/(library)/playlists/${item.id}`,
+    };
   }, [item]);
-
   return (
     <FadeOutScaleDown
       href={type.url}

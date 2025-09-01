@@ -7,7 +7,9 @@ import { themeConfig } from "@/config/theme";
 import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { LinearGradient } from "expo-linear-gradient";
+import type { Href } from "expo-router";
 import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
+import { useMemo } from "react";
 
 interface HomeShortcutProps {
   recentPlay: RecentPlay;
@@ -27,8 +29,22 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
 }
 
 export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
+  const href = useMemo<Href>(() => {
+    if (recentPlay.type === "artist") {
+      return `/(tabs)/(home)/artists/${recentPlay.id}`;
+    }
+    if (recentPlay.type === "album") {
+      return `/(tabs)/(home)/albums/${recentPlay.id}`;
+    }
+    if (recentPlay.type === "playlist") {
+      return `/(tabs)/(home)/playlists/${recentPlay.id}`;
+    }
+    if (recentPlay.type === "favorites") {
+      return "/(tabs)/(library)/favorites";
+    }
+  }, [recentPlay]);
   return (
-    <FadeOutScaleDown href="/favorites" className="flex-0.5 w-1/2">
+    <FadeOutScaleDown href={href} className="flex-0.5 w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
         {recentPlay.coverArt ? (
           <Image

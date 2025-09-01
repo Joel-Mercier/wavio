@@ -187,19 +187,19 @@ export default function RootLayout() {
                       name="artists/[id]/index"
                       options={{ headerShown: false }}
                     /> */}
-                    <Stack.Screen
+                    {/* <Stack.Screen
                       name="genres/[id]/index"
                       options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
+                    /> */}
+                    {/* <Stack.Screen
                       name="favorites"
                       options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
+                    /> */}
+                    {/* <Stack.Screen
                       name="library/search"
                       options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
+                    /> */}
+                    {/* <Stack.Screen
                       name="recent-searches"
                       options={{
                         headerShown: false,
@@ -210,7 +210,7 @@ export default function RootLayout() {
                       options={{
                         headerShown: false,
                       }}
-                    />
+                    /> */}
                     <Stack.Screen
                       name="settings"
                       options={{ headerShown: false }}

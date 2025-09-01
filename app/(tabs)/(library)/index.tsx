@@ -3,6 +3,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import LibraryListItem, {
   type Favorites,
 } from "@/components/library/LibraryListItem";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -21,6 +22,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -45,6 +47,7 @@ import type { LayoutChangeEvent } from "react-native";
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
+  const setShowDrawer = useApp.use.setShowDrawer();
   const router = useRouter();
   const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sort, setSort] = useState<"addedAt" | "alphabetical">("addedAt");
@@ -106,7 +109,7 @@ export default function LibraryScreen() {
   };
 
   const handleSearchPress = () => {
-    router.navigate("/library/search");
+    router.navigate("/(tabs)/(library)/search");
   };
 
   const data = useMemo(() => {
@@ -198,9 +201,18 @@ export default function LibraryScreen() {
           <>
             <Box onLayout={handleHeaderLayout}>
               <HStack className="mt-6 items-center justify-between">
-                <Heading className="text-white" size="2xl">
-                  Library
-                </Heading>
+                <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+                    <Avatar size="sm" className="border-emerald-500 border-2">
+                      <AvatarFallbackText className="font-body ">
+                        {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
+                      </AvatarFallbackText>
+                    </Avatar>
+                  </FadeOutScaleDown>
+                  <Heading className="text-white" size="2xl">
+                    Library
+                  </Heading>
+                </HStack>
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown onPress={handleSearchPress}>
                     <Search color={themeConfig.theme.colors.white} />

@@ -15,7 +15,10 @@ interface ArtistListItemProps {
 
 export default function ArtistListItem({ artist }: ArtistListItemProps) {
   return (
-    <FadeOutScaleDown href={`/artists/${artist.id}`} className="mr-6">
+    <FadeOutScaleDown
+      href={`/(tabs)/(home)/artists/${artist.id}`}
+      className="mr-6"
+    >
       <VStack className="gap-y-2 w-32">
         {artist.coverArt ? (
           <Image

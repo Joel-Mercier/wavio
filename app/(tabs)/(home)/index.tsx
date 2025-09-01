@@ -2,7 +2,6 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AlbumListItem from "@/components/albums/AlbumListItem";
-import HomeDrawer from "@/components/home/HomeDrawer";
 import HomeShortcut from "@/components/home/HomeShortcut";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
@@ -14,12 +13,12 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useState } from "react";
 
 export default function HomeScreen() {
-  const [showDrawer, setShowDrawer] = useState<boolean>(false);
+  const setShowDrawer = useApp.use.setShowDrawer();
   const tabBarHeight = useBottomTabBarHeight();
   const recentPlays = useRecentPlays.use.recentPlays();
   const {
@@ -42,7 +41,6 @@ export default function HomeScreen() {
     isLoading: isLoadingHighestRated,
     error: highestRatedError,
   } = useAlbumList2({ type: "highest", size: 12 });
-  const handleClose = () => setShowDrawer(false);
 
   return (
     <>
@@ -221,7 +219,6 @@ export default function HomeScreen() {
             !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
         </ScrollView>
       </SafeAreaView>
-      <HomeDrawer onClose={handleClose} showDrawer={showDrawer} />
     </>
   );
 }

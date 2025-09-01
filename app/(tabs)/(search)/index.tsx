@@ -2,6 +2,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import GenreListItem from "@/components/search/GenreListItem";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -11,6 +12,7 @@ import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
 import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
 import type { Genre } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { cn } from "@/utils/tailwind";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
@@ -18,12 +20,13 @@ import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
 
 export default function SearchScreen() {
+  const setShowDrawer = useApp.use.setShowDrawer();
   const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useGenres();
 
   const handleSearchPress = () => {
-    router.navigate("/recent-searches");
+    router.navigate("/(tabs)/(search)/recent-searches");
   };
   return (
     <Box>
@@ -43,7 +46,14 @@ export default function SearchScreen() {
           numColumns={2}
           ListHeaderComponent={() => (
             <>
-              <HStack className="my-6 items-center justify-between">
+              <HStack className="gap-x-4 my-6 items-center">
+                <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+                  <Avatar size="sm" className="border-emerald-500 border-2">
+                    <AvatarFallbackText className="font-body ">
+                      {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
+                    </AvatarFallbackText>
+                  </Avatar>
+                </FadeOutScaleDown>
                 <Heading className="text-white" size="2xl">
                   Search
                 </Heading>
