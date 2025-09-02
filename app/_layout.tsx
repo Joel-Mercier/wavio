@@ -132,111 +132,13 @@ export default function RootLayout() {
                     }}
                   >
                     <Stack.Screen
-                      name="(tabs)"
-                      options={{ headerShown: false }}
-                    />
-                    {/* <Stack.Screen
-                      name="albums/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
-                    <Stack.Screen
-                      name="playlists/new"
+                      name="(app)"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
-                      name="playlists/add-to-playlist"
-                      options={({ navigation }) => ({
-                        headerShown: true,
-                        title: "Add to playlist",
-                        headerTitleAlign: "center",
-                        headerTitleStyle: {
-                          fontSize: 16,
-                          fontWeight: "bold",
-                        },
-                        headerLeft: () => (
-                          <FadeOutScaleDown onPress={() => navigation.goBack()}>
-                            <ArrowLeft
-                              size={22}
-                              color={themeConfig.theme.colors.white}
-                            />
-                          </FadeOutScaleDown>
-                        ),
-                      })}
-                    />
-                    <Stack.Screen
-                      name="playlists/[id]/edit"
-                      options={({ navigation }) => ({
-                        headerShown: true,
-                        title: "Edit playlist",
-                        headerTitleAlign: "center",
-                        headerTitleStyle: {
-                          fontSize: 16,
-                          fontWeight: "bold",
-                        },
-                        headerLeft: () => (
-                          <FadeOutScaleDown onPress={() => navigation.goBack()}>
-                            <X
-                              size={22}
-                              color={themeConfig.theme.colors.white}
-                            />
-                          </FadeOutScaleDown>
-                        ),
-                      })}
-                    />
-                    {/* <Stack.Screen
-                      name="playlists/[id]/index"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="artists/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
-                    {/* <Stack.Screen
-                      name="genres/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
-                    {/* <Stack.Screen
-                      name="favorites"
-                      options={{ headerShown: false }}
-                    /> */}
-                    {/* <Stack.Screen
-                      name="library/search"
-                      options={{ headerShown: false }}
-                    /> */}
-                    {/* <Stack.Screen
-                      name="recent-searches"
+                      name="(auth)"
                       options={{
                         headerShown: false,
-                      }}
-                    />
-                    <Stack.Screen
-                      name="search-results"
-                      options={{
-                        headerShown: false,
-                      }}
-                    /> */}
-                    <Stack.Screen
-                      name="settings"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="shares"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="servers"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="player"
-                      options={{
-                        headerShown: false,
-                        gestureEnabled: true,
-                        fullScreenGestureEnabled: true,
-                        gestureDirection: "vertical",
-                        animationDuration: 300,
-                        animation: "fade_from_bottom",
-                        presentation: "formSheet",
                       }}
                     />
                     <Stack.Screen name="+not-found" />
