@@ -39,6 +39,7 @@ import {
   ReanimatedLogLevel,
   configureReanimatedLogger,
 } from "react-native-reanimated";
+import { z } from "zod";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -80,6 +81,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (locale) {
       i18n.changeLanguage(locale);
+      z.config(z.locales[locale]());
     } else {
       const userLocales = getLocales();
       if (
@@ -96,9 +98,11 @@ export default function RootLayout() {
         )[0].languageCode as TSupportedLanguages;
         setLocale(firstMatchingLocale);
         i18n.changeLanguage(firstMatchingLocale);
+        z.config(z.locales[firstMatchingLocale]());
       } else {
         setLocale("en");
         i18n.changeLanguage("en");
+        z.config(z.locales.en());
       }
     }
     const subscription = AppState.addEventListener("change", onAppStateChange);
@@ -217,6 +221,10 @@ export default function RootLayout() {
                     />
                     <Stack.Screen
                       name="shares"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="servers"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen

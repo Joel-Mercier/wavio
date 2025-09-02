@@ -15,7 +15,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { Settings, Share2 } from "lucide-react-native";
+import { Server, Settings, Share2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface HomeDrawerProps {
@@ -34,6 +34,11 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
 
   const handleSharesPress = () => {
     router.navigate("/shares");
+    onClose();
+  };
+
+  const handleServersPress = () => {
+    router.navigate("/servers");
     onClose();
   };
 
@@ -87,6 +92,15 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
             <Share2 size={24} color={themeConfig.theme.colors.white} />
             <Heading size="lg" className="text-white font-normal">
               Shares
+            </Heading>
+          </HStack>
+          <HStack
+            className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+            onPress={handleServersPress}
+          >
+            <Server size={24} color={themeConfig.theme.colors.white} />
+            <Heading size="lg" className="text-white font-normal">
+              Servers
             </Heading>
           </HStack>
           <Center className="mt-4">

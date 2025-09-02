@@ -44,7 +44,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
     }
   }, [recentPlay]);
   return (
-    <FadeOutScaleDown href={href} className="flex-0.5 w-1/2">
+    <FadeOutScaleDown href={href} className="w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
         {recentPlay.coverArt ? (
           <Image
