@@ -29,7 +29,7 @@ export default function NewPlaylistScreen() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
-            router.navigate("/(tabs)/library");
+            router.navigate("/(app)/(tabs)/(library)");
             toast.show({
               placement: "top",
               duration: 3000,

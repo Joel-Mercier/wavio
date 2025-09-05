@@ -1,6 +1,6 @@
+import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import type { ScanStatus } from "@/services/openSubsonic/types";
 import axios from "axios";
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
-import type { ScanStatus } from "./types";
 
 export const getScanStatus = async () => {
   try {

@@ -337,7 +337,7 @@ export default function PlayerScreen() {
               alignItems: "center",
             }}
           >
-            <Box className="p-6 w-full pb-12">
+            <Box className="p-6 w-full mb-12">
               <HStack className="items-center">
                 {playingTrack?.artwork ? (
                   <Image

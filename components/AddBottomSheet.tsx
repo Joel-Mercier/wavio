@@ -25,7 +25,6 @@ export default function AddBottomSheet({
 }: AddBottomSheetProps) {
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["50%"], []);
 
   const handlePresentModalPress = () => {
     bottomSheetModalRef.current?.present();
@@ -61,7 +60,6 @@ export default function AddBottomSheet({
     <BottomSheetModal
       ref={bottomSheetModalRef}
       index={0}
-      snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose={true}
       backgroundStyle={{
@@ -73,7 +71,7 @@ export default function AddBottomSheet({
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-        <Box className="p-6 w-full pb-12">
+        <Box className="p-6 w-full mb-12">
           <VStack className="mt-6 gap-y-8">
             <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
               <HStack className="items-center">

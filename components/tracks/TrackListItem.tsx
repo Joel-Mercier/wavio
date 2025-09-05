@@ -2,7 +2,17 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
@@ -43,16 +53,6 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { AudioPro, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Icon } from "../ui/icon";
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "../ui/modal";
 
 interface TrackListItemProps {
   track: Child;
@@ -61,6 +61,7 @@ interface TrackListItemProps {
   handleRemoveFromPlaylist?: (index: string) => void;
   className?: string;
   onPlayCallback?: () => void;
+  showCoverArt?: boolean;
 }
 
 export default function TrackListItem({
@@ -70,6 +71,7 @@ export default function TrackListItem({
   handleRemoveFromPlaylist,
   className,
   onPlayCallback,
+  showCoverArt = true,
 }: TrackListItemProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -112,6 +114,7 @@ export default function TrackListItem({
           });
         },
         onError: (error) => {
+          console.log(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -247,20 +250,25 @@ export default function TrackListItem({
           {showIndex && (
             <Text className="text-sm text-white mr-4">{index + 1}</Text>
           )}
-          {track.coverArt ? (
-            <Image
-              source={{
-                uri: artworkUrl(track.coverArt),
-              }}
-              className="w-16 h-16 rounded-md aspect-square"
-              alt="Track cover"
-            />
-          ) : (
-            <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
-              <AudioLines size={24} color={themeConfig.theme.colors.white} />
-            </Box>
-          )}
-          <VStack className="ml-4">
+          {showCoverArt &&
+            (track.coverArt ? (
+              <Image
+                source={{
+                  uri: artworkUrl(track.coverArt),
+                }}
+                className="w-16 h-16 rounded-md aspect-square"
+                alt="Track cover"
+              />
+            ) : (
+              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                <AudioLines size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            ))}
+          <VStack
+            className={cn({
+              "ml-4": showCoverArt,
+            })}
+          >
             <Heading
               className={cn("text-white text-md font-normal capitalize", {
                 "text-emerald-500": playingTrack?.title === track.title,
@@ -306,11 +314,11 @@ export default function TrackListItem({
               alignItems: "center",
             }}
           >
-            <Box className="p-6 w-full pb-12">
+            <Box className="p-6 w-full mb-12">
               <HStack className="items-center">
                 {track.coverArt ? (
                   <Image
-                    source={{ uri: track.coverArt }}
+                    source={{ uri: artworkUrl(track.coverArt) }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
                   />
@@ -435,7 +443,7 @@ export default function TrackListItem({
                 <Icon as={X} size="md" className="color-white" />
               </ModalCloseButton>
             </ModalHeader>
-            <ModalBody>
+            <ModalBody className="mb-0 pb-0">
               <VStack className="gap-y-2">
                 <VStack className="border-b border-primary-600 py-2">
                   <Text className="text-primary-100 text-sm">Title</Text>

@@ -1,6 +1,6 @@
+import type { Bookmarks, PlayQueue } from "@/services/openSubsonic/types";
 import axios from "axios";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
-import type { Bookmarks, PlayQueue } from "./types";
 
 export const createBookmark = async (
   id: string,

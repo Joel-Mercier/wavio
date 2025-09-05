@@ -1,3 +1,4 @@
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Center } from "@/components/ui/center";
 import {
@@ -13,9 +14,17 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import useAuth from "@/stores/auth";
+import useServers from "@/stores/servers";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { Server, Settings, Share2 } from "lucide-react-native";
+import {
+  ArrowDownUp,
+  LogOut,
+  Server,
+  Settings,
+  Share2,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface HomeDrawerProps {
@@ -26,19 +35,34 @@ interface HomeDrawerProps {
 export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
   const { bottom, top, left, right } = useSafeAreaInsets();
   const router = useRouter();
+  const logout = useAuth.use.logout();
+  const username = useAuth.use.username();
+  const currentServer = useServers((state) =>
+    state.servers.find((server) => server.current === true),
+  );
 
   const handleSettingsPress = () => {
-    router.navigate("/settings");
+    router.navigate("/(app)/settings");
     onClose();
   };
 
   const handleSharesPress = () => {
-    router.navigate("/shares");
+    router.navigate("/(app)/shares");
     onClose();
   };
 
   const handleServersPress = () => {
-    router.navigate("/servers");
+    router.navigate("/(app)/servers");
+    onClose();
+  };
+
+  const handleLogoutPress = () => {
+    logout();
+    onClose();
+  };
+
+  const handleCurrentServerPress = () => {
+    router.navigate("/(app)/servers");
     onClose();
   };
 
@@ -59,7 +83,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
             <HStack className="items-center m-1 p-4 border-b-2 border-primary-500 active:bg-primary-800">
               <Avatar size="md" className="mr-4 bg-primary-400">
                 <AvatarFallbackText className="font-body">
-                  {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
+                  {username}
                 </AvatarFallbackText>
               </Avatar>
               <VStack>
@@ -68,46 +92,88 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
                   size="xl"
                   className="text-white font-bold"
                 >
-                  {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
+                  {username}
                 </Heading>
-                <Text className="text-primary-100">See profile</Text>
               </VStack>
             </HStack>
           </Pressable>
         </DrawerHeader>
         <DrawerBody>
-          <HStack
-            className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-            onPress={handleSettingsPress}
-          >
-            <Settings size={24} color={themeConfig.theme.colors.white} />
-            <Heading size="lg" className="text-white font-normal">
-              Settings
-            </Heading>
-          </HStack>
-          <HStack
-            className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-            onPress={handleSharesPress}
-          >
-            <Share2 size={24} color={themeConfig.theme.colors.white} />
-            <Heading size="lg" className="text-white font-normal">
-              Shares
-            </Heading>
-          </HStack>
-          <HStack
-            className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-            onPress={handleServersPress}
-          >
-            <Server size={24} color={themeConfig.theme.colors.white} />
-            <Heading size="lg" className="text-white font-normal">
-              Servers
-            </Heading>
-          </HStack>
-          <Center className="mt-4">
-            <Text className="text-primary-100">
-              version {Application.nativeApplicationVersion}
-            </Text>
-          </Center>
+          <VStack className="justify-between h-full">
+            <VStack>
+              <HStack
+                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleSettingsPress}
+              >
+                <Settings size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  Settings
+                </Heading>
+              </HStack>
+              <HStack
+                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleSharesPress}
+              >
+                <Share2 size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  Shares
+                </Heading>
+              </HStack>
+              <HStack
+                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleServersPress}
+              >
+                <Server size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  Servers
+                </Heading>
+              </HStack>
+              <HStack
+                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleLogoutPress}
+              >
+                <LogOut size={24} color={themeConfig.theme.colors.red[500]} />
+                <Heading size="lg" className="text-red-500 font-normal">
+                  Logout
+                </Heading>
+              </HStack>
+            </VStack>
+            {currentServer && (
+              <VStack className="my-6">
+                <Text className="text-primary-100 text-center mb-2">
+                  Current server
+                </Text>
+                <FadeOutScaleDown
+                  onPress={handleCurrentServerPress}
+                  className="border border-primary-200 rounded-lg p-4 mx-6 bg-primary-800"
+                >
+                  <HStack className="items-center justify-between">
+                    <VStack>
+                      <Heading
+                        size="lg"
+                        className="text-white font-normal"
+                        numberOfLines={1}
+                      >
+                        {currentServer.name}
+                      </Heading>
+                      <Text className="text-primary-100" numberOfLines={1}>
+                        {currentServer.url}
+                      </Text>
+                    </VStack>
+                    <ArrowDownUp
+                      size={24}
+                      color={themeConfig.theme.colors.white}
+                    />
+                  </HStack>
+                </FadeOutScaleDown>
+              </VStack>
+            )}
+            <Center className="mt-4">
+              <Text className="text-primary-100">
+                version {Application.nativeApplicationVersion}
+              </Text>
+            </Center>
+          </VStack>
         </DrawerBody>
       </DrawerContent>
     </Drawer>

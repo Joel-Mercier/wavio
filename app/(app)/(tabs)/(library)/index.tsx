@@ -1,5 +1,6 @@
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
 } from "@/components/library/LibraryListItem";
@@ -8,7 +9,6 @@ import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
@@ -23,6 +23,7 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
+import useAuth from "@/stores/auth";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -43,19 +44,21 @@ import {
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
   const setShowDrawer = useApp.use.setShowDrawer();
+  const username = useAuth.use.username();
   const router = useRouter();
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sort, setSort] = useState<"addedAt" | "alphabetical">("addedAt");
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | null
   >(null);
   const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
@@ -76,11 +79,6 @@ export default function LibraryScreen() {
     error: playlistsError,
     refetch: refetchPlaylists,
   } = usePlaylists({});
-
-  const handleHeaderLayout = (event: LayoutChangeEvent) => {
-    const { height } = event.nativeEvent.layout;
-    setHeaderHeight(height);
-  };
 
   const handleLayoutPress = () => {
     setLayout(layout === "list" ? "grid" : "list");
@@ -109,7 +107,7 @@ export default function LibraryScreen() {
   };
 
   const handleSearchPress = () => {
-    router.navigate("/(tabs)/(library)/search");
+    router.navigate("/(app)/(tabs)/(library)/search");
   };
 
   const data = useMemo(() => {
@@ -163,7 +161,7 @@ export default function LibraryScreen() {
   }, [starredData, playlistsData, filter, sort]);
 
   return (
-    <SafeAreaView className="h-full">
+    <Box className="h-full">
       <FlashList
         data={data}
         keyExtractor={(item) => item.id}
@@ -199,13 +197,13 @@ export default function LibraryScreen() {
         extraData={{ layout }}
         ListHeaderComponent={() => (
           <>
-            <Box onLayout={handleHeaderLayout}>
+            <Box>
               <HStack className="mt-6 items-center justify-between">
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
                     <Avatar size="sm" className="border-emerald-500 border-2">
                       <AvatarFallbackText className="font-body ">
-                        {process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || ""}
+                        {username}
                       </AvatarFallbackText>
                     </Avatar>
                   </FadeOutScaleDown>
@@ -297,7 +295,8 @@ export default function LibraryScreen() {
         )}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingBottom: tabBarHeight,
+          paddingTop: insets.top,
+          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       />
       <BottomSheetModal
@@ -317,7 +316,7 @@ export default function LibraryScreen() {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
                 <HStack className="items-center">
@@ -354,7 +353,7 @@ export default function LibraryScreen() {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={() => handleSortPress("addedAt")}>
                 <HStack className="items-center justify-between">
@@ -386,6 +385,6 @@ export default function LibraryScreen() {
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
-    </SafeAreaView>
+    </Box>
   );
 }

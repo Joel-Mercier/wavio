@@ -37,7 +37,9 @@ const useServersBase = create<ServersStore>()(
           const isDuplicate = state.servers.some(
             (existingServer) =>
               existingServer.name === server.name ||
-              existingServer.url === server.url,
+              (existingServer.url === server.url &&
+                existingServer.username === server.username &&
+                existingServer.password === server.password),
           );
 
           if (isDuplicate) {

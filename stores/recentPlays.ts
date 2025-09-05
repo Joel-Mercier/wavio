@@ -27,6 +27,7 @@ interface RecentPlaysStore {
   recentPlays: RecentPlay[];
   addRecentPlay: (recentPlay: RecentPlay) => void;
   insertRecentPlayAtTop: (recentPlay: RecentPlay) => void;
+  clearRecentPlays: () => void;
 }
 
 // Capture store reference for use in persist callbacks
@@ -63,6 +64,11 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
             );
             const newRecentPlays = [recentPlay, ...withoutDuplicate];
             return { recentPlays: pinFavoritesAndCap(newRecentPlays) };
+          });
+        },
+        clearRecentPlays: () => {
+          set((state) => {
+            return { recentPlays: state.recentPlays.filter((play) => play.id !== "favorites") };
           });
         },
       };

@@ -11,6 +11,7 @@ import React, { useState } from "react";
 export default function TabLayout() {
   const showDrawer = useApp.use.showDrawer();
   const setShowDrawer = useApp.use.setShowDrawer();
+  const showAddTab = useApp.use.showAddTab();
   const [showAddSheet, setShowAddSheet] = useState(false);
 
   const handleClose = () => {
@@ -40,12 +41,18 @@ export default function TabLayout() {
           ),
           tabBarBackground: () => (
             <LinearGradient
-              colors={["transparent", "rgba(24,23,25, 0.8)"]}
-              style={{ height: 52 }}
-              locations={[0, 0.3, 1]}
+              colors={[
+                "rgba(24,23,25, 0)",
+                "rgba(24,23,25, 0.3)",
+                "rgba(24,23,25, 0.9)",
+                "rgb(24,23,25)",
+              ]}
+              style={{ height: "100%" }}
+              locations={[0, 0.1, 0.5, 1]}
             />
           ),
           tabBarActiveTintColor: themeConfig.theme.colors.emerald[500],
+          tabBarInactiveTintColor: themeConfig.theme.colors.gray[200],
         }}
       >
         <Tabs.Screen
@@ -58,9 +65,7 @@ export default function TabLayout() {
           }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
-              // Prevent default behavior
               e.preventDefault();
-              // Reset the home stack to its initial screen
               navigation.reset({
                 index: 0,
                 routes: [{ name: "(home)" }],
@@ -78,9 +83,7 @@ export default function TabLayout() {
           }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
-              // Prevent default behavior
               e.preventDefault();
-              // Reset the search stack to its initial screen
               navigation.reset({
                 index: 0,
                 routes: [{ name: "(search)" }],
@@ -98,9 +101,7 @@ export default function TabLayout() {
           }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
-              // Prevent default behavior
               e.preventDefault();
-              // Reset the library stack to its initial screen
               navigation.reset({
                 index: 0,
                 routes: [{ name: "(library)" }],
@@ -111,12 +112,13 @@ export default function TabLayout() {
         <Tabs.Screen
           name="add"
           options={{
+            // @ts-ignore
+            href: showAddTab ? "" : null,
             title: "Create",
             tabBarIcon: ({ color }) => <Plus size={24} color={color} />,
           }}
           listeners={{
             tabPress: (e) => {
-              // Prevent default behavior and show bottom sheet instead
               e.preventDefault();
               handleAddTabPress();
             },

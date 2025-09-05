@@ -1,5 +1,5 @@
+import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
 import axios from "axios";
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 
 export const scrobble = async (
   id: string,

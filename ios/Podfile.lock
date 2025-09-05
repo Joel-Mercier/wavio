@@ -312,6 +312,8 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (7.1.7):
     - ExpoModulesCore
+  - ExpoLocalization (16.1.6):
+    - ExpoModulesCore
   - ExpoModulesCore (2.5.0):
     - DoubleConversion
     - glog
@@ -2400,6 +2402,7 @@ DEPENDENCIES:
   - "ExpoKeepAwake (from `../node_modules/.pnpm/expo-keep-awake@14.1.4_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_react-_83888b8c3773124908e42fca5cf15865/node_modules/expo-keep-awake/ios`)"
   - "ExpoLinearGradient (from `../node_modules/.pnpm/expo-linear-gradient@14.1.5_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_r_88e677a921746c01b8000ed385ff1641/node_modules/expo-linear-gradient/ios`)"
   - "ExpoLinking (from `../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_react-nati_feaf826965eb0c2fb211600f60635928/node_modules/expo-linking/ios`)"
+  - "ExpoLocalization (from `../node_modules/.pnpm/expo-localization@16.1.6_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_reac_6cf39e9a06ce4ea03d8d096f75e48885/node_modules/expo-localization/ios`)"
   - "ExpoModulesCore (from `../node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core`)"
   - "ExpoSplashScreen (from `../node_modules/.pnpm/expo-splash-screen@0.30.10_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_re_a77d4fd93edc42333925d6e59132c17b/node_modules/expo-splash-screen/ios`)"
   - "ExpoSymbols (from `../node_modules/.pnpm/expo-symbols@0.4.5_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_react-nati_9687ed64c32ee79d89192d5f044aeaf9/node_modules/expo-symbols/ios`)"
@@ -2533,6 +2536,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/.pnpm/expo-linear-gradient@14.1.5_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_r_88e677a921746c01b8000ed385ff1641/node_modules/expo-linear-gradient/ios"
   ExpoLinking:
     :path: "../node_modules/.pnpm/expo-linking@7.1.7_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_react-nati_feaf826965eb0c2fb211600f60635928/node_modules/expo-linking/ios"
+  ExpoLocalization:
+    :path: "../node_modules/.pnpm/expo-localization@16.1.6_expo@53.0.20_@babel+core@7.27.1_@expo+metro-runtime@5.0.4_reac_6cf39e9a06ce4ea03d8d096f75e48885/node_modules/expo-localization/ios"
   ExpoModulesCore:
     :path: "../node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core"
   ExpoSplashScreen:
@@ -2723,6 +2728,7 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoLinearGradient: 7734c8059972fcf691fb4330bcdf3390960a152d
   ExpoLinking: d5c183998ca6ada66ff45e407e0f965b398a8902
+  ExpoLocalization: 999a1ff61a7f5917d65c2bd9234883009019ca9f
   ExpoModulesCore: 00a1b5c73248465bd0b93f59f8538c4573dac579
   ExpoSplashScreen: 0ad5acac1b5d2953c6e00d4319f16d616f70d4dd
   ExpoSymbols: c5612a90fb9179cdaebcd19bea9d8c69e5d3b859

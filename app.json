@@ -12,15 +12,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.jmercier.wavio",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#302F2F"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.jmercier.wavio"
@@ -38,7 +36,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#302F2F"
         }
       ],
       [

@@ -70,7 +70,7 @@ export default function RecentSearchesScreen() {
   };
 
   const handleOnSumbit = () => {
-    router.navigate(`/(tabs)/(search)/search-results?query=${query}`);
+    router.navigate(`/(app)/(tabs)/(search)/search-results?query=${query}`);
   };
 
   return (

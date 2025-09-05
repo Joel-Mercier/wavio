@@ -1,3 +1,6 @@
+import FadeOut from "@/components/FadeOut";
+import MovingText from "@/components/MovingText";
+import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
@@ -7,9 +10,8 @@ import { themeConfig } from "@/config/theme";
 import { usePathname, useRouter } from "expo-router";
 import { AudioLines, Pause, Play } from "lucide-react-native";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
-import FadeOut from "./FadeOut";
-import MovingText from "./MovingText";
-import { Box } from "./ui/box";
+
+export const FLOATING_PLAYER_HEIGHT = 64;
 
 export default function FloatingPlayer() {
   const { state, playingTrack } = useAudioPro();

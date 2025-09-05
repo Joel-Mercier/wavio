@@ -1,16 +1,14 @@
+import type { ResponseStatus } from "@/services/openSubsonic/types";
+import { useAuthBase } from "@/stores/auth";
 import axios from "axios";
-import type { ResponseStatus } from "./types";
 
-const navidromeUrl = process.env.EXPO_PUBLIC_NAVIDROME_URL || "";
-const navidromeUsername = process.env.EXPO_PUBLIC_NAVIDROME_USERNAME || "";
-const navidromePassword = process.env.EXPO_PUBLIC_NAVIDROME_PASSWORD || "";
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
 const navidromeClient = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "";
 
-console.info("NAVIDROME URL : ", navidromeUrl);
-console.info("NAVIDROME USERNAME : ", navidromeUsername);
-console.info("NAVIDROME PASSWORD : ", navidromePassword);
+console.info("NAVIDROME URL : ", useAuthBase.getState().url);
+console.info("NAVIDROME USERNAME : ", useAuthBase.getState().username);
+console.info("NAVIDROME PASSWORD : ", useAuthBase.getState().password);
 console.info("NAVIDROME SUBSONIC API VERSION : ", navidromeSubsonicApiVersion);
 console.info("NAVIDROME CLIENT : ", navidromeClient);
 
@@ -32,22 +30,30 @@ export type OpenSubsonicErrorResponse = {
 };
 
 const openSubsonicApiInstance = axios.create({
-  baseURL: navidromeUrl,
+  // baseURL is set dynamically in the interceptor from the latest auth store state
+  baseURL: "",
   headers: { "Content-Type": "application/json" },
 });
 
 openSubsonicApiInstance.interceptors.request.use(
   (request) => {
-    request.params.u = navidromeUsername;
-    request.params.p = navidromePassword;
-    request.params.v = navidromeSubsonicApiVersion;
-    request.params.c = navidromeClient;
-    request.params.f = "json";
+    const { url, username, password } = useAuthBase.getState();
+    // Ensure params is always an object before assigning
+    console.log("INTERCEPTOR", request.baseURL, url, username, password);
+    request.params = {
+      ...(request.params ?? {}),
+      u: username,
+      p: password,
+      v: navidromeSubsonicApiVersion,
+      c: navidromeClient,
+      f: "json",
+    };
+    request.baseURL = url || request.baseURL || "";
     return request;
   },
   (error) => {
     console.error(error);
-    Promise.reject(error);
+    return Promise.reject(error);
   },
 );
 

@@ -1,7 +1,7 @@
+import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import type { Lyrics, StructuredLyrics } from "@/services/openSubsonic/types";
 import { arrayBufferToBase64 } from "@/utils/arrayBufferToBase64";
 import axios from "axios";
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
-import type { Lyrics, StructuredLyrics } from "./types";
 
 export const download = async (id: string) => {
   const rsp = await openSubsonicApiInstance.get<string>("/rest/download", {

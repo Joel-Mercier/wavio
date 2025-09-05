@@ -34,6 +34,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -49,6 +50,8 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function PlaylistDetail() {
   const queryClient = useQueryClient();
@@ -56,6 +59,8 @@ export default function PlaylistDetail() {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const toast = useToast();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -199,111 +204,108 @@ export default function PlaylistDetail() {
   };
 
   return (
-    <Box>
-      <SafeAreaView className="h-full">
-        <FlashList
-          data={data?.playlist.entry?.reverse()}
-          renderItem={({ item, index }: { item: Child; index: number }) => (
-            <TrackListItem
-              track={item}
-              index={index}
-              handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
-              onPlayCallback={handleTrackPressCallback}
-            />
-          )}
-          ListEmptyComponent={() => (
-            <VStack className="items-center justify-center my-6">
-              <Text className="text-white text-md">This playlist is empty</Text>
-              <FadeOutScaleDown
-                onPress={() => router.navigate("/(tabs)/search")}
-                className="bg-white rounded-full px-6 py-3 mt-4"
-              >
-                <Text className="text-primary-800 font-bold">
-                  Find songs to add to this playlist
-                </Text>
-              </FadeOutScaleDown>
-            </VStack>
-          )}
-          ListHeaderComponent={() => (
-            <VStack>
-              <HStack className="mt-6 items-start justify-between">
-                <FadeOutScaleDown onPress={() => router.back()}>
-                  <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
-                </FadeOutScaleDown>
-                {/* https://github.com/navidrome/navidrome/issues/406 */}
-                {data?.playlist?.coverArt ? (
-                  <Image
-                    source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
-                    className="w-[70%] aspect-square rounded-md"
-                    alt="Playlist cover"
-                  />
-                ) : (
-                  <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                    <ListMusic
-                      size={48}
-                      color={themeConfig.theme.colors.white}
-                    />
-                  </Box>
-                )}
-
-                <Box className="w-6" />
-              </HStack>
-              <VStack>
-                <VStack className="mt-5">
-                  <Heading numberOfLines={1} className="text-white" size="2xl">
-                    {data?.playlist.name}
-                  </Heading>
-                  {data?.playlist.comment && (
-                    <Text className="text-md text-primary-100 mt-2">
-                      {data?.playlist.comment}
-                    </Text>
-                  )}
-                </VStack>
-                <HStack className="mt-2 items-center">
-                  <Clock color={"#808080"} size={16} />
-                  <Text className="ml-2 text-primary-100">
-                    {Math.round((data?.playlist.duration || 0) / 60)} min
-                  </Text>
-                </HStack>
-                <HStack className="mt-4 items-center justify-between">
-                  <HStack className="items-center gap-x-4">
-                    <FadeOutScaleDown onPress={handlePresentModalPress}>
-                      <EllipsisVertical
-                        color={themeConfig.theme.colors.white}
-                      />
-                    </FadeOutScaleDown>
-                  </HStack>
-                  <HStack className="items-center gap-x-4">
-                    <FadeOutScaleDown>
-                      <Shuffle color={themeConfig.theme.colors.white} />
-                    </FadeOutScaleDown>
-                    <FadeOutScaleDown>
-                      <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
-                      </Box>
-                    </FadeOutScaleDown>
-                  </HStack>
-                </HStack>
-              </VStack>
-              {error && <ErrorDisplay error={error} />}
-              {isLoading && <Spinner size="large" />}
-            </VStack>
-          )}
-          ListFooterComponent={() => (
-            <VStack className="my-6">
-              <Text className="text-white font-bold">
-                {(data?.playlist.songCount || "0 ") +
-                  (data?.playlist.songCount || 0 > 1 ? " song" : "songs")}{" "}
-                ⦁ {Math.round((data?.playlist.duration || 0) / 60)} min
+    <Box className="h-full">
+      <FlashList
+        data={data?.playlist.entry?.reverse()}
+        renderItem={({ item, index }: { item: Child; index: number }) => (
+          <TrackListItem
+            track={item}
+            index={index}
+            handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
+            onPlayCallback={handleTrackPressCallback}
+          />
+        )}
+        ListEmptyComponent={() => (
+          <VStack className="items-center justify-center my-6">
+            <Text className="text-white text-md">This playlist is empty</Text>
+            <FadeOutScaleDown
+              onPress={() => router.navigate("/(tabs)/search")}
+              className="bg-white rounded-full px-6 py-3 mt-4"
+            >
+              <Text className="text-primary-800 font-bold">
+                Find songs to add to this playlist
               </Text>
+            </FadeOutScaleDown>
+          </VStack>
+        )}
+        ListHeaderComponent={() => (
+          <VStack>
+            <HStack className="mt-6 items-start justify-between">
+              <FadeOutScaleDown onPress={() => router.back()}>
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+              {/* https://github.com/navidrome/navidrome/issues/406 */}
+              {data?.playlist?.coverArt ? (
+                <Image
+                  source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
+                  className="w-[70%] aspect-square rounded-md"
+                  alt="Playlist cover"
+                />
+              ) : (
+                <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <ListMusic size={48} color={themeConfig.theme.colors.white} />
+                </Box>
+              )}
+
+              <Box className="w-6" />
+            </HStack>
+            <VStack>
+              <VStack className="mt-5">
+                <Heading numberOfLines={1} className="text-white" size="2xl">
+                  {data?.playlist.name}
+                </Heading>
+                {data?.playlist.comment && (
+                  <Text className="text-md text-primary-100 mt-2">
+                    {data?.playlist.comment}
+                  </Text>
+                )}
+              </VStack>
+              <HStack className="mt-2 items-center">
+                <Clock color={"#808080"} size={16} />
+                <Text className="ml-2 text-primary-100">
+                  {Math.round((data?.playlist.duration || 0) / 60)} min
+                </Text>
+              </HStack>
+              <HStack className="mt-4 items-center justify-between">
+                <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                </HStack>
+                <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown>
+                    <Shuffle color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown>
+                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                      <Play
+                        color={themeConfig.theme.colors.white}
+                        fill={themeConfig.theme.colors.white}
+                      />
+                    </Box>
+                  </FadeOutScaleDown>
+                </HStack>
+              </HStack>
             </VStack>
-          )}
-          contentContainerStyle={{ paddingHorizontal: 24 }}
-        />
-      </SafeAreaView>
+            {error && <ErrorDisplay error={error} />}
+            {isLoading && <Spinner size="large" />}
+          </VStack>
+        )}
+        ListFooterComponent={() => (
+          <VStack className="my-6">
+            <Text className="text-white font-bold">
+              {(data?.playlist.songCount || "0 ") +
+                (data?.playlist.songCount || 0 > 1 ? " song" : "songs")}{" "}
+              ⦁ {Math.round((data?.playlist.duration || 0) / 60)} min
+            </Text>
+          </VStack>
+        )}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: insets.top,
+          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
+      />
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -321,7 +323,7 @@ export default function PlaylistDetail() {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {data?.playlist?.coverArt ? (
                 <Image

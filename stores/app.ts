@@ -9,6 +9,8 @@ interface AppStore {
   setLocale: (locale: TSupportedLanguages) => void;
   showDrawer: boolean;
   setShowDrawer: (showDrawer: boolean) => void;
+  showAddTab: boolean;
+  setShowAddTab: (showAddTab: boolean) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -22,6 +24,10 @@ export const useAppBase = create<AppStore>()(
       showDrawer: false,
       setShowDrawer: (showDrawer: boolean) => {
         set({ showDrawer });
+      },
+      showAddTab: false,
+      setShowAddTab: (showAddTab: boolean) => {
+        set({ showAddTab });
       },
     }),
     {

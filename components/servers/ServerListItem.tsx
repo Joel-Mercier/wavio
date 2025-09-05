@@ -1,7 +1,24 @@
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
+import { Box } from "@/components/ui/box";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+} from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -20,29 +37,14 @@ import {
   Trash,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "../ui/alert-dialog";
-import { Box } from "../ui/box";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "../ui/form-control";
-import { Input, InputField } from "../ui/input";
-import { Toast, ToastDescription, useToast } from "../ui/toast";
+import { set } from "zod";
 
 interface ServerListItemProps {
   server: Server;
 }
 
 export default function ServerListItem({ server }: ServerListItemProps) {
+  const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -81,7 +83,13 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const handleCloseEditServerModal = () => {
     setShowEditAlertDialog(false);
   };
-  console.log("SERVER", server);
+  const handleCloseAlertDialog = () => {
+    setShowAlertDialog(false);
+  };
+  const handleDeletePress = () => {
+    removeServer(server.name);
+  };
+
   return (
     <FadeOutScaleDown
       className="mb-4"
@@ -132,7 +140,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
                 onPress={() => {
@@ -153,7 +161,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               <FadeOutScaleDown
                 onPress={() => {
                   bottomSheetModalRef.current?.dismiss();
-                  removeServer(server.name);
+                  setShowAlertDialog(true);
                 }}
               >
                 <HStack className="items-center">
@@ -167,6 +175,40 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
+      <AlertDialog
+        isOpen={showAlertDialog}
+        onClose={handleCloseAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              Are you sure you want to delete this server?
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              Deleting the server will remove it permanently. Please confirm if
+              you want to proceed.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">Cancel</Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handleDeletePress}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog
         isOpen={showEditAlertDialog}
         onClose={handleCloseEditServerModal}

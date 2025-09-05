@@ -1,6 +1,6 @@
+import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import type { License, OpenSubsonicExtensions } from "@/services/openSubsonic/types";
 import axios from "axios";
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
-import type { License, OpenSubsonicExtensions } from "./types";
 
 export const getLicense = async () => {
   try {

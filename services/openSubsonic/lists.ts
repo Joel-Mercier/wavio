@@ -1,5 +1,4 @@
-import axios from "axios";
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
+import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
 import type {
   AlbumList,
   AlbumList2,
@@ -7,7 +6,8 @@ import type {
   Songs,
   Starred,
   Starred2,
-} from "./types";
+} from "@/services/openSubsonic/types";
+import axios from "axios";
 
 export type AlbumListType =
   | "random"

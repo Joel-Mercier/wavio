@@ -1,7 +1,6 @@
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
-} from "@/services/openSubsonic";
-import axios from "axios";
+} from "@/services/openSubsonic/index";
 import type {
   AlbumInfo,
   AlbumWithSongsID3,
@@ -21,7 +20,8 @@ import type {
   TopSongs,
   VideoInfo,
   Videos,
-} from "./types";
+} from "@/services/openSubsonic/types";
+import axios from "axios";
 
 export const getMusicFolders = async () => {
   try {

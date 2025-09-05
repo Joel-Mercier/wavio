@@ -25,6 +25,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,12 +40,16 @@ import {
   User,
 } from "lucide-react-native";
 import { useCallback, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ArtistDetail() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const toast = useToast();
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -191,26 +196,27 @@ export default function ArtistDetail() {
                 colors={["transparent", "#000000"]}
                 className="h-96"
               >
-                <Box className="bg-black/25 flex-1">
-                  <SafeAreaView>
-                    <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                      <FadeOutScaleDown onPress={() => router.back()}>
-                        <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                          <ArrowLeft
-                            size={24}
-                            color={themeConfig.theme.colors.white}
-                          />
-                        </Box>
-                      </FadeOutScaleDown>
-                      <Heading
-                        numberOfLines={2}
-                        className="text-white"
-                        size="3xl"
-                      >
-                        {data?.artist.name}
-                      </Heading>
-                    </VStack>
-                  </SafeAreaView>
+                <Box
+                  className="bg-black/25 flex-1 "
+                  style={{ paddingTop: insets.top }}
+                >
+                  <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
+                    <FadeOutScaleDown onPress={() => router.back()}>
+                      <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                        <ArrowLeft
+                          size={24}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      </Box>
+                    </FadeOutScaleDown>
+                    <Heading
+                      numberOfLines={2}
+                      className="text-white mb-4"
+                      size="3xl"
+                    >
+                      {data?.artist.name}
+                    </Heading>
+                  </VStack>
                 </Box>
               </LinearGradient>
             </ImageBackground>
@@ -278,7 +284,9 @@ export default function ArtistDetail() {
           </VStack>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
-        contentContainerStyle={{ paddingHorizontal: 0 }}
+        contentContainerStyle={{
+          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
       />
       <BottomSheetModal
         ref={bottomSheetModalRef}
@@ -297,7 +305,7 @@ export default function ArtistDetail() {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
                 <Image

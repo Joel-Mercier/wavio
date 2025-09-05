@@ -168,7 +168,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               </Box>
             )}
             <VStack className="ml-4">
-              <Heading size="lg" className="text-white">
+              <Heading size="lg" className="text-white" numberOfLines={1}>
                 {isPlaylist
                   ? share.description
                   : share.entry[0].name || share.entry[0].title}
@@ -205,7 +205,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
                 onPress={() => {

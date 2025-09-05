@@ -25,6 +25,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parse } from "date-fns";
@@ -43,6 +44,7 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AlbumDetail() {
   const queryClient = useQueryClient();
@@ -58,6 +60,8 @@ export default function AlbumDetail() {
   const { data, isLoading, error } = useAlbum(id);
   const colors = useImageColors(data?.album?.coverArt);
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = useBottomTabBarHeight();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -222,6 +226,12 @@ export default function AlbumDetail() {
   return (
     <Box className="h-full w-full">
       <FlashList
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + bottomTabBarHeight,
+          paddingTop: insets.top,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
         data={data?.album.song}
         renderItem={({ item, index }: { item: Child; index: number }) => (
           <TrackListItem
@@ -229,6 +239,7 @@ export default function AlbumDetail() {
             index={index}
             className="px-6"
             onPlayCallback={handleTrackPressCallback}
+            showCoverArt={false}
           />
         )}
         ListHeaderComponent={() => (
@@ -241,108 +252,104 @@ export default function AlbumDetail() {
             locations={[0, 0.8]}
             className="px-6"
           >
-            <SafeAreaView>
-              <HStack className="mt-6 items-start justify-between">
-                <FadeOutScaleDown onPress={() => router.back()}>
-                  <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
-                </FadeOutScaleDown>
-                {!data?.album?.coverArt ? (
-                  <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                    <Disc3 size={48} color={themeConfig.theme.colors.white} />
-                  </Box>
-                ) : (
-                  <Image
-                    source={{
-                      uri: artworkUrl(data?.album?.coverArt),
-                    }}
-                    className="w-[70%] aspect-square rounded-md"
-                    alt="Album cover"
-                  />
-                )}
-                <Box className="w-6" />
+            <HStack className="mt-6 items-start justify-between">
+              <FadeOutScaleDown onPress={() => router.back()}>
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+              {!data?.album?.coverArt ? (
+                <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <Disc3 size={48} color={themeConfig.theme.colors.white} />
+                </Box>
+              ) : (
+                <Image
+                  source={{
+                    uri: artworkUrl(data?.album?.coverArt),
+                  }}
+                  className="w-[70%] aspect-square rounded-md"
+                  alt="Album cover"
+                />
+              )}
+              <Box className="w-6" />
+            </HStack>
+            <VStack>
+              <HStack className="mt-5 items-center justify-between">
+                <Heading numberOfLines={1} className="text-white" size="2xl">
+                  {data?.album.name}
+                </Heading>
               </HStack>
-              <VStack>
-                <HStack className="mt-5 items-center justify-between">
-                  <Heading numberOfLines={1} className="text-white" size="2xl">
-                    {data?.album.name}
-                  </Heading>
-                </HStack>
-                <HStack className="mt-4 items-center">
-                  <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
-                    <User size={16} color={themeConfig.theme.colors.white} />
-                  </Box>
-                  <Text
-                    className="ml-4 text-white text-md font-bold"
-                    numberOfLines={1}
-                  >
-                    {((data?.album?.artists?.length || 0) > 1 &&
-                      data?.album.artists?.map((artist) => (
-                        <Link key={artist.id} href={`/artists/${artist.id}`}>
-                          {artist.name}
-                        </Link>
-                      ))) || (
-                        <Link href={`/artists/${data?.album.artistId}`}>
-                          {data?.album.displayArtist}
-                        </Link>
-                      ) || (
-                        <Link href={`/artists/${data?.album.artistId}`}>
-                          {data?.album.artist}
-                        </Link>
-                      )}
-                  </Text>
-                </HStack>
-                <HStack className="mt-2 items-center">
-                  <Text className="text-primary-100">
-                    {data?.album.isCompilation ? "Compilation" : "Album"} ⦁{" "}
-                    {data?.album.originalReleaseDate &&
-                      format(
-                        parse(
-                          `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
-                          "d/M/yyyy",
-                          new Date(),
-                        ),
-                        "dd MMM yyyy",
-                      )}
-                  </Text>
-                </HStack>
-                <HStack className="mt-4 items-center justify-between">
-                  <HStack className="items-center gap-x-4">
-                    {data?.album.starred ? (
-                      <FadeOutScaleDown onPress={handleUnfavoritePress}>
-                        <Heart
-                          color={themeConfig.theme.colors.emerald[500]}
-                          fill={themeConfig.theme.colors.emerald[500]}
-                        />
-                      </FadeOutScaleDown>
-                    ) : (
-                      <FadeOutScaleDown onPress={handleFavoritePress}>
-                        <Heart color={themeConfig.theme.colors.white} />
-                      </FadeOutScaleDown>
+              <HStack className="mt-4 items-center">
+                <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
+                  <User size={16} color={themeConfig.theme.colors.white} />
+                </Box>
+                <Text
+                  className="ml-4 text-white text-md font-bold"
+                  numberOfLines={1}
+                >
+                  {((data?.album?.artists?.length || 0) > 1 &&
+                    data?.album.artists?.map((artist) => (
+                      <Link key={artist.id} href={`/artists/${artist.id}`}>
+                        {artist.name}
+                      </Link>
+                    ))) || (
+                      <Link href={`/artists/${data?.album.artistId}`}>
+                        {data?.album.displayArtist}
+                      </Link>
+                    ) || (
+                      <Link href={`/artists/${data?.album.artistId}`}>
+                        {data?.album.artist}
+                      </Link>
                     )}
-                    <FadeOutScaleDown onPress={handlePresentModalPress}>
-                      <EllipsisVertical
-                        color={themeConfig.theme.colors.white}
+                </Text>
+              </HStack>
+              <HStack className="mt-2 items-center">
+                <Text className="text-primary-100">
+                  {data?.album.isCompilation ? "Compilation" : "Album"} ⦁{" "}
+                  {data?.album.originalReleaseDate &&
+                    format(
+                      parse(
+                        `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
+                        "d/M/yyyy",
+                        new Date(),
+                      ),
+                      "dd MMM yyyy",
+                    )}
+                </Text>
+              </HStack>
+              <HStack className="mt-4 items-center justify-between">
+                <HStack className="items-center gap-x-4">
+                  {data?.album.starred ? (
+                    <FadeOutScaleDown onPress={handleUnfavoritePress}>
+                      <Heart
+                        color={themeConfig.theme.colors.emerald[500]}
+                        fill={themeConfig.theme.colors.emerald[500]}
                       />
                     </FadeOutScaleDown>
-                  </HStack>
-                  <HStack className="items-center gap-x-4">
-                    <FadeOutScaleDown>
-                      <Shuffle color={themeConfig.theme.colors.white} />
+                  ) : (
+                    <FadeOutScaleDown onPress={handleFavoritePress}>
+                      <Heart color={themeConfig.theme.colors.white} />
                     </FadeOutScaleDown>
-                    <FadeOutScaleDown>
-                      <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
-                      </Box>
-                    </FadeOutScaleDown>
-                  </HStack>
+                  )}
+                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
                 </HStack>
-              </VStack>
-              {error && <ErrorDisplay error={error} />}
-              {isLoading && <Spinner size="large" />}
-            </SafeAreaView>
+                <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown>
+                    <Shuffle color={themeConfig.theme.colors.white} />
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown>
+                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                      <Play
+                        color={themeConfig.theme.colors.white}
+                        fill={themeConfig.theme.colors.white}
+                      />
+                    </Box>
+                  </FadeOutScaleDown>
+                </HStack>
+              </HStack>
+            </VStack>
+            {error && <ErrorDisplay error={error} />}
+            {isLoading && <Spinner size="large" />}
           </LinearGradient>
         )}
         ListFooterComponent={() => (
@@ -379,7 +386,7 @@ export default function AlbumDetail() {
             alignItems: "center",
           }}
         >
-          <Box className="p-6 w-full pb-12">
+          <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {data?.album?.coverArt ? (
                 <Image

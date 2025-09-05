@@ -6,6 +6,7 @@ import { ArrowLeft, X } from "lucide-react-native";
 
 export default function AppLayout() {
   const isAuthenticated = useAuth.use.isAuthenticated();
+  console.log("isAuthenticated", isAuthenticated);
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
