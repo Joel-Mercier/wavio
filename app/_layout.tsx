@@ -128,19 +128,11 @@ export default function RootLayout() {
                 <BottomSheetModalProvider>
                   <Stack
                     screenOptions={{
-                      navigationBarColor: "#000",
+                      headerShown: false,
                     }}
                   >
-                    <Stack.Screen
-                      name="(app)"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="(auth)"
-                      options={{
-                        headerShown: false,
-                      }}
-                    />
+                    <Stack.Screen name="(app)" />
+                    <Stack.Screen name="(auth)" />
                     <Stack.Screen name="+not-found" />
                   </Stack>
                   <FloatingPlayer />

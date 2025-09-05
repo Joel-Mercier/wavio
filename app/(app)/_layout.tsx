@@ -12,17 +12,13 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        navigationBarColor: "#000",
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
       {/* <Stack.Screen
                       name="albums/[id]/index"
                       options={{ headerShown: false }}
                     /> */}
-      <Stack.Screen name="playlists/new" options={{ headerShown: false }} />
+      <Stack.Screen name="playlists/new" />
       <Stack.Screen
         name="playlists/add-to-playlist"
         options={({ navigation }) => ({
@@ -57,45 +53,12 @@ export default function AppLayout() {
           ),
         })}
       />
-      {/* <Stack.Screen
-                      name="playlists/[id]/index"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="artists/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
-      {/* <Stack.Screen
-                      name="genres/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
-      {/* <Stack.Screen
-                      name="favorites"
-                      options={{ headerShown: false }}
-                    /> */}
-      {/* <Stack.Screen
-                      name="library/search"
-                      options={{ headerShown: false }}
-                    /> */}
-      {/* <Stack.Screen
-                      name="recent-searches"
-                      options={{
-                        headerShown: false,
-                      }}
-                    />
-                    <Stack.Screen
-                      name="search-results"
-                      options={{
-                        headerShown: false,
-                      }}
-                    /> */}
-      <Stack.Screen name="settings" options={{ headerShown: false }} />
-      <Stack.Screen name="shares" options={{ headerShown: false }} />
-      <Stack.Screen name="servers" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="shares" />
+      <Stack.Screen name="servers" />
       <Stack.Screen
         name="player"
         options={{
-          headerShown: false,
           gestureEnabled: true,
           fullScreenGestureEnabled: true,
           gestureDirection: "vertical",

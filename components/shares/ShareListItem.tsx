@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+} from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -33,6 +39,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useForm } from "@tanstack/react-form";
 import {
+  AlertCircleIcon,
   AudioLines,
   Disc3,
   EllipsisVertical,
@@ -40,6 +47,12 @@ import {
   Trash,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
+import z from "zod";
+
+const updateShareSchema = z.object({
+  description: z.string().optional(),
+  expires: z.string().optional(),
+});
 
 export default function ShareListItem({ share }: { share: Share }) {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -54,14 +67,17 @@ export default function ShareListItem({ share }: { share: Share }) {
   const form = useForm({
     defaultValues: {
       description: share.description,
-      expires: share.expires as string,
+      expires: share.expires as unknown as string,
+    },
+    validators: {
+      onChange: updateShareSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdateShare.mutate(
         {
           id: share.id,
           description: value.description,
-          expires: value.expires?.getTime(),
+          expires: value.expires,
         },
         {
           onSuccess: () => {
@@ -139,7 +155,8 @@ export default function ShareListItem({ share }: { share: Share }) {
     );
   };
 
-  const isPlaylist = share.entry?.length > 1;
+  const isPlaylist = (share?.entry?.length || 0) > 1;
+  const hasEntries = (share?.entry?.length || 0) > 0;
   return (
     <ExternalLink href={share.url}>
       <Card
@@ -149,7 +166,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       >
         <HStack className="items-center justify-between">
           <HStack className="items-center">
-            {share.entry[0]?.coverArt ? (
+            {share?.entry && hasEntries && share?.entry[0]?.coverArt ? (
               <Image
                 source={{ uri: artworkUrl(share.entry[0].coverArt) }}
                 className="w-16 h-16 rounded-md aspect-square"
@@ -157,7 +174,9 @@ export default function ShareListItem({ share }: { share: Share }) {
               />
             ) : (
               <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                {share.entry[0].mediaType === "album" ? (
+                {share?.entry &&
+                hasEntries &&
+                share.entry[0].mediaType === "album" ? (
                   <Disc3 size={24} color={themeConfig.theme.colors.white} />
                 ) : (
                   <AudioLines
@@ -171,11 +190,17 @@ export default function ShareListItem({ share }: { share: Share }) {
               <Heading size="lg" className="text-white" numberOfLines={1}>
                 {isPlaylist
                   ? share.description
-                  : share.entry[0].name || share.entry[0].title}
+                  : hasEntries && share?.entry
+                    ? share.entry[0].name || share.entry[0].title
+                    : "No description"}
               </Heading>
               <HStack>
                 <Text className="text-md text-primary-100 capitalize">
-                  {isPlaylist ? "Playlist" : share.entry[0].mediaType}
+                  {isPlaylist
+                    ? "Playlist"
+                    : hasEntries && share?.entry
+                      ? share.entry[0].mediaType
+                      : "Unknown"}
                 </Text>
                 <Text className="text-md text-primary-100">
                   {` ⦁ ${share.visitCount} ${share.visitCount > 1 ? "visits" : "visit"}`}
@@ -286,9 +311,16 @@ export default function ShareListItem({ share }: { share: Share }) {
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
-            {!isPlaylist && (
-              <form.Field name="description">
-                {(field) => (
+            <form.Field name="description">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
                   <Textarea className="border-0 border-b border-b-white text-white">
                     <TextareaInput
                       value={field.state.value}
@@ -298,20 +330,54 @@ export default function ShareListItem({ share }: { share: Share }) {
                       placeholder="Description (displayed in the link preview)"
                     />
                   </Textarea>
-                )}
-              </form.Field>
-            )}
+                  {!field.state.meta.isValid && (
+                    <FormControlError>
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500">
+                        {field.state.meta.errors.join(", ")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </form.Field>
             <form.Field name="expires">
               {(field) => (
-                <Input className="border-white my-6 h-16" variant="underlined">
-                  <InputField
-                    value={field.state.value}
-                    onChangeText={field.handleChange}
-                    onBlur={field.handleBlur}
-                    className="text-md text-white font-bold"
-                    placeholder="Expires"
-                  />
-                </Input>
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Input
+                    className="border-white my-6 h-16"
+                    variant="underlined"
+                  >
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      className="text-md text-white font-bold"
+                      placeholder="Expires"
+                    />
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError>
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500">
+                        {field.state.meta.errors.join(", ")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
               )}
             </form.Field>
           </AlertDialogBody>

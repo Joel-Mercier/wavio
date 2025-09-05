@@ -79,64 +79,62 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
         }}
       >
         <DrawerHeader>
-          <Pressable className="w-full">
-            <HStack className="items-center m-1 p-4 border-b-2 border-primary-500 active:bg-primary-800">
-              <Avatar size="md" className="mr-4 bg-primary-400">
-                <AvatarFallbackText className="font-body">
-                  {username}
-                </AvatarFallbackText>
-              </Avatar>
-              <VStack>
-                <Heading
-                  numberOfLines={1}
-                  size="xl"
-                  className="text-white font-bold"
-                >
-                  {username}
-                </Heading>
-              </VStack>
-            </HStack>
-          </Pressable>
+          <HStack className="w-full items-center m-1 p-4 border-b-2 border-primary-500">
+            <Avatar size="md" className="mr-4 bg-primary-400">
+              <AvatarFallbackText className="font-body">
+                {username}
+              </AvatarFallbackText>
+            </Avatar>
+            <VStack>
+              <Heading
+                numberOfLines={1}
+                size="xl"
+                className="text-white font-bold"
+              >
+                {username}
+              </Heading>
+            </VStack>
+          </HStack>
         </DrawerHeader>
         <DrawerBody>
           <VStack className="justify-between h-full">
             <VStack>
-              <HStack
-                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleSettingsPress}
               >
                 <Settings size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
                   Settings
                 </Heading>
-              </HStack>
-              <HStack
-                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleSharesPress}
               >
                 <Share2 size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
                   Shares
                 </Heading>
-              </HStack>
-              <HStack
-                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleServersPress}
               >
                 <Server size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
                   Servers
                 </Heading>
-              </HStack>
-              <HStack
-                className="items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleLogoutPress}
               >
                 <LogOut size={24} color={themeConfig.theme.colors.red[500]} />
                 <Heading size="lg" className="text-red-500 font-normal">
                   Logout
                 </Heading>
-              </HStack>
+              </Pressable>
             </VStack>
             {currentServer && (
               <VStack className="my-6">

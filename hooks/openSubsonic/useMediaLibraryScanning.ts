@@ -10,6 +10,7 @@ export const useGetScanStatus = () => {
     queryFn: () => {
       return getScanStatus();
     },
+    refetchInterval: 3000,
   });
 };
 

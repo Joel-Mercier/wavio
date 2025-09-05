@@ -1,4 +1,4 @@
-import type { LibraryLayout } from "@/app/(tabs)/library";
+import type { LibraryLayout } from "@/app/(app)/(tabs)/(library)/index";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";

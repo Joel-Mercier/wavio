@@ -7,7 +7,6 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
@@ -36,6 +35,31 @@ export default function SearchScreen() {
 
   return (
     <Box className="h-full">
+      <>
+        <HStack
+          className="px-6 gap-x-4 my-6 items-center"
+          style={{ paddingTop: insets.top }}
+        >
+          <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+            <Avatar size="sm" className="border-emerald-500 border-2">
+              <AvatarFallbackText className="font-body ">
+                {username}
+              </AvatarFallbackText>
+            </Avatar>
+          </FadeOutScaleDown>
+          <Heading className="text-white" size="2xl">
+            Search
+          </Heading>
+        </HStack>
+        <FadeOutScaleDown className="mx-6 mb-6" onPress={handleSearchPress}>
+          <HStack className="bg-white rounded-md py-3 px-3">
+            <Search size={22} color={themeConfig.theme.colors.gray[500]} />
+            <Text className="text-gray-500 text-xl ml-4">
+              What do you want to listen to ?
+            </Text>
+          </HStack>
+        </FadeOutScaleDown>
+      </>
       <FlashList
         data={data?.genres.genre}
         renderItem={({ item, index }: { item: Genre; index: number }) => (
@@ -51,26 +75,6 @@ export default function SearchScreen() {
         numColumns={2}
         ListHeaderComponent={() => (
           <>
-            <HStack className="gap-x-4 my-6 items-center">
-              <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-                <Avatar size="sm" className="border-emerald-500 border-2">
-                  <AvatarFallbackText className="font-body ">
-                    {username}
-                  </AvatarFallbackText>
-                </Avatar>
-              </FadeOutScaleDown>
-              <Heading className="text-white" size="2xl">
-                Search
-              </Heading>
-            </HStack>
-            <FadeOutScaleDown className="mb-6" onPress={handleSearchPress}>
-              <HStack className="bg-white rounded-md py-3 px-3">
-                <Search size={22} color={themeConfig.theme.colors.gray[500]} />
-                <Text className="text-gray-500 text-xl ml-4">
-                  What do you want to listen to ?
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
             <Heading size="lg" className="text-white mb-4">
               Explore genres
             </Heading>
@@ -81,7 +85,6 @@ export default function SearchScreen() {
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingTop: insets.top,
           paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       />

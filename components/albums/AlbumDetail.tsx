@@ -6,7 +6,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";

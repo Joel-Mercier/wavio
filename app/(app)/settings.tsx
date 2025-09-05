@@ -7,6 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
+import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
@@ -15,9 +16,14 @@ import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
+import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { SupportedLanguages } from "@/config/i18n";
 import { themeConfig } from "@/config/theme";
+import {
+  useGetScanStatus,
+  useStartScan,
+} from "@/hooks/openSubsonic/useMediaLibraryScanning";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
@@ -27,6 +33,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { formatDistanceToNow, parse, parseISO } from "date-fns";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Check } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -43,12 +50,15 @@ export default function SettingsScreen() {
     bottomSheetLanguageModalRef,
   );
   const router = useRouter();
+  const toast = useToast();
   const locale = useApp.use.locale();
   const setLocale = useApp.use.setLocale();
   const showAddTab = useApp.use.showAddTab();
   const setShowAddTab = useApp.use.setShowAddTab();
   const clearRecentPlays = useRecentPlays.use.clearRecentPlays();
   const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
+  const doStartScan = useStartScan();
+  const { data, isLoading, error } = useGetScanStatus();
 
   const handlePresentLanguageModalPress = () => {
     bottomSheetLanguageModalRef.current?.present();
@@ -72,6 +82,38 @@ export default function SettingsScreen() {
     setShowRecentSearchesAlertDialog(false);
   };
 
+  console.log("DATA", data);
+
+  const handleMediaLibraryScanPress = () => {
+    doStartScan.mutate(undefined, {
+      onSuccess: () => {
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastDescription>Scan started successfully</ToastDescription>
+            </Toast>
+          ),
+        });
+      },
+      onError: (error) => {
+        console.error(error);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="error">
+              <ToastDescription>
+                An error occurred while starting a scan
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      },
+    });
+  };
+
   return (
     <SafeAreaView>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -85,6 +127,53 @@ export default function SettingsScreen() {
             </Heading>
           </HStack>
           <VStack className="my-6 gap-y-4">
+            <Heading className="text-white mt-4" size="lg">
+              Music library settings
+            </Heading>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  Scan music library
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  Initiates a rescan of the media libraries on your server
+                </Text>
+              </VStack>
+              <FadeOutScaleDown
+                onPress={handleMediaLibraryScanPress}
+                className="items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+              >
+                <Text className="text-primary-800 font-bold text-lg">Scan</Text>
+              </FadeOutScaleDown>
+            </HStack>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  Scan status
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  Indicates the scan status of your music library
+                </Text>
+                {data?.scanStatus?.lastScan && (
+                  <Text className="text-primary-100 text-sm">
+                    {`Last scan: ${formatDistanceToNow(
+                      parseISO(data?.scanStatus?.lastScan || ""),
+                    )} ago`}
+                  </Text>
+                )}
+              </VStack>
+              <Badge
+                className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                size="lg"
+                variant="solid"
+                action={data?.scanStatus?.scanning ? "warning" : "success"}
+              >
+                <BadgeText className="normal-case text-center text-emerald-700">
+                  {data?.scanStatus?.scanning ? "Scanning" : "Idle"}
+                </BadgeText>
+              </Badge>
+            </HStack>
+            <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               Display settings
             </Heading>

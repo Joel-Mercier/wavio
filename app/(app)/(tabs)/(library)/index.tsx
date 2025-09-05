@@ -43,7 +43,6 @@ import {
   Search,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type LibraryLayout = "list" | "grid";
@@ -162,6 +161,92 @@ export default function LibraryScreen() {
 
   return (
     <Box className="h-full">
+      <>
+        <Box className="px-6" style={{ paddingTop: insets.top }}>
+          <HStack className="mt-6 items-center justify-between">
+            <HStack className="items-center gap-x-4">
+              <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+                <Avatar size="sm" className="border-emerald-500 border-2">
+                  <AvatarFallbackText className="font-body ">
+                    {username}
+                  </AvatarFallbackText>
+                </Avatar>
+              </FadeOutScaleDown>
+              <Heading className="text-white" size="2xl">
+                Library
+              </Heading>
+            </HStack>
+            <HStack className="items-center gap-x-4">
+              <FadeOutScaleDown onPress={handleSearchPress}>
+                <Search color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handlePresentModalPress}>
+                <Plus color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+            </HStack>
+          </HStack>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="gap-x-4 my-6"
+          >
+            <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
+              <Badge
+                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                  "bg-emerald-500 text-primary-800": filter === "playlists",
+                })}
+              >
+                <BadgeText className="normal-case text-md text-white">
+                  Playlists
+                </BadgeText>
+              </Badge>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+              <Badge
+                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                  "bg-emerald-500 text-primary-800": filter === "albums",
+                })}
+              >
+                <BadgeText className="normal-case text-md text-white">
+                  Albums
+                </BadgeText>
+              </Badge>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+              <Badge
+                className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                  "bg-emerald-500 text-primary-800": filter === "artists",
+                })}
+              >
+                <BadgeText className="normal-case text-md text-white">
+                  Artists
+                </BadgeText>
+              </Badge>
+            </FadeOutScaleDown>
+          </ScrollView>
+        </Box>
+        <HStack className="px-6 pb-6 items-center justify-between">
+          <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+            <HStack className="items-center gap-x-2">
+              <ArrowDownUp size={16} color={themeConfig.theme.colors.white} />
+              <Text className="text-white font-bold">
+                {sort === "addedAt" ? "Recent" : "Alphabetical"}
+              </Text>
+            </HStack>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={handleLayoutPress}>
+            {layout === "list" ? (
+              <LayoutGrid size={16} color={themeConfig.theme.colors.white} />
+            ) : (
+              <List size={16} color={themeConfig.theme.colors.white} />
+            )}
+          </FadeOutScaleDown>
+        </HStack>
+        {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />}
+        {(playlistsError || starredError) && (
+          <ErrorDisplay error={playlistsError || starredError} />
+        )}
+      </>
       <FlashList
         data={data}
         keyExtractor={(item) => item.id}
@@ -195,107 +280,11 @@ export default function LibraryScreen() {
           );
         }}
         extraData={{ layout }}
-        ListHeaderComponent={() => (
-          <>
-            <Box>
-              <HStack className="mt-6 items-center justify-between">
-                <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-                    <Avatar size="sm" className="border-emerald-500 border-2">
-                      <AvatarFallbackText className="font-body ">
-                        {username}
-                      </AvatarFallbackText>
-                    </Avatar>
-                  </FadeOutScaleDown>
-                  <Heading className="text-white" size="2xl">
-                    Library
-                  </Heading>
-                </HStack>
-                <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown onPress={handleSearchPress}>
-                    <Search color={themeConfig.theme.colors.white} />
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handlePresentModalPress}>
-                    <Plus color={themeConfig.theme.colors.white} />
-                  </FadeOutScaleDown>
-                </HStack>
-              </HStack>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="gap-x-4 my-6"
-              >
-                <FadeOutScaleDown
-                  onPress={() => handleFilterPress("playlists")}
-                >
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                      "bg-emerald-500 text-primary-800": filter === "playlists",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Playlists
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                      "bg-emerald-500 text-primary-800": filter === "albums",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Albums
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                      "bg-emerald-500 text-primary-800": filter === "artists",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Artists
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-              </ScrollView>
-            </Box>
-            <HStack className="pb-6 items-center justify-between">
-              <FadeOutScaleDown onPress={handlePresentSortModalPress}>
-                <HStack className="items-center gap-x-2">
-                  <ArrowDownUp
-                    size={16}
-                    color={themeConfig.theme.colors.white}
-                  />
-                  <Text className="text-white font-bold">
-                    {sort === "addedAt" ? "Recent" : "Alphabetical"}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handleLayoutPress}>
-                {layout === "list" ? (
-                  <LayoutGrid
-                    size={16}
-                    color={themeConfig.theme.colors.white}
-                  />
-                ) : (
-                  <List size={16} color={themeConfig.theme.colors.white} />
-                )}
-              </FadeOutScaleDown>
-            </HStack>
-            {(isLoadingPlaylists || isLoadingStarred) && (
-              <Spinner size="large" />
-            )}
-            {(playlistsError || starredError) && (
-              <ErrorDisplay error={playlistsError || starredError} />
-            )}
-          </>
-        )}
+        // ListHeaderComponent={() => (
+
+        // )}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingTop: insets.top,
           paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       />

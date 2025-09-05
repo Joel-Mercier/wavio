@@ -8,7 +8,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { ImageBackground } from "@/components/ui/image-background";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
@@ -42,6 +41,7 @@ import {
 import { useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
+import { Center } from "../ui/center";
 
 export default function ArtistDetail() {
   const queryClient = useQueryClient();
@@ -254,7 +254,7 @@ export default function ArtistDetail() {
                 </HStack>
               </HStack>
               <Heading className="text-white">Top songs</Heading>
-              <VStack>
+              <VStack className="h-[450px] overflow-hidden mb-4">
                 {topSongsError && <ErrorDisplay error={topSongsError} />}
                 {isLoadingTopSongs && <Spinner size="large" />}
                 {topSongsData?.topSongs.song?.map((song, index) => (
@@ -269,6 +269,16 @@ export default function ArtistDetail() {
                 {!isLoadingTopSongs &&
                   !topSongsError &&
                   !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
+                <LinearGradient
+                  className="absolute h-[90px] bottom-0 left-0 right-0"
+                  colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
+                  locations={[0, 0.3, 0.7]}
+                />
+                <Center className="absolute bottom-0 left-0 right-0">
+                  <FadeOutScaleDown className="rounded-full border border-gray-300 py-1 px-3">
+                    <Text className="text-gray-300">See more</Text>
+                  </FadeOutScaleDown>
+                </Center>
               </VStack>
               <Heading className="text-white">Discography</Heading>
             </VStack>
@@ -328,7 +338,7 @@ export default function ArtistDetail() {
                 </Heading>
               </VStack>
             </HStack>
-            <VStack className="mt-6 gap-y-8"></VStack>
+            <VStack className="mt-6 gap-y-8" />
           </Box>
         </BottomSheetView>
       </BottomSheetModal>

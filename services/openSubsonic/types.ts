@@ -164,6 +164,7 @@ export interface Child {
   genres?: { name: string }[];
   replayGain?: { albumPeak: number; trackPeak: number };
   artists?: { id: string; name: string }[];
+  name?: string;
 }
 
 export interface Directory {
@@ -345,6 +346,10 @@ export type ResponseStatus = "ok" | "failed";
 export interface ScanStatus {
   count?: number;
   scanning: boolean;
+  elapsedTime?: number;
+  folderCount?: number;
+  lastScan?: string;
+  scanType?: "quick";
 }
 
 export interface SearchResult {
