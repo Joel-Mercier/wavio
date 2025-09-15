@@ -3,17 +3,18 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import GenreListItem from "@/components/search/GenreListItem";
+import GenreListItemSkeleton from "@/components/search/GenreListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
 import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
@@ -28,7 +29,6 @@ export default function SearchScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useGenres();
   const insets = useSafeAreaInsets();
-
   const handleSearchPress = () => {
     router.navigate("/(app)/(tabs)/(search)/recent-searches");
   };
@@ -61,7 +61,7 @@ export default function SearchScreen() {
         </FadeOutScaleDown>
       </>
       <FlashList
-        data={data?.genres.genre}
+        data={data?.genres.genre || loadingData(16)}
         renderItem={({ item, index }: { item: Genre; index: number }) => (
           <Box
             className={cn("flex-1 w-full mb-4", {
@@ -69,7 +69,11 @@ export default function SearchScreen() {
               "ml-2": index % 2 !== 0,
             })}
           >
-            <GenreListItem genre={item} />
+            {isLoading ? (
+              <GenreListItemSkeleton />
+            ) : (
+              <GenreListItem genre={item} />
+            )}
           </Box>
         )}
         numColumns={2}
@@ -78,7 +82,6 @@ export default function SearchScreen() {
             <Heading size="lg" className="text-white mb-4">
               Explore genres
             </Heading>
-            {isLoading && <Spinner size="large" />}
             {error && <ErrorDisplay error={error} />}
           </>
         )}

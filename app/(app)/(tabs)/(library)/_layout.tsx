@@ -9,6 +9,9 @@ export default function LibraryLayout() {
       <Stack.Screen name="albums/[id]" />
       <Stack.Screen name="artists/[id]" />
       <Stack.Screen name="playlists/[id]" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="servers" />
+      <Stack.Screen name="shares" />
     </Stack>
   );
 }

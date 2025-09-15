@@ -2,13 +2,15 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import TrackListItem from "@/components/tracks/TrackListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
+import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { ImageBackground } from "@/components/ui/image-background";
-import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -19,6 +21,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -41,7 +44,6 @@ import {
 import { useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
-import { Center } from "../ui/center";
 
 export default function ArtistDetail() {
   const queryClient = useQueryClient();
@@ -179,10 +181,14 @@ export default function ArtistDetail() {
   return (
     <Box className="h-full">
       <FlashList
-        data={data?.artist.album}
-        renderItem={({ item, index }: { item: AlbumID3; index: number }) => (
-          <AlbumListItem album={item} index={index} />
-        )}
+        data={data?.artist.album || loadingData(3)}
+        renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
+          isLoading ? (
+            <AlbumListItemSkeleton index={index} />
+          ) : (
+            <AlbumListItem album={item} index={index} />
+          )
+        }
         keyExtractor={(item) => item.id}
         ListHeaderComponent={() => (
           <>
@@ -256,34 +262,52 @@ export default function ArtistDetail() {
               <Heading className="text-white">Top songs</Heading>
               <VStack className="h-[450px] overflow-hidden mb-4">
                 {topSongsError && <ErrorDisplay error={topSongsError} />}
-                {isLoadingTopSongs && <Spinner size="large" />}
-                {topSongsData?.topSongs.song?.map((song, index) => (
-                  <TrackListItem
-                    key={song.id}
-                    showIndex
-                    track={song}
-                    index={index}
-                    onPlayCallback={handleTrackPressCallback}
-                  />
-                ))}
+                {isLoadingTopSongs ? (
+                  loadingData(6).map((_, index) => (
+                    <TrackListItemSkeleton
+                      key={`top-song-skeleton-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                        index
+                      }`}
+                      index={index}
+                      className="px-6"
+                    />
+                  ))
+                ) : (
+                  <>
+                    {topSongsData?.topSongs.song?.map((song, index) => (
+                      <TrackListItem
+                        key={song.id}
+                        showIndex
+                        track={song}
+                        index={index}
+                        onPlayCallback={handleTrackPressCallback}
+                      />
+                    ))}
+                  </>
+                )}
+
                 {!isLoadingTopSongs &&
                   !topSongsError &&
                   !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
-                <LinearGradient
-                  className="absolute h-[90px] bottom-0 left-0 right-0"
-                  colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
-                  locations={[0, 0.3, 0.7]}
-                />
-                <Center className="absolute bottom-0 left-0 right-0">
-                  <FadeOutScaleDown className="rounded-full border border-gray-300 py-1 px-3">
-                    <Text className="text-gray-300">See more</Text>
-                  </FadeOutScaleDown>
-                </Center>
+                {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
+                  <>
+                    <LinearGradient
+                      className="absolute h-[90px] bottom-0 left-0 right-0"
+                      colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
+                      locations={[0, 0.3, 0.7]}
+                    />
+                    <Center className="absolute bottom-0 left-0 right-0">
+                      <FadeOutScaleDown className="rounded-full border border-gray-300 py-1 px-3">
+                        <Text className="text-gray-300">See more</Text>
+                      </FadeOutScaleDown>
+                    </Center>
+                  </>
+                )}
               </VStack>
               <Heading className="text-white">Discography</Heading>
             </VStack>
             {error && <ErrorDisplay error={error} />}
-            {isLoading && <Spinner size="large" />}
           </>
         )}
         ListFooterComponent={() => (

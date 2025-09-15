@@ -1,6 +1,7 @@
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
-import axios from "axios";
+import axios, { Axios } from "axios";
+import { use } from "react";
 
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
@@ -30,7 +31,6 @@ export type OpenSubsonicErrorResponse = {
 };
 
 const openSubsonicApiInstance = axios.create({
-  // baseURL is set dynamically in the interceptor from the latest auth store state
   baseURL: "",
   headers: { "Content-Type": "application/json" },
 });
@@ -38,8 +38,6 @@ const openSubsonicApiInstance = axios.create({
 openSubsonicApiInstance.interceptors.request.use(
   (request) => {
     const { url, username, password } = useAuthBase.getState();
-    // Ensure params is always an object before assigning
-    console.log("INTERCEPTOR", request.baseURL, url, username, password);
     request.params = {
       ...(request.params ?? {}),
       u: username,
@@ -56,6 +54,18 @@ openSubsonicApiInstance.interceptors.request.use(
     return Promise.reject(error);
   },
 );
+
+openSubsonicApiInstance.interceptors.response.use((response) => {
+  return response;
+}, (error) => {
+  console.error(error);
+  if (axios.isAxiosError(error)) {
+    if (error.code === "ERR_NETWORK") {
+      useAuthBase.getState().logout();
+    }
+  }
+  return Promise.reject(error);
+})
 
 export type ApiType = typeof openSubsonicApiInstance;
 

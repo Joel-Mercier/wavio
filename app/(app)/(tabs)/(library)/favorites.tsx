@@ -2,12 +2,11 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import TrackListItem from "@/components/tracks/TrackListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
@@ -36,15 +35,18 @@ export default function FavoritesScreen() {
     <Box className="h-full">
       <FlashList
         data={data?.starred2.song}
-        renderItem={({ item, index }: { item: Child; index: number }) => (
-          <Box className="px-6">
+        renderItem={({ item, index }: { item: Child; index: number }) =>
+          isLoading ? (
+            <TrackListItemSkeleton index={index} className="px-6" />
+          ) : (
             <TrackListItem
               track={item}
               index={index}
+              className="px-6"
               onPlayCallback={handleTrackPressCallback}
             />
-          </Box>
-        )}
+          )
+        }
         ListHeaderComponent={() => (
           <>
             <LinearGradient
@@ -96,7 +98,6 @@ export default function FavoritesScreen() {
                 </HStack>
               </HStack>
               {error && <ErrorDisplay error={error} />}
-              {isLoading && <Spinner size="large" />}
             </VStack>
           </>
         )}

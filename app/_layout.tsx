@@ -12,13 +12,11 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SystemBars } from "react-native-edge-to-edge";
 import "react-native-reanimated";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
-import { themeConfig } from "@/config/theme";
 import useApp from "@/stores/app";
 import { OverlayProvider } from "@gluestack-ui/overlay";
 import { ToastProvider } from "@gluestack-ui/toast";
@@ -31,9 +29,9 @@ import {
   onlineManager,
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
-import { ArrowLeft, X } from "lucide-react-native";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import {
   ReanimatedLogLevel,
@@ -116,33 +114,35 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GluestackUIProvider mode="light">
-        <ThemeProvider value={DarkTheme}>
-          <SystemBars
-            style="light"
-            hidden={{ statusBar: false, navigationBar: false }}
-          />
-          <OverlayProvider>
-            <ToastProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <BottomSheetModalProvider>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                    }}
-                  >
-                    <Stack.Screen name="(app)" />
-                    <Stack.Screen name="(auth)" />
-                    <Stack.Screen name="+not-found" />
-                  </Stack>
-                  <FloatingPlayer />
-                </BottomSheetModalProvider>
-              </GestureHandlerRootView>
-            </ToastProvider>
-          </OverlayProvider>
-        </ThemeProvider>
-      </GluestackUIProvider>
-      {/* {__DEV__ && <DevToolsBubble />} */}
+      <KeyboardProvider>
+        <GluestackUIProvider mode="light">
+          <ThemeProvider value={DarkTheme}>
+            <SystemBars
+              style="light"
+              hidden={{ statusBar: false, navigationBar: false }}
+            />
+            <OverlayProvider>
+              <ToastProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <BottomSheetModalProvider>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                      }}
+                    >
+                      <Stack.Screen name="(app)" />
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="+not-found" />
+                    </Stack>
+                    <FloatingPlayer />
+                  </BottomSheetModalProvider>
+                </GestureHandlerRootView>
+              </ToastProvider>
+            </OverlayProvider>
+          </ThemeProvider>
+        </GluestackUIProvider>
+        {/* {__DEV__ && <DevToolsBubble />} */}
+      </KeyboardProvider>
     </QueryClientProvider>
   );
 }

@@ -24,7 +24,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { secondsToMinutes } from "date-fns";
+import { millisecondsToMinutes } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -46,7 +46,7 @@ import {
   SkipForward,
   User,
 } from "lucide-react-native";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 
 export default function PlayerScreen() {
@@ -176,13 +176,19 @@ export default function PlayerScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <VStack className="px-6 h-screen">
             <HStack className="items-center justify-between my-6">
-              <FadeOutScaleDown onPress={() => router.back()}>
+              <FadeOutScaleDown
+                onPress={() => router.back()}
+                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+              >
                 <ChevronDown size={24} color="white" />
               </FadeOutScaleDown>
               <Text className="text-white font-bold uppercase tracking-wider">
                 Playing now
               </Text>
-              <FadeOutScaleDown onPress={handlePresentModalPress}>
+              <FadeOutScaleDown
+                onPress={handlePresentModalPress}
+                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+              >
                 <EllipsisVertical size={24} color="white" />
               </FadeOutScaleDown>
             </HStack>
@@ -256,9 +262,9 @@ export default function PlayerScreen() {
                   <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
                 </Slider>
                 <HStack className="mt-2 items-center justify-between">
-                  <Text className="text-primary-100 text-sm">{`${secondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
+                  <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
                   <Text className="text-primary-100 text-sm">
-                    {`${secondsToMinutes(duration)}:${duration % 60}`}
+                    {`${millisecondsToMinutes(duration)}:${duration % 60}`}
                   </Text>
                 </HStack>
               </VStack>
@@ -289,6 +295,8 @@ export default function PlayerScreen() {
                 <FadeOut onPress={handleNextPress}>
                   <SkipForward size={36} color="white" fill="white" />
                 </FadeOut>
+                <Repeat size={24} color="white" />
+
                 {/* {repeatMode === RepeatMode.Off && (
                   <FadeOut
                     onPress={() => handleRepeatModePress(RepeatMode.Queue)}
@@ -361,10 +369,10 @@ export default function PlayerScreen() {
                     size="lg"
                     numberOfLines={1}
                   >
-                    Unicorn
+                    {playingTrack?.title}
                   </Heading>
                   <Text numberOfLines={1} className="text-md text-primary-100">
-                    Gunship ⦁ Album
+                    {playingTrack?.artist} ⦁ {playingTrack?.album}
                   </Text>
                 </VStack>
               </HStack>

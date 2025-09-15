@@ -42,17 +42,17 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
   );
 
   const handleSettingsPress = () => {
-    router.navigate("/(app)/settings");
+    router.navigate("/settings");
     onClose();
   };
 
   const handleSharesPress = () => {
-    router.navigate("/(app)/shares");
+    router.navigate("/shares");
     onClose();
   };
 
   const handleServersPress = () => {
-    router.navigate("/(app)/servers");
+    router.navigate("/servers");
     onClose();
   };
 
@@ -62,7 +62,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
   };
 
   const handleCurrentServerPress = () => {
-    router.navigate("/(app)/servers");
+    router.navigate("/servers");
     onClose();
   };
 

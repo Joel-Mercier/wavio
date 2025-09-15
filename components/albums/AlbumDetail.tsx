@@ -6,7 +6,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -19,6 +18,7 @@ import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -44,6 +44,7 @@ import {
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 export default function AlbumDetail() {
   const queryClient = useQueryClient();
@@ -57,7 +58,7 @@ export default function AlbumDetail() {
   const doShare = useCreateShare();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
-  const colors = useImageColors(data?.album?.coverArt);
+  const colors = useImageColors(artworkUrl(data?.album?.coverArt));
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -227,20 +228,27 @@ export default function AlbumDetail() {
       <FlashList
         contentContainerStyle={{
           paddingBottom: insets.bottom + bottomTabBarHeight,
-          paddingTop: insets.top,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         }}
-        data={data?.album.song}
-        renderItem={({ item, index }: { item: Child; index: number }) => (
-          <TrackListItem
-            track={item}
-            index={index}
-            className="px-6"
-            onPlayCallback={handleTrackPressCallback}
-            showCoverArt={false}
-          />
-        )}
+        data={data?.album.song || loadingData(16)}
+        renderItem={({ item, index }: { item: Child; index: number }) =>
+          isLoading ? (
+            <TrackListItemSkeleton
+              index={index}
+              showCoverArt={false}
+              className="px-6"
+            />
+          ) : (
+            <TrackListItem
+              track={item}
+              index={index}
+              className="px-6"
+              onPlayCallback={handleTrackPressCallback}
+              showCoverArt={false}
+            />
+          )
+        }
         ListHeaderComponent={() => (
           <LinearGradient
             colors={[
@@ -250,9 +258,13 @@ export default function AlbumDetail() {
             ]}
             locations={[0, 0.8]}
             className="px-6"
+            style={{ paddingTop: insets.top }}
           >
             <HStack className="mt-6 items-start justify-between">
-              <FadeOutScaleDown onPress={() => router.back()}>
+              <FadeOutScaleDown
+                onPress={() => router.back()}
+                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+              >
                 <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
               </FadeOutScaleDown>
               {!data?.album?.coverArt ? (
@@ -268,7 +280,7 @@ export default function AlbumDetail() {
                   alt="Album cover"
                 />
               )}
-              <Box className="w-6" />
+              <Box className="w-10" />
             </HStack>
             <VStack>
               <HStack className="mt-5 items-center justify-between">
@@ -286,9 +298,16 @@ export default function AlbumDetail() {
                 >
                   {((data?.album?.artists?.length || 0) > 1 &&
                     data?.album.artists?.map((artist) => (
-                      <Link key={artist.id} href={`/artists/${artist.id}`}>
-                        {artist.name}
-                      </Link>
+                      <React.Fragment key={artist.id}>
+                        <Link href={`/artists/${artist.id}`}>
+                          {artist.name}
+                        </Link>
+                        {artist.id ===
+                        data?.album?.artists[data?.album?.artists?.length - 1]
+                          ?.id ? null : (
+                          <Text>, </Text>
+                        )}
+                      </React.Fragment>
                     ))) || (
                       <Link href={`/artists/${data?.album.artistId}`}>
                         {data?.album.displayArtist}
@@ -348,7 +367,6 @@ export default function AlbumDetail() {
               </HStack>
             </VStack>
             {error && <ErrorDisplay error={error} />}
-            {isLoading && <Spinner size="large" />}
           </LinearGradient>
         )}
         ListFooterComponent={() => (

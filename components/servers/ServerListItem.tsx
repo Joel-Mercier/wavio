@@ -230,27 +230,36 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
+                  className="my-4"
                 >
                   <Input
-                    className="border-white my-6 h-16"
-                    variant="underlined"
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
                   >
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={field.handleBlur}
-                      className="text-md text-white font-bold"
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
                       placeholder="Enter server name"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
-                    <FormControlError>
+                    <FormControlError className="items-start">
                       <FormControlErrorIcon
                         as={AlertCircleIcon}
                         className="text-red-500"
                       />
-                      <FormControlErrorText className="text-red-500">
-                        {field.state.meta.errors.join(", ")}
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
                   )}
@@ -265,16 +274,23 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
+                  className="my-4"
                 >
                   <Input
-                    className="border-white my-6 h-16"
-                    variant="underlined"
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
                   >
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={field.handleBlur}
-                      className="text-md text-white font-bold"
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
                       placeholder="Enter server url"
                       keyboardType="url"
                       autoCapitalize="none"
@@ -282,13 +298,15 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     />
                   </Input>
                   {!field.state.meta.isValid && (
-                    <FormControlError>
+                    <FormControlError className="items-start">
                       <FormControlErrorIcon
                         as={AlertCircleIcon}
                         className="text-red-500"
                       />
-                      <FormControlErrorText className="text-red-500">
-                        {field.state.meta.errors.join(", ")}
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
                   )}
@@ -303,29 +321,38 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
+                  className="my-4"
                 >
                   <Input
-                    className="border-white my-6 h-16"
-                    variant="underlined"
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
                   >
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={field.handleBlur}
-                      className="text-md text-white font-bold"
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
                       placeholder="Enter server username"
                       autoCapitalize="none"
                       textContentType="username"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
-                    <FormControlError>
+                    <FormControlError className="items-start">
                       <FormControlErrorIcon
                         as={AlertCircleIcon}
                         className="text-red-500"
                       />
-                      <FormControlErrorText className="text-red-500">
-                        {field.state.meta.errors.join(", ")}
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
                   )}
@@ -340,16 +367,23 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
+                  className="my-4"
                 >
                   <Input
-                    className="border-white my-6 h-16"
-                    variant="underlined"
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
                   >
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={field.handleBlur}
-                      className="text-md text-white font-bold"
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
                       placeholder="Enter user password"
                       secureTextEntry
                       autoCapitalize="none"
@@ -357,13 +391,15 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     />
                   </Input>
                   {!field.state.meta.isValid && (
-                    <FormControlError>
+                    <FormControlError className="items-start">
                       <FormControlErrorIcon
                         as={AlertCircleIcon}
                         className="text-red-500"
                       />
-                      <FormControlErrorText className="text-red-500">
-                        {field.state.meta.errors.join(", ")}
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
                   )}

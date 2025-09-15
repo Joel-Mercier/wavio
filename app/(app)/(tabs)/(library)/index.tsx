@@ -4,6 +4,7 @@ import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
 } from "@/components/library/LibraryListItem";
+import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -24,6 +25,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -40,6 +42,7 @@ import {
   List,
   ListMusic,
   Plus,
+  Radio,
   Search,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -100,6 +103,11 @@ export default function LibraryScreen() {
     router.navigate("/playlists/new");
   };
 
+  const handleCreateInternetRadioStationPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate("/internet-radio-stations/new");
+  };
+
   const handleSortPress = (type: typeof sort) => {
     bottomSheetModalSortRef.current?.dismiss();
     setSort(type);
@@ -116,7 +124,7 @@ export default function LibraryScreen() {
       !playlistsData ||
       !playlistsData?.playlists
     ) {
-      return [];
+      return null;
     }
     let data = [];
     if (!filter) {
@@ -158,6 +166,9 @@ export default function LibraryScreen() {
       }
     });
   }, [starredData, playlistsData, filter, sort]);
+
+  const isLoading = isLoadingPlaylists || isLoadingStarred;
+  const error = playlistsError || starredError;
 
   return (
     <Box className="h-full">
@@ -242,52 +253,54 @@ export default function LibraryScreen() {
             )}
           </FadeOutScaleDown>
         </HStack>
-        {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />}
-        {(playlistsError || starredError) && (
-          <ErrorDisplay error={playlistsError || starredError} />
-        )}
+        {/* {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />} */}
+        {error && <ErrorDisplay error={error} />}
       </>
-      <FlashList
-        data={data}
-        keyExtractor={(item) => item.id}
-        numColumns={layout === "grid" ? 3 : 1}
-        refreshing={
-          (isFetchingStarred && !isLoadingStarred) ||
-          (isFetchingPlaylists && !isLoadingPlaylists)
-        }
-        onRefresh={() => {
-          refetchPlaylists();
-          refetchStarred();
-        }}
-        renderItem={({
-          item,
-          index,
-          target,
-          extraData,
-        }: {
-          item: Playlist & AlbumID3 & ArtistID3 & Favorites;
-          index: number;
-          target: string;
-          extraData: { layout: LibraryLayout };
-        }) => {
-          return (
-            <LibraryListItem
-              item={item}
-              layout={extraData.layout}
-              key={item.id}
-              index={index}
-            />
-          );
-        }}
-        extraData={{ layout }}
-        // ListHeaderComponent={() => (
-
-        // )}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-      />
+      {!error && (
+        <FlashList
+          data={data || loadingData(16)}
+          keyExtractor={(item) => item.id}
+          numColumns={layout === "grid" ? 3 : 1}
+          refreshing={
+            (isFetchingStarred && !isLoadingStarred) ||
+            (isFetchingPlaylists && !isLoadingPlaylists)
+          }
+          onRefresh={() => {
+            refetchPlaylists();
+            refetchStarred();
+          }}
+          renderItem={({
+            item,
+            index,
+            target,
+            extraData,
+          }: {
+            item: Playlist & AlbumID3 & ArtistID3 & Favorites;
+            index: number;
+            target: string;
+            extraData: { layout: LibraryLayout };
+          }) =>
+            isLoading ? (
+              <LibraryListItemSkeleton
+                layout={extraData.layout}
+                index={index}
+              />
+            ) : (
+              <LibraryListItem
+                item={item}
+                layout={extraData.layout}
+                key={item.id}
+                index={index}
+              />
+            )
+          }
+          extraData={{ layout }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+        />
+      )}
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -317,6 +330,20 @@ export default function LibraryScreen() {
                     <Heading className="text-white">Playlist</Heading>
                     <Text className="text-md text-gray-200">
                       Create a playlist with songs or podcast episodes
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
+                <HStack className="items-center">
+                  <Radio size={32} color={themeConfig.theme.colors.gray[200]} />
+                  <VStack className="ml-4">
+                    <Heading className="text-white">
+                      Internet radio station
+                    </Heading>
+                    <Text className="text-md text-gray-200">
+                      Create a internet radio station you can stream from the
+                      app
                     </Text>
                   </VStack>
                 </HStack>

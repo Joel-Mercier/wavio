@@ -13,7 +13,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
@@ -28,6 +27,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -51,6 +51,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
+import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 export default function PlaylistDetail() {
   const queryClient = useQueryClient();
@@ -205,20 +206,24 @@ export default function PlaylistDetail() {
   return (
     <Box className="h-full">
       <FlashList
-        data={data?.playlist.entry?.reverse()}
-        renderItem={({ item, index }: { item: Child; index: number }) => (
-          <TrackListItem
-            track={item}
-            index={index}
-            handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
-            onPlayCallback={handleTrackPressCallback}
-          />
-        )}
+        data={data?.playlist.entry?.reverse() || loadingData(16)}
+        renderItem={({ item, index }: { item: Child; index: number }) =>
+          isLoading ? (
+            <TrackListItemSkeleton index={index} />
+          ) : (
+            <TrackListItem
+              track={item}
+              index={index}
+              handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
+              onPlayCallback={handleTrackPressCallback}
+            />
+          )
+        }
         ListEmptyComponent={() => (
           <VStack className="items-center justify-center my-6">
             <Text className="text-white text-md">This playlist is empty</Text>
             <FadeOutScaleDown
-              onPress={() => router.navigate("/(tabs)/search")}
+              onPress={() => router.navigate("/(app)/(tabs)/(search)")}
               className="bg-white rounded-full px-6 py-3 mt-4"
             >
               <Text className="text-primary-800 font-bold">
@@ -287,7 +292,6 @@ export default function PlaylistDetail() {
               </HStack>
             </VStack>
             {error && <ErrorDisplay error={error} />}
-            {isLoading && <Spinner size="large" />}
           </VStack>
         )}
         ListFooterComponent={() => (

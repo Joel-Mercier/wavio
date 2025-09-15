@@ -53,9 +53,6 @@ export default function AppLayout() {
           ),
         })}
       />
-      <Stack.Screen name="settings" />
-      <Stack.Screen name="shares" />
-      <Stack.Screen name="servers" />
       <Stack.Screen
         name="player"
         options={{

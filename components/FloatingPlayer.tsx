@@ -7,6 +7,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import useImageColors from "@/hooks/useImageColors";
 import { usePathname, useRouter } from "expo-router";
 import { AudioLines, Pause, Play } from "lucide-react-native";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
@@ -17,6 +18,7 @@ export default function FloatingPlayer() {
   const { state, playingTrack } = useAudioPro();
   const router = useRouter();
   const pathname = usePathname();
+  const colors = useImageColors(playingTrack?.artwork);
 
   const handlePress = () => {
     router.navigate("/player");
@@ -39,7 +41,14 @@ export default function FloatingPlayer() {
       className="absolute bottom-28 right-0 left-0"
       onPress={handlePress}
     >
-      <HStack className="h-16 px-4 py-2 bg-primary-500 rounded-md items-center justify-between">
+      <HStack
+        className="h-16 mx-2 px-4 py-2 rounded-md items-center justify-between overflow-hidden"
+        style={{
+          backgroundColor:
+            (colors?.platform === "ios" ? colors.background : colors?.muted) ||
+            themeConfig.theme.colors.primary[500],
+        }}
+      >
         <HStack className="items-center">
           {playingTrack.artwork ? (
             <Image
@@ -61,7 +70,7 @@ export default function FloatingPlayer() {
             <Text numberOfLines={1} className="text-white font-bold text-md">
               {playingTrack.title}
             </Text>
-            <Text numberOfLines={1} className="text-primary-50">
+            <Text numberOfLines={1} className="text-gray-300">
               {playingTrack.artist}
             </Text>
           </VStack>
@@ -83,6 +92,7 @@ export default function FloatingPlayer() {
             )}
           </FadeOut>
         </HStack>
+        <Box className="absolute inset-0 bg-black/30 -z-10" />
       </HStack>
     </Pressable>
   );

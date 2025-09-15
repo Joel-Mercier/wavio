@@ -12,7 +12,6 @@ import { Box } from "@/components/ui/box";
 import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
@@ -33,13 +32,16 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { formatDistanceToNow, parse, parseISO } from "date-fns";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Check } from "lucide-react-native";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
-export default function SettingsScreen() {
+export default function SettingsDerail() {
   const { t } = useTranslation();
   const [showRecentPlaysAlertDialog, setShowRecentPlaysAlertDialog] =
     useState(false);
@@ -49,6 +51,8 @@ export default function SettingsScreen() {
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
     bottomSheetLanguageModalRef,
   );
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
   const toast = useToast();
   const locale = useApp.use.locale();
@@ -82,8 +86,6 @@ export default function SettingsScreen() {
     setShowRecentSearchesAlertDialog(false);
   };
 
-  console.log("DATA", data);
-
   const handleMediaLibraryScanPress = () => {
     doStartScan.mutate(undefined, {
       onSuccess: () => {
@@ -115,18 +117,27 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Box className="px-6 mt-6 mb-4">
-          <HStack className="items-center">
-            <FadeOutScaleDown onPress={() => router.back()}>
-              <ArrowLeft size={24} color="white" />
-            </FadeOutScaleDown>
-            <Heading className="text-white ml-4" size="xl">
-              Settings
-            </Heading>
-          </HStack>
-          <VStack className="my-6 gap-y-4">
+    <Box className="h-full">
+      <Box className="px-6 mt-6 pb-6">
+        <HStack
+          className="items-center mb-6"
+          style={{ paddingTop: insets.top }}
+        >
+          <FadeOutScaleDown onPress={() => router.back()}>
+            <ArrowLeft size={24} color="white" />
+          </FadeOutScaleDown>
+          <Heading className="text-white ml-4" size="xl">
+            Settings
+          </Heading>
+        </HStack>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+        >
+          <VStack className="mb-6 gap-y-4">
             <Heading className="text-white mt-4" size="lg">
               Music library settings
             </Heading>
@@ -252,8 +263,8 @@ export default function SettingsScreen() {
               </FadeOutScaleDown>
             </HStack>
           </VStack>
-        </Box>
-      </ScrollView>
+        </ScrollView>
+      </Box>
       <BottomSheetModal
         ref={bottomSheetLanguageModalRef}
         onChange={handleSheetPositionChange}
@@ -368,6 +379,6 @@ export default function SettingsScreen() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SafeAreaView>
+    </Box>
   );
 }

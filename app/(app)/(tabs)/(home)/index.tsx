@@ -3,19 +3,23 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import HomeShortcut from "@/components/home/HomeShortcut";
+import InternetRadioStationListItem from "@/components/internetRadioStations/InternetRadioStationListItem";
+import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
+import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useRecentPlays from "@/stores/recentPlays";
+import { loadingData } from "@/utils/loadingData";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -45,7 +49,11 @@ export default function HomeScreen() {
     isLoading: isLoadingHighestRated,
     error: highestRatedError,
   } = useAlbumList2({ type: "highest", size: 12 });
-
+  const {
+    data: internetRadioStationsData,
+    isLoading: isLoadingInternetRadioStations,
+    error: internetRadioStationsError,
+  } = useGetInternetRadioStations();
   return (
     <Box>
       <Image
@@ -101,15 +109,21 @@ export default function HomeScreen() {
         {recentlyPlayedError ? (
           <ErrorDisplay error={recentlyPlayedError} />
         ) : (
-          <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6 mb-6"
+          >
             {isLoadingRecentlyPlayed ? (
-              <Spinner size="large" />
+              loadingData(4).map((_, index) => (
+                <AlbumListItemSkeleton
+                  key={`recently-played-${index}`}
+                  index={index}
+                  layout="horizontal"
+                />
+              ))
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="pl-6 mb-6"
-              >
+              <>
                 {recentlyPlayedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
@@ -118,9 +132,9 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </ScrollView>
+              </>
             )}
-          </>
+          </ScrollView>
         )}
         {!isLoadingRecentlyPlayed &&
           !recentlyPlayedError &&
@@ -133,15 +147,21 @@ export default function HomeScreen() {
         {recentError ? (
           <ErrorDisplay error={recentError} />
         ) : (
-          <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6 mb-6"
+          >
             {isLoadingRecent ? (
-              <Spinner size="large" />
+              loadingData(4).map((_, index) => (
+                <AlbumListItemSkeleton
+                  key={`recently-added-${index}`}
+                  index={index}
+                  layout="horizontal"
+                />
+              ))
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="pl-6 mb-6"
-              >
+              <>
                 {recentData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
@@ -150,9 +170,9 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </ScrollView>
+              </>
             )}
-          </>
+          </ScrollView>
         )}
         {!isLoadingRecent &&
           !recentError &&
@@ -165,15 +185,21 @@ export default function HomeScreen() {
         {mostPlayedError ? (
           <ErrorDisplay error={mostPlayedError} />
         ) : (
-          <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6 mb-6"
+          >
             {isLoadingMostPlayed ? (
-              <Spinner size="large" />
+              loadingData(4).map((_, index) => (
+                <AlbumListItemSkeleton
+                  key={`most-played-${index}`}
+                  index={index}
+                  layout="horizontal"
+                />
+              ))
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="pl-6 mb-6"
-              >
+              <>
                 {mostPlayedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
@@ -182,9 +208,9 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </ScrollView>
+              </>
             )}
-          </>
+          </ScrollView>
         )}
         {!isLoadingMostPlayed &&
           !mostPlayedError &&
@@ -197,15 +223,21 @@ export default function HomeScreen() {
         {highestRatedError ? (
           <ErrorDisplay error={highestRatedError} />
         ) : (
-          <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6 mb-6"
+          >
             {isLoadingHighestRated ? (
-              <Spinner size="large" />
+              loadingData(4).map((_, index) => (
+                <AlbumListItemSkeleton
+                  key={`highest-rated-${index}`}
+                  index={index}
+                  layout="horizontal"
+                />
+              ))
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="pl-6 mb-6"
-              >
+              <>
                 {highestRatedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
@@ -214,13 +246,50 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </ScrollView>
+              </>
             )}
-          </>
+          </ScrollView>
         )}
         {!isLoadingHighestRated &&
           !highestRatedError &&
           !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
+        <Box className="px-6 mt-4 mb-4">
+          <Heading size="xl" className="text-white">
+            Internet radio stations
+          </Heading>
+        </Box>
+        {internetRadioStationsError ? (
+          <ErrorDisplay error={internetRadioStationsError} />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6 mb-6"
+          >
+            {isLoadingInternetRadioStations ? (
+              loadingData(4).map((_, index) => (
+                <InternetRadioStationListItemSkeleton
+                  key={`internet-radio-stations-${index}`}
+                />
+              ))
+            ) : (
+              <>
+                {internetRadioStationsData?.internetRadioStations?.internetRadioStation?.map(
+                  (radioStation, index) => (
+                    <InternetRadioStationListItem
+                      key={radioStation.id}
+                      internetRadioStation={radioStation}
+                    />
+                  ),
+                )}
+              </>
+            )}
+          </ScrollView>
+        )}
+        {!isLoadingInternetRadioStations &&
+          !internetRadioStationsError &&
+          !internetRadioStationsData?.internetRadioStations
+            ?.internetRadioStation?.length && <EmptyDisplay />}
       </ScrollView>
     </Box>
   );

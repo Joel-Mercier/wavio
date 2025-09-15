@@ -1,5 +1,67 @@
-import { ExternalLink } from "@/components/ExternalLink";
+import EmptyDisplay from "@/components/EmptyDisplay";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import TrackListItem from "@/components/tracks/TrackListItem";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
+import {
+  useDeleteInternetRadioStation,
+  useUpdateInternetRadioStation,
+} from "@/hooks/openSubsonic/useInternetRadioStations";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
+import type { Child } from "@/services/openSubsonic/types";
+import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
+import { loadingData } from "@/utils/loadingData";
+import { cn } from "@/utils/tailwind";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { FlashList } from "@shopify/flash-list";
+import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { format, parse } from "date-fns";
+import { LinearGradient } from "expo-linear-gradient";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  AlertCircleIcon,
+  ArrowLeft,
+  Disc3,
+  EllipsisVertical,
+  Heart,
+  Info,
+  ListPlus,
+  Play,
+  PlusCircle,
+  Radio,
+  Share2,
+  Shuffle,
+  Trash,
+  User,
+} from "lucide-react-native";
+import React, { useCallback, useRef, useState } from "react";
+import { Linking } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import z from "zod";
+import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -7,103 +69,79 @@ import {
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
-import { Box } from "@/components/ui/box";
-import { Card } from "@/components/ui/card";
+} from "../ui/alert-dialog";
 import {
   FormControl,
   FormControlError,
   FormControlErrorIcon,
   FormControlErrorText,
-} from "@/components/ui/form-control";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
-import { Input, InputField } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import {
-  useDeleteShare,
-  useUpdateShare,
-} from "@/hooks/openSubsonic/useSharing";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import type { Share } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
-import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
-import {
-  AlertCircleIcon,
-  AudioLines,
-  Disc3,
-  EllipsisVertical,
-  Pencil,
-  Trash,
-} from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
-import z from "zod";
+} from "../ui/form-control";
+import { Input, InputField } from "../ui/input";
 
-const updateShareSchema = z.object({
-  description: z.string().optional(),
-  expires: z.string().optional(),
+const updateInternetRadioStationSchema = z.object({
+  name: z.string().min(1),
+  streamUrl: z.url().min(1),
+  homePageUrl: z.url().optional(),
 });
 
-export default function ShareListItem({ share }: { share: Share }) {
+export default function AlbumDetail() {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
+  const { id, streamUrl, name, homePageUrl } = useLocalSearchParams<{
+    id: string;
+    streamUrl: string;
+    name: string;
+    homePageUrl?: string;
+  }>();
+  const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-  const doDeleteShare = useDeleteShare();
-  const doUpdateShare = useUpdateShare();
   const toast = useToast();
+  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const doDeleteInternetRadioStation = useDeleteInternetRadioStation();
+  const doUpdateInternetRadioStation = useUpdateInternetRadioStation();
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const form = useForm({
     defaultValues: {
-      description: share.description,
-      expires: share.expires as unknown as string,
+      name,
+      streamUrl,
+      homePageUrl,
     },
     validators: {
-      onChange: updateShareSchema,
+      onChange: updateInternetRadioStationSchema,
     },
     onSubmit: async ({ value }) => {
-      doUpdateShare.mutate(
-        {
-          id: share.id,
-          description: value.description,
-          expires: value.expires,
-        },
+      doUpdateInternetRadioStation.mutate(
+        { id, ...value },
         {
           onSuccess: () => {
-            setShowEditAlertDialog(false);
             toast.show({
               placement: "top",
               duration: 3000,
               render: () => (
                 <Toast action="success">
+                  <ToastTitle>
+                    Internet radio station successfully updated
+                  </ToastTitle>
                   <ToastDescription>
-                    Share successfully updated
+                    Internet radio station has been successfully updated.
                   </ToastDescription>
                 </Toast>
               ),
             });
           },
           onError: (error) => {
-            console.error(error);
             toast.show({
               placement: "top",
               duration: 3000,
               render: () => (
                 <Toast action="error">
+                  <ToastTitle>Error</ToastTitle>
                   <ToastDescription>
-                    An error occurred while updating the share
+                    An error occurred while updating the internet radio station.
                   </ToastDescription>
                 </Toast>
               ),
@@ -114,39 +152,48 @@ export default function ShareListItem({ share }: { share: Share }) {
     },
   });
 
-  const handleCloseAlertDialog = () => setShowAlertDialog(false);
-
-  const handleCloseEditAlertDialog = () => setShowEditAlertDialog(false);
-
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
 
+  const handleVisitHomePagePress = async () => {
+    if (homePageUrl && (await Linking.canOpenURL(homePageUrl))) {
+      Linking.openURL(homePageUrl);
+    }
+    bottomSheetModalRef.current?.dismiss();
+  };
+
   const handleDeletePress = () => {
-    doDeleteShare.mutate(
-      { id: share.id },
+    bottomSheetModalRef.current?.dismiss();
+    doDeleteInternetRadioStation.mutate(
+      { id },
       {
         onSuccess: () => {
-          bottomSheetModalRef.current?.dismiss();
+          router.back();
           toast.show({
             placement: "top",
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastDescription>Share successfully deleted</ToastDescription>
+                <ToastTitle>
+                  Internet radio station successfully deleted
+                </ToastTitle>
+                <ToastDescription>
+                  Internet radio station has been successfully deleted.
+                </ToastDescription>
               </Toast>
             ),
           });
         },
         onError: (error) => {
-          console.error(error);
           toast.show({
             placement: "top",
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
-                  An error occurred while deleting the share
+                  An error occurred while deleting the internet radio station.
                 </ToastDescription>
               </Toast>
             ),
@@ -156,64 +203,65 @@ export default function ShareListItem({ share }: { share: Share }) {
     );
   };
 
-  const isPlaylist = (share?.entry?.length || 0) > 1;
-  const hasEntries = (share?.entry?.length || 0) > 0;
+  const handleCloseAlertDialog = () => setShowAlertDialog(false);
+
+  const handleCloseEditAlertDialog = () => setShowEditAlertDialog(false);
+
   return (
-    <ExternalLink href={share.url}>
-      <Card
-        size="md"
-        variant="ghost"
-        className="rounded-md w-full p-0 pb-4 border-b-white"
+    <Box
+      className="h-full w-full"
+      style={{
+        paddingBottom: insets.bottom + bottomTabBarHeight,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
+      <LinearGradient
+        colors={[themeConfig.theme.colors.blue[500], "#000000"]}
+        className="px-6"
+        style={{ paddingTop: insets.top }}
       >
-        <HStack className="items-center justify-between">
-          <HStack className="items-center">
-            {share?.entry && hasEntries && share?.entry[0]?.coverArt ? (
-              <Image
-                source={{ uri: artworkUrl(share.entry[0].coverArt) }}
-                className="w-16 h-16 rounded-md aspect-square"
-                alt="Share cover"
-              />
-            ) : (
-              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                {share?.entry &&
-                hasEntries &&
-                share.entry[0].mediaType === "album" ? (
-                  <Disc3 size={24} color={themeConfig.theme.colors.white} />
-                ) : (
-                  <AudioLines
-                    size={24}
-                    color={themeConfig.theme.colors.white}
-                  />
-                )}
-              </Box>
-            )}
-            <VStack className="ml-4">
-              <Heading size="lg" className="text-white" numberOfLines={1}>
-                {isPlaylist
-                  ? share.description
-                  : hasEntries && share?.entry
-                    ? share.entry[0].name || share.entry[0].title
-                    : "No description"}
-              </Heading>
-              <HStack>
-                <Text className="text-md text-primary-100 capitalize">
-                  {isPlaylist
-                    ? "Playlist"
-                    : hasEntries && share?.entry
-                      ? share.entry[0].mediaType
-                      : "Unknown"}
-                </Text>
-                <Text className="text-md text-primary-100">
-                  {` ⦁ ${share.visitCount} ${share.visitCount > 1 ? "visits" : "visit"}`}
-                </Text>
-              </HStack>
-            </VStack>
-          </HStack>
-          <FadeOutScaleDown onPress={handlePresentModalPress}>
-            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+        <HStack className="mt-6 items-start justify-between">
+          <FadeOutScaleDown
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+          >
+            <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
           </FadeOutScaleDown>
+          <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+            <Radio size={48} color={themeConfig.theme.colors.white} />
+          </Box>
+          <Box className="w-10" />
         </HStack>
-      </Card>
+        <VStack>
+          <HStack className="mt-5 items-center justify-between">
+            <Heading numberOfLines={1} className="text-white" size="2xl">
+              {name}
+            </Heading>
+          </HStack>
+          <HStack className="mt-4 items-center justify-between">
+            <HStack className="items-center gap-x-4">
+              <FadeOutScaleDown onPress={handlePresentModalPress}>
+                <EllipsisVertical color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+            </HStack>
+            <HStack className="items-center gap-x-4">
+              <FadeOutScaleDown>
+                <Shuffle color={themeConfig.theme.colors.white} />
+              </FadeOutScaleDown>
+              <FadeOutScaleDown>
+                <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                  <Play
+                    color={themeConfig.theme.colors.white}
+                    fill={themeConfig.theme.colors.white}
+                  />
+                </Box>
+              </FadeOutScaleDown>
+            </HStack>
+          </HStack>
+        </VStack>
+      </LinearGradient>
+
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -232,31 +280,42 @@ export default function ShareListItem({ share }: { share: Share }) {
           }}
         >
           <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                <Radio size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+              <VStack className="ml-4 flex-1">
+                <Heading
+                  className="text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {name}
+                </Heading>
+                <Text numberOfLines={1} className="text-md text-primary-100">
+                  {streamUrl}
+                </Text>
+              </VStack>
+            </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() => {
-                  bottomSheetModalRef.current?.dismiss();
-                  setShowEditAlertDialog(true);
-                }}
-              >
-                <HStack className="items-center">
-                  <Pencil
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
-                  <Text className="ml-4 text-lg text-gray-200">Edit share</Text>
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() => {
-                  bottomSheetModalRef.current?.dismiss();
-                  setShowAlertDialog(true);
-                }}
-              >
+              {homePageUrl && (
+                <FadeOutScaleDown onPress={handleVisitHomePagePress}>
+                  <HStack className="items-center">
+                    <Info
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Visit home page
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              <FadeOutScaleDown onPress={handleDeletePress}>
                 <HStack className="items-center">
                   <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Delete share
+                    Delete internet radio station
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -312,50 +371,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
-            <form.Field name="description">
-              {(field) => (
-                <FormControl
-                  isInvalid={!field.state.meta.isValid}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Textarea
-                    className="bg-primary-600 border-0 rounded-lg"
-                    size="xl"
-                  >
-                    <TextareaInput
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-lg",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
-                      placeholder="Description (displayed in the link preview)"
-                    />
-                  </Textarea>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
-                </FormControl>
-              )}
-            </form.Field>
-            <form.Field name="expires">
+            <form.Field name="name">
               {(field) => (
                 <FormControl
                   isInvalid={!field.state.meta.isValid}
@@ -380,7 +396,99 @@ export default function ShareListItem({ share }: { share: Share }) {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Expires at"
+                      placeholder="Name"
+                    />
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </form.Field>
+            <form.Field name="streamUrl">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Input
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
+                  >
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
+                      placeholder="Stream URL"
+                      keyboardType="url"
+                      textContentType="URL"
+                    />
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}{" "}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </form.Field>
+            <form.Field name="homePageUrl">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Input
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
+                  >
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
+                      placeholder="Homepage URL"
+                      keyboardType="url"
+                      textContentType="URL"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -419,6 +527,6 @@ export default function ShareListItem({ share }: { share: Share }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ExternalLink>
+    </Box>
   );
 }

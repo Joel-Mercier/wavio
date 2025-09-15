@@ -1,5 +1,7 @@
+import Logo from "@/assets/images/logo.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
+import { Center } from "@/components/ui/center";
 import {
   FormControl,
   FormControlError,
@@ -10,7 +12,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { ScrollView } from "@/components/ui/scroll-view";
 import {
   Select,
   SelectBackdrop,
@@ -19,7 +20,6 @@ import {
   SelectDragIndicatorWrapper,
   SelectIcon,
   SelectInput,
-  SelectItem,
   SelectPortal,
   SelectScrollView,
   SelectTrigger,
@@ -32,6 +32,7 @@ import useServers, { type Server } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 export default function LoginScreen() {
   const toast = useToast();
@@ -46,14 +47,19 @@ export default function LoginScreen() {
       url: "",
     },
     validators: {
-      onBlur: loginSchema,
+      onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
+      const defaultServers = servers.filter((server) =>
+        server.name.startsWith("Default"),
+      );
+      const newServerName = `Default${defaultServers.length > 0 ? ` (${defaultServers.length + 1})` : ""}`;
       addServer({
         ...value,
-        name: "Default",
+        name: newServerName,
         current: true,
       });
+      setCurrentServer(newServerName);
       login(value.url, value.username, value.password);
       toast.show({
         placement: "top",
@@ -82,15 +88,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          justifyContent: "center",
-          height: "100%",
-        }}
-      >
+    <SafeAreaView className="justify-center h-full">
+      <KeyboardAvoidingView behavior={"padding"}>
         <Box className="px-6">
+          <Center className="mb-4 ">
+            <Logo width={64} height={64} />
+          </Center>
           <Heading size="2xl" className="text-white font-bold">
             Sign in
           </Heading>
@@ -100,9 +103,12 @@ export default function LoginScreen() {
                 <SelectTrigger
                   variant="outline"
                   size="xl"
-                  className="justify-between"
+                  className="justify-between bg-primary-600 border-0 rounded-full"
                 >
-                  <SelectInput placeholder="Select server" />
+                  <SelectInput
+                    placeholder="Select server"
+                    className="text-md"
+                  />
                   <SelectIcon className="mr-3" as={ChevronDownIcon} />
                 </SelectTrigger>
                 <SelectPortal snapPoints={[50]}>
@@ -112,7 +118,7 @@ export default function LoginScreen() {
                       <SelectDragIndicator />
                     </SelectDragIndicatorWrapper>
                     <SelectScrollView>
-                      <Box className="p-6 w-full mb-12 divide-y divide-primary-600">
+                      <Box className="p-6 w-full mb-12 divide-y divide-y-white">
                         {servers.map((server) => (
                           // <SelectItem
                           //   key={server.name}
@@ -159,7 +165,7 @@ export default function LoginScreen() {
                   </SelectContent>
                 </SelectPortal>
               </Select>
-              <Text className="text-primary-100 text-center mt-4">
+              <Text className="text-primary-100 text-center my-4">
                 Or enter your server details
               </Text>
             </Box>
@@ -172,28 +178,38 @@ export default function LoginScreen() {
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
-                className="my-4"
+                className="mb-2 mt-0"
               >
-                <Input className="border-white" variant="underlined">
+                <Input
+                  className="bg-primary-600 border-0 rounded-full"
+                  variant="rounded"
+                  size="xl"
+                >
                   <InputField
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
-                    className="text-md text-white font-bold"
+                    className={cn(
+                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                      {
+                        "border-red-500": !field.state.meta.isValid,
+                      },
+                    )}
                     placeholder="Enter server url"
                     keyboardType="url"
                     autoCapitalize="none"
-                    textContentType="URL"
                   />
                 </Input>
                 {!field.state.meta.isValid && (
-                  <FormControlError>
+                  <FormControlError className="items-start">
                     <FormControlErrorIcon
                       as={AlertCircleIcon}
                       className="text-red-500"
                     />
-                    <FormControlErrorText className="text-red-500">
-                      {field.state.meta.errors.join(", ")}
+                    <FormControlErrorText className="text-red-500 shrink">
+                      {field.state.meta.errors
+                        .map((error) => error.message)
+                        .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>
                 )}
@@ -208,27 +224,38 @@ export default function LoginScreen() {
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
-                className="my-4"
+                className="my-2"
               >
-                <Input className="border-white" variant="underlined">
+                <Input
+                  className="bg-primary-600 border-0 rounded-full"
+                  variant="rounded"
+                  size="xl"
+                >
                   <InputField
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
-                    className="text-md text-white font-bold"
+                    className={cn(
+                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                      {
+                        "border-red-500": !field.state.meta.isValid,
+                      },
+                    )}
                     placeholder="Enter server username"
                     autoCapitalize="none"
                     textContentType="username"
                   />
                 </Input>
                 {!field.state.meta.isValid && (
-                  <FormControlError>
+                  <FormControlError className="items-start">
                     <FormControlErrorIcon
                       as={AlertCircleIcon}
                       className="text-red-500"
                     />
-                    <FormControlErrorText className="text-red-500">
-                      {field.state.meta.errors.join(", ")}
+                    <FormControlErrorText className="text-red-500 shrink">
+                      {field.state.meta.errors
+                        .map((error) => error.message)
+                        .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>
                 )}
@@ -243,14 +270,23 @@ export default function LoginScreen() {
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
-                className="my-4"
+                className="my-2"
               >
-                <Input className="border-white" variant="underlined">
+                <Input
+                  className="bg-primary-600 border-0 rounded-full"
+                  variant="rounded"
+                  size="xl"
+                >
                   <InputField
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
-                    className="text-md text-white font-bold"
+                    className={cn(
+                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                      {
+                        "border-red-500": !field.state.meta.isValid,
+                      },
+                    )}
                     placeholder="Enter user password"
                     secureTextEntry
                     autoCapitalize="none"
@@ -258,13 +294,15 @@ export default function LoginScreen() {
                   />
                 </Input>
                 {!field.state.meta.isValid && (
-                  <FormControlError>
+                  <FormControlError className="items-start">
                     <FormControlErrorIcon
                       as={AlertCircleIcon}
                       className="text-red-500"
                     />
-                    <FormControlErrorText className="text-red-500">
-                      {field.state.meta.errors.join(", ")}
+                    <FormControlErrorText className="text-red-500 shrink">
+                      {field.state.meta.errors
+                        .map((error) => error.message)
+                        .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>
                 )}
@@ -280,7 +318,7 @@ export default function LoginScreen() {
             <Text className="text-primary-800 font-bold text-lg">Login</Text>
           </FadeOutScaleDown>
         </Box>
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -43,7 +43,7 @@ type ItemWrapperProps = PropsWithChildren<{
   style?: ViewStyle;
 }>;
 
-const ItemWrapper = forwardRef<any, ItemWrapperProps>((props, ref) => {
+const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
   const { active, height, insertIndex, activeIndex, index } = props;
 
   const position = useSharedValue(0);
@@ -108,15 +108,15 @@ const ItemWrapper = forwardRef<any, ItemWrapperProps>((props, ref) => {
 const GestureFlashList = createNativeWrapper(FlashList);
 const AnimatedFlashList = Animated.createAnimatedComponent(GestureFlashList);
 
-type FlashDragListProps = Omit<FlashListProps<any>, "renderItem"> & {
-  data: Array<any>;
+type FlashDragListProps = Omit<FlashListProps<unknown>, "renderItem"> & {
+  data: Array<unknown>;
   itemsSize: number;
-  onSort?: (fromIndex: number, toIndex: number) => any;
+  onSort?: (fromIndex: number, toIndex: number) => void;
   renderItem: (
-    item: any,
+    item: unknown,
     index: number,
     active: boolean,
-    beginDrag: () => any,
+    beginDrag: () => void,
   ) => JSX.Element;
   autoScrollSpeed?: number;
 };
@@ -144,7 +144,7 @@ const FlashDragList: FunctionComponent<FlashDragListProps> = (props) => {
   // TODO: Change layout so it takes into account the list header
   const [layout, setLayout] = useState<Layout | null>(null);
 
-  const scrollview = useRef<FlashList<any>>(null);
+  const scrollview = useRef<typeof FlashList<unknown>>(null);
 
   const activeIndex = useSharedValue(-1);
   const [activeIndexState, setActiveIndexState] = useState(-1);
@@ -302,7 +302,7 @@ const FlashDragList: FunctionComponent<FlashDragListProps> = (props) => {
     [active],
   );
 
-  const renderItem = ({ item, index }: any) => {
+  const renderItem = ({ item, index }: { item: unknown; index: number }) => {
     return props.renderItem(
       item,
       index,

@@ -6,7 +6,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 export type RecentPlay = {
   id: string;
   title: string;
-  type: "album" | "artist" | "playlist" | "favorites";
+  type: "album" | "artist" | "playlist" | "favorites" | "internetRadioStation";
   coverArt?: string;
 };
 
