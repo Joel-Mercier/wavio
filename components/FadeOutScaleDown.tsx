@@ -8,6 +8,7 @@ interface FadeOutScaleDownProps {
   className?: string;
   href?: ComponentProps<typeof Link>["href"];
   onPress?: ComponentProps<typeof Pressable>["onPress"];
+  defaultOpacity?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -15,9 +16,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const FadeOutScaleDown = React.forwardRef<
   React.ElementRef<typeof Pressable>,
   FadeOutScaleDownProps
->(({ children, className, href, onPress }, ref) => {
+>(({ children, className, href, onPress, defaultOpacity = 1 }, ref) => {
   const router = useRouter();
-  const opacity = useSharedValue(1);
+  const opacity = useSharedValue(defaultOpacity);
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {

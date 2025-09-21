@@ -1,11 +1,24 @@
-import EmptyDisplay from "@/components/EmptyDisplay";
-import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import TrackListItem from "@/components/tracks/TrackListItem";
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
+import { Center } from "@/components/ui/center";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+} from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
+import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -15,19 +28,14 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
 import {
   useDeleteInternetRadioStation,
   useUpdateInternetRadioStation,
 } from "@/hooks/openSubsonic/useInternetRadioStations";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import type { Child } from "@/services/openSubsonic/types";
+import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
-import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -35,56 +43,35 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { format, parse } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   AlertCircleIcon,
   ArrowLeft,
-  Disc3,
   EllipsisVertical,
-  Heart,
   Info,
-  ListPlus,
+  Pause,
+  Pencil,
   Play,
-  PlusCircle,
   Radio,
-  Share2,
-  Shuffle,
+  SquareArrowOutUpRight,
   Trash,
-  User,
 } from "lucide-react-native";
 import React, { useCallback, useRef, useState } from "react";
 import { Linking } from "react-native";
+import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
-import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "../ui/alert-dialog";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "../ui/form-control";
-import { Input, InputField } from "../ui/input";
 
 const updateInternetRadioStationSchema = z.object({
   name: z.string().min(1),
-  streamUrl: z.url().min(1),
+  streamUrl: z.url(),
   homePageUrl: z.url().optional(),
 });
 
-export default function AlbumDetail() {
+export default function InternetRadioStationDetail() {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
@@ -104,6 +91,10 @@ export default function AlbumDetail() {
   const doUpdateInternetRadioStation = useUpdateInternetRadioStation();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const { state } = useAudioPro();
+  const queryClient = useQueryClient();
+  const meta = useWebsiteMetadata(homePageUrl);
+  const colors = useImageColors(meta.image || meta["twitter:image"]);
   const form = useForm({
     defaultValues: {
       name,
@@ -118,6 +109,10 @@ export default function AlbumDetail() {
         { id, ...value },
         {
           onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: ["internet_radio_stations"],
+            });
+            setShowEditAlertDialog(false);
             toast.show({
               placement: "top",
               duration: 3000,
@@ -169,6 +164,9 @@ export default function AlbumDetail() {
       { id },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ["internet_radio_stations"],
+          });
           router.back();
           toast.show({
             placement: "top",
@@ -203,9 +201,36 @@ export default function AlbumDetail() {
     );
   };
 
+  const handleShowEditAlertDialog = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowEditAlertDialog(true);
+  };
+
   const handleCloseAlertDialog = () => setShowAlertDialog(false);
 
   const handleCloseEditAlertDialog = () => setShowEditAlertDialog(false);
+
+  const handlePlayPausePress = () => {
+    if (state === AudioProState.PLAYING) {
+      AudioPro.stop();
+    } else {
+      AudioPro.play({
+        id,
+        url: streamUrl,
+        title: name,
+        artwork: meta.image || meta["twitter:image"],
+        artist: homePageUrl,
+      });
+      addRecentPlay({
+        id,
+        title: name,
+        type: "internetRadioStation",
+        homePageUrl,
+        streamUrl,
+        coverArt: meta.image || meta["twitter:image"],
+      });
+    }
+  };
 
   return (
     <Box
@@ -217,7 +242,11 @@ export default function AlbumDetail() {
       }}
     >
       <LinearGradient
-        colors={[themeConfig.theme.colors.blue[500], "#000000"]}
+        colors={[
+          (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+            themeConfig.theme.colors.blue[500],
+          "#000000",
+        ]}
         className="px-6"
         style={{ paddingTop: insets.top }}
       >
@@ -228,9 +257,17 @@ export default function AlbumDetail() {
           >
             <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
           </FadeOutScaleDown>
-          <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-            <Radio size={48} color={themeConfig.theme.colors.white} />
-          </Box>
+          {meta.image || meta["twitter:image"] ? (
+            <Image
+              source={{ uri: meta.image || meta["twitter:image"] }}
+              className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center"
+              alt="Internet radio station cover"
+            />
+          ) : (
+            <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+              <Radio size={48} color={themeConfig.theme.colors.white} />
+            </Box>
+          )}
           <Box className="w-10" />
         </HStack>
         <VStack>
@@ -246,22 +283,43 @@ export default function AlbumDetail() {
               </FadeOutScaleDown>
             </HStack>
             <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown>
-                <Shuffle color={themeConfig.theme.colors.white} />
-              </FadeOutScaleDown>
-              <FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handlePlayPausePress}>
                 <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  <Play
-                    color={themeConfig.theme.colors.white}
-                    fill={themeConfig.theme.colors.white}
-                  />
+                  {state === AudioProState.PLAYING ? (
+                    <Pause
+                      color={themeConfig.theme.colors.white}
+                      fill={themeConfig.theme.colors.white}
+                    />
+                  ) : (
+                    <Play
+                      color={themeConfig.theme.colors.white}
+                      fill={themeConfig.theme.colors.white}
+                    />
+                  )}
                 </Box>
               </FadeOutScaleDown>
             </HStack>
           </HStack>
         </VStack>
       </LinearGradient>
-
+      <VStack>
+        {homePageUrl && (
+          <Center className="mt-6">
+            <FadeOutScaleDown
+              className="flex flex-row gap-x-2 items-center justify-center py-3 px-8 border border-white bg-white rounded-full ml-4 mt-4"
+              onPress={handleVisitHomePagePress}
+            >
+              <SquareArrowOutUpRight
+                size={20}
+                color={themeConfig.theme.colors.gray[800]}
+              />
+              <Text className="text-primary-800 font-bold text-lg">
+                Visit homepage
+              </Text>
+            </FadeOutScaleDown>
+          </Center>
+        )}
+      </VStack>
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -311,6 +369,17 @@ export default function AlbumDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              <FadeOutScaleDown onPress={handleShowEditAlertDialog}>
+                <HStack className="items-center">
+                  <Pencil
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Edit internet radio station
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleDeletePress}>
                 <HStack className="items-center">
                   <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
@@ -332,14 +401,13 @@ export default function AlbumDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Are you sure you want to delete this share?
+              Are you sure you want to delete this interne radio station?
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              Deleting the share will remove it permanently and will prevent
-              others from accessing the shared sounds. Please confirm if you
-              want to proceed.
+              Deleting the internet radio station will remove it permanently.
+              Please confirm if you want to proceed.
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -367,7 +435,7 @@ export default function AlbumDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Edit share
+              Edit internet radio station
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
@@ -443,6 +511,7 @@ export default function AlbumDetail() {
                       placeholder="Stream URL"
                       keyboardType="url"
                       textContentType="URL"
+                      autoCapitalize="none"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -489,6 +558,7 @@ export default function AlbumDetail() {
                       placeholder="Homepage URL"
                       keyboardType="url"
                       textContentType="URL"
+                      autoCapitalize="none"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -519,8 +589,12 @@ export default function AlbumDetail() {
               <Text className="text-white font-bold text-lg">Cancel</Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
-              onPress={form.state.isDirty ? form.handleSubmit : undefined}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+              onPress={
+                form.state.isDirty || !form.state.isSubmitting
+                  ? form.handleSubmit
+                  : undefined
+              }
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 opacity-65"
             >
               <Text className="text-primary-800 font-bold text-lg">Save</Text>
             </FadeOutScaleDown>

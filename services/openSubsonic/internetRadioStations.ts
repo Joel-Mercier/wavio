@@ -10,7 +10,7 @@ export const createInternetRadioStation = async (streamUrl: string, name: string
       params: {
         streamUrl,
         name,
-        homePageUrl,
+        homepageUrl: homePageUrl,
       }
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {

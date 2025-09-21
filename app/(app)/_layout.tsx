@@ -53,6 +53,7 @@ export default function AppLayout() {
           ),
         })}
       />
+      <Stack.Screen name="internet-radio-stations/new" />
       <Stack.Screen
         name="player"
         options={{

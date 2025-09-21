@@ -8,6 +8,8 @@ export type RecentPlay = {
   title: string;
   type: "album" | "artist" | "playlist" | "favorites" | "internetRadioStation";
   coverArt?: string;
+  homePageUrl?: string;
+  streamUrl?: string;
 };
 
 // Default to Favorites to ensure it appears after hydration unless overridden
@@ -68,7 +70,7 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
         },
         clearRecentPlays: () => {
           set((state) => {
-            return { recentPlays: state.recentPlays.filter((play) => play.id !== "favorites") };
+            return { recentPlays: state.recentPlays.filter((play) => play.id === "favorites") };
           });
         },
       };

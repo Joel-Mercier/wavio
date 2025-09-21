@@ -1,122 +1,122 @@
-"use client";
-import type { VariantProps } from "@gluestack-ui/nativewind-utils";
-import { tva } from "@gluestack-ui/nativewind-utils/tva";
+'use client';
+import React from 'react';
+import { createProgress } from '@gluestack-ui/core/progress/creator';
+import { View } from 'react-native';
+import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import {
-  useStyleContext,
   withStyleContext,
-} from "@gluestack-ui/nativewind-utils/withStyleContext";
-import { createProgress } from "@gluestack-ui/progress";
-import { cssInterop } from "nativewind";
-import React from "react";
-import { View } from "react-native";
+  useStyleContext,
+} from '@gluestack-ui/utils/nativewind-utils';
+import { cssInterop } from 'nativewind';
+import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
 
-const SCOPE = "PROGRESS";
+const SCOPE = 'PROGRESS';
 export const UIProgress = createProgress({
   Root: withStyleContext(View, SCOPE),
   FilledTrack: View,
 });
 
-cssInterop(UIProgress, { className: "style" });
-cssInterop(UIProgress.FilledTrack, { className: "style" });
+cssInterop(UIProgress, { className: 'style' });
+cssInterop(UIProgress.FilledTrack, { className: 'style' });
 
 const progressStyle = tva({
-  base: "bg-background-300 rounded-full w-full",
+  base: 'bg-background-300 rounded-full w-full',
   variants: {
     orientation: {
-      horizontal: "w-full",
-      vertical: "h-full",
+      horizontal: 'w-full',
+      vertical: 'h-full',
     },
     size: {
-      xs: "h-1",
-      sm: "h-2",
-      md: "h-3",
-      lg: "h-4",
-      xl: "h-5",
-      "2xl": "h-6",
+      'xs': 'h-1',
+      'sm': 'h-2',
+      'md': 'h-3',
+      'lg': 'h-4',
+      'xl': 'h-5',
+      '2xl': 'h-6',
     },
   },
   compoundVariants: [
     {
-      orientation: "vertical",
-      size: "xs",
-      class: "h-full w-1 justify-end",
+      orientation: 'vertical',
+      size: 'xs',
+      class: 'h-full w-1 justify-end',
     },
     {
-      orientation: "vertical",
-      size: "sm",
-      class: "h-full w-2 justify-end",
+      orientation: 'vertical',
+      size: 'sm',
+      class: 'h-full w-2 justify-end',
     },
     {
-      orientation: "vertical",
-      size: "md",
-      class: "h-full w-3 justify-end",
+      orientation: 'vertical',
+      size: 'md',
+      class: 'h-full w-3 justify-end',
     },
     {
-      orientation: "vertical",
-      size: "lg",
-      class: "h-full w-4 justify-end",
+      orientation: 'vertical',
+      size: 'lg',
+      class: 'h-full w-4 justify-end',
     },
 
     {
-      orientation: "vertical",
-      size: "xl",
-      class: "h-full w-5 justify-end",
+      orientation: 'vertical',
+      size: 'xl',
+      class: 'h-full w-5 justify-end',
     },
     {
-      orientation: "vertical",
-      size: "2xl",
-      class: "h-full w-6 justify-end",
+      orientation: 'vertical',
+      size: '2xl',
+      class: 'h-full w-6 justify-end',
     },
   ],
 });
 
 const progressFilledTrackStyle = tva({
-  base: "bg-primary-500 rounded-full",
+  base: 'bg-primary-500 rounded-full',
   parentVariants: {
     orientation: {
-      horizontal: "w-full",
-      vertical: "h-full",
+      horizontal: 'w-full',
+      vertical: 'h-full',
     },
     size: {
-      xs: "h-1",
-      sm: "h-2",
-      md: "h-3",
-      lg: "h-4",
-      xl: "h-5",
-      "2xl": "h-6",
+      'xs': 'h-1',
+      'sm': 'h-2',
+      'md': 'h-3',
+      'lg': 'h-4',
+      'xl': 'h-5',
+      '2xl': 'h-6',
     },
   },
   parentCompoundVariants: [
     {
-      orientation: "vertical",
-      size: "xs",
-      class: "h-full w-1",
+      orientation: 'vertical',
+      size: 'xs',
+      class: 'h-full w-1',
     },
     {
-      orientation: "vertical",
-      size: "sm",
-      class: "h-full w-2",
+      orientation: 'vertical',
+      size: 'sm',
+      class: 'h-full w-2',
     },
     {
-      orientation: "vertical",
-      size: "md",
-      class: "h-full w-3",
+      orientation: 'vertical',
+      size: 'md',
+      class: 'h-full w-3',
     },
     {
-      orientation: "vertical",
-      size: "lg",
-      class: "h-full w-4",
+      orientation: 'vertical',
+      size: 'lg',
+      class: 'h-full w-4',
     },
 
     {
-      orientation: "vertical",
-      size: "xl",
-      class: "h-full w-5",
+      orientation: 'vertical',
+      size: 'xl',
+      class: 'h-full w-5',
     },
     {
-      orientation: "vertical",
-      size: "2xl",
-      class: "h-full w-6",
+      orientation: 'vertical',
+      size: '2xl',
+      class: 'h-full w-6',
     },
   ],
 });
@@ -127,9 +127,12 @@ type IProgressFilledTrackProps = VariantProps<typeof progressFilledTrackStyle> &
   React.ComponentProps<typeof UIProgress.FilledTrack>;
 
 const Progress = React.forwardRef<
-  React.ElementRef<typeof UIProgress>,
+  React.ComponentRef<typeof UIProgress>,
   IProgressProps
->(({ className, size = "md", orientation = "horizontal", ...props }, ref) => {
+>(function Progress(
+  { className, size = 'md', orientation = 'horizontal', ...props },
+  ref
+) {
   return (
     <UIProgress
       ref={ref}
@@ -142,9 +145,9 @@ const Progress = React.forwardRef<
 });
 
 const ProgressFilledTrack = React.forwardRef<
-  React.ElementRef<typeof UIProgress.FilledTrack>,
+  React.ComponentRef<typeof UIProgress.FilledTrack>,
   IProgressFilledTrackProps
->(({ className, ...props }, ref) => {
+>(function ProgressFilledTrack({ className, ...props }, ref) {
   const { size: parentSize, orientation: parentOrientation } =
     useStyleContext(SCOPE);
 

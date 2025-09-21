@@ -8,7 +8,7 @@ import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
-import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
+import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
 import { useMemo } from "react";
 
 interface HomeShortcutProps {
@@ -25,6 +25,8 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
       return <ListMusic size={24} color="white" />;
     case "favorites":
       return <Heart size={24} color="white" fill="white" />;
+    case "internetRadioStation":
+      return <Radio size={24} color="white" />;
   }
 }
 
@@ -42,13 +44,28 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
     if (recentPlay.type === "favorites") {
       return "/(tabs)/(library)/favorites";
     }
+    if (recentPlay.type === "internetRadioStation") {
+      return {
+        pathname: `/(tabs)/(home)/internet-radio-stations/${recentPlay.id}`,
+        params: {
+          homePageUrl: recentPlay.homePageUrl,
+          streamUrl: recentPlay.streamUrl,
+          name: recentPlay.title,
+        },
+      };
+    }
   }, [recentPlay]);
   return (
     <FadeOutScaleDown href={href} className="w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
         {recentPlay.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(recentPlay.coverArt) }}
+            source={{
+              uri:
+                recentPlay.type === "internetRadioStation"
+                  ? recentPlay.coverArt
+                  : artworkUrl(recentPlay.id),
+            }}
             className="w-16 h-16 aspect-square"
             alt="Home shortcut cover"
           />

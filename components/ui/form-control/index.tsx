@@ -1,211 +1,211 @@
-"use client";
-import { createFormControl } from "@gluestack-ui/form-control";
-import { PrimitiveIcon, UIIcon } from "@gluestack-ui/icon";
-import type { VariantProps } from "@gluestack-ui/nativewind-utils";
-import { tva } from "@gluestack-ui/nativewind-utils/tva";
+'use client';
+import { Text, View } from 'react-native';
+import React from 'react';
+import { createFormControl } from '@gluestack-ui/core/form-control/creator';
+import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import {
-  useStyleContext,
   withStyleContext,
-} from "@gluestack-ui/nativewind-utils/withStyleContext";
-import { cssInterop } from "nativewind";
-import React from "react";
-import { Text, View } from "react-native";
+  useStyleContext,
+} from '@gluestack-ui/utils/nativewind-utils';
+import { cssInterop } from 'nativewind';
+import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
+import { PrimitiveIcon, UIIcon } from '@gluestack-ui/core/icon/creator';
 
-const SCOPE = "FORM_CONTROL";
+const SCOPE = 'FORM_CONTROL';
 
 const formControlStyle = tva({
-  base: "flex flex-col",
+  base: 'flex flex-col',
   variants: {
     size: {
-      sm: "",
-      md: "",
-      lg: "",
+      sm: '',
+      md: '',
+      lg: '',
     },
   },
 });
 
 const formControlErrorIconStyle = tva({
-  base: "text-error-700 fill-none",
+  base: 'text-error-700 fill-none',
   variants: {
     size: {
-      "2xs": "h-3 w-3",
-      xs: "h-3.5 w-3.5",
-      sm: "h-4 w-4",
-      md: "h-[18px] w-[18px]",
-      lg: "h-5 w-5",
-      xl: "h-6 w-6",
+      '2xs': 'h-3 w-3',
+      'xs': 'h-3.5 w-3.5',
+      'sm': 'h-4 w-4',
+      'md': 'h-[18px] w-[18px]',
+      'lg': 'h-5 w-5',
+      'xl': 'h-6 w-6',
     },
   },
 });
 
 const formControlErrorStyle = tva({
-  base: "flex flex-row justify-start items-center mt-1 gap-1",
+  base: 'flex flex-row justify-start items-center mt-1 gap-1',
 });
 
 const formControlErrorTextStyle = tva({
-  base: "text-error-700",
+  base: 'text-error-700',
   variants: {
     isTruncated: {
-      true: "web:truncate",
+      true: 'web:truncate',
     },
     bold: {
-      true: "font-bold",
+      true: 'font-bold',
     },
     underline: {
-      true: "underline",
+      true: 'underline',
     },
     strikeThrough: {
-      true: "line-through",
+      true: 'line-through',
     },
     size: {
-      "2xs": "text-2xs",
-      xs: "text-xs",
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
-      xl: "text-xl",
-      "2xl": "text-2xl",
-      "3xl": "text-3xl",
-      "4xl": "text-4xl",
-      "5xl": "text-5xl",
-      "6xl": "text-6xl",
+      '2xs': 'text-2xs',
+      'xs': 'text-xs',
+      'sm': 'text-sm',
+      'md': 'text-base',
+      'lg': 'text-lg',
+      'xl': 'text-xl',
+      '2xl': 'text-2xl',
+      '3xl': 'text-3xl',
+      '4xl': 'text-4xl',
+      '5xl': 'text-5xl',
+      '6xl': 'text-6xl',
     },
     sub: {
-      true: "text-xs",
+      true: 'text-xs',
     },
     italic: {
-      true: "italic",
+      true: 'italic',
     },
     highlight: {
-      true: "bg-yellow-500",
+      true: 'bg-yellow-500',
     },
   },
 });
 
 const formControlHelperStyle = tva({
-  base: "flex flex-row justify-start items-center mt-1",
+  base: 'flex flex-row justify-start items-center mt-1',
 });
 
 const formControlHelperTextStyle = tva({
-  base: "text-typography-500",
+  base: 'text-typography-500',
   variants: {
     isTruncated: {
-      true: "web:truncate",
+      true: 'web:truncate',
     },
     bold: {
-      true: "font-bold",
+      true: 'font-bold',
     },
     underline: {
-      true: "underline",
+      true: 'underline',
     },
     strikeThrough: {
-      true: "line-through",
+      true: 'line-through',
     },
     size: {
-      "2xs": "text-2xs",
-      xs: "text-xs",
-      sm: "text-xs",
-      md: "text-sm",
-      lg: "text-base",
-      xl: "text-xl",
-      "2xl": "text-2xl",
-      "3xl": "text-3xl",
-      "4xl": "text-4xl",
-      "5xl": "text-5xl",
-      "6xl": "text-6xl",
+      '2xs': 'text-2xs',
+      'xs': 'text-xs',
+      'sm': 'text-xs',
+      'md': 'text-sm',
+      'lg': 'text-base',
+      'xl': 'text-xl',
+      '2xl': 'text-2xl',
+      '3xl': 'text-3xl',
+      '4xl': 'text-4xl',
+      '5xl': 'text-5xl',
+      '6xl': 'text-6xl',
     },
     sub: {
-      true: "text-xs",
+      true: 'text-xs',
     },
     italic: {
-      true: "italic",
+      true: 'italic',
     },
     highlight: {
-      true: "bg-yellow-500",
+      true: 'bg-yellow-500',
     },
   },
 });
 
 const formControlLabelStyle = tva({
-  base: "flex flex-row justify-start items-center mb-1",
+  base: 'flex flex-row justify-start items-center mb-1',
 });
 
 const formControlLabelTextStyle = tva({
-  base: "font-medium text-typography-900",
+  base: 'font-medium text-typography-900',
   variants: {
     isTruncated: {
-      true: "web:truncate",
+      true: 'web:truncate',
     },
     bold: {
-      true: "font-bold",
+      true: 'font-bold',
     },
     underline: {
-      true: "underline",
+      true: 'underline',
     },
     strikeThrough: {
-      true: "line-through",
+      true: 'line-through',
     },
     size: {
-      "2xs": "text-2xs",
-      xs: "text-xs",
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
-      xl: "text-xl",
-      "2xl": "text-2xl",
-      "3xl": "text-3xl",
-      "4xl": "text-4xl",
-      "5xl": "text-5xl",
-      "6xl": "text-6xl",
+      '2xs': 'text-2xs',
+      'xs': 'text-xs',
+      'sm': 'text-sm',
+      'md': 'text-base',
+      'lg': 'text-lg',
+      'xl': 'text-xl',
+      '2xl': 'text-2xl',
+      '3xl': 'text-3xl',
+      '4xl': 'text-4xl',
+      '5xl': 'text-5xl',
+      '6xl': 'text-6xl',
     },
     sub: {
-      true: "text-xs",
+      true: 'text-xs',
     },
     italic: {
-      true: "italic",
+      true: 'italic',
     },
     highlight: {
-      true: "bg-yellow-500",
+      true: 'bg-yellow-500',
     },
   },
 });
 
 const formControlLabelAstrickStyle = tva({
-  base: "font-medium text-typography-900",
+  base: 'font-medium text-typography-900',
   variants: {
     isTruncated: {
-      true: "web:truncate",
+      true: 'web:truncate',
     },
     bold: {
-      true: "font-bold",
+      true: 'font-bold',
     },
     underline: {
-      true: "underline",
+      true: 'underline',
     },
     strikeThrough: {
-      true: "line-through",
+      true: 'line-through',
     },
     size: {
-      "2xs": "text-2xs",
-      xs: "text-xs",
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
-      xl: "text-xl",
-      "2xl": "text-2xl",
-      "3xl": "text-3xl",
-      "4xl": "text-4xl",
-      "5xl": "text-5xl",
-      "6xl": "text-6xl",
+      '2xs': 'text-2xs',
+      'xs': 'text-xs',
+      'sm': 'text-sm',
+      'md': 'text-base',
+      'lg': 'text-lg',
+      'xl': 'text-xl',
+      '2xl': 'text-2xl',
+      '3xl': 'text-3xl',
+      '4xl': 'text-4xl',
+      '5xl': 'text-5xl',
+      '6xl': 'text-6xl',
     },
     sub: {
-      true: "text-xs",
+      true: 'text-xs',
     },
     italic: {
-      true: "italic",
+      true: 'italic',
     },
     highlight: {
-      true: "bg-yellow-500",
+      true: 'bg-yellow-500',
     },
   },
 });
@@ -216,9 +216,9 @@ type IFormControlLabelAstrickProps = React.ComponentPropsWithoutRef<
   VariantProps<typeof formControlLabelAstrickStyle>;
 
 const FormControlLabelAstrick = React.forwardRef<
-  React.ElementRef<typeof Text>,
+  React.ComponentRef<typeof Text>,
   IFormControlLabelAstrickProps
->(({ className, ...props }, ref) => {
+>(function FormControlLabelAstrick({ className, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
   return (
@@ -247,7 +247,7 @@ export const UIFormControl = createFormControl({
 
 cssInterop(PrimitiveIcon, {
   className: {
-    target: "style",
+    target: 'style',
     nativeStyleToProp: {
       height: true,
       width: true,
@@ -262,9 +262,9 @@ type IFormControlProps = React.ComponentProps<typeof UIFormControl> &
   VariantProps<typeof formControlStyle>;
 
 const FormControl = React.forwardRef<
-  React.ElementRef<typeof UIFormControl>,
+  React.ComponentRef<typeof UIFormControl>,
   IFormControlProps
->(({ className, size = "md", ...props }, ref) => {
+>(function FormControl({ className, size = 'md', ...props }, ref) {
   return (
     <UIFormControl
       ref={ref}
@@ -279,9 +279,9 @@ type IFormControlErrorProps = React.ComponentProps<typeof UIFormControl.Error> &
   VariantProps<typeof formControlErrorStyle>;
 
 const FormControlError = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Error>,
+  React.ComponentRef<typeof UIFormControl.Error>,
   IFormControlErrorProps
->(({ className, ...props }, ref) => {
+>(function FormControlError({ className, ...props }, ref) {
   return (
     <UIFormControl.Error
       ref={ref}
@@ -297,9 +297,9 @@ type IFormControlErrorTextProps = React.ComponentProps<
   VariantProps<typeof formControlErrorTextStyle>;
 
 const FormControlErrorText = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Error.Text>,
+  React.ComponentRef<typeof UIFormControl.Error.Text>,
   IFormControlErrorTextProps
->(({ className, size, ...props }, ref) => {
+>(function FormControlErrorText({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
   return (
     <UIFormControl.Error.Text
@@ -323,12 +323,12 @@ type IFormControlErrorIconProps = React.ComponentProps<
   };
 
 const FormControlErrorIcon = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Error.Icon>,
+  React.ComponentRef<typeof UIFormControl.Error.Icon>,
   IFormControlErrorIconProps
->(({ className, size, ...props }, ref) => {
+>(function FormControlErrorIcon({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
-  if (typeof size === "number") {
+  if (typeof size === 'number') {
     return (
       <UIFormControl.Error.Icon
         ref={ref}
@@ -365,9 +365,9 @@ type IFormControlLabelProps = React.ComponentProps<typeof UIFormControl.Label> &
   VariantProps<typeof formControlLabelStyle>;
 
 const FormControlLabel = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Label>,
+  React.ComponentRef<typeof UIFormControl.Label>,
   IFormControlLabelProps
->(({ className, ...props }, ref) => {
+>(function FormControlLabel({ className, ...props }, ref) {
   return (
     <UIFormControl.Label
       ref={ref}
@@ -383,9 +383,9 @@ type IFormControlLabelTextProps = React.ComponentProps<
   VariantProps<typeof formControlLabelTextStyle>;
 
 const FormControlLabelText = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Label.Text>,
+  React.ComponentRef<typeof UIFormControl.Label.Text>,
   IFormControlLabelTextProps
->(({ className, size, ...props }, ref) => {
+>(function FormControlLabelText({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
   return (
@@ -407,9 +407,9 @@ type IFormControlHelperProps = React.ComponentProps<
   VariantProps<typeof formControlHelperStyle>;
 
 const FormControlHelper = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Helper>,
+  React.ComponentRef<typeof UIFormControl.Helper>,
   IFormControlHelperProps
->(({ className, ...props }, ref) => {
+>(function FormControlHelper({ className, ...props }, ref) {
   return (
     <UIFormControl.Helper
       ref={ref}
@@ -427,9 +427,9 @@ type IFormControlHelperTextProps = React.ComponentProps<
   VariantProps<typeof formControlHelperTextStyle>;
 
 const FormControlHelperText = React.forwardRef<
-  React.ElementRef<typeof UIFormControl.Helper.Text>,
+  React.ComponentRef<typeof UIFormControl.Helper.Text>,
   IFormControlHelperTextProps
->(({ className, size, ...props }, ref) => {
+>(function FormControlHelperText({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
   return (
@@ -445,15 +445,15 @@ const FormControlHelperText = React.forwardRef<
   );
 });
 
-FormControl.displayName = "FormControl";
-FormControlError.displayName = "FormControlError";
-FormControlErrorText.displayName = "FormControlErrorText";
-FormControlErrorIcon.displayName = "FormControlErrorIcon";
-FormControlLabel.displayName = "FormControlLabel";
-FormControlLabelText.displayName = "FormControlLabelText";
-FormControlLabelAstrick.displayName = "FormControlLabelAstrick";
-FormControlHelper.displayName = "FormControlHelper";
-FormControlHelperText.displayName = "FormControlHelperText";
+FormControl.displayName = 'FormControl';
+FormControlError.displayName = 'FormControlError';
+FormControlErrorText.displayName = 'FormControlErrorText';
+FormControlErrorIcon.displayName = 'FormControlErrorIcon';
+FormControlLabel.displayName = 'FormControlLabel';
+FormControlLabelText.displayName = 'FormControlLabelText';
+FormControlLabelAstrick.displayName = 'FormControlLabelAstrick';
+FormControlHelper.displayName = 'FormControlHelper';
+FormControlHelperText.displayName = 'FormControlHelperText';
 
 export {
   FormControl,

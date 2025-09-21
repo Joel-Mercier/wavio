@@ -1,94 +1,96 @@
-"use client";
-import { PrimitiveIcon, UIIcon } from "@gluestack-ui/icon";
-import type { VariantProps } from "@gluestack-ui/nativewind-utils";
-import { tva } from "@gluestack-ui/nativewind-utils/tva";
+'use client';
+import React from 'react';
+import { Text, View } from 'react-native';
+import { PrimitiveIcon, UIIcon } from '@gluestack-ui/core/icon/creator';
+import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import {
-  useStyleContext,
   withStyleContext,
-} from "@gluestack-ui/nativewind-utils/withStyleContext";
-import { cssInterop } from "nativewind";
-import React from "react";
-import { Text, View } from "react-native";
-const SCOPE = "BADGE";
+  useStyleContext,
+} from '@gluestack-ui/utils/nativewind-utils';
+import { cssInterop } from 'nativewind';
+import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
+
+import { Svg } from 'react-native-svg';
+const SCOPE = 'BADGE';
 
 const badgeStyle = tva({
-  base: "flex-row items-center rounded-sm data-[disabled=true]:opacity-50 px-2 py-1",
+  base: 'flex-row items-center rounded-sm data-[disabled=true]:opacity-50 px-2 py-1',
   variants: {
     action: {
-      error: "bg-background-error border-error-300",
-      warning: "bg-background-warning border-warning-300",
-      success: "bg-background-success border-success-300",
-      info: "bg-background-info border-info-300",
-      muted: "bg-background-muted border-background-300",
+      error: 'bg-background-error border-error-300',
+      warning: 'bg-background-warning border-warning-300',
+      success: 'bg-background-success border-success-300',
+      info: 'bg-background-info border-info-300',
+      muted: 'bg-background-muted border-background-300',
     },
     variant: {
-      solid: "",
-      outline: "border",
+      solid: '',
+      outline: 'border',
     },
     size: {
-      sm: "",
-      md: "",
-      lg: "",
+      sm: '',
+      md: '',
+      lg: '',
     },
   },
 });
 
 const badgeTextStyle = tva({
-  base: "text-typography-700 font-body font-normal tracking-normal uppercase",
+  base: 'text-typography-700 font-body font-normal tracking-normal uppercase',
 
   parentVariants: {
     action: {
-      error: "text-error-600",
-      warning: "text-warning-600",
-      success: "text-success-600",
-      info: "text-info-600",
-      muted: "text-background-800",
+      error: 'text-error-600',
+      warning: 'text-warning-600',
+      success: 'text-success-600',
+      info: 'text-info-600',
+      muted: 'text-background-800',
     },
     size: {
-      sm: "text-2xs",
-      md: "text-xs",
-      lg: "text-sm",
+      sm: 'text-2xs',
+      md: 'text-xs',
+      lg: 'text-sm',
     },
   },
   variants: {
     isTruncated: {
-      true: "web:truncate",
+      true: 'web:truncate',
     },
     bold: {
-      true: "font-bold",
+      true: 'font-bold',
     },
     underline: {
-      true: "underline",
+      true: 'underline',
     },
     strikeThrough: {
-      true: "line-through",
+      true: 'line-through',
     },
     sub: {
-      true: "text-xs",
+      true: 'text-xs',
     },
     italic: {
-      true: "italic",
+      true: 'italic',
     },
     highlight: {
-      true: "bg-yellow-500",
+      true: 'bg-yellow-500',
     },
   },
 });
 
 const badgeIconStyle = tva({
-  base: "fill-none",
+  base: 'fill-none',
   parentVariants: {
     action: {
-      error: "text-error-600",
-      warning: "text-warning-600",
-      success: "text-success-600",
-      info: "text-info-600",
-      muted: "text-background-800",
+      error: 'text-error-600',
+      warning: 'text-warning-600',
+      success: 'text-success-600',
+      info: 'text-info-600',
+      muted: 'text-background-800',
     },
     size: {
-      sm: "h-3 w-3",
-      md: "h-3.5 w-3.5",
-      lg: "h-4 w-4",
+      sm: 'h-3 w-3',
+      md: 'h-3.5 w-3.5',
+      lg: 'h-4 w-4',
     },
   },
 });
@@ -97,12 +99,12 @@ const ContextView = withStyleContext(View, SCOPE);
 
 cssInterop(PrimitiveIcon, {
   className: {
-    target: "style",
+    target: 'style',
     nativeStyleToProp: {
       height: true,
       width: true,
       fill: true,
-      color: "classNameColor",
+      color: 'classNameColor',
       stroke: true,
     },
   },
@@ -110,14 +112,14 @@ cssInterop(PrimitiveIcon, {
 
 type IBadgeProps = React.ComponentPropsWithoutRef<typeof ContextView> &
   VariantProps<typeof badgeStyle>;
-const Badge = ({
+function Badge({
   children,
-  action = "muted",
-  variant = "solid",
-  size = "md",
+  action = 'muted',
+  variant = 'solid',
+  size = 'md',
   className,
   ...props
-}: { className?: string } & IBadgeProps) => {
+}: { className?: string } & IBadgeProps) {
   return (
     <ContextView
       className={badgeStyle({ action, variant, class: className })}
@@ -131,15 +133,15 @@ const Badge = ({
       {children}
     </ContextView>
   );
-};
+}
 
 type IBadgeTextProps = React.ComponentPropsWithoutRef<typeof Text> &
   VariantProps<typeof badgeTextStyle>;
 
 const BadgeText = React.forwardRef<
-  React.ElementRef<typeof Text>,
+  React.ComponentRef<typeof Text>,
   IBadgeTextProps
->(({ children, className, size, ...props }, ref) => {
+>(function BadgeText({ children, className, size, ...props }, ref) {
   const { size: parentSize, action: parentAction } = useStyleContext(SCOPE);
   return (
     <Text
@@ -163,12 +165,12 @@ type IBadgeIconProps = React.ComponentPropsWithoutRef<typeof PrimitiveIcon> &
   VariantProps<typeof badgeIconStyle>;
 
 const BadgeIcon = React.forwardRef<
-  React.ElementRef<typeof UIIcon>,
+  React.ComponentRef<typeof Svg>,
   IBadgeIconProps
->(({ className, size, ...props }, ref) => {
+>(function BadgeIcon({ className, size, ...props }, ref) {
   const { size: parentSize, action: parentAction } = useStyleContext(SCOPE);
 
-  if (typeof size === "number") {
+  if (typeof size === 'number') {
     return (
       <UIIcon
         ref={ref}
@@ -205,8 +207,8 @@ const BadgeIcon = React.forwardRef<
   );
 });
 
-Badge.displayName = "Badge";
-BadgeText.displayName = "BadgeText";
-BadgeIcon.displayName = "BadgeIcon";
+Badge.displayName = 'Badge';
+BadgeText.displayName = 'BadgeText';
+BadgeIcon.displayName = 'BadgeIcon';
 
 export { Badge, BadgeIcon, BadgeText };

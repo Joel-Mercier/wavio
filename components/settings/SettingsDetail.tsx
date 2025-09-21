@@ -33,6 +33,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Check } from "lucide-react-native";
@@ -51,6 +52,7 @@ export default function SettingsDerail() {
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
     bottomSheetLanguageModalRef,
   );
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
@@ -89,6 +91,7 @@ export default function SettingsDerail() {
   const handleMediaLibraryScanPress = () => {
     doStartScan.mutate(undefined, {
       onSuccess: () => {
+        queryClient.invalidateQueries();
         toast.show({
           placement: "top",
           duration: 3000,

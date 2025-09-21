@@ -18,8 +18,6 @@ import i18n, {
   type TSupportedLanguages,
 } from "@/config/i18n";
 import useApp from "@/stores/app";
-import { OverlayProvider } from "@gluestack-ui/overlay";
-import { ToastProvider } from "@gluestack-ui/toast";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import NetInfo from "@react-native-community/netinfo";
 import {
@@ -121,24 +119,20 @@ export default function RootLayout() {
               style="light"
               hidden={{ statusBar: false, navigationBar: false }}
             />
-            <OverlayProvider>
-              <ToastProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <BottomSheetModalProvider>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                      }}
-                    >
-                      <Stack.Screen name="(app)" />
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="+not-found" />
-                    </Stack>
-                    <FloatingPlayer />
-                  </BottomSheetModalProvider>
-                </GestureHandlerRootView>
-              </ToastProvider>
-            </OverlayProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <BottomSheetModalProvider>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                >
+                  <Stack.Screen name="(app)" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <FloatingPlayer />
+              </BottomSheetModalProvider>
+            </GestureHandlerRootView>
           </ThemeProvider>
         </GluestackUIProvider>
         {/* {__DEV__ && <DevToolsBubble />} */}

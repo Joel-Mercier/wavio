@@ -112,7 +112,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="pl-6 mb-6"
+            contentContainerClassName="mb-6 pl-6"
           >
             {isLoadingRecentlyPlayed ? (
               loadingData(4).map((_, index) => (
@@ -150,7 +150,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="pl-6 mb-6"
+            contentContainerClassName="pl-6 mb-6"
           >
             {isLoadingRecent ? (
               loadingData(4).map((_, index) => (
@@ -188,7 +188,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="pl-6 mb-6"
+            contentContainerClassName="pl-6 mb-6"
           >
             {isLoadingMostPlayed ? (
               loadingData(4).map((_, index) => (
@@ -226,7 +226,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="pl-6 mb-6"
+            contentContainerClassName="pl-6 mb-6"
           >
             {isLoadingHighestRated ? (
               loadingData(4).map((_, index) => (
@@ -264,7 +264,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="pl-6 mb-6"
+            contentContainerClassName="pl-6 mb-6"
           >
             {isLoadingInternetRadioStations ? (
               loadingData(4).map((_, index) => (

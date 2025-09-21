@@ -12,7 +12,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 interface AddBottomSheetProps {
   isOpen: boolean;

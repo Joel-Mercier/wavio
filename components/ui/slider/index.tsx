@@ -1,17 +1,17 @@
-"use client";
-import type { VariantProps } from "@gluestack-ui/nativewind-utils";
-import { tva } from "@gluestack-ui/nativewind-utils/tva";
+'use client';
+import { createSlider } from '@gluestack-ui/core/slider/creator';
+import { Pressable } from 'react-native';
+import { View } from 'react-native';
+import React from 'react';
+import { tva } from '@gluestack-ui/utils/nativewind-utils';
 import {
-  useStyleContext,
   withStyleContext,
-} from "@gluestack-ui/nativewind-utils/withStyleContext";
-import { createSlider } from "@gluestack-ui/slider";
-import { cssInterop } from "nativewind";
-import React from "react";
-import { Pressable } from "react-native";
-import { View } from "react-native";
+  useStyleContext,
+} from '@gluestack-ui/utils/nativewind-utils';
+import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
+import { cssInterop } from 'nativewind';
 
-const SCOPE = "SLIDER";
+const SCOPE = 'SLIDER';
 const Root = withStyleContext(View, SCOPE);
 export const UISlider = createSlider({
   Root: Root,
@@ -21,132 +21,132 @@ export const UISlider = createSlider({
   ThumbInteraction: View,
 });
 
-cssInterop(UISlider.Track, { className: "style" });
+cssInterop(UISlider.Track, { className: 'style' });
 
 const sliderStyle = tva({
-  base: "justify-center items-center data-[disabled=true]:opacity-40 data-[disabled=true]:web:pointer-events-none",
+  base: 'justify-center items-center data-[disabled=true]:opacity-40 data-[disabled=true]:web:pointer-events-none',
   variants: {
     orientation: {
-      horizontal: "w-full",
-      vertical: "h-full",
+      horizontal: 'w-full',
+      vertical: 'h-full',
     },
     size: {
-      sm: "",
-      md: "",
-      lg: "",
+      sm: '',
+      md: '',
+      lg: '',
     },
     isReversed: {
-      true: "",
-      false: "",
+      true: '',
+      false: '',
     },
   },
 });
 
 const sliderThumbStyle = tva({
-  base: "bg-primary-500 absolute rounded-full data-[focus=true]:bg-primary-600 data-[active=true]:bg-primary-600 data-[hover=true]:bg-primary-600 data-[disabled=true]:bg-primary-500 web:cursor-pointer web:data-[active=true]:outline web:data-[active=true]:outline-4 web:data-[active=true]:outline-primary-400 shadow-hard-1",
+  base: 'bg-primary-500 absolute rounded-full data-[focus=true]:bg-primary-600 data-[active=true]:bg-primary-600 data-[hover=true]:bg-primary-600 data-[disabled=true]:bg-primary-500 web:cursor-pointer web:data-[active=true]:outline web:data-[active=true]:outline-4 web:data-[active=true]:outline-primary-400 shadow-hard-1',
 
   parentVariants: {
     size: {
-      sm: "h-4 w-4",
-      md: "h-5 w-5",
-      lg: "h-6 w-6",
+      sm: 'h-4 w-4',
+      md: 'h-5 w-5',
+      lg: 'h-6 w-6',
     },
   },
 });
 
 const sliderTrackStyle = tva({
-  base: "bg-background-300 rounded-lg overflow-hidden",
+  base: 'bg-background-300 rounded-lg overflow-hidden',
   parentVariants: {
     orientation: {
-      horizontal: "w-full",
-      vertical: "h-full",
+      horizontal: 'w-full',
+      vertical: 'h-full',
     },
     isReversed: {
-      true: "",
-      false: "",
+      true: '',
+      false: '',
     },
     size: {
-      sm: "",
-      md: "",
-      lg: "",
+      sm: '',
+      md: '',
+      lg: '',
     },
   },
   parentCompoundVariants: [
     {
-      orientation: "horizontal",
-      size: "sm",
-      class: "h-1 flex-row",
+      orientation: 'horizontal',
+      size: 'sm',
+      class: 'h-1 flex-row',
     },
     {
-      orientation: "horizontal",
-      size: "sm",
+      orientation: 'horizontal',
+      size: 'sm',
       isReversed: true,
-      class: "h-1 flex-row-reverse",
+      class: 'h-1 flex-row-reverse',
     },
     {
-      orientation: "horizontal",
-      size: "md",
-      class: "h-1 flex-row",
+      orientation: 'horizontal',
+      size: 'md',
+      class: 'h-1 flex-row',
     },
     {
-      orientation: "horizontal",
-      size: "md",
+      orientation: 'horizontal',
+      size: 'md',
       isReversed: true,
-      class: "h-[5px] flex-row-reverse",
+      class: 'h-[5px] flex-row-reverse',
     },
     {
-      orientation: "horizontal",
-      size: "lg",
-      class: "h-1.5 flex-row",
+      orientation: 'horizontal',
+      size: 'lg',
+      class: 'h-1.5 flex-row',
     },
     {
-      orientation: "horizontal",
-      size: "lg",
+      orientation: 'horizontal',
+      size: 'lg',
       isReversed: true,
-      class: "h-1.5 flex-row-reverse",
+      class: 'h-1.5 flex-row-reverse',
     },
     {
-      orientation: "vertical",
-      size: "sm",
-      class: "w-1 flex-col-reverse",
+      orientation: 'vertical',
+      size: 'sm',
+      class: 'w-1 flex-col-reverse',
     },
     {
-      orientation: "vertical",
-      size: "sm",
+      orientation: 'vertical',
+      size: 'sm',
       isReversed: true,
-      class: "w-1 flex-col",
+      class: 'w-1 flex-col',
     },
     {
-      orientation: "vertical",
-      size: "md",
-      class: "w-[5px] flex-col-reverse",
+      orientation: 'vertical',
+      size: 'md',
+      class: 'w-[5px] flex-col-reverse',
     },
     {
-      orientation: "vertical",
-      size: "md",
+      orientation: 'vertical',
+      size: 'md',
       isReversed: true,
-      class: "w-[5px] flex-col",
+      class: 'w-[5px] flex-col',
     },
     {
-      orientation: "vertical",
-      size: "lg",
-      class: "w-1.5 flex-col-reverse",
+      orientation: 'vertical',
+      size: 'lg',
+      class: 'w-1.5 flex-col-reverse',
     },
     {
-      orientation: "vertical",
-      size: "lg",
+      orientation: 'vertical',
+      size: 'lg',
       isReversed: true,
-      class: "w-1.5 flex-col",
+      class: 'w-1.5 flex-col',
     },
   ],
 });
 
 const sliderFilledTrackStyle = tva({
-  base: "bg-primary-500 data-[focus=true]:bg-primary-600 data-[active=true]:bg-primary-600 data-[hover=true]:bg-primary-600",
+  base: 'bg-primary-500 data-[focus=true]:bg-primary-600 data-[active=true]:bg-primary-600 data-[hover=true]:bg-primary-600',
   parentVariants: {
     orientation: {
-      horizontal: "h-full",
-      vertical: "w-full",
+      horizontal: 'h-full',
+      vertical: 'w-full',
     },
   },
 });
@@ -155,43 +155,41 @@ type ISliderProps = React.ComponentProps<typeof UISlider> &
   VariantProps<typeof sliderStyle>;
 
 const Slider = React.forwardRef<
-  React.ElementRef<typeof UISlider>,
+  React.ComponentRef<typeof UISlider>,
   ISliderProps
->(
-  (
-    {
-      className,
-      size = "md",
-      orientation = "horizontal",
-      isReversed = false,
-      ...props
-    },
-    ref,
-  ) => {
-    return (
-      <UISlider
-        ref={ref}
-        isReversed={isReversed}
-        orientation={orientation}
-        {...props}
-        className={sliderStyle({
-          orientation,
-          isReversed,
-          class: className,
-        })}
-        context={{ size, orientation, isReversed }}
-      />
-    );
+>(function Slider(
+  {
+    className,
+    size = 'md',
+    orientation = 'horizontal',
+    isReversed = false,
+    ...props
   },
-);
+  ref
+) {
+  return (
+    <UISlider
+      ref={ref}
+      isReversed={isReversed}
+      orientation={orientation}
+      {...props}
+      className={sliderStyle({
+        orientation,
+        isReversed,
+        class: className,
+      })}
+      context={{ size, orientation, isReversed }}
+    />
+  );
+});
 
 type ISliderThumbProps = React.ComponentProps<typeof UISlider.Thumb> &
   VariantProps<typeof sliderThumbStyle>;
 
 const SliderThumb = React.forwardRef<
-  React.ElementRef<typeof UISlider.Thumb>,
+  React.ComponentRef<typeof UISlider.Thumb>,
   ISliderThumbProps
->(({ className, size, ...props }, ref) => {
+>(function SliderThumb({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
   return (
@@ -213,9 +211,9 @@ type ISliderTrackProps = React.ComponentProps<typeof UISlider.Track> &
   VariantProps<typeof sliderTrackStyle>;
 
 const SliderTrack = React.forwardRef<
-  React.ElementRef<typeof UISlider.Track>,
+  React.ComponentRef<typeof UISlider.Track>,
   ISliderTrackProps
->(({ className, ...props }, ref) => {
+>(function SliderTrack({ className, ...props }, ref) {
   const {
     orientation: parentOrientation,
     size: parentSize,
@@ -244,9 +242,9 @@ type ISliderFilledTrackProps = React.ComponentProps<
   VariantProps<typeof sliderFilledTrackStyle>;
 
 const SliderFilledTrack = React.forwardRef<
-  React.ElementRef<typeof UISlider.FilledTrack>,
+  React.ComponentRef<typeof UISlider.FilledTrack>,
   ISliderFilledTrackProps
->(({ className, ...props }, ref) => {
+>(function SliderFilledTrack({ className, ...props }, ref) {
   const { orientation: parentOrientation } = useStyleContext(SCOPE);
 
   return (

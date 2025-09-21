@@ -22,6 +22,7 @@ import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { loadingData } from "@/utils/loadingData";
+import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -260,7 +261,13 @@ export default function ArtistDetail() {
                 </HStack>
               </HStack>
               <Heading className="text-white">Top songs</Heading>
-              <VStack className="h-[450px] overflow-hidden mb-4">
+              <VStack
+                className={cn("overflow-hidden mb-4", {
+                  "h-[450px]":
+                    (topSongsData?.topSongs.song?.length || 0) > 5 ||
+                    isLoadingTopSongs,
+                })}
+              >
                 {topSongsError && <ErrorDisplay error={topSongsError} />}
                 {isLoadingTopSongs ? (
                   loadingData(6).map((_, index) => (
