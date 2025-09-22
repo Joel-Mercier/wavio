@@ -18,6 +18,7 @@ import { themeConfig } from "@/config/theme";
 import { useArtist, useTopSongs } from "@/hooks/openSubsonic/useBrowsing";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -38,14 +39,22 @@ import {
   EllipsisVertical,
   Heart,
   Play,
-  Share,
   Shuffle,
   User,
 } from "lucide-react-native";
 import { useCallback, useRef } from "react";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedBox = Animated.createAnimatedComponent(Box);
 export default function ArtistDetail() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,6 +74,21 @@ export default function ArtistDetail() {
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const offsetY = useSharedValue(0);
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        offsetY.value,
+        [0, 204],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    offsetY.value = event.contentOffset.y;
+  });
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -180,54 +204,83 @@ export default function ArtistDetail() {
   };
 
   return (
-    <Box className="h-full">
-      <FlashList
+    <Box className="h-full bg-black">
+      <AnimatedBox
+        className="w-full z-10 absolute top-0 left-0 right-0"
+        style={[headerStyle]}
+      >
+        <LinearGradient
+          colors={[
+            (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+              "#000",
+            (colors?.platform === "ios"
+              ? colors.primary
+              : colors?.darkVibrant) || "#000",
+          ]}
+        >
+          <HStack
+            className="items-center justify-between pb-4 px-6 bg-black/25"
+            style={{ paddingTop: insets.top + 16 }}
+          >
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+            <Heading className="text-white font-bold" size="lg">
+              {data?.artist.name}
+            </Heading>
+            <Box className="w-10" />
+          </HStack>
+        </LinearGradient>
+      </AnimatedBox>
+      <ImageBackground
+        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+        alt="Artist cover"
+        className="h-96 absolute top-0 left-0 right-0"
+        resizeMode="cover"
+      />
+
+      <AnimatedFlashList
+        onScroll={scrollHandler}
         data={data?.artist.album || loadingData(3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <AlbumListItemSkeleton index={index} />
           ) : (
-            <AlbumListItem album={item} index={index} />
+            <Box className="bg-black">
+              <AlbumListItem album={item} index={index} />
+            </Box>
           )
         }
         keyExtractor={(item) => item.id}
         ListHeaderComponent={() => (
           <>
-            <ImageBackground
-              source={{ uri: artworkUrl(data?.artist?.coverArt) }}
-              alt="Artist cover"
+            <LinearGradient
+              colors={["transparent", "#000000"]}
               className="h-96"
-              resizeMode="cover"
             >
-              <LinearGradient
-                colors={["transparent", "#000000"]}
-                className="h-96"
-              >
-                <Box
-                  className="bg-black/25 flex-1 "
-                  style={{ paddingTop: insets.top }}
-                >
-                  <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                    <FadeOutScaleDown onPress={() => router.back()}>
-                      <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                        <ArrowLeft
-                          size={24}
-                          color={themeConfig.theme.colors.white}
-                        />
-                      </Box>
-                    </FadeOutScaleDown>
-                    <Heading
-                      numberOfLines={2}
-                      className="text-white mb-4"
-                      size="3xl"
-                    >
-                      {data?.artist.name}
-                    </Heading>
-                  </VStack>
-                </Box>
-              </LinearGradient>
-            </ImageBackground>
-            <VStack className="px-6">
+              <Box className="flex-1 " style={{ paddingTop: insets.top }}>
+                <VStack className="mt-6 px-6 items-start justify-between h-full">
+                  <FadeOutScaleDown onPress={() => router.back()}>
+                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                      <ArrowLeft
+                        size={24}
+                        color={themeConfig.theme.colors.white}
+                      />
+                    </Box>
+                  </FadeOutScaleDown>
+                  <Heading
+                    numberOfLines={2}
+                    className="text-white mb-4 absolute bottom-2 left-6"
+                    size="3xl"
+                  >
+                    {data?.artist.name}
+                  </Heading>
+                </VStack>
+              </Box>
+            </LinearGradient>
+            <VStack className="px-6 bg-black">
               <HStack className="items-center justify-between my-4">
                 <HStack className="items-center gap-x-4">
                   {data?.artist?.starred ? (
@@ -312,13 +365,13 @@ export default function ArtistDetail() {
                   </>
                 )}
               </VStack>
-              <Heading className="text-white">Discography</Heading>
+              <Heading className="text-white mb-6">Discography</Heading>
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </>
         )}
         ListFooterComponent={() => (
-          <VStack className="px-6 my-6">
+          <VStack className="px-6 py-6 bg-black">
             <Text className="text-white font-bold">
               {data?.artist.album?.length} albums
             </Text>

@@ -33,8 +33,6 @@ function findOGTags(content: string, url: string) {
       } catch (error) {
         if (__DEV__) {
           console.log('Error on ', matches[i]);
-          console.log('propertyMatch', propertyMatch);
-          console.log('contentMatch', contentMatch);
           console.log(error);
         }
 
@@ -101,8 +99,6 @@ function findHTMLMetaTags(content: string, url: string) {
       } catch (error) {
         if (__DEV__) {
           console.log('Error on ', matches[i]);
-          console.log('propertyMatch', propertyMatch);
-          console.log('contentMatch', contentMatch);
           console.log(error);
         }
 
@@ -177,7 +173,6 @@ const useWebsiteMetadata = (url?: string) => {
         const data = await response.text();
         const parsedMeta = parseMeta(data, url, { fallbackOnHTMLTags: true });
         setMeta(parsedMeta)
-        console.log(meta);
       } catch (error) {
         console.error(error);
       }

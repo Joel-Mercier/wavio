@@ -2,6 +2,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -43,8 +44,17 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function AlbumDetail() {
   const queryClient = useQueryClient();
@@ -62,7 +72,20 @@ export default function AlbumDetail() {
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-
+  const offsetY = useSharedValue(0);
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        offsetY.value,
+        [0, 220],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    offsetY.value = event.contentOffset.y;
+  });
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
@@ -225,7 +248,37 @@ export default function AlbumDetail() {
 
   return (
     <Box className="h-full w-full">
-      <FlashList
+      <AnimatedBox
+        className="w-full z-10 absolute top-0 left-0 right-0"
+        style={[headerStyle]}
+      >
+        <LinearGradient
+          colors={[
+            (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+              "#000",
+            (colors?.platform === "ios"
+              ? colors.primary
+              : colors?.darkVibrant) || "#000",
+          ]}
+        >
+          <HStack
+            className="items-center justify-between pb-4 px-6 bg-black/25"
+            style={{ paddingTop: insets.top + 16 }}
+          >
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+            <Heading className="text-white font-bold" size="lg">
+              {data?.album.name}
+            </Heading>
+            <Box className="w-10" />
+          </HStack>
+        </LinearGradient>
+      </AnimatedBox>
+      <AnimatedFlashList
+        onScroll={scrollHandler}
         contentContainerStyle={{
           paddingBottom: insets.bottom + bottomTabBarHeight,
           paddingLeft: insets.left,
@@ -289,9 +342,17 @@ export default function AlbumDetail() {
                 </Heading>
               </HStack>
               <HStack className="mt-4 items-center">
-                <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
-                  <User size={16} color={themeConfig.theme.colors.white} />
-                </Box>
+                {data?.album?.artistId ? (
+                  <Image
+                    source={{ uri: artworkUrl(data?.album?.artistId) }}
+                    className="w-8 h-8 rounded-full aspect-square"
+                    alt="Artist cover"
+                  />
+                ) : (
+                  <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
+                    <User size={16} color={themeConfig.theme.colors.white} />
+                  </Box>
+                )}
                 <Text
                   className="ml-4 text-white text-md font-bold"
                   numberOfLines={1}

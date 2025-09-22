@@ -14,20 +14,22 @@ interface AlbumListItemProps {
   album: AlbumID3;
   index: number;
   layout?: "vertical" | "horizontal";
+  className?: string;
 }
 
 export default function AlbumListItem({
   album,
   index,
   layout = "vertical",
+  className = "",
 }: AlbumListItemProps) {
   return (
     <FadeOutScaleDown
       href={`/(tabs)/(home)/albums/${album.id}`}
-      className={cn({
-        "mt-6": layout === "vertical" && index === 0,
-        "mt-4": layout === "vertical",
-        "mx-6": layout === "vertical",
+      className={cn(className, {
+        "mt-0": layout === "vertical" && index === 0,
+        "pt-4": layout === "vertical" && index !== 0,
+        "px-6": layout === "vertical",
         "mr-6": layout === "horizontal",
       })}
     >

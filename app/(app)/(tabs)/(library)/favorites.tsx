@@ -1,5 +1,6 @@
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
@@ -13,12 +14,23 @@ import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
+import { loadingData } from "@/utils/loadingData";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Play, Shuffle } from "lucide-react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -26,15 +38,53 @@ export default function FavoritesScreen() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useStarred2({});
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
-
+  const offsetY = useSharedValue(0);
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        offsetY.value,
+        [0, 100],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    offsetY.value = event.contentOffset.y;
+  });
   const handleTrackPressCallback = () => {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
   return (
     <Box className="h-full">
-      <FlashList
-        data={data?.starred2.song}
+      <AnimatedBox
+        className="w-full z-10 absolute top-0 left-0 right-0"
+        style={[headerStyle]}
+      >
+        <LinearGradient
+          colors={["#000", themeConfig.theme.colors.blue[500]]}
+          locations={[0, 0.7]}
+        >
+          <HStack
+            className="items-center justify-between pb-4 px-6 bg-black/25"
+            style={{ paddingTop: insets.top + 16 }}
+          >
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+            <Heading className="text-white font-bold" size="lg">
+              Favorites
+            </Heading>
+            <Box className="w-10" />
+          </HStack>
+        </LinearGradient>
+      </AnimatedBox>
+      <AnimatedFlashList
+        onScroll={scrollHandler}
+        data={data?.starred2.song || loadingData(16)}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (
             <TrackListItemSkeleton index={index} className="px-6" />

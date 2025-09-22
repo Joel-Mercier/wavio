@@ -24,6 +24,7 @@ import {
 } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -36,6 +37,7 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -49,9 +51,19 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function PlaylistDetail() {
   const queryClient = useQueryClient();
@@ -69,7 +81,21 @@ export default function PlaylistDetail() {
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
-
+  const colors = useImageColors(artworkUrl(data?.playlist?.coverArt));
+  const offsetY = useSharedValue(0);
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        offsetY.value,
+        [0, 220],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    offsetY.value = event.contentOffset.y;
+  });
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
@@ -205,7 +231,37 @@ export default function PlaylistDetail() {
 
   return (
     <Box className="h-full">
-      <FlashList
+      <AnimatedBox
+        className="w-full z-10 absolute top-0 left-0 right-0"
+        style={[headerStyle]}
+      >
+        <LinearGradient
+          colors={[
+            (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+              "#000",
+            (colors?.platform === "ios"
+              ? colors.primary
+              : colors?.darkVibrant) || "#000",
+          ]}
+        >
+          <HStack
+            className="items-center justify-between pb-4 px-6 bg-black/25"
+            style={{ paddingTop: insets.top + 16 }}
+          >
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+            <Heading className="text-white font-bold" size="lg">
+              {data?.playlist.name}
+            </Heading>
+            <Box className="w-10" />
+          </HStack>
+        </LinearGradient>
+      </AnimatedBox>
+      <AnimatedFlashList
+        onScroll={scrollHandler}
         data={data?.playlist.entry?.reverse() || loadingData(16)}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (

@@ -41,7 +41,6 @@ export default function ServersDetail() {
   const servers = useServers.use.servers();
   const addServer = useServers.use.addServer();
   const removeServer = useServers.use.removeServer();
-  console.log("SERVERS", servers);
   const form = useForm({
     defaultValues: {
       name: "",
