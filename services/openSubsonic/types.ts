@@ -62,6 +62,7 @@ export interface ArtistID3 {
   id: string;
   name: string;
   starred?: Date;
+  musicBrainzId?: string;
 }
 
 export interface ArtistInfo extends ArtistInfoBase {

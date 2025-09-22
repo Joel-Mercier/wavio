@@ -1,3 +1,5 @@
+import LastFM from "@/assets/images/lastfm.svg";
+import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -44,6 +46,7 @@ import {
   User,
 } from "lucide-react-native";
 import React, { useCallback, useRef } from "react";
+import { Linking } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -243,6 +246,34 @@ export default function AlbumDetail() {
         type: "album",
         coverArt: data?.album?.coverArt,
       });
+    }
+  };
+
+  const handleMusicBrainzPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (
+      data?.album?.musicBrainzId &&
+      (await Linking.canOpenURL(
+        `https://musicbrainz.org/album/${data?.album?.musicBrainzId}`,
+      ))
+    ) {
+      Linking.openURL(
+        `https://musicbrainz.org/album/${data?.album?.musicBrainzId}`,
+      );
+    }
+  };
+
+  const handleLastFMPress = async () => {
+    if (
+      data?.album?.name &&
+      data?.album?.artist &&
+      (await Linking.canOpenURL(
+        `https://www.last.fm/music/${encodeURIComponent(data?.album?.artist)}/${encodeURIComponent(data?.album?.name)}`,
+      ))
+    ) {
+      Linking.openURL(
+        `https://www.last.fm/music/${encodeURIComponent(data?.album?.artist)}/${encodeURIComponent(data?.album?.name)}`,
+      );
     }
   };
 
@@ -530,6 +561,34 @@ export default function AlbumDetail() {
                   <Text className="ml-4 text-lg text-gray-200">Share</Text>
                 </HStack>
               </FadeOutScaleDown>
+              {data?.album?.musicBrainzId && (
+                <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                  <HStack className="items-center">
+                    <MusicBrainz
+                      width={24}
+                      height={24}
+                      fill={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Open in MusicBrainz
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {data?.album?.name && data?.album?.artist && (
+                <FadeOutScaleDown onPress={handleLastFMPress}>
+                  <HStack className="items-center">
+                    <LastFM
+                      width={24}
+                      height={24}
+                      fill={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      Open in Last.fm
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
             </VStack>
           </Box>
         </BottomSheetView>
