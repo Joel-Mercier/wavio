@@ -17,7 +17,11 @@ import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useArtist, useTopSongs } from "@/hooks/openSubsonic/useBrowsing";
+import {
+  useArtist,
+  useArtistInfo2,
+  useTopSongs,
+} from "@/hooks/openSubsonic/useBrowsing";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
@@ -35,7 +39,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
   EllipsisVertical,
@@ -69,6 +73,8 @@ export default function ArtistDetail() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
+  const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
+    useArtistInfo2(id);
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
@@ -233,8 +239,7 @@ export default function ArtistDetail() {
     }
   };
 
-  console.log("ARTIST", data?.artist);
-
+  console.log("ARTIST INFO", artistInfoData);
   return (
     <Box className="h-full bg-black">
       <AnimatedBox
@@ -403,11 +408,49 @@ export default function ArtistDetail() {
           </>
         )}
         ListFooterComponent={() => (
-          <VStack className="px-6 py-6 bg-black">
-            <Text className="text-white font-bold">
-              {data?.artist.album?.length} albums
-            </Text>
-          </VStack>
+          <>
+            <VStack className="px-6 py-6 bg-black">
+              <Text className="text-white font-bold">
+                {data?.artist.album?.length} albums
+              </Text>
+            </VStack>
+            {artistInfoData?.artistInfo2?.biography && (
+              <VStack className="px-6 bg-black">
+                <Heading className="text-white mb-6">About</Heading>
+                <FadeOutScaleDown
+                  href={{
+                    pathname: `/artists/${id}/biography`,
+                    params: {
+                      biography: artistInfoData?.artistInfo2?.biography,
+                      name: data?.artist?.name,
+                      musicBrainzId: artistInfoData?.artistInfo2?.musicBrainzId,
+                      lastFmUrl: artistInfoData?.artistInfo2?.lastFmUrl,
+                    },
+                  }}
+                >
+                  <ImageBackground
+                    source={{
+                      uri: artistInfoData?.artistInfo2?.mediumImageUrl,
+                    }}
+                    alt="Artist cover"
+                    resizeMode="cover"
+                    className="aspect-square"
+                  >
+                    <Box className="absolute inset-0">
+                      <LinearGradient
+                        colors={["transparent", "#000"]}
+                        className="h-full w-full p-6 flex justify-end"
+                      >
+                        <Text className="text-white" numberOfLines={3}>
+                          {artistInfoData?.artistInfo2?.biography}
+                        </Text>
+                      </LinearGradient>
+                    </Box>
+                  </ImageBackground>
+                </FadeOutScaleDown>
+              </VStack>
+            )}
+          </>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
