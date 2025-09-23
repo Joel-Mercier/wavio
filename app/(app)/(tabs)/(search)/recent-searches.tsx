@@ -1,5 +1,6 @@
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import RecentSearchListItem from "@/components/search/RecentSearchListItem";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
 import { Box } from "@/components/ui/box";
@@ -8,19 +9,23 @@ import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
+import { cn } from "@/utils/tailwind";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RecentSearchesScreen() {
   const router = useRouter();
+  const bottomTabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
   const recentSearches = useRecentSearches.use.recentSearches();
   const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
   const removeRecentSearch = useRecentSearches.use.removeRecentSearch();
@@ -74,7 +79,38 @@ export default function RecentSearchesScreen() {
   };
 
   return (
-    <SafeAreaView className="h-full" edges={["bottom", "left", "right"]}>
+    <Box className="h-full">
+      <Box
+        className="bg-primary-600 px-6 py-6"
+        style={{ paddingTop: insets.top + 24 }}
+      >
+        <HStack className="items-center">
+          <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+            <ArrowLeft size={24} color="white" />
+          </FadeOutScaleDown>
+          <form.Field name="query">
+            {(field) => (
+              <Input className="flex-1 border-0">
+                <InputField
+                  autoFocus
+                  className="text-white text-xl"
+                  placeholder="What do you want to listen to ?"
+                  placeholderTextColor={themeConfig.theme.colors.primary[50]}
+                  type="text"
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={field.handleBlur}
+                  enterKeyHint="search"
+                  onSubmitEditing={handleOnSumbit}
+                />
+                <InputSlot className="pr-3" onPress={handleSearchClearPress}>
+                  <InputIcon as={X} size="xl" />
+                </InputSlot>
+              </Input>
+            )}
+          </form.Field>
+        </HStack>
+      </Box>
       <FlashList
         data={query.length === 0 ? recentSearches : searchData}
         keyExtractor={(item) => item.id}
@@ -90,7 +126,7 @@ export default function RecentSearchesScreen() {
           target: string;
           extraData: { query: string };
         }) => (
-          <Box className="px-6">
+          <Box className={cn("px-6", { "mt-6": index === 0 })}>
             {extraData.query.length === 0 ? (
               <RecentSearchListItem
                 recentSearch={item as RecentSearch}
@@ -103,50 +139,11 @@ export default function RecentSearchesScreen() {
             )}
           </Box>
         )}
-        contentInsetAdjustmentBehavior="automatic"
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={
           <>
-            <Box className="bg-primary-600 px-6 py-6 mb-6">
-              <SafeAreaView edges={["top"]}>
-                <HStack className="items-center">
-                  <FadeOutScaleDown
-                    className="mr-4"
-                    onPress={() => router.back()}
-                  >
-                    <ArrowLeft size={24} color="white" />
-                  </FadeOutScaleDown>
-                  <form.Field name="query">
-                    {(field) => (
-                      <Input className="flex-1 border-0">
-                        <InputField
-                          autoFocus
-                          className="text-white text-xl"
-                          placeholder="What do you want to listen to ?"
-                          placeholderTextColor={
-                            themeConfig.theme.colors.primary[50]
-                          }
-                          type="text"
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          onBlur={field.handleBlur}
-                          enterKeyHint="search"
-                          onSubmitEditing={handleOnSumbit}
-                        />
-                        <InputSlot
-                          className="pr-3"
-                          onPress={handleSearchClearPress}
-                        >
-                          <InputIcon as={X} size="xl" />
-                        </InputSlot>
-                      </Input>
-                    )}
-                  </form.Field>
-                </HStack>
-              </SafeAreaView>
-            </Box>
             {query.length === 0 && (
-              <Heading className="text-white ml-6 mb-6">
+              <Heading className="text-white ml-6 my-6">
                 Recent searches
               </Heading>
             )}
@@ -154,26 +151,26 @@ export default function RecentSearchesScreen() {
         }
         ListFooterComponent={
           <Box>
-            {query.length === 0 &&
-              (recentSearches.length > 0 ? (
-                <Center className="my-6">
-                  <FadeOutScaleDown>
-                    <Button
-                      variant="outline"
-                      action="default"
-                      className="rounded-full border-white"
-                      onPress={handleClearAllPress}
-                    >
-                      <ButtonText className="text-white">Clear all</ButtonText>
-                    </Button>
-                  </FadeOutScaleDown>
-                </Center>
-              ) : (
-                <EmptyDisplay />
-              ))}
+            {query.length === 0 && recentSearches.length > 0 && (
+              <Center className="my-6">
+                <FadeOutScaleDown>
+                  <Button
+                    variant="outline"
+                    action="default"
+                    className="rounded-full border-white"
+                    onPress={handleClearAllPress}
+                  >
+                    <ButtonText className="text-white">Clear all</ButtonText>
+                  </Button>
+                </FadeOutScaleDown>
+              </Center>
+            )}
           </Box>
         }
+        contentContainerStyle={{
+          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
       />
-    </SafeAreaView>
+    </Box>
   );
 }

@@ -239,7 +239,6 @@ export default function ArtistDetail() {
     }
   };
 
-  console.log("ARTIST INFO", artistInfoData);
   return (
     <Box className="h-full bg-black">
       <AnimatedBox

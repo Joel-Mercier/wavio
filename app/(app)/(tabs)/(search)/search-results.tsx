@@ -1,27 +1,30 @@
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { ScrollView } from "@/components/ui/scroll-view";
 import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchResultsScreen() {
   const { query } = useLocalSearchParams<{ query: string }>();
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | "songs" | null
   >(null);
+  const bottomTabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
   const { data, isLoading, error } = useSearch3(query, {
     albumCount: 12,
     albumOffset: 0,
@@ -66,7 +69,71 @@ export default function SearchResultsScreen() {
   };
 
   return (
-    <SafeAreaView className="h-full" edges={["bottom", "left", "right"]}>
+    <Box className="h-full flex-1">
+      <Box
+        className="bg-primary-600 px-6 py-6 mb-6"
+        style={{ paddingTop: insets.top + 24 }}
+      >
+        <HStack className="items-center">
+          <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+            <ArrowLeft size={24} color="white" />
+          </FadeOutScaleDown>
+          <form.Field name="query">
+            {(field) => (
+              <Input className="flex-1 border-0">
+                <InputField
+                  className="text-white text-xl"
+                  placeholder="What do you want to listen to ?"
+                  placeholderTextColor={themeConfig.theme.colors.primary[50]}
+                  type="text"
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={field.handleBlur}
+                  enterKeyHint="search"
+                />
+                <InputSlot className="pr-3" onPress={handleSearchClearPress}>
+                  <InputIcon as={X} size="xl" />
+                </InputSlot>
+              </Input>
+            )}
+          </form.Field>
+        </HStack>
+      </Box>
+      <HStack className="px-6 gap-x-2 mb-6">
+        <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+          <Badge
+            className={cn("rounded-full bg-gray-800 px-4 py-1", {
+              "bg-emerald-500 text-primary-800": filter === "albums",
+            })}
+          >
+            <BadgeText className="normal-case text-md text-white">
+              Albums
+            </BadgeText>
+          </Badge>
+        </FadeOutScaleDown>
+        <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+          <Badge
+            className={cn("rounded-full bg-gray-800 px-4 py-1", {
+              "bg-emerald-500 text-primary-800": filter === "artists",
+            })}
+          >
+            <BadgeText className="normal-case text-md text-white">
+              Artists
+            </BadgeText>
+          </Badge>
+        </FadeOutScaleDown>
+        <FadeOutScaleDown onPress={() => handleFilterPress("songs")}>
+          <Badge
+            className={cn("rounded-full bg-gray-800 px-4 py-1", {
+              "bg-emerald-500 text-primary-800": filter === "songs",
+            })}
+          >
+            <BadgeText className="normal-case text-md text-white">
+              Songs
+            </BadgeText>
+          </Badge>
+        </FadeOutScaleDown>
+      </HStack>
       <FlashList
         data={searchData}
         keyExtractor={(item) => item.id}
@@ -78,90 +145,11 @@ export default function SearchResultsScreen() {
             <SearchResultListItem searchResult={item} />
           </Box>
         )}
-        contentInsetAdjustmentBehavior="automatic"
         ListEmptyComponent={<EmptyDisplay />}
-        ListHeaderComponent={
-          <>
-            <Box className="bg-primary-600 px-6 py-6 mb-6">
-              <SafeAreaView edges={["top"]}>
-                <HStack className="items-center">
-                  <FadeOutScaleDown
-                    className="mr-4"
-                    onPress={() => router.back()}
-                  >
-                    <ArrowLeft size={24} color="white" />
-                  </FadeOutScaleDown>
-                  <form.Field name="query">
-                    {(field) => (
-                      <Input className="flex-1 border-0">
-                        <InputField
-                          className="text-white text-xl"
-                          placeholder="What do you want to listen to ?"
-                          placeholderTextColor={
-                            themeConfig.theme.colors.primary[50]
-                          }
-                          type="text"
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          onBlur={field.handleBlur}
-                          enterKeyHint="search"
-                        />
-                        <InputSlot
-                          className="pr-3"
-                          onPress={handleSearchClearPress}
-                        >
-                          <InputIcon as={X} size="xl" />
-                        </InputSlot>
-                      </Input>
-                    )}
-                  </form.Field>
-                </HStack>
-              </SafeAreaView>
-            </Box>
-            <SafeAreaView edges={["bottom", "left", "right"]}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="gap-x-4 mb-6"
-              >
-                <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                      "bg-emerald-500 text-primary-800": filter === "albums",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Albums
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                      "bg-emerald-500 text-primary-800": filter === "artists",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Artists
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={() => handleFilterPress("songs")}>
-                  <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                      "bg-emerald-500 text-primary-800": filter === "songs",
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      Songs
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-              </ScrollView>
-            </SafeAreaView>
-          </>
-        }
+        contentContainerStyle={{
+          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
       />
-    </SafeAreaView>
+    </Box>
   );
 }
