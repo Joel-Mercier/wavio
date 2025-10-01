@@ -15,7 +15,12 @@ import {
 } from "@/components/ui/modal";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
@@ -26,7 +31,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { niceBytes } from "@/utils/fileSize";
-import { streamUrl } from "@/utils/streaming";
+import { downloadUrl, streamUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -36,11 +41,13 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, secondsToMinutes } from "date-fns";
+import { Directory, File, Paths } from "expo-file-system";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
   Check,
   CircleX,
+  Download,
   EllipsisVertical,
   Heart,
   Info,
@@ -235,6 +242,46 @@ export default function TrackListItem({
     }
   };
 
+  const handleDownloadPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    const url = downloadUrl(track.id);
+    const destination = new Directory(Paths.document);
+    try {
+      destination.create({
+        idempotent: true,
+      });
+      const output = await File.downloadFileAsync(url, destination);
+      if (output.exists) {
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Track successfully downloaded</ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+      console.log(output.exists); // true
+      console.log(output.uri);
+    } catch (error) {
+      console.error(error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>
+              An error occurred while downloading the track
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
   return (
     <Pressable onPress={handleTrackPress}>
       <HStack
@@ -421,6 +468,15 @@ export default function TrackListItem({
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">Get info</Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleDownloadPress}>
+                  <HStack className="items-center">
+                    <Download
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">Download</Text>
                   </HStack>
                 </FadeOutScaleDown>
               </VStack>

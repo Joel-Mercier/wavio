@@ -35,31 +35,29 @@ export default function SearchScreen() {
 
   return (
     <Box className="h-full">
-      <>
-        <HStack
-          className="px-6 gap-x-4 my-6 items-center"
-          style={{ paddingTop: insets.top }}
-        >
-          <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-            <Avatar size="sm" className="border-emerald-500 border-2">
-              <AvatarFallbackText className="font-body ">
-                {username}
-              </AvatarFallbackText>
-            </Avatar>
-          </FadeOutScaleDown>
-          <Heading className="text-white" size="2xl">
-            Search
-          </Heading>
-        </HStack>
-        <FadeOutScaleDown className="mx-6 mb-6" onPress={handleSearchPress}>
-          <HStack className="bg-white rounded-md py-3 px-3">
-            <Search size={22} color={themeConfig.theme.colors.gray[500]} />
-            <Text className="text-gray-500 text-xl ml-4">
-              What do you want to listen to ?
-            </Text>
-          </HStack>
+      <HStack
+        className="px-6 gap-x-4 my-6 items-center"
+        style={{ paddingTop: insets.top }}
+      >
+        <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+          <Avatar size="sm" className="border-emerald-500 border-2">
+            <AvatarFallbackText className="font-body ">
+              {username}
+            </AvatarFallbackText>
+          </Avatar>
         </FadeOutScaleDown>
-      </>
+        <Heading className="text-white" size="2xl">
+          Search
+        </Heading>
+      </HStack>
+      <FadeOutScaleDown className="mx-6 mb-6" onPress={handleSearchPress}>
+        <HStack className="bg-white rounded-md py-3 px-3">
+          <Search size={22} color={themeConfig.theme.colors.gray[500]} />
+          <Text className="text-gray-500 text-xl ml-4">
+            What do you want to listen to ?
+          </Text>
+        </HStack>
+      </FadeOutScaleDown>
       <FlashList
         data={data?.genres.genre || loadingData(16)}
         renderItem={({ item, index }: { item: Genre; index: number }) => (

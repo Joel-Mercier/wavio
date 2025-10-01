@@ -13,3 +13,8 @@ export const streamUrl = (id: string) => {
   const { url, username, password } = useAuthBase.getState()
   return `${url}/rest/stream?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
 };
+
+export const downloadUrl = (id: string) => {
+  const { url, username, password } = useAuthBase.getState()
+  return `${url}/rest/download?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+};

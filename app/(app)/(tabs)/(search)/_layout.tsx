@@ -10,6 +10,7 @@ export default function SearchLayout() {
       <Stack.Screen name="artists/[id]" />
       <Stack.Screen name="artists/[id]/biography" />
       <Stack.Screen name="playlists/[id]" />
+      <Stack.Screen name="playlists/add-to-playlist" />
       <Stack.Screen name="genres/[id]" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="servers" />

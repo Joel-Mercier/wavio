@@ -81,6 +81,7 @@ export default function LibraryListItem({
       url: `/(tabs)/(library)/playlists/${item.id}`,
     };
   }, [item]);
+
   return (
     <FadeOutScaleDown
       href={type.url}

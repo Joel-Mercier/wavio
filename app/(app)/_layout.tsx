@@ -14,45 +14,7 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
-      {/* <Stack.Screen
-                      name="albums/[id]/index"
-                      options={{ headerShown: false }}
-                    /> */}
       <Stack.Screen name="playlists/new" />
-      <Stack.Screen
-        name="playlists/add-to-playlist"
-        options={({ navigation }) => ({
-          headerShown: true,
-          title: "Add to playlist",
-          headerTitleAlign: "center",
-          headerTitleStyle: {
-            fontSize: 16,
-            fontWeight: "bold",
-          },
-          headerLeft: () => (
-            <FadeOutScaleDown onPress={() => navigation.goBack()}>
-              <ArrowLeft size={22} color={themeConfig.theme.colors.white} />
-            </FadeOutScaleDown>
-          ),
-        })}
-      />
-      <Stack.Screen
-        name="playlists/[id]/edit"
-        options={({ navigation }) => ({
-          headerShown: true,
-          title: "Edit playlist",
-          headerTitleAlign: "center",
-          headerTitleStyle: {
-            fontSize: 16,
-            fontWeight: "bold",
-          },
-          headerLeft: () => (
-            <FadeOutScaleDown onPress={() => navigation.goBack()}>
-              <X size={22} color={themeConfig.theme.colors.white} />
-            </FadeOutScaleDown>
-          ),
-        })}
-      />
       <Stack.Screen name="internet-radio-stations/new" />
       <Stack.Screen
         name="player"

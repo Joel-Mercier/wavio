@@ -11,7 +11,6 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { VStack } from "@/components/ui/vstack";
 import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
@@ -56,32 +55,28 @@ export default function HomeScreen() {
   } = useGetInternetRadioStations();
   return (
     <Box>
-      <Image
-        source={require("@/assets/images/home-bg-transparent.png")}
-        className="absolute right-0 top-0 w-60 h-60 aspect-square"
-        resizeMode="contain"
-        alt="home screen background"
-      />
+      <HStack
+        className="px-6 gap-x-4 my-6 items-center"
+        style={{ paddingTop: insets.top }}
+      >
+        <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+          <Avatar size="sm" className="border-emerald-500 border-2">
+            <AvatarFallbackText className="font-body ">
+              {username}
+            </AvatarFallbackText>
+          </Avatar>
+        </FadeOutScaleDown>
+        <Heading size="2xl" className="text-white font-bold">
+          Hi {username}
+        </Heading>
+      </HStack>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top,
           paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Box className="px-6 mt-6 mb-4">
-          <HStack className="gap-x-4 items-center mb-4">
-            <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-              <Avatar size="sm" className="border-emerald-500 border-2">
-                <AvatarFallbackText className="font-body ">
-                  {username}
-                </AvatarFallbackText>
-              </Avatar>
-            </FadeOutScaleDown>
-            <Heading size="2xl" className="text-white font-bold">
-              Hi {username}
-            </Heading>
-          </HStack>
+        <Box className="px-6 mb-4">
           <VStack className="gap-y-4">
             {recentPlays.reduce((rows: JSX.Element[], play, index) => {
               if (index % 2 === 0) {

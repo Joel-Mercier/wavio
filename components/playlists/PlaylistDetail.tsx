@@ -44,6 +44,7 @@ import {
   Clock,
   EllipsisVertical,
   ListMusic,
+  Menu,
   Pencil,
   Play,
   Share2,
@@ -105,6 +106,11 @@ export default function PlaylistDetail() {
   const handlePlaylistUpdatePress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/edit`);
+  };
+
+  const handlePlaylistReorderPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate(`/playlists/${id}/reorder`);
   };
 
   const handlePlaylistDeletePress = () => {
@@ -406,6 +412,14 @@ export default function PlaylistDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              {/* <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
+                <HStack className="items-center">
+                  <Menu size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    Reorder this playlist
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown> */}
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
                   <Pencil

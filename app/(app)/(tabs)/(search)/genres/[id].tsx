@@ -125,7 +125,6 @@ export default function GenreScreen() {
           </>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
-        ListFooterComponent={() => <Box className="h-[500px]" />}
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}

@@ -23,7 +23,6 @@ import {
 } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
-  runOnJS,
   useAnimatedStyle,
   useAnimatedScrollHandler,
   withTiming,
@@ -31,6 +30,7 @@ import Animated, {
   withSpring,
   useAnimatedReaction,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 const AnimatedCellContainer = Animated.createAnimatedComponent(View);
 
@@ -141,7 +141,6 @@ const FlashDragList: FunctionComponent<FlashDragListProps> = (props) => {
     setData(props.data);
   });
 
-  // TODO: Change layout so it takes into account the list header
   const [layout, setLayout] = useState<Layout | null>(null);
 
   const scrollview = useRef<typeof FlashList<unknown>>(null);
@@ -292,7 +291,7 @@ const FlashDragList: FunctionComponent<FlashDragListProps> = (props) => {
       if (activeIndex.value < 0) return;
       const fromIndex = activeIndex.value;
       const toIndex = Math.round(insertIndex.value);
-      runOnJS(endDrag)(fromIndex, toIndex);
+      scheduleOnRN(endDrag, fromIndex, toIndex);
     });
 
   const extraData = useMemo(
