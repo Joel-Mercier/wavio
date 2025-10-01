@@ -20,10 +20,16 @@ interface QueueStore {
   queue: QueueTrack[];
   currentIndex: number | null;
   removePlayed: boolean;
+  repeatMode: "off" | "all" | "one";
+  // Optional context subset that defines the loop scope for repeatMode "all"
+  // Represented by track ids to remain stable across reorders
+  contextIds: string[] | null;
   setQueue: (tracks: QueueTrack[], startIndex?: number | null) => void;
   clearQueue: () => void;
   setCurrentIndex: (index: number | null) => void;
   setRemovePlayed: (remove: boolean) => void;
+  setRepeatMode: (mode: "off" | "all" | "one") => void;
+  setContext: (trackIds: string[] | null) => void;
 
   enqueueNext: (track: QueueTrack | QueueTrack[]) => void;
   enqueueEnd: (track: QueueTrack | QueueTrack[]) => void;
@@ -45,9 +51,16 @@ const useQueueBase = create<QueueStore>()(
       queue: [],
       currentIndex: null,
       removePlayed: true,
+      repeatMode: "off",
+      contextIds: null,
 
       setQueue: (tracks, startIndex = 0) => {
-        set(() => {
+        set((state) => {
+          // When replacing the queue, drop context if it no longer applies
+          const newIds = new Set(tracks.map((t) => t.id));
+          const nextContext = state.contextIds
+            ? state.contextIds.filter((id) => newIds.has(id))
+            : null;
           return {
             queue: [...tracks],
             currentIndex:
@@ -56,6 +69,8 @@ const useQueueBase = create<QueueStore>()(
                 : startIndex != null
                   ? Math.max(0, Math.min(startIndex, tracks.length - 1))
                   : 0,
+            contextIds:
+              nextContext && nextContext.length > 0 ? nextContext : null,
           };
         });
       },
@@ -65,6 +80,7 @@ const useQueueBase = create<QueueStore>()(
           return {
             queue: [],
             currentIndex: null,
+            contextIds: null,
           };
         });
       },
@@ -83,6 +99,19 @@ const useQueueBase = create<QueueStore>()(
         set(() => ({ removePlayed: remove }));
       },
 
+      setRepeatMode: (mode) => {
+        set(() => ({ repeatMode: mode }));
+      },
+
+      setContext: (trackIds) => {
+        set((state) => {
+          if (!trackIds || trackIds.length === 0) return { contextIds: null };
+          const availableIds = new Set(state.queue.map((t) => t.id));
+          const filtered = trackIds.filter((id) => availableIds.has(id));
+          return { contextIds: filtered.length > 0 ? filtered : null };
+        });
+      },
+
       enqueueNext: (track) => {
         set((state) => {
           const items = Array.isArray(track) ? track : [track];
@@ -92,6 +121,7 @@ const useQueueBase = create<QueueStore>()(
               : state.queue.length;
           const nextQueue = state.queue.slice();
           nextQueue.splice(insertAt, 0, ...items);
+          // Keep contextIds as-is; they are based on ids and remain valid
           return {
             queue: nextQueue,
             currentIndex:
@@ -104,6 +134,7 @@ const useQueueBase = create<QueueStore>()(
         set((state) => {
           const items = Array.isArray(track) ? track : [track];
           const nextQueue = state.queue.concat(items);
+          // Keep contextIds as-is; they are based on ids and remain valid
           return {
             queue: nextQueue,
             currentIndex:
@@ -114,13 +145,19 @@ const useQueueBase = create<QueueStore>()(
 
       playNow: (tracks, startIndex = 0) => {
         const items = Array.isArray(tracks) ? tracks : [tracks];
-        set(() => {
+        set((state) => {
+          const newIds = new Set(items.map((t) => t.id));
+          const nextContext = state.contextIds
+            ? state.contextIds.filter((id) => newIds.has(id))
+            : null;
           return {
             queue: [...items],
             currentIndex:
               items.length === 0
                 ? null
                 : Math.max(0, Math.min(startIndex, items.length - 1)),
+            contextIds:
+              nextContext && nextContext.length > 0 ? nextContext : null,
           };
         });
       },
@@ -134,6 +171,9 @@ const useQueueBase = create<QueueStore>()(
             const remove = idSet.has(t.id);
             return !remove;
           });
+          const nextContext = state.contextIds
+            ? state.contextIds.filter((id) => !idSet.has(id))
+            : null;
           let nextIndex: number | null = originalIndex;
           if (originalIndex != null) {
             const removedBefore = state.queue
@@ -146,6 +186,8 @@ const useQueueBase = create<QueueStore>()(
           return {
             queue: filtered,
             currentIndex: nextIndex,
+            contextIds:
+              nextContext && nextContext.length > 0 ? nextContext : null,
           };
         });
       },
@@ -158,6 +200,12 @@ const useQueueBase = create<QueueStore>()(
           );
           if (removeSet.size === 0) return state;
           const filtered = state.queue.filter((_, idx) => !removeSet.has(idx));
+          const removedIds = new Set(
+            state.queue.filter((_, idx) => removeSet.has(idx)).map((t) => t.id),
+          );
+          const nextContext = state.contextIds
+            ? state.contextIds.filter((id) => !removedIds.has(id))
+            : null;
           let nextIndex: number | null = state.currentIndex;
           if (state.currentIndex != null) {
             const currentIndex = state.currentIndex ?? 0;
@@ -171,6 +219,8 @@ const useQueueBase = create<QueueStore>()(
           return {
             queue: filtered,
             currentIndex: nextIndex,
+            contextIds:
+              nextContext && nextContext.length > 0 ? nextContext : null,
           };
         });
       },
@@ -216,24 +266,62 @@ const useQueueBase = create<QueueStore>()(
             };
           }
 
-          let nextQueue = state.queue;
-          let nextIndex: number | null = state.currentIndex;
+          const isRepeatOne = state.repeatMode === "one";
+          const isRepeatAll = state.repeatMode === "all";
 
-          if (state.removePlayed) {
-            nextQueue = state.queue.slice();
-            nextQueue.splice(state.currentIndex, 1);
-            if (nextQueue.length === 0) nextIndex = null;
-            else if (state.currentIndex >= nextQueue.length)
-              nextIndex = nextQueue.length - 1;
-          } else {
-            const candidate = state.currentIndex + 1;
-            nextIndex = candidate < state.queue.length ? candidate : null;
+          // Repeat one: stay on the same track, never remove current
+          if (isRepeatOne) {
+            return { currentIndex: state.currentIndex };
           }
 
-          return {
-            queue: nextQueue,
-            currentIndex: nextIndex,
-          };
+          // If a context subset is defined and repeat-all is active, wrap within the subset
+          if (isRepeatAll && state.contextIds && state.contextIds.length > 0) {
+            const currentId = state.queue[state.currentIndex]?.id;
+            const ids = state.contextIds;
+            const count = ids.length;
+            const pos = currentId ? ids.indexOf(currentId) : -1;
+
+            // If current is not in context, snap to first valid id in context
+            const startPos = pos >= 0 ? pos : 0;
+            for (let offset = 1; offset <= count; offset++) {
+              const nextPos = (startPos + offset) % count;
+              const targetId = ids[nextPos];
+              const targetIndex = state.queue.findIndex(
+                (t) => t.id === targetId,
+              );
+              if (targetIndex >= 0) {
+                return { currentIndex: targetIndex };
+              }
+            }
+            // No valid target (context references removed tracks)
+            return state;
+          }
+
+          // When removing played tracks, we pop current and advance to the next item at the same index
+          if (state.removePlayed) {
+            const nextQueue = state.queue.slice();
+            nextQueue.splice(state.currentIndex, 1);
+            if (nextQueue.length === 0) {
+              return { queue: nextQueue, currentIndex: null };
+            }
+            const nextIndex = Math.min(
+              state.currentIndex,
+              nextQueue.length - 1,
+            );
+            return { queue: nextQueue, currentIndex: nextIndex };
+          }
+
+          // Not removing played tracks
+          const length = state.queue.length;
+          const candidate = state.currentIndex + 1;
+          let nextIndex: number | null;
+          if (candidate < length) {
+            nextIndex = candidate;
+          } else {
+            nextIndex = isRepeatAll ? 0 : null;
+          }
+
+          return { currentIndex: nextIndex } as Partial<QueueStore>;
         });
       },
 
@@ -246,9 +334,42 @@ const useQueueBase = create<QueueStore>()(
             };
           }
 
+          const isRepeatOne = state.repeatMode === "one";
+          const isRepeatAll = state.repeatMode === "all";
+
+          if (isRepeatOne) {
+            return { currentIndex: state.currentIndex };
+          }
+
+          // If a context subset is defined and repeat-all is active, wrap within the subset backwards
+          if (isRepeatAll && state.contextIds && state.contextIds.length > 0) {
+            const currentId = state.queue[state.currentIndex]?.id;
+            const ids = state.contextIds;
+            const count = ids.length;
+            const pos = currentId ? ids.indexOf(currentId) : -1;
+            const startPos = pos >= 0 ? pos : 0;
+            for (let offset = 1; offset <= count; offset++) {
+              const prevPos = (startPos - offset + count) % count;
+              const targetId = ids[prevPos];
+              const targetIndex = state.queue.findIndex(
+                (t) => t.id === targetId,
+              );
+              if (targetIndex >= 0) {
+                return { currentIndex: targetIndex };
+              }
+            }
+            return state;
+          }
+
           const prevIndex = state.currentIndex - 1;
-          const nextIndex = prevIndex >= 0 ? prevIndex : null;
-          return { currentIndex: nextIndex };
+          if (prevIndex >= 0) return { currentIndex: prevIndex };
+
+          // Wrap to end only when repeating all
+          if (isRepeatAll && state.queue.length > 0) {
+            return { currentIndex: state.queue.length - 1 };
+          }
+
+          return { currentIndex: null };
         });
       },
 
@@ -275,6 +396,8 @@ const useQueueBase = create<QueueStore>()(
         queue: state.queue,
         currentIndex: state.currentIndex,
         removePlayed: state.removePlayed,
+        repeatMode: state.repeatMode,
+        contextIds: state.contextIds,
       }),
     },
   ),
