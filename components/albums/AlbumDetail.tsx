@@ -3,18 +3,37 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import StarRating from "@/components/StarRating";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
@@ -31,10 +50,13 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parse } from "date-fns";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
+  ClipboardCheck,
+  ClipboardIcon,
   Disc3,
   EllipsisVertical,
   Heart,
@@ -43,9 +65,11 @@ import {
   PlusCircle,
   Share2,
   Shuffle,
+  Star,
   User,
+  X,
 } from "lucide-react-native";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Linking } from "react-native";
 import Animated, {
   Extrapolation,
@@ -63,12 +87,19 @@ export default function AlbumDetail() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [clipboardText, setClipboardText] = useState("");
+  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleShareSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
+  const doSetRating = useSetRating();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
@@ -116,6 +147,7 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
                 <ToastDescription>
                   Album successfully added to favorites
                 </ToastDescription>
@@ -136,6 +168,7 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while adding album to favorites
                 </ToastDescription>
@@ -165,6 +198,8 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+
                 <ToastDescription>
                   Album successfully removed from favorites
                 </ToastDescription>
@@ -185,6 +220,8 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+
                 <ToastDescription>
                   An error occurred while removing the album from favorites
                 </ToastDescription>
@@ -200,14 +237,19 @@ export default function AlbumDetail() {
     doShare.mutate(
       { id },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          setClipboardText(data?.shares?.share[0]?.url);
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
+          bottomSheetShareModalRef.current?.present();
+
           toast.show({
             placement: "top",
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+
                 <ToastDescription>Album successfully shared</ToastDescription>
               </Toast>
             ),
@@ -219,6 +261,7 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while sharing the album
                 </ToastDescription>
@@ -277,6 +320,97 @@ export default function AlbumDetail() {
     }
   };
 
+  const handleRatingPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowRatingModal(true);
+  };
+
+  const handleCloseRatingModal = () => setShowRatingModal(false);
+
+  const handleRatingChange = (rating: number) => {
+    if (!data?.album?.id) return;
+    doSetRating.mutate(
+      { id: data.album.id, rating },
+      {
+        onSuccess: () => {
+          // queryClient.setQueryData(["album", data.album.id], {
+          //   ...data.album,
+          //   userRating: rating,
+          // });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+                <ToastDescription>Rating successfully set</ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>
+                  An error occurred while setting the rating
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (clipoardCopyDone) {
+      const timer = setTimeout(() => {
+        setClipoardCopyDone(false);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [clipoardCopyDone]);
+
+  const handleCopyShareUrlPress = async () => {
+    try {
+      if (clipboardText) {
+        await Clipboard.setStringAsync(clipboardText);
+        setClipoardCopyDone(true);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Share url copied to clipboard</ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>
+              An error occurred while copying the share url to the clipboard
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
   return (
     <Box className="h-full w-full">
       <AnimatedBox
@@ -302,7 +436,7 @@ export default function AlbumDetail() {
               </Box>
             </FadeOutScaleDown>
             <Heading className="text-white font-bold" size="lg">
-              {data?.album.name}
+              {data?.album?.name}
             </Heading>
             <Box className="w-10" />
           </HStack>
@@ -315,7 +449,7 @@ export default function AlbumDetail() {
           paddingLeft: insets.left,
           paddingRight: insets.right,
         }}
-        data={data?.album.song || loadingData(16)}
+        data={data?.album?.song || loadingData(16)}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (
             <TrackListItemSkeleton
@@ -369,7 +503,7 @@ export default function AlbumDetail() {
             <VStack>
               <HStack className="mt-5 items-center justify-between">
                 <Heading numberOfLines={1} className="text-white" size="2xl">
-                  {data?.album.name}
+                  {data?.album?.name}
                 </Heading>
               </HStack>
               <HStack className="mt-4 items-center">
@@ -389,7 +523,7 @@ export default function AlbumDetail() {
                   numberOfLines={1}
                 >
                   {((data?.album?.artists?.length || 0) > 1 &&
-                    data?.album.artists?.map((artist) => (
+                    data?.album?.artists?.map((artist) => (
                       <React.Fragment key={artist.id}>
                         <Link href={`/artists/${artist.id}`}>
                           {artist.name}
@@ -401,20 +535,20 @@ export default function AlbumDetail() {
                         )}
                       </React.Fragment>
                     ))) || (
-                      <Link href={`/artists/${data?.album.artistId}`}>
-                        {data?.album.displayArtist}
+                      <Link href={`/artists/${data?.album?.artistId}`}>
+                        {data?.album?.displayArtist}
                       </Link>
                     ) || (
-                      <Link href={`/artists/${data?.album.artistId}`}>
-                        {data?.album.artist}
+                      <Link href={`/artists/${data?.album?.artistId}`}>
+                        {data?.album?.artist}
                       </Link>
                     )}
                 </Text>
               </HStack>
               <HStack className="mt-2 items-center">
                 <Text className="text-primary-100">
-                  {data?.album.isCompilation ? "Compilation" : "Album"} ⦁{" "}
-                  {data?.album.originalReleaseDate &&
+                  {data?.album?.isCompilation ? "Compilation" : "Album"} ⦁{" "}
+                  {data?.album?.originalReleaseDate &&
                     format(
                       parse(
                         `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
@@ -427,7 +561,7 @@ export default function AlbumDetail() {
               </HStack>
               <HStack className="mt-4 items-center justify-between">
                 <HStack className="items-center gap-x-4">
-                  {data?.album.starred ? (
+                  {data?.album?.starred ? (
                     <FadeOutScaleDown onPress={handleUnfavoritePress}>
                       <Heart
                         color={themeConfig.theme.colors.emerald[500]}
@@ -464,11 +598,11 @@ export default function AlbumDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
-              {(data?.album.songCount || "0 ") +
-                (data?.album.songCount || 0 > 1 ? " song" : "songs")}{" "}
-              ⦁ {Math.round((data?.album.duration || 0) / 60)} min
+              {(data?.album?.songCount || "0 ") +
+                ((data?.album?.songCount || 0) > 1 ? " songs" : "song")}{" "}
+              ⦁ {Math.round((data?.album?.duration || 0) / 60)} min
             </Text>
-            {data?.album.recordLabels?.map((recordLabel) => (
+            {data?.album?.recordLabels?.map((recordLabel) => (
               <Text className="text-primary-100 text-sm" key={recordLabel.name}>
                 © {recordLabel.name}
               </Text>
@@ -478,6 +612,52 @@ export default function AlbumDetail() {
         ListEmptyComponent={() => <EmptyDisplay />}
         // contentContainerStyle={{ paddingHorizontal: 24 }}
       />
+      <BottomSheetModal
+        ref={bottomSheetShareModalRef}
+        onChange={handleShareSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <FadeOutScaleDown
+                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                onPress={handleCopyShareUrlPress}
+              >
+                {clipoardCopyDone ? (
+                  <ClipboardCheck
+                    size={24}
+                    color={themeConfig.theme.colors.emerald[500]}
+                  />
+                ) : (
+                  <ClipboardIcon
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                )}
+                <Text
+                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                >
+                  {clipboardText}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -514,10 +694,10 @@ export default function AlbumDetail() {
                   size="lg"
                   numberOfLines={1}
                 >
-                  {data?.album.name}
+                  {data?.album?.name}
                 </Heading>
                 <Text numberOfLines={1} className="text-md text-primary-100">
-                  {data?.album.artist}
+                  {data?.album?.artist}
                 </Text>
               </VStack>
             </HStack>
@@ -550,6 +730,12 @@ export default function AlbumDetail() {
                   <Text className="ml-4 text-lg text-gray-200">
                     Add to queue
                   </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleRatingPress}>
+                <HStack className="items-center">
+                  <Star size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">Rate</Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleSharePress}>
@@ -593,6 +779,30 @@ export default function AlbumDetail() {
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
+      <Modal
+        isOpen={showRatingModal}
+        onClose={handleCloseRatingModal}
+        closeOnOverlayClick
+      >
+        <ModalBackdrop />
+        <ModalContent
+          className="bg-primary-800 border-primary-600 max-h-[80%]"
+          style={{ marginBottom: insets.bottom, marginTop: insets.top }}
+        >
+          <ModalHeader>
+            <Heading className="text-white">Rate album</Heading>
+            <ModalCloseButton>
+              <Icon as={X} size="md" className="color-white" />
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody className="mb-0 pb-0">
+            <StarRating
+              value={data?.album?.userRating || 0}
+              onChange={handleRatingChange}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

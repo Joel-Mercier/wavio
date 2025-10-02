@@ -1,4 +1,5 @@
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import StarRating from "@/components/StarRating";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -10,7 +11,6 @@ import {
   ModalBody,
   ModalCloseButton,
   ModalContent,
-  ModalFooter,
   ModalHeader,
 } from "@/components/ui/modal";
 import { Pressable } from "@/components/ui/pressable";
@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useUpdatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -31,7 +35,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { niceBytes } from "@/utils/fileSize";
-import { downloadUrl, streamUrl } from "@/utils/streaming";
+import { downloadUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
@@ -41,12 +45,16 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, secondsToMinutes } from "date-fns";
+import * as Clipboard from "expo-clipboard";
 import { Directory, File, Paths } from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
   Check,
   CircleX,
+  ClipboardCheck,
+  ClipboardIcon,
   Download,
   EllipsisVertical,
   Heart,
@@ -54,10 +62,11 @@ import {
   ListPlus,
   PlusCircle,
   Share,
+  Star,
   User,
   X,
 } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioPro, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -84,15 +93,23 @@ export default function TrackListItem({
   const router = useRouter();
   const route = useRoute();
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [clipboardText, setClipboardText] = useState("");
+  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleShareSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const { playingTrack } = useAudioPro();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
+  const doSetRating = useSetRating();
   const toast = useToast();
   const insets = useSafeAreaInsets();
+  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -176,9 +193,11 @@ export default function TrackListItem({
     doShare.mutate(
       { id: track.id },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           bottomSheetModalRef.current?.dismiss();
+          setClipboardText(data?.shares?.share[0]?.url);
           queryClient.invalidateQueries({ queryKey: ["shares"] });
+          bottomSheetShareModalRef.current?.present();
           toast.show({
             placement: "top",
             duration: 3000,
@@ -244,14 +263,22 @@ export default function TrackListItem({
 
   const handleDownloadPress = async () => {
     bottomSheetModalRef.current?.dismiss();
+    if (permissionResponse?.status !== "granted") {
+      await requestPermission();
+    }
     const url = downloadUrl(track.id);
-    const destination = new Directory(Paths.document);
+    const destination = new Directory(Paths.cache, "Downloads");
     try {
       destination.create({
         idempotent: true,
+        intermediates: true,
       });
-      const output = await File.downloadFileAsync(url, destination);
+      const output = await File.downloadFileAsync(url, destination, {
+        idempotent: true,
+      });
       if (output.exists) {
+        await MediaLibrary.saveToLibraryAsync(output.uri);
+        output.delete();
         toast.show({
           placement: "top",
           duration: 3000,
@@ -263,10 +290,7 @@ export default function TrackListItem({
           ),
         });
       }
-      console.log(output.exists); // true
-      console.log(output.uri);
     } catch (error) {
-      console.error(error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -275,6 +299,93 @@ export default function TrackListItem({
             <ToastTitle>Error</ToastTitle>
             <ToastDescription>
               An error occurred while downloading the track
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleRatingPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowRatingModal(true);
+  };
+
+  const handleCloseRatingModal = () => setShowRatingModal(false);
+
+  const handleRatingChange = (rating: number) => {
+    doSetRating.mutate(
+      { id: track.id, rating },
+      {
+        onSuccess: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+
+                <ToastDescription>Rating successfully set</ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>
+                  An error occurred while setting the rating
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (clipoardCopyDone) {
+      const timer = setTimeout(() => {
+        setClipoardCopyDone(false);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [clipoardCopyDone]);
+
+  const handleCopyShareUrlPress = async () => {
+    try {
+      if (clipboardText) {
+        await Clipboard.setStringAsync(clipboardText);
+        setClipoardCopyDone(true);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Share url copied to clipboard</ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>
+              An error occurred while copying the share url to the clipboard
             </ToastDescription>
           </Toast>
         ),
@@ -344,6 +455,52 @@ export default function TrackListItem({
             <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
           </FadeOutScaleDown>
         </HStack>
+        <BottomSheetModal
+          ref={bottomSheetShareModalRef}
+          onChange={handleShareSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+            }}
+          >
+            <Box className="p-6 w-full mb-12">
+              <HStack className="items-center">
+                <FadeOutScaleDown
+                  className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                  onPress={handleCopyShareUrlPress}
+                >
+                  {clipoardCopyDone ? (
+                    <ClipboardCheck
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  ) : (
+                    <ClipboardIcon
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                  )}
+                  <Text
+                    className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                  >
+                    {clipboardText}
+                  </Text>
+                </FadeOutScaleDown>
+              </HStack>
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
         <BottomSheetModal
           ref={bottomSheetModalRef}
           onChange={handleSheetPositionChange}
@@ -452,6 +609,15 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleRatingPress}>
+                  <HStack className="items-center">
+                    <Star
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">Rate</Text>
+                  </HStack>
+                </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSharePress}>
                   <HStack className="items-center">
                     <Share
@@ -483,6 +649,30 @@ export default function TrackListItem({
             </Box>
           </BottomSheetView>
         </BottomSheetModal>
+        <Modal
+          isOpen={showRatingModal}
+          onClose={handleCloseRatingModal}
+          closeOnOverlayClick
+        >
+          <ModalBackdrop />
+          <ModalContent
+            className="bg-primary-800 border-primary-600 max-h-[80%]"
+            style={{ marginBottom: insets.bottom, marginTop: insets.top }}
+          >
+            <ModalHeader>
+              <Heading className="text-white">Rate track</Heading>
+              <ModalCloseButton>
+                <Icon as={X} size="md" className="color-white" />
+              </ModalCloseButton>
+            </ModalHeader>
+            <ModalBody className="mb-0 pb-0">
+              <StarRating
+                value={track.userRating || 0}
+                onChange={handleRatingChange}
+              />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
         <Modal
           isOpen={showInfoModal}
           onClose={handleCloseInfoModal}

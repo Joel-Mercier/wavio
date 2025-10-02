@@ -61,7 +61,16 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your files.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files.",
+          "isAccessMediaLocationEnabled": true,
+          "granularPermissions": ["audio"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

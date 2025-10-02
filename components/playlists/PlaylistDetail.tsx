@@ -14,7 +14,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import {
@@ -37,10 +42,13 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
+  ClipboardCheck,
+  ClipboardIcon,
   Clock,
   EllipsisVertical,
   ListMusic,
@@ -51,7 +59,7 @@ import {
   Shuffle,
   X,
 } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -70,6 +78,8 @@ export default function PlaylistDetail() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
+  const [clipboardText, setClipboardText] = useState("");
+  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const toast = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -77,6 +87,9 @@ export default function PlaylistDetail() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleShareSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const { data, isLoading, error } = usePlaylist(id);
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -126,6 +139,7 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
                 <ToastDescription>
                   Playlist successfully deleted
                 </ToastDescription>
@@ -140,6 +154,7 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while deleting the playlist
                 </ToastDescription>
@@ -155,14 +170,18 @@ export default function PlaylistDetail() {
     doShare.mutate(
       { id },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          setClipboardText(data?.shares?.share[0]?.url);
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
+          bottomSheetShareModalRef.current?.present();
+
           toast.show({
             placement: "top",
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
                 <ToastDescription>
                   Playlist successfully shared
                 </ToastDescription>
@@ -176,6 +195,7 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while sharing the playlist
                 </ToastDescription>
@@ -199,6 +219,7 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
                 <ToastDescription>
                   Track successfully removed from playlist
                 </ToastDescription>
@@ -213,6 +234,7 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while removing the track from this playlist
                 </ToastDescription>
@@ -231,6 +253,50 @@ export default function PlaylistDetail() {
         title: data?.playlist.name,
         type: "playlist",
         coverArt: data?.playlist?.coverArt,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (clipoardCopyDone) {
+      const timer = setTimeout(() => {
+        setClipoardCopyDone(false);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [clipoardCopyDone]);
+
+  const handleCopyShareUrlPress = async () => {
+    try {
+      if (clipboardText) {
+        await Clipboard.setStringAsync(clipboardText);
+        setClipoardCopyDone(true);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Share url copied to clipboard</ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>
+              An error occurred while copying the share url to the clipboard
+            </ToastDescription>
+          </Toast>
+        ),
       });
     }
   };
@@ -371,6 +437,52 @@ export default function PlaylistDetail() {
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       />
+      <BottomSheetModal
+        ref={bottomSheetShareModalRef}
+        onChange={handleShareSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <FadeOutScaleDown
+                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                onPress={handleCopyShareUrlPress}
+              >
+                {clipoardCopyDone ? (
+                  <ClipboardCheck
+                    size={24}
+                    color={themeConfig.theme.colors.emerald[500]}
+                  />
+                ) : (
+                  <ClipboardIcon
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                )}
+                <Text
+                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                >
+                  {clipboardText}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}

@@ -3,6 +3,8 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import StarRating from "@/components/StarRating";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -11,10 +13,24 @@ import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { ImageBackground } from "@/components/ui/image-background";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import {
@@ -22,7 +38,11 @@ import {
   useArtistInfo2,
   useTopSongs,
 } from "@/hooks/openSubsonic/useBrowsing";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -46,9 +66,11 @@ import {
   Heart,
   Play,
   Shuffle,
+  Star,
   User,
+  X,
 } from "lucide-react-native";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Linking } from "react-native";
 import Animated, {
   Extrapolation,
@@ -58,7 +80,6 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
@@ -66,6 +87,7 @@ export default function ArtistDetail() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -79,9 +101,10 @@ export default function ArtistDetail() {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
     error: topSongsError,
-  } = useTopSongs(data?.artist.name, { count: 10 });
+  } = useTopSongs(data?.artist?.name, { count: 10 });
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doSetRating = useSetRating();
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const offsetY = useSharedValue(0);
@@ -121,6 +144,8 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+
                 <ToastDescription>
                   Artist successfully added to favorites
                 </ToastDescription>
@@ -141,6 +166,8 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+
                 <ToastDescription>
                   An error occurred while adding artist to favorites
                 </ToastDescription>
@@ -170,6 +197,8 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+
                 <ToastDescription>
                   Artist successfully removed from favorites
                 </ToastDescription>
@@ -190,6 +219,7 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
                 <ToastDescription>
                   An error occurred while removing the artist from favorites
                 </ToastDescription>
@@ -239,6 +269,53 @@ export default function ArtistDetail() {
     }
   };
 
+  const handleRatingPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowRatingModal(true);
+  };
+
+  const handleCloseRatingModal = () => setShowRatingModal(false);
+
+  const handleRatingChange = (rating: number) => {
+    if (!data?.artist?.id) return;
+    doSetRating.mutate(
+      { id: data.artist.id, rating },
+      {
+        onSuccess: () => {
+          // queryClient.setQueryData(["artist", data.artist.id], {
+          //   ...data.artist,
+          //   userRating: rating,
+          // });
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
+                <ToastDescription>Rating successfully set</ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+                <ToastDescription>
+                  An error occurred while setting the rating
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
   return (
     <Box className="h-full bg-black">
       <AnimatedBox
@@ -264,7 +341,7 @@ export default function ArtistDetail() {
               </Box>
             </FadeOutScaleDown>
             <Heading className="text-white font-bold" size="lg">
-              {data?.artist.name}
+              {data?.artist?.name}
             </Heading>
             <Box className="w-10" />
           </HStack>
@@ -279,7 +356,7 @@ export default function ArtistDetail() {
 
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.artist.album || loadingData(3)}
+        data={data?.artist?.album || loadingData(3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <AlbumListItemSkeleton index={index} />
@@ -311,7 +388,7 @@ export default function ArtistDetail() {
                     className="text-white mb-4 absolute bottom-2 left-6"
                     size="3xl"
                   >
-                    {data?.artist.name}
+                    {data?.artist?.name}
                   </Heading>
                 </VStack>
               </Box>
@@ -410,7 +487,7 @@ export default function ArtistDetail() {
           <>
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
-                {data?.artist.album?.length} albums
+                {data?.artist?.album?.length || 0} albums
               </Text>
             </VStack>
             {artistInfoData?.artistInfo2?.biography && (
@@ -492,11 +569,17 @@ export default function ArtistDetail() {
                   size="lg"
                   numberOfLines={1}
                 >
-                  {data?.artist.name}
+                  {data?.artist?.name}
                 </Heading>
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown onPress={handleRatingPress}>
+                <HStack className="items-center">
+                  <Star size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">Rate</Text>
+                </HStack>
+              </FadeOutScaleDown>
               {data?.artist?.musicBrainzId && (
                 <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                   <HStack className="items-center">
@@ -529,6 +612,30 @@ export default function ArtistDetail() {
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
+      <Modal
+        isOpen={showRatingModal}
+        onClose={handleCloseRatingModal}
+        closeOnOverlayClick
+      >
+        <ModalBackdrop />
+        <ModalContent
+          className="bg-primary-800 border-primary-600 max-h-[80%]"
+          style={{ marginBottom: insets.bottom, marginTop: insets.top }}
+        >
+          <ModalHeader>
+            <Heading className="text-white">Rate artist</Heading>
+            <ModalCloseButton>
+              <Icon as={X} size="md" className="color-white" />
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody className="mb-0 pb-0">
+            <StarRating
+              value={data?.artist?.userRating || 0}
+              onChange={handleRatingChange}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

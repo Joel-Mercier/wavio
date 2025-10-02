@@ -22,7 +22,12 @@ import { Image } from "@/components/ui/image";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import {
@@ -39,15 +44,18 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useForm } from "@tanstack/react-form";
+import * as Clipboard from "expo-clipboard";
 import {
   AlertCircleIcon,
   AudioLines,
+  ClipboardCheck,
+  Clipboard as ClipboardIcon,
   Disc3,
   EllipsisVertical,
   Pencil,
   Trash,
 } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import z from "zod";
 
 const updateShareSchema = z.object({
@@ -56,6 +64,7 @@ const updateShareSchema = z.object({
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
+  const [clipoardCopyDone, setClipoardCopyDone] = useState<boolean>(false);
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
@@ -88,6 +97,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               duration: 3000,
               render: () => (
                 <Toast action="success">
+                  <ToastTitle>Success</ToastTitle>
                   <ToastDescription>
                     Share successfully updated
                   </ToastDescription>
@@ -102,6 +112,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               duration: 3000,
               render: () => (
                 <Toast action="error">
+                  <ToastTitle>Error</ToastTitle>
                   <ToastDescription>
                     An error occurred while updating the share
                   </ToastDescription>
@@ -133,6 +144,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>Success</ToastTitle>
                 <ToastDescription>Share successfully deleted</ToastDescription>
               </Toast>
             ),
@@ -145,6 +157,8 @@ export default function ShareListItem({ share }: { share: Share }) {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>Error</ToastTitle>
+
                 <ToastDescription>
                   An error occurred while deleting the share
                 </ToastDescription>
@@ -154,6 +168,48 @@ export default function ShareListItem({ share }: { share: Share }) {
         },
       },
     );
+  };
+
+  useEffect(() => {
+    if (clipoardCopyDone) {
+      const timer = setTimeout(() => {
+        setClipoardCopyDone(false);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [clipoardCopyDone]);
+
+  const handleCopyShareUrlPress = async () => {
+    try {
+      await Clipboard.setStringAsync(share.url);
+      setClipoardCopyDone(true);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>Success</ToastTitle>
+            <ToastDescription>Share url copied to clipboard</ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>
+              An error occurred while copying the share url to the clipboard
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   const isPlaylist = (share?.entry?.length || 0) > 1;
@@ -232,6 +288,31 @@ export default function ShareListItem({ share }: { share: Share }) {
           }}
         >
           <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <FadeOutScaleDown
+                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                onPress={handleCopyShareUrlPress}
+              >
+                {clipoardCopyDone ? (
+                  <ClipboardCheck
+                    size={24}
+                    color={themeConfig.theme.colors.emerald[500]}
+                  />
+                ) : (
+                  <ClipboardIcon
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                )}
+                <Text
+                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                >
+                  {share.url}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
                 onPress={() => {
