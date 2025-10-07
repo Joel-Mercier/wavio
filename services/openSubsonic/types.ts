@@ -167,6 +167,7 @@ export interface Child {
   replayGain?: { albumPeak: number; trackPeak: number };
   artists?: { id: string; name: string }[];
   name?: string;
+  musicBrainzId?: string;
 }
 
 export interface Directory {

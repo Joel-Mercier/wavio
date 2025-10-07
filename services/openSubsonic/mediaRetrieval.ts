@@ -1,4 +1,6 @@
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import openSubsonicApiInstance, {
+  type OpenSubsonicResponse,
+} from "@/services/openSubsonic/index";
 import type { Lyrics, StructuredLyrics } from "@/services/openSubsonic/types";
 import { arrayBufferToBase64 } from "@/utils/arrayBufferToBase64";
 import axios from "axios";

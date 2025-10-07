@@ -1,2 +1,2 @@
-'use client';
-export { SectionList } from 'react-native';
+"use client";
+export { SectionList } from "react-native";

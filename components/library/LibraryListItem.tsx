@@ -17,6 +17,7 @@ import { cn } from "@/utils/tailwind";
 import { LinearGradient } from "expo-linear-gradient";
 import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 export type Favorites = {
   name: string;
@@ -53,34 +54,35 @@ export default function LibraryListItem({
   layout,
   index,
 }: LibraryListItemProps) {
+  const { t, i18n } = useTranslation();
   const type = useMemo(() => {
     if (item.isFavorites) {
       return {
         id: "favorites",
-        label: "Playlist",
+        label: t("app.shared.favorites"),
         url: "/(tabs)/(library)/favorites",
       };
     }
     if (item.albumCount) {
       return {
         id: "artist",
-        label: "Artist",
+        label: t("app.shared.artist_one"),
         url: `/(tabs)/(library)/artists/${item.id}`,
       };
     }
     if (item.year) {
       return {
         id: "album",
-        label: "Album",
+        label: t("app.shared.album_one"),
         url: `/(tabs)/(library)/albums/${item.id}`,
       };
     }
     return {
       id: "playlist",
-      label: "Playlist",
+      label: t("app.shared.playlist_one"),
       url: `/(tabs)/(library)/playlists/${item.id}`,
     };
-  }, [item]);
+  }, [item, i18n.language]);
 
   return (
     <FadeOutScaleDown

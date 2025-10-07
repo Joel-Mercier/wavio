@@ -1,17 +1,17 @@
-'use client';
-import React from 'react';
-import { createFab } from '@gluestack-ui/core/fab/creator';
-import { Pressable, Text } from 'react-native';
-import { tva } from '@gluestack-ui/utils/nativewind-utils';
+"use client";
+import { createFab } from "@gluestack-ui/core/fab/creator";
+import { PrimitiveIcon, UIIcon } from "@gluestack-ui/core/icon/creator";
+import { tva } from "@gluestack-ui/utils/nativewind-utils";
 import {
-  withStyleContext,
   useStyleContext,
-} from '@gluestack-ui/utils/nativewind-utils';
-import { cssInterop } from 'nativewind';
-import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
-import { PrimitiveIcon, UIIcon } from '@gluestack-ui/core/icon/creator';
+  withStyleContext,
+} from "@gluestack-ui/utils/nativewind-utils";
+import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
+import { cssInterop } from "nativewind";
+import React from "react";
+import { Pressable, Text } from "react-native";
 
-const SCOPE = 'FAB';
+const SCOPE = "FAB";
 const Root = withStyleContext(Pressable, SCOPE);
 const UIFab = createFab({
   Root: Root,
@@ -21,104 +21,104 @@ const UIFab = createFab({
 
 cssInterop(PrimitiveIcon, {
   className: {
-    target: 'style',
+    target: "style",
     nativeStyleToProp: {
       height: true,
       width: true,
       fill: true,
-      color: 'classNameColor',
+      color: "classNameColor",
       stroke: true,
     },
   },
 });
 
 const fabStyle = tva({
-  base: 'group/fab bg-primary-500 rounded-full z-20 p-4 flex-row items-center justify-center absolute hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:pointer-events-all disabled:cursor-not-allowed data-[focus=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[focus-visible=true]:web:ring-indicator-info shadow-hard-2',
+  base: "group/fab bg-primary-500 rounded-full z-20 p-4 flex-row items-center justify-center absolute hover:bg-primary-600 active:bg-primary-700 disabled:opacity-40 disabled:pointer-events-all disabled:cursor-not-allowed data-[focus=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[focus-visible=true]:web:ring-indicator-info shadow-hard-2",
   variants: {
     size: {
-      sm: 'px-2.5 py-2.5',
-      md: 'px-3 py-3',
-      lg: 'px-4 py-4',
+      sm: "px-2.5 py-2.5",
+      md: "px-3 py-3",
+      lg: "px-4 py-4",
     },
     placement: {
-      'top right': 'top-4 right-4',
-      'top left': 'top-4 left-4',
-      'bottom right': 'bottom-4 right-4',
-      'bottom left': 'bottom-4 left-4',
-      'top center': 'top-4 self-center',
-      'bottom center': 'bottom-4 self-center',
+      "top right": "top-4 right-4",
+      "top left": "top-4 left-4",
+      "bottom right": "bottom-4 right-4",
+      "bottom left": "bottom-4 left-4",
+      "top center": "top-4 self-center",
+      "bottom center": "bottom-4 self-center",
     },
   },
 });
 
 const fabLabelStyle = tva({
-  base: 'text-typography-50 font-normal font-body tracking-md text-left mx-2',
+  base: "text-typography-50 font-normal font-body tracking-md text-left mx-2",
   variants: {
     isTruncated: {
-      true: '',
+      true: "",
     },
     bold: {
-      true: 'font-bold',
+      true: "font-bold",
     },
     underline: {
-      true: 'underline',
+      true: "underline",
     },
     strikeThrough: {
-      true: 'line-through',
+      true: "line-through",
     },
     size: {
-      '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
-      '2xl': 'text-2xl',
-      '3xl': 'text-3xl',
-      '4xl': 'text-4xl',
-      '5xl': 'text-5xl',
-      '6xl': 'text-6xl',
+      "2xs": "text-2xs",
+      xs: "text-xs",
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
+      xl: "text-xl",
+      "2xl": "text-2xl",
+      "3xl": "text-3xl",
+      "4xl": "text-4xl",
+      "5xl": "text-5xl",
+      "6xl": "text-6xl",
     },
     sub: {
-      true: 'text-xs',
+      true: "text-xs",
     },
     italic: {
-      true: 'italic',
+      true: "italic",
     },
     highlight: {
-      true: 'bg-yellow-500',
+      true: "bg-yellow-500",
     },
   },
   parentVariants: {
     size: {
-      sm: 'text-sm',
-      md: 'text-base',
-      lg: 'text-lg',
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
     },
   },
 });
 
 const fabIconStyle = tva({
-  base: 'text-typography-50 fill-none',
+  base: "text-typography-50 fill-none",
   variants: {
     size: {
-      '2xs': 'h-3 w-3',
-      'xs': 'h-3.5 w-3.5',
-      'sm': 'h-4 w-4',
-      'md': 'w-[18px] h-[18px]',
-      'lg': 'h-5 w-5',
-      'xl': 'h-6 w-6',
+      "2xs": "h-3 w-3",
+      xs: "h-3.5 w-3.5",
+      sm: "h-4 w-4",
+      md: "w-[18px] h-[18px]",
+      lg: "h-5 w-5",
+      xl: "h-6 w-6",
     },
   },
 });
 
-type IFabProps = Omit<React.ComponentPropsWithoutRef<typeof UIFab>, 'context'> &
+type IFabProps = Omit<React.ComponentPropsWithoutRef<typeof UIFab>, "context"> &
   VariantProps<typeof fabStyle>;
 
 const Fab = React.forwardRef<React.ComponentRef<typeof UIFab>, IFabProps>(
   function Fab(
-    { size = 'md', placement = 'bottom right', className, ...props },
-    ref
+    { size = "md", placement = "bottom right", className, ...props },
+    ref,
   ) {
     return (
       <UIFab
@@ -128,7 +128,7 @@ const Fab = React.forwardRef<React.ComponentRef<typeof UIFab>, IFabProps>(
         context={{ size }}
       />
     );
-  }
+  },
 );
 
 type IFabLabelProps = React.ComponentPropsWithoutRef<typeof UIFab.Label> &
@@ -147,7 +147,7 @@ const FabLabel = React.forwardRef<
     className,
     ...props
   },
-  ref
+  ref,
 ) {
   const { size: parentSize } = useStyleContext(SCOPE);
   return (
@@ -181,7 +181,7 @@ const FabIcon = React.forwardRef<
 >(function FabIcon({ size, className, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
-  if (typeof size === 'number') {
+  if (typeof size === "number") {
     return (
       <UIFab.Icon
         ref={ref}
@@ -217,8 +217,8 @@ const FabIcon = React.forwardRef<
   );
 });
 
-Fab.displayName = 'Fab';
-FabLabel.displayName = 'FabLabel';
-FabIcon.displayName = 'FabIcon';
+Fab.displayName = "Fab";
+FabLabel.displayName = "FabLabel";
+FabIcon.displayName = "FabIcon";
 
 export { Fab, FabLabel, FabIcon };

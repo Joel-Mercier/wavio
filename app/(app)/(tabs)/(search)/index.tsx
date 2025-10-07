@@ -20,9 +20,11 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
+  const { t } = useTranslation();
   const username = useAuth.use.username();
   const setShowDrawer = useApp.use.setShowDrawer();
   const router = useRouter();
@@ -47,14 +49,14 @@ export default function SearchScreen() {
           </Avatar>
         </FadeOutScaleDown>
         <Heading className="text-white" size="2xl">
-          Search
+          {t("app.search.title")}
         </Heading>
       </HStack>
       <FadeOutScaleDown className="mx-6 mb-6" onPress={handleSearchPress}>
         <HStack className="bg-white rounded-md py-3 px-3">
           <Search size={22} color={themeConfig.theme.colors.gray[500]} />
           <Text className="text-gray-500 text-xl ml-4">
-            What do you want to listen to ?
+            {t("app.search.inputPlaceholder")}
           </Text>
         </HStack>
       </FadeOutScaleDown>
@@ -78,7 +80,7 @@ export default function SearchScreen() {
         ListHeaderComponent={() => (
           <>
             <Heading size="lg" className="text-white mb-4">
-              Explore genres
+              {t("app.search.exploreGenres")}
             </Heading>
             {error && <ErrorDisplay error={error} />}
           </>

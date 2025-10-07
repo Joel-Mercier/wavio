@@ -1,14 +1,14 @@
-import React, { createContext, useMemo, useContext } from 'react';
+import React, { createContext, useMemo, useContext } from "react";
 import {
-  tableStyle,
-  tableHeaderStyle,
   tableBodyStyle,
+  tableCaptionStyle,
+  tableDataStyle,
   tableFooterStyle,
   tableHeadStyle,
+  tableHeaderStyle,
   tableRowStyleStyle,
-  tableDataStyle,
-  tableCaptionStyle,
-} from './styles';
+  tableStyle,
+} from "./styles";
 
 const TableHeaderContext = createContext<{
   isHeaderRow: boolean;
@@ -21,7 +21,7 @@ const TableFooterContext = createContext<{
   isFooterRow: false,
 });
 
-const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<'table'>>(
+const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<"table">>(
   function Table({ className, ...props }, ref) {
     return (
       <table
@@ -30,12 +30,12 @@ const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<'table'>>(
         {...props}
       />
     );
-  }
+  },
 );
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
-  React.ComponentProps<'thead'>
+  React.ComponentProps<"thead">
 >(function TableHeader({ className, ...props }, ref) {
   const contextValue = useMemo(() => {
     return {
@@ -55,7 +55,7 @@ const TableHeader = React.forwardRef<
 
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
-  React.ComponentProps<'tbody'>
+  React.ComponentProps<"tbody">
 >(function TableBody({ className, ...props }, ref) {
   return (
     <tbody
@@ -68,7 +68,7 @@ const TableBody = React.forwardRef<
 
 const TableFooter = React.forwardRef<
   HTMLTableSectionElement,
-  React.ComponentProps<'tfoot'>
+  React.ComponentProps<"tfoot">
 >(function TableFooter({ className, ...props }, ref) {
   const contextValue = useMemo(() => {
     return {
@@ -88,7 +88,7 @@ const TableFooter = React.forwardRef<
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ComponentProps<'th'>
+  React.ComponentProps<"th">
 >(function TableHead({ className, ...props }, ref) {
   return (
     <th ref={ref} className={tableHeadStyle({ class: className })} {...props} />
@@ -97,7 +97,7 @@ const TableHead = React.forwardRef<
 
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
-  React.ComponentProps<'tr'>
+  React.ComponentProps<"tr">
 >(function TableRow({ className, ...props }, ref) {
   const { isHeaderRow } = useContext(TableHeaderContext);
   const { isFooterRow } = useContext(TableFooterContext);
@@ -116,7 +116,7 @@ const TableRow = React.forwardRef<
 
 const TableData = React.forwardRef<
   HTMLTableCellElement,
-  React.ComponentProps<'td'>
+  React.ComponentProps<"td">
 >(function TableData({ className, ...props }, ref) {
   return (
     <td ref={ref} className={tableDataStyle({ class: className })} {...props} />
@@ -125,7 +125,7 @@ const TableData = React.forwardRef<
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
-  React.ComponentProps<'caption'>
+  React.ComponentProps<"caption">
 >(function TableCaption({ className, ...props }, ref) {
   return (
     <caption
@@ -136,14 +136,14 @@ const TableCaption = React.forwardRef<
   );
 });
 
-Table.displayName = 'Table';
-TableHeader.displayName = 'TableHeader';
-TableBody.displayName = 'TableBody';
-TableFooter.displayName = 'TableFooter';
-TableHead.displayName = 'TableHead';
-TableRow.displayName = 'TableRow';
-TableData.displayName = 'TableData';
-TableCaption.displayName = 'TableCaption';
+Table.displayName = "Table";
+TableHeader.displayName = "TableHeader";
+TableBody.displayName = "TableBody";
+TableFooter.displayName = "TableFooter";
+TableHead.displayName = "TableHead";
+TableRow.displayName = "TableRow";
+TableData.displayName = "TableData";
+TableCaption.displayName = "TableCaption";
 
 export {
   Table,

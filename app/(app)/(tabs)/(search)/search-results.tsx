@@ -16,9 +16,11 @@ import { useForm } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchResultsScreen() {
+  const { t } = useTranslation();
   const { query } = useLocalSearchParams<{ query: string }>();
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | "songs" | null
@@ -83,7 +85,7 @@ export default function SearchResultsScreen() {
               <Input className="flex-1 border-0">
                 <InputField
                   className="text-white text-xl"
-                  placeholder="What do you want to listen to ?"
+                  placeholder={t("app.search.inputPlaceholder")}
                   placeholderTextColor={themeConfig.theme.colors.primary[50]}
                   type="text"
                   value={field.state.value}
@@ -107,7 +109,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              Albums
+              {t("app.shared.album_other")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>
@@ -118,7 +120,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              Artists
+              {t("app.shared.artist_other")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>
@@ -129,7 +131,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              Songs
+              {t("app.shared.song_other")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>

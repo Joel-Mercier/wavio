@@ -1,3 +1,4 @@
+import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
 import { Box } from "@/components/ui/box";
@@ -66,7 +67,9 @@ import {
   User,
   X,
 } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
 import { AudioPro, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -89,6 +92,7 @@ export default function TrackListItem({
   onPlayCallback,
   showCoverArt = true,
 }: TrackListItemProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
   const route = useRoute();
@@ -130,8 +134,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Track successfully added to favorites
+                  {t("app.tracks.favoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -144,8 +149,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while adding track to favorites
+                  {t("app.tracks.favoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -165,8 +171,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Track successfully removed from favorites
+                  {t("app.tracks.unfavoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -178,8 +185,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while removing the track from favorites
+                  {t("app.tracks.unfavoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -203,7 +211,10 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastDescription>Track successfully shared</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.shareSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -215,8 +226,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while sharing the track
+                  {t("app.tracks.shareErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -284,8 +296,10 @@ export default function TrackListItem({
           duration: 3000,
           render: () => (
             <Toast action="success">
-              <ToastTitle>Success</ToastTitle>
-              <ToastDescription>Track successfully downloaded</ToastDescription>
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.tracks.downloadSuccessMessage")}
+              </ToastDescription>
             </Toast>
           ),
         });
@@ -296,9 +310,9 @@ export default function TrackListItem({
         duration: 3000,
         render: () => (
           <Toast action="error">
-            <ToastTitle>Error</ToastTitle>
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              An error occurred while downloading the track
+              {t("app.tracks.downloadErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -323,9 +337,10 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-
-                <ToastDescription>Rating successfully set</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.rateSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -337,9 +352,9 @@ export default function TrackListItem({
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while setting the rating
+                  {t("app.tracks.rateErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -370,8 +385,10 @@ export default function TrackListItem({
           duration: 3000,
           render: () => (
             <Toast action="success">
-              <ToastTitle>Success</ToastTitle>
-              <ToastDescription>Share url copied to clipboard</ToastDescription>
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.shared.shareUrlCopiedMessage")}
+              </ToastDescription>
             </Toast>
           ),
         });
@@ -383,13 +400,27 @@ export default function TrackListItem({
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastTitle>Error</ToastTitle>
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              An error occurred while copying the share url to the clipboard
+              {t("app.shared.shareUrlErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
       });
+    }
+  };
+
+  const handleMusicBrainzPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (
+      track?.musicBrainzId &&
+      (await Linking.canOpenURL(
+        `https://musicbrainz.org/recording/${track?.musicBrainzId}`,
+      ))
+    ) {
+      Linking.openURL(
+        `https://musicbrainz.org/recording/${track?.musicBrainzId}`,
+      );
     }
   };
 
@@ -556,7 +587,7 @@ export default function TrackListItem({
                         color={themeConfig.theme.colors.gray[200]}
                       />
                       <Text className="ml-4 text-lg text-gray-200">
-                        Add to favorites
+                        {t("app.tracks.addToFavorites")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
@@ -569,8 +600,8 @@ export default function TrackListItem({
                     />
                     <Text className="ml-4 text-lg text-gray-200">
                       {route.name === "playlists/[id]/index"
-                        ? "Add to another playlist"
-                        : "Add to playlist"}
+                        ? t("app.tracks.addToAnotherPlaylist")
+                        : t("app.tracks.addToPlaylist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -582,7 +613,7 @@ export default function TrackListItem({
                         color={themeConfig.theme.colors.gray[200]}
                       />
                       <Text className="ml-4 text-lg text-gray-200">
-                        Remove from playlist
+                        {t("app.tracks.removeFromPlaylist")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
@@ -594,7 +625,7 @@ export default function TrackListItem({
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Go to artist
+                      {t("app.tracks.goToArtist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -605,7 +636,7 @@ export default function TrackListItem({
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Add to queue
+                      {t("app.tracks.addToQueue")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -615,7 +646,9 @@ export default function TrackListItem({
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />
-                    <Text className="ml-4 text-lg text-gray-200">Rate</Text>
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.rate")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSharePress}>
@@ -624,7 +657,9 @@ export default function TrackListItem({
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />
-                    <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.share")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleInfoPress}>
@@ -633,7 +668,9 @@ export default function TrackListItem({
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />
-                    <Text className="ml-4 text-lg text-gray-200">Get info</Text>
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.getInfo")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleDownloadPress}>
@@ -642,9 +679,25 @@ export default function TrackListItem({
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />
-                    <Text className="ml-4 text-lg text-gray-200">Download</Text>
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.download")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {track?.musicBrainzId && (
+                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                    <HStack className="items-center">
+                      <MusicBrainz
+                        width={24}
+                        height={24}
+                        fill={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.musicBrainz")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
               </VStack>
             </Box>
           </BottomSheetView>
@@ -660,7 +713,9 @@ export default function TrackListItem({
             style={{ marginBottom: insets.bottom, marginTop: insets.top }}
           >
             <ModalHeader>
-              <Heading className="text-white">Rate track</Heading>
+              <Heading className="text-white">
+                {t("app.tracks.rateModalTitle")}
+              </Heading>
               <ModalCloseButton>
                 <Icon as={X} size="md" className="color-white" />
               </ModalCloseButton>
@@ -684,7 +739,9 @@ export default function TrackListItem({
             style={{ marginBottom: insets.bottom, marginTop: insets.top }}
           >
             <ModalHeader>
-              <Heading className="text-white">Track info</Heading>
+              <Heading className="text-white">
+                {t("app.tracks.trackInfoModalTitle")}
+              </Heading>
               <ModalCloseButton>
                 <Icon as={X} size="md" className="color-white" />
               </ModalCloseButton>
@@ -692,47 +749,67 @@ export default function TrackListItem({
             <ModalBody className="mb-0 pb-0">
               <VStack className="gap-y-2">
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Title</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.title")}
+                  </Text>
                   <Text className="text-white">{track.title}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Path</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.path")}
+                  </Text>
                   <Text className="text-white">{track.path}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Album artist</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.artist")}
+                  </Text>
                   <Text className="text-white">{track.artist}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Artists</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.artists")}
+                  </Text>
                   <Text className="text-white">
                     {track.artists?.map((artist) => artist.name).join(", ")}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Album</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.album")}
+                  </Text>
                   <Text className="text-white">{track.album}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Disc</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.discNumber")}
+                  </Text>
                   <Text className="text-white">{track.discNumber}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Track</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.track")}
+                  </Text>
                   <Text className="text-white">{track.track}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Release year</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.year")}
+                  </Text>
                   <Text className="text-white">{track.year}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Genres</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.genres")}
+                  </Text>
                   <Text className="text-white">
                     {track.genres?.map((genre) => genre.name)?.join(", ")}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Duration</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.duration")}
+                  </Text>
                   <Text className="text-white">
                     {track.duration
                       ? `${secondsToMinutes(track?.duration)}:${track?.duration % 60}`
@@ -740,25 +817,35 @@ export default function TrackListItem({
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Codec</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.codec")}
+                  </Text>
                   <Text className="text-white">{track.suffix}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Bitrate</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.bitRate")}
+                  </Text>
                   <Text className="text-white">{track.bitRate}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Channels</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.channelCount")}
+                  </Text>
                   <Text className="text-white">{track.channelCount}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Size</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.size")}
+                  </Text>
                   <Text className="text-white">
                     {niceBytes(track.size || 0)}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Favorite</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.favorite")}
+                  </Text>
                   <Text className="text-white">
                     {track.starred ? (
                       <Check color={themeConfig.theme.colors.white} size={14} />
@@ -768,11 +855,15 @@ export default function TrackListItem({
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Play count</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.playCount")}
+                  </Text>
                   <Text className="text-white">{track.playCount}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Last played</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.lastPlayed")}
+                  </Text>
                   <Text className="text-white">
                     {track.played
                       ? `${formatDistanceToNow(new Date(track.played))} ago`
@@ -780,17 +871,23 @@ export default function TrackListItem({
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Modified</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.modified")}
+                  </Text>
                   <Text className="text-white">{track.genre}</Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Album peak</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.albumPeak")}
+                  </Text>
                   <Text className="text-white">
                     {track.replayGain?.albumPeak}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
-                  <Text className="text-primary-100 text-sm">Track peak</Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.trackPeak")}
+                  </Text>
                   <Text className="text-white">
                     {track.replayGain?.trackPeak}
                   </Text>

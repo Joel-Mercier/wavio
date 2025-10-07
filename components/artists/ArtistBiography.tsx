@@ -8,10 +8,12 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ArtistBiography() {
+  const { t } = useTranslation();
   const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
     name: string;
     biography: string;
@@ -64,14 +66,18 @@ export default function ArtistBiography() {
           className="flex flex-row items-center my-6"
         >
           <MusicBrainz width={24} height={24} fill="white" />
-          <Text className="text-white ml-4 text-lg">Open in MusicBrainz</Text>
+          <Text className="text-white ml-4 text-lg">
+            {t("app.artists.musicBrainz")}
+          </Text>
         </FadeOutScaleDown>
         <FadeOutScaleDown
           onPress={handleLastFMPress}
           className="flex flex-row items-center"
         >
           <LastFM width={24} height={24} fill="white" />
-          <Text className="text-white ml-4 text-lg">Open in Last.fm</Text>
+          <Text className="text-white ml-4 text-lg">
+            {t("app.artists.lastFM")}
+          </Text>
         </FadeOutScaleDown>
       </ScrollView>
     </Box>

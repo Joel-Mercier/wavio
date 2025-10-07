@@ -1,4 +1,6 @@
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import openSubsonicApiInstance, {
+  type OpenSubsonicResponse,
+} from "@/services/openSubsonic/index";
 import type { ScanStatus } from "@/services/openSubsonic/types";
 import axios from "axios";
 

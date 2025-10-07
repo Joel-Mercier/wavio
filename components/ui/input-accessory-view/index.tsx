@@ -1,2 +1,2 @@
-'use client';
-export { InputAccessoryView } from 'react-native';
+"use client";
+export { InputAccessoryView } from "react-native";

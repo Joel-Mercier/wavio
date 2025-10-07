@@ -1,5 +1,5 @@
 import AddBottomSheet from "@/components/AddBottomSheet";
-import HomeDrawer from "@/components/home/HomeDrawer";
+import DrawerMenu from "@/components/DrawerMenu";
 import { Pressable } from "@/components/ui/pressable";
 import { themeConfig } from "@/config/theme";
 import useApp from "@/stores/app";
@@ -7,8 +7,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { Home, Library, Plus, Search } from "lucide-react-native";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const showDrawer = useApp.use.showDrawer();
   const setShowDrawer = useApp.use.setShowDrawer();
   const showAddTab = useApp.use.showAddTab();
@@ -58,7 +60,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="(home)"
           options={{
-            title: "Home",
+            title: t("app.home.tabTitle"),
             tabBarIcon: ({ focused, color }) => (
               <Home color={color} size={24} />
             ),
@@ -76,7 +78,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="(search)"
           options={{
-            title: "Search",
+            title: t("app.search.title"),
             tabBarIcon: ({ focused, color }) => (
               <Search color={color} size={24} />
             ),
@@ -94,7 +96,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="(library)"
           options={{
-            title: "Library",
+            title: t("app.library.title"),
             tabBarIcon: ({ focused, color }) => (
               <Library color={color} size={24} />
             ),
@@ -114,7 +116,7 @@ export default function TabLayout() {
           options={{
             // @ts-ignore
             href: showAddTab ? "" : null,
-            title: "Create",
+            title: t("app.create.title"),
             tabBarIcon: ({ color }) => <Plus size={24} color={color} />,
           }}
           listeners={{
@@ -125,7 +127,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <HomeDrawer onClose={handleClose} showDrawer={showDrawer} />
+      <DrawerMenu onClose={handleClose} showDrawer={showDrawer} />
       <AddBottomSheet
         isOpen={showAddSheet}
         onClose={() => setShowAddSheet(false)}

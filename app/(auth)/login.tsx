@@ -25,16 +25,23 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const toast = useToast();
   const servers = useServers.use.servers();
   const addServer = useServers.use.addServer();
@@ -66,7 +73,10 @@ export default function LoginScreen() {
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastDescription>Successfully signed in</ToastDescription>
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("auth.login.loginSuccessMessage")}
+            </ToastDescription>
           </Toast>
         ),
       });
@@ -81,7 +91,10 @@ export default function LoginScreen() {
       duration: 3000,
       render: () => (
         <Toast action="success">
-          <ToastDescription>Successfully signed in</ToastDescription>
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("auth.login.loginSuccessMessage")}
+          </ToastDescription>
         </Toast>
       ),
     });
@@ -95,7 +108,7 @@ export default function LoginScreen() {
             <Logo width={64} height={64} />
           </Center>
           <Heading size="2xl" className="text-white font-bold">
-            Sign in
+            {t("auth.login.title")}
           </Heading>
           {servers && servers.length > 0 && (
             <Box className="mt-6">
@@ -106,7 +119,7 @@ export default function LoginScreen() {
                   className="justify-between bg-primary-600 border-0 rounded-full"
                 >
                   <SelectInput
-                    placeholder="Select server"
+                    placeholder={t("auth.login.serverPlaceholder")}
                     className="text-md"
                   />
                   <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -166,7 +179,7 @@ export default function LoginScreen() {
                 </SelectPortal>
               </Select>
               <Text className="text-primary-100 text-center my-4">
-                Or enter your server details
+                {t("auth.login.choice")}
               </Text>
             </Box>
           )}
@@ -195,7 +208,7 @@ export default function LoginScreen() {
                         "border-red-500": !field.state.meta.isValid,
                       },
                     )}
-                    placeholder="Enter server url"
+                    placeholder={t("auth.login.urlPlaceholder")}
                     keyboardType="url"
                     autoCapitalize="none"
                   />
@@ -241,7 +254,7 @@ export default function LoginScreen() {
                         "border-red-500": !field.state.meta.isValid,
                       },
                     )}
-                    placeholder="Enter server username"
+                    placeholder={t("auth.login.usernamePlaceholder")}
                     autoCapitalize="none"
                     textContentType="username"
                   />
@@ -287,7 +300,7 @@ export default function LoginScreen() {
                         "border-red-500": !field.state.meta.isValid,
                       },
                     )}
-                    placeholder="Enter user password"
+                    placeholder={t("auth.login.passwordPlaceholder")}
                     secureTextEntry
                     autoCapitalize="none"
                     textContentType="password"
@@ -315,7 +328,9 @@ export default function LoginScreen() {
             }}
             className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 mt-4"
           >
-            <Text className="text-primary-800 font-bold text-lg">Login</Text>
+            <Text className="text-primary-800 font-bold text-lg">
+              {t("auth.login.login")}
+            </Text>
           </FadeOutScaleDown>
         </Box>
       </KeyboardAvoidingView>

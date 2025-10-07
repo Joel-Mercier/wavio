@@ -20,6 +20,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Play, Shuffle } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -33,6 +34,7 @@ const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function FavoritesScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -76,7 +78,7 @@ export default function FavoritesScreen() {
               </Box>
             </FadeOutScaleDown>
             <Heading className="text-white font-bold" size="lg">
-              Favorites
+              {t("app.favorites.title")}
             </Heading>
             <Box className="w-10" />
           </HStack>
@@ -121,7 +123,7 @@ export default function FavoritesScreen() {
                     className="text-white mb-12"
                     size="xl"
                   >
-                    Favorite tracks
+                    {t("app.favorites.favorite_tracks")}
                   </Heading>
                 </VStack>
               </Box>
@@ -130,7 +132,9 @@ export default function FavoritesScreen() {
               <HStack className="items-center justify-between">
                 <HStack className="items-center gap-x-4">
                   <Text className="text-primary-100" numberOfLines={1}>
-                    {data?.starred2.song?.length || 0} songs
+                    {t("app.shared.songCount", {
+                      count: data?.starred2.song?.length || 0,
+                    })}
                   </Text>
                 </HStack>
                 <HStack className="items-center gap-x-4">

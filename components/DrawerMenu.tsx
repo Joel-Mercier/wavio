@@ -25,14 +25,16 @@ import {
   Settings,
   Share2,
 } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-interface HomeDrawerProps {
+interface DrawerMenuProps {
   showDrawer: boolean;
   onClose: () => void;
 }
 
-export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
+export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
+  const { t } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
   const router = useRouter();
   const logout = useAuth.use.logout();
@@ -105,7 +107,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
               >
                 <Settings size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
-                  Settings
+                  {t("app.shared.sidebar.settings")}
                 </Heading>
               </Pressable>
               <Pressable
@@ -114,7 +116,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
               >
                 <Share2 size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
-                  Shares
+                  {t("app.shared.sidebar.shares")}
                 </Heading>
               </Pressable>
               <Pressable
@@ -123,7 +125,7 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
               >
                 <Server size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
-                  Servers
+                  {t("app.shared.sidebar.servers")}
                 </Heading>
               </Pressable>
               <Pressable
@@ -132,14 +134,14 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
               >
                 <LogOut size={24} color={themeConfig.theme.colors.red[500]} />
                 <Heading size="lg" className="text-red-500 font-normal">
-                  Logout
+                  {t("app.shared.sidebar.logout")}
                 </Heading>
               </Pressable>
             </VStack>
             {currentServer && (
               <VStack className="my-6">
                 <Text className="text-primary-100 text-center mb-2">
-                  Current server
+                  {t("app.shared.sidebar.currentServer")}
                 </Text>
                 <FadeOutScaleDown
                   onPress={handleCurrentServerPress}
@@ -168,7 +170,9 @@ export default function HomeDrawer({ showDrawer, onClose }: HomeDrawerProps) {
             )}
             <Center className="mt-4">
               <Text className="text-primary-100">
-                version {Application.nativeApplicationVersion}
+                {t("app.shared.sidebar.version", {
+                  version: Application.nativeApplicationVersion,
+                })}
               </Text>
             </Center>
           </VStack>

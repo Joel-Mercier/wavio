@@ -1,8 +1,14 @@
-import openSubsonicApiInstance, { type OpenSubsonicResponse } from "@/services/openSubsonic/index";
+import openSubsonicApiInstance, {
+  type OpenSubsonicResponse,
+} from "@/services/openSubsonic/index";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 import axios from "axios";
 
-export const createInternetRadioStation = async (streamUrl: string, name: string, homePageUrl?: string) => {
+export const createInternetRadioStation = async (
+  streamUrl: string,
+  name: string,
+  homePageUrl?: string,
+) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ radioStation: InternetRadioStation }>
@@ -11,7 +17,7 @@ export const createInternetRadioStation = async (streamUrl: string, name: string
         streamUrl,
         name,
         homepageUrl: homePageUrl,
-      }
+      },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error;
@@ -28,7 +34,9 @@ export const createInternetRadioStation = async (streamUrl: string, name: string
 export const getInternetRadioStations = async () => {
   try {
     const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ internetRadioStations: { internetRadioStation: InternetRadioStation[] } }>
+      OpenSubsonicResponse<{
+        internetRadioStations: { internetRadioStation: InternetRadioStation[] };
+      }>
     >("/rest/getInternetRadioStations", {
       params: {},
     });
@@ -65,7 +73,14 @@ export const deleteInternetRadioStation = async (id: string) => {
   }
 };
 
-export const updateInternetRadioStation = async (id: string, { streamUrl, name, homePageUrl }: { streamUrl: string, name: string, homePageUrl?: string }) => {
+export const updateInternetRadioStation = async (
+  id: string,
+  {
+    streamUrl,
+    name,
+    homePageUrl,
+  }: { streamUrl: string; name: string; homePageUrl?: string },
+) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>

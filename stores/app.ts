@@ -35,7 +35,9 @@ export const useAppBase = create<AppStore>()(
       storage: createJSONStorage(() => zustandStorage),
       partialize: (state) =>
         Object.fromEntries(
-          Object.entries(state).filter(([key]) => !['showDrawer'].includes(key)),
+          Object.entries(state).filter(
+            ([key]) => !["showDrawer"].includes(key),
+          ),
         ),
     },
   ),

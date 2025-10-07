@@ -4,6 +4,8 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
+import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -19,6 +21,7 @@ import {
   ModalContent,
   ModalHeader,
 } from "@/components/ui/modal";
+import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -28,7 +31,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useAlbum } from "@/hooks/openSubsonic/useBrowsing";
+import { useAlbum, useArtist } from "@/hooks/openSubsonic/useBrowsing";
 import {
   useSetRating,
   useStar,
@@ -70,6 +73,7 @@ import {
   X,
 } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Animated, {
   Extrapolation,
@@ -82,8 +86,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function AlbumDetail() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -102,6 +108,11 @@ export default function AlbumDetail() {
   const doSetRating = useSetRating();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
+  const {
+    data: discoverMoreData,
+    isLoading: discoverMoreIsLoading,
+    error: discoverMoreError,
+  } = useArtist(data?.album?.artistId);
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
   const insets = useSafeAreaInsets();
@@ -115,6 +126,20 @@ export default function AlbumDetail() {
         [0, 1],
         Extrapolation.CLAMP,
       ),
+    };
+  });
+  const artworkStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          scale: interpolate(
+            offsetY.value,
+            [0, 220],
+            [1, 0.5],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
   const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -147,9 +172,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Album successfully added to favorites
+                  {t("app.albums.favoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -168,9 +193,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while adding album to favorites
+                  {t("app.albums.favoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -198,10 +223,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Album successfully removed from favorites
+                  {t("app.albums.unfavoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -220,10 +244,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while removing the album from favorites
+                  {t("app.albums.unfavoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -248,9 +271,10 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-
-                <ToastDescription>Album successfully shared</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.albums.shareSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -261,9 +285,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while sharing the album
+                  {t("app.albums.shareErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -342,8 +366,10 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-                <ToastDescription>Rating successfully set</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.shared.rateSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -355,9 +381,9 @@ export default function AlbumDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while setting the rating
+                  {t("app.shared.rateErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -388,8 +414,10 @@ export default function AlbumDetail() {
           duration: 3000,
           render: () => (
             <Toast action="success">
-              <ToastTitle>Success</ToastTitle>
-              <ToastDescription>Share url copied to clipboard</ToastDescription>
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.shared.shareUrlCopiedMessage")}
+              </ToastDescription>
             </Toast>
           ),
         });
@@ -401,9 +429,9 @@ export default function AlbumDetail() {
         duration: 3000,
         render: () => (
           <Toast action="error">
-            <ToastTitle>Error</ToastTitle>
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              An error occurred while copying the share url to the clipboard
+              {t("app.shared.shareUrlErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -490,7 +518,8 @@ export default function AlbumDetail() {
                   <Disc3 size={48} color={themeConfig.theme.colors.white} />
                 </Box>
               ) : (
-                <Image
+                <AnimatedImage
+                  style={artworkStyle}
                   source={{
                     uri: artworkUrl(data?.album?.coverArt),
                   }}
@@ -598,8 +627,7 @@ export default function AlbumDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
-              {(data?.album?.songCount || "0 ") +
-                ((data?.album?.songCount || 0) > 1 ? " songs" : "song")}{" "}
+              {`${t("app.shared.songCount", { count: data?.album?.songCount })} `}{" "}
               ⦁ {Math.round((data?.album?.duration || 0) / 60)} min
             </Text>
             {data?.album?.recordLabels?.map((recordLabel) => (
@@ -607,6 +635,60 @@ export default function AlbumDetail() {
                 © {recordLabel.name}
               </Text>
             ))}
+            {discoverMoreData?.artist?.album && (
+              <VStack>
+                <HStack className="mt-6 mb-4 items-center justify-between">
+                  <Heading numberOfLines={1} size="xl" className="text-white">
+                    {t("app.albums.moreFromArtist", {
+                      artist: discoverMoreData?.artist?.name,
+                    })}
+                  </Heading>
+                  <FadeOutScaleDown
+                    href={`/artists/${discoverMoreData?.artist?.id}/discography`}
+                  >
+                    <Text numberOfLines={1} className="text-gray-200">
+                      See all
+                    </Text>
+                  </FadeOutScaleDown>
+                </HStack>
+                {discoverMoreError ? (
+                  <ErrorDisplay error={discoverMoreError} />
+                ) : (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerClassName="mb-6"
+                  >
+                    {discoverMoreIsLoading ? (
+                      loadingData(4).map((_, index) => (
+                        <AlbumListItemSkeleton
+                          key={`discover-more-${index}`}
+                          index={index}
+                          layout="horizontal"
+                        />
+                      ))
+                    ) : (
+                      <>
+                        {discoverMoreData?.artist?.album
+                          ?.filter((album) => album.id !== data?.album?.id)
+                          ?.slice(0, 4)
+                          .map((album, index) => (
+                            <AlbumListItem
+                              key={album.id}
+                              album={album}
+                              index={index}
+                              layout="horizontal"
+                            />
+                          ))}
+                      </>
+                    )}
+                  </ScrollView>
+                )}
+                {!discoverMoreIsLoading &&
+                  !discoverMoreError &&
+                  !discoverMoreData?.artist?.album?.length && <EmptyDisplay />}
+              </VStack>
+            )}
           </VStack>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
@@ -709,7 +791,7 @@ export default function AlbumDetail() {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Add to playlist
+                    {t("app.albums.addToPlaylist")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -717,7 +799,7 @@ export default function AlbumDetail() {
                 <HStack className="items-center">
                   <User size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Go to artist
+                    {t("app.albums.goToArtist")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -728,14 +810,16 @@ export default function AlbumDetail() {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Add to queue
+                    {t("app.albums.addToQueue")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleRatingPress}>
                 <HStack className="items-center">
                   <Star size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">Rate</Text>
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.rate")}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleSharePress}>
@@ -744,7 +828,9 @@ export default function AlbumDetail() {
                     size={24}
                     color={themeConfig.theme.colors.gray[200]}
                   />
-                  <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.share")}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               {data?.album?.musicBrainzId && (
@@ -756,7 +842,7 @@ export default function AlbumDetail() {
                       fill={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Open in MusicBrainz
+                      {t("app.albums.musicBrainz")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -770,7 +856,7 @@ export default function AlbumDetail() {
                       fill={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Open in Last.fm
+                      {t("app.albums.lastFM")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -790,7 +876,9 @@ export default function AlbumDetail() {
           style={{ marginBottom: insets.bottom, marginTop: insets.top }}
         >
           <ModalHeader>
-            <Heading className="text-white">Rate album</Heading>
+            <Heading className="text-white">
+              {t("app.albums.rateModalTitle")}
+            </Heading>
             <ModalCloseButton>
               <Icon as={X} size="md" className="color-white" />
             </ModalCloseButton>

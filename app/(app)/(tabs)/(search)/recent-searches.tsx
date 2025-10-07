@@ -20,9 +20,11 @@ import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RecentSearchesScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -94,7 +96,7 @@ export default function RecentSearchesScreen() {
                 <InputField
                   autoFocus
                   className="text-white text-xl"
-                  placeholder="What do you want to listen to ?"
+                  placeholder={t("app.search.inputPlaceholder")}
                   placeholderTextColor={themeConfig.theme.colors.primary[50]}
                   type="text"
                   value={field.state.value}
@@ -144,7 +146,7 @@ export default function RecentSearchesScreen() {
           <>
             {query.length === 0 && (
               <Heading className="text-white ml-6 my-6">
-                Recent searches
+                {t("app.search.recentSearches")}
               </Heading>
             )}
           </>
@@ -160,7 +162,9 @@ export default function RecentSearchesScreen() {
                     className="rounded-full border-white"
                     onPress={handleClearAllPress}
                   >
-                    <ButtonText className="text-white">Clear all</ButtonText>
+                    <ButtonText className="text-white">
+                      {t("app.search.clearRecentSearches")}
+                    </ButtonText>
                   </Button>
                 </FadeOutScaleDown>
               </Center>

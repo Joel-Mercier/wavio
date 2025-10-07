@@ -1,5 +1,330 @@
+import { fa } from "zod/v4/locales";
+
 export default {
   translation: {
-
-  }
-}
+    app: {
+      home: {
+        tabTitle: "Home",
+        title: "Hi {{username}}",
+        recentlyPlayed: "Recently played",
+        recentlyAdded: "Recently added",
+        mostPlayed: "Most played",
+        topRated: "Top rated",
+        internetRadioStations: "Internet radio stations",
+      },
+      search: {
+        title: "Search",
+        inputPlaceholder: "What do you want to listen to ?",
+        exploreGenres: "Explore genres",
+        recentSearches: "Recent searches",
+        clearRecentSearches: "Clear all",
+      },
+      library: {
+        title: "Library",
+        searchPlaceholder: "Search your library",
+        recentSort: "Recent",
+        alphabeticalSort: "Alphabetical",
+      },
+      create: {
+        title: "Create",
+        playlistTitle: "Playlist",
+        playlistDescription: "Create a playlist with songs",
+        internetRadioStationTitle: "Internet radio station",
+        internetRadioStationDescription:
+          "Create an internet radio station you can stream from the app",
+      },
+      albums: {
+        addToPlaylist: "Add to playlist",
+        addToQueue: "Add to queue",
+        goToArtist: "Go to artist",
+        rate: "Rate",
+        share: "Share",
+        musicBrainz: "Open in MusicBrainz",
+        lastFM: "Open in Last.fm",
+        moreFromArtist: "More from {{artist}}",
+        favoriteSuccessMessage: "Album successfully added to favorites",
+        favoriteErrorMessage:
+          "An error occurred while adding album to favorites",
+        unfavoriteSuccessMessage: "Album successfully removed from favorites",
+        unfavoriteErrorMessage:
+          "An error occurred while removing the album from favorites",
+        shareSuccessMessage: "Album successfully shared",
+        shareErrorMessage: "An error occurred while sharing the album",
+        rateModalTitle: "Rate album",
+      },
+      artists: {
+        topSongs: "Top songs",
+        discography: "Discography",
+        about: "About",
+        rate: "Rate",
+        musicBrainz: "Open in MusicBrainz",
+        lastFM: "Open in Last.fm",
+        rateModalTitle: "Rate artist",
+        albumCount_one: "{{count}} album",
+        albumCount_other: "{{count}} albums",
+        favoriteSuccessMessage: "Artist successfully added to favorites",
+        favoriteErrorMessage:
+          "An error occurred while adding artist to favorites",
+        unfavoriteSuccessMessage: "Artist successfully removed from favorites",
+        unfavoriteErrorMessage:
+          "An error occurred while removing the artist from favorites",
+      },
+      favorites: {
+        title: "Favorites",
+        favorite_tracks: "Favorite tracks",
+      },
+      playlists: {
+        edit: "Edit this playlist",
+        delete: "Delete this playlist",
+        share: "Share",
+        deletePlaylistConfirmTitle:
+          "Are you sure you want to delete this playlist?",
+        deletePlaylistConfirmDescription:
+          "Deleting this playlist will remove it permanently and cannot be undone. Please confirm if you want to proceed.",
+        deletePlaylistSuccessMessage: "Playlist successfully deleted",
+        deletePlaylistErrorMessage:
+          "An error occurred while deleting the playlist",
+        sharePlaylistSuccessMessage: "Playlist successfully shared",
+        sharePlaylistErrorMessage:
+          "An error occurred while sharing the playlist",
+        removeTrackSuccessMessage: "Track successfully removed from playlist",
+        removeTrackErrorMessage:
+          "An error occurred while removing the track from the playlist",
+        empty: "This playlist is empty",
+        emptyAction: "Find songs to add to this playlist",
+      },
+      newPlaylist: {
+        title: "Give a name to your playlist",
+        newPlaylistSuccessMessage: "Playlist successfully created",
+        newPlaylistErrorMessage:
+          "An error occurred while creating the playlist",
+        namePlaceholder: "My awesome playlist",
+      },
+      editPlaylist: {
+        title: "Edit playlist",
+        namePlaceholder: "Enter playlist name",
+        descriptionPlaceholder: "Enter playlist description",
+      },
+      settings: {
+        title: "Settings",
+        musicLibrarySettings: {
+          title: "Music library settings",
+          scanMusicLibraryLabel: "Scan music library",
+          scanMusicLibraryDescription:
+            "Intitiates a rescan of the media libraries on your server",
+          scanMusicLibraryAction: "Scan",
+          scanMusicLibrarySuccessDescription: "Scan started successfully",
+          scanMusicLibraryErrorDescription:
+            "An error occurred while starting a scan",
+          scanStatusLabel: "Scan status",
+          scanStatusDescription:
+            "Indicates the scan status of your music library",
+          scanStatusLastScan: "Last scan: {{lastScan}} ago",
+          scanStatuses: {
+            idle: "Idle",
+            scanning: "Scanning",
+          },
+        },
+        displaySettings: {
+          title: "Display settings",
+          languageLabel: "Language",
+          languageDescription: "Set your default language for the Wavio app",
+          createTabLabel: "Create tab",
+          createTabDescription: "Show the 'create' tab in the bottom tab bar",
+        },
+        contentSettings: {
+          title: "Content settings",
+          recentSearchesLabel: "Recent searches",
+          recentSearchesDescription: "Delete your recent searches",
+          recentSearchesConfirmTitle:
+            "Are you sure you want to delete your stored recent searches?",
+          recentSearchesConfirmDescription:
+            "Deleting these is irreversible. Please confirm if you want to proceed.",
+          recentPlaysLabel: "Recent plays",
+          recentPlaysDescription:
+            "Delete your recent plays shortcuts on the top of the home screen",
+          recentPlaysConfirmTitle:
+            "Are you sure you want to delete your stored recent play shortcuts?",
+          recentPlaysConfirmDescription:
+            "Deleting these is irreversible. Please confirm if you want to proceed.",
+        },
+      },
+      internetRadioStations: {
+        newTitle: "Give a name to your internet radio station",
+        namePlaceholder: "Radio station name",
+        streamUrlPlaceholder: "Stream URL",
+        homePageUrlPlaceholder: "Homepage URL",
+        edit: "Edit internet radio station",
+        delete: "Delete internet radio station",
+        newSuccessMessage: "Internet radio station successfully created",
+        newErrorMessage:
+          "An error occurred while creating the internet radio station",
+        visitHomePage: "Visit homepage",
+        editInternetRadioStation: "Edit internet radio station",
+        deleteInternetRadioStation: "Delete internet radio station",
+        deleteInternetRadioStationSuccessMessage:
+          "Internet radio station successfully deleted",
+        deleteInternetRadioStationErrorMessage:
+          "An error occurred while deleting the internet radio station.",
+        deleteInternetRadioStationConfirmTitle:
+          "Are you sure you want to delete this interne radio station?",
+        deleteInternetRadioStationConfirmDescription:
+          "Deleting the internet radio station will remove it permanently. Please confirm if you want to proceed.",
+        editInternetRadioStationModalTitle: "Edit internet radio station",
+        editInternetRadioStationSuccessMessage:
+          "Internet radio station has been successfully updated.",
+        editInternetRadioStationErrorMessage:
+          "An error occurred while updating the internet radio station.",
+      },
+      tracks: {
+        addToFavorites: "Add to favorites",
+        addToPlaylist: "Add to playlist",
+        addToAnotherPlaylist: "Add to another playlist",
+        removeFromPlaylist: "Remove from playlist",
+        addToQueue: "Add to queue",
+        goToArtist: "Go to artist",
+        rate: "Rate",
+        share: "Share",
+        getInfo: "Get info",
+        download: "Download",
+        musicBrainz: "Open in MusicBrainz",
+        trackInfoModalTitle: "Track info",
+        rateModalTitle: "Rate track",
+        favoriteSuccessMessage: "Track successfully added to favorites",
+        favoriteErrorMessage:
+          "An error occurred while adding track to favorites",
+        unfavoriteSuccessMessage: "Track successfully removed from favorites",
+        unfavoriteErrorMessage:
+          "An error occurred while removing the track from favorites",
+        shareSuccessMessage: "Track successfully shared",
+        shareErrorMessage: "An error occurred while sharing the track",
+        downloadSuccessMessage: "Track successfully downloaded",
+        downloadErrorMessage: "An error occurred while downloading the track",
+        rateSuccessMessage: "Rating successfully set",
+        rateErrorMessage: "An error occurred while setting the rating",
+        infoModal: {
+          title: "Title",
+          path: "Path",
+          artist: "Album artist",
+          artists: "Artists",
+          album: "Album",
+          discNumber: "Disc number",
+          track: "Track number",
+          year: "Release year",
+          genres: "Genres",
+          duration: "Duration",
+          codec: "Codec",
+          bitRate: "Bitrate",
+          channelCount: "Channels",
+          size: "Size",
+          favorite: "Favorite",
+          playCount: "Play count",
+          lastPlayed: "Last played",
+          modified: "Modified",
+          albumPeak: "Album peak",
+          trackPeak: "Track peak",
+        },
+      },
+      player: {
+        title: "Playing now",
+        addToPlaylist: "Add to playlist",
+        addToQueue: "Add to queue",
+        goToArtist: "Go to artist",
+        rate: "Rate",
+        share: "Share",
+        download: "Download",
+      },
+      shares: {
+        title: "Shares",
+        visitCount_one: "{{count}} visit",
+        visitCount_other: "{{count}} visits",
+        editShare: "Edit share",
+        deleteShare: "Delete share",
+        editShareSuccessMessage: "Share successfully updated",
+        editShareErrorMessage: "An error occurred while updating the share",
+        deleteShareSuccessMessage: "Share successfully deleted",
+        deleteShareErrorMessage: "An error occurred while deleting the share",
+        noDescription: "No description",
+        deleteShareConfirmTitle: "Are you sure you want to delete this share?",
+        deleteShareConfirmDescription:
+          "Deleting the share will remove it permanently and will prevent others from accessing the shared sounds. Please confirm if you want to proceed.",
+        editShareModalTitle: "Edit share",
+      },
+      servers: {
+        title: "Servers",
+        addServer: "Add server",
+        namePlaceholder: "Enter server name",
+        urlPlaceholder: "Enter server URL",
+        usernamePlaceholder: "Enter server username",
+        passwordPlaceholder: "Enter server password",
+        editServer: "Edit server",
+        deleteServer: "Delete server",
+        createServerSuccessMessage: "Server successfully added",
+        editServerSuccessMessage: "Server successfully updated",
+        deleteServerConfirmTitle:
+          "Are you sure you want to delete this server?",
+        deleteServerConfirmDescription:
+          "Deleting the server will remove it permanently. Please confirm if you want to proceed.",
+      },
+      shared: {
+        cancel: "Cancel",
+        create: "Create",
+        delete: "Delete",
+        unknown: "Unknown",
+        favorites: "Favorites",
+        album_one: "Album",
+        album_other: "Albums",
+        artist_one: "Artist",
+        artist_other: "Artists",
+        playlist_one: "Playlist",
+        playlist_other: "Playlists",
+        song_one: "Song",
+        song_other: "Songs",
+        save: "Save",
+        seeMore: "See more",
+        noData: "No data",
+        albumCount_one: "{{count}} album",
+        albumCount_other: "{{count}} albums",
+        songCount_one: "{{count}} song",
+        songCount_other: "{{count}} songs",
+        toastSuccessTitle: "Success",
+        toastErrorTitle: "Error",
+        rateSuccessMessage: "Rating successfully set",
+        rateErrorMessage: "An error occurred while setting the rating",
+        shareUrlCopiedMessage: "Share url copied to clipboard",
+        shareUrlErrorMessage:
+          "An error occurred while copying the share url to the clipboard",
+        tabs: {
+          home: "Home",
+          search: "Search",
+          library: "Library",
+          create: "Create",
+        },
+        sidebar: {
+          settings: "Settings",
+          shares: "Shares",
+          servers: "Servers",
+          logout: "Logout",
+          currentServer: "Current server",
+          version: "version {{version}}",
+        },
+        languages: {
+          en: "English",
+          fr: "Français",
+        },
+      },
+    },
+    auth: {
+      login: {
+        title: "Sign in",
+        serverPlaceholder: "Select server",
+        urlPlaceholder: "Enter server URL",
+        usernamePlaceholder: "Enter username",
+        passwordPlaceholder: "Enter user password",
+        choice: "Or enter your server details",
+        login: "Login",
+        loginSuccessMessage: "Successfully signed in",
+      },
+    },
+  },
+};

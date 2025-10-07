@@ -56,6 +56,7 @@ import {
   Trash,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import z from "zod";
 
 const updateShareSchema = z.object({
@@ -64,6 +65,7 @@ const updateShareSchema = z.object({
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
+  const { t } = useTranslation();
   const [clipoardCopyDone, setClipoardCopyDone] = useState<boolean>(false);
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
@@ -97,9 +99,9 @@ export default function ShareListItem({ share }: { share: Share }) {
               duration: 3000,
               render: () => (
                 <Toast action="success">
-                  <ToastTitle>Success</ToastTitle>
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                   <ToastDescription>
-                    Share successfully updated
+                    {t("app.shares.editShareSuccessMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -112,9 +114,9 @@ export default function ShareListItem({ share }: { share: Share }) {
               duration: 3000,
               render: () => (
                 <Toast action="error">
-                  <ToastTitle>Error</ToastTitle>
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                   <ToastDescription>
-                    An error occurred while updating the share
+                    {t("app.shares.editShareErrorMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -144,8 +146,10 @@ export default function ShareListItem({ share }: { share: Share }) {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-                <ToastDescription>Share successfully deleted</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.shares.deleteShareSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -157,10 +161,9 @@ export default function ShareListItem({ share }: { share: Share }) {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while deleting the share
+                  {t("app.shares.deleteShareErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -190,8 +193,10 @@ export default function ShareListItem({ share }: { share: Share }) {
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastTitle>Success</ToastTitle>
-            <ToastDescription>Share url copied to clipboard</ToastDescription>
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.shareUrlCopiedMessage")}
+            </ToastDescription>
           </Toast>
         ),
       });
@@ -202,9 +207,9 @@ export default function ShareListItem({ share }: { share: Share }) {
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastTitle>Error</ToastTitle>
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              An error occurred while copying the share url to the clipboard
+              {t("app.shared.shareUrlErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -254,13 +259,13 @@ export default function ShareListItem({ share }: { share: Share }) {
               <HStack>
                 <Text className="text-md text-primary-100 capitalize">
                   {isPlaylist
-                    ? "Playlist"
+                    ? t("app.shared.playlist_one")
                     : hasEntries && share?.entry
                       ? share.entry[0].mediaType
-                      : "Unknown"}
+                      : t("app.shared.unknown")}
                 </Text>
                 <Text className="text-md text-primary-100">
-                  {` ⦁ ${share.visitCount} ${share.visitCount > 1 ? "visits" : "visit"}`}
+                  {` ⦁ ${t("app.shares.visitCount", { count: share.visitCount })}`}
                 </Text>
               </HStack>
             </VStack>
@@ -325,7 +330,9 @@ export default function ShareListItem({ share }: { share: Share }) {
                     size={24}
                     color={themeConfig.theme.colors.gray[200]}
                   />
-                  <Text className="ml-4 text-lg text-gray-200">Edit share</Text>
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.shares.editShare")}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown
@@ -337,7 +344,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 <HStack className="items-center">
                   <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Delete share
+                    {t("app.shares.deleteShare")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -354,14 +361,12 @@ export default function ShareListItem({ share }: { share: Share }) {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Are you sure you want to delete this share?
+              {t("app.shares.deleteShareConfirmTitle")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              Deleting the share will remove it permanently and will prevent
-              others from accessing the shared sounds. Please confirm if you
-              want to proceed.
+              {t("app.shares.deleteShareConfirmDescription")}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -369,13 +374,17 @@ export default function ShareListItem({ share }: { share: Share }) {
               onPress={handleCloseAlertDialog}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handleDeletePress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -389,7 +398,7 @@ export default function ShareListItem({ share }: { share: Share }) {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Edit share
+              {t("app.shares.editShareModalTitle")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
@@ -489,13 +498,17 @@ export default function ShareListItem({ share }: { share: Share }) {
               }}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={form.state.isDirty ? form.handleSubmit : undefined}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Save</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -10,11 +10,13 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import ShareListItemSkeleton from "./ShareListItemSkeleton";
 
 export default function SharesDetail() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -30,7 +32,7 @@ export default function SharesDetail() {
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading className="text-white ml-4" size="xl">
-            Shares
+            {t("app.shares.title")}
           </Heading>
         </HStack>
         {error && <ErrorDisplay error={error} />}

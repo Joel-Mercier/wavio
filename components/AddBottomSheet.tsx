@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface AddBottomSheetProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export default function AddBottomSheet({
   isOpen,
   onClose,
 }: AddBottomSheetProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -84,10 +86,12 @@ export default function AddBottomSheet({
                   size={32}
                   color={themeConfig.theme.colors.gray[200]}
                 />
-                <VStack className="ml-4">
-                  <Heading className="text-white">Playlist</Heading>
-                  <Text className="text-md text-gray-200">
-                    Create a playlist with songs or podcast episodes
+                <VStack className="ml-4 flex-1">
+                  <Heading numberOfLines={1} className="text-white">
+                    {t("app.create.playlistTitle")}
+                  </Heading>
+                  <Text className="text-md text-gray-200 flex-1">
+                    {t("app.create.playlistDescription")}
                   </Text>
                 </VStack>
               </HStack>
@@ -95,12 +99,12 @@ export default function AddBottomSheet({
             <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
               <HStack className="items-center">
                 <Radio size={32} color={themeConfig.theme.colors.gray[200]} />
-                <VStack className="ml-4">
-                  <Heading className="text-white">
-                    Internet radio station
+                <VStack className="ml-4 flex-1">
+                  <Heading numberOfLines={1} className="text-white">
+                    {t("app.create.internetRadioStationTitle")}
                   </Heading>
-                  <Text className="text-md text-gray-200">
-                    Create a internet radio station you can stream from the app
+                  <Text className="text-md text-gray-200 flex-1">
+                    {t("app.create.internetRadioStationDescription")}
                   </Text>
                 </VStack>
               </HStack>

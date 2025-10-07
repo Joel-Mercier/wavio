@@ -70,7 +70,11 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
         },
         clearRecentPlays: () => {
           set((state) => {
-            return { recentPlays: state.recentPlays.filter((play) => play.id === "favorites") };
+            return {
+              recentPlays: state.recentPlays.filter(
+                (play) => play.id === "favorites",
+              ),
+            };
           });
         },
       };

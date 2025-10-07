@@ -13,23 +13,34 @@ import {
   SliderTrack,
 } from "@/components/ui/slider";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { artworkUrl } from "@/utils/artwork";
+import { downloadUrl } from "@/utils/streaming";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { millisecondsToMinutes } from "date-fns";
+import * as Clipboard from "expo-clipboard";
+import { Directory, File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import {
   AudioLines,
   ChevronDown,
+  Download,
   EllipsisVertical,
   Heart,
   ListPlus,
@@ -46,10 +57,15 @@ import {
   SkipForward,
   User,
 } from "lucide-react-native";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 
 export default function PlayerScreen() {
+  const { t } = useTranslation();
+  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [clipboardText, setClipboardText] = useState("");
+  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
@@ -67,6 +83,7 @@ export default function PlayerScreen() {
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const toast = useToast();
+  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -103,8 +120,9 @@ export default function PlayerScreen() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Track successfully added to favorites
+                  {t("app.tracks.favoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -116,8 +134,9 @@ export default function PlayerScreen() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while adding track to favorites
+                  {t("app.tracks.favoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -137,8 +156,9 @@ export default function PlayerScreen() {
             duration: 3000,
             render: () => (
               <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Track successfully removed from favorites
+                  {t("app.tracks.unfavoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -150,8 +170,9 @@ export default function PlayerScreen() {
             duration: 3000,
             render: () => (
               <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while removing the track from favorites
+                  {t("app.tracks.unfavoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -162,6 +183,53 @@ export default function PlayerScreen() {
   };
 
   const handleRepeatModePress = (repeatMode: any) => {};
+
+  const handleDownloadPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (permissionResponse?.status !== "granted") {
+      await requestPermission();
+    }
+    const url = downloadUrl(track.id);
+    const destination = new Directory(Paths.cache, "Downloads");
+    try {
+      destination.create({
+        idempotent: true,
+        intermediates: true,
+      });
+      const output = await File.downloadFileAsync(url, destination, {
+        idempotent: true,
+      });
+      if (output.exists) {
+        await MediaLibrary.saveToLibraryAsync(output.uri);
+        output.delete();
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.tracks.downloadSuccessMessage")}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    } catch (error) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.downloadErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
 
   return (
     <LinearGradient
@@ -183,7 +251,7 @@ export default function PlayerScreen() {
                 <ChevronDown size={24} color="white" />
               </FadeOutScaleDown>
               <Text className="text-white font-bold uppercase tracking-wider">
-                Playing now
+                {t("app.player.title")}
               </Text>
               <FadeOutScaleDown
                 onPress={handlePresentModalPress}
@@ -350,7 +418,7 @@ export default function PlayerScreen() {
                 {playingTrack?.artwork ? (
                   <Image
                     source={{
-                      uri: `data:image/jpeg;base64,${playingTrack?.artwork}`,
+                      uri: playingTrack?.artwork,
                     }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
@@ -384,7 +452,7 @@ export default function PlayerScreen() {
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Add to playlist
+                      {t("app.tracks.addToPlaylist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -395,7 +463,7 @@ export default function PlayerScreen() {
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Go to artist
+                      {t("app.tracks.goToArtist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -406,7 +474,7 @@ export default function PlayerScreen() {
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Add to queue
+                      {t("app.tracks.addToQueue")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -416,7 +484,20 @@ export default function PlayerScreen() {
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />
-                    <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.share")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleDownloadPress}>
+                  <HStack className="items-center">
+                    <Download
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.download")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
               </VStack>

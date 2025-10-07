@@ -1,2 +1,2 @@
-'use client';
-export { SafeAreaView } from 'react-native-safe-area-context';
+"use client";
+export { SafeAreaView } from "react-native-safe-area-context";

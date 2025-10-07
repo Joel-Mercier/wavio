@@ -1,8 +1,5 @@
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
 import { Redirect, Stack } from "expo-router";
-import { ArrowLeft, X } from "lucide-react-native";
 
 export default function AppLayout() {
   const isAuthenticated = useAuth.use.isAuthenticated();

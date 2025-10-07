@@ -1,9 +1,9 @@
-import React from 'react';
-import { skeletonStyle, skeletonTextStyle } from './styles';
+import React from "react";
+import { skeletonStyle, skeletonTextStyle } from "./styles";
 
-import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
+import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
 
-type ISkeletonProps = React.ComponentPropsWithoutRef<'div'> &
+type ISkeletonProps = React.ComponentPropsWithoutRef<"div"> &
   VariantProps<typeof skeletonStyle> & {
     startColor?: string;
     isLoaded?: boolean;
@@ -13,14 +13,14 @@ const Skeleton = React.forwardRef<HTMLDivElement, ISkeletonProps>(
   function Skeleton(
     {
       className,
-      variant = 'rounded',
+      variant = "rounded",
       children,
       speed = 2,
-      startColor = 'bg-background-200',
+      startColor = "bg-background-200",
       isLoaded = false,
       ...props
     },
-    ref
+    ref,
   ) {
     if (!isLoaded) {
       return (
@@ -37,10 +37,10 @@ const Skeleton = React.forwardRef<HTMLDivElement, ISkeletonProps>(
     } else {
       return children;
     }
-  }
+  },
 );
 
-type ISkeletonTextProps = React.ComponentPropsWithoutRef<'div'> &
+type ISkeletonTextProps = React.ComponentPropsWithoutRef<"div"> &
   VariantProps<typeof skeletonTextStyle> & {
     _lines?: number;
     isLoaded?: boolean;
@@ -53,12 +53,12 @@ const SkeletonText = React.forwardRef<HTMLDivElement, ISkeletonTextProps>(
       className,
       _lines,
       isLoaded = false,
-      startColor = 'bg-background-200',
+      startColor = "bg-background-200",
       gap = 2,
       children,
       ...props
     },
-    ref
+    ref,
   ) {
     if (!isLoaded) {
       if (_lines) {
@@ -94,10 +94,10 @@ const SkeletonText = React.forwardRef<HTMLDivElement, ISkeletonTextProps>(
     } else {
       return children;
     }
-  }
+  },
 );
 
-Skeleton.displayName = 'Skeleton';
-SkeletonText.displayName = 'SkeletonText';
+Skeleton.displayName = "Skeleton";
+SkeletonText.displayName = "SkeletonText";
 
 export { Skeleton, SkeletonText };

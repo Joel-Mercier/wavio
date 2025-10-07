@@ -11,7 +11,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
@@ -20,6 +25,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { AlertCircleIcon } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
 
@@ -28,6 +34,7 @@ const newPlaylistSchema = z.object({
 });
 
 export default function NewPlaylistScreen() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
@@ -52,8 +59,9 @@ export default function NewPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                   <ToastDescription>
-                    Playlist successfully created
+                    {t("app.newPlaylist.newPlaylistSuccessMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -66,8 +74,9 @@ export default function NewPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                   <ToastDescription>
-                    An error occurred while creating the playlist
+                    {t("app.newPlaylist.newPlaylistErrorMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -99,7 +108,7 @@ export default function NewPlaylistScreen() {
         <VStack className="w-full px-6">
           <Center>
             <Heading className="text-white mb-6" size="xl">
-              Give a name to your playlist
+              {t("app.newPlaylist.title")}
             </Heading>
           </Center>
           <form.Field name="name">
@@ -118,7 +127,7 @@ export default function NewPlaylistScreen() {
                     onChangeText={field.handleChange}
                     autoFocus
                     className="text-3xl text-white text-center font-bold placeholder:text-gray-400"
-                    placeholder="My awesome playlist"
+                    placeholder={t("app.newPlaylist.namePlaceholder")}
                   />
                 </Input>
                 {!field.state.meta.isValid && (
@@ -142,13 +151,17 @@ export default function NewPlaylistScreen() {
               onPress={handleCancelPress}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={form.handleSubmit}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Create</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.create")}
+              </Text>
             </FadeOutScaleDown>
           </HStack>
         </VStack>

@@ -60,6 +60,7 @@ import {
   Trash,
 } from "lucide-react-native";
 import React, { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -72,6 +73,7 @@ const updateInternetRadioStationSchema = z.object({
 });
 
 export default function InternetRadioStationDetail() {
+  const { t } = useTranslation();
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
@@ -118,11 +120,11 @@ export default function InternetRadioStationDetail() {
               duration: 3000,
               render: () => (
                 <Toast action="success">
-                  <ToastTitle>
-                    Internet radio station successfully updated
-                  </ToastTitle>
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                   <ToastDescription>
-                    Internet radio station has been successfully updated.
+                    {t(
+                      "app.internetRadioStations.editInternetRadioStationSuccessMessage",
+                    )}
                   </ToastDescription>
                 </Toast>
               ),
@@ -134,9 +136,11 @@ export default function InternetRadioStationDetail() {
               duration: 3000,
               render: () => (
                 <Toast action="error">
-                  <ToastTitle>Error</ToastTitle>
+                  <ToastTitle> {t("app.shared.toastErrorTitle")}</ToastTitle>
                   <ToastDescription>
-                    An error occurred while updating the internet radio station.
+                    {t(
+                      "app.internetRadioStations.editInternetRadioStationErrorMessage",
+                    )}
                   </ToastDescription>
                 </Toast>
               ),
@@ -173,11 +177,11 @@ export default function InternetRadioStationDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>
-                  Internet radio station successfully deleted
-                </ToastTitle>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Internet radio station has been successfully deleted.
+                  {t(
+                    "app.internetRadioStations.deleteInternetRadioStationSuccessMessage",
+                  )}
                 </ToastDescription>
               </Toast>
             ),
@@ -189,9 +193,11 @@ export default function InternetRadioStationDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle> {t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while deleting the internet radio station.
+                  {t(
+                    "app.internetRadioStations.deleteInternetRadioStationErrorMessage",
+                  )}
                 </ToastDescription>
               </Toast>
             ),
@@ -314,7 +320,7 @@ export default function InternetRadioStationDetail() {
                 color={themeConfig.theme.colors.gray[800]}
               />
               <Text className="text-primary-800 font-bold text-lg">
-                Visit homepage
+                {t("app.internetRadioStations.visitHomePage")}
               </Text>
             </FadeOutScaleDown>
           </Center>
@@ -364,7 +370,7 @@ export default function InternetRadioStationDetail() {
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Visit home page
+                      {t("app.internetRadioStations.visitHomePage")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -376,7 +382,7 @@ export default function InternetRadioStationDetail() {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Edit internet radio station
+                    {t("app.internetRadioStations.editInternetRadioStation")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -384,7 +390,7 @@ export default function InternetRadioStationDetail() {
                 <HStack className="items-center">
                   <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Delete internet radio station
+                    {t("app.internetRadioStations.deleteInternetRadioStation")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -401,13 +407,16 @@ export default function InternetRadioStationDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Are you sure you want to delete this interne radio station?
+              {t(
+                "app.internetRadioStations.deleteInternetRadioStationConfirmTitle",
+              )}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              Deleting the internet radio station will remove it permanently.
-              Please confirm if you want to proceed.
+              {t(
+                "app.internetRadioStations.deleteInternetRadioStationConfirmDescription",
+              )}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -415,13 +424,17 @@ export default function InternetRadioStationDetail() {
               onPress={handleCloseAlertDialog}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handleDeletePress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -435,7 +448,9 @@ export default function InternetRadioStationDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Edit internet radio station
+              {t(
+                "app.internetRadioStations.editInternetRadioStationModalTitle",
+              )}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
@@ -464,7 +479,9 @@ export default function InternetRadioStationDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Name"
+                      placeholder={t(
+                        "app.internetRadioStations.namePlaceholder",
+                      )}
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -508,7 +525,9 @@ export default function InternetRadioStationDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Stream URL"
+                      placeholder={t(
+                        "app.internetRadioStations.streamUrlPlaceholder",
+                      )}
                       keyboardType="url"
                       textContentType="URL"
                       autoCapitalize="none"
@@ -555,7 +574,9 @@ export default function InternetRadioStationDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Homepage URL"
+                      placeholder={t(
+                        "app.internetRadioStations.homePageUrlPlaceholder",
+                      )}
                       keyboardType="url"
                       textContentType="URL"
                       autoCapitalize="none"
@@ -586,7 +607,9 @@ export default function InternetRadioStationDetail() {
               }}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={
@@ -596,7 +619,9 @@ export default function InternetRadioStationDetail() {
               }
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 opacity-65"
             >
-              <Text className="text-primary-800 font-bold text-lg">Save</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

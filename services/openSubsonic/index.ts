@@ -55,17 +55,20 @@ openSubsonicApiInstance.interceptors.request.use(
   },
 );
 
-openSubsonicApiInstance.interceptors.response.use((response) => {
-  return response;
-}, (error) => {
-  console.error(error);
-  if (axios.isAxiosError(error)) {
-    if (error.code === "ERR_NETWORK") {
-      useAuthBase.getState().logout();
+openSubsonicApiInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error(error);
+    if (axios.isAxiosError(error)) {
+      if (error.code === "ERR_NETWORK") {
+        useAuthBase.getState().logout();
+      }
     }
-  }
-  return Promise.reject(error);
-})
+    return Promise.reject(error);
+  },
+);
 
 export type ApiType = typeof openSubsonicApiInstance;
 

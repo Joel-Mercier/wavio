@@ -45,11 +45,13 @@ import {
   Search,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
+  const { t } = useTranslation();
   const setShowDrawer = useApp.use.setShowDrawer();
   const username = useAuth.use.username();
   const router = useRouter();
@@ -183,7 +185,7 @@ export default function LibraryScreen() {
                 </Avatar>
               </FadeOutScaleDown>
               <Heading className="text-white" size="2xl">
-                Library
+                {t("app.library.title")}
               </Heading>
             </HStack>
             <HStack className="items-center gap-x-4">
@@ -207,7 +209,7 @@ export default function LibraryScreen() {
                 })}
               >
                 <BadgeText className="normal-case text-md text-white">
-                  Playlists
+                  {t("app.shared.playlist_other")}
                 </BadgeText>
               </Badge>
             </FadeOutScaleDown>
@@ -218,7 +220,7 @@ export default function LibraryScreen() {
                 })}
               >
                 <BadgeText className="normal-case text-md text-white">
-                  Albums
+                  {t("app.shared.album_other")}
                 </BadgeText>
               </Badge>
             </FadeOutScaleDown>
@@ -229,7 +231,7 @@ export default function LibraryScreen() {
                 })}
               >
                 <BadgeText className="normal-case text-md text-white">
-                  Artists
+                  {t("app.shared.artist_other")}
                 </BadgeText>
               </Badge>
             </FadeOutScaleDown>
@@ -240,7 +242,9 @@ export default function LibraryScreen() {
             <HStack className="items-center gap-x-2">
               <ArrowDownUp size={16} color={themeConfig.theme.colors.white} />
               <Text className="text-white font-bold">
-                {sort === "addedAt" ? "Recent" : "Alphabetical"}
+                {sort === "addedAt"
+                  ? t("app.library.recentSort")
+                  : t("app.library.alphabeticalSort")}
               </Text>
             </HStack>
           </FadeOutScaleDown>
@@ -326,9 +330,11 @@ export default function LibraryScreen() {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <VStack className="ml-4">
-                    <Heading className="text-white">Playlist</Heading>
+                    <Heading className="text-white">
+                      {t("app.create.playlistTitle")}
+                    </Heading>
                     <Text className="text-md text-gray-200">
-                      Create a playlist with songs or podcast episodes
+                      {t("app.create.playlistDescription")}
                     </Text>
                   </VStack>
                 </HStack>
@@ -338,11 +344,10 @@ export default function LibraryScreen() {
                   <Radio size={32} color={themeConfig.theme.colors.gray[200]} />
                   <VStack className="ml-4">
                     <Heading className="text-white">
-                      Internet radio station
+                      {t("app.create.internetRadioStationTitle")}
                     </Heading>
                     <Text className="text-md text-gray-200">
-                      Create a internet radio station you can stream from the
-                      app
+                      {t("app.create.internetRadioStationDescription")}
                     </Text>
                   </VStack>
                 </HStack>
@@ -373,7 +378,9 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleSortPress("addedAt")}>
                 <HStack className="items-center justify-between">
                   <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">Recent</Text>
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.recentSort")}
+                    </Text>
                   </VStack>
                   {sort === "addedAt" && (
                     <Check
@@ -386,7 +393,9 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleSortPress("alphabetical")}>
                 <HStack className="items-center justify-between">
                   <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">Alphabetical</Text>
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.alphabeticalSort")}
+                    </Text>
                   </VStack>
                   {sort === "alphabetical" && (
                     <Check

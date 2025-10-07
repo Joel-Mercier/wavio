@@ -8,12 +8,14 @@ import { themeConfig } from "@/config/theme";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { ListMusic } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
 interface PlaylistListItemProps {
   playlist: Playlist;
 }
 
 export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
+  const { t } = useTranslation();
   return (
     <FadeOutScaleDown
       href={`/(tabs)/(home)/playlists/${playlist.id}`}
@@ -36,7 +38,7 @@ export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
           {playlist.name}
         </Heading>
         <Text numberOfLines={2} className="text-md text-primary-100">
-          Playlist
+          {t("app.shared.playlist_one")}
         </Text>
       </VStack>
     </FadeOutScaleDown>

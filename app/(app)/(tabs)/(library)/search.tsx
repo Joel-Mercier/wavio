@@ -23,8 +23,10 @@ import { useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
 import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function LibrarySearchScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const form = useForm({
     defaultValues: {
@@ -123,7 +125,7 @@ export default function LibrarySearchScreen() {
                       <Input className="flex-1 border-0">
                         <InputField
                           className="text-white text-xl"
-                          placeholder="Search your library"
+                          placeholder={t("app.library.search.inputPlaceholder")}
                           placeholderTextColor={
                             themeConfig.theme.colors.primary[50]
                           }

@@ -20,9 +20,11 @@ import useAuth from "@/stores/auth";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const setShowDrawer = useApp.use.setShowDrawer();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -67,12 +69,13 @@ export default function HomeScreen() {
           </Avatar>
         </FadeOutScaleDown>
         <Heading size="2xl" className="text-white font-bold">
-          Hi {username}
+          {t("app.home.title", { username })}
         </Heading>
       </HStack>
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -98,7 +101,7 @@ export default function HomeScreen() {
         </Box>
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
-            Recently played
+            {t("app.home.recentlyPlayed")}
           </Heading>
         </Box>
         {recentlyPlayedError ? (
@@ -136,7 +139,7 @@ export default function HomeScreen() {
           !recentlyPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
-            Recently added
+            {t("app.home.recentlyAdded")}
           </Heading>
         </Box>
         {recentError ? (
@@ -174,7 +177,7 @@ export default function HomeScreen() {
           !recentData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
-            Most played
+            {t("app.home.mostPlayed")}
           </Heading>
         </Box>
         {mostPlayedError ? (
@@ -212,7 +215,7 @@ export default function HomeScreen() {
           !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
-            Top rated
+            {t("app.home.topRated")}
           </Heading>
         </Box>
         {highestRatedError ? (
@@ -250,7 +253,7 @@ export default function HomeScreen() {
           !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
-            Internet radio stations
+            {t("app.home.internetRadioStations")}
           </Heading>
         </Box>
         {internetRadioStationsError ? (

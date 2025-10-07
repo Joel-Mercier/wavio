@@ -14,12 +14,14 @@ import { themeConfig } from "@/config/theme";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { Check, ListMusic } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 
 export default function AddToPlaylistListItem({
   playlist,
   selected,
   onPress,
 }: { playlist: Playlist; selected: boolean; onPress: (id: string) => void }) {
+  const { t } = useTranslation();
   return (
     <FadeOut className="px-6 mb-4" onPress={() => onPress(playlist.id)}>
       <HStack className="items-center justify-between">
@@ -40,7 +42,7 @@ export default function AddToPlaylistListItem({
               {playlist.name}
             </Heading>
             <Text className="text-primary-100 text-sm">
-              {playlist.songCount} songs
+              {t("app.shared.songCount", { count: playlist.songCount })}
             </Text>
           </VStack>
         </HStack>

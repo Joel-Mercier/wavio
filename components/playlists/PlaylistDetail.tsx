@@ -60,6 +60,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -73,8 +74,10 @@ import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function PlaylistDetail() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -105,6 +108,20 @@ export default function PlaylistDetail() {
         [0, 1],
         Extrapolation.CLAMP,
       ),
+    };
+  });
+  const artworkStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          scale: interpolate(
+            offsetY.value,
+            [0, 220],
+            [1, 0.5],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
   const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -139,9 +156,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Playlist successfully deleted
+                  {t("app.playlists.deletePlaylistSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -154,9 +171,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while deleting the playlist
+                  {t("app.playlists.deletePlaylistErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -181,9 +198,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Playlist successfully shared
+                  {t("app.playlists.sharePlaylistSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -195,9 +212,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while sharing the playlist
+                  {t("app.playlists.sharePlaylistErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -219,9 +236,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Track successfully removed from playlist
+                  {t("app.playlists.removeTrackSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -234,9 +251,9 @@ export default function PlaylistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while removing the track from this playlist
+                  {t("app.playlists.removeTrackErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -278,8 +295,10 @@ export default function PlaylistDetail() {
           duration: 3000,
           render: () => (
             <Toast action="success">
-              <ToastTitle>Success</ToastTitle>
-              <ToastDescription>Share url copied to clipboard</ToastDescription>
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.shared.shareUrlCopiedMessage")}
+              </ToastDescription>
             </Toast>
           ),
         });
@@ -291,9 +310,9 @@ export default function PlaylistDetail() {
         duration: 3000,
         render: () => (
           <Toast action="error">
-            <ToastTitle>Error</ToastTitle>
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              An error occurred while copying the share url to the clipboard
+              {t("app.shared.shareUrlErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -349,13 +368,15 @@ export default function PlaylistDetail() {
         }
         ListEmptyComponent={() => (
           <VStack className="items-center justify-center my-6">
-            <Text className="text-white text-md">This playlist is empty</Text>
+            <Text className="text-white text-md">
+              {t("app.playlists.empty")}
+            </Text>
             <FadeOutScaleDown
               onPress={() => router.navigate("/(app)/(tabs)/(search)")}
               className="bg-white rounded-full px-6 py-3 mt-4"
             >
               <Text className="text-primary-800 font-bold">
-                Find songs to add to this playlist
+                {t("app.playlists.emptyAction")}
               </Text>
             </FadeOutScaleDown>
           </VStack>
@@ -368,7 +389,8 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
               {/* https://github.com/navidrome/navidrome/issues/406 */}
               {data?.playlist?.coverArt ? (
-                <Image
+                <AnimatedImage
+                  style={artworkStyle}
                   source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
                   className="w-[70%] aspect-square rounded-md"
                   alt="Playlist cover"
@@ -425,8 +447,7 @@ export default function PlaylistDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6">
             <Text className="text-white font-bold">
-              {(data?.playlist.songCount || "0 ") +
-                (data?.playlist.songCount || 0 > 1 ? " song" : "songs")}{" "}
+              {`${t("app.shared.songCount", { count: data?.playlist.songCount })} `}{" "}
               ⦁ {Math.round((data?.playlist.duration || 0) / 60)} min
             </Text>
           </VStack>
@@ -539,7 +560,7 @@ export default function PlaylistDetail() {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Edit this playlist
+                    {t("app.playlists.edit")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -549,7 +570,9 @@ export default function PlaylistDetail() {
                     size={24}
                     color={themeConfig.theme.colors.gray[200]}
                   />
-                  <Text className="ml-4 text-lg text-gray-200">Share</Text>
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.playlists.share")}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown
@@ -561,7 +584,7 @@ export default function PlaylistDetail() {
                 <HStack className="items-center">
                   <X size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Delete this playlist
+                    {t("app.playlists.delete")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -578,13 +601,12 @@ export default function PlaylistDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Are you sure you want to delete this playlist?
+              {t("app.playlists.deletePlaylistConfirmTitle")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              Deleting the playlist will remove it permanently and cannot be
-              undone. Please confirm if you want to proceed.
+              {t("app.playlists.deletePlaylistConfirmDescription")}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -592,13 +614,17 @@ export default function PlaylistDetail() {
               onPress={handleCloseAlertDialog}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handlePlaylistDeletePress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

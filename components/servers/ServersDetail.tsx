@@ -19,7 +19,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import useServers, { serverSchema } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -28,11 +33,13 @@ import { useForm } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { AlertCircleIcon, ArrowLeft, Plus } from "lucide-react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ServersDetail() {
+  const { t } = useTranslation();
   const [showAddServerModal, setShowAddServerModal] = useState<boolean>(false);
   const router = useRouter();
   const toast = useToast();
@@ -40,7 +47,6 @@ export default function ServersDetail() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const servers = useServers.use.servers();
   const addServer = useServers.use.addServer();
-  const removeServer = useServers.use.removeServer();
   const form = useForm({
     defaultValues: {
       name: "",
@@ -62,7 +68,10 @@ export default function ServersDetail() {
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastDescription>Server successfully added</ToastDescription>
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.servers.createServerSuccessMessage")}
+            </ToastDescription>
           </Toast>
         ),
       });
@@ -89,7 +98,7 @@ export default function ServersDetail() {
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading className="text-white ml-4" size="xl">
-            Servers
+            {t("app.servers.title")}
           </Heading>
         </HStack>
         <FadeOutScaleDown onPress={handleAddServerPress}>
@@ -114,7 +123,7 @@ export default function ServersDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Add server
+              {t("app.servers.addServer")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
@@ -143,7 +152,7 @@ export default function ServersDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server name"
+                      placeholder={t("app.servers.namePlaceholder")}
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -187,7 +196,7 @@ export default function ServersDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server url"
+                      placeholder={t("app.servers.urlPlaceholder")}
                       keyboardType="url"
                       autoCapitalize="none"
                       textContentType="URL"
@@ -234,7 +243,7 @@ export default function ServersDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server username"
+                      placeholder={t("app.servers.usernamePlaceholder")}
                       autoCapitalize="none"
                       textContentType="username"
                     />
@@ -280,7 +289,7 @@ export default function ServersDetail() {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter user password"
+                      placeholder={t("app.servers.passwordPlaceholder")}
                       secureTextEntry
                       autoCapitalize="none"
                       textContentType="password"
@@ -311,7 +320,9 @@ export default function ServersDetail() {
               }}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={() => {
@@ -319,7 +330,9 @@ export default function ServersDetail() {
               }}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Save</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

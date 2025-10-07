@@ -1,8 +1,9 @@
-import { decode } from 'html-entities';
+import { decode } from "html-entities";
 import { useEffect, useState } from "react";
 
 function findOGTags(content: string, url: string) {
-  const metaTagOGRegex = /<meta[^>]*(?:property=[ '"]*og:([^'"]*))?[^>]*(?:content=["]([^"]*)["])?[^>]*>/gi;
+  const metaTagOGRegex =
+    /<meta[^>]*(?:property=[ '"]*og:([^'"]*))?[^>]*(?:content=["]([^"]*)["])?[^>]*>/gi;
   const matches = content.match(metaTagOGRegex);
   const meta: Record<string, string> = {};
 
@@ -10,7 +11,7 @@ function findOGTags(content: string, url: string) {
     const metaPropertyRegex = /<meta[^>]*property=[ "]*og:([^"]*)[^>]*>/i;
     const metaContentRegex = /<meta[^>]*content=[ "]([^"]*)[^>]*>/i;
 
-    for (let i = matches.length; i--;) {
+    for (let i = matches.length; i--; ) {
       let propertyMatch: RegExpExecArray | null;
       let contentMatch: RegExpExecArray | null;
       let metaName: string;
@@ -32,7 +33,7 @@ function findOGTags(content: string, url: string) {
         }
       } catch (error) {
         if (__DEV__) {
-          console.log('Error on ', matches[i]);
+          console.log("Error on ", matches[i]);
           console.log(error);
         }
 
@@ -40,18 +41,18 @@ function findOGTags(content: string, url: string) {
       }
 
       if (metaValue.length > 0) {
-        if (metaValue[0] === '/') {
-          if (metaValue.length <= 1 || metaValue[1] !== '/') {
-            if (url[url.length - 1] === '/') {
+        if (metaValue[0] === "/") {
+          if (metaValue.length <= 1 || metaValue[1] !== "/") {
+            if (url[url.length - 1] === "/") {
               metaValue = url + metaValue.substring(1);
             } else {
               metaValue = url + metaValue;
             }
           } else {
             // handle protocol agnostic meta URLs
-            if (url.indexOf('https://') === 0) {
+            if (url.indexOf("https://") === 0) {
               metaValue = `https:${metaValue}`;
-            } else if (url.indexOf('http://') === 0) {
+            } else if (url.indexOf("http://") === 0) {
               metaValue = `http:${metaValue}`;
             }
           }
@@ -68,7 +69,8 @@ function findOGTags(content: string, url: string) {
 }
 
 function findHTMLMetaTags(content: string, url: string) {
-  const metaTagHTMLRegex = /<meta(?:[^>]*(?:name|itemprop)=[ '"]([^'"]*))?[^>]*(?:[^>]*content=["]([^"]*)["])?[^>]*>/gi;
+  const metaTagHTMLRegex =
+    /<meta(?:[^>]*(?:name|itemprop)=[ '"]([^'"]*))?[^>]*(?:[^>]*content=["]([^"]*)["])?[^>]*>/gi;
   const matches = content.match(metaTagHTMLRegex);
   const meta: Record<string, string> = {};
 
@@ -76,7 +78,7 @@ function findHTMLMetaTags(content: string, url: string) {
     const metaPropertyRegex = /<meta[^>]*(?:name|itemprop)=[ "]([^"]*)[^>]*>/i;
     const metaContentRegex = /<meta[^>]*content=[ "]([^"]*)[^>]*>/i;
 
-    for (let i = matches.length; i--;) {
+    for (let i = matches.length; i--; ) {
       let propertyMatch: RegExpExecArray | null;
       let contentMatch: RegExpExecArray | null;
       let metaName: string;
@@ -98,7 +100,7 @@ function findHTMLMetaTags(content: string, url: string) {
         }
       } catch (error) {
         if (__DEV__) {
-          console.log('Error on ', matches[i]);
+          console.log("Error on ", matches[i]);
           console.log(error);
         }
 
@@ -106,18 +108,18 @@ function findHTMLMetaTags(content: string, url: string) {
       }
 
       if (metaValue.length > 0) {
-        if (metaValue[0] === '/') {
-          if (metaValue.length <= 1 || metaValue[1] !== '/') {
-            if (url[url.length - 1] === '/') {
+        if (metaValue[0] === "/") {
+          if (metaValue.length <= 1 || metaValue[1] !== "/") {
+            if (url[url.length - 1] === "/") {
               metaValue = url + metaValue.substring(1);
             } else {
               metaValue = url + metaValue;
             }
           } else {
             // handle protocol agnostic meta URLs
-            if (url.indexOf('https://') === 0) {
+            if (url.indexOf("https://") === 0) {
               metaValue = `https:${metaValue}`;
-            } else if (url.indexOf('http://') === 0) {
+            } else if (url.indexOf("http://") === 0) {
               metaValue = `http:${metaValue}`;
             }
           }
@@ -142,7 +144,11 @@ function findHTMLMetaTags(content: string, url: string) {
   return meta;
 }
 
-function parseMeta(html: string, url: string, options: { fallbackOnHTMLTags: boolean }) {
+function parseMeta(
+  html: string,
+  url: string,
+  options: { fallbackOnHTMLTags: boolean },
+) {
   let meta = findOGTags(html, url);
   if (options.fallbackOnHTMLTags) {
     try {
@@ -152,7 +158,7 @@ function parseMeta(html: string, url: string, options: { fallbackOnHTMLTags: boo
       };
     } catch (error) {
       if (__DEV__) {
-        console.log('Error in fallback', error);
+        console.log("Error in fallback", error);
       }
     }
   }
@@ -172,7 +178,7 @@ const useWebsiteMetadata = (url?: string) => {
         });
         const data = await response.text();
         const parsedMeta = parseMeta(data, url, { fallbackOnHTMLTags: true });
-        setMeta(parsedMeta)
+        setMeta(parsedMeta);
       } catch (error) {
         console.error(error);
       }

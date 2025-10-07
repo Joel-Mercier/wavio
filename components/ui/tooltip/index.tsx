@@ -1,16 +1,16 @@
-'use client';
-import React from 'react';
-import { createTooltip } from '@gluestack-ui/core/tooltip/creator';
-import { View, Text, ViewStyle } from 'react-native';
-import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
-import { tva } from '@gluestack-ui/utils/nativewind-utils';
-import { withStyleContext } from '@gluestack-ui/utils/nativewind-utils';
+"use client";
+import { createTooltip } from "@gluestack-ui/core/tooltip/creator";
+import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
+import { tva } from "@gluestack-ui/utils/nativewind-utils";
+import { withStyleContext } from "@gluestack-ui/utils/nativewind-utils";
 import {
-  Motion,
   AnimatePresence,
-  MotionComponentProps,
-} from '@legendapp/motion';
-import { cssInterop } from 'nativewind';
+  Motion,
+  type MotionComponentProps,
+} from "@legendapp/motion";
+import { cssInterop } from "nativewind";
+import React from "react";
+import { Text, View, type ViewStyle } from "react-native";
 
 type IMotionViewProps = React.ComponentProps<typeof View> &
   MotionComponentProps<typeof View, ViewStyle, unknown, unknown, unknown>;
@@ -24,53 +24,53 @@ export const UITooltip = createTooltip({
   AnimatePresence: AnimatePresence,
 });
 
-cssInterop(MotionView, { className: 'style' });
+cssInterop(MotionView, { className: "style" });
 
 const tooltipStyle = tva({
-  base: 'w-full h-full web:pointer-events-none',
+  base: "w-full h-full web:pointer-events-none",
 });
 
 const tooltipContentStyle = tva({
-  base: 'py-1 px-3 rounded-sm bg-background-900 web:pointer-events-auto',
+  base: "py-1 px-3 rounded-sm bg-background-900 web:pointer-events-auto",
 });
 
 const tooltipTextStyle = tva({
-  base: 'font-normal tracking-normal web:select-none text-xs text-typography-50',
+  base: "font-normal tracking-normal web:select-none text-xs text-typography-50",
 
   variants: {
     isTruncated: {
-      true: 'line-clamp-1 truncate',
+      true: "line-clamp-1 truncate",
     },
     bold: {
-      true: 'font-bold',
+      true: "font-bold",
     },
     underline: {
-      true: 'underline',
+      true: "underline",
     },
     strikeThrough: {
-      true: 'line-through',
+      true: "line-through",
     },
     size: {
-      '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
-      '2xl': 'text-2xl',
-      '3xl': 'text-3xl',
-      '4xl': 'text-4xl',
-      '5xl': 'text-5xl',
-      '6xl': 'text-6xl',
+      "2xs": "text-2xs",
+      xs: "text-xs",
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
+      xl: "text-xl",
+      "2xl": "text-2xl",
+      "3xl": "text-3xl",
+      "4xl": "text-4xl",
+      "5xl": "text-5xl",
+      "6xl": "text-6xl",
     },
     sub: {
-      true: 'text-xs',
+      true: "text-xs",
     },
     italic: {
-      true: 'italic',
+      true: "italic",
     },
     highlight: {
-      true: 'bg-yellow-500',
+      true: "bg-yellow-500",
     },
   },
 });
@@ -124,8 +124,8 @@ const TooltipText = React.forwardRef<
   );
 });
 
-Tooltip.displayName = 'Tooltip';
-TooltipContent.displayName = 'TooltipContent';
-TooltipText.displayName = 'TooltipText';
+Tooltip.displayName = "Tooltip";
+TooltipContent.displayName = "TooltipContent";
+TooltipText.displayName = "TooltipText";
 
 export { Tooltip, TooltipContent, TooltipText };

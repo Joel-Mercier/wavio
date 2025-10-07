@@ -71,6 +71,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Animated, {
   Extrapolation,
@@ -83,7 +84,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+
 export default function ArtistDetail() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -144,10 +147,9 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Artist successfully added to favorites
+                  {t("app.artists.favoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -166,10 +168,9 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while adding artist to favorites
+                  {t("app.artists.favoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -197,10 +198,9 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                 <ToastDescription>
-                  Artist successfully removed from favorites
+                  {t("app.artists.unfavoriteSuccessMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -219,9 +219,9 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while removing the artist from favorites
+                  {t("app.artists.unfavoriteErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -291,8 +291,10 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="success">
-                <ToastTitle>Success</ToastTitle>
-                <ToastDescription>Rating successfully set</ToastDescription>
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.shared.rateSuccessMessage")}
+                </ToastDescription>
               </Toast>
             ),
           });
@@ -304,9 +306,9 @@ export default function ArtistDetail() {
             duration: 3000,
             render: () => (
               <Toast action="error">
-                <ToastTitle>Error</ToastTitle>
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                 <ToastDescription>
-                  An error occurred while setting the rating
+                  {t("app.shared.rateErrorMessage")}
                 </ToastDescription>
               </Toast>
             ),
@@ -426,7 +428,9 @@ export default function ArtistDetail() {
                   </FadeOutScaleDown>
                 </HStack>
               </HStack>
-              <Heading className="text-white">Top songs</Heading>
+              <Heading className="text-white">
+                {t("app.artists.topSongs")}
+              </Heading>
               <VStack
                 className={cn("overflow-hidden mb-4", {
                   "h-[450px]":
@@ -472,13 +476,17 @@ export default function ArtistDetail() {
                     />
                     <Center className="absolute bottom-0 left-0 right-0">
                       <FadeOutScaleDown className="rounded-full border border-gray-300 py-1 px-3">
-                        <Text className="text-gray-300">See more</Text>
+                        <Text className="text-gray-300">
+                          {t("app.shared.seeMore")}
+                        </Text>
                       </FadeOutScaleDown>
                     </Center>
                   </>
                 )}
               </VStack>
-              <Heading className="text-white mb-6">Discography</Heading>
+              <Heading className="text-white mb-6">
+                {t("app.artists.discography")}
+              </Heading>
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </>
@@ -487,12 +495,16 @@ export default function ArtistDetail() {
           <>
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
-                {data?.artist?.album?.length || 0} albums
+                {t("app.artists.albumCount", {
+                  count: data?.artist?.album?.length || 0,
+                })}
               </Text>
             </VStack>
             {artistInfoData?.artistInfo2?.biography && (
               <VStack className="px-6 bg-black">
-                <Heading className="text-white mb-6">About</Heading>
+                <Heading className="text-white mb-6">
+                  {t("app.artists.about")}
+                </Heading>
                 <FadeOutScaleDown
                   href={{
                     pathname: `/artists/${id}/biography`,
@@ -577,7 +589,9 @@ export default function ArtistDetail() {
               <FadeOutScaleDown onPress={handleRatingPress}>
                 <HStack className="items-center">
                   <Star size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">Rate</Text>
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.artists.rate")}
+                  </Text>
                 </HStack>
               </FadeOutScaleDown>
               {data?.artist?.musicBrainzId && (
@@ -589,7 +603,7 @@ export default function ArtistDetail() {
                       fill={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Open in MusicBrainz
+                      {t("app.artists.musicBrainz")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -603,7 +617,7 @@ export default function ArtistDetail() {
                       fill={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      Open in Last.fm
+                      {t("app.artists.lastFM")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -623,7 +637,9 @@ export default function ArtistDetail() {
           style={{ marginBottom: insets.bottom, marginTop: insets.top }}
         >
           <ModalHeader>
-            <Heading className="text-white">Rate artist</Heading>
+            <Heading className="text-white">
+              {t("app.artists.rateModalTitle")}
+            </Heading>
             <ModalCloseButton>
               <Icon as={X} size="md" className="color-white" />
             </ModalCloseButton>

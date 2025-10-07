@@ -18,7 +18,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -37,13 +42,14 @@ import {
   Trash,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
-import { set } from "zod";
+import { useTranslation } from "react-i18next";
 
 interface ServerListItemProps {
   server: Server;
 }
 
 export default function ServerListItem({ server }: ServerListItemProps) {
+  const { t } = useTranslation();
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
@@ -70,7 +76,10 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         duration: 3000,
         render: () => (
           <Toast action="success">
-            <ToastDescription>Server successfully updated</ToastDescription>
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.servers.editServerSuccessMessage")}
+            </ToastDescription>
           </Toast>
         ),
       });
@@ -154,7 +163,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     color={themeConfig.theme.colors.gray[200]}
                   />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Edit server
+                    {t("app.servers.editServer")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -167,7 +176,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                 <HStack className="items-center">
                   <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Delete server
+                    {t("app.servers.deleteServer")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -184,13 +193,12 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Are you sure you want to delete this server?
+              {t("app.servers.deleteServerConfirmTitle")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              Deleting the server will remove it permanently. Please confirm if
-              you want to proceed.
+              {t("app.servers.deleteServerConfirmDescription")}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -198,13 +206,17 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               onPress={handleCloseAlertDialog}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handleDeletePress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Delete</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -218,7 +230,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              Edit server
+              {t("app.servers.editServer")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
@@ -247,7 +259,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server name"
+                      placeholder={t("app.servers.namePlaceholder")}
                     />
                   </Input>
                   {!field.state.meta.isValid && (
@@ -291,7 +303,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server url"
+                      placeholder={t("app.servers.urlPlaceholder")}
                       keyboardType="url"
                       autoCapitalize="none"
                       textContentType="URL"
@@ -338,7 +350,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter server username"
+                      placeholder={t("app.servers.usernamePlaceholder")}
                       autoCapitalize="none"
                       textContentType="username"
                     />
@@ -384,7 +396,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                           "border-red-500": !field.state.meta.isValid,
                         },
                       )}
-                      placeholder="Enter user password"
+                      placeholder={t("app.servers.passwordPlaceholder")}
                       secureTextEntry
                       autoCapitalize="none"
                       textContentType="password"
@@ -412,7 +424,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               onPress={handleCloseEditServerModal}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
-              <Text className="text-white font-bold text-lg">Cancel</Text>
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={() => {
@@ -420,7 +434,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               }}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">Save</Text>
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
+              </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>
