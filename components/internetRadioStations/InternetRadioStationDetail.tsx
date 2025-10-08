@@ -104,7 +104,7 @@ export default function InternetRadioStationDetail() {
       homePageUrl,
     },
     validators: {
-      onChange: updateInternetRadioStationSchema,
+      onBlur: updateInternetRadioStationSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdateInternetRadioStation.mutate(
@@ -528,7 +528,6 @@ export default function InternetRadioStationDetail() {
                       placeholder={t(
                         "app.internetRadioStations.streamUrlPlaceholder",
                       )}
-                      keyboardType="url"
                       textContentType="URL"
                       autoCapitalize="none"
                     />
@@ -577,7 +576,6 @@ export default function InternetRadioStationDetail() {
                       placeholder={t(
                         "app.internetRadioStations.homePageUrlPlaceholder",
                       )}
-                      keyboardType="url"
                       textContentType="URL"
                       autoCapitalize="none"
                     />

@@ -12,7 +12,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SystemBars } from "react-native-edge-to-edge";
 import "react-native-reanimated";
-import FloatingPlayer from "@/components/FloatingPlayer";
 import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
@@ -130,7 +129,6 @@ export default function RootLayout() {
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="+not-found" />
                 </Stack>
-                <FloatingPlayer />
               </BottomSheetModalProvider>
             </GestureHandlerRootView>
           </ThemeProvider>

@@ -304,7 +304,6 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                         },
                       )}
                       placeholder={t("app.servers.urlPlaceholder")}
-                      keyboardType="url"
                       autoCapitalize="none"
                       textContentType="URL"
                     />

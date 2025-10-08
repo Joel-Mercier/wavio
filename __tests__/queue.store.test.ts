@@ -36,6 +36,9 @@ beforeEach(() => {
     removePlayed: true,
     repeatMode: "off",
     contextIds: null,
+    shuffle: false,
+    shuffleOrderIds: null,
+    shuffleCursor: null,
   });
 });
 
@@ -82,6 +85,80 @@ describe("queue store - basic state setters", () => {
     expect(get().contextIds).toEqual(["t2"]);
     get().removeByIds(["t2"]);
     expect(get().contextIds).toBeNull();
+  });
+});
+
+describe("queue store - shuffle mode", () => {
+  test("enabling shuffle creates an order and cursor on current", () => {
+    const base = makeTracks(5);
+    get().setQueue(base, 2); // current t3
+    expect(get().shuffle).toBeFalsy();
+    get().setShuffle(true);
+    expect(get().shuffle).toBeTruthy();
+    expect(get().shuffleOrderIds).not.toBeNull();
+    expect(get().shuffleOrderIds?.length).toBeGreaterThan(0);
+    const currentId = get().getCurrent()?.id;
+    expect(currentId).toBe("t3");
+    const cursor = get().shuffleCursor;
+    expect(cursor).not.toBeNull();
+    expect(get().shuffleOrderIds?.[cursor as number]).toBe(currentId);
+  });
+
+  test("next respects shuffle order without removePlayed and wraps when repeat all", () => {
+    const base = makeTracks(3);
+    get().setQueue(base, 0);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setShuffle(true);
+    const initialCursor = get().shuffleCursor as number;
+    const initialOrder = get().shuffleOrderIds as string[];
+    // Step through 4 times, expecting wrap on 3rd -> 0
+    get().next();
+    expect(get().shuffleCursor).toBe((initialCursor + 1) % initialOrder.length);
+    get().next();
+    expect(get().shuffleCursor).toBe((initialCursor + 2) % initialOrder.length);
+    get().next();
+    expect(get().shuffleCursor).toBe((initialCursor + 3) % initialOrder.length);
+  });
+
+  test("next in shuffle with removePlayed removes current and advances to next id", () => {
+    const base = makeTracks(4);
+    get().setQueue(base, 1); // t2 current
+    get().setRemovePlayed(true);
+    get().setShuffle(true);
+    const orderBefore = get().shuffleOrderIds as string[];
+    const expectedNextId = orderBefore.filter((id) => id !== "t2")[0];
+    get().next();
+    expect(get().queue.map((t) => t.id)).toHaveLength(3);
+    expect(get().getCurrent()?.id).toBe(expectedNextId);
+    // cursor should be at 0 after removal path
+    expect(get().shuffleCursor).toBe(0);
+  });
+
+  test("previous in shuffle steps back by order and wraps with repeat all", () => {
+    const base = makeTracks(3);
+    get().setQueue(base, 0);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setShuffle(true);
+    // Move forward once to avoid prev at start
+    get().next();
+    const curCursor = get().shuffleCursor as number;
+    get().previous();
+    const order = get().shuffleOrderIds as string[];
+    const expectedCursor = (curCursor - 1 + order.length) % order.length;
+    expect(get().shuffleCursor).toBe(expectedCursor);
+  });
+
+  test("setQueue while shuffle on rebuilds order and aligns cursor", () => {
+    const base = makeTracks(3);
+    get().setQueue(base, 1); // t2 current
+    get().setShuffle(true);
+    get().setQueue(makeTracks(2), 0); // now t1 current
+    const currentId = get().getCurrent()?.id;
+    expect(currentId).toBe("t1");
+    const cursor = get().shuffleCursor as number;
+    expect(get().shuffleOrderIds?.[cursor]).toBe(currentId);
   });
 });
 

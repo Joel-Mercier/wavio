@@ -32,13 +32,16 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import { useForm } from "@tanstack/react-form";
+import axios, { Axios } from "axios";
 import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -47,6 +50,7 @@ export default function LoginScreen() {
   const addServer = useServers.use.addServer();
   const setCurrentServer = useServers.use.setCurrentServer();
   const login = useAuth.use.login();
+  const insets = useSafeAreaInsets();
   const form = useForm({
     defaultValues: {
       username: "",
@@ -54,20 +58,94 @@ export default function LoginScreen() {
       url: "",
     },
     validators: {
-      onChange: loginSchema,
+      onBlur: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      const defaultServers = servers.filter((server) =>
-        server.name.startsWith("Default"),
-      );
-      const newServerName = `Default${defaultServers.length > 0 ? ` (${defaultServers.length + 1})` : ""}`;
-      addServer({
-        ...value,
-        name: newServerName,
-        current: true,
-      });
-      setCurrentServer(newServerName);
-      login(value.url, value.username, value.password);
+      try {
+        const rsp = await axios
+          .create({
+            baseURL: value.url.trim(),
+            headers: { "Content-Type": "application/json" },
+          })
+          .get("/rest/ping", {
+            params: {
+              u: value.username.trim(),
+              p: value.password.trim(),
+              v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
+              c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
+              f: "json",
+            },
+          });
+        if (rsp.data["subsonic-response"]?.status !== "ok") {
+          throw new Error(
+            openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
+          );
+        }
+        const defaultServers = servers.filter((server) =>
+          server.name.startsWith(t("app.servers.defaultServer")),
+        );
+        const newServerName = `${t("app.servers.defaultServer")}${defaultServers.length > 0 ? ` (${defaultServers.length + 1})` : ""}`;
+        addServer({
+          ...value,
+          name: newServerName,
+          current: true,
+        });
+        setCurrentServer(newServerName);
+        login(value.url, value.username, value.password);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("auth.login.loginSuccessMessage")}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      } catch (error) {
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="error">
+              <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+              <ToastDescription>
+                {axios.isAxiosError(error)
+                  ? t("auth.login.loginErrorMessage")
+                  : error.message}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    },
+  });
+
+  const handleServerPress = async (server: Server) => {
+    try {
+      setCurrentServer(server.name);
+      const rsp = await axios
+        .create({
+          baseURL: server.url,
+          headers: { "Content-Type": "application/json" },
+        })
+        .get("/rest/ping", {
+          params: {
+            u: server.username,
+            p: server.password,
+            v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
+            c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
+            f: "json",
+          },
+        });
+      if (rsp.data["subsonic-response"]?.status !== "ok") {
+        throw new Error(
+          openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
+        );
+      }
+      login(server.url, server.username, server.password);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -80,38 +158,44 @@ export default function LoginScreen() {
           </Toast>
         ),
       });
-    },
-  });
-
-  const handleServerPress = (server: Server) => {
-    setCurrentServer(server.name);
-    login(server.url, server.username, server.password);
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("auth.login.loginSuccessMessage")}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
+    } catch (error) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {axios.isAxiosError(error)
+                ? t("auth.login.loginErrorMessage")
+                : error.message}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   return (
-    <SafeAreaView className="justify-center h-full">
+    <Box
+      className="justify-center h-full"
+      style={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       <KeyboardAvoidingView behavior={"padding"}>
         <Box className="px-6">
           <Center className="mb-4 ">
             <Logo width={64} height={64} />
           </Center>
-          <Heading size="2xl" className="text-white font-bold">
+          <Heading size="2xl" className="text-white font-bold mb-6">
             {t("auth.login.title")}
           </Heading>
           {servers && servers.length > 0 && (
-            <Box className="mt-6">
+            <Box>
               <Select>
                 <SelectTrigger
                   variant="outline"
@@ -209,7 +293,7 @@ export default function LoginScreen() {
                       },
                     )}
                     placeholder={t("auth.login.urlPlaceholder")}
-                    keyboardType="url"
+                    textContentType="URL"
                     autoCapitalize="none"
                   />
                 </Input>
@@ -334,6 +418,6 @@ export default function LoginScreen() {
           </FadeOutScaleDown>
         </Box>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Box>
   );
 }

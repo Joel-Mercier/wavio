@@ -1,3 +1,4 @@
+import i18n from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
 import z from "zod";
@@ -5,10 +6,10 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export const serverSchema = z.object({
-  name: z.string().min(1),
-  url: z.url().min(1),
-  username: z.string().min(1),
-  password: z.string().min(1),
+  name: z.string().trim().min(1),
+  url: z.url().trim().min(1),
+  username: z.string().trim().min(1),
+  password: z.string().trim().min(1),
   current: z.boolean().optional(),
 });
 
@@ -43,7 +44,8 @@ const useServersBase = create<ServersStore>()(
           );
 
           if (isDuplicate) {
-            return { servers: state.servers };
+            throw new Error(i18n.t("auth.login.serverAlreadyExists"));
+            // return { servers: state.servers };
           }
 
           const hasCurrentServer = state.servers.some(

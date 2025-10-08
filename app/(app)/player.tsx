@@ -24,6 +24,7 @@ import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { downloadUrl } from "@/utils/streaming";
 import {
@@ -49,8 +50,6 @@ import {
   PlusCircle,
   Repeat,
   Repeat1,
-  Repeat2,
-  Share,
   Share2,
   Shuffle,
   SkipBack,
@@ -82,6 +81,10 @@ export default function PlayerScreen() {
   const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const repeatMode = useQueue.use.repeatMode();
+  const setRepeatMode = useQueue.use.setRepeatMode();
+  const shuffle = useQueue.use.shuffle();
+  const setShuffle = useQueue.use.setShuffle();
   const toast = useToast();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
@@ -182,7 +185,13 @@ export default function PlayerScreen() {
     );
   };
 
-  const handleRepeatModePress = (repeatMode: any) => {};
+  const handleRepeatModePress = (newRepeatMode: typeof repeatMode) => {
+    setRepeatMode(newRepeatMode);
+  };
+
+  const handleShufflePress = (enabled: boolean) => {
+    setShuffle(enabled);
+  };
 
   const handleDownloadPress = async () => {
     bottomSheetModalRef.current?.dismiss();
@@ -241,161 +250,165 @@ export default function PlayerScreen() {
       locations={[0, 0.7]}
     >
       <SafeAreaView>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <VStack className="px-6 h-screen">
-            <HStack className="items-center justify-between my-6">
-              <FadeOutScaleDown
-                onPress={() => router.back()}
-                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-              >
-                <ChevronDown size={24} color="white" />
-              </FadeOutScaleDown>
-              <Text className="text-white font-bold uppercase tracking-wider">
-                {t("app.player.title")}
-              </Text>
-              <FadeOutScaleDown
-                onPress={handlePresentModalPress}
-                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-              >
-                <EllipsisVertical size={24} color="white" />
-              </FadeOutScaleDown>
+        <VStack className="px-6 h-screen">
+          <HStack className="items-center justify-between my-6">
+            <FadeOutScaleDown
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+            >
+              <ChevronDown size={24} color="white" />
+            </FadeOutScaleDown>
+            <Text className="text-white font-bold uppercase tracking-wider">
+              {t("app.player.title")}
+            </Text>
+            <FadeOutScaleDown
+              onPress={handlePresentModalPress}
+              className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+            >
+              <EllipsisVertical size={24} color="white" />
+            </FadeOutScaleDown>
+          </HStack>
+          <VStack className="mt-12">
+            <HStack className="mb-4">
+              {playingTrack?.artwork ? (
+                <Image
+                  source={{
+                    uri: playingTrack?.artwork,
+                  }}
+                  className="w-full aspect-square rounded-md"
+                  alt="cover"
+                />
+              ) : (
+                <Box className="w-full aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <AudioLines
+                    size={64}
+                    color={themeConfig.theme.colors.white}
+                  />
+                </Box>
+              )}
             </HStack>
-            <VStack className="mt-12">
-              <HStack className="mb-4">
-                {playingTrack?.artwork ? (
-                  <Image
-                    source={{
-                      // uri: `data:image/jpeg;base64,${playingTrack?.artwork}`,
-                      uri: playingTrack?.artwork,
-                    }}
-                    className="w-full aspect-square rounded-md"
-                    alt="cover"
-                  />
-                ) : (
-                  <Box className="w-full aspect-square rounded-md bg-primary-600 items-center justify-center">
-                    <AudioLines
-                      size={64}
-                      color={themeConfig.theme.colors.white}
-                    />
-                  </Box>
-                )}
-              </HStack>
-              <HStack className="items-center justify-between">
-                <VStack className="my-6">
-                  <Heading className="text-white" size="xl">
-                    {playingTrack?.title}
-                  </Heading>
-                  <Text className="text-primary-100 text-lg">
-                    {playingTrack?.artist}
-                  </Text>
-                </VStack>
-                <FadeOut
-                  onPress={
-                    playingTrack?.starred
-                      ? handleUnfavoritePress
-                      : handleFavoritePress
-                  }
-                >
-                  <Heart
-                    size={24}
-                    color={
-                      playingTrack?.starred
-                        ? themeConfig.theme.colors.emerald[500]
-                        : "white"
-                    }
-                    fill={
-                      playingTrack?.starred
-                        ? themeConfig.theme.colors.emerald[500]
-                        : "transparent"
-                    }
-                  />
-                </FadeOut>
-              </HStack>
-              <VStack className="mb-6">
-                <Slider
-                  defaultValue={0}
-                  value={position}
-                  step={1}
-                  minValue={0}
-                  maxValue={duration}
-                  size="md"
-                  orientation="horizontal"
-                  isDisabled={false}
-                  isReversed={false}
-                  onChange={handleSliderChange}
-                >
-                  <SliderTrack className="bg-primary-400">
-                    <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                  </SliderTrack>
-                  <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                </Slider>
-                <HStack className="mt-2 items-center justify-between">
-                  <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
-                  <Text className="text-primary-100 text-sm">
-                    {`${millisecondsToMinutes(duration)}:${duration % 60}`}
-                  </Text>
-                </HStack>
+            <HStack className="items-center justify-between">
+              <VStack className="my-6">
+                <Heading className="text-white" size="xl">
+                  {playingTrack?.title}
+                </Heading>
+                <Text className="text-primary-100 text-lg">
+                  {playingTrack?.artist}
+                </Text>
               </VStack>
-              <HStack className="items-center justify-between">
-                <FadeOut>
-                  <Shuffle size={24} color="white" />
-                </FadeOut>
-                <FadeOut onPress={handlePreviousPress}>
-                  <SkipBack size={36} color="white" fill="white" />
-                </FadeOut>
-                <FadeOut onPress={handlePlayPausePress}>
-                  <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                    {state === AudioProState.PLAYING ? (
-                      <Pause
-                        size={24}
-                        color={themeConfig.theme.colors.gray[800]}
-                        fill={themeConfig.theme.colors.gray[800]}
-                      />
-                    ) : (
-                      <Play
-                        size={24}
-                        color={themeConfig.theme.colors.gray[800]}
-                        fill={themeConfig.theme.colors.gray[800]}
-                      />
-                    )}
-                  </Box>
-                </FadeOut>
-                <FadeOut onPress={handleNextPress}>
-                  <SkipForward size={36} color="white" fill="white" />
-                </FadeOut>
-                <Repeat size={24} color="white" />
-
-                {/* {repeatMode === RepeatMode.Off && (
-                  <FadeOut
-                    onPress={() => handleRepeatModePress(RepeatMode.Queue)}
-                  >
-                    <Repeat size={24} color="white" />
-                  </FadeOut>
-                )}
-                {repeatMode === RepeatMode.Queue && (
-                  <FadeOut
-                    onPress={() => handleRepeatModePress(RepeatMode.Track)}
-                  >
-                    <Repeat2
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
-                  </FadeOut>
-                )}
-                {repeatMode === RepeatMode.Track && (
-                  <FadeOut
-                    onPress={() => handleRepeatModePress(RepeatMode.Off)}
-                  >
-                    <Repeat1
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
-                  </FadeOut>
-                )} */}
+              <FadeOut
+                onPress={
+                  playingTrack?.starred
+                    ? handleUnfavoritePress
+                    : handleFavoritePress
+                }
+              >
+                <Heart
+                  size={24}
+                  color={
+                    playingTrack?.starred
+                      ? themeConfig.theme.colors.emerald[500]
+                      : "white"
+                  }
+                  fill={
+                    playingTrack?.starred
+                      ? themeConfig.theme.colors.emerald[500]
+                      : "transparent"
+                  }
+                />
+              </FadeOut>
+            </HStack>
+            <VStack className="mb-6">
+              <Slider
+                defaultValue={0}
+                value={position}
+                step={1}
+                minValue={0}
+                maxValue={duration}
+                size="md"
+                orientation="horizontal"
+                isDisabled={false}
+                isReversed={false}
+                onChange={handleSliderChange}
+              >
+                <SliderTrack className="bg-primary-400">
+                  <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+                </SliderTrack>
+                <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+              </Slider>
+              <HStack className="mt-2 items-center justify-between">
+                <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
+                <Text className="text-primary-100 text-sm">
+                  {`${millisecondsToMinutes(duration)}:${duration % 60}`}
+                </Text>
               </HStack>
             </VStack>
+            <HStack className="items-center justify-between">
+              <FadeOut onPress={() => handleShufflePress(!shuffle)}>
+                {shuffle ? (
+                  <>
+                    <Shuffle
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                      <Box className="bg-emerald-500 rounded-full size-1" />
+                    </Box>
+                  </>
+                ) : (
+                  <Shuffle size={24} color="white" />
+                )}
+              </FadeOut>
+              <FadeOut onPress={handlePreviousPress}>
+                <SkipBack size={36} color="white" fill="white" />
+              </FadeOut>
+              <FadeOut onPress={handlePlayPausePress}>
+                <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
+                  {state === AudioProState.PLAYING ? (
+                    <Pause
+                      size={24}
+                      color={themeConfig.theme.colors.gray[800]}
+                      fill={themeConfig.theme.colors.gray[800]}
+                    />
+                  ) : (
+                    <Play
+                      size={24}
+                      color={themeConfig.theme.colors.gray[800]}
+                      fill={themeConfig.theme.colors.gray[800]}
+                    />
+                  )}
+                </Box>
+              </FadeOut>
+              <FadeOut onPress={handleNextPress}>
+                <SkipForward size={36} color="white" fill="white" />
+              </FadeOut>
+              {repeatMode === "off" && (
+                <FadeOut onPress={() => handleRepeatModePress("all")}>
+                  <Repeat size={24} color="white" />
+                </FadeOut>
+              )}
+              {repeatMode === "all" && (
+                <FadeOut onPress={() => handleRepeatModePress("one")}>
+                  <Repeat
+                    size={24}
+                    color={themeConfig.theme.colors.emerald[500]}
+                  />
+                  <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                    <Box className="bg-emerald-500 rounded-full size-1" />
+                  </Box>
+                </FadeOut>
+              )}
+              {repeatMode === "one" && (
+                <FadeOut onPress={() => handleRepeatModePress("off")}>
+                  <Repeat1
+                    size={24}
+                    color={themeConfig.theme.colors.emerald[500]}
+                  />
+                </FadeOut>
+              )}
+            </HStack>
           </VStack>
-        </ScrollView>
+        </VStack>
         <BottomSheetModal
           ref={bottomSheetModalRef}
           onChange={handleSheetPositionChange}

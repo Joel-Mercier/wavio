@@ -31,8 +31,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
 
 const editPlaylistSchema = z.object({
-  name: z.string().min(1),
-  comment: z.string().optional(),
+  name: z.string().min(1).trim(),
+  comment: z.string().trim().optional(),
 });
 
 export default function EditPlaylistScreen() {
@@ -50,7 +50,7 @@ export default function EditPlaylistScreen() {
       comment: data?.playlist?.comment ?? "",
     },
     validators: {
-      onChange: editPlaylistSchema,
+      onBlur: editPlaylistSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdatePlaylist.mutate(

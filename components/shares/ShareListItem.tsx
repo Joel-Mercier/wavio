@@ -60,8 +60,8 @@ import { useTranslation } from "react-i18next";
 import z from "zod";
 
 const updateShareSchema = z.object({
-  description: z.string().optional(),
-  expires: z.string().optional(),
+  description: z.string().trim().optional(),
+  expires: z.string().trim().optional(),
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
@@ -82,7 +82,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       expires: share.expires as unknown as string,
     },
     validators: {
-      onChange: updateShareSchema,
+      onBlur: updateShareSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdateShare.mutate(

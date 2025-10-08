@@ -55,7 +55,7 @@ export default function ServersDetail() {
       url: "",
     },
     validators: {
-      onChange: serverSchema,
+      onBlur: serverSchema,
     },
     onSubmit: async ({ value }) => {
       addServer({
@@ -197,7 +197,6 @@ export default function ServersDetail() {
                         },
                       )}
                       placeholder={t("app.servers.urlPlaceholder")}
-                      keyboardType="url"
                       autoCapitalize="none"
                       textContentType="URL"
                     />

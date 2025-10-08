@@ -1,13 +1,16 @@
 import { zustandStorage } from "@/config/storage";
+import openSubsonicApiInstance from "@/services/openSubsonic";
 import createSelectors from "@/utils/createSelectors";
+import axios from "axios";
+import { t } from "i18next";
 import z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export const loginSchema = z.object({
-  url: z.url().min(1),
-  username: z.string().min(1),
-  password: z.string().min(1),
+  url: z.url().min(1).trim(),
+  username: z.string().min(1).trim(),
+  password: z.string().min(1).trim(),
 });
 
 type AuthStore = {
@@ -27,7 +30,12 @@ export const useAuthBase = create<AuthStore>()(
       password: "",
       isAuthenticated: false,
       login: (url: string, username: string, password: string) => {
-        set({ url, username, password, isAuthenticated: true });
+        set({
+          url: url.trim(),
+          username: username.trim(),
+          password: password.trim(),
+          isAuthenticated: true,
+        });
       },
       logout: () => {
         set({ url: "", username: "", password: "", isAuthenticated: false });

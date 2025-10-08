@@ -1,5 +1,3 @@
-import { fa } from "zod/v4/locales";
-
 export default {
   translation: {
     app: {
@@ -265,6 +263,7 @@ export default {
           "Are you sure you want to delete this server?",
         deleteServerConfirmDescription:
           "Deleting the server will remove it permanently. Please confirm if you want to proceed.",
+        defaultServer: "Default server",
       },
       shared: {
         cancel: "Cancel",
@@ -282,6 +281,7 @@ export default {
         song_other: "Songs",
         save: "Save",
         seeMore: "See more",
+        seeAll: "See all",
         noData: "No data",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
@@ -324,6 +324,23 @@ export default {
         choice: "Or enter your server details",
         login: "Login",
         loginSuccessMessage: "Successfully signed in",
+        loginErrorMessage: "Couldn't reach the requested server. Try again after verifying your server informations",
+        serverAlreadyExists: "Server already exists",
+      },
+    },
+    openSubsonic: {
+      errorCodes: {
+        10: "Required parameter is missing.",
+        20: "Incompatible Subsonic REST protocol version. Client must upgrade.",
+        30: "Incompatible Subsonic REST protocol version. Server must upgrade.",
+        40: "Wrong username or password.",
+        41: "Token authentication not supported for LDAP users.",
+        42: "Provided authentication mechanism not supported.",
+        43: "Multiple conflicting authentication mechanisms provided.",
+        44: "Invalid API key.",
+        50: "User is not authorized for the given operation.",
+        60: "The trial period for the Subsonic server is over. Please upgrade to Subsonic Premium. Visit subsonic.org for details.",
+        70: "The requested data was not found.",
       },
     },
   },

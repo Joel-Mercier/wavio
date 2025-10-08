@@ -30,7 +30,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
 
 const newPlaylistSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
 });
 
 export default function NewPlaylistScreen() {
@@ -45,7 +45,7 @@ export default function NewPlaylistScreen() {
       name: "",
     },
     validators: {
-      onChange: newPlaylistSchema,
+      onBlur: newPlaylistSchema,
     },
     onSubmit: async ({ value }) => {
       doCreatePlaylist.mutate(

@@ -30,9 +30,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
 
 const newInternetRadioStationSchema = z.object({
-  name: z.string().min(1),
-  streamUrl: z.url(),
-  homePageUrl: z.url().optional(),
+  name: z.string().trim().min(1),
+  streamUrl: z.url().trim(),
+  homePageUrl: z.url().trim().optional(),
 });
 export default function NewInternetRadioStationScreen() {
   const { t } = useTranslation();
@@ -48,7 +48,7 @@ export default function NewInternetRadioStationScreen() {
       homePageUrl: "",
     },
     validators: {
-      onChange: newInternetRadioStationSchema,
+      onBlur: newInternetRadioStationSchema,
     },
     onSubmit: async ({ value }) => {
       doCreateInternetRadioStation.mutate(
@@ -171,7 +171,6 @@ export default function NewInternetRadioStationScreen() {
                       "app.internetRadioStations.streamUrlPlaceholder",
                     )}
                     textContentType="URL"
-                    keyboardType="url"
                     autoCapitalize="none"
                   />
                 </Input>
@@ -211,7 +210,6 @@ export default function NewInternetRadioStationScreen() {
                       "app.internetRadioStations.homePageUrlPlaceholder",
                     )}
                     textContentType="URL"
-                    keyboardType="url"
                     autoCapitalize="none"
                   />
                 </Input>
