@@ -43,6 +43,7 @@ import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { format } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
@@ -52,7 +53,7 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
-import { format, parse } from "date-fns";
+import { parse } from "date-fns";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";

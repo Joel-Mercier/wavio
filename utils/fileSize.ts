@@ -1,4 +1,4 @@
-const units = ["bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+import i18n from "@/config/i18n";
 
 export function niceBytes(x: number): string {
   let l = 0;
@@ -8,5 +8,5 @@ export function niceBytes(x: number): string {
     n = n / 1024;
   }
 
-  return `${n.toFixed(n < 10 && l > 0 ? 1 : 0)} ${units[l]}`;
+  return `${n.toFixed(n < 10 && l > 0 ? 1 : 0)} ${i18n.t(`app.shared.fileSizes.${l}`)}`;
 }

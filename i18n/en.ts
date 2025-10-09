@@ -105,6 +105,17 @@ export default {
       },
       settings: {
         title: "Settings",
+        offlineSettings: {
+          title: "Offline mode",
+          offlineModeLabel: "Offline mode",
+          offlineModeDescription:
+            "Download favorite tracks for offline listening",
+          downloadedTracksCount: "{{count}}/{{total}} tracks downloaded ({{size}})",
+          clearDownloadsLabel: "Clear downloads",
+          clearDownloadsDescription: "Remove all downloaded tracks from device",
+          clearDownloadsSuccessMessage: "All downloads cleared successfully",
+          clearDownloadsErrorMessage: "Failed to clear downloads",
+        },
         musicLibrarySettings: {
           title: "Music library settings",
           scanMusicLibraryLabel: "Scan music library",
@@ -198,6 +209,17 @@ export default {
         shareErrorMessage: "An error occurred while sharing the track",
         downloadSuccessMessage: "Track successfully downloaded",
         downloadErrorMessage: "An error occurred while downloading the track",
+        downloadForOffline: "Download for offline",
+        downloadingForOffline: "Downloading for offline",
+        removeOfflineDownload: "Remove offline download",
+        offlineDownloadSuccessMessage:
+          "Track successfully downloaded for offline use",
+        offlineDownloadErrorMessage:
+          "An error occurred while downloading track for offline use",
+        removeOfflineDownloadSuccessMessage:
+          "Track successfully removed from offline downloads",
+        removeOfflineDownloadErrorMessage:
+          "An error occurred while removing track from offline downloads",
         rateSuccessMessage: "Rating successfully set",
         rateErrorMessage: "An error occurred while setting the rating",
         infoModal: {
@@ -269,6 +291,7 @@ export default {
         cancel: "Cancel",
         create: "Create",
         delete: "Delete",
+        clear: "Clear",
         unknown: "Unknown",
         favorites: "Favorites",
         album_one: "Album",
@@ -312,6 +335,7 @@ export default {
           en: "English",
           fr: "Français",
         },
+        fileSizes: ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
       },
     },
     auth: {
@@ -324,7 +348,8 @@ export default {
         choice: "Or enter your server details",
         login: "Login",
         loginSuccessMessage: "Successfully signed in",
-        loginErrorMessage: "Couldn't reach the requested server. Try again after verifying your server informations",
+        loginErrorMessage:
+          "Couldn't reach the requested server. Try again after verifying your server informations",
         serverAlreadyExists: "Server already exists",
       },
     },

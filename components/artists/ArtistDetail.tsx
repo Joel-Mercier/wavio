@@ -358,7 +358,7 @@ export default function ArtistDetail() {
 
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.artist?.album || loadingData(3)}
+        data={data?.artist?.album?.slice(0, 3) || loadingData(3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <AlbumListItemSkeleton index={index} />
@@ -499,6 +499,21 @@ export default function ArtistDetail() {
                   count: data?.artist?.album?.length || 0,
                 })}
               </Text>
+              {(data?.artist?.album?.length || 0) > 3 && (
+                <Center>
+                  <FadeOutScaleDown
+                    href={{
+                      pathname: `/artists/${id}/discography`,
+                      params: { name: data?.artist?.name },
+                    }}
+                    className="rounded-full border border-gray-300 py-1 px-3"
+                  >
+                    <Text className="text-gray-300">
+                      {t("app.shared.seeAll")}
+                    </Text>
+                  </FadeOutScaleDown>
+                </Center>
+              )}
             </VStack>
             {artistInfoData?.artistInfo2?.biography && (
               <VStack className="px-6 bg-black">

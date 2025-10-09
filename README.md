@@ -5,9 +5,14 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 ## TODO
 
 - [ ] Add support for iOS
-- [ ] Add support for offline mode
+- [ ] Banner when network is down
+- [ ] Finish top songs feature
+- [ ] Choose API and implement Podcast features
+- [ ] Implement RevenueCat to unlock podcasts
+- [ ] Make server switching work
 - [ ] Get good design elements (logo, icon, splash screen, bg elements, ...)
 - [ ] Spotify-like queue handling (https://www.howtogeek.com/spotifys-play-queue-is-the-best-in-the-business-heres-why/#:~:text=do%20they%20work%3F-,How%20a%20Play%20Queue%20Works%20in%20General,to%20play%20after%20each%20other.&text=When%20you%20press%20play%20on,are%20added%20to%20the%20queue.)
+- [ ] Support Jellyfin (https://api.jellyfin.org/)
 
 ## Getting started
 

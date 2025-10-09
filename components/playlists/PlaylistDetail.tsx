@@ -46,7 +46,11 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
+  ArrowDown,
+  ArrowDownUp,
   ArrowLeft,
+  ArrowUp,
+  Check,
   ClipboardCheck,
   ClipboardIcon,
   Clock,
@@ -59,7 +63,7 @@ import {
   Shuffle,
   X,
 } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -80,6 +84,9 @@ export default function PlaylistDetail() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [sort, setSort] = useState<
+    "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc"
+  >("addedAtAsc");
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -93,12 +100,15 @@ export default function PlaylistDetail() {
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleShareSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetShareModalRef);
-  const { data, isLoading, error } = usePlaylist(id);
+  const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleSortSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetSortModalRef);
+  const { data: playlistData, isLoading, error } = usePlaylist(id);
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
-  const colors = useImageColors(artworkUrl(data?.playlist?.coverArt));
+  const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -264,12 +274,12 @@ export default function PlaylistDetail() {
   };
 
   const handleTrackPressCallback = () => {
-    if (data?.playlist) {
+    if (playlistData?.playlist) {
       addRecentPlay({
         id,
-        title: data?.playlist.name,
+        title: playlistData?.playlist.name,
         type: "playlist",
-        coverArt: data?.playlist?.coverArt,
+        coverArt: playlistData?.playlist?.coverArt,
       });
     }
   };
@@ -320,6 +330,43 @@ export default function PlaylistDetail() {
     }
   };
 
+  const handlePresentSortModalPress = useCallback(() => {
+    bottomSheetSortModalRef.current?.present();
+  }, []);
+
+  const handleSortPress = (type: typeof sort) => {
+    bottomSheetSortModalRef.current?.dismiss();
+    setSort(type);
+  };
+
+  const data = useMemo(() => {
+    if (
+      !playlistData ||
+      !playlistData?.playlist ||
+      !playlistData?.playlist.entry
+    ) {
+      return null;
+    }
+    const newData = [...playlistData.playlist.entry];
+
+    if (sort === "addedAtAsc") {
+      return newData;
+    }
+    if (sort === "addedAtDesc") {
+      return newData.reverse();
+    }
+    if (sort === "alphabeticalAsc") {
+      return newData.sort((a, b) => {
+        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
+      });
+    }
+    if (sort === "alphabeticalDesc") {
+      return newData.sort((a, b) => {
+        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
+      });
+    }
+  }, [playlistData, sort]);
+
   return (
     <Box className="h-full">
       <AnimatedBox
@@ -345,7 +392,7 @@ export default function PlaylistDetail() {
               </Box>
             </FadeOutScaleDown>
             <Heading className="text-white font-bold" size="lg">
-              {data?.playlist.name}
+              {playlistData?.playlist.name}
             </Heading>
             <Box className="w-10" />
           </HStack>
@@ -353,7 +400,7 @@ export default function PlaylistDetail() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.playlist.entry?.reverse() || loadingData(16)}
+        data={data || loadingData(16)}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (
             <TrackListItemSkeleton index={index} />
@@ -388,10 +435,10 @@ export default function PlaylistDetail() {
                 <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
               </FadeOutScaleDown>
               {/* https://github.com/navidrome/navidrome/issues/406 */}
-              {data?.playlist?.coverArt ? (
+              {playlistData?.playlist?.coverArt ? (
                 <AnimatedImage
                   style={artworkStyle}
-                  source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
+                  source={{ uri: artworkUrl(playlistData?.playlist?.coverArt) }}
                   className="w-[70%] aspect-square rounded-md"
                   alt="Playlist cover"
                 />
@@ -406,22 +453,49 @@ export default function PlaylistDetail() {
             <VStack>
               <VStack className="mt-5">
                 <Heading numberOfLines={1} className="text-white" size="2xl">
-                  {data?.playlist.name}
+                  {playlistData?.playlist.name}
                 </Heading>
-                {data?.playlist.comment && (
+                {playlistData?.playlist.comment && (
                   <Text className="text-md text-primary-100 mt-2">
-                    {data?.playlist.comment}
+                    {playlistData?.playlist.comment}
                   </Text>
                 )}
               </VStack>
               <HStack className="mt-2 items-center">
                 <Clock color={"#808080"} size={16} />
                 <Text className="ml-2 text-primary-100">
-                  {Math.round((data?.playlist.duration || 0) / 60)} min
+                  {Math.round((playlistData?.playlist.duration || 0) / 60)} min
                 </Text>
               </HStack>
               <HStack className="mt-4 items-center justify-between">
                 <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                    <HStack className="items-center gap-x-2">
+                      {sort.endsWith("Asc") && (
+                        <ArrowUp
+                          size={16}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      )}
+                      {sort.endsWith("Desc") && (
+                        <ArrowDown
+                          size={16}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      )}
+                      {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
+                        <ArrowDownUp
+                          size={16}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      )}
+                      <Text className="text-white font-bold">
+                        {sort.startsWith("addedAt")
+                          ? t("app.library.recentSort")
+                          : t("app.library.alphabeticalSort")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
                     <EllipsisVertical color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
@@ -447,8 +521,8 @@ export default function PlaylistDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6">
             <Text className="text-white font-bold">
-              {`${t("app.shared.songCount", { count: data?.playlist.songCount })} `}{" "}
-              ⦁ {Math.round((data?.playlist.duration || 0) / 60)} min
+              {`${t("app.shared.songCount", { count: playlistData?.playlist.songCount })} `}{" "}
+              ⦁ {Math.round((playlistData?.playlist.duration || 0) / 60)} min
             </Text>
           </VStack>
         )}
@@ -523,9 +597,9 @@ export default function PlaylistDetail() {
         >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
-              {data?.playlist?.coverArt ? (
+              {playlistData?.playlist?.coverArt ? (
                 <Image
-                  source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
+                  source={{ uri: artworkUrl(playlistData?.playlist?.coverArt) }}
                   className="w-16 h-16 rounded-full aspect-square"
                   alt="Playlist cover"
                 />
@@ -540,7 +614,7 @@ export default function PlaylistDetail() {
                   size="lg"
                   numberOfLines={1}
                 >
-                  {data?.playlist.name}
+                  {playlistData?.playlist.name}
                 </Heading>
               </VStack>
             </HStack>
@@ -586,6 +660,85 @@ export default function PlaylistDetail() {
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.delete")}
                   </Text>
+                </HStack>
+              </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetSortModalRef}
+        onChange={handleSortSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "addedAtAsc" ? "addedAtDesc" : "addedAtAsc",
+                  )
+                }
+              >
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.recentSort")}
+                    </Text>
+                  </VStack>
+                  {sort === "addedAtAsc" && (
+                    <ArrowUp
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                  {sort === "addedAtDesc" && (
+                    <ArrowDown
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "alphabeticalAsc"
+                      ? "alphabeticalDesc"
+                      : "alphabeticalAsc",
+                  )
+                }
+              >
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.alphabeticalSort")}
+                    </Text>
+                  </VStack>
+                  {sort === "alphabeticalAsc" && (
+                    <ArrowUp
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                  {sort === "alphabeticalDesc" && (
+                    <ArrowDown
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
                 </HStack>
               </FadeOutScaleDown>
             </VStack>

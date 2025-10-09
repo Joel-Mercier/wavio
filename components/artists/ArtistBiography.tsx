@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ArtistBiography() {
   const { t } = useTranslation();
@@ -59,7 +60,12 @@ export default function ArtistBiography() {
         </Heading>
         <Box className="w-6" />
       </HStack>
-      <ScrollView>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
+        }}
+      >
         <Text className="text-white mt-6">{biography}</Text>
         <FadeOutScaleDown
           onPress={handleMusicBrainzPress}

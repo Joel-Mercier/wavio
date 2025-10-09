@@ -106,6 +106,16 @@ export default {
       },
       settings: {
         title: "Paramètres",
+        offlineSettings: {
+          title: "Mode hors ligne",
+          offlineModeLabel: "Mode hors ligne",
+          offlineModeDescription: "Télécharger les titres favoris pour le mode hors ligne",
+          downloadedTracksCount: "{{count}}/{{total}} titres téléchargés ({{size}})",
+          clearDownloadsLabel: "Effacer les téléchargements",
+          clearDownloadsDescription: "Supprimer tous les téléchargements de l'appareil",
+          clearDownloadsSuccessMessage: "Tous les téléchargements ont été effacé avec succès",
+          clearDownloadsErrorMessage: "Échec de l'effacement des téléchargements",
+        },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
           scanMusicLibraryLabel: "Scanner la bibliothèque musicale",
@@ -203,6 +213,13 @@ export default {
         downloadSuccessMessage: "Titre téléchargé avec succès",
         downloadErrorMessage:
           "Une erreur s'est produite lors du téléchargement du titre",
+        downloadForOffline: "Rendre accessible en mode hors ligne",
+        downloadingForOffline: "Téléchargement en mode hors ligne",
+        removeOfflineDownload: "Supprimer le téléchargement en mode hors ligne",
+        offlineDownloadSuccessMessage: "Titre téléchargé pour le mode hors ligne",
+        offlineDownloadErrorMessage: "Une erreur s'est produite lors du téléchargement du titre pour le mode hors ligne",
+        removeOfflineDownloadSuccessMessage: "Titre supprimé avec succès du mode hors ligne",
+        removeOfflineDownloadErrorMessage: "Une erreur s'est produite lors de la suppression du titre du mode hors ligne",
         rateSuccessMessage: "Notation du titre réussie",
         rateErrorMessage:
           "Une erreur s'est produite lors de la notation du titre",
@@ -278,6 +295,7 @@ export default {
         cancel: "Annuler",
         create: "Créer",
         delete: "Supprimer",
+        clear: "Effacer",
         unknown: "Inconnu",
         favorites: "Favoris",
         album_one: "Album",
@@ -321,6 +339,7 @@ export default {
           en: "English",
           fr: "Français",
         },
+        fileSizes: ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"],
       },
     },
     auth: {

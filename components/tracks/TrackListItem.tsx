@@ -32,9 +32,11 @@ import {
 import { useUpdatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
+import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 import { downloadUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
@@ -45,12 +47,13 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow, secondsToMinutes } from "date-fns";
+import { secondsToMinutes } from "date-fns";
 import * as Clipboard from "expo-clipboard";
 import { Directory, File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import {
+  ArrowDown,
   AudioLines,
   Check,
   CircleX,
@@ -114,6 +117,14 @@ export default function TrackListItem({
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const {
+    offlineModeEnabled,
+    isTrackDownloaded,
+    isTrackDownloading,
+    downloadTrack,
+    removeDownloadedTrack,
+    getDownloadProgress,
+  } = useOfflineDownloads();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -424,6 +435,72 @@ export default function TrackListItem({
     }
   };
 
+  const handleOfflineDownloadPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await downloadTrack(track);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.offlineDownloadSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error downloading track for offline:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.offlineDownloadErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleRemoveOfflineDownloadPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await removeDownloadedTrack(track.id);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.removeOfflineDownloadSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error removing offline download:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.removeOfflineDownloadErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
   return (
     <Pressable onPress={handleTrackPress}>
       <HStack
@@ -466,9 +543,16 @@ export default function TrackListItem({
             >
               {track.title}
             </Heading>
-            <Text numberOfLines={1} className="text-md text-primary-100">
-              {track.artist}
-            </Text>
+            <HStack className="flex-1 items-center">
+              {offlineModeEnabled && isTrackDownloaded(track.id) && (
+                <Box className="flex items-center justify-center rounded-full size-4 bg-emerald-500 mr-2">
+                  <ArrowDown color={themeConfig.theme.colors.black} size={12} />
+                </Box>
+              )}
+              <Text numberOfLines={1} className="text-md text-primary-100">
+                {track.artist}
+              </Text>
+            </HStack>
           </VStack>
         </HStack>
         <HStack className="items-center">
@@ -684,6 +768,53 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {offlineModeEnabled && track.starred && (
+                  <>
+                    {!isTrackDownloading(track.id) &&
+                      !isTrackDownloaded(track.id) && (
+                        <FadeOutScaleDown onPress={handleOfflineDownloadPress}>
+                          <HStack className="items-center">
+                            <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                              <ArrowDown
+                                size={20}
+                                color={themeConfig.theme.colors.black}
+                              />
+                            </Box>
+                            <Text className="ml-4 text-lg text-emerald-400">
+                              {t("app.tracks.downloadForOffline")}
+                            </Text>
+                          </HStack>
+                        </FadeOutScaleDown>
+                      )}
+                    {isTrackDownloading(track.id) && (
+                      <HStack className="items-center">
+                        <Download
+                          size={24}
+                          color={themeConfig.theme.colors.gray[400]}
+                        />
+                        <Text className="ml-4 text-lg text-gray-400">
+                          {t("app.tracks.downloadingForOffline")} (
+                          {getDownloadProgress(track.id)?.progress || 0}%)
+                        </Text>
+                      </HStack>
+                    )}
+                    {isTrackDownloaded(track.id) && (
+                      <FadeOutScaleDown
+                        onPress={handleRemoveOfflineDownloadPress}
+                      >
+                        <HStack className="items-center">
+                          <X
+                            size={24}
+                            color={themeConfig.theme.colors.red[500]}
+                          />
+                          <Text className="ml-4 text-lg text-red-400">
+                            {t("app.tracks.removeOfflineDownload")}
+                          </Text>
+                        </HStack>
+                      </FadeOutScaleDown>
+                    )}
+                  </>
+                )}
                 {track?.musicBrainzId && (
                   <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                     <HStack className="items-center">

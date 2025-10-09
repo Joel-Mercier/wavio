@@ -37,7 +37,8 @@ import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import { useForm } from "@tanstack/react-form";
-import axios, { Axios } from "axios";
+import axios from "axios";
+import { formatISO } from "date-fns";
 import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -81,10 +82,8 @@ export default function LoginScreen() {
             openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
           );
         }
-        const defaultServers = servers.filter((server) =>
-          server.name.startsWith(t("app.servers.defaultServer")),
-        );
-        const newServerName = `${t("app.servers.defaultServer")}${defaultServers.length > 0 ? ` (${defaultServers.length + 1})` : ""}`;
+
+        const newServerName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
         addServer({
           ...value,
           name: newServerName,

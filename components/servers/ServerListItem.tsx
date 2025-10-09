@@ -113,11 +113,15 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         )}
       >
         <HStack className="items-center justify-between">
-          <VStack>
-            <Heading size="md" className="text-white mb-8" numberOfLines={1}>
+          <VStack className="flex-1">
+            <Heading
+              size="md"
+              className="text-white mb-8 flex-1"
+              numberOfLines={1}
+            >
               {server.name}
             </Heading>
-            <HStack>
+            <HStack className="flex-1">
               <Text className="text-primary-100 text-sm" numberOfLines={1}>
                 {server.url}
               </Text>

@@ -148,7 +148,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                   className="border border-primary-200 rounded-lg p-4 mx-6 bg-primary-800"
                 >
                   <HStack className="items-center justify-between">
-                    <VStack>
+                    <VStack className="flex-1">
                       <Heading
                         size="lg"
                         className="text-white font-normal"

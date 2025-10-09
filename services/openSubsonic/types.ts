@@ -168,6 +168,7 @@ export interface Child {
   artists?: { id: string; name: string }[];
   name?: string;
   musicBrainzId?: string;
+  sortName?: string;
 }
 
 export interface Directory {

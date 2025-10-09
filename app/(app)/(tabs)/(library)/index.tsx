@@ -35,7 +35,9 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import {
+  ArrowDown,
   ArrowDownUp,
+  ArrowUp,
   Check,
   LayoutGrid,
   List,
@@ -55,7 +57,9 @@ export default function LibraryScreen() {
   const setShowDrawer = useApp.use.setShowDrawer();
   const username = useAuth.use.username();
   const router = useRouter();
-  const [sort, setSort] = useState<"addedAt" | "alphabetical">("addedAt");
+  const [sort, setSort] = useState<
+    "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc"
+  >("addedAtAsc");
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | null
@@ -157,13 +161,21 @@ export default function LibraryScreen() {
     }
     data = data.flat();
     return data.sort((a, b) => {
-      if (sort === "addedAt") {
+      if (sort === "addedAtAsc") {
+        return (
+          new Date(a.starred || a.created) - new Date(b.starred || b.created)
+        );
+      }
+      if (sort === "addedAtDesc") {
         return (
           new Date(b.starred || b.created) - new Date(a.starred || a.created)
         );
       }
-      if (sort === "alphabetical") {
+      if (sort === "alphabeticalAsc") {
         return a.name.localeCompare(b.name);
+      }
+      if (sort === "alphabeticalDesc") {
+        return b.name.localeCompare(a.name);
       }
     });
   }, [starredData, playlistsData, filter, sort]);
@@ -240,9 +252,17 @@ export default function LibraryScreen() {
         <HStack className="px-6 pb-6 items-center justify-between">
           <FadeOutScaleDown onPress={handlePresentSortModalPress}>
             <HStack className="items-center gap-x-2">
-              <ArrowDownUp size={16} color={themeConfig.theme.colors.white} />
+              {sort.endsWith("Asc") && (
+                <ArrowUp size={16} color={themeConfig.theme.colors.white} />
+              )}
+              {sort.endsWith("Desc") && (
+                <ArrowDown size={16} color={themeConfig.theme.colors.white} />
+              )}
+              {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
+                <ArrowDownUp size={16} color={themeConfig.theme.colors.white} />
+              )}
               <Text className="text-white font-bold">
-                {sort === "addedAt"
+                {sort.startsWith("addedAt")
                   ? t("app.library.recentSort")
                   : t("app.library.alphabeticalSort")}
               </Text>
@@ -375,30 +395,56 @@ export default function LibraryScreen() {
         >
           <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={() => handleSortPress("addedAt")}>
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "addedAtAsc" ? "addedAtDesc" : "addedAtAsc",
+                  )
+                }
+              >
                 <HStack className="items-center justify-between">
                   <VStack className="ml-4">
                     <Text className="text-lg text-gray-200">
                       {t("app.library.recentSort")}
                     </Text>
                   </VStack>
-                  {sort === "addedAt" && (
-                    <Check
+                  {sort === "addedAtAsc" && (
+                    <ArrowUp
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                  {sort === "addedAtDesc" && (
+                    <ArrowDown
                       size={24}
                       color={themeConfig.theme.colors.emerald[500]}
                     />
                   )}
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => handleSortPress("alphabetical")}>
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "alphabeticalAsc"
+                      ? "alphabeticalDesc"
+                      : "alphabeticalAsc",
+                  )
+                }
+              >
                 <HStack className="items-center justify-between">
                   <VStack className="ml-4">
                     <Text className="text-lg text-gray-200">
                       {t("app.library.alphabeticalSort")}
                     </Text>
                   </VStack>
-                  {sort === "alphabetical" && (
-                    <Check
+                  {sort === "alphabeticalAsc" && (
+                    <ArrowUp
+                      size={24}
+                      color={themeConfig.theme.colors.emerald[500]}
+                    />
+                  )}
+                  {sort === "alphabeticalDesc" && (
+                    <ArrowDown
                       size={24}
                       color={themeConfig.theme.colors.emerald[500]}
                     />

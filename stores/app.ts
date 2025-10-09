@@ -1,6 +1,7 @@
 import i18n, { type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
+import z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -19,6 +20,7 @@ export const useAppBase = create<AppStore>()(
       locale: null,
       setLocale: (locale: TSupportedLanguages) => {
         i18n.changeLanguage(locale);
+        z.config(z.locales[locale]());
         set({ locale });
       },
       showDrawer: false,

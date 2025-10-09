@@ -1,5 +1,6 @@
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import TestSlider from "@/components/Slider";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -336,6 +337,10 @@ export default function PlayerScreen() {
                 </SliderTrack>
                 <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
               </Slider>
+              <TestSlider
+                trackClassName="bg-primary-400"
+                thumbClassName="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
+              />
               <HStack className="mt-2 items-center justify-between">
                 <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
                 <Text className="text-primary-100 text-sm">

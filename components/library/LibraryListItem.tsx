@@ -7,6 +7,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type {
   AlbumID3,
   ArtistID3,
@@ -15,7 +16,7 @@ import type {
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 import { LinearGradient } from "expo-linear-gradient";
-import { Disc3, Heart, ListMusic, User } from "lucide-react-native";
+import { ArrowDown, Disc3, Heart, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -55,6 +56,7 @@ export default function LibraryListItem({
   index,
 }: LibraryListItemProps) {
   const { t, i18n } = useTranslation();
+  const { offlineModeEnabled } = useOfflineDownloads();
   const type = useMemo(() => {
     if (item.isFavorites) {
       return {
@@ -145,16 +147,19 @@ export default function LibraryListItem({
           >
             {item.name}
           </Heading>
-          <Text numberOfLines={1} className="text-md text-primary-100">
-            {type.label} ⦁ {item.albumCount || item.songCount}{" "}
-            {type.id === "artist"
-              ? item.albumCount > 1
-                ? "albums"
-                : "album"
-              : item.songCount > 1
-                ? "songs"
-                : "song"}
-          </Text>
+          <HStack className="items-center">
+            {offlineModeEnabled && type.id === "favorites" && (
+              <Box className="size-4 rounded-full bg-emerald-500 items-center justify-center mr-2">
+                <ArrowDown size={12} color={themeConfig.theme.colors.black} />
+              </Box>
+            )}
+            <Text numberOfLines={1} className="text-md text-primary-100">
+              {type.label} ⦁{" "}
+              {type.id === "artist"
+                ? t("app.shared.albumCount", { count: item.albumCount })
+                : t("app.shared.songCount", { count: item.songCount })}
+            </Text>
+          </HStack>
         </VStack>
       </HStack>
     </FadeOutScaleDown>

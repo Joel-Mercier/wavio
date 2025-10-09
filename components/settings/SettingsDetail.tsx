@@ -29,9 +29,12 @@ import {
   useStartScan,
 } from "@/hooks/openSubsonic/useMediaLibraryScanning";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
+import { formatDistanceToNow } from "@/utils/date";
+import { niceBytes } from "@/utils/fileSize";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -39,7 +42,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Check } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -48,7 +51,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function SettingsDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showRecentPlaysAlertDialog, setShowRecentPlaysAlertDialog] =
     useState(false);
   const [showRecentSearchesAlertDialog, setShowRecentSearchesAlertDialog] =
@@ -70,6 +73,14 @@ export default function SettingsDetail() {
   const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
   const doStartScan = useStartScan();
   const { data, isLoading, error } = useGetScanStatus();
+  const {
+    offlineModeEnabled,
+    setOfflineModeEnabled,
+    getDownloadedTracksCount,
+    getTotalDownloadSize,
+    clearAllDownloads,
+    downloadedTracksList,
+  } = useOfflineDownloads();
 
   const handlePresentLanguageModalPress = () => {
     bottomSheetLanguageModalRef.current?.present();
@@ -130,6 +141,37 @@ export default function SettingsDetail() {
         });
       },
     });
+  };
+
+  const handleClearOfflineDownloadsPress = async () => {
+    try {
+      await clearAllDownloads();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.settings.offlineSettings.clearDownloadsSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.settings.offlineSettings.clearDownloadsErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   return (
@@ -214,6 +256,65 @@ export default function SettingsDetail() {
             </HStack>
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.offlineSettings.title")}
+            </Heading>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.offlineSettings.offlineModeLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.offlineSettings.offlineModeDescription")}
+                </Text>
+                {offlineModeEnabled && (
+                  <Text className="text-emerald-400 text-sm">
+                    {t("app.settings.offlineSettings.downloadedTracksCount", {
+                      count: getDownloadedTracksCount(),
+                      total: downloadedTracksList.length,
+                      size: niceBytes(getTotalDownloadSize()),
+                    })}
+                  </Text>
+                )}
+              </VStack>
+              <Switch
+                size="md"
+                trackColor={{
+                  false: themeConfig.theme.colors.gray[500],
+                  true: themeConfig.theme.colors.emerald[500],
+                }}
+                thumbColor={themeConfig.theme.colors.white}
+                ios_backgroundColor={themeConfig.theme.colors.white}
+                value={offlineModeEnabled}
+                onToggle={(value) => setOfflineModeEnabled(value)}
+              />
+            </HStack>
+            {offlineModeEnabled && (
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-3/5">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.offlineSettings.clearDownloadsLabel")}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t(
+                      "app.settings.offlineSettings.clearDownloadsDescription",
+                    )}
+                  </Text>
+                </VStack>
+                <FadeOutScaleDown
+                  onPress={handleClearOfflineDownloadsPress}
+                  className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+                >
+                  <Text
+                    numberOfLines={1}
+                    className="text-primary-800 font-bold text-lg"
+                  >
+                    {t("app.shared.clear")}
+                  </Text>
+                </FadeOutScaleDown>
+              </HStack>
+            )}
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
               {t("app.settings.displaySettings.title")}
             </Heading>
             <FadeOutScaleDown onPress={handlePresentLanguageModalPress}>
@@ -240,7 +341,7 @@ export default function SettingsDetail() {
               <Switch
                 size="md"
                 trackColor={{
-                  false: themeConfig.theme.colors.primary[400],
+                  false: themeConfig.theme.colors.gray[500],
                   true: themeConfig.theme.colors.emerald[500],
                 }}
                 thumbColor={themeConfig.theme.colors.white}

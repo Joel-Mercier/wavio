@@ -12,6 +12,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
@@ -19,7 +20,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Play, Shuffle } from "lucide-react-native";
+import { ArrowDown, ArrowLeft, Play, Shuffle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -40,6 +41,7 @@ export default function FavoritesScreen() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useStarred2({});
   const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const { offlineModeEnabled } = useOfflineDownloads();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -120,7 +122,7 @@ export default function FavoritesScreen() {
                   </Pressable>
                   <Heading
                     numberOfLines={2}
-                    className="text-white mb-12"
+                    className="text-white mb-12 font-bold"
                     size="xl"
                   >
                     {t("app.favorites.favorite_tracks")}
@@ -136,6 +138,14 @@ export default function FavoritesScreen() {
                       count: data?.starred2.song?.length || 0,
                     })}
                   </Text>
+                  {offlineModeEnabled && (
+                    <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                      <ArrowDown
+                        size={20}
+                        color={themeConfig.theme.colors.black}
+                      />
+                    </Box>
+                  )}
                 </HStack>
                 <HStack className="items-center gap-x-4">
                   <Pressable>
