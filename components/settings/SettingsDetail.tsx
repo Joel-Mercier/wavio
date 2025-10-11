@@ -1,4 +1,5 @@
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -10,8 +11,15 @@ import {
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Divider } from "@/components/ui/divider";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+} from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Input, InputField } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
@@ -28,33 +36,45 @@ import {
   useGetScanStatus,
   useStartScan,
 } from "@/hooks/openSubsonic/useMediaLibraryScanning";
+import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import useApp from "@/stores/app";
+import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
+import { cn } from "@/utils/tailwind";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Check } from "lucide-react-native";
+import { AlertCircleIcon, ArrowLeft, Check } from "lucide-react-native";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
+import z from "zod";
+
+const podcastConfigSchema = z.object({
+  apiKey: z.string().trim().min(1),
+  userId: z.string().trim().min(1),
+});
 
 export default function SettingsDetail() {
   const { t, i18n } = useTranslation();
   const [showRecentPlaysAlertDialog, setShowRecentPlaysAlertDialog] =
     useState(false);
   const [showRecentSearchesAlertDialog, setShowRecentSearchesAlertDialog] =
+    useState(false);
+  const [showPodcastsAlertDialog, setShowPodcastsAlertDialog] = useState(false);
+  const [showDeletePodcastsAlertDialog, setShowDeletePodcastsAlertDialog] =
     useState(false);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
@@ -69,10 +89,18 @@ export default function SettingsDetail() {
   const setLocale = useApp.use.setLocale();
   const showAddTab = useApp.use.showAddTab();
   const setShowAddTab = useApp.use.setShowAddTab();
+  const setTaddyPodcastsConfig = usePodcasts.use.setTaddyPodcastsConfig();
+  const clearTaddyPodcastsConfig = usePodcasts.use.clearTaddyPodcastsConfig();
+  const taddyPodcastApiKey = usePodcasts.use.taddyPodcastsApiKey();
+  const taddyPodcastUserId = usePodcasts.use.taddyPodcastsUserId();
   const clearRecentPlays = useRecentPlays.use.clearRecentPlays();
   const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
   const doStartScan = useStartScan();
   const { data, isLoading, error } = useGetScanStatus();
+  const { data: remainingApiRequests } = useRemainingApiRequests(
+    !!(taddyPodcastApiKey && taddyPodcastUserId),
+  );
+
   const {
     offlineModeEnabled,
     setOfflineModeEnabled,
@@ -81,6 +109,34 @@ export default function SettingsDetail() {
     clearAllDownloads,
     downloadedTracksList,
   } = useOfflineDownloads();
+  const podcastConfigForm = useForm({
+    defaultValues: {
+      apiKey: taddyPodcastApiKey,
+      userId: taddyPodcastUserId,
+    },
+    validators: {
+      onBlur: podcastConfigSchema,
+    },
+    onSubmit: ({ value }) => {
+      console.log(value);
+      setTaddyPodcastsConfig(value);
+      setShowPodcastsAlertDialog(false);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t(
+                "app.settings.podcastSettings.configurePodcastsSuccessMessage",
+              )}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    },
+  });
 
   const handlePresentLanguageModalPress = () => {
     bottomSheetLanguageModalRef.current?.present();
@@ -92,6 +148,10 @@ export default function SettingsDetail() {
 
   const handleCloseRecentSearchesAlertDialog = () => {
     setShowRecentSearchesAlertDialog(false);
+  };
+
+  const handleCloseDeletePodcastsAlertDialog = () => {
+    setShowDeletePodcastsAlertDialog(false);
   };
 
   const handleDeleteRecentPlaysPress = () => {
@@ -172,6 +232,14 @@ export default function SettingsDetail() {
         ),
       });
     }
+  };
+
+  const handleConfigurePodcastsPress = () => {
+    setShowPodcastsAlertDialog(true);
+  };
+
+  const handleClosePodcastsAlertDialog = () => {
+    setShowPodcastsAlertDialog(false);
   };
 
   return (
@@ -313,6 +381,89 @@ export default function SettingsDetail() {
                 </FadeOutScaleDown>
               </HStack>
             )}
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.podcastSettings.title")}
+            </Heading>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.podcastSettings.configurePodcastsLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t(
+                    "app.settings.podcastSettings.configurePodcastsDescription",
+                  )}
+                </Text>
+              </VStack>
+              <VStack className="gap-y-4">
+                <FadeOutScaleDown
+                  onPress={handleConfigurePodcastsPress}
+                  className="items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+                >
+                  <Text className="text-primary-800 font-bold text-lg">
+                    {t("app.settings.podcastSettings.configurePodcastsAction")}
+                  </Text>
+                </FadeOutScaleDown>
+                {taddyPodcastApiKey && taddyPodcastUserId && (
+                  <FadeOutScaleDown
+                    onPress={() => clearTaddyPodcastsConfig()}
+                    className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+                  >
+                    <Text
+                      numberOfLines={1}
+                      className="text-primary-800 font-bold text-lg"
+                    >
+                      {t("app.shared.delete")}
+                    </Text>
+                  </FadeOutScaleDown>
+                )}
+              </VStack>
+            </HStack>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.podcastSettings.apiStatusLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.podcastSettings.apiStatusDescription")}
+                </Text>
+                {taddyPodcastUserId && (
+                  <Text className="text-primary-100 text-sm">
+                    {`${t("app.settings.podcastSettings.userId")}: ${taddyPodcastUserId}`}
+                  </Text>
+                )}
+                {taddyPodcastApiKey && (
+                  <Text className="text-primary-100 text-sm">
+                    {`${t("app.settings.podcastSettings.apiKey")}: ${taddyPodcastApiKey}`}
+                  </Text>
+                )}
+                {remainingApiRequests?.data?.getApiRequestsRemaining && (
+                  <Text className="text-emerald-400 text-sm">
+                    {t("app.settings.podcastSettings.remainingApiRequests", {
+                      count: remainingApiRequests.data.getApiRequestsRemaining,
+                      total: 500,
+                    })}
+                  </Text>
+                )}
+              </VStack>
+              <Badge
+                className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                size="lg"
+                variant="solid"
+                action={
+                  taddyPodcastApiKey && taddyPodcastUserId
+                    ? "warning"
+                    : "success"
+                }
+              >
+                <BadgeText className="normal-case text-center text-emerald-700">
+                  {taddyPodcastApiKey && taddyPodcastUserId
+                    ? t("app.settings.podcastSettings.statuses.active")
+                    : t("app.settings.podcastSettings.statuses.inactive")}
+                </BadgeText>
+              </Badge>
+            </HStack>
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.displaySettings.title")}
@@ -515,6 +666,142 @@ export default function SettingsDetail() {
             >
               <Text className="text-primary-800 font-bold text-lg">
                 {t("app.shared.delete")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={showPodcastsAlertDialog}
+        onClose={handleClosePodcastsAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.settings.podcastSettings.podcastConfigFormTitle")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t("app.settings.podcastSettings.podcastConfigFormDescription")}
+            </Text>
+            <podcastConfigForm.Field name="userId">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Input
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
+                  >
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
+                      placeholder={t(
+                        "app.settings.podcastSettings.userIdPlaceholder",
+                      )}
+                      autoCapitalize="none"
+                      keyboardType="numeric"
+                    />
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </podcastConfigForm.Field>
+            <podcastConfigForm.Field name="apiKey">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Input
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
+                  >
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
+                      placeholder={t(
+                        "app.settings.podcastSettings.userIdPlaceholder",
+                      )}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </podcastConfigForm.Field>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleClosePodcastsAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={() => {
+                podcastConfigForm.state.isDirty
+                  ? podcastConfigForm.handleSubmit()
+                  : undefined;
+              }}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>

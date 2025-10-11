@@ -159,6 +159,33 @@ export default {
           recentPlaysConfirmDescription:
             "Supprimer ces raccourcis est irréversible. Êtes-vous sûr de vouloir continuer ?",
         },
+        podcastSettings: {
+          title: "Paramètres des podcasts",
+          configurePodcastsLabel: "Configurer les podcasts",
+          configurePodcastsDescription:
+            "Configurez vos podcasts pour les diffuser depuis l'application",
+          configurePodcastsAction: "Configurer",
+          configurePodcastsSuccessMessage: "Podcasts configurés avec succès",
+          configurePodcastsErrorMessage:
+            "Une erreur s'est produite lors de la configuration des podcasts",
+          podcastConfigFormTitle: "Configurer les podcasts",
+          podcastConfigFormDescription:
+            "Saisissez votre ID utilisateur et votre clé API pour configurer vos podcasts",
+          userId: "ID utilisateur",
+          userIdPlaceholder: "Entrer votre ID utilisateur",
+          apiKey: "Clé API",
+          apiKeyPlaceholder: "Entrer votre clé API",
+          apiStatusLabel: "Statut de l'API",
+          apiStatusDescription: "Indique le statut de l'API de vos podcasts",
+          statuses: {
+            active: "Actif",
+            inactive: "Inactif",
+          },
+          remainingApiRequests: "Requêtes API restantes: {{count}}/{{total}}",
+          removePodcastConfigConfirmLabel: "Supprimer la configuration des podcasts",
+          removePodcastConfigConfirmDescription:
+            "Supprimer la configuration de vos podcasts vous fera perdrez l'accès à vos podcasts. Êtes-vous sûr de vouloir continuer ?",
+        }
       },
       internetRadioStations: {
         newTitle: "Donnez un nom à votre station de radio en ligne",

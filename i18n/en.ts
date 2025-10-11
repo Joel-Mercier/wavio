@@ -157,6 +157,33 @@ export default {
           recentPlaysConfirmDescription:
             "Deleting these is irreversible. Please confirm if you want to proceed.",
         },
+        podcastSettings: {
+          title: "Podcast settings",
+          configurePodcastsLabel: "Configure podcasts",
+          configurePodcastsDescription:
+            "Configure your podcasts to stream from the app",
+          configurePodcastsAction: "Configure",
+          configurePodcastsSuccessMessage: "Podcasts successfully configured",
+          configurePodcastsErrorMessage:
+            "An error occurred while configuring the podcasts",
+          podcastConfigFormTitle: "Configure podcasts",
+          podcastConfigFormDescription:
+            "Enter your user ID and API key to configure your podcasts",
+          userId: "User ID",
+          userIdPlaceholder: "Enter your user ID",
+          apiKey: "API key",
+          apiKeyPlaceholder: "Enter your API key",
+          apiStatusLabel: "API status",
+          apiStatusDescription: "Indicates the API status of your podcasts",
+          statuses: {
+            active: "Active",
+            inactive: "Inactive",
+          },
+          remainingApiRequests: "Remaining API requests: {{count}}/{{total}}",
+          removePodcastConfigConfirmLabel: "Remove podcast configuration",
+          removePodcastConfigConfirmDescription:
+            "Removing podcast configuration will remove access to your podcasts. Please confirm if you want to proceed.",
+        }
       },
       internetRadioStations: {
         newTitle: "Give a name to your internet radio station",

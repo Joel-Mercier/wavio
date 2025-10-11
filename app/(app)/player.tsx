@@ -337,9 +337,21 @@ export default function PlayerScreen() {
                 </SliderTrack>
                 <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
               </Slider>
+              <Box className="flex-1 h-[50px]" />
               <TestSlider
-                trackClassName="bg-primary-400"
-                thumbClassName="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
+                value={50}
+                onValueChange={(value) => console.log(value)}
+                min={0}
+                max={100}
+                step={5}
+                trackClassName="bg-gray-200 rounded-full"
+                filledTrackClassName="bg-blue-500 rounded-full"
+                thumbClassName="bg-white rounded-full shadow-lg border-2 border-blue-500"
+                width={300}
+                height={6}
+                thumbSize={24}
+                accessibilityLabel="Volume control"
+                accessibilityHint="Adjust volume by dragging or tapping"
               />
               <HStack className="mt-2 items-center justify-between">
                 <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
