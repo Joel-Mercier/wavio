@@ -143,13 +143,11 @@ export default function RecentSearchesScreen() {
         )}
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={
-          <>
-            {query.length === 0 && (
-              <Heading className="text-white ml-6 my-6">
-                {t("app.search.recentSearches")}
-              </Heading>
-            )}
-          </>
+          query.length === 0 && (
+            <Heading className="text-white ml-6 my-6">
+              {t("app.search.recentSearches")}
+            </Heading>
+          )
         }
         ListFooterComponent={
           <Box>

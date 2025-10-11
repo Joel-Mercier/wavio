@@ -59,7 +59,8 @@ const Icon = React.forwardRef<React.ComponentRef<typeof UIIcon>, IIConProps>(
           size={size}
         />
       );
-    } else if (
+    }
+    if (
       (props.height !== undefined || props.width !== undefined) &&
       size === undefined
     ) {

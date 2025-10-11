@@ -49,13 +49,13 @@ export default function SearchResultsScreen() {
 
     const searchData = [];
     if ((!filter || filter === "albums") && data?.searchResult3?.album) {
-      searchData.push(...data?.searchResult3?.album);
+      searchData.push(...data.searchResult3.album);
     }
     if ((!filter || filter === "artists") && data?.searchResult3?.artist) {
-      searchData.push(...data?.searchResult3?.artist);
+      searchData.push(...data.searchResult3.artist);
     }
     if ((!filter || filter === "songs") && data?.searchResult3?.song) {
-      searchData.push(...data?.searchResult3?.song);
+      searchData.push(...data.searchResult3.song);
     }
     return searchData;
   }, [data, filter]);

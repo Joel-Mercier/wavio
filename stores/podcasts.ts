@@ -6,7 +6,10 @@ import { createJSONStorage, persist } from "zustand/middleware";
 interface PodcastsStore {
   taddyPodcastsApiKey: string;
   taddyPodcastsUserId: string;
-  setTaddyPodcastsConfig: ({ apiKey, userId }: { apiKey: string, userId: string }) => void;
+  setTaddyPodcastsConfig: ({
+    apiKey,
+    userId,
+  }: { apiKey: string; userId: string }) => void;
   clearTaddyPodcastsConfig: () => void;
 }
 

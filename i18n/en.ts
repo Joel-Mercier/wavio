@@ -110,7 +110,8 @@ export default {
           offlineModeLabel: "Offline mode",
           offlineModeDescription:
             "Download favorite tracks for offline listening",
-          downloadedTracksCount: "{{count}}/{{total}} tracks downloaded ({{size}})",
+          downloadedTracksCount:
+            "{{count}}/{{total}} tracks downloaded ({{size}})",
           clearDownloadsLabel: "Clear downloads",
           clearDownloadsDescription: "Remove all downloaded tracks from device",
           clearDownloadsSuccessMessage: "All downloads cleared successfully",
@@ -183,7 +184,7 @@ export default {
           removePodcastConfigConfirmLabel: "Remove podcast configuration",
           removePodcastConfigConfirmDescription:
             "Removing podcast configuration will remove access to your podcasts. Please confirm if you want to proceed.",
-        }
+        },
       },
       internetRadioStations: {
         newTitle: "Give a name to your internet radio station",

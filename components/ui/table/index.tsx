@@ -122,15 +122,14 @@ const TableHead = React.forwardRef<
         {...props}
       />
     );
-  } else {
-    return (
-      <Text
-        ref={ref}
-        className={tableHeadStyle({ class: className })}
-        {...props}
-      />
-    );
   }
+  return (
+    <Text
+      ref={ref}
+      className={tableHeadStyle({ class: className })}
+      {...props}
+    />
+  );
 });
 
 const TableRow = React.forwardRef<
@@ -165,15 +164,14 @@ const TableData = React.forwardRef<
         {...props}
       />
     );
-  } else {
-    return (
-      <Text
-        ref={ref}
-        className={tableDataStyle({ class: className })}
-        {...props}
-      />
-    );
   }
+  return (
+    <Text
+      ref={ref}
+      className={tableDataStyle({ class: className })}
+      {...props}
+    />
+  );
 });
 
 const TableCaption = React.forwardRef<

@@ -109,12 +109,17 @@ export default {
         offlineSettings: {
           title: "Mode hors ligne",
           offlineModeLabel: "Mode hors ligne",
-          offlineModeDescription: "Télécharger les titres favoris pour le mode hors ligne",
-          downloadedTracksCount: "{{count}}/{{total}} titres téléchargés ({{size}})",
+          offlineModeDescription:
+            "Télécharger les titres favoris pour le mode hors ligne",
+          downloadedTracksCount:
+            "{{count}}/{{total}} titres téléchargés ({{size}})",
           clearDownloadsLabel: "Effacer les téléchargements",
-          clearDownloadsDescription: "Supprimer tous les téléchargements de l'appareil",
-          clearDownloadsSuccessMessage: "Tous les téléchargements ont été effacé avec succès",
-          clearDownloadsErrorMessage: "Échec de l'effacement des téléchargements",
+          clearDownloadsDescription:
+            "Supprimer tous les téléchargements de l'appareil",
+          clearDownloadsSuccessMessage:
+            "Tous les téléchargements ont été effacé avec succès",
+          clearDownloadsErrorMessage:
+            "Échec de l'effacement des téléchargements",
         },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
@@ -182,10 +187,11 @@ export default {
             inactive: "Inactif",
           },
           remainingApiRequests: "Requêtes API restantes: {{count}}/{{total}}",
-          removePodcastConfigConfirmLabel: "Supprimer la configuration des podcasts",
+          removePodcastConfigConfirmLabel:
+            "Supprimer la configuration des podcasts",
           removePodcastConfigConfirmDescription:
             "Supprimer la configuration de vos podcasts vous fera perdrez l'accès à vos podcasts. Êtes-vous sûr de vouloir continuer ?",
-        }
+        },
       },
       internetRadioStations: {
         newTitle: "Donnez un nom à votre station de radio en ligne",
@@ -243,10 +249,14 @@ export default {
         downloadForOffline: "Rendre accessible en mode hors ligne",
         downloadingForOffline: "Téléchargement en mode hors ligne",
         removeOfflineDownload: "Supprimer le téléchargement en mode hors ligne",
-        offlineDownloadSuccessMessage: "Titre téléchargé pour le mode hors ligne",
-        offlineDownloadErrorMessage: "Une erreur s'est produite lors du téléchargement du titre pour le mode hors ligne",
-        removeOfflineDownloadSuccessMessage: "Titre supprimé avec succès du mode hors ligne",
-        removeOfflineDownloadErrorMessage: "Une erreur s'est produite lors de la suppression du titre du mode hors ligne",
+        offlineDownloadSuccessMessage:
+          "Titre téléchargé pour le mode hors ligne",
+        offlineDownloadErrorMessage:
+          "Une erreur s'est produite lors du téléchargement du titre pour le mode hors ligne",
+        removeOfflineDownloadSuccessMessage:
+          "Titre supprimé avec succès du mode hors ligne",
+        removeOfflineDownloadErrorMessage:
+          "Une erreur s'est produite lors de la suppression du titre du mode hors ligne",
         rateSuccessMessage: "Notation du titre réussie",
         rateErrorMessage:
           "Une erreur s'est produite lors de la notation du titre",
@@ -379,7 +389,8 @@ export default {
         choice: "Ou entrer vos détails de serveur",
         login: "Connexion",
         loginSuccessMessage: "Connexion réussie",
-        loginErrorMessage: "Impossible de se connecter au serveur. Vérifiez les informations de votre serveur",
+        loginErrorMessage:
+          "Impossible de se connecter au serveur. Vérifiez les informations de votre serveur",
         serverAlreadyExists: "Ce serveur existe déjà",
       },
     },

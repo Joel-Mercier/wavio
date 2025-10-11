@@ -1,4 +1,7 @@
-import useOffline, { type DownloadProgress, type OfflineTrack } from "@/stores/offline";
+import useOffline, {
+  type DownloadProgress,
+  type OfflineTrack,
+} from "@/stores/offline";
 import { downloadUrl } from "@/utils/streaming";
 import { Directory, File, Paths } from "expo-file-system";
 import type { Child } from "./openSubsonic/types";
@@ -8,7 +11,7 @@ export class OfflineDownloadService {
   private downloadQueue: Set<string> = new Set();
   private isProcessing = false;
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): OfflineDownloadService {
     if (!OfflineDownloadService.instance) {
@@ -29,7 +32,10 @@ export class OfflineDownloadService {
     try {
       await this.downloadSingleTrackWithData(track);
     } catch (error) {
-      console.error(`Download Manager: Failed to download track ${trackId}:`, error);
+      console.error(
+        `Download Manager: Failed to download track ${trackId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -41,7 +47,9 @@ export class OfflineDownloadService {
   }
 
   async downloadAllStarredTracks(starredTracks: Child[]): Promise<void> {
-    console.log(`Download Manager: Starting download of ${starredTracks.length} starred tracks`);
+    console.log(
+      `Download Manager: Starting download of ${starredTracks.length} starred tracks`,
+    );
     await this.downloadTracks(starredTracks);
   }
 
@@ -60,7 +68,10 @@ export class OfflineDownloadService {
         await this.downloadSingleTrack(trackId);
         offlineStore.removeFromDownloadQueue(trackId);
       } catch (error) {
-        console.error(`Download Manager: Failed to download track ${trackId}:`, error);
+        console.error(
+          `Download Manager: Failed to download track ${trackId}:`,
+          error,
+        );
         offlineStore.setDownloadProgress(trackId, {
           trackId,
           status: "failed",
@@ -146,12 +157,19 @@ export class OfflineDownloadService {
           progress: 100,
         });
 
-        console.log(`Download Manager: Successfully downloaded track ${trackId}`);
+        console.log(
+          `Download Manager: Successfully downloaded track ${trackId}`,
+        );
       } else {
-        throw new Error("Download Manager: Download failed - file does not exist");
+        throw new Error(
+          "Download Manager: Download failed - file does not exist",
+        );
       }
     } catch (error) {
-      console.error(`Download Manager: Error downloading track ${trackId}:`, error);
+      console.error(
+        `Download Manager: Error downloading track ${trackId}:`,
+        error,
+      );
       offlineStore.setDownloadProgress(trackId, {
         trackId,
         status: "failed",
@@ -238,12 +256,19 @@ export class OfflineDownloadService {
           progress: 100,
         });
 
-        console.log(`Download Manager: Successfully downloaded track ${trackId}`);
+        console.log(
+          `Download Manager: Successfully downloaded track ${trackId}`,
+        );
       } else {
-        throw new Error("Download Manager: Download failed - file does not exist");
+        throw new Error(
+          "Download Manager: Download failed - file does not exist",
+        );
       }
     } catch (error) {
-      console.error(`Download Manager: Error downloading track ${trackId}:`, error);
+      console.error(
+        `Download Manager: Error downloading track ${trackId}:`,
+        error,
+      );
       offlineStore.setDownloadProgress(trackId, {
         trackId,
         status: "failed",
@@ -275,7 +300,9 @@ export class OfflineDownloadService {
         offlineStore.removeDownloadedTrack(trackId);
         offlineStore.removeDownloadProgress(trackId);
 
-        console.log(`Download Manager: Successfully removed downloaded track ${trackId}`);
+        console.log(
+          `Download Manager: Successfully removed downloaded track ${trackId}`,
+        );
       } catch (error) {
         console.error(`Error removing track ${trackId}:`, error);
         throw error;
@@ -295,7 +322,10 @@ export class OfflineDownloadService {
             file.delete();
           }
         } catch (error) {
-          console.error(`Download Manager: Error deleting file for track ${track.id}:`, error);
+          console.error(
+            `Download Manager: Error deleting file for track ${track.id}:`,
+            error,
+          );
         }
       }
 

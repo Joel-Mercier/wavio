@@ -26,6 +26,9 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "info"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "info"
       }
     }
   },

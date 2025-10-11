@@ -34,9 +34,8 @@ const Skeleton = React.forwardRef<HTMLDivElement, ISkeletonProps>(
           {...props}
         />
       );
-    } else {
-      return children;
     }
+    return children;
   },
 );
 
@@ -80,20 +79,18 @@ const SkeletonText = React.forwardRef<HTMLDivElement, ISkeletonTextProps>(
             ))}
           </div>
         );
-      } else {
-        return (
-          <div
-            ref={ref}
-            className={`animate-pulse ${startColor} ${skeletonTextStyle({
-              class: className,
-            })}`}
-            {...props}
-          />
-        );
       }
-    } else {
-      return children;
+      return (
+        <div
+          ref={ref}
+          className={`animate-pulse ${startColor} ${skeletonTextStyle({
+            class: className,
+          })}`}
+          {...props}
+        />
+      );
     }
+    return children;
   },
 );
 

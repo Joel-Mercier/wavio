@@ -32,7 +32,10 @@ export const useOfflineDownloads = () => {
               tracksToDownload,
             );
           } catch (error) {
-            console.error("Download Manager: Error auto-downloading starred tracks:", error);
+            console.error(
+              "Download Manager: Error auto-downloading starred tracks:",
+              error,
+            );
           }
         }
       }
@@ -63,7 +66,10 @@ export const useOfflineDownloads = () => {
     try {
       await offlineDownloadService.removeDownloadedTrack(trackId);
     } catch (error) {
-      console.error("Download Manager: Error removing downloaded track:", error);
+      console.error(
+        "Download Manager: Error removing downloaded track:",
+        error,
+      );
       throw error;
     }
   }, []);

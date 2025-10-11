@@ -82,7 +82,7 @@ export const openSubsonicErrorCodes: Record<number, string> = {
   50: i18n.t("openSubsonic.errorCodes.50"),
   60: i18n.t("openSubsonic.errorCodes.60"),
   70: i18n.t("openSubsonic.errorCodes.70"),
-}
+};
 
 export type ApiType = typeof openSubsonicApiInstance;
 

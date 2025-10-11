@@ -40,7 +40,8 @@ export const Icon = React.forwardRef<
         size={size}
       />
     );
-  } else if (
+  }
+  if (
     (props.height !== undefined || props.width !== undefined) &&
     size === undefined
   ) {

@@ -159,7 +159,7 @@ const Grid = forwardRef<React.ComponentRef<typeof View>, IGridProps>(
         <View
           ref={ref}
           className={gridStyle({
-            class: className + " " + gridClassMerged,
+            class: `${className} ${gridClassMerged}`,
           })}
           onLayout={(event) => {
             const paddingLeftToSubtract =

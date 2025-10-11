@@ -1,1 +1,1 @@
-export type GetApiRequestsRemaining = { getApiRequestsRemaining: number }
+export type GetApiRequestsRemaining = { getApiRequestsRemaining: number };
