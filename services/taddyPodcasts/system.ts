@@ -1,7 +1,3 @@
-// {
-//   getApiRequestsRemaining
-// }
-
 import taddyPodcastsApiInstance, {
   type TaddyPodcastsResponse,
 } from "@/services/taddyPodcasts/index";
@@ -12,11 +8,14 @@ export const getApiRequestsRemaining = async () => {
   try {
     const rsp = await taddyPodcastsApiInstance.post<
       TaddyPodcastsResponse<GetApiRequestsRemaining>
-    >("/graphql", {
+    >("", {
       query: `query {
         getApiRequestsRemaining
       }`,
     });
+    if (rsp.data?.data?.errors) {
+      throw rsp.data?.data?.errors;
+    }
     return rsp.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

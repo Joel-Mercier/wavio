@@ -8,6 +8,7 @@ import HomeShortcut from "@/components/home/HomeShortcut";
 import InternetRadioStationListItem from "@/components/internetRadioStations/InternetRadioStationListItem";
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -20,11 +21,13 @@ import useAuth from "@/stores/auth";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const setShowDrawer = useApp.use.setShowDrawer();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -68,9 +71,29 @@ export default function HomeScreen() {
             </AvatarFallbackText>
           </Avatar>
         </FadeOutScaleDown>
-        <Heading size="2xl" className="text-white font-bold">
+        <HStack className="items-center">
+          <FadeOutScaleDown
+            onPress={() => router.navigate("/(app)/(tabs)/(home)")}
+          >
+            <Badge className="rounded-full bg-emerald-500 text-primary-800 px-4 py-1 mr-2">
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.home.tabs.music")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown
+            onPress={() => router.navigate("/(app)/(tabs)/(home)/podcasts")}
+          >
+            <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.home.tabs.podcasts")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+        </HStack>
+        {/* <Heading size="2xl" className="text-white font-bold">
           {t("app.home.title", { username })}
-        </Heading>
+        </Heading> */}
       </HStack>
       <ScrollView
         contentContainerStyle={{

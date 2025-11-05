@@ -182,6 +182,9 @@ importers:
       react-native-screens:
         specifier: ~4.16.0
         version: 4.16.0(react-native@0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0))(react@19.1.0)
+      react-native-share:
+        specifier: ^12.2.0
+        version: 12.2.0
       react-native-svg:
         specifier: ^15.12.0
         version: 15.13.0(react-native@0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0))(react@19.1.0)
@@ -5102,6 +5105,10 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  react-native-share@12.2.0:
+    resolution: {integrity: sha512-f6MB9BsKa9xVvu0DKbxq5jw4IyYHqQeqUlCNkD8eAFoJx6SD31ObPAn7SQ6NG9AOuhCy6aYuSJYJvx25DaoMZQ==}
+    engines: {node: '>=16'}
 
   react-native-svg-transformer@1.5.1:
     resolution: {integrity: sha512-dFvBNR8A9VPum9KCfh+LE49YiJEF8zUSnEFciKQroR/bEOhlPoZA0SuQ0qNk7m2iZl2w59FYjdRe0pMHWMDl0Q==}
@@ -12304,6 +12311,8 @@ snapshots:
       react-native: 0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0)
       react-native-is-edge-to-edge: 1.2.1(react-native@0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0))(react@19.1.0)
       warn-once: 0.1.1
+
+  react-native-share@12.2.0: {}
 
   react-native-svg-transformer@1.5.1(react-native-svg@15.13.0(react-native@0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0))(react@19.1.0))(react-native@0.81.4(@babel/core@7.27.1)(@types/react@19.1.13)(react@19.1.0))(typescript@5.9.2):
     dependencies:

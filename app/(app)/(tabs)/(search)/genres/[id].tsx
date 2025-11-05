@@ -67,7 +67,11 @@ export default function GenreScreen() {
                 <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
               </Box>
             </FadeOutScaleDown>
-            <Heading className="text-white font-bold" size="lg">
+            <Heading
+              numberOfLines={1}
+              className="text-white font-bold"
+              size="lg"
+            >
               {id}
             </Heading>
             <Box className="w-10" />

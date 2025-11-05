@@ -28,4 +28,12 @@ i18n
     },
   });
 
+i18n.services?.formatter?.add('lowercase', (value, lng, options) => {
+  return value.toLowerCase();
+});
+
+i18n.services?.formatter?.add('titlecase', (value, lng, options) => {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`;
+});
+
 export default i18n;

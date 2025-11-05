@@ -1,8 +1,9 @@
+import i18n from "@/config/i18n";
 import usePodcasts from "@/stores/podcasts";
 import axios from "axios";
 
 export type TaddyPodcastsResponse<T> = {
-  data: T;
+  data: { [key: string]: T };
 };
 
 export type TaddyPodcastsErrorResponse = {
@@ -35,21 +36,14 @@ taddyPodcastsApiInstance.interceptors.request.use(
 );
 
 export const taddyPodcastsErrorCodes: Record<string, string> = {
-  API_KEY_INVALID:
-    "The API Key or User ID you are using in your headers is invalid.",
-  API_RATE_LIMIT_EXCEEDED:
-    "You have exceeded your monthly quota of API requests.",
-  INVALID_QUERY_OR_SYNTAX:
-    "Your query is too complex or there is a spelling or syntax mistake somewhere in your query. Use the message value as a hint as to what can be fixed.",
-  BAD_USER_INPUT:
-    "One of the arguments you are passing in is invalid. Use the message value to get more details on what is invalid.",
-  QUERY_TOO_COMPLEX:
-    "The query you are passing in is too complex. Please simplify your query (by removing items from your query)",
-  REQUIRES_USER_AUTHENTICATION:
-    "You need to be be logged in to make that request.",
-  ACCESS_NOT_ALLOWED: "You are not allowed to access this query or mutation.",
-  TADDY_SERVER_ERROR:
-    "Something is wrong on our end. We have systems in place to monitor this but also feel free to reach out to danny@taddy.org if you are getting this error.",
+  API_KEY_INVALID: i18n.t("taddyPodcasts.errorCodes.API_KEY_INVALID"),
+  API_RATE_LIMIT_EXCEEDED: i18n.t("taddyPodcasts.errorCodes.API_RATE_LIMIT_EXCEEDED"),
+  INVALID_QUERY_OR_SYNTAX: i18n.t("taddyPodcasts.errorCodes.INVALID_QUERY_OR_SYNTAX"),
+  BAD_USER_INPUT: i18n.t("taddyPodcasts.errorCodes.BAD_USER_INPUT"),
+  QUERY_TOO_COMPLEX: i18n.t("taddyPodcasts.errorCodes.QUERY_TOO_COMPLEX"),
+  REQUIRES_USER_AUTHENTICATION: i18n.t("taddyPodcasts.errorCodes.REQUIRES_USER_AUTHENTICATION"),
+  ACCESS_NOT_ALLOWED: i18n.t("taddyPodcasts.errorCodes.ACCESS_NOT_ALLOWED"),
+  TADDY_SERVER_ERROR: i18n.t("taddyPodcasts.errorCodes.TADDY_SERVER_ERROR"),
 };
 
 export default taddyPodcastsApiInstance;

@@ -39,6 +39,7 @@ import {
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { Country, Language } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
@@ -56,15 +57,35 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { useRouter } from "expo-router";
-import { AlertCircleIcon, ArrowLeft, Check } from "lucide-react-native";
+import {
+  AlertCircleIcon,
+  ArrowLeft,
+  Check,
+  ChevronDownIcon,
+} from "lucide-react-native";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import z from "zod";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectFlatList,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+} from "../ui/select";
 
 const podcastConfigSchema = z.object({
   apiKey: z.string().trim().min(1),
   userId: z.string().trim().min(1),
+  language: z.enum(Language),
+  country: z.enum(Country),
 });
 
 export default function SettingsDetail() {
@@ -93,6 +114,8 @@ export default function SettingsDetail() {
   const clearTaddyPodcastsConfig = usePodcasts.use.clearTaddyPodcastsConfig();
   const taddyPodcastApiKey = usePodcasts.use.taddyPodcastsApiKey();
   const taddyPodcastUserId = usePodcasts.use.taddyPodcastsUserId();
+  const taddyPodcastLanguage = usePodcasts.use.taddyPodcastsLanguage();
+  const taddyPodcastCountry = usePodcasts.use.taddyPodcastsCountry();
   const clearRecentPlays = useRecentPlays.use.clearRecentPlays();
   const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
   const doStartScan = useStartScan();
@@ -113,6 +136,8 @@ export default function SettingsDetail() {
     defaultValues: {
       apiKey: taddyPodcastApiKey,
       userId: taddyPodcastUserId,
+      language: taddyPodcastLanguage,
+      country: taddyPodcastCountry,
     },
     validators: {
       onBlur: podcastConfigSchema,
@@ -766,6 +791,160 @@ export default function SettingsDetail() {
                       autoCapitalize="none"
                     />
                   </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </podcastConfigForm.Field>
+            <podcastConfigForm.Field name="country">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Select
+                    selectedValue={taddyPodcastCountry}
+                    onValueChange={(value: keyof typeof Country) =>
+                      field.handleChange(value)
+                    }
+                    onClose={field.handleBlur}
+                    closeOnOverlayClick
+                    isInvalid={!field.state.meta.isValid}
+                  >
+                    <SelectTrigger
+                      variant="rounded"
+                      size="xl"
+                      className="bg-primary-600 border-0 rounded-full"
+                    >
+                      <SelectInput
+                        className={cn(
+                          "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full flex-1 pl-4",
+                          {
+                            "border-red-500": !field.state.meta.isValid,
+                          },
+                        )}
+                        placeholder={t(
+                          "app.settings.podcastSettings.countryPlaceholder",
+                        )}
+                      />
+                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                    </SelectTrigger>
+                    <SelectPortal snapPoints={[75]}>
+                      <SelectBackdrop />
+                      <SelectContent
+                        style={{ backgroundColor: "rgb(41, 41, 41)" }}
+                      >
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        <SelectFlatList
+                          data={Object.values(Country)}
+                          keyExtractor={(item) => item}
+                          renderItem={({ item }: { item: string }) => (
+                            <SelectItem
+                              label={item}
+                              value={item}
+                              textStyle={{
+                                className: "text-white",
+                              }}
+                            />
+                          )}
+                        />
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error.message)
+                          .join("\n")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              )}
+            </podcastConfigForm.Field>
+            <podcastConfigForm.Field name="language">
+              {(field) => (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="my-4"
+                >
+                  <Select
+                    selectedValue={taddyPodcastLanguage}
+                    onValueChange={(value: keyof typeof Language) =>
+                      field.handleChange(value)
+                    }
+                    onClose={field.handleBlur}
+                    closeOnOverlayClick
+                    isInvalid={!field.state.meta.isValid}
+                  >
+                    <SelectTrigger
+                      variant="rounded"
+                      size="xl"
+                      className="bg-primary-600 border-0 rounded-full"
+                    >
+                      <SelectInput
+                        className={cn(
+                          "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full flex-1 pl-4",
+                          {
+                            "border-red-500": !field.state.meta.isValid,
+                          },
+                        )}
+                        placeholder={t(
+                          "app.settings.podcastSettings.countryPlaceholder",
+                        )}
+                      />
+                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                    </SelectTrigger>
+                    <SelectPortal snapPoints={[75]}>
+                      <SelectBackdrop />
+                      <SelectContent
+                        style={{ backgroundColor: "rgb(41, 41, 41)" }}
+                      >
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        <SelectFlatList
+                          data={Object.values(Language)}
+                          keyExtractor={(item) => item}
+                          renderItem={({ item }: { item: string }) => (
+                            <SelectItem
+                              label={item}
+                              value={item}
+                              textStyle={{
+                                className: "text-white",
+                              }}
+                            />
+                          )}
+                        />
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
                   {!field.state.meta.isValid && (
                     <FormControlError className="items-start">
                       <FormControlErrorIcon

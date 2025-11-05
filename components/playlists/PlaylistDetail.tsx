@@ -391,7 +391,11 @@ export default function PlaylistDetail() {
                 <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
               </Box>
             </FadeOutScaleDown>
-            <Heading className="text-white font-bold" size="lg">
+            <Heading
+              numberOfLines={1}
+              className="text-white font-bold"
+              size="lg"
+            >
               {playlistData?.playlist.name}
             </Heading>
             <Box className="w-10" />
