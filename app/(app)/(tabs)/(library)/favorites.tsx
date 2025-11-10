@@ -40,7 +40,7 @@ export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useStarred2({});
-  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const { offlineModeEnabled } = useOfflineDownloads();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
@@ -110,6 +110,7 @@ export default function FavoritesScreen() {
             <LinearGradient
               colors={[themeConfig.theme.colors.blue[500], "#000000"]}
               className="h-48"
+              style={{ height: 192 }}
             >
               <Box
                 className="bg-black/25 flex-1"
@@ -173,6 +174,7 @@ export default function FavoritesScreen() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

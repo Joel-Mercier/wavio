@@ -434,7 +434,6 @@ export const search = async ({
   filterForDurationLessThan,
   filterForDurationGreaterThan,
   filterForHasTranscript,
-  filterForHasChapters,
   sortBy,
   matchBy,
   isSafeMode,
@@ -458,15 +457,14 @@ export const search = async ({
   filterForDurationLessThan?: number;
   filterForDurationGreaterThan?: number;
   filterForHasTranscript?: boolean;
-  filterForHasChapters?: boolean;
   sortBy?: keyof typeof SearchSortOrder;
   matchBy?: keyof typeof SearchMatchType;
   isSafeMode?: boolean;
 }) => {
   try {
-    const rsp = await taddyPodcastsApiInstance.post<TaddyPodcastsResponse<{ searchId: string; podcastSeries: PodcastSeries[]; podcastEpisode: PodcastEpisode[]; rankingDetails: SearchRankingDetails[]; responseDetails: SearchResponseDetails[] }>>("", {
-      query: `query($term: String, $page: Int, $limitPerPage: Int, $filterForTypes: [SearchContentType], $filterForCountries: [Country], $filterForLanguages: [Language], $filterForGenres: [Genre], $filterForSeriesUuids: [ID], $filterForNotInSeriesUuids: [ID], $filterForPodcastContentType: [PodcastContentType], $filterForPublishedAfter: Int, $filterForPublishedBefore: Int, $filterForLastUpdatedAfter: Int, $filterForLastUpdatedBefore: Int, $filterForTotalEpisodesLessThan: Int, $filterForTotalEpisodesGreaterThan: Int, $filterForDurationLessThan: Int, $filterForDurationGreaterThan: Int, $filterForHasTranscript: Boolean, $filterForHasChapters: Boolean, $sortBy: SearchSortOrder, $matchBy: SearchMatchType, $isSafeMode: Boolean){){
-        search(term: $term, page: $page, limitPerPage: $limitPerPage, filterForTypes: $filterForTypes, filterForCountries: $filterForCountries, filterForLanguages: $filterForLanguages, filterForGenres: $filterForGenres, filterForSeriesUuids: $filterForSeriesUuids, filterForNotInSeriesUuids: $filterForNotInSeriesUuids, filterForPodcastContentType: $filterForPodcastContentType, filterForPublishedAfter: $filterForPublishedAfter, filterForPublishedBefore: $filterForPublishedBefore, filterForLastUpdatedAfter: $filterForLastUpdatedAfter, filterForLastUpdatedBefore: $filterForLastUpdatedBefore, filterForTotalEpisodesLessThan: $filterForTotalEpisodesLessThan, filterForTotalEpisodesGreaterThan: $filterForTotalEpisodesGreaterThan, filterForDurationLessThan: $filterForDurationLessThan, filterForDurationGreaterThan: $filterForDurationGreaterThan, filterForHasTranscript: $filterForHasTranscript, filterForHasChapters: $filterForHasChapters, sortBy: $sortBy, matchBy: $matchBy, isSafeMode: $isSafeMode){
+    const rsp = await taddyPodcastsApiInstance.post<TaddyPodcastsResponse<{ searchId: string; podcastSeries: PodcastSeries[]; podcastEpisodes: PodcastEpisode[]; rankingDetails: SearchRankingDetails[]; responseDetails: SearchResponseDetails[] }>>("", {
+      query: `query($term: String, $page: Int, $limitPerPage: Int, $filterForTypes: [SearchContentType], $filterForCountries: [Country], $filterForLanguages: [Language], $filterForGenres: [Genre], $filterForSeriesUuids: [ID], $filterForNotInSeriesUuids: [ID], $filterForPodcastContentType: [PodcastContentType], $filterForPublishedAfter: Int, $filterForPublishedBefore: Int, $filterForLastUpdatedAfter: Int, $filterForLastUpdatedBefore: Int, $filterForTotalEpisodesLessThan: Int, $filterForTotalEpisodesGreaterThan: Int, $filterForDurationLessThan: Int, $filterForDurationGreaterThan: Int, $filterForHasTranscript: Boolean, $sortBy: SearchSortOrder, $matchBy: SearchMatchType, $isSafeMode: Boolean){
+        search(term: $term, page: $page, limitPerPage: $limitPerPage, filterForTypes: $filterForTypes, filterForCountries: $filterForCountries, filterForLanguages: $filterForLanguages, filterForGenres: $filterForGenres, filterForSeriesUuids: $filterForSeriesUuids, filterForNotInSeriesUuids: $filterForNotInSeriesUuids, filterForPodcastContentType: $filterForPodcastContentType, filterForPublishedAfter: $filterForPublishedAfter, filterForPublishedBefore: $filterForPublishedBefore, filterForLastUpdatedAfter: $filterForLastUpdatedAfter, filterForLastUpdatedBefore: $filterForLastUpdatedBefore, filterForTotalEpisodesLessThan: $filterForTotalEpisodesLessThan, filterForTotalEpisodesGreaterThan: $filterForTotalEpisodesGreaterThan, filterForDurationLessThan: $filterForDurationLessThan, filterForDurationGreaterThan: $filterForDurationGreaterThan, filterForHasTranscript: $filterForHasTranscript, sortBy: $sortBy, matchBy: $matchBy, isSafeMode: $isSafeMode){
           searchId
           podcastSeries{
             uuid
@@ -479,7 +477,7 @@ export const search = async ({
             websiteUrl
             authorName
           }
-          podcastEpisode{
+          podcastEpisodes{
             uuid
             name
             subtitle
@@ -532,7 +530,6 @@ export const search = async ({
         filterForDurationLessThan,
         filterForDurationGreaterThan,
         filterForHasTranscript,
-        filterForHasChapters,
         sortBy,
         matchBy,
         isSafeMode,

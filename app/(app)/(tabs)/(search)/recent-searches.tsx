@@ -28,9 +28,13 @@ export default function RecentSearchesScreen() {
   const router = useRouter();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
-  const recentSearches = useRecentSearches.use.recentSearches();
-  const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
-  const removeRecentSearch = useRecentSearches.use.removeRecentSearch();
+  const recentSearches = useRecentSearches((store) => store.recentSearches);
+  const clearRecentSearches = useRecentSearches(
+    (store) => store.clearRecentSearches,
+  );
+  const removeRecentSearch = useRecentSearches(
+    (store) => store.removeRecentSearch,
+  );
   const form = useForm({
     defaultValues: {
       query: "",
@@ -172,6 +176,7 @@ export default function RecentSearchesScreen() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

@@ -45,8 +45,8 @@ export default function ServersDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const servers = useServers.use.servers();
-  const addServer = useServers.use.addServer();
+  const servers = useServers((store) => store.servers);
+  const addServer = useServers((store) => store.addServer);
   const form = useForm({
     defaultValues: {
       name: "",

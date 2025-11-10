@@ -25,7 +25,10 @@ export default function PodcastSeriesListItemSkeleton({
     >
       <Box className="bg-primary-600">
         <Skeleton
-          className="w-32 h-32 aspect-square rounded-md items-center justify-center"
+          className={cn(
+            "w-32 h-32 aspect-square rounded-md items-center justify-center",
+            { "w-16 h-16": layout === "vertical" },
+          )}
           variant="rounded"
           startColor="bg-primary-400"
           speed={4}

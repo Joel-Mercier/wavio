@@ -25,8 +25,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
   const { t } = useTranslation();
-  const username = useAuth.use.username();
-  const setShowDrawer = useApp.use.setShowDrawer();
+  const username = useAuth((store) => store.username);
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
   const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
   const { data, isLoading, error } = useGenres();
@@ -90,6 +90,7 @@ export default function SearchScreen() {
           paddingHorizontal: 24,
           paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

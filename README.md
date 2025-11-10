@@ -5,12 +5,12 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 ## TODO
 
 - [ ] Check if https://github.com/PedroBern/react-native-collapsible-tab-view works for podcast series screen
-- [ ] Add support for iOS
 - [ ] Banner when network is down
 - [ ] Finish top songs feature
 - [ ] Make server switching work
 - [ ] Get good design elements (logo, icon, splash screen, bg elements, ...)
 - [ ] Spotify-like queue handling (https://www.howtogeek.com/spotifys-play-queue-is-the-best-in-the-business-heres-why/#:~:text=do%20they%20work%3F-,How%20a%20Play%20Queue%20Works%20in%20General,to%20play%20after%20each%20other.&text=When%20you%20press%20play%20on,are%20added%20to%20the%20queue.)
+- [ ] Support Android Auto / CarPlay
 - [ ] Support Jellyfin (https://api.jellyfin.org/)
 
 ## Getting started
@@ -70,3 +70,4 @@ TODO
 - React Native documentation: https://reactnative.dev/
 - React Native Audio Pro documentation: https://rnap.dev/
 - React Navigation documentation: https://reactnavigation.org/docs/getting-started/
+- Gluestack UI documentation: https://gluestack.io/ui/docs

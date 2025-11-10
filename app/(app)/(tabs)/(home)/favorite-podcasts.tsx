@@ -5,8 +5,10 @@ import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkelet
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
+import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Text } from "@/components/ui/text";
 import { useLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
@@ -22,11 +24,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function FavoritePodcastsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const setShowDrawer = useApp.use.setShowDrawer();
-  const username = useAuth.use.username();
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const username = useAuth((store) => store.username);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   const { data, isLoading, error } = useLatestPodcastEpisodes(
     favoritePodcasts.map((podcast) => podcast.uuid),
   );
@@ -78,30 +82,49 @@ export default function FavoritePodcastsScreen() {
           </Badge>
         </HStack>
       </HStack>
-      <FlashList
-        data={data?.data?.getLatestPodcastEpisodes || loadingData(16)}
-        renderItem={({
-          item,
-          index,
-        }: { item: PodcastEpisode; index: number }) =>
-          isLoading ? (
-            <PodcastListItemSkeleton index={index} />
-          ) : (
-            <PodcastListItem podcast={item} index={index} />
-          )
-        }
-        keyExtractor={(item) => item.uuid}
-        ListHeaderComponent={() => (
-          <Box className="px-6">
-            <Heading className="text-white" size="2xl">
-              {t("app.favoritePodcasts.title")}
-            </Heading>
-          </Box>
-        )}
-        contentContainerStyle={{
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-      />
+      {taddyPodcastApiKey && taddyPodcastUserId ? (
+        <FlashList
+          data={data?.data?.getLatestPodcastEpisodes || loadingData(16)}
+          renderItem={({
+            item,
+            index,
+          }: { item: PodcastEpisode; index: number }) =>
+            isLoading ? (
+              <PodcastListItemSkeleton index={index} />
+            ) : (
+              <PodcastListItem podcast={item} index={index} />
+            )
+          }
+          keyExtractor={(item) => item.uuid}
+          ListHeaderComponent={() => (
+            <Box className="px-6">
+              <Heading className="text-white" size="2xl">
+                {t("app.favoritePodcasts.title")}
+              </Heading>
+            </Box>
+          )}
+          contentContainerStyle={{
+            paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <Box className="items-center justify-center self-center content-center">
+          <Text className="text-primary-50">
+            {t("app.podcasts.taddyPodcastsNotConfigured")}
+          </Text>
+          <Center>
+            <FadeOutScaleDown
+              href={"/(app)/(tabs)/(home)/settings"}
+              className="mt-6 items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.podcasts.configureTaddyPodcasts")}
+              </Text>
+            </FadeOutScaleDown>
+          </Center>
+        </Box>
+      )}
     </Box>
   );
 }

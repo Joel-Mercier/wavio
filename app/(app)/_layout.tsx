@@ -6,7 +6,7 @@ import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 
 export default function AppLayout() {
-  const isAuthenticated = useAuth.use.isAuthenticated();
+  const isAuthenticated = useAuth((store) => store.isAuthenticated);
   console.log("isAuthenticated", isAuthenticated);
 
   useEffect(() => {

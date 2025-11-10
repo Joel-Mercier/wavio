@@ -155,6 +155,7 @@ export default function LibrarySearchScreen() {
             )}
           </>
         }
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );

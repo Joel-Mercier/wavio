@@ -78,7 +78,12 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
                   themeConfig.theme.colors.blue[500],
                   themeConfig.theme.colors.emerald[500],
                 ]}
-                className="w-full h-full items-center justify-center"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
                 <HomeShortcutIcon type={recentPlay.type} />
               </LinearGradient>

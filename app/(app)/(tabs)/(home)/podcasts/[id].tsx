@@ -65,8 +65,10 @@ export default function PodcastScreen() {
   const colors = useImageColors(podcast.imageUrl);
   const insets = useSafeAreaInsets();
   const toast = useToast();
-  const addFavoritePodcast = usePodcasts.use.addFavoritePodcast();
-  const removeFavoritePodcast = usePodcasts.use.removeFavoritePodcast();
+  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
+  const removeFavoritePodcast = usePodcasts(
+    (store) => store.removeFavoritePodcast,
+  );
   const bottomTabBarHeight = useBottomTabBarHeight();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =

@@ -131,6 +131,12 @@ export default function LibraryListItem({
                   themeConfig.theme.colors.blue[500],
                   themeConfig.theme.colors.emerald[500],
                 ]}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
                 className="w-full h-full items-center justify-center"
               >
                 <LibraryListItemIcon type={type.id} />

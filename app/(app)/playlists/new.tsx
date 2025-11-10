@@ -95,6 +95,7 @@ export default function NewPlaylistScreen() {
     <LinearGradient
       colors={[themeConfig.theme.colors.gray[300], "transparent"]}
       className="h-full"
+      style={{ height: "100%" }}
     >
       <Box
         className="h-full justify-center"

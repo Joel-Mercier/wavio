@@ -56,8 +56,10 @@ export default function PodcastSeriesScreen() {
   const toast = useToast();
   const offsetY = useSharedValue(0);
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const addFavoritePodcast = usePodcasts.use.addFavoritePodcast();
-  const removeFavoritePodcast = usePodcasts.use.removeFavoritePodcast();
+  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
+  const removeFavoritePodcast = usePodcasts(
+    (store) => store.removeFavoritePodcast,
+  );
   const headerStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(offsetY.value, [0, 60], [0, 1], Extrapolation.CLAMP),
@@ -161,7 +163,7 @@ export default function PodcastSeriesScreen() {
             ]}
             locations={[0, 0.8]}
             className="px-6"
-            style={{ paddingTop: insets.top }}
+            style={{ paddingTop: insets.top, paddingHorizontal: 24 }}
           >
             <VStack className="mt-6">
               <FadeOutScaleDown
@@ -228,6 +230,7 @@ export default function PodcastSeriesScreen() {
           paddingLeft: insets.left,
           paddingRight: insets.right,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

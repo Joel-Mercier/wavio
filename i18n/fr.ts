@@ -1,4 +1,5 @@
 import { search } from "@/services/openSubsonic/searching";
+import { configure } from "@react-native-community/netinfo";
 
 export default {
   translation: {
@@ -60,6 +61,7 @@ export default {
         shareErrorMessage:
           "Une erreur s'est produite lors de la partage de l'album",
         rateModalTitle: "Noter l'album",
+        seeAll: "Voir tout",
       },
       artists: {
         topSongs: "Chansons les plus écoutées",
@@ -112,6 +114,11 @@ export default {
         dailyTopChartsByCountry: "Top des podcasts en {{country, titlecase}} aujourd'hui",
         dailyTopChartsByGenre: "Top des podcasts $t(app.podcasts.genres.{{genre}}) aujourd'hui",
         seeAllEpisodes: "Voir tous les épisodes",
+        configureTaddyPodcasts: "Configurer dans les paramètres",
+        taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
+        search: {
+          inputPlaceholder: "Rechercher des podcasts",
+        },
         genres: {
           PODCASTSERIES_ARTS: "Arts",
           PODCASTSERIES_ARTS_BOOKS: "Arts - Livres",

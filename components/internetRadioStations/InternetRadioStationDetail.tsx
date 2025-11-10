@@ -88,7 +88,7 @@ export default function InternetRadioStationDetail() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const toast = useToast();
-  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const doDeleteInternetRadioStation = useDeleteInternetRadioStation();
   const doUpdateInternetRadioStation = useUpdateInternetRadioStation();
   const insets = useSafeAreaInsets();
@@ -254,7 +254,7 @@ export default function InternetRadioStationDetail() {
           "#000000",
         ]}
         className="px-6"
-        style={{ paddingTop: insets.top }}
+        style={{ paddingTop: insets.top, paddingHorizontal: 24 }}
       >
         <HStack className="mt-6 items-start justify-between">
           <FadeOutScaleDown

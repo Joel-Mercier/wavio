@@ -82,10 +82,10 @@ export default function PlayerScreen() {
   const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-  const repeatMode = useQueue.use.repeatMode();
-  const setRepeatMode = useQueue.use.setRepeatMode();
-  const shuffle = useQueue.use.shuffle();
-  const setShuffle = useQueue.use.setShuffle();
+  const repeatMode = useQueue((store) => store.repeatMode);
+  const setRepeatMode = useQueue((store) => store.setRepeatMode);
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
   const toast = useToast();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 

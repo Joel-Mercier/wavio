@@ -151,6 +151,7 @@ export default function SearchResultsScreen() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

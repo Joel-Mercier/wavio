@@ -28,11 +28,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const setShowDrawer = useApp.use.setShowDrawer();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
-  const recentPlays = useRecentPlays.use.recentPlays();
-  const username = useAuth.use.username();
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const username = useAuth((store) => store.username);
+  const recentPlays = useRecentPlays((store) => store.recentPlays);
   const {
     data: recentlyPlayedData,
     isLoading: isLoadingRecentlyPlayed,

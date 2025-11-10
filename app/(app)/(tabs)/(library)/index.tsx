@@ -54,8 +54,8 @@ export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
   const { t } = useTranslation();
-  const setShowDrawer = useApp.use.setShowDrawer();
-  const username = useAuth.use.username();
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const username = useAuth((store) => store.username);
   const router = useRouter();
   const [sort, setSort] = useState<
     "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc"
@@ -322,6 +322,7 @@ export default function LibraryScreen() {
             paddingHorizontal: 24,
             paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
+          showsVerticalScrollIndicator={false}
         />
       )}
       <BottomSheetModal

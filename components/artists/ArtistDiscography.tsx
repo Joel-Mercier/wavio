@@ -49,6 +49,7 @@ export default function ArtistDiscography() {
         contentContainerStyle={{
           paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );

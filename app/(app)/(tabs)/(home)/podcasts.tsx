@@ -7,12 +7,13 @@ import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesLi
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
+import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useTopChartsByCountry,
   useTopChartsByGenres,
@@ -29,10 +30,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function PodcastsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const setShowDrawer = useApp.use.setShowDrawer();
-  const username = useAuth.use.username();
-  const favorites = usePodcasts.use.favoritePodcasts();
-  const getRecommendationParams = usePodcasts.use.getRecommendationParams();
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const username = useAuth((store) => store.username);
+  const favorites = usePodcasts((store) => store.favoritePodcasts);
+  const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
+  const getRecommendationParams = usePodcasts(
+    (store) => store.getRecommendationParams,
+  );
   const insets = useSafeAreaInsets();
   const recommandationParams = getRecommendationParams();
   const {
@@ -51,7 +56,7 @@ export default function PodcastsScreen() {
     type: "PODCASTSERIES",
     genres: recommandationParams?.genres?.[0],
   });
-  console.log(recommandationParams);
+
   return (
     <Box>
       <HStack
@@ -101,147 +106,167 @@ export default function PodcastsScreen() {
           </HStack>
         </ScrollView>
       </HStack>
-      <FadeOutScaleDown
-        href={"/(app)/(tabs)/(home)/podcasts/search"}
-        className="mb-4"
-      >
-        <HStack className="mx-6 px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
-          <Search
-            size={20}
-            color={"rgb(128, 128, 128)"}
-            className="text-primary-100"
-          />
-          <Text className="text-primary-100 text-sm">
-            {t("app.podcasts.searchPlaceholder")}
+      {taddyPodcastApiKey && taddyPodcastUserId ? (
+        <>
+          <FadeOutScaleDown
+            href={"/(app)/(tabs)/(home)/podcasts/search"}
+            className="mb-4"
+          >
+            <HStack className="mx-6 px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+              <Search
+                size={20}
+                color={"rgb(128, 128, 128)"}
+                className="text-primary-100"
+              />
+              <Text className="text-primary-100 text-sm">
+                {t("app.podcasts.searchPlaceholder")}
+              </Text>
+            </HStack>
+          </FadeOutScaleDown>
+          {favorites && (
+            <VStack className="gap-y-4 px-6">
+              {favorites
+                .slice(0, 8)
+                .reduce((rows: JSX.Element[], favorite, index) => {
+                  if (index % 4 === 0) {
+                    rows.push(
+                      <HStack
+                        key={`row-${Math.floor(index / 4)}`}
+                        className="gap-x-4"
+                      >
+                        <FavoritePodcastListItem
+                          key={favorite.uuid}
+                          podcast={favorite}
+                        />
+                        {favorites[index + 1] && (
+                          <FavoritePodcastListItem
+                            key={favorites[index + 1].uuid}
+                            podcast={favorites[index + 1]}
+                          />
+                        )}
+                        {favorites[index + 2] && (
+                          <FavoritePodcastListItem
+                            key={favorites[index + 2].uuid}
+                            podcast={favorites[index + 2]}
+                          />
+                        )}
+                        {favorites[index + 3] && (
+                          <FavoritePodcastListItem
+                            key={favorites[index + 3].uuid}
+                            podcast={favorites[index + 3]}
+                          />
+                        )}
+                      </HStack>,
+                    );
+                  }
+                  return rows;
+                }, [])}
+            </VStack>
+          )}
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              {t("app.podcasts.dailyTopChartsByCountry", {
+                country: recommandationParams.country,
+              })}
+            </Heading>
+          </Box>
+          {topChartsByCountryError ? (
+            <ErrorDisplay error={topChartsByCountryError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="mb-6 pl-6"
+            >
+              {isLoadingTopChartsByCountry ? (
+                loadingData(4).map((_, index) => (
+                  <PodcastSeriesListItemSkeleton
+                    key={`top-charts-by-country-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              ) : (
+                <>
+                  {topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries?.map(
+                    (podcast, index) => (
+                      <PodcastSeriesListItem
+                        key={podcast.uuid}
+                        podcast={podcast}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ),
+                  )}
+                </>
+              )}
+            </ScrollView>
+          )}
+          {!isLoadingTopChartsByCountry &&
+            !topChartsByCountryError &&
+            !topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries
+              ?.length && <EmptyDisplay />}
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              {t("app.podcasts.dailyTopChartsByGenre", {
+                genre: recommandationParams?.genres?.[0],
+              })}
+            </Heading>
+          </Box>
+          {topChartsByGenreError ? (
+            <ErrorDisplay error={topChartsByGenreError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="mb-6 pl-6"
+            >
+              {isLoadingTopChartsByGenre ? (
+                loadingData(4).map((_, index) => (
+                  <PodcastSeriesListItemSkeleton
+                    key={`top-charts-by-genre-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              ) : (
+                <>
+                  {topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries?.map(
+                    (podcast, index) => (
+                      <PodcastSeriesListItem
+                        key={podcast.uuid}
+                        podcast={podcast}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ),
+                  )}
+                </>
+              )}
+            </ScrollView>
+          )}
+          {!isLoadingTopChartsByGenre &&
+            !topChartsByGenreError &&
+            !topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries
+              ?.length && <EmptyDisplay />}
+        </>
+      ) : (
+        <Box className="items-center justify-center self-center content-center">
+          <Text className="text-primary-50">
+            {t("app.podcasts.taddyPodcastsNotConfigured")}
           </Text>
-        </HStack>
-      </FadeOutScaleDown>
-      {favorites && (
-        <VStack className="gap-y-4 px-6">
-          {favorites
-            .slice(0, 8)
-            .reduce((rows: JSX.Element[], favorite, index) => {
-              if (index % 4 === 0) {
-                rows.push(
-                  <HStack
-                    key={`row-${Math.floor(index / 4)}`}
-                    className="gap-x-4"
-                  >
-                    <FavoritePodcastListItem
-                      key={favorite.uuid}
-                      podcast={favorite}
-                    />
-                    {favorites[index + 1] && (
-                      <FavoritePodcastListItem
-                        key={favorites[index + 1].uuid}
-                        podcast={favorites[index + 1]}
-                      />
-                    )}
-                    {favorites[index + 2] && (
-                      <FavoritePodcastListItem
-                        key={favorites[index + 2].uuid}
-                        podcast={favorites[index + 2]}
-                      />
-                    )}
-                    {favorites[index + 3] && (
-                      <FavoritePodcastListItem
-                        key={favorites[index + 3].uuid}
-                        podcast={favorites[index + 3]}
-                      />
-                    )}
-                  </HStack>,
-                );
-              }
-              return rows;
-            }, [])}
-        </VStack>
+          <Center>
+            <FadeOutScaleDown
+              href={"/(app)/(tabs)/(home)/settings"}
+              className="mt-6 items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.podcasts.configureTaddyPodcasts")}
+              </Text>
+            </FadeOutScaleDown>
+          </Center>
+        </Box>
       )}
-      <Box className="px-6 mt-4 mb-4">
-        <Heading size="xl" className="text-white">
-          {t("app.podcasts.dailyTopChartsByCountry", {
-            country: recommandationParams.country,
-          })}
-        </Heading>
-      </Box>
-      {topChartsByCountryError ? (
-        <ErrorDisplay error={topChartsByCountryError} />
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="mb-6 pl-6"
-        >
-          {isLoadingTopChartsByCountry ? (
-            loadingData(4).map((_, index) => (
-              <PodcastSeriesListItemSkeleton
-                key={`top-charts-by-country-${index}`}
-                index={index}
-                layout="horizontal"
-              />
-            ))
-          ) : (
-            <>
-              {topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries?.map(
-                (podcast, index) => (
-                  <PodcastSeriesListItem
-                    key={podcast.uuid}
-                    podcast={podcast}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ),
-              )}
-            </>
-          )}
-        </ScrollView>
-      )}
-      {!isLoadingTopChartsByCountry &&
-        !topChartsByCountryError &&
-        !topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries
-          ?.length && <EmptyDisplay />}
-      <Box className="px-6 mt-4 mb-4">
-        <Heading size="xl" className="text-white">
-          {t("app.podcasts.dailyTopChartsByGenre", {
-            genre: recommandationParams?.genres?.[0],
-          })}
-        </Heading>
-      </Box>
-      {topChartsByGenreError ? (
-        <ErrorDisplay error={topChartsByGenreError} />
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="mb-6 pl-6"
-        >
-          {isLoadingTopChartsByGenre ? (
-            loadingData(4).map((_, index) => (
-              <PodcastSeriesListItemSkeleton
-                key={`top-charts-by-genre-${index}`}
-                index={index}
-                layout="horizontal"
-              />
-            ))
-          ) : (
-            <>
-              {topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries?.map(
-                (podcast, index) => (
-                  <PodcastSeriesListItem
-                    key={podcast.uuid}
-                    podcast={podcast}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ),
-              )}
-            </>
-          )}
-        </ScrollView>
-      )}
-      {!isLoadingTopChartsByGenre &&
-        !topChartsByGenreError &&
-        !topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries
-          ?.length && <EmptyDisplay />}
     </Box>
   );
 }

@@ -41,7 +41,7 @@ export const usePodcastSeries = ({
   sortOrder?: keyof typeof SortOrder;
   searchTerm?: string;
 }) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getPodcastSeries",
@@ -83,7 +83,7 @@ export const usePodcastSeries = ({
 };
 
 export const useLatestPodcastEpisodes = (uuids: string[]) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: ["taddyPodcasts:getLatestPodcastEpisodes", uuids],
     queryFn: async () => {
@@ -100,7 +100,7 @@ export const useLatestPodcastEpisodes = (uuids: string[]) => {
 };
 
 export const useMultiplePodcastEpisodes = (uuids: string[]) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: ["taddyPodcasts:getMultiplePodcastEpisodes", uuids],
     queryFn: async () => {
@@ -116,7 +116,7 @@ export const useMultiplePodcastEpisodes = (uuids: string[]) => {
 };
 
 export const useMultiplePodcastSeries = (uuids: string[]) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: ["taddyPodcasts:getMultiplePodcastSeries", uuids],
     queryFn: async () => {
@@ -142,7 +142,7 @@ export const useTopChartsByCountry = ({
   page?: number;
   limitPerPage?: number;
 }) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getTopChartsByCountry",
@@ -183,7 +183,7 @@ export const useTopChartsByGenres = ({
   page?: number;
   limitPerPage?: number;
 }) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getTopChartsByGenres",
@@ -230,7 +230,7 @@ export const usePopularContent = ({
   page?: number;
   limitPerPage?: number;
 }) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getPopularContent",
@@ -271,7 +271,6 @@ export const useSearchPodcasts = ({
   filterForDurationLessThan,
   filterForDurationGreaterThan,
   filterForHasTranscript,
-  filterForHasChapters,
   sortBy,
   matchBy,
   isSafeMode,
@@ -295,12 +294,11 @@ export const useSearchPodcasts = ({
   filterForDurationLessThan?: number;
   filterForDurationGreaterThan?: number;
   filterForHasTranscript?: boolean;
-  filterForHasChapters?: boolean;
   sortBy?: keyof typeof SearchSortOrder;
   matchBy?: keyof typeof SearchMatchType;
   isSafeMode?: boolean;
 }) => {
-  const favoritePodcasts = usePodcasts.use.favoritePodcasts();
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   return useQuery({
     queryKey: [
       "taddyPodcasts:search",
@@ -323,7 +321,6 @@ export const useSearchPodcasts = ({
       filterForDurationLessThan,
       filterForDurationGreaterThan,
       filterForHasTranscript,
-      filterForHasChapters,
       sortBy,
       matchBy,
       isSafeMode,
@@ -349,21 +346,25 @@ export const useSearchPodcasts = ({
         filterForDurationLessThan,
         filterForDurationGreaterThan,
         filterForHasTranscript,
-        filterForHasChapters,
         sortBy,
         matchBy,
         isSafeMode,
       });
       if (response.data?.search) {
         const favoriteUuids = new Set(favoritePodcasts.map(fav => fav.uuid));
-        for (const podcastSeries of response.data.search.podcastSeries) {
-          podcastSeries.isFavorite = favoriteUuids.has(podcastSeries.uuid);
-        };
-        for (const podcastEpisode of response.data.search.podcastEpisode) {
-          podcastEpisode.podcastSeries.isFavorite = favoriteUuids.has(podcastEpisode.podcastSeries.uuid);
-        };
+        if (response.data.search.podcastSeries && response.data.search.podcastSeries.length > 0) {
+          for (const podcastSeries of response.data.search.podcastSeries) {
+            podcastSeries.isFavorite = favoriteUuids.has(podcastSeries.uuid);
+          };
+        }
+        if (response.data.search.podcastEpisodes && response.data.search.podcastEpisodes.length > 0) {
+          for (const podcastEpisode of response.data.search.podcastEpisodes) {
+            podcastEpisode.podcastSeries.isFavorite = favoriteUuids.has(podcastEpisode.podcastSeries.uuid);
+          };
+        }
       }
       return response;
     },
+    enabled: !!searchTerm
   });
 };

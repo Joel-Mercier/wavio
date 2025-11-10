@@ -47,10 +47,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function LoginScreen() {
   const { t } = useTranslation();
   const toast = useToast();
-  const servers = useServers.use.servers();
-  const addServer = useServers.use.addServer();
-  const setCurrentServer = useServers.use.setCurrentServer();
-  const login = useAuth.use.login();
+  const servers = useServers((store) => store.servers);
+  const addServer = useServers((store) => store.addServer);
+  const setCurrentServer = useServers((store) => store.setCurrentServer);
+  const login = useAuth((store) => store.login);
   const insets = useSafeAreaInsets();
   const form = useForm({
     defaultValues: {

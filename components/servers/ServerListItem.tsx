@@ -57,9 +57,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const toast = useToast();
-  const editServer = useServers.use.editServer();
-  const removeServer = useServers.use.removeServer();
-  const setCurrentServer = useServers.use.setCurrentServer();
+  const editServer = useServers((store) => store.editServer);
+  const removeServer = useServers((store) => store.removeServer);
+  const setCurrentServer = useServers((store) => store.setCurrentServer);
   const form = useForm({
     defaultValues: server,
     validators: {

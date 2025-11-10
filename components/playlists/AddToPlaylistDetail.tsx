@@ -132,6 +132,7 @@ export default function AddToPlaylistDetail() {
         )}
         keyExtractor={(item) => item.id}
         extraData={{ selectedPlaylists }}
+        showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <VStack className="px-6">
             <Center className="my-6">

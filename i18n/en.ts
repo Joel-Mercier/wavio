@@ -59,6 +59,7 @@ export default {
         shareSuccessMessage: "Album successfully shared",
         shareErrorMessage: "An error occurred while sharing the album",
         rateModalTitle: "Rate album",
+        seeAll: "See all",
       },
       artists: {
         topSongs: "Top songs",
@@ -111,6 +112,11 @@ export default {
         dailyTopChartsByCountry: "Top podcasts in {{country, titlecase}} today",
         dailyTopChartsByGenre: "Top podcasts in $t(app.podcasts.genres.{{genre}}) today",
         seeAllEpisodes: "See all episodes",
+        configureTaddyPodcasts: "Configure in settings",
+        taddyPodcastsNotConfigured: "Podcast access is not configured",
+        search: {
+          inputPlaceholder: "Search podcasts",
+        },
         genres: {
           PODCASTSERIES_ARTS: "Arts",
           PODCASTSERIES_ARTS_BOOKS: "Arts - Books",

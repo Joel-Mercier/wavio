@@ -115,7 +115,7 @@ export default function AlbumDetail() {
     error: discoverMoreError,
   } = useArtist(data?.album?.artistId);
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
-  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const offsetY = useSharedValue(0);
@@ -509,7 +509,10 @@ export default function AlbumDetail() {
             ]}
             locations={[0, 0.8]}
             className="px-6"
-            style={{ paddingTop: insets.top }}
+            style={{
+              paddingTop: insets.top,
+              paddingHorizontal: 24,
+            }}
           >
             <HStack className="mt-6 items-start justify-between">
               <FadeOutScaleDown
@@ -652,7 +655,7 @@ export default function AlbumDetail() {
                     href={`/artists/${discoverMoreData?.artist?.id}/discography`}
                   >
                     <Text numberOfLines={1} className="text-gray-200">
-                      See all
+                      {t("app.albums.seeAll")}
                     </Text>
                   </FadeOutScaleDown>
                 </HStack>
@@ -698,6 +701,7 @@ export default function AlbumDetail() {
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
         // contentContainerStyle={{ paddingHorizontal: 24 }}
+        showsVerticalScrollIndicator={false}
       />
       <BottomSheetModal
         ref={bottomSheetShareModalRef}

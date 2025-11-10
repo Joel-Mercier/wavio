@@ -8,7 +8,6 @@ interface FavoritePodcastListItemProps {
 export default function FavoritePodcastListItem({
   podcast,
 }: FavoritePodcastListItemProps) {
-  console.log(podcast);
   return (
     <FadeOutScaleDown
       href={{

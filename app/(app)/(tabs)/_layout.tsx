@@ -11,9 +11,9 @@ import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const showDrawer = useApp.use.showDrawer();
-  const setShowDrawer = useApp.use.setShowDrawer();
-  const showAddTab = useApp.use.showAddTab();
+  const showDrawer = useApp((store) => store.showDrawer);
+  const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const showAddTab = useApp((store) => store.showAddTab);
   const [showAddSheet, setShowAddSheet] = useState(false);
 
   const handleClose = () => {
@@ -44,10 +44,10 @@ export default function TabLayout() {
           tabBarBackground: () => (
             <LinearGradient
               colors={[
-                "rgba(24,23,25, 0)",
-                "rgba(24,23,25, 0.3)",
-                "rgba(24,23,25, 0.9)",
-                "rgb(24,23,25)",
+                "rgba(0,0,0, 0)",
+                "rgba(0,0,0, 0.3)",
+                "rgba(0,0,0, 0.9)",
+                "rgb(0,0,0)",
               ]}
               style={{ height: "100%" }}
               locations={[0, 0.1, 0.5, 1]}

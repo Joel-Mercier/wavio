@@ -37,8 +37,8 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const { t } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
   const router = useRouter();
-  const logout = useAuth.use.logout();
-  const username = useAuth.use.username();
+  const logout = useAuth((store) => store.logout);
+  const username = useAuth((store) => store.username);
   const currentServer = useServers((state) =>
     state.servers.find((server) => server.current === true),
   );

@@ -106,18 +106,28 @@ export default function SettingsDetail() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
   const toast = useToast();
-  const locale = useApp.use.locale();
-  const setLocale = useApp.use.setLocale();
-  const showAddTab = useApp.use.showAddTab();
-  const setShowAddTab = useApp.use.setShowAddTab();
-  const setTaddyPodcastsConfig = usePodcasts.use.setTaddyPodcastsConfig();
-  const clearTaddyPodcastsConfig = usePodcasts.use.clearTaddyPodcastsConfig();
-  const taddyPodcastApiKey = usePodcasts.use.taddyPodcastsApiKey();
-  const taddyPodcastUserId = usePodcasts.use.taddyPodcastsUserId();
-  const taddyPodcastLanguage = usePodcasts.use.taddyPodcastsLanguage();
-  const taddyPodcastCountry = usePodcasts.use.taddyPodcastsCountry();
-  const clearRecentPlays = useRecentPlays.use.clearRecentPlays();
-  const clearRecentSearches = useRecentSearches.use.clearRecentSearches();
+  const locale = useApp((store) => store.locale);
+  const setLocale = useApp((store) => store.setLocale);
+  const showAddTab = useApp((store) => store.showAddTab);
+  const setShowAddTab = useApp((store) => store.setShowAddTab);
+  const setTaddyPodcastsConfig = usePodcasts(
+    (store) => store.setTaddyPodcastsConfig,
+  );
+  const clearTaddyPodcastsConfig = usePodcasts(
+    (store) => store.clearTaddyPodcastsConfig,
+  );
+  const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
+  const taddyPodcastLanguage = usePodcasts(
+    (store) => store.taddyPodcastsLanguage,
+  );
+  const taddyPodcastCountry = usePodcasts(
+    (store) => store.taddyPodcastsCountry,
+  );
+  const clearRecentPlays = useRecentPlays((store) => store.clearRecentPlays);
+  const clearRecentSearches = useRecentSearches(
+    (store) => store.clearRecentSearches,
+  );
   const doStartScan = useStartScan();
   const { data, isLoading, error } = useGetScanStatus();
   const { data: remainingApiRequests } = useRemainingApiRequests(
@@ -143,7 +153,6 @@ export default function SettingsDetail() {
       onBlur: podcastConfigSchema,
     },
     onSubmit: ({ value }) => {
-      console.log(value);
       setTaddyPodcastsConfig(value);
       setShowPodcastsAlertDialog(false);
       toast.show({
@@ -473,7 +482,12 @@ export default function SettingsDetail() {
                 )}
               </VStack>
               <Badge
-                className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                className={cn(
+                  "rounded-full normal-case py-1 px-3 bg-primary-100",
+                  {
+                    "bg-emerald-100": taddyPodcastApiKey && taddyPodcastUserId,
+                  },
+                )}
                 size="lg"
                 variant="solid"
                 action={
@@ -482,7 +496,12 @@ export default function SettingsDetail() {
                     : "success"
                 }
               >
-                <BadgeText className="normal-case text-center text-emerald-700">
+                <BadgeText
+                  className={cn("normal-case text-center text-primary-700", {
+                    "text-emerald-700":
+                      taddyPodcastApiKey && taddyPodcastUserId,
+                  })}
+                >
                   {taddyPodcastApiKey && taddyPodcastUserId
                     ? t("app.settings.podcastSettings.statuses.active")
                     : t("app.settings.podcastSettings.statuses.inactive")}

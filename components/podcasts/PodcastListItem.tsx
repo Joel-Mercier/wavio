@@ -52,8 +52,10 @@ export default function PodcastListItem({
 }: PodcastListItemProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const addFavoritePodcast = usePodcasts.use.addFavoritePodcast();
-  const removeFavoritePodcast = usePodcasts.use.removeFavoritePodcast();
+  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
+  const removeFavoritePodcast = usePodcasts(
+    (store) => store.removeFavoritePodcast,
+  );
   const toast = useToast();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =

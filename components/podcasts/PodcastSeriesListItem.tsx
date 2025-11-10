@@ -31,7 +31,7 @@ export default function PodcastSeriesListItem({
         },
       }}
       className={cn(className, {
-        "mt-0": layout === "vertical" && index === 0,
+        "mt-6": layout === "vertical" && index === 0,
         "pt-4": layout === "vertical" && index !== 0,
         "px-6": layout === "vertical",
         "mr-6": layout === "horizontal",
@@ -46,12 +46,22 @@ export default function PodcastSeriesListItem({
         {podcast.imageUrl ? (
           <Image
             source={{ uri: podcast.imageUrl }}
-            className="w-32 h-32 rounded-md aspect-square"
+            className={cn("w-32 h-32 rounded-md aspect-square", {
+              "w-16 h-16": layout === "vertical",
+            })}
             alt="Album cover"
           />
         ) : (
-          <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">
-            <Podcast size={48} color={themeConfig.theme.colors.white} />
+          <Box
+            className={cn(
+              "w-32 h-32 rounded-md bg-primary-600 items-center justify-center",
+              { "w-16 h-16": layout === "vertical" },
+            )}
+          >
+            <Podcast
+              size={layout === "vertical" ? 24 : 48}
+              color={themeConfig.theme.colors.white}
+            />
           </Box>
         )}
         <VStack className={cn({ "flex-col ml-4": layout === "vertical" })}>

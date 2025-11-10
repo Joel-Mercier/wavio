@@ -108,7 +108,7 @@ export default function ArtistDetail() {
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
-  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
@@ -378,6 +378,7 @@ export default function ArtistDetail() {
             <LinearGradient
               colors={["transparent", "#000000"]}
               className="h-96"
+              style={{ height: 384 }}
             >
               <Box className="flex-1 " style={{ paddingTop: insets.top }}>
                 <VStack className="mt-6 px-6 items-start justify-between h-full">
@@ -475,6 +476,13 @@ export default function ArtistDetail() {
                   <>
                     <LinearGradient
                       className="absolute h-[90px] bottom-0 left-0 right-0"
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 90,
+                      }}
                       colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
                       locations={[0, 0.3, 0.7]}
                     />
@@ -546,7 +554,12 @@ export default function ArtistDetail() {
                     <Box className="absolute inset-0">
                       <LinearGradient
                         colors={["transparent", "#000"]}
-                        className="h-full w-full p-6 flex justify-end"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          justifyContent: "flex-end",
+                          padding: 24,
+                        }}
                       >
                         <Text className="text-white" numberOfLines={3}>
                           {artistInfoData?.artistInfo2?.biography}
@@ -563,6 +576,7 @@ export default function ArtistDetail() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
       <BottomSheetModal
         ref={bottomSheetModalRef}

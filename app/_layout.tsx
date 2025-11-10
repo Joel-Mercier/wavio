@@ -59,8 +59,8 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 export default function RootLayout() {
-  const locale = useApp.use.locale();
-  const setLocale = useApp.use.setLocale();
+  const locale = useApp((store) => store.locale);
+  const setLocale = useApp((store) => store.setLocale);
   const [loaded] = useFonts({
     Inter_400Regular,
     Inter_300Light,

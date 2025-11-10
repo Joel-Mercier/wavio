@@ -107,7 +107,7 @@ export default function PlaylistDetail() {
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
-  const addRecentPlay = useRecentPlays.use.addRecentPlay();
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
@@ -535,6 +535,7 @@ export default function PlaylistDetail() {
           paddingTop: insets.top,
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
       <BottomSheetModal
         ref={bottomSheetShareModalRef}

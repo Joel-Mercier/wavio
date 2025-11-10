@@ -93,6 +93,7 @@ export default function GenreScreen() {
             <LinearGradient
               colors={[themeConfig.theme.colors.blue[500], "#000000"]}
               className="h-48"
+              style={{ height: 192 }}
             >
               <Box
                 className="bg-black/25 flex-1"
@@ -132,6 +133,7 @@ export default function GenreScreen() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        showsVerticalScrollIndicator={false}
       />
     </Box>
   );
