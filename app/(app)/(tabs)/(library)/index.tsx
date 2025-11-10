@@ -57,9 +57,8 @@ export default function LibraryScreen() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const router = useRouter();
-  const [sort, setSort] = useState<
-    "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc"
-  >("addedAtAsc");
+  const sort = useApp((store) => store.librarySort);
+  const setSort = useApp((store) => store.setLibrarySort);
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | null

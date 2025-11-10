@@ -5,6 +5,7 @@ export default function LibraryLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="favorites" />
+      <Stack.Screen name="favorites/search" />
       <Stack.Screen name="search" />
       <Stack.Screen name="albums/[id]" />
       <Stack.Screen name="artists/[id]" />
@@ -12,6 +13,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="artists/[id]/discography" />
       <Stack.Screen name="playlists/add-to-playlist" />
       <Stack.Screen name="playlists/[id]" />
+      <Stack.Screen name="playlists/[id]/search" />
       <Stack.Screen name="playlists/[id]/edit" />
       <Stack.Screen name="playlists/[id]/reorder" />
       <Stack.Screen name="settings" />

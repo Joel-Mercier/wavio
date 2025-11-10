@@ -12,6 +12,30 @@ interface AppStore {
   setShowDrawer: (showDrawer: boolean) => void;
   showAddTab: boolean;
   setShowAddTab: (showAddTab: boolean) => void;
+  librarySort:
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc";
+  setLibrarySort: (
+    librarySort:
+      | "addedAtAsc"
+      | "addedAtDesc"
+      | "alphabeticalAsc"
+      | "alphabeticalDesc",
+  ) => void;
+  favoritesSort:
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc";
+  setFavoritesSort: (
+    favoritesSort:
+      | "addedAtAsc"
+      | "addedAtDesc"
+      | "alphabeticalAsc"
+      | "alphabeticalDesc",
+  ) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -30,6 +54,26 @@ export const useAppBase = create<AppStore>()(
       showAddTab: false,
       setShowAddTab: (showAddTab: boolean) => {
         set({ showAddTab });
+      },
+      librarySort: "addedAtAsc",
+      setLibrarySort: (
+        librarySort:
+          | "addedAtAsc"
+          | "addedAtDesc"
+          | "alphabeticalAsc"
+          | "alphabeticalDesc",
+      ) => {
+        set({ librarySort });
+      },
+      favoritesSort: "addedAtAsc",
+      setFavoritesSort: (
+        favoritesSort:
+          | "addedAtAsc"
+          | "addedAtDesc"
+          | "alphabeticalAsc"
+          | "alphabeticalDesc",
+      ) => {
+        set({ favoritesSort });
       },
     }),
     {

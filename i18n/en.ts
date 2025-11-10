@@ -1,5 +1,3 @@
-import { search } from "@/services/openSubsonic/searching";
-
 export default {
   translation: {
     app: {
@@ -81,6 +79,7 @@ export default {
       favorites: {
         title: "Favorites",
         favorite_tracks: "Favorite tracks",
+        searchPlaceholder: "Search your favorite tracks",
       },
       playlists: {
         edit: "Edit this playlist",
@@ -101,6 +100,7 @@ export default {
           "An error occurred while removing the track from the playlist",
         empty: "This playlist is empty",
         emptyAction: "Find songs to add to this playlist",
+        searchPlaceholder: "Search playlist",
       },
       podcasts: {
         goToPodcastSeries: "Go to podcast",

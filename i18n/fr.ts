@@ -1,6 +1,3 @@
-import { search } from "@/services/openSubsonic/searching";
-import { configure } from "@react-native-community/netinfo";
-
 export default {
   translation: {
     app: {
@@ -83,6 +80,7 @@ export default {
       favorites: {
         title: "Favoris",
         favorite_tracks: "Titres favoris",
+        searchPlaceholder: "Rechercher dans vos favoris",
       },
       playlists: {
         edit: "Modifier cette playlist",
@@ -103,6 +101,7 @@ export default {
           "Une erreur s'est produite lors de la suppression du titre de la playlist",
         empty: "Cette playlist est vide",
         emptyAction: "Rechercher des titres à ajouter à cette playlist",
+        searchPlaceholder: "Rechercher dans la playlist",
       },
       podcasts: {
         goToPodcastSeries: "Voir le podcast",

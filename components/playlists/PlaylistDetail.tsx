@@ -31,6 +31,7 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
+import usePlaylists from "@/stores/playlists";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { loadingData } from "@/utils/loadingData";
@@ -56,9 +57,9 @@ import {
   Clock,
   EllipsisVertical,
   ListMusic,
-  Menu,
   Pencil,
   Play,
+  Search,
   Share2,
   Shuffle,
   X,
@@ -84,9 +85,9 @@ export default function PlaylistDetail() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [sort, setSort] = useState<
-    "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc"
-  >("addedAtAsc");
+  const setPlaylistSort = usePlaylists((store) => store.setPlaylistSort);
+  const playlistSorts = usePlaylists((store) => store.playlistSorts);
+  const sort = playlistSorts[id] ?? "addedAtAsc";
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -334,9 +335,11 @@ export default function PlaylistDetail() {
     bottomSheetSortModalRef.current?.present();
   }, []);
 
-  const handleSortPress = (type: typeof sort) => {
+  const handleSortPress = (
+    type: "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc",
+  ) => {
     bottomSheetSortModalRef.current?.dismiss();
-    setSort(type);
+    setPlaylistSort(id, type);
   };
 
   const data = useMemo(() => {
@@ -405,6 +408,7 @@ export default function PlaylistDetail() {
       <AnimatedFlashList
         onScroll={scrollHandler}
         data={data || loadingData(16)}
+        keyExtractor={(item) => item.id}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (
             <TrackListItemSkeleton index={index} />
@@ -518,6 +522,24 @@ export default function PlaylistDetail() {
                   </FadeOutScaleDown>
                 </HStack>
               </HStack>
+              <FadeOutScaleDown
+                href={{
+                  pathname: `/playlists/${id}/search`,
+                  params: { sort },
+                }}
+                className="my-4"
+              >
+                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+                  <Search
+                    size={20}
+                    color={"rgb(128, 128, 128)"}
+                    className="text-primary-100"
+                  />
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.playlists.searchPlaceholder")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </VStack>

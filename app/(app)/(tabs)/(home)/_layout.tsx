@@ -9,6 +9,7 @@ export default function HomeLayout() {
       <Stack.Screen name="artists/[id]/biography" />
       <Stack.Screen name="artists/[id]/discography" />
       <Stack.Screen name="playlists/[id]" />
+      <Stack.Screen name="playlists/[id]/search" />
       <Stack.Screen name="playlists/add-to-playlist" />
       <Stack.Screen name="internet-radio-stations/[id]" />
       <Stack.Screen name="settings" />
