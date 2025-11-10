@@ -4,7 +4,7 @@
     "slug": "wavio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/splash-icon-dark.png",
     "scheme": "wavio",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,12 +13,17 @@
       "bundleIdentifier": "com.jmercier.wavio",
       "infoPlist": {
         "UIBackgroundModes": ["audio"]
+      },
+      "icon": {
+        "dark": "./assets/images/ios-dark.png",
+        "light": "./assets/images/ios-light.png",
+        "tinted": "./assets/images/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#302F2F"
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.jmercier.wavio"
@@ -33,10 +38,13 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-icon-dark.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#302F2F"
+          "backgroundColor": "#000000",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
       ],
       [

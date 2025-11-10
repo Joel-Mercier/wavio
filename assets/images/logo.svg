@@ -1,14 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img">
-  <g fill="none" stroke="#10B981" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M72 164
-             C120 132,184 132,232 164
-             C280 196,344 196,392 164" />
-    <path d="M72 256
-             C120 224,184 224,232 256
-             C280 288,344 288,392 256" />
-    <path d="M72 348
-             C120 316,184 316,232 348
-             C280 380,344 380,392 348" />
-  </g>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M96 164C144 132 208 132 256 164C304 196 368 196 416 164" stroke="#10B981" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M96 256C144 224 208 224 256 256C304 288 368 288 416 256" stroke="#10B981" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M96 348C144 316 208 316 256 348C304 380 368 380 416 348" stroke="#10B981" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

@@ -7,26 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DA30875D21FC28912A30976 /* libPods-Wavio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 070C4E99E03A6F11441140D6 /* libPods-Wavio.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6191277E5A9C1091455FA3C3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 99C8C9D8C547EAAD079701FC /* PrivacyInfo.xcprivacy */; };
-		78E0DECCA8B4DE88EDA50024 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36885F276DB592B2BF6D047 /* ExpoModulesProvider.swift */; };
+		419E7583539EB72D9217F00F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 874C1C2A4C0E0F87D0C4FECC /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E86E03802EE735F587069B2E /* libPods-Wavio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 37EDEBF52DF000C37B30CF66 /* libPods-Wavio.a */; };
+		EF7F0596B214C8B1BC61BE82 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F1A0B4F10B9465F3012A854 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0549E728C293F9ED51662C82 /* Pods-Wavio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.debug.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.debug.xcconfig"; sourceTree = "<group>"; };
+		070C4E99E03A6F11441140D6 /* libPods-Wavio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Wavio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* Wavio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wavio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Wavio/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Wavio/Info.plist; sourceTree = "<group>"; };
-		37EDEBF52DF000C37B30CF66 /* libPods-Wavio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Wavio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		72AA8EF80C7DFAAC9976D2F5 /* Pods-Wavio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.debug.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.debug.xcconfig"; sourceTree = "<group>"; };
-		99C8C9D8C547EAAD079701FC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Wavio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7F1A0B4F10B9465F3012A854 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		874C1C2A4C0E0F87D0C4FECC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Wavio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Wavio/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D36885F276DB592B2BF6D047 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		DE62E942C2C9869A297E4633 /* Pods-Wavio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.release.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.release.xcconfig"; sourceTree = "<group>"; };
+		BF5A0A154C5F9EB3D5A327B3 /* Pods-Wavio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.release.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Wavio/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Wavio-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Wavio-Bridging-Header.h"; path = "Wavio/Wavio-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E86E03802EE735F587069B2E /* libPods-Wavio.a in Frameworks */,
+				0DA30875D21FC28912A30976 /* libPods-Wavio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,34 +53,36 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				99C8C9D8C547EAAD079701FC /* PrivacyInfo.xcprivacy */,
+				874C1C2A4C0E0F87D0C4FECC /* PrivacyInfo.xcprivacy */,
 			);
 			name = Wavio;
 			sourceTree = "<group>";
 		};
-		29A0AC8024EA37FDFA69F872 /* ExpoModulesProviders */ = {
+		2B65B9EBD133CAEDF7B98820 /* Wavio */ = {
 			isa = PBXGroup;
 			children = (
-				829710BC6B1553B84D861612 /* Wavio */,
+				7F1A0B4F10B9465F3012A854 /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = Wavio;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				37EDEBF52DF000C37B30CF66 /* libPods-Wavio.a */,
+				070C4E99E03A6F11441140D6 /* libPods-Wavio.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		829710BC6B1553B84D861612 /* Wavio */ = {
+		4D54EF78103940CFE394A442 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				D36885F276DB592B2BF6D047 /* ExpoModulesProvider.swift */,
+				0549E728C293F9ED51662C82 /* Pods-Wavio.debug.xcconfig */,
+				BF5A0A154C5F9EB3D5A327B3 /* Pods-Wavio.release.xcconfig */,
 			);
-			name = Wavio;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -97,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				939A253AB66A0AAC2E674A4E /* Pods */,
-				29A0AC8024EA37FDFA69F872 /* ExpoModulesProviders */,
+				4D54EF78103940CFE394A442 /* Pods */,
+				F2F3F15AAB9FF83B8F3706D5 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -113,16 +115,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		939A253AB66A0AAC2E674A4E /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				72AA8EF80C7DFAAC9976D2F5 /* Pods-Wavio.debug.xcconfig */,
-				DE62E942C2C9869A297E4633 /* Pods-Wavio.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -130,6 +122,14 @@
 			);
 			name = Supporting;
 			path = Wavio/Supporting;
+			sourceTree = "<group>";
+		};
+		F2F3F15AAB9FF83B8F3706D5 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				2B65B9EBD133CAEDF7B98820 /* Wavio */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Wavio" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				A40147AFCC77531741322E5B /* [Expo] Configure project */,
+				EEE471949B7F74FBA6CAF19D /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				39A8D3E9807E85AA9DF92612 /* [CP] Embed Pods Frameworks */,
+				3A36630D7015D740C97E2F97 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				6191277E5A9C1091455FA3C3 /* PrivacyInfo.xcprivacy in Resources */,
+				419E7583539EB72D9217F00F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		39A8D3E9807E85AA9DF92612 /* [CP] Embed Pods Frameworks */ = {
+		3A36630D7015D740C97E2F97 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -304,7 +304,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A40147AFCC77531741322E5B /* [Expo] Configure project */ = {
+		EEE471949B7F74FBA6CAF19D /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -336,7 +336,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				78E0DECCA8B4DE88EDA50024 /* ExpoModulesProvider.swift in Sources */,
+				EF7F0596B214C8B1BC61BE82 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,7 +345,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 72AA8EF80C7DFAAC9976D2F5 /* Pods-Wavio.debug.xcconfig */;
+			baseConfigurationReference = 0549E728C293F9ED51662C82 /* Pods-Wavio.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -381,7 +381,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DE62E942C2C9869A297E4633 /* Pods-Wavio.release.xcconfig */;
+			baseConfigurationReference = BF5A0A154C5F9EB3D5A327B3 /* Pods-Wavio.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

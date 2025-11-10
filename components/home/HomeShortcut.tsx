@@ -56,6 +56,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
     }
     return "/(app)/(tabs)/(home)";
   }, [recentPlay]);
+
   return (
     <FadeOutScaleDown href={href} className="w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
