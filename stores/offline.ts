@@ -37,24 +37,20 @@ interface OfflineStore {
   offlineModeEnabled: boolean;
   setOfflineModeEnabled: (enabled: boolean) => void;
 
-  // Downloaded tracks
   downloadedTracks: Record<string, OfflineTrack>;
   addDownloadedTrack: (track: OfflineTrack) => void;
   removeDownloadedTrack: (trackId: string) => void;
   clearAllDownloads: () => void;
 
-  // Download progress tracking
   downloadProgress: Record<string, DownloadProgress>;
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
   removeDownloadProgress: (trackId: string) => void;
 
-  // Download queue management
   downloadQueue: string[];
   addToDownloadQueue: (trackId: string) => void;
   removeFromDownloadQueue: (trackId: string) => void;
   clearDownloadQueue: () => void;
 
-  // Utility functions
   isTrackDownloaded: (trackId: string) => boolean;
   getDownloadedTrack: (trackId: string) => OfflineTrack | null;
   getDownloadedTracksList: () => OfflineTrack[];

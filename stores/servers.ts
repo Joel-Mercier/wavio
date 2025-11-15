@@ -45,7 +45,6 @@ const useServersBase = create<ServersStore>()(
 
           if (isDuplicate) {
             throw new Error(i18n.t("auth.login.serverAlreadyExists"));
-            // return { servers: state.servers };
           }
 
           const hasCurrentServer = state.servers.some(

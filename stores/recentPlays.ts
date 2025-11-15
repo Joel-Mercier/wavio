@@ -13,7 +13,6 @@ export type RecentPlay = {
   streamUrl?: string;
 };
 
-// Default to Favorites to ensure it appears after hydration unless overridden
 let ensuredRecentPlayOnHydration: RecentPlay | null = {
   id: "favorites",
   title: "Favorites",
@@ -33,7 +32,6 @@ interface RecentPlaysStore {
   clearRecentPlays: () => void;
 }
 
-// Capture store reference for use in persist callbacks
 let storeRef: { getState: () => RecentPlaysStore } | null = null;
 
 const useRecentPlaysBase = create<RecentPlaysStore>()(

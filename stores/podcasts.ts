@@ -123,7 +123,6 @@ export const usePodcastsBase = create<PodcastsStore>()(
           return [];
         }
 
-        // Shuffle the genres to create variety
         const shuffledGenres = [...uniqueGenres].sort(
           () => Math.random() - 0.5,
         );
@@ -140,7 +139,6 @@ export const usePodcastsBase = create<PodcastsStore>()(
           };
         }
 
-        // Get genre rotation
         const genreRotation = state.getGenreRotation();
         let selectedGenre: keyof typeof Genre | undefined;
         if (genreRotation.length > 0) {
@@ -148,17 +146,14 @@ export const usePodcastsBase = create<PodcastsStore>()(
             state.lastUsedGenreIndex % genreRotation.length;
           selectedGenre = genreRotation[currentGenreIndex];
 
-          // Update the genre index for next time
           const nextIndex =
             (state.lastUsedGenreIndex + 1) % genreRotation.length;
           set({ lastUsedGenreIndex: nextIndex });
         }
 
-        // Get all unique genres from favorites
         const allGenres = favoritePodcasts.flatMap((podcast) => podcast.genres);
         const uniqueGenres = [...new Set(allGenres)];
 
-        // Get most common language and country from favorites
         const languageCounts = favoritePodcasts.reduce(
           (acc, podcast) => {
             if (!podcast.language) return acc;
@@ -193,7 +188,6 @@ export const usePodcastsBase = create<PodcastsStore>()(
           )[0] as keyof typeof Country;
         }
 
-        // Get UUIDs to exclude (all favorite podcasts)
         const excludeUuids = favoritePodcasts.map((podcast) => podcast.uuid);
 
         return {

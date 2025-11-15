@@ -86,15 +86,16 @@ export default function LibraryListItem({
     };
   }, [item, i18n.language]);
 
+  const gridColumn = index % 3;
+  const gridMarginClass = useMemo(() => {
+    if (layout !== "grid") return "";
+    if (gridColumn === 0) return "mr-2 ml-0";
+    if (gridColumn === 1) return "mx-2";
+    return "ml-2 mr-0";
+  }, [layout, gridColumn]);
+
   return (
-    <FadeOutScaleDown
-      href={type.url}
-      className={cn("mb-4", {
-        "mr-2 ml-0": layout === "grid" && (index + 1) % 1 === 0,
-        "mx-2": layout === "grid" && (index + 1) % 2 === 0,
-        "ml-2 mr-0": layout === "grid" && (index + 1) % 3 === 0,
-      })}
-    >
+    <FadeOutScaleDown href={type.url} className={cn("mb-4", gridMarginClass)}>
       <HStack
         className={cn("flex-row transition duration-100 items-center", {
           "flex-col items-start": layout === "grid",

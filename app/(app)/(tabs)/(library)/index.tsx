@@ -280,9 +280,11 @@ export default function LibraryScreen() {
       </>
       {!error && (
         <FlashList
+          key={`library-${layout}`}
           data={data || loadingData(16)}
           keyExtractor={(item) => item.id}
           numColumns={layout === "grid" ? 3 : 1}
+          estimatedItemSize={layout === "grid" ? 200 : 100}
           refreshing={
             (isFetchingStarred && !isLoadingStarred) ||
             (isFetchingPlaylists && !isLoadingPlaylists)

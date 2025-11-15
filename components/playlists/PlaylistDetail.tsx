@@ -57,6 +57,7 @@ import {
   Clock,
   EllipsisVertical,
   ListMusic,
+  Menu,
   Pencil,
   Play,
   Search,
@@ -88,6 +89,9 @@ export default function PlaylistDetail() {
   const setPlaylistSort = usePlaylists((store) => store.setPlaylistSort);
   const playlistSorts = usePlaylists((store) => store.playlistSorts);
   const sort = playlistSorts[id] ?? "addedAtAsc";
+  const getPlaylistTrackPositions = usePlaylists(
+    (store) => store.getPlaylistTrackPositions,
+  );
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -351,6 +355,20 @@ export default function PlaylistDetail() {
       return null;
     }
     const newData = [...playlistData.playlist.entry];
+    const storedPositions = getPlaylistTrackPositions(id);
+
+    if (storedPositions && sort === "addedAtAsc") {
+      return newData.sort((a, b) => {
+        const posA = storedPositions[a.id];
+        const posB = storedPositions[b.id];
+        if (posA !== undefined && posB !== undefined) {
+          return posA - posB;
+        }
+        if (posA !== undefined) return -1;
+        if (posB !== undefined) return 1;
+        return 0;
+      });
+    }
 
     if (sort === "addedAtAsc") {
       return newData;
@@ -368,7 +386,7 @@ export default function PlaylistDetail() {
         return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
       });
     }
-  }, [playlistData, sort]);
+  }, [playlistData, sort, id, getPlaylistTrackPositions]);
 
   return (
     <Box className="h-full">
@@ -646,14 +664,14 @@ export default function PlaylistDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              {/* <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
+              <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
                 <HStack className="items-center">
                   <Menu size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
                     Reorder this playlist
                   </Text>
                 </HStack>
-              </FadeOutScaleDown> */}
+              </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
                   <Pencil

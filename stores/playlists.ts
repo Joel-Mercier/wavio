@@ -14,6 +14,21 @@ interface PlaylistsStore {
   playlistSorts: Record<string, PlaylistSortType>;
   getPlaylistSort: (playlistId: string) => PlaylistSortType;
   setPlaylistSort: (playlistId: string, sort: PlaylistSortType) => void;
+  playlistTrackPositions: Record<string, Record<string, number>>;
+  getPlaylistTrackPositions: (
+    playlistId: string,
+  ) => Record<string, number> | undefined;
+  setPlaylistTrackPositions: (
+    playlistId: string,
+    positions: Record<string, number>,
+  ) => void;
+  getTrackPosition: (playlistId: string, trackId: string) => number | undefined;
+  setTrackPosition: (
+    playlistId: string,
+    trackId: string,
+    position: number,
+  ) => void;
+  clearPlaylistTrackPositions: (playlistId: string) => void;
 }
 
 const usePlaylistsBase = create<PlaylistsStore>()(
@@ -31,6 +46,53 @@ const usePlaylistsBase = create<PlaylistsStore>()(
             [playlistId]: sort,
           },
         }));
+      },
+      playlistTrackPositions: {},
+      getPlaylistTrackPositions: (playlistId: string) => {
+        const state = get();
+        return state.playlistTrackPositions[playlistId];
+      },
+      setPlaylistTrackPositions: (
+        playlistId: string,
+        positions: Record<string, number>,
+      ) => {
+        set((state) => ({
+          playlistTrackPositions: {
+            ...state.playlistTrackPositions,
+            [playlistId]: positions,
+          },
+        }));
+      },
+      getTrackPosition: (playlistId: string, trackId: string) => {
+        const state = get();
+        return state.playlistTrackPositions[playlistId]?.[trackId];
+      },
+      setTrackPosition: (
+        playlistId: string,
+        trackId: string,
+        position: number,
+      ) => {
+        set((state) => {
+          const currentPositions =
+            state.playlistTrackPositions[playlistId] || {};
+          return {
+            playlistTrackPositions: {
+              ...state.playlistTrackPositions,
+              [playlistId]: {
+                ...currentPositions,
+                [trackId]: position,
+              },
+            },
+          };
+        });
+      },
+      clearPlaylistTrackPositions: (playlistId: string) => {
+        set((state) => {
+          const { [playlistId]: _, ...rest } = state.playlistTrackPositions;
+          return {
+            playlistTrackPositions: rest,
+          };
+        });
       },
     }),
     {

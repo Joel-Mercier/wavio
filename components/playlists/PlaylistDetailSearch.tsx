@@ -28,6 +28,9 @@ export default function PlaylistDetailSearch() {
   }>();
   const playlistSorts = usePlaylists((store) => store.playlistSorts);
   const sort = playlistSorts[id] ?? "addedAtAsc";
+  const getPlaylistTrackPositions = usePlaylists(
+    (store) => store.getPlaylistTrackPositions,
+  );
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -52,16 +55,30 @@ export default function PlaylistDetailSearch() {
       return null;
     }
     let newData = [...playlistData.playlist.entry];
+    const storedPositions = getPlaylistTrackPositions(id);
 
-    if (sort === "addedAtDesc") {
+    // If we have stored positions and sort is "addedAtAsc", use stored order
+    if (storedPositions && sort === "addedAtAsc") {
+      newData = newData.sort((a, b) => {
+        const posA = storedPositions[a.id];
+        const posB = storedPositions[b.id];
+        // If both have positions, sort by position
+        if (posA !== undefined && posB !== undefined) {
+          return posA - posB;
+        }
+        // If only one has position, prioritize it
+        if (posA !== undefined) return -1;
+        if (posB !== undefined) return 1;
+        // If neither has position, maintain original order
+        return 0;
+      });
+    } else if (sort === "addedAtDesc") {
       newData = newData.reverse();
-    }
-    if (sort === "alphabeticalAsc") {
+    } else if (sort === "alphabeticalAsc") {
       newData = newData.sort((a, b) => {
         return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
       });
-    }
-    if (sort === "alphabeticalDesc") {
+    } else if (sort === "alphabeticalDesc") {
       newData = newData.sort((a, b) => {
         return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
       });
@@ -85,7 +102,7 @@ export default function PlaylistDetailSearch() {
     const fuse = new Fuse<Child>(newData, options);
     const result = fuse.search(query);
     return result;
-  }, [playlistData, sort, query]);
+  }, [playlistData, sort, query, id, getPlaylistTrackPositions]);
 
   return (
     <Box className="h-full">
