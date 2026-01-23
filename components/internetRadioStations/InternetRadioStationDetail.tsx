@@ -64,7 +64,7 @@ import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import z from "zod";
+import * as z from "zod";
 
 const updateInternetRadioStationSchema = z.object({
   name: z.string().min(1),

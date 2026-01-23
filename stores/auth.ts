@@ -1,9 +1,6 @@
 import { zustandStorage } from "@/config/storage";
-import openSubsonicApiInstance from "@/services/openSubsonic";
 import createSelectors from "@/utils/createSelectors";
-import axios from "axios";
-import { t } from "i18next";
-import z from "zod";
+import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 

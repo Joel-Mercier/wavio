@@ -34,7 +34,7 @@ import {
   ReanimatedLogLevel,
   configureReanimatedLogger,
 } from "react-native-reanimated";
-import { z } from "zod";
+import * as z from "zod";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

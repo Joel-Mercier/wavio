@@ -42,7 +42,7 @@ import { ArrowLeft, Settings2, X } from "lucide-react-native";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import z from "zod";
+import * as z from "zod";
 
 const filtersSchema = z.object({
   query: z.string().trim().min(1),

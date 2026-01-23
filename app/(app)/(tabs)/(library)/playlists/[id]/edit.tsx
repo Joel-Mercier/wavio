@@ -28,7 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircleIcon, ListMusic, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import z from "zod";
+import * as z from "zod";
 
 const editPlaylistSchema = z.object({
   name: z.string().min(1).trim(),

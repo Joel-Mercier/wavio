@@ -1,7 +1,7 @@
 import i18n from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
-import z from "zod";
+import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 

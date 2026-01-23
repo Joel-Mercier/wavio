@@ -66,7 +66,7 @@ import {
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import z from "zod";
+import * as z from "zod";
 import {
   Select,
   SelectBackdrop,

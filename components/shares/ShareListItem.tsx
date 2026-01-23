@@ -57,7 +57,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import z from "zod";
+import * as z from "zod";
 
 const updateShareSchema = z.object({
   description: z.string().trim().optional(),

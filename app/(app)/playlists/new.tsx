@@ -27,7 +27,7 @@ import { useRouter } from "expo-router";
 import { AlertCircleIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import z from "zod";
+import * as z from "zod";
 
 const newPlaylistSchema = z.object({
   name: z.string().trim().min(1),
