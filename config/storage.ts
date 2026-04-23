@@ -1,7 +1,7 @@
-import { MMKV } from "react-native-mmkv";
+import { createMMKV } from "react-native-mmkv";
 import type { StateStorage } from "zustand/middleware";
 
-export const storage = new MMKV({
+export const storage = createMMKV({
   id: "wavio",
 });
 
@@ -14,7 +14,7 @@ export const zustandStorage: StateStorage = {
     return value ?? null;
   },
   removeItem: (name) => {
-    return storage.delete(name);
+    return storage.remove(name);
   },
 };
 
@@ -27,7 +27,7 @@ export const createScopedStorage = (scope: string): StateStorage => ({
     return value ?? null;
   },
   removeItem: (name) => {
-    return storage.delete(`${scope}:${name}`);
+    return storage.remove(`${scope}:${name}`);
   },
 });
 

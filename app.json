@@ -7,7 +7,6 @@
     "icon": "./assets/images/splash-icon-dark.png",
     "scheme": "wavio",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jmercier.wavio",
@@ -25,7 +24,6 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.jmercier.wavio"
     },
     "web": {
@@ -53,8 +51,8 @@
           "android": {
             "usesCleartextTraffic": true,
             "minSdkVersion": 26,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
           }
         }
       ],

@@ -1,8 +1,7 @@
-import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
-import type React from "react";
-import { forwardRef } from "react";
-import { Animated, Easing, Platform, View } from "react-native";
-import { skeletonStyle, skeletonTextStyle } from "./styles";
+import React, { forwardRef } from 'react';
+import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
+import { Animated, Easing, Platform, View } from 'react-native';
+import { skeletonStyle, skeletonTextStyle } from './styles';
 
 type ISkeletonProps = React.ComponentProps<typeof View> &
   VariantProps<typeof skeletonStyle> & {
@@ -26,12 +25,12 @@ const Skeleton = forwardRef<
     className,
     variant,
     children,
-    startColor = "bg-background-200",
+    startColor = 'bg-background-200',
     isLoaded = false,
     speed = 2,
     ...props
   },
-  ref,
+  ref
 ) {
   const pulseAnim = new Animated.Value(1);
   const customTimingFunction = Easing.bezier(0.4, 0, 0.6, 1);
@@ -43,19 +42,19 @@ const Skeleton = forwardRef<
       toValue: 1, // Start with opacity 1
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== "web",
+      useNativeDriver: Platform.OS !== 'web',
     }),
     Animated.timing(pulseAnim, {
       toValue: 0.75,
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== "web",
+      useNativeDriver: Platform.OS !== 'web',
     }),
     Animated.timing(pulseAnim, {
       toValue: 1,
       duration: animationDuration / 2, // Third of the animation duration
       easing: customTimingFunction,
-      useNativeDriver: Platform.OS !== "web",
+      useNativeDriver: Platform.OS !== 'web',
     }),
   ]);
 
@@ -72,10 +71,11 @@ const Skeleton = forwardRef<
         ref={ref}
       />
     );
-  }
-  Animated.loop(pulse).stop();
+  } else {
+    Animated.loop(pulse).stop();
 
-  return children;
+    return children;
+  }
 });
 
 const SkeletonText = forwardRef<
@@ -86,12 +86,12 @@ const SkeletonText = forwardRef<
     className,
     _lines,
     isLoaded = false,
-    startColor = "bg-background-200",
+    startColor = 'bg-background-200',
     gap = 2,
     children,
     ...props
   },
-  ref,
+  ref
 ) {
   if (!isLoaded) {
     if (_lines) {
@@ -113,21 +113,23 @@ const SkeletonText = forwardRef<
           ))}
         </View>
       );
+    } else {
+      return (
+        <Skeleton
+          className={`${startColor} ${skeletonTextStyle({
+            class: className,
+          })}`}
+          {...props}
+          ref={ref}
+        />
+      );
     }
-    return (
-      <Skeleton
-        className={`${startColor} ${skeletonTextStyle({
-          class: className,
-        })}`}
-        {...props}
-        ref={ref}
-      />
-    );
+  } else {
+    return children;
   }
-  return children;
 });
 
-Skeleton.displayName = "Skeleton";
-SkeletonText.displayName = "SkeletonText";
+Skeleton.displayName = 'Skeleton';
+SkeletonText.displayName = 'SkeletonText';
 
 export { Skeleton, SkeletonText };
