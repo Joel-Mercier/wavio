@@ -46,7 +46,7 @@ export default function NewInternetRadioStationScreen() {
       name: "",
       streamUrl: "",
       homePageUrl: "",
-    },
+    } as z.input<typeof newInternetRadioStationSchema>,
     validators: {
       onBlur: newInternetRadioStationSchema,
     },
@@ -144,7 +144,7 @@ export default function NewInternetRadioStationScreen() {
                     />
                     <FormControlErrorText className="text-red-500 shrink">
                       {field.state.meta.errors
-                        .map((error) => error.message)
+                        .map((error) => error?.message)
                         .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>
@@ -183,7 +183,7 @@ export default function NewInternetRadioStationScreen() {
                     />
                     <FormControlErrorText className="text-red-500 shrink">
                       {field.state.meta.errors
-                        .map((error) => error.message)
+                        .map((error) => error?.message)
                         .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>
@@ -222,7 +222,7 @@ export default function NewInternetRadioStationScreen() {
                     />
                     <FormControlErrorText className="text-red-500 shrink">
                       {field.state.meta.errors
-                        .map((error) => error.message)
+                        .map((error) => error?.message)
                         .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>

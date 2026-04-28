@@ -222,7 +222,6 @@ export const BottomSheetContent = ({ ...props }: IBottomSheetContent) => {
     return (
       <GorhomBottomSheetView
         {...props}
-        // @ts-expect-error
         {...keyDownHandlers}
         className={bottomSheetContentStyle({
           className: props.className,
@@ -239,7 +238,6 @@ export const BottomSheetContent = ({ ...props }: IBottomSheetContent) => {
   return (
     <GorhomBottomSheetView
       {...props}
-      // @ts-expect-error
       {...keyDownHandlers}
       className={bottomSheetContentStyle({
         className: props.className,

@@ -1,6 +1,7 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -133,7 +134,7 @@ export default function PodcastsScreen() {
             <VStack className="gap-y-4 px-6">
               {favorites
                 .slice(0, 8)
-                .reduce((rows: JSX.Element[], favorite, index) => {
+                .reduce((rows: ReactElement[], favorite, index) => {
                   if (index % 4 === 0) {
                     rows.push(
                       <HStack

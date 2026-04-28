@@ -82,7 +82,9 @@ import { artworkUrl } from "@/utils/artwork";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function ArtistDetail() {
@@ -372,7 +374,7 @@ export default function ArtistDetail() {
             </Box>
           )
         }
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: AlbumID3) => item.id}
         ListHeaderComponent={() => (
           <>
             <LinearGradient

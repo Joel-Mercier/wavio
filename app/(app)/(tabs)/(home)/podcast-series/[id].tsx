@@ -39,7 +39,9 @@ import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 
 export default function PodcastSeriesScreen() {
   const { t } = useTranslation();

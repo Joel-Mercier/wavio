@@ -108,7 +108,7 @@ export default function PodcastScreen() {
   const handleGoToPodcastSeriesPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate({
-      pathname: `/(app)/(tabs)/(home)/podcast-series/${podcast.podcastSeries.uuid}`,
+      pathname: `/(app)/(tabs)/(home)/podcast-series/${podcast.podcastSeries?.uuid}`,
       params: {
         ...podcast.podcastSeries,
         genres: podcast?.podcastSeries?.genres?.join(","),
@@ -135,7 +135,7 @@ export default function PodcastScreen() {
 
   const handleRemoveFavoritePodcastPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    removeFavoritePodcast(podcast.podcastSeries.uuid);
+    removeFavoritePodcast(podcast.podcastSeries?.uuid);
     toast.show({
       placement: "top",
       duration: 3000,

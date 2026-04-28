@@ -10,9 +10,10 @@ import type { OpenSubsonicErrorResponse } from "@/services/openSubsonic";
 export default function ErrorDisplay({
   error,
 }: {
-  error: OpenSubsonicErrorResponse;
+  error: OpenSubsonicErrorResponse | Error;
 }) {
   const route = useRoute();
+  const code = "code" in error ? error.code : undefined;
   return (
     <Box className="flex-1 items-center justify-center self-center content-center">
       <Alert
@@ -22,9 +23,11 @@ export default function ErrorDisplay({
       >
         <AlertIcon as={CircleX} />
         <AlertText className="text-primary-50">{error.message}</AlertText>
-        <AlertText className="text-xs text-primary-100">
-          Error code : {error.code}
-        </AlertText>
+        {code !== undefined && (
+          <AlertText className="text-xs text-primary-100">
+            Error code : {code}
+          </AlertText>
+        )}
       </Alert>
       {route.name !== "index" && (
         <Center>

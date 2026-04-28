@@ -46,6 +46,7 @@ import { loadingData } from "@/utils/loadingData";
 
 const filtersSchema = z.object({
   query: z.string().trim().min(1),
+  page: z.number(),
   filterForCountries: z.array(z.enum(Country)).optional(),
   filterForLanguages: z.array(z.enum(Language)).optional(),
   filterForGenres: z.array(z.enum(Genre)).optional(),
@@ -84,7 +85,7 @@ export default function PodcastsSearchScreen() {
       sortBy: undefined,
       matchBy: undefined,
       isSafeMode: undefined,
-    },
+    } as z.input<typeof filtersSchema>,
     validators: {
       onBlur: filtersSchema,
     },

@@ -1,5 +1,6 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AlbumListItem from "@/components/albums/AlbumListItem";
@@ -104,7 +105,7 @@ export default function HomeScreen() {
       >
         <Box className="px-6 mb-4">
           <VStack className="gap-y-4">
-            {recentPlays.reduce((rows: JSX.Element[], play, index) => {
+            {recentPlays.reduce((rows: ReactElement[], play, index) => {
               if (index % 2 === 0) {
                 rows.push(
                   <HStack key={`row-${play.id}`} className="gap-x-4">

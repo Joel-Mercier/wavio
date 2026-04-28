@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
   AlertDialog,
@@ -61,7 +62,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const removeServer = useServers((store) => store.removeServer);
   const setCurrentServer = useServers((store) => store.setCurrentServer);
   const form = useForm({
-    defaultValues: server,
+    defaultValues: server as z.input<typeof serverSchema>,
     validators: {
       onBlur: serverSchema,
     },
@@ -274,7 +275,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -320,7 +321,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -366,7 +367,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -413,7 +414,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>

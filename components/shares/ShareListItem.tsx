@@ -80,7 +80,7 @@ export default function ShareListItem({ share }: { share: Share }) {
     defaultValues: {
       description: share.description,
       expires: share.expires as unknown as string,
-    },
+    } as z.input<typeof updateShareSchema>,
     validators: {
       onBlur: updateShareSchema,
     },
@@ -437,7 +437,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -481,7 +481,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>

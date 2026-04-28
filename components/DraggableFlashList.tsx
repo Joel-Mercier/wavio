@@ -1,7 +1,12 @@
-import { FlashList, type FlashListProps } from "@shopify/flash-list";
+import {
+  FlashList,
+  type FlashListProps,
+  type FlashListRef,
+} from "@shopify/flash-list";
 import {
   forwardRef,
   type PropsWithChildren,
+  type ReactElement,
   useCallback,
   useEffect,
   useMemo,
@@ -92,7 +97,9 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
 ItemWrapper.displayName = "ItemWrapper";
 
 const GestureFlashList = createNativeWrapper(FlashList);
-const AnimatedFlashList = Animated.createAnimatedComponent(GestureFlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  GestureFlashList,
+) as unknown as typeof FlashList;
 
 type DraggableFlashListProps<T> = Omit<
   FlashListProps<T>,
@@ -106,7 +113,7 @@ type DraggableFlashListProps<T> = Omit<
     index: number,
     isActive: boolean,
     beginDrag: () => void,
-  ) => JSX.Element;
+  ) => ReactElement;
   autoScrollSpeed?: number;
   keyExtractor: (item: T, index: number) => string;
 };
@@ -135,7 +142,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   }, [props.data]);
 
   const [layout, setLayout] = useState<Layout | null>(null);
-  const scrollViewRef = useRef<typeof FlashList<T>>(null);
+  const scrollViewRef = useRef<FlashListRef<T>>(null);
 
   const activeIndex = useSharedValue(-1);
   const [activeIndexState, setActiveIndexState] = useState(-1);
@@ -376,7 +383,6 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
       >
         <AnimatedFlashList
           {...props}
-          // @ts-expect-error - FlashList ref type
           ref={scrollViewRef}
           data={data}
           renderItem={renderItem}

@@ -771,7 +771,7 @@ export default function SettingsDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}
                       </FormControlErrorText>
                     </FormControlError>
@@ -818,7 +818,7 @@ export default function SettingsDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}
                       </FormControlErrorText>
                     </FormControlError>
@@ -838,8 +838,8 @@ export default function SettingsDetail() {
                 >
                   <Select
                     selectedValue={taddyPodcastCountry}
-                    onValueChange={(value: keyof typeof Country) =>
-                      field.handleChange(value)
+                    onValueChange={(value) =>
+                      field.handleChange(value as keyof typeof Country)
                     }
                     onClose={field.handleBlur}
                     closeOnOverlayClick
@@ -873,11 +873,11 @@ export default function SettingsDetail() {
                         </SelectDragIndicatorWrapper>
                         <SelectFlatList
                           data={Object.values(Country)}
-                          keyExtractor={(item) => item}
-                          renderItem={({ item }: { item: string }) => (
+                          keyExtractor={(item) => item as string}
+                          renderItem={({ item }) => (
                             <SelectItem
-                              label={item}
-                              value={item}
+                              label={item as string}
+                              value={item as string}
                               textStyle={{
                                 className: "text-white",
                               }}
@@ -895,7 +895,7 @@ export default function SettingsDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}
                       </FormControlErrorText>
                     </FormControlError>
@@ -915,8 +915,8 @@ export default function SettingsDetail() {
                 >
                   <Select
                     selectedValue={taddyPodcastLanguage}
-                    onValueChange={(value: keyof typeof Language) =>
-                      field.handleChange(value)
+                    onValueChange={(value) =>
+                      field.handleChange(value as keyof typeof Language)
                     }
                     onClose={field.handleBlur}
                     closeOnOverlayClick
@@ -950,11 +950,11 @@ export default function SettingsDetail() {
                         </SelectDragIndicatorWrapper>
                         <SelectFlatList
                           data={Object.values(Language)}
-                          keyExtractor={(item) => item}
-                          renderItem={({ item }: { item: string }) => (
+                          keyExtractor={(item) => item as string}
+                          renderItem={({ item }) => (
                             <SelectItem
-                              label={item}
-                              value={item}
+                              label={item as string}
+                              value={item as string}
                               textStyle={{
                                 className: "text-white",
                               }}
@@ -972,7 +972,7 @@ export default function SettingsDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}
                       </FormControlErrorText>
                     </FormControlError>

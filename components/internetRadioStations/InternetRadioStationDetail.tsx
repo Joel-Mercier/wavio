@@ -106,7 +106,7 @@ export default function InternetRadioStationDetail() {
       name,
       streamUrl,
       homePageUrl,
-    },
+    } as z.input<typeof updateInternetRadioStationSchema>,
     validators: {
       onBlur: updateInternetRadioStationSchema,
     },
@@ -501,7 +501,7 @@ export default function InternetRadioStationDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -549,7 +549,7 @@ export default function InternetRadioStationDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>
@@ -597,7 +597,7 @@ export default function InternetRadioStationDetail() {
                       />
                       <FormControlErrorText className="text-red-500 shrink">
                         {field.state.meta.errors
-                          .map((error) => error.message)
+                          .map((error) => error?.message)
                           .join("\n")}{" "}
                       </FormControlErrorText>
                     </FormControlError>

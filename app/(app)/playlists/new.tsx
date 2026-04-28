@@ -139,7 +139,7 @@ export default function NewPlaylistScreen() {
                     />
                     <FormControlErrorText className="text-red-500 shrink">
                       {field.state.meta.errors
-                        .map((error) => error.message)
+                        .map((error) => error?.message)
                         .join("\n")}
                     </FormControlErrorText>
                   </FormControlError>

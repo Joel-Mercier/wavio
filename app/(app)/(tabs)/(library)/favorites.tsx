@@ -47,7 +47,9 @@ import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function FavoritesScreen() {

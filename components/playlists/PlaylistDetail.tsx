@@ -78,7 +78,9 @@ import { loadingData } from "@/utils/loadingData";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
@@ -203,7 +205,7 @@ export default function PlaylistDetail() {
       { id },
       {
         onSuccess: (data) => {
-          setClipboardText(data?.shares?.share[0]?.url);
+          setClipboardText(data?.shares?.share?.[0]?.url);
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
           bottomSheetShareModalRef.current?.present();
@@ -426,7 +428,7 @@ export default function PlaylistDetail() {
       <AnimatedFlashList
         onScroll={scrollHandler}
         data={data || loadingData(16)}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: Child) => item.id}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           isLoading ? (
             <TrackListItemSkeleton index={index} />

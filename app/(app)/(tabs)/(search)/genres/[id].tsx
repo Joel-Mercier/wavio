@@ -27,7 +27,9 @@ import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {

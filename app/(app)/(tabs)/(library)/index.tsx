@@ -159,16 +159,18 @@ export default function LibraryScreen() {
       }
     }
     data = data.flat();
+    const sortTime = (item: (typeof data)[number]) => {
+      const value =
+        ("starred" in item ? item.starred : undefined) ??
+        ("created" in item ? item.created : undefined);
+      return value ? new Date(value).getTime() : 0;
+    };
     return data.sort((a, b) => {
       if (sort === "addedAtAsc") {
-        return (
-          new Date(a.starred || a.created) - new Date(b.starred || b.created)
-        );
+        return sortTime(a) - sortTime(b);
       }
       if (sort === "addedAtDesc") {
-        return (
-          new Date(b.starred || b.created) - new Date(a.starred || a.created)
-        );
+        return sortTime(b) - sortTime(a);
       }
       if (sort === "alphabeticalAsc") {
         return a.name.localeCompare(b.name);
@@ -176,6 +178,7 @@ export default function LibraryScreen() {
       if (sort === "alphabeticalDesc") {
         return b.name.localeCompare(a.name);
       }
+      return 0;
     });
   }, [starredData, playlistsData, filter, sort]);
 
@@ -281,10 +284,13 @@ export default function LibraryScreen() {
       {!error && (
         <FlashList
           key={`library-${layout}`}
-          data={data || loadingData(16)}
+          data={
+            (data || loadingData(16)) as Array<
+              Playlist & AlbumID3 & ArtistID3 & Favorites
+            >
+          }
           keyExtractor={(item) => item.id}
           numColumns={layout === "grid" ? 3 : 1}
-          estimatedItemSize={layout === "grid" ? 200 : 100}
           refreshing={
             (isFetchingStarred && !isLoadingStarred) ||
             (isFetchingPlaylists && !isLoadingPlaylists)
@@ -293,31 +299,21 @@ export default function LibraryScreen() {
             refetchPlaylists();
             refetchStarred();
           }}
-          renderItem={({
-            item,
-            index,
-            target,
-            extraData,
-          }: {
-            item: Playlist & AlbumID3 & ArtistID3 & Favorites;
-            index: number;
-            target: string;
-            extraData: { layout: LibraryLayout };
-          }) =>
-            isLoading ? (
-              <LibraryListItemSkeleton
-                layout={extraData.layout}
-                index={index}
-              />
+          renderItem={({ item, index, extraData }) => {
+            const { layout: itemLayout } = extraData as {
+              layout: LibraryLayout;
+            };
+            return isLoading ? (
+              <LibraryListItemSkeleton layout={itemLayout} index={index} />
             ) : (
               <LibraryListItem
                 item={item}
-                layout={extraData.layout}
+                layout={itemLayout}
                 key={item.id}
                 index={index}
               />
-            )
-          }
+            );
+          }}
           extraData={{ layout }}
           contentContainerStyle={{
             paddingHorizontal: 24,

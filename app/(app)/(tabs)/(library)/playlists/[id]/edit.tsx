@@ -48,7 +48,7 @@ export default function EditPlaylistScreen() {
     defaultValues: {
       name: data?.playlist.name ?? "",
       comment: data?.playlist?.comment ?? "",
-    },
+    } as z.input<typeof editPlaylistSchema>,
     validators: {
       onBlur: editPlaylistSchema,
     },
@@ -170,7 +170,7 @@ export default function EditPlaylistScreen() {
                   />
                   <FormControlErrorText className="text-red-500 shrink">
                     {field.state.meta.errors
-                      .map((error) => error.message)
+                      .map((error) => error?.message)
                       .join("\n")}
                   </FormControlErrorText>
                 </FormControlError>
@@ -205,7 +205,7 @@ export default function EditPlaylistScreen() {
                   />
                   <FormControlErrorText className="text-red-500 shrink">
                     {field.state.meta.errors
-                      .map((error) => error.message)
+                      .map((error) => error?.message)
                       .join("\n")}
                   </FormControlErrorText>
                 </FormControlError>

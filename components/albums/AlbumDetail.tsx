@@ -85,7 +85,9 @@ import { artworkUrl } from "@/utils/artwork";
 import { format } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
@@ -152,7 +154,7 @@ export default function AlbumDetail() {
 
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    router.navigate(`/artists/${data?.album.artists[0].id}`);
+    router.navigate(`/artists/${data?.album.artists?.[0].id}`);
   };
 
   const handleFavoritePress = () => {
@@ -262,7 +264,7 @@ export default function AlbumDetail() {
       { id },
       {
         onSuccess: (data) => {
-          setClipboardText(data?.shares?.share[0]?.url);
+          setClipboardText(data?.shares?.share?.[0]?.url);
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
           bottomSheetShareModalRef.current?.present();
@@ -567,8 +569,9 @@ export default function AlbumDetail() {
                           {artist.name}
                         </Link>
                         {artist.id ===
-                        data?.album?.artists[data?.album?.artists?.length - 1]
-                          ?.id ? null : (
+                        data?.album?.artists?.[
+                          (data?.album?.artists?.length ?? 0) - 1
+                        ]?.id ? null : (
                           <Text>, </Text>
                         )}
                       </React.Fragment>

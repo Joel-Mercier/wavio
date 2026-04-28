@@ -78,7 +78,7 @@ export default function LibrarySearchScreen() {
     };
 
     const fuse = new Fuse<AlbumID3 & Playlist & ArtistID3 & Favorites>(
-      data,
+      data as Array<AlbumID3 & Playlist & ArtistID3 & Favorites>,
       options,
     );
 
@@ -146,7 +146,9 @@ export default function LibrarySearchScreen() {
               <Spinner size="large" />
             )}
             {(playlistsError || starredError) && (
-              <ErrorDisplay error={playlistsError || starredError} />
+              <ErrorDisplay
+                error={(playlistsError || starredError) as Error}
+              />
             )}
           </>
         }
