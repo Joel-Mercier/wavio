@@ -28,7 +28,7 @@ import {
   User,
   X,
 } from "lucide-react-native";
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { AudioPro, useAudioPro } from "react-native-audio-pro";

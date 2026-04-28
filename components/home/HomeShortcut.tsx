@@ -94,9 +94,10 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
           </Box>
         )}
 
-        <Box>
+        <Box className="flex-1">
           <Heading
             numberOfLines={2}
+            ellipsizeMode="tail"
             size="sm"
             className="text-white font-bold mx-2"
           >

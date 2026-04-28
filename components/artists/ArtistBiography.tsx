@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,7 @@ import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ArtistBiography() {
   const { t } = useTranslation();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
     name: string;
     biography: string;
@@ -63,7 +65,8 @@ export default function ArtistBiography() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       >
         <Text className="text-white mt-6">{biography}</Text>

@@ -98,6 +98,15 @@ export default {
         removeTrackSuccessMessage: "Track successfully removed from playlist",
         removeTrackErrorMessage:
           "An error occurred while removing the track from the playlist",
+        addToPlaylistTitle: "Add to playlist",
+        newPlaylist: "New playlist",
+        finished: "Finished",
+        addTrackSuccessMessage_one: "Song successfully added to playlist",
+        addTrackSuccessMessage_other: "Songs successfully added to playlist",
+        addTrackErrorMessage_one:
+          "An error occurred while adding the song to the playlist",
+        addTrackErrorMessage_other:
+          "An error occurred while adding the songs to the playlist",
         empty: "This playlist is empty",
         emptyAction: "Find songs to add to this playlist",
         searchPlaceholder: "Search playlist",

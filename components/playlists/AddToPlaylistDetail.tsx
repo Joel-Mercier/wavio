@@ -1,8 +1,10 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { X } from "lucide-react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -21,9 +23,9 @@ import {
   usePlaylists,
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function AddToPlaylistDetail() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { ids } = useLocalSearchParams<{ ids: string }>();
   const trackIds = ids?.split(",");
@@ -64,8 +66,9 @@ export default function AddToPlaylistDetail() {
                 render: () => (
                   <Toast action="success">
                     <ToastDescription>
-                      {trackIds.length > 1 ? "Songs" : "Song"} successfully
-                      added to playlist
+                      {t("app.playlists.addTrackSuccessMessage", {
+                        count: trackIds.length,
+                      })}
                     </ToastDescription>
                   </Toast>
                 ),
@@ -79,9 +82,9 @@ export default function AddToPlaylistDetail() {
                 render: () => (
                   <Toast action="error">
                     <ToastDescription>
-                      An error occurred while adding the{" "}
-                      {trackIds.length > 1 ? "songs" : "song"} successfully
-                      added to playlist to the playlist
+                      {t("app.playlists.addTrackErrorMessage", {
+                        count: trackIds.length,
+                      })}
                     </ToastDescription>
                   </Toast>
                 ),
@@ -116,7 +119,7 @@ export default function AddToPlaylistDetail() {
             </Box>
           </FadeOutScaleDown>
           <Heading className="text-white font-bold" size="lg">
-            Add to playlist
+            {t("app.playlists.addToPlaylistTitle")}
           </Heading>
           <Box className="w-10" />
         </HStack>
@@ -141,7 +144,7 @@ export default function AddToPlaylistDetail() {
                 onPress={handleNewPlaylistPress}
               >
                 <Text className="text-primary-800 font-bold text-lg">
-                  New playlist
+                  {t("app.playlists.newPlaylist")}
                 </Text>
               </FadeOutScaleDown>
             </Center>
@@ -152,14 +155,16 @@ export default function AddToPlaylistDetail() {
         }
       />
       <Center
-        className="absolute left-0 right-0 bg-red-500"
+        className="absolute left-0 right-0"
         style={{ bottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT }}
       >
         <FadeOutScaleDown
           className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
           onPress={handlePlaylistUpdatePress}
         >
-          <Text className="text-primary-800 font-bold text-lg">Finished</Text>
+          <Text className="text-primary-800 font-bold text-lg">
+            {t("app.playlists.finished")}
+          </Text>
         </FadeOutScaleDown>
       </Center>
     </Box>

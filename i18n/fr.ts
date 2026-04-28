@@ -99,6 +99,15 @@ export default {
         removeTrackSuccessMessage: "Titre supprimé avec succès de la playlist",
         removeTrackErrorMessage:
           "Une erreur s'est produite lors de la suppression du titre de la playlist",
+        addToPlaylistTitle: "Ajouter à la playlist",
+        newPlaylist: "Nouvelle playlist",
+        finished: "Terminé",
+        addTrackSuccessMessage_one: "Titre ajouté avec succès à la playlist",
+        addTrackSuccessMessage_other: "Titres ajoutés avec succès à la playlist",
+        addTrackErrorMessage_one:
+          "Une erreur s'est produite lors de l'ajout du titre à la playlist",
+        addTrackErrorMessage_other:
+          "Une erreur s'est produite lors de l'ajout des titres à la playlist",
         empty: "Cette playlist est vide",
         emptyAction: "Rechercher des titres à ajouter à cette playlist",
         searchPlaceholder: "Rechercher dans la playlist",
