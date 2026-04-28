@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,10 +20,9 @@ import {
   SquareArrowOutUpRight,
   Trash,
 } from "lucide-react-native";
-import React, { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
-import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -61,8 +61,12 @@ import {
 } from "@/hooks/openSubsonic/useInternetRadioStations";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
+import {
+  pause as pausePlayback,
+  playTracks,
+  usePlayerStatus,
+} from "@/services/player";
 import useRecentPlays from "@/stores/recentPlays";
 import { cn } from "@/utils/tailwind";
 
@@ -93,7 +97,7 @@ export default function InternetRadioStationDetail() {
   const doUpdateInternetRadioStation = useUpdateInternetRadioStation();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const { state } = useAudioPro();
+  const status = usePlayerStatus();
   const queryClient = useQueryClient();
   const meta = useWebsiteMetadata(homePageUrl);
   const colors = useImageColors(meta.image || meta["twitter:image"]);
@@ -217,16 +221,21 @@ export default function InternetRadioStationDetail() {
   const handleCloseEditAlertDialog = () => setShowEditAlertDialog(false);
 
   const handlePlayPausePress = () => {
-    if (state === AudioProState.PLAYING) {
-      AudioPro.stop();
+    if (status.playing) {
+      pausePlayback();
     } else {
-      AudioPro.play({
-        id,
-        url: streamUrl,
-        title: name,
-        artwork: meta.image || meta["twitter:image"],
-        artist: homePageUrl,
-      });
+      playTracks(
+        [
+          {
+            id,
+            url: streamUrl,
+            title: name,
+            artwork: meta.image || meta["twitter:image"],
+            artist: homePageUrl,
+          },
+        ],
+        0,
+      );
       addRecentPlay({
         id,
         title: name,
@@ -291,7 +300,7 @@ export default function InternetRadioStationDetail() {
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handlePlayPausePress}>
                 <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  {state === AudioProState.PLAYING ? (
+                  {status.playing ? (
                     <Pause
                       color={themeConfig.theme.colors.white}
                       fill={themeConfig.theme.colors.white}

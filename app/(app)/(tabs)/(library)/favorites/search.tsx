@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
@@ -18,7 +19,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { loadingData } from "@/utils/loadingData";
@@ -126,7 +126,11 @@ export default function FavoritesSearch() {
             {isLoading ? (
               <TrackListItemSkeleton index={index} />
             ) : (
-              <TrackListItem track={item.item} index={index} />
+              <TrackListItem
+                track={item.item}
+                index={index}
+                trackList={data?.map((r) => r.item)}
+              />
             )}
           </Box>
         )}

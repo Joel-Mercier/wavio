@@ -3,8 +3,6 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { millisecondsToMinutes } from "date-fns";
-import * as Clipboard from "expo-clipboard";
 import { Directory, File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -29,16 +27,13 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import TestSlider from "@/components/Slider";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { ScrollView } from "@/components/ui/scroll-view";
 import {
   Slider,
   SliderFilledTrack,
@@ -57,9 +52,24 @@ import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import {
+  seekTo,
+  skipNext,
+  skipPrevious,
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
 import useQueue from "@/stores/queue";
-import { artworkUrl } from "@/utils/artwork";
 import { downloadUrl } from "@/utils/streaming";
+
+function formatSeconds(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const remaining = total % 60;
+  return `${minutes}:${remaining.toString().padStart(2, "0")}`;
+}
 
 export default function PlayerScreen() {
   const { t } = useTranslation();
@@ -70,15 +80,10 @@ export default function PlayerScreen() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-  const {
-    state,
-    position,
-    duration,
-    playingTrack,
-    playbackSpeed,
-    volume,
-    error,
-  } = useAudioPro();
+  const status = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+  const position = status.currentTime;
+  const duration = status.duration;
   const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
@@ -99,20 +104,20 @@ export default function PlayerScreen() {
   };
 
   const handlePlayPausePress = () => {
-    if (state === AudioProState.PLAYING) {
-      AudioPro.pause();
-    } else {
-      AudioPro.resume();
-    }
+    togglePlayPause();
   };
 
   const handleSliderChange = (value: number) => {
-    AudioPro.seekTo(value);
+    seekTo(value);
   };
 
-  const handleNextPress = () => {};
+  const handleNextPress = () => {
+    skipNext();
+  };
 
-  const handlePreviousPress = () => {};
+  const handlePreviousPress = () => {
+    skipPrevious();
+  };
 
   const handleFavoritePress = () => {
     doFavorite.mutate(
@@ -196,10 +201,11 @@ export default function PlayerScreen() {
 
   const handleDownloadPress = async () => {
     bottomSheetModalRef.current?.dismiss();
+    if (!playingTrack) return;
     if (permissionResponse?.status !== "granted") {
       await requestPermission();
     }
-    const url = downloadUrl(track.id);
+    const url = downloadUrl(playingTrack.id);
     const destination = new Directory(Paths.cache, "Downloads");
     try {
       destination.create({
@@ -338,25 +344,12 @@ export default function PlayerScreen() {
                 <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
               </Slider>
               <Box className="flex-1 h-[50px]" />
-              <TestSlider
-                value={50}
-                onValueChange={(value) => console.log(value)}
-                min={0}
-                max={100}
-                step={5}
-                trackClassName="bg-gray-200 rounded-full"
-                filledTrackClassName="bg-blue-500 rounded-full"
-                thumbClassName="bg-white rounded-full shadow-lg border-2 border-blue-500"
-                width={300}
-                height={6}
-                thumbSize={24}
-                accessibilityLabel="Volume control"
-                accessibilityHint="Adjust volume by dragging or tapping"
-              />
               <HStack className="mt-2 items-center justify-between">
-                <Text className="text-primary-100 text-sm">{`${millisecondsToMinutes(position) || 0}:${Math.round(position % 60) || "00"}`}</Text>
                 <Text className="text-primary-100 text-sm">
-                  {`${millisecondsToMinutes(duration)}:${duration % 60}`}
+                  {formatSeconds(position)}
+                </Text>
+                <Text className="text-primary-100 text-sm">
+                  {formatSeconds(duration)}
                 </Text>
               </HStack>
             </VStack>
@@ -381,7 +374,7 @@ export default function PlayerScreen() {
               </FadeOut>
               <FadeOut onPress={handlePlayPausePress}>
                 <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                  {state === AudioProState.PLAYING ? (
+                  {status.playing ? (
                     <Pause
                       size={24}
                       color={themeConfig.theme.colors.gray[800]}

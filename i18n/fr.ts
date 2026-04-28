@@ -103,7 +103,8 @@ export default {
         newPlaylist: "Nouvelle playlist",
         finished: "Terminé",
         addTrackSuccessMessage_one: "Titre ajouté avec succès à la playlist",
-        addTrackSuccessMessage_other: "Titres ajoutés avec succès à la playlist",
+        addTrackSuccessMessage_other:
+          "Titres ajoutés avec succès à la playlist",
         addTrackErrorMessage_one:
           "Une erreur s'est produite lors de l'ajout du titre à la playlist",
         addTrackErrorMessage_other:

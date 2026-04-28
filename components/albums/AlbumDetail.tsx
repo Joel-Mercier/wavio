@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { parse } from "date-fns";
@@ -78,7 +79,6 @@ import {
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -494,6 +494,7 @@ export default function AlbumDetail() {
             <TrackListItem
               track={item}
               index={index}
+              trackList={data?.album?.song}
               className="px-6"
               onPlayCallback={handleTrackPressCallback}
               showCoverArt={false}

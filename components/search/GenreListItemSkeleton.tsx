@@ -1,5 +1,5 @@
 import { Box } from "@/components/ui/box";
-import { Skeleton, SkeletonText } from "../ui/skeleton";
+import { SkeletonText } from "../ui/skeleton";
 
 export default function GenreListItemSkeleton() {
   return (

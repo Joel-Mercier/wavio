@@ -31,7 +31,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
-import { AudioPro, useAudioPro } from "react-native-audio-pro";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -69,6 +68,7 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
+import { playTracks, usePlayingTrack } from "@/services/player";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDistanceToNow } from "@/utils/date";
@@ -79,6 +79,7 @@ import { cn } from "@/utils/tailwind";
 interface TrackListItemProps {
   track: Child;
   index: number;
+  trackList?: Child[];
   showIndex?: boolean;
   handleRemoveFromPlaylist?: (index: string) => void;
   className?: string;
@@ -89,6 +90,7 @@ interface TrackListItemProps {
 export default function TrackListItem({
   track,
   index,
+  trackList,
   showIndex = false,
   handleRemoveFromPlaylist,
   className,
@@ -109,7 +111,7 @@ export default function TrackListItem({
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleShareSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetShareModalRef);
-  const { playingTrack } = useAudioPro();
+  const playingTrack = usePlayingTrack();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
@@ -272,13 +274,11 @@ export default function TrackListItem({
   const handleCloseInfoModal = () => setShowInfoModal(false);
 
   const handleTrackPress = () => {
-    // AudioPro.stop();
-    // AudioPro.clear();
-    // console.log(trackCover, cover);
-    const audioProTrack = childToTrack(track);
-    console.log("LOG URL", audioProTrack.artwork);
-    AudioPro.play(audioProTrack);
-    // AudioPro.resume();
+    if (trackList && trackList.length > 0) {
+      playTracks(trackList.map(childToTrack), index);
+    } else {
+      playTracks([childToTrack(track)], 0);
+    }
     if (onPlayCallback) {
       onPlayCallback();
     }

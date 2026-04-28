@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
@@ -10,7 +11,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useGetShares } from "@/hooks/openSubsonic/useSharing";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { loadingData } from "@/utils/loadingData";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import ShareListItemSkeleton from "./ShareListItemSkeleton";

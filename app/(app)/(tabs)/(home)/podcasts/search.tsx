@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,7 +33,6 @@ import { themeConfig } from "@/config/theme";
 import { useSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import {
   Country,
   Genre,

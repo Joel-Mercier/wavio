@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -23,7 +24,6 @@ import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
 

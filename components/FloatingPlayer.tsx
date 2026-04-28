@@ -1,6 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
 import { AudioLines, Pause, Play } from "lucide-react-native";
-import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import FadeOut from "@/components/FadeOut";
 import MovingText from "@/components/MovingText";
 import { Box } from "@/components/ui/box";
@@ -11,11 +10,17 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useImageColors from "@/hooks/useImageColors";
+import {
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 
 export default function FloatingPlayer() {
-  const { state, playingTrack } = useAudioPro();
+  const status = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
   const router = useRouter();
   const pathname = usePathname();
   const colors = useImageColors(playingTrack?.artwork);
@@ -25,11 +30,7 @@ export default function FloatingPlayer() {
   };
 
   const handlePlayPausePress = () => {
-    if (state === AudioProState.PLAYING) {
-      AudioPro.pause();
-    } else {
-      AudioPro.resume();
-    }
+    togglePlayPause();
   };
 
   if (!playingTrack || pathname.startsWith("/player")) {
@@ -77,7 +78,7 @@ export default function FloatingPlayer() {
         </HStack>
         <HStack className="items-center">
           <FadeOut onPress={handlePlayPausePress}>
-            {state === AudioProState.PLAYING ? (
+            {status.playing ? (
               <Pause
                 color={themeConfig.theme.colors.white}
                 stroke={undefined}

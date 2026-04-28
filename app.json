@@ -76,6 +76,14 @@
           "isAccessMediaLocationEnabled": true,
           "granularPermissions": ["audio"]
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "enableBackgroundPlayback": true,
+          "enableBackgroundRecording": false
+        }
       ]
     ],
     "experiments": {

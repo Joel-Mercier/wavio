@@ -1,6 +1,5 @@
 import { FlashList, type FlashListProps } from "@shopify/flash-list";
-import React, {
-  type FunctionComponent,
+import {
   forwardRef,
   type PropsWithChildren,
   useCallback,

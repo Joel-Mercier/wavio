@@ -5,7 +5,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
-import React, { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

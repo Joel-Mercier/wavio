@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { useLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";

@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -41,7 +42,6 @@ import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
@@ -156,6 +156,7 @@ export default function FavoritesScreen() {
             <TrackListItem
               track={item}
               index={index}
+              trackList={data ?? undefined}
               className="px-6"
               onPlayCallback={handleTrackPressCallback}
             />

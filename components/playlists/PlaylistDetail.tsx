@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -69,7 +70,6 @@ import {
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import useRecentPlays from "@/stores/recentPlays";
@@ -434,6 +434,7 @@ export default function PlaylistDetail() {
             <TrackListItem
               track={item}
               index={index}
+              trackList={data}
               handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
               onPlayCallback={handleTrackPressCallback}
             />

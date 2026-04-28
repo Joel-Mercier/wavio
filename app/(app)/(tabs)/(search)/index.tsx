@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
@@ -16,7 +17,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
 import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";

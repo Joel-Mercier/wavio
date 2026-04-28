@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
@@ -15,7 +14,6 @@ import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 
 export default function ArtistDiscography() {
-  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();

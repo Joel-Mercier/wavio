@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { fromUnixTime, secondsToMinutes } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
@@ -47,7 +48,6 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";

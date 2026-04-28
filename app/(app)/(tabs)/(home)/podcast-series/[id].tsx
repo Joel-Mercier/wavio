@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -29,7 +30,6 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { usePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type {
   Genre,
   PodcastEpisode,

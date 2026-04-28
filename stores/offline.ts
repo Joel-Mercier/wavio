@@ -171,7 +171,7 @@ const useOfflineBase = create<OfflineStore>()(
       storage: createJSONStorage(() => ({
         getItem: (name: string) => storage.getString(name) ?? null,
         setItem: (name: string, value: string) => storage.set(name, value),
-        removeItem: (name: string) => storage.delete(name),
+        removeItem: (name: string) => storage.remove(name),
       })),
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,

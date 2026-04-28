@@ -57,7 +57,7 @@ const useQueueBase = create<QueueStore>()(
     (set, get) => ({
       queue: [],
       currentIndex: null,
-      removePlayed: true,
+      removePlayed: false,
       repeatMode: "off",
       contextIds: null,
       shuffle: false,
@@ -754,12 +754,11 @@ const useQueueBase = create<QueueStore>()(
       storage: createJSONStorage(() => ({
         getItem: (name: string) => storage.getString(name) ?? null,
         setItem: (name: string, value: string) => storage.set(name, value),
-        removeItem: (name: string) => storage.delete(name),
+        removeItem: (name: string) => storage.remove(name),
       })),
       partialize: (state) => ({
         queue: state.queue,
         currentIndex: state.currentIndex,
-        removePlayed: state.removePlayed,
         repeatMode: state.repeatMode,
         contextIds: state.contextIds,
         shuffle: state.shuffle,

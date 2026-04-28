@@ -1,5 +1,5 @@
 import { Star } from "lucide-react-native";
-import React, { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {
   Gesture,

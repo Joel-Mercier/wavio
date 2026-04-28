@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,7 +18,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { usePlaylist } from "@/hooks/openSubsonic/usePlaylists";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
@@ -149,7 +149,11 @@ export default function PlaylistDetailSearch() {
             {isLoading ? (
               <TrackListItemSkeleton index={index} />
             ) : (
-              <TrackListItem track={item.item} index={index} />
+              <TrackListItem
+                track={item.item}
+                index={index}
+                trackList={data?.map((r) => r.item)}
+              />
             )}
           </Box>
         )}

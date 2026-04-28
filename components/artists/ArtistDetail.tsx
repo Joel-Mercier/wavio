@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -75,7 +76,6 @@ import {
 } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -463,6 +463,7 @@ export default function ArtistDetail() {
                         showIndex
                         track={song}
                         index={index}
+                        trackList={topSongsData?.topSongs.song}
                         onPlayCallback={handleTrackPressCallback}
                       />
                     ))}

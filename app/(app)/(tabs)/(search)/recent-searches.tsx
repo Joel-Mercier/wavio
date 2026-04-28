@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
@@ -18,7 +19,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { cn } from "@/utils/tailwind";

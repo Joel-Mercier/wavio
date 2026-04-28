@@ -1,26 +1,4 @@
 PODS:
-  - AudioPro (10.1.3):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - EXApplication (55.0.14):
     - ExpoModulesCore
   - EXConstants (55.0.15):
@@ -202,6 +180,8 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - ExpoAsset (55.0.16):
+    - ExpoModulesCore
+  - ExpoAudio (55.0.14):
     - ExpoModulesCore
   - ExpoClipboard (55.0.13):
     - ExpoModulesCore
@@ -2585,7 +2565,6 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
-  - AudioPro (from `../node_modules/react-native-audio-pro`)
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
@@ -2596,6 +2575,7 @@ DEPENDENCIES:
   - expo-dev-menu (from `../node_modules/expo-dev-menu`)
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoAudio (from `../node_modules/expo-audio/ios`)
   - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - "ExpoDomWebView (from `../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
@@ -2719,8 +2699,6 @@ SPEC REPOS:
     - SwiftDrawDOM
 
 EXTERNAL SOURCES:
-  AudioPro:
-    :path: "../node_modules/react-native-audio-pro"
   EXApplication:
     :path: "../node_modules/expo-application/ios"
   EXConstants:
@@ -2741,6 +2719,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoAudio:
+    :path: "../node_modules/expo-audio/ios"
   ExpoClipboard:
     :path: "../node_modules/expo-clipboard/ios"
   ExpoDomWebView:
@@ -2958,7 +2938,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AudioPro: 208a65decc26d2ef644d778019f8ae69ab17fbfc
   EXApplication: ab5a9ca485adce8be81309a5172d1565e9d7467f
   EXConstants: 5caf448ff399f60be9d1053e77aed32e39411900
   EXJSONUtils: 04bc3807d351331a5fe154ce1da596ec15d99169
@@ -2969,6 +2948,7 @@ SPEC CHECKSUMS:
   expo-dev-menu: 8d6cf955ad15b1f33b73aec853a9ec02afc39c04
   expo-dev-menu-interface: 833795f4c98a674d36cbc12b11b21756c38e01e8
   ExpoAsset: f56ed740b6a127da2bfd90832cf688ae309d4410
+  ExpoAudio: a826903abdeba843cde8602bd1c077d808b31f1d
   ExpoClipboard: 5d1b0cd2686406f21e616f2d9b3431259dee2e6a
   ExpoDomWebView: 2b2fbd9a07de8790569257cbf9dfdaa31cf95c70
   ExpoFileSystem: a0e4a5a09c9c4f84338289b273a172609452dec9

@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,6 @@ import {
   useTopChartsByCountry,
   useTopChartsByGenres,
 } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";

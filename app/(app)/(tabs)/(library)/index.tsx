@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import {
@@ -39,7 +40,6 @@ import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type {
   AlbumID3,
   ArtistID3,
