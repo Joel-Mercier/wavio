@@ -1,3 +1,5 @@
+import { ListMusic } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -7,8 +9,6 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
-import { ListMusic } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
 
 interface PlaylistListItemProps {
   playlist: Playlist;

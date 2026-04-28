@@ -1,2 +1,2 @@
-'use client';
-export { View } from 'react-native';
+"use client";
+export { View } from "react-native";

@@ -1,3 +1,6 @@
+import { type Href, Link } from "expo-router";
+import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
+import { useMemo } from "react";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -9,13 +12,12 @@ import { themeConfig } from "@/config/theme";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import { type Href, Link } from "expo-router";
-import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
-import { useMemo } from "react";
 
 function SearchResultListItemIcon({
   type,
-}: { type: "artist" | "album" | "playlist" | "song" }) {
+}: {
+  type: "artist" | "album" | "playlist" | "song";
+}) {
   if (type === "song") {
     return (
       <AudioLines
@@ -39,7 +41,9 @@ function SearchResultListItemIcon({
 
 export default function SearchResultListItem({
   searchResult,
-}: { searchResult: AlbumID3 & Child & ArtistID3 }) {
+}: {
+  searchResult: AlbumID3 & Child & ArtistID3;
+}) {
   const type = useMemo<{
     id: "artist" | "album" | "playlist" | "song";
     label: string;

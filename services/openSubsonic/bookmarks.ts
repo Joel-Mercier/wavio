@@ -1,5 +1,5 @@
-import type { Bookmarks, PlayQueue } from "@/services/openSubsonic/types";
 import axios from "axios";
+import type { Bookmarks, PlayQueue } from "@/services/openSubsonic/types";
 import openSubsonicApiInstance, { type OpenSubsonicResponse } from ".";
 
 export const createBookmark = async (
@@ -90,7 +90,11 @@ export const savePlayQueue = async ({
   id,
   current,
   position,
-}: { id?: string; current?: string; position?: number }) => {
+}: {
+  id?: string;
+  current?: string;
+  position?: number;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.post<
       OpenSubsonicResponse<Record<string, never>>

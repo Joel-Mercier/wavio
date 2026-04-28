@@ -1,5 +1,5 @@
-import { getUser, getUsers } from "@/services/openSubsonic/users";
 import { useQuery } from "@tanstack/react-query";
+import { getUser, getUsers } from "@/services/openSubsonic/users";
 
 export const useUsers = () => {
   return useQuery({

@@ -1,6 +1,6 @@
+import axios from "axios";
 import i18n from "@/config/i18n";
 import usePodcasts from "@/stores/podcasts";
-import axios from "axios";
 
 export type TaddyPodcastsResponse<T> = {
   data: { [key: string]: T };
@@ -37,11 +37,17 @@ taddyPodcastsApiInstance.interceptors.request.use(
 
 export const taddyPodcastsErrorCodes: Record<string, string> = {
   API_KEY_INVALID: i18n.t("taddyPodcasts.errorCodes.API_KEY_INVALID"),
-  API_RATE_LIMIT_EXCEEDED: i18n.t("taddyPodcasts.errorCodes.API_RATE_LIMIT_EXCEEDED"),
-  INVALID_QUERY_OR_SYNTAX: i18n.t("taddyPodcasts.errorCodes.INVALID_QUERY_OR_SYNTAX"),
+  API_RATE_LIMIT_EXCEEDED: i18n.t(
+    "taddyPodcasts.errorCodes.API_RATE_LIMIT_EXCEEDED",
+  ),
+  INVALID_QUERY_OR_SYNTAX: i18n.t(
+    "taddyPodcasts.errorCodes.INVALID_QUERY_OR_SYNTAX",
+  ),
   BAD_USER_INPUT: i18n.t("taddyPodcasts.errorCodes.BAD_USER_INPUT"),
   QUERY_TOO_COMPLEX: i18n.t("taddyPodcasts.errorCodes.QUERY_TOO_COMPLEX"),
-  REQUIRES_USER_AUTHENTICATION: i18n.t("taddyPodcasts.errorCodes.REQUIRES_USER_AUTHENTICATION"),
+  REQUIRES_USER_AUTHENTICATION: i18n.t(
+    "taddyPodcasts.errorCodes.REQUIRES_USER_AUTHENTICATION",
+  ),
   ACCESS_NOT_ALLOWED: i18n.t("taddyPodcasts.errorCodes.ACCESS_NOT_ALLOWED"),
   TADDY_SERVER_ERROR: i18n.t("taddyPodcasts.errorCodes.TADDY_SERVER_ERROR"),
 };

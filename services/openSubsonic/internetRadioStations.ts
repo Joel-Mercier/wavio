@@ -1,8 +1,8 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export const createInternetRadioStation = async (
   streamUrl: string,

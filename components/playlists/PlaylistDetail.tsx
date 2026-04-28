@@ -1,46 +1,8 @@
-import ErrorDisplay from "@/components/ErrorDisplay";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import TrackListItem from "@/components/tracks/TrackListItem";
-import {
-  AlertDialog,
-  AlertDialogBackdrop,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
-import { Text } from "@/components/ui/text";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import {
-  useDeletePlaylist,
-  usePlaylist,
-  useUpdatePlaylist,
-} from "@/hooks/openSubsonic/usePlaylists";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import useImageColors from "@/hooks/useImageColors";
-import type { Child } from "@/services/openSubsonic/types";
-import usePlaylists from "@/stores/playlists";
-import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
-import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -75,6 +37,44 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import TrackListItem from "@/components/tracks/TrackListItem";
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import {
+  useDeletePlaylist,
+  usePlaylist,
+  useUpdatePlaylist,
+} from "@/hooks/openSubsonic/usePlaylists";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import type { Child } from "@/services/openSubsonic/types";
+import usePlaylists from "@/stores/playlists";
+import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
+import { loadingData } from "@/utils/loadingData";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 

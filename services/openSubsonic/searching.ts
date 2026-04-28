@@ -1,3 +1,4 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
@@ -6,7 +7,6 @@ import type {
   SearchResult2,
   SearchResult3,
 } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export const search = async ({
   artist,

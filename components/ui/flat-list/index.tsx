@@ -1,2 +1,2 @@
-'use client';
-export { FlatList } from 'react-native';
+"use client";
+export { FlatList } from "react-native";

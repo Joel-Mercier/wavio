@@ -1,3 +1,7 @@
+import { LinearGradient } from "expo-linear-gradient";
+import type { Href } from "expo-router";
+import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
+import { useMemo } from "react";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -6,10 +10,6 @@ import { Image } from "@/components/ui/image";
 import { themeConfig } from "@/config/theme";
 import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
-import { LinearGradient } from "expo-linear-gradient";
-import type { Href } from "expo-router";
-import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
-import { useMemo } from "react";
 
 interface HomeShortcutProps {
   recentPlay: RecentPlay;

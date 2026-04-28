@@ -1,3 +1,9 @@
+import { useForm, useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { AlertCircleIcon, ListMusic, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { Box } from "@/components/ui/box";
@@ -20,15 +26,9 @@ import {
   usePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useForm, useStore } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { AlertCircleIcon, ListMusic, X } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as z from "zod";
 
 const editPlaylistSchema = z.object({
   name: z.string().min(1).trim(),

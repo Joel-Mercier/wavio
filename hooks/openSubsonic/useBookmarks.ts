@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createBookmark,
   deleteBookmark,
@@ -5,7 +6,6 @@ import {
   getPlayQueue,
   savePlayQueue,
 } from "@/services/openSubsonic/bookmarks";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useCreateBookmark = () => {
   const query = useMutation({

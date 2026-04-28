@@ -1,10 +1,10 @@
-import i18n from "@/config/i18n";
 import {
-  type Locale,
   format as _format,
   formatDistanceToNow as _formatDistanceToNow,
+  type Locale,
 } from "date-fns";
 import { enUS as en, fr } from "date-fns/locale";
+import i18n from "@/config/i18n";
 
 const locales: Record<string, Locale> = {
   en,

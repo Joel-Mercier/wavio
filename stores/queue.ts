@@ -1,7 +1,7 @@
-import { storage } from "@/config/storage";
-import createSelectors from "@/utils/createSelectors";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { storage } from "@/config/storage";
+import createSelectors from "@/utils/createSelectors";
 
 export type QueueTrack = {
   id: string;

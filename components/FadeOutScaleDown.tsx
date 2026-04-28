@@ -1,7 +1,7 @@
-import { Pressable } from "@/components/ui/pressable";
 import { type Link, useRouter } from "expo-router";
 import React, { type ComponentProps } from "react";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
+import { Pressable } from "@/components/ui/pressable";
 
 interface FadeOutScaleDownProps {
   children?: React.ReactNode;

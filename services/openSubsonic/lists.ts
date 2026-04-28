@@ -1,3 +1,4 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
@@ -9,7 +10,6 @@ import type {
   Starred,
   Starred2,
 } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export type AlbumListType =
   | "random"
@@ -200,7 +200,9 @@ export const getSongsByGenre = async (
 
 export const getStarred = async ({
   musicFolderId,
-}: { musicFolderId?: string }) => {
+}: {
+  musicFolderId?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ starred: Starred }>
@@ -223,7 +225,9 @@ export const getStarred = async ({
 
 export const getStarred2 = async ({
   musicFolderId,
-}: { musicFolderId?: string }) => {
+}: {
+  musicFolderId?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ starred2: Starred2 }>

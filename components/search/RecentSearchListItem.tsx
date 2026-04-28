@@ -1,3 +1,13 @@
+import { type Href, Link } from "expo-router";
+import {
+  AudioLines,
+  Clock,
+  Disc3,
+  ListMusic,
+  User,
+  X,
+} from "lucide-react-native";
+import { useMemo } from "react";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -9,16 +19,6 @@ import { themeConfig } from "@/config/theme";
 import type { RecentSearch } from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import { type Href, Link } from "expo-router";
-import {
-  AudioLines,
-  Clock,
-  Disc3,
-  ListMusic,
-  User,
-  X,
-} from "lucide-react-native";
-import { useMemo } from "react";
 
 function RecentSearchListItemIcon({ type }: { type: RecentSearch["type"] }) {
   if (type === "song") {
@@ -45,7 +45,10 @@ function RecentSearchListItemIcon({ type }: { type: RecentSearch["type"] }) {
 export default function RecentSearchListItem({
   recentSearch,
   handleDeletePress,
-}: { recentSearch: RecentSearch; handleDeletePress: (id: string) => void }) {
+}: {
+  recentSearch: RecentSearch;
+  handleDeletePress: (id: string) => void;
+}) {
   const url = useMemo<Href>(() => {
     if (recentSearch.type === "query") {
       return `/search-results?query=${recentSearch.title}`;

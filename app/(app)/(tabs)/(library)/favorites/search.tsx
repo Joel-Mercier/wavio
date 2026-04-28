@@ -1,3 +1,12 @@
+import { FlashList } from "@shopify/flash-list";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useRouter } from "expo-router";
+import type { FuseResult } from "fuse.js";
+import Fuse from "fuse.js";
+import { ArrowLeft, X } from "lucide-react-native";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -9,19 +18,10 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
-import { useRouter } from "expo-router";
-import type { FuseResult } from "fuse.js";
-import Fuse from "fuse.js";
-import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function FavoritesSearch() {
   const { t } = useTranslation();

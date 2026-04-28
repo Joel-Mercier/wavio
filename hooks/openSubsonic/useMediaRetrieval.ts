@@ -1,5 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
 import {
-  stream,
   download,
   getAvatar,
   getCaptions,
@@ -7,8 +7,8 @@ import {
   getLyrics,
   getLyricsBySongId,
   hls,
+  stream,
 } from "@/services/openSubsonic/mediaRetrieval";
-import { useQuery } from "@tanstack/react-query";
 
 export const useDownload = (id: string) => {
   return useQuery({

@@ -1,2 +1,2 @@
-'use client';
-export { StatusBar } from 'react-native';
+"use client";
+export { StatusBar } from "react-native";

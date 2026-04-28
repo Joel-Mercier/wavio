@@ -1,3 +1,9 @@
+import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { X } from "lucide-react-native";
+import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -16,12 +22,6 @@ import {
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { X } from "lucide-react-native";
-import { useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddToPlaylistDetail() {
   const queryClient = useQueryClient();

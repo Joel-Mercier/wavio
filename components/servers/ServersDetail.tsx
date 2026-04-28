@@ -1,3 +1,11 @@
+import { FlashList } from "@shopify/flash-list";
+import { useForm } from "@tanstack/react-form";
+import { useRouter } from "expo-router";
+import { AlertCircleIcon, ArrowLeft, Plus } from "lucide-react-native";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ServerListItem from "@/components/servers/ServerListItem";
 import {
@@ -25,17 +33,9 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import useServers, { serverSchema } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useForm } from "@tanstack/react-form";
-import { useRouter } from "expo-router";
-import { AlertCircleIcon, ArrowLeft, Plus } from "lucide-react-native";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ServersDetail() {

@@ -1,2 +1,2 @@
-'use client';
-export { ScrollView } from 'react-native';
+"use client";
+export { ScrollView } from "react-native";

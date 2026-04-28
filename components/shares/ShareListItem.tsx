@@ -1,3 +1,23 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useForm } from "@tanstack/react-form";
+import * as Clipboard from "expo-clipboard";
+import {
+  AlertCircleIcon,
+  AudioLines,
+  ClipboardCheck,
+  Clipboard as ClipboardIcon,
+  Disc3,
+  EllipsisVertical,
+  Pencil,
+  Trash,
+} from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import * as z from "zod";
 import { ExternalLink } from "@/components/ExternalLink";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
@@ -38,26 +58,6 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
-import * as Clipboard from "expo-clipboard";
-import {
-  AlertCircleIcon,
-  AudioLines,
-  ClipboardCheck,
-  Clipboard as ClipboardIcon,
-  Disc3,
-  EllipsisVertical,
-  Pencil,
-  Trash,
-} from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import * as z from "zod";
 
 const updateShareSchema = z.object({
   description: z.string().trim().optional(),

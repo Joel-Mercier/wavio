@@ -1,6 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { Center } from "@/components/ui/center";
 import { Text } from "@/components/ui/text";
-import { useTranslation } from "react-i18next";
 
 export default function EmptyDisplay() {
   const { t } = useTranslation();

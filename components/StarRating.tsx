@@ -1,6 +1,3 @@
-import { Box } from "@/components/ui/box";
-import { Pressable } from "@/components/ui/pressable";
-import { themeConfig } from "@/config/theme";
 import { Star } from "lucide-react-native";
 import React, { memo, useCallback, useMemo, useState } from "react";
 import type { ViewStyle } from "react-native";
@@ -15,6 +12,9 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { Box } from "@/components/ui/box";
+import { Pressable } from "@/components/ui/pressable";
+import { themeConfig } from "@/config/theme";
 
 type StarRatingProps = {
   value: number;

@@ -1,5 +1,3 @@
-import { Box } from "@/components/ui/box";
-import { Pressable } from "@/components/ui/pressable";
 import { useCallback, useEffect, useState } from "react";
 import { type GestureResponderEvent, View } from "react-native";
 import {
@@ -13,6 +11,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { runOnJS, scheduleOnRN } from "react-native-worklets";
+import { Box } from "@/components/ui/box";
+import { Pressable } from "@/components/ui/pressable";
 
 interface SliderProps {
   value?: number;

@@ -1,3 +1,5 @@
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandStorage } from "@/config/storage";
 import type {
   Country,
@@ -6,8 +8,6 @@ import type {
   PodcastSeries,
 } from "@/services/taddyPodcasts/types";
 import createSelectors from "@/utils/createSelectors";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface FavoritePodcast {
   uuid: string;

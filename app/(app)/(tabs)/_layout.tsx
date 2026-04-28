@@ -1,13 +1,13 @@
-import AddBottomSheet from "@/components/AddBottomSheet";
-import DrawerMenu from "@/components/DrawerMenu";
-import { Pressable } from "@/components/ui/pressable";
-import { themeConfig } from "@/config/theme";
-import useApp from "@/stores/app";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { Home, Library, Plus, Search } from "lucide-react-native";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import AddBottomSheet from "@/components/AddBottomSheet";
+import DrawerMenu from "@/components/DrawerMenu";
+import { Pressable } from "@/components/ui/pressable";
+import { themeConfig } from "@/config/theme";
+import useApp from "@/stores/app";
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -114,7 +114,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="add"
           options={{
-            // @ts-ignore
+            // @ts-expect-error
             href: showAddTab ? "" : null,
             title: t("app.create.title"),
             tabBarIcon: ({ color }) => <Plus size={24} color={color} />,

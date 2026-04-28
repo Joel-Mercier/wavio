@@ -1,8 +1,8 @@
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { createScopedStorage, getAuthScope } from "@/config/storage";
 import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
 export type PlaylistSortType =
   | "addedAtAsc"

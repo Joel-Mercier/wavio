@@ -1,9 +1,9 @@
+import { Directory, File, Paths } from "expo-file-system";
 import useOffline, {
   type DownloadProgress,
   type OfflineTrack,
 } from "@/stores/offline";
 import { downloadUrl } from "@/utils/streaming";
-import { Directory, File, Paths } from "expo-file-system";
 import type { Child } from "./openSubsonic/types";
 
 export class OfflineDownloadService {

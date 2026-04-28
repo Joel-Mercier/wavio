@@ -1,8 +1,8 @@
+import axios from "axios";
 import taddyPodcastsApiInstance, {
   type TaddyPodcastsResponse,
 } from "@/services/taddyPodcasts/index";
 import type { GetApiRequestsRemaining } from "@/services/taddyPodcasts/types";
-import axios from "axios";
 
 export const getApiRequestsRemaining = async () => {
   try {

@@ -1,11 +1,49 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
+import { parse } from "date-fns";
+import * as Clipboard from "expo-clipboard";
+import { LinearGradient } from "expo-linear-gradient";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  ArrowLeft,
+  ClipboardCheck,
+  ClipboardIcon,
+  Disc3,
+  EllipsisVertical,
+  Heart,
+  ListPlus,
+  Play,
+  PlusCircle,
+  Share2,
+  Shuffle,
+  Star,
+  User,
+  X,
+} from "lucide-react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
+import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
-import AlbumListItem from "@/components/albums/AlbumListItem";
-import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -40,50 +78,12 @@ import {
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { format } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useQueryClient } from "@tanstack/react-query";
-import { parse } from "date-fns";
-import * as Clipboard from "expo-clipboard";
-import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  ClipboardCheck,
-  ClipboardIcon,
-  Disc3,
-  EllipsisVertical,
-  Heart,
-  ListPlus,
-  Play,
-  PlusCircle,
-  Share2,
-  Shuffle,
-  Star,
-  User,
-  X,
-} from "lucide-react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-} from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);

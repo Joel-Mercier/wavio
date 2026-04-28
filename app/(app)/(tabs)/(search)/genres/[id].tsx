@@ -1,19 +1,3 @@
-import EmptyDisplay from "@/components/EmptyDisplay";
-import ErrorDisplay from "@/components/ErrorDisplay";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import AlbumListItem from "@/components/albums/AlbumListItem";
-import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
-import type { AlbumID3 } from "@/services/openSubsonic/types";
-import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -26,6 +10,22 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import EmptyDisplay from "@/components/EmptyDisplay";
+import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Pressable } from "@/components/ui/pressable";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import type { AlbumID3 } from "@/services/openSubsonic/types";
+import { loadingData } from "@/utils/loadingData";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);

@@ -1,3 +1,4 @@
+import { Radio } from "lucide-react-native";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -7,11 +8,12 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
-import { Radio } from "lucide-react-native";
 
 export default function InternetRadioStationListItem({
   internetRadioStation,
-}: { internetRadioStation: InternetRadioStation }) {
+}: {
+  internetRadioStation: InternetRadioStation;
+}) {
   const meta = useWebsiteMetadata(internetRadioStation?.homePageUrl);
   return (
     <FadeOutScaleDown

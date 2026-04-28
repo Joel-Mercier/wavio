@@ -1,3 +1,4 @@
+import { Disc3 } from "lucide-react-native";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -8,7 +9,6 @@ import { themeConfig } from "@/config/theme";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import { Disc3 } from "lucide-react-native";
 
 interface AlbumListItemProps {
   album: AlbumID3;

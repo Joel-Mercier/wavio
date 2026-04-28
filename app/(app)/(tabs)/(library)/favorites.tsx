@@ -1,29 +1,8 @@
-import EmptyDisplay from "@/components/EmptyDisplay";
-import ErrorDisplay from "@/components/ErrorDisplay";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import TrackListItem from "@/components/tracks/TrackListItem";
-import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
-import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import { useStarred2 } from "@/hooks/openSubsonic/useLists";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
-import type { Child } from "@/services/openSubsonic/types";
-import useApp from "@/stores/app";
-import useRecentPlays from "@/stores/recentPlays";
-import { loadingData } from "@/utils/loadingData";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -46,6 +25,27 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import EmptyDisplay from "@/components/EmptyDisplay";
+import ErrorDisplay from "@/components/ErrorDisplay";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import TrackListItem from "@/components/tracks/TrackListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Pressable } from "@/components/ui/pressable";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import type { Child } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
+import useRecentPlays from "@/stores/recentPlays";
+import { loadingData } from "@/utils/loadingData";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 const AnimatedBox = Animated.createAnimatedComponent(Box);
@@ -148,9 +148,9 @@ export default function FavoritesScreen() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data || loadingData(16)}
+        data={!starredData ? loadingData(16) : data || []}
         renderItem={({ item, index }: { item: Child; index: number }) =>
-          isLoading ? (
+          !starredData ? (
             <TrackListItemSkeleton index={index} className="px-6" />
           ) : (
             <TrackListItem

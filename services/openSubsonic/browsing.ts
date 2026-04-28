@@ -1,3 +1,4 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
@@ -7,8 +8,8 @@ import type {
   Artist,
   ArtistInfo,
   ArtistInfo2,
-  ArtistWithAlbumsID3,
   ArtistsID3,
+  ArtistWithAlbumsID3,
   Child,
   Directory,
   Genres,
@@ -21,7 +22,6 @@ import type {
   VideoInfo,
   Videos,
 } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export const getMusicFolders = async () => {
   try {
@@ -170,7 +170,9 @@ export const getArtistInfo2 = async (id: string) => {
 
 export const getArtists = async ({
   musicFolderId,
-}: { musicFolderId?: string }) => {
+}: {
+  musicFolderId?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ artists: ArtistsID3 }>
@@ -213,7 +215,10 @@ export const getGenres = async () => {
 export const getIndexes = async ({
   musicFolderId,
   ifModifiedSince,
-}: { musicFolderId?: string; ifModifiedSince?: number }) => {
+}: {
+  musicFolderId?: string;
+  ifModifiedSince?: number;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ indexes: Indexes }>

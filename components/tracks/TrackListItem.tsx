@@ -1,3 +1,38 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useRoute } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import { secondsToMinutes } from "date-fns";
+import * as Clipboard from "expo-clipboard";
+import { Directory, File, Paths } from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+import { useRouter } from "expo-router";
+import {
+  ArrowDown,
+  AudioLines,
+  Check,
+  CircleX,
+  ClipboardCheck,
+  ClipboardIcon,
+  Download,
+  EllipsisVertical,
+  Heart,
+  Info,
+  ListPlus,
+  PlusCircle,
+  Share,
+  Star,
+  User,
+  X,
+} from "lucide-react-native";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
+import { AudioPro, useAudioPro } from "react-native-audio-pro";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
@@ -40,41 +75,6 @@ import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 import { downloadUrl } from "@/utils/streaming";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useRoute } from "@react-navigation/native";
-import { useQueryClient } from "@tanstack/react-query";
-import { secondsToMinutes } from "date-fns";
-import * as Clipboard from "expo-clipboard";
-import { Directory, File, Paths } from "expo-file-system";
-import * as MediaLibrary from "expo-media-library";
-import { useRouter } from "expo-router";
-import {
-  ArrowDown,
-  AudioLines,
-  Check,
-  CircleX,
-  ClipboardCheck,
-  ClipboardIcon,
-  Download,
-  EllipsisVertical,
-  Heart,
-  Info,
-  ListPlus,
-  PlusCircle,
-  Share,
-  Star,
-  User,
-  X,
-} from "lucide-react-native";
-import { use, useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
-import { AudioPro, useAudioPro } from "react-native-audio-pro";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface TrackListItemProps {
   track: Child;

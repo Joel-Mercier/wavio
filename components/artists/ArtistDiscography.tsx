@@ -1,16 +1,16 @@
-import { Box } from "@/components/ui/box";
-import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
-import type { AlbumID3 } from "@/services/openSubsonic/types";
-import { loadingData } from "@/utils/loadingData";
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FadeOutScaleDown from "../FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
+import { Box } from "@/components/ui/box";
+import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
+import type { AlbumID3 } from "@/services/openSubsonic/types";
+import { loadingData } from "@/utils/loadingData";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
+import FadeOutScaleDown from "../FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 

@@ -1,9 +1,9 @@
-import i18n from "@/config/i18n";
-import { zustandStorage } from "@/config/storage";
-import createSelectors from "@/utils/createSelectors";
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import i18n from "@/config/i18n";
+import { zustandStorage } from "@/config/storage";
+import createSelectors from "@/utils/createSelectors";
 
 export const serverSchema = z.object({
   name: z.string().trim().min(1),

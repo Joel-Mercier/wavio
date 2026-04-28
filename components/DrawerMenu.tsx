@@ -1,3 +1,14 @@
+import * as Application from "expo-application";
+import { useRouter } from "expo-router";
+import {
+  ArrowDownUp,
+  LogOut,
+  Server,
+  Settings,
+  Share2,
+} from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Center } from "@/components/ui/center";
@@ -16,17 +27,6 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
 import useServers from "@/stores/servers";
-import * as Application from "expo-application";
-import { useRouter } from "expo-router";
-import {
-  ArrowDownUp,
-  LogOut,
-  Server,
-  Settings,
-  Share2,
-} from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface DrawerMenuProps {
   showDrawer: boolean;

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   type AlbumListType,
   getAlbumList,
@@ -8,7 +9,6 @@ import {
   getStarred,
   getStarred2,
 } from "@/services/openSubsonic/lists";
-import { useQuery } from "@tanstack/react-query";
 
 export const useAlbumList = (params: {
   type: AlbumListType;

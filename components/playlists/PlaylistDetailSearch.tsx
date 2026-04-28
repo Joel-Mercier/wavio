@@ -1,3 +1,11 @@
+import { FlashList } from "@shopify/flash-list";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import Fuse, { type FuseResult } from "fuse.js";
+import { ArrowLeft, X } from "lucide-react-native";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -9,18 +17,10 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { usePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import Fuse, { type FuseResult } from "fuse.js";
-import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function PlaylistDetailSearch() {
   const { id } = useLocalSearchParams<{

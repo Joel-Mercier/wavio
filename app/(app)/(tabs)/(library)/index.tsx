@@ -1,3 +1,25 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
+import {
+  ArrowDown,
+  ArrowDownUp,
+  ArrowUp,
+  Check,
+  LayoutGrid,
+  List,
+  ListMusic,
+  Plus,
+  Radio,
+  Search,
+} from "lucide-react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -17,6 +39,7 @@ import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type {
   AlbumID3,
   ArtistID3,
@@ -26,29 +49,6 @@ import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useRouter } from "expo-router";
-import {
-  ArrowDown,
-  ArrowDownUp,
-  ArrowUp,
-  Check,
-  LayoutGrid,
-  List,
-  ListMusic,
-  Plus,
-  Radio,
-  Search,
-} from "lucide-react-native";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type LibraryLayout = "list" | "grid";
 

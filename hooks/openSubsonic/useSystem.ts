@@ -1,9 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   getLicense,
   getOpenSubsonicExtensions,
   ping,
 } from "@/services/openSubsonic/system";
-import { useQuery } from "@tanstack/react-query";
 
 export const useGetLicense = () => {
   return useQuery({

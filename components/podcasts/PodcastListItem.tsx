@@ -1,3 +1,21 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { fromUnixTime, secondsToMinutes } from "date-fns";
+import { useRouter } from "expo-router";
+import {
+  CircleMinus,
+  CirclePlus,
+  EllipsisVertical,
+  Play,
+  Podcast,
+  Share2,
+} from "lucide-react-native";
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import Share from "react-native-share";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -18,24 +36,6 @@ import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { fromUnixTime, secondsToMinutes } from "date-fns";
-import { useRouter } from "expo-router";
-import {
-  CircleMinus,
-  CirclePlus,
-  EllipsisVertical,
-  Play,
-  Podcast,
-  Share2,
-} from "lucide-react-native";
-import { useRef } from "react";
-import { useTranslation } from "react-i18next";
-import Share from "react-native-share";
 
 interface PodcastListItemProps {
   podcast: PodcastEpisode;

@@ -1,3 +1,17 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useForm } from "@tanstack/react-form";
+import {
+  AlertCircleIcon,
+  EllipsisVertical,
+  Pencil,
+  Trash,
+} from "lucide-react-native";
+import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
   AlertDialog,
@@ -27,22 +41,8 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import useServers, { serverSchema, type Server } from "@/stores/servers";
+import useServers, { type Server, serverSchema } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
-import {
-  AlertCircleIcon,
-  EllipsisVertical,
-  Pencil,
-  Trash,
-} from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 
 interface ServerListItemProps {
   server: Server;

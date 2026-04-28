@@ -1,3 +1,8 @@
+import { FlashList } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
+import { Search } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -11,17 +16,12 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { themeConfig } from "@/config/theme";
 import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useRouter } from "expo-router";
-import { Search } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SearchScreen() {
   const { t } = useTranslation();

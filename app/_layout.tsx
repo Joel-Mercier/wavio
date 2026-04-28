@@ -1,6 +1,5 @@
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import "@/global.css";
-import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import {
   Inter_300Light,
   Inter_400Regular,
@@ -11,19 +10,15 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SystemBars } from "react-native-edge-to-edge";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
-import i18n, {
-  SupportedLanguages,
-  type TSupportedLanguages,
-} from "@/config/i18n";
-import useApp from "@/stores/app";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import NetInfo from "@react-native-community/netinfo";
 import {
-  QueryClient,
-  QueryClientProvider,
   focusManager,
   onlineManager,
+  QueryClient,
+  QueryClientProvider,
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
 import { AppState, type AppStateStatus, Platform } from "react-native";
@@ -31,10 +26,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import {
-  ReanimatedLogLevel,
   configureReanimatedLogger,
+  ReanimatedLogLevel,
 } from "react-native-reanimated";
 import * as z from "zod";
+import i18n, {
+  SupportedLanguages,
+  type TSupportedLanguages,
+} from "@/config/i18n";
+import useApp from "@/stores/app";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

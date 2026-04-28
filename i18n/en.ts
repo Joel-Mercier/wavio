@@ -29,7 +29,7 @@ export default {
         alphabeticalSort: "Alphabetical",
         search: {
           inputPlaceholder: "Search your library",
-        }
+        },
       },
       create: {
         title: "Create",
@@ -110,7 +110,8 @@ export default {
         unsubscribe: "Unsubscribe",
         searchPlaceholder: "Search podcasts",
         dailyTopChartsByCountry: "Top podcasts in {{country, titlecase}} today",
-        dailyTopChartsByGenre: "Top podcasts in $t(app.podcasts.genres.{{genre}}) today",
+        dailyTopChartsByGenre:
+          "Top podcasts in $t(app.podcasts.genres.{{genre}}) today",
         seeAllEpisodes: "See all episodes",
         configureTaddyPodcasts: "Configure in settings",
         taddyPodcastsNotConfigured: "Podcast access is not configured",
@@ -127,7 +128,8 @@ export default {
           PODCASTSERIES_ARTS_VISUAL_ARTS: "Arts - Visual arts",
           PODCASTSERIES_BUSINESS: "Business",
           PODCASTSERIES_BUSINESS_CAREERS: "Business - Careers",
-          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP: "Business - Entrepreneurship",
+          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP:
+            "Business - Entrepreneurship",
           PODCASTSERIES_BUSINESS_INVESTING: "Business - Investing",
           PODCASTSERIES_BUSINESS_MANAGEMENT: "Business - Management",
           PODCASTSERIES_BUSINESS_MARKETING: "Business - Marketing",
@@ -139,8 +141,10 @@ export default {
           PODCASTSERIES_EDUCATION: "Education",
           PODCASTSERIES_EDUCATION_COURSES: "Education - Courses",
           PODCASTSERIES_EDUCATION_HOW_TO: "Education - How-to",
-          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING: "Education - Language learning",
-          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT: "Education - Self-improvement",
+          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING:
+            "Education - Language learning",
+          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT:
+            "Education - Self-improvement",
           PODCASTSERIES_FICTION: "Fiction",
           PODCASTSERIES_FICTION_COMEDY_FICTION: "Fiction - Comedy",
           PODCASTSERIES_FICTION_DRAMA: "Fiction - Drama",
@@ -148,19 +152,30 @@ export default {
           PODCASTSERIES_GOVERNMENT: "Government",
           PODCASTSERIES_HISTORY: "History",
           PODCASTSERIES_HEALTH_AND_FITNESS: "Health and fitness",
-          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH: "Health and fitness - Alternative health",
-          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS: "Health and fitness - Fitness",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE: "Health and fitness - Medicine",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH: "Health and fitness - Mental health",
-          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION: "Health and fitness - Nutrition",
-          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY: "Health and fitness - Sexuality",
+          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH:
+            "Health and fitness - Alternative health",
+          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS:
+            "Health and fitness - Fitness",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE:
+            "Health and fitness - Medicine",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH:
+            "Health and fitness - Mental health",
+          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION:
+            "Health and fitness - Nutrition",
+          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY:
+            "Health and fitness - Sexuality",
           PODCASTSERIES_KIDS_AND_FAMILY: "Kids and family",
-          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS: "Kids and family - Education for kids",
-          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING: "Kids and family - Parenting",
-          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS: "Kids and family - Pets and animals",
-          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS: "Kids and family - Stories for kids",
+          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS:
+            "Kids and family - Education for kids",
+          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING:
+            "Kids and family - Parenting",
+          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS:
+            "Kids and family - Pets and animals",
+          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS:
+            "Kids and family - Stories for kids",
           PODCASTSERIES_LEISURE: "Leisure",
-          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA: "Leisure - Animation and manga",
+          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA:
+            "Leisure - Animation and manga",
           PODCASTSERIES_LEISURE_AUTOMOTIVE: "Leisure - Automotive",
           PODCASTSERIES_LEISURE_AVIATION: "Leisure - Aviation",
           PODCASTSERIES_LEISURE_CRAFTS: "Leisure - Crafts",
@@ -181,13 +196,20 @@ export default {
           PODCASTSERIES_NEWS_SPORTS: "News - Sports",
           PODCASTSERIES_NEWS_TECH: "News - Technology",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY: "Religion and spirituality",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM: "Religion and spirituality - Buddhism",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY: "Religion and spirituality - Christianity",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM: "Religion and spirituality - Hinduism",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM: "Religion and spirituality - Islam",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM: "Religion and spirituality - Judaism",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION: "Religion and spirituality - Religion",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY: "Religion and spirituality - Spirituality",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM:
+            "Religion and spirituality - Buddhism",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY:
+            "Religion and spirituality - Christianity",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM:
+            "Religion and spirituality - Hinduism",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM:
+            "Religion and spirituality - Islam",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM:
+            "Religion and spirituality - Judaism",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION:
+            "Religion and spirituality - Religion",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY:
+            "Religion and spirituality - Spirituality",
           PODCASTSERIES_SCIENCE: "Science",
           PODCASTSERIES_SCIENCE_ASTRONOMY: "Science - Astronomy",
           PODCASTSERIES_SCIENCE_CHEMISTRY: "Science - Chemistry",
@@ -199,11 +221,16 @@ export default {
           PODCASTSERIES_SCIENCE_PHYSICS: "Science - Physics",
           PODCASTSERIES_SCIENCE_SOCIAL_SCIENCES: "Science - Social sciences",
           PODCASTSERIES_SOCIETY_AND_CULTURE: "Society and culture",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY: "Society and culture - Documentary",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS: "Society and culture - Personal journals",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY: "Society and culture - Philosophy",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL: "Society and culture - Places and travel",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS: "Society and culture - Relationships",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY:
+            "Society and culture - Documentary",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS:
+            "Society and culture - Personal journals",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY:
+            "Society and culture - Philosophy",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL:
+            "Society and culture - Places and travel",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS:
+            "Society and culture - Relationships",
           PODCASTSERIES_SPORTS: "Sports",
           PODCASTSERIES_SPORTS_BASEBALL: "Sports - Baseball",
           PODCASTSERIES_SPORTS_BASKETBALL: "Sports - Basketball",
@@ -228,7 +255,7 @@ export default {
           PODCASTSERIES_TV_AND_FILM_INTERVIEWS: "TV and film - Interviews",
           PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS: "TV and film - Film reviews",
           PODCASTSERIES_TV_AND_FILM_TV_REVIEWS: "TV and film - TV reviews",
-        }
+        },
       },
       favoritePodcasts: {
         title: "Recent episodes",

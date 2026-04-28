@@ -1,13 +1,16 @@
+import axios from "axios";
 import i18n from "@/config/i18n";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
-import axios from "axios";
 
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
 const navidromeClient = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "";
 
-console.log("[app] Navidrome Subsonic API Version : ", navidromeSubsonicApiVersion);
+console.log(
+  "[app] Navidrome Subsonic API Version : ",
+  navidromeSubsonicApiVersion,
+);
 console.log("[app] Navidrome Client : ", navidromeClient);
 
 export type OpenSubsonicResponse<T> = {

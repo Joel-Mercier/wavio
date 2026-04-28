@@ -1,3 +1,10 @@
+import { FlashList } from "@shopify/flash-list";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useRouter } from "expo-router";
+import Fuse, { type FuseResult } from "fuse.js";
+import { ArrowLeft, X } from "lucide-react-native";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -17,13 +24,6 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
-import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
-import { useRouter } from "expo-router";
-import Fuse, { type FuseResult } from "fuse.js";
-import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 
 export default function LibrarySearchScreen() {
   const { t } = useTranslation();
@@ -55,12 +55,7 @@ export default function LibrarySearchScreen() {
   };
 
   const data = useMemo(() => {
-    if (
-      !starredData ||
-      !starredData?.starred2 ||
-      !playlistsData ||
-      !playlistsData?.playlists
-    ) {
+    if (!starredData?.starred2 || !playlistsData?.playlists) {
       return [];
     }
     let data = [];

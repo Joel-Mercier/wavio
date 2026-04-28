@@ -1,10 +1,10 @@
+import { useMutation } from "@tanstack/react-query";
 import {
   scrobble,
   setRating,
   star,
   unstar,
 } from "@/services/openSubsonic/mediaAnnotation";
-import { useMutation } from "@tanstack/react-query";
 
 export const useScrobble = () => {
   const query = useMutation({

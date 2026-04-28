@@ -133,14 +133,14 @@ export type SearchRankingDetails = {
   uuid: string;
   type: keyof typeof SearchContentType;
   rankingScore: number;
-}
+};
 
 export type SearchResponseDetails = {
   id: string;
-  type: keyof typeof SearchContentType
+  type: keyof typeof SearchContentType;
   totalCount: number;
   pagesCount: number;
-}
+};
 
 export enum PodcastEpisodeType {
   FULL = "FULL",

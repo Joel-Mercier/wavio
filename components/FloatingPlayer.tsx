@@ -1,3 +1,6 @@
+import { usePathname, useRouter } from "expo-router";
+import { AudioLines, Pause, Play } from "lucide-react-native";
+import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 import FadeOut from "@/components/FadeOut";
 import MovingText from "@/components/MovingText";
 import { Box } from "@/components/ui/box";
@@ -8,9 +11,6 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useImageColors from "@/hooks/useImageColors";
-import { usePathname, useRouter } from "expo-router";
-import { AudioLines, Pause, Play } from "lucide-react-native";
-import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 

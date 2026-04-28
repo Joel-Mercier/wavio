@@ -1,10 +1,10 @@
+import { Redirect, Stack } from "expo-router";
+import { useEffect } from "react";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
-import { Redirect, Stack } from "expo-router";
-import { useEffect } from "react";
 
 export default function AppLayout() {
   const isAuthenticated = useAuth((store) => store.isAuthenticated);

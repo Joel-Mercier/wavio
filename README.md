@@ -16,11 +16,12 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 ## Getting started
 
 1. Clone the repository
-2. Make sure you have pnpm installed (`npm i -g pnpm`)
-3. Install dependencies with `pnpm install`
-4. Set environment variables in `.env` file
-5. Prebuild the native development app with `npx expo prebuild`
-6. Run the app with `npx expo start`
+2. Make sure you have Node v22+ installed
+3. Make sure you have bun installed
+4. Install dependencies with `bun install`
+5. Set environment variables in `.env` file
+6. Prebuild the native development app with `bun run prebuild`
+7. Run the app with `bun run start`
 
 
 ## Building the app
@@ -38,14 +39,14 @@ TODO
 
 ## Useful commands
 
-- `npx expo start`: Start the app in development mode
-- `npx expo start --web`: Start the app in development mode with web support
-- `npx expo build:android`: Build the app for Android
-- `npx expo build:ios`: Build the app for iOS
-- `npx expo prebuild`: Prebuild the native development app
-- `npx expo doctor`: Check the app for any potential issues
-- `pnpm run lint`: Lint the codebase
-- `pnpm run lint:fix`: Fix linting issues
+- `bun run start`: Start the app in development mode
+- `bun run web`: Start the app in development mode with web support
+- `bunx --bun expo build:android`: Build the app for Android
+- `bunx --bun expo build:ios`: Build the app for iOS
+- `bun run prebuild`: Prebuild the native development app
+- `bun run doctor`: Check the app for any potential issues
+- `bun run lint`: Lint the codebase
+- `bun run lint:fix`: Fix linting issues
 - `eas build --profile preview --platform android`: Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo

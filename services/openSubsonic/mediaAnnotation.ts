@@ -1,7 +1,7 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
-import axios from "axios";
 
 export const scrobble = async (
   id: string,
@@ -55,7 +55,11 @@ export const star = async ({
   id,
   albumId,
   artistId,
-}: { id?: string; albumId?: string; artistId?: string }) => {
+}: {
+  id?: string;
+  albumId?: string;
+  artistId?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>
@@ -82,7 +86,11 @@ export const unstar = async ({
   id,
   albumId,
   artistId,
-}: { id?: string; albumId?: string; artistId?: string }) => {
+}: {
+  id?: string;
+  albumId?: string;
+  artistId?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>

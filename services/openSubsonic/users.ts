@@ -1,8 +1,8 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
 import type { User, Users } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export const getUser = async (username: string) => {
   try {

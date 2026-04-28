@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   getAlbum,
   getAlbumInfo,
@@ -16,7 +17,6 @@ import {
   getVideoInfo,
   getVideos,
 } from "@/services/openSubsonic/browsing";
-import { useQuery } from "@tanstack/react-query";
 
 export const useMusicFolders = () => {
   return useQuery({

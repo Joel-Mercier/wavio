@@ -1,3 +1,16 @@
+import { FlashList } from "@shopify/flash-list";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ArrowLeft, Podcast } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
@@ -16,6 +29,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { usePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import useImageColors from "@/hooks/useImageColors";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type {
   Genre,
   PodcastEpisode,
@@ -23,20 +37,6 @@ import type {
 } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Podcast } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-} from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
@@ -142,7 +142,10 @@ export default function PodcastSeriesScreen() {
         renderItem={({
           item,
           index,
-        }: { item: PodcastEpisode; index: number }) =>
+        }: {
+          item: PodcastEpisode;
+          index: number;
+        }) =>
           isLoading ? (
             <PodcastListItemSkeleton index={index} />
           ) : (

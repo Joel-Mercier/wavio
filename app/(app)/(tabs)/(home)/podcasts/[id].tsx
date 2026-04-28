@@ -1,29 +1,8 @@
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
-import { Text } from "@/components/ui/text";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import useImageColors from "@/hooks/useImageColors";
-import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
-import usePodcasts from "@/stores/podcasts";
-import { formatDistanceToNow } from "@/utils/date";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { fromUnixTime, secondsToMinutes } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
@@ -51,6 +30,27 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
+import usePodcasts from "@/stores/podcasts";
+import { formatDistanceToNow } from "@/utils/date";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);

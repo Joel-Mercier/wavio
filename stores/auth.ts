@@ -1,8 +1,8 @@
-import { zustandStorage } from "@/config/storage";
-import createSelectors from "@/utils/createSelectors";
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { zustandStorage } from "@/config/storage";
+import createSelectors from "@/utils/createSelectors";
 
 export const loginSchema = z.object({
   url: z.url().min(1).trim(),

@@ -1,3 +1,30 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  AlertCircleIcon,
+  ArrowLeft,
+  EllipsisVertical,
+  Info,
+  Pause,
+  Pencil,
+  Play,
+  Radio,
+  SquareArrowOutUpRight,
+  Trash,
+} from "lucide-react-native";
+import React, { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
+import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
   AlertDialog,
@@ -34,37 +61,10 @@ import {
 } from "@/hooks/openSubsonic/useInternetRadioStations";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import useRecentPlays from "@/stores/recentPlays";
 import { cn } from "@/utils/tailwind";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useForm } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  AlertCircleIcon,
-  ArrowLeft,
-  EllipsisVertical,
-  Info,
-  Pause,
-  Pencil,
-  Play,
-  Radio,
-  SquareArrowOutUpRight,
-  Trash,
-} from "lucide-react-native";
-import React, { useCallback, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
-import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as z from "zod";
 
 const updateInternetRadioStationSchema = z.object({
   name: z.string().min(1),

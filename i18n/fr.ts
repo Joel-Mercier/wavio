@@ -29,7 +29,7 @@ export default {
         alphabeticalSort: "Alphabétique",
         search: {
           inputPlaceholder: "Rechercher dans votre bibliothèque",
-        }
+        },
       },
       create: {
         title: "Créer",
@@ -110,8 +110,10 @@ export default {
         subscribe: "S'abonner",
         unsubscribe: "Se désabonner",
         searchPlaceholder: "Rechercher des podcasts",
-        dailyTopChartsByCountry: "Top des podcasts en {{country, titlecase}} aujourd'hui",
-        dailyTopChartsByGenre: "Top des podcasts $t(app.podcasts.genres.{{genre}}) aujourd'hui",
+        dailyTopChartsByCountry:
+          "Top des podcasts en {{country, titlecase}} aujourd'hui",
+        dailyTopChartsByGenre:
+          "Top des podcasts $t(app.podcasts.genres.{{genre}}) aujourd'hui",
         seeAllEpisodes: "Voir tous les épisodes",
         configureTaddyPodcasts: "Configurer dans les paramètres",
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
@@ -132,7 +134,8 @@ export default {
           PODCASTSERIES_BUSINESS_INVESTING: "Affaires - Investissement",
           PODCASTSERIES_BUSINESS_MANAGEMENT: "Affaires - Gestion",
           PODCASTSERIES_BUSINESS_MARKETING: "Affaires - Marketing",
-          PODCASTSERIES_BUSINESS_NON_PROFIT: "Affaires - Organisations à but non lucratif",
+          PODCASTSERIES_BUSINESS_NON_PROFIT:
+            "Affaires - Organisations à but non lucratif",
           PODCASTSERIES_COMEDY: "Comédie",
           PODCASTSERIES_COMEDY_INTERVIEWS: "Comédie - Interviews",
           PODCASTSERIES_COMEDY_IMPROV: "Comédie - Improvisation",
@@ -140,8 +143,10 @@ export default {
           PODCASTSERIES_EDUCATION: "Éducation",
           PODCASTSERIES_EDUCATION_COURSES: "Éducation - Cours",
           PODCASTSERIES_EDUCATION_HOW_TO: "Éducation - Tutoriels",
-          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING: "Éducation - Apprentissage des langues",
-          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT: "Éducation - Développement personnel",
+          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING:
+            "Éducation - Apprentissage des langues",
+          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT:
+            "Éducation - Développement personnel",
           PODCASTSERIES_FICTION: "Fiction",
           PODCASTSERIES_FICTION_COMEDY_FICTION: "Fiction - Comédie",
           PODCASTSERIES_FICTION_DRAMA: "Fiction - Drame",
@@ -149,19 +154,30 @@ export default {
           PODCASTSERIES_GOVERNMENT: "Gouvernement",
           PODCASTSERIES_HISTORY: "Histoire",
           PODCASTSERIES_HEALTH_AND_FITNESS: "Santé et forme physique",
-          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH: "Santé et forme physique - Santé alternative",
-          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS: "Santé et forme physique - Fitness",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE: "Santé et forme physique - Médecine",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH: "Santé et forme physique - Santé mentale",
-          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION: "Santé et forme physique - Nutrition",
-          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY: "Santé et forme physique - Sexualité",
+          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH:
+            "Santé et forme physique - Santé alternative",
+          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS:
+            "Santé et forme physique - Fitness",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE:
+            "Santé et forme physique - Médecine",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH:
+            "Santé et forme physique - Santé mentale",
+          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION:
+            "Santé et forme physique - Nutrition",
+          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY:
+            "Santé et forme physique - Sexualité",
           PODCASTSERIES_KIDS_AND_FAMILY: "Enfants et famille",
-          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS: "Enfants et famille - Éducation pour enfants",
-          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING: "Enfants et famille - Parentalité",
-          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS: "Enfants et famille - Animaux de compagnie",
-          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS: "Enfants et famille - Histoires pour enfants",
+          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS:
+            "Enfants et famille - Éducation pour enfants",
+          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING:
+            "Enfants et famille - Parentalité",
+          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS:
+            "Enfants et famille - Animaux de compagnie",
+          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS:
+            "Enfants et famille - Histoires pour enfants",
           PODCASTSERIES_LEISURE: "Loisirs",
-          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA: "Loisirs - Animation et manga",
+          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA:
+            "Loisirs - Animation et manga",
           PODCASTSERIES_LEISURE_AUTOMOTIVE: "Loisirs - Automobile",
           PODCASTSERIES_LEISURE_AVIATION: "Loisirs - Aviation",
           PODCASTSERIES_LEISURE_CRAFTS: "Loisirs - Bricolage",
@@ -182,29 +198,43 @@ export default {
           PODCASTSERIES_NEWS_SPORTS: "Actualités - Sports",
           PODCASTSERIES_NEWS_TECH: "Actualités - Technologie",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY: "Religion et spiritualité",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM: "Religion et spiritualité - Bouddhisme",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY: "Religion et spiritualité - Christianisme",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM: "Religion et spiritualité - Hindouisme",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM: "Religion et spiritualité - Islam",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM: "Religion et spiritualité - Judaïsme",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION: "Religion et spiritualité - Religion",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY: "Religion et spiritualité - Spiritualité",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM:
+            "Religion et spiritualité - Bouddhisme",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY:
+            "Religion et spiritualité - Christianisme",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM:
+            "Religion et spiritualité - Hindouisme",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM:
+            "Religion et spiritualité - Islam",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM:
+            "Religion et spiritualité - Judaïsme",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION:
+            "Religion et spiritualité - Religion",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY:
+            "Religion et spiritualité - Spiritualité",
           PODCASTSERIES_SCIENCE: "Science",
           PODCASTSERIES_SCIENCE_ASTRONOMY: "Science - Astronomie",
           PODCASTSERIES_SCIENCE_CHEMISTRY: "Science - Chimie",
-          PODCASTSERIES_SCIENCE_EARTH_SCIENCES: "Science - Sciences de la Terre",
+          PODCASTSERIES_SCIENCE_EARTH_SCIENCES:
+            "Science - Sciences de la Terre",
           PODCASTSERIES_SCIENCE_LIFE_SCIENCES: "Science - Sciences de la vie",
           PODCASTSERIES_SCIENCE_MATHEMATICS: "Science - Mathématiques",
-          PODCASTSERIES_SCIENCE_NATURAL_SCIENCES: "Science - Sciences naturelles",
+          PODCASTSERIES_SCIENCE_NATURAL_SCIENCES:
+            "Science - Sciences naturelles",
           PODCASTSERIES_SCIENCE_NATURE: "Science - Nature",
           PODCASTSERIES_SCIENCE_PHYSICS: "Science - Physique",
           PODCASTSERIES_SCIENCE_SOCIAL_SCIENCES: "Science - Sciences sociales",
           PODCASTSERIES_SOCIETY_AND_CULTURE: "Société et culture",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY: "Société et culture - Documentaire",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS: "Société et culture - Journaux personnels",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY: "Société et culture - Philosophie",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL: "Société et culture - Lieux et voyages",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS: "Société et culture - Relations",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY:
+            "Société et culture - Documentaire",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS:
+            "Société et culture - Journaux personnels",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY:
+            "Société et culture - Philosophie",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL:
+            "Société et culture - Lieux et voyages",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS:
+            "Société et culture - Relations",
           PODCASTSERIES_SPORTS: "Sports",
           PODCASTSERIES_SPORTS_BASEBALL: "Sports - Baseball",
           PODCASTSERIES_SPORTS_BASKETBALL: "Sports - Basketball",
@@ -224,11 +254,15 @@ export default {
           PODCASTSERIES_TECHNOLOGY: "Technologie",
           PODCASTSERIES_TRUE_CRIME: "Faits divers",
           PODCASTSERIES_TV_AND_FILM: "Télévision et cinéma",
-          PODCASTSERIES_TV_AND_FILM_AFTER_SHOWS: "Télévision et cinéma - Après-émissions",
+          PODCASTSERIES_TV_AND_FILM_AFTER_SHOWS:
+            "Télévision et cinéma - Après-émissions",
           PODCASTSERIES_TV_AND_FILM_HISTORY: "Télévision et cinéma - Histoire",
-          PODCASTSERIES_TV_AND_FILM_INTERVIEWS: "Télévision et cinéma - Interviews",
-          PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS: "Télévision et cinéma - Critiques de films",
-          PODCASTSERIES_TV_AND_FILM_TV_REVIEWS: "Télévision et cinéma - Critiques de séries",
+          PODCASTSERIES_TV_AND_FILM_INTERVIEWS:
+            "Télévision et cinéma - Interviews",
+          PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS:
+            "Télévision et cinéma - Critiques de films",
+          PODCASTSERIES_TV_AND_FILM_TV_REVIEWS:
+            "Télévision et cinéma - Critiques de séries",
         },
       },
       favoritePodcasts: {

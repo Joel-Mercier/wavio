@@ -1,8 +1,8 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   getScanStatus,
   startScan,
 } from "@/services/openSubsonic/mediaLibraryScanning";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useGetScanStatus = () => {
   return useQuery({

@@ -1,10 +1,3 @@
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -14,6 +7,13 @@ import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
 
 interface AddBottomSheetProps {
   isOpen: boolean;

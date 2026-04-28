@@ -1,9 +1,13 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AlbumListItem from "@/components/albums/AlbumListItem";
+import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import AlbumListItem from "@/components/albums/AlbumListItem";
-import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import HomeShortcut from "@/components/home/HomeShortcut";
 import InternetRadioStationListItem from "@/components/internetRadioStations/InternetRadioStationListItem";
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
@@ -20,10 +24,6 @@ import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -135,17 +135,15 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="mb-6 pl-6"
           >
-            {isLoadingRecentlyPlayed ? (
-              loadingData(4).map((_, index) => (
-                <AlbumListItemSkeleton
-                  key={`recently-played-${index}`}
-                  index={index}
-                  layout="horizontal"
-                />
-              ))
-            ) : (
-              <>
-                {recentlyPlayedData?.albumList2?.album?.map((album, index) => (
+            {isLoadingRecentlyPlayed
+              ? loadingData(4).map((_, index) => (
+                  <AlbumListItemSkeleton
+                    key={`recently-played-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              : recentlyPlayedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
                     album={album}
@@ -153,8 +151,6 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </>
-            )}
           </ScrollView>
         )}
         {!isLoadingRecentlyPlayed &&
@@ -173,17 +169,15 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="pl-6 mb-6"
           >
-            {isLoadingRecent ? (
-              loadingData(4).map((_, index) => (
-                <AlbumListItemSkeleton
-                  key={`recently-added-${index}`}
-                  index={index}
-                  layout="horizontal"
-                />
-              ))
-            ) : (
-              <>
-                {recentData?.albumList2?.album?.map((album, index) => (
+            {isLoadingRecent
+              ? loadingData(4).map((_, index) => (
+                  <AlbumListItemSkeleton
+                    key={`recently-added-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              : recentData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
                     album={album}
@@ -191,8 +185,6 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </>
-            )}
           </ScrollView>
         )}
         {!isLoadingRecent &&
@@ -211,17 +203,15 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="pl-6 mb-6"
           >
-            {isLoadingMostPlayed ? (
-              loadingData(4).map((_, index) => (
-                <AlbumListItemSkeleton
-                  key={`most-played-${index}`}
-                  index={index}
-                  layout="horizontal"
-                />
-              ))
-            ) : (
-              <>
-                {mostPlayedData?.albumList2?.album?.map((album, index) => (
+            {isLoadingMostPlayed
+              ? loadingData(4).map((_, index) => (
+                  <AlbumListItemSkeleton
+                    key={`most-played-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              : mostPlayedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
                     album={album}
@@ -229,8 +219,6 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </>
-            )}
           </ScrollView>
         )}
         {!isLoadingMostPlayed &&
@@ -249,17 +237,15 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="pl-6 mb-6"
           >
-            {isLoadingHighestRated ? (
-              loadingData(4).map((_, index) => (
-                <AlbumListItemSkeleton
-                  key={`highest-rated-${index}`}
-                  index={index}
-                  layout="horizontal"
-                />
-              ))
-            ) : (
-              <>
-                {highestRatedData?.albumList2?.album?.map((album, index) => (
+            {isLoadingHighestRated
+              ? loadingData(4).map((_, index) => (
+                  <AlbumListItemSkeleton
+                    key={`highest-rated-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              : highestRatedData?.albumList2?.album?.map((album, index) => (
                   <AlbumListItem
                     key={album.id}
                     album={album}
@@ -267,8 +253,6 @@ export default function HomeScreen() {
                     layout="horizontal"
                   />
                 ))}
-              </>
-            )}
           </ScrollView>
         )}
         {!isLoadingHighestRated &&
@@ -287,24 +271,20 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="pl-6 mb-6"
           >
-            {isLoadingInternetRadioStations ? (
-              loadingData(4).map((_, index) => (
-                <InternetRadioStationListItemSkeleton
-                  key={`internet-radio-stations-${index}`}
-                />
-              ))
-            ) : (
-              <>
-                {internetRadioStationsData?.internetRadioStations?.internetRadioStation?.map(
-                  (radioStation, index) => (
+            {isLoadingInternetRadioStations
+              ? loadingData(4).map((_, index) => (
+                  <InternetRadioStationListItemSkeleton
+                    key={`internet-radio-stations-${index}`}
+                  />
+                ))
+              : internetRadioStationsData?.internetRadioStations?.internetRadioStation?.map(
+                  (radioStation, _index) => (
                     <InternetRadioStationListItem
                       key={radioStation.id}
                       internetRadioStation={radioStation}
                     />
                   ),
                 )}
-              </>
-            )}
           </ScrollView>
         )}
         {!isLoadingInternetRadioStations &&

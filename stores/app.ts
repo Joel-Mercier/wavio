@@ -1,9 +1,9 @@
-import i18n, { type TSupportedLanguages } from "@/config/i18n";
-import { zustandStorage } from "@/config/storage";
-import createSelectors from "@/utils/createSelectors";
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import i18n, { type TSupportedLanguages } from "@/config/i18n";
+import { zustandStorage } from "@/config/storage";
+import createSelectors from "@/utils/createSelectors";
 
 interface AppStore {
   locale: TSupportedLanguages | null;
@@ -13,10 +13,10 @@ interface AppStore {
   showAddTab: boolean;
   setShowAddTab: (showAddTab: boolean) => void;
   librarySort:
-  | "addedAtAsc"
-  | "addedAtDesc"
-  | "alphabeticalAsc"
-  | "alphabeticalDesc";
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc";
   setLibrarySort: (
     librarySort:
       | "addedAtAsc"
@@ -25,10 +25,10 @@ interface AppStore {
       | "alphabeticalDesc",
   ) => void;
   favoritesSort:
-  | "addedAtAsc"
-  | "addedAtDesc"
-  | "alphabeticalAsc"
-  | "alphabeticalDesc";
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc";
   setFavoritesSort: (
     favoritesSort:
       | "addedAtAsc"

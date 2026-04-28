@@ -1,3 +1,4 @@
+import axios from "axios";
 import taddyPodcastsApiInstance, {
   type TaddyPodcastsResponse,
 } from "@/services/taddyPodcasts/index";
@@ -16,7 +17,6 @@ import type {
   SortOrder,
   TaddyType,
 } from "@/services/taddyPodcasts/types";
-import axios from "axios";
 
 export const getPodcastSeries = async ({
   uuid,
@@ -232,7 +232,11 @@ export const getTopChartsByCountry = async ({
 }) => {
   try {
     const rsp = await taddyPodcastsApiInstance.post<
-      TaddyPodcastsResponse<{ podcastSeries: PodcastSeries[]; podcastEpisodes: PodcastEpisode[], topchartsId: string }>
+      TaddyPodcastsResponse<{
+        podcastSeries: PodcastSeries[];
+        podcastEpisodes: PodcastEpisode[];
+        topchartsId: string;
+      }>
     >("", {
       query: `query($type: TaddyType!, $country: Country!, $page: Int, $limitPerPage: Int) {
         getTopChartsByCountry(taddyType: $type, country: $country, page: $page, limitPerPage: $limitPerPage){
@@ -306,7 +310,11 @@ export const getTopChartsByGenres = async ({
 }) => {
   try {
     const rsp = await taddyPodcastsApiInstance.post<
-      TaddyPodcastsResponse<{ podcastSeries: PodcastSeries[]; podcastEpisodes: PodcastEpisode[], topchartsId: string }>
+      TaddyPodcastsResponse<{
+        podcastSeries: PodcastSeries[];
+        podcastEpisodes: PodcastEpisode[];
+        topchartsId: string;
+      }>
     >("", {
       query: `query($type: TaddyType!, $genres: [Genre!], $country: Country, $page: Int, $limitPerPage: Int) {
         getTopChartsByGenres(taddyType: $type, genres: $genres, filterByCountry: $country, page: $page, limitPerPage: $limitPerPage){
@@ -462,7 +470,15 @@ export const search = async ({
   isSafeMode?: boolean;
 }) => {
   try {
-    const rsp = await taddyPodcastsApiInstance.post<TaddyPodcastsResponse<{ searchId: string; podcastSeries: PodcastSeries[]; podcastEpisodes: PodcastEpisode[]; rankingDetails: SearchRankingDetails[]; responseDetails: SearchResponseDetails[] }>>("", {
+    const rsp = await taddyPodcastsApiInstance.post<
+      TaddyPodcastsResponse<{
+        searchId: string;
+        podcastSeries: PodcastSeries[];
+        podcastEpisodes: PodcastEpisode[];
+        rankingDetails: SearchRankingDetails[];
+        responseDetails: SearchResponseDetails[];
+      }>
+    >("", {
       query: `query($term: String, $page: Int, $limitPerPage: Int, $filterForTypes: [SearchContentType], $filterForCountries: [Country], $filterForLanguages: [Language], $filterForGenres: [Genre], $filterForSeriesUuids: [ID], $filterForNotInSeriesUuids: [ID], $filterForPodcastContentType: [PodcastContentType], $filterForPublishedAfter: Int, $filterForPublishedBefore: Int, $filterForLastUpdatedAfter: Int, $filterForLastUpdatedBefore: Int, $filterForTotalEpisodesLessThan: Int, $filterForTotalEpisodesGreaterThan: Int, $filterForDurationLessThan: Int, $filterForDurationGreaterThan: Int, $filterForHasTranscript: Boolean, $sortBy: SearchSortOrder, $matchBy: SearchMatchType, $isSafeMode: Boolean){
         search(term: $term, page: $page, limitPerPage: $limitPerPage, filterForTypes: $filterForTypes, filterForCountries: $filterForCountries, filterForLanguages: $filterForLanguages, filterForGenres: $filterForGenres, filterForSeriesUuids: $filterForSeriesUuids, filterForNotInSeriesUuids: $filterForNotInSeriesUuids, filterForPodcastContentType: $filterForPodcastContentType, filterForPublishedAfter: $filterForPublishedAfter, filterForPublishedBefore: $filterForPublishedBefore, filterForLastUpdatedAfter: $filterForLastUpdatedAfter, filterForLastUpdatedBefore: $filterForLastUpdatedBefore, filterForTotalEpisodesLessThan: $filterForTotalEpisodesLessThan, filterForTotalEpisodesGreaterThan: $filterForTotalEpisodesGreaterThan, filterForDurationLessThan: $filterForDurationLessThan, filterForDurationGreaterThan: $filterForDurationGreaterThan, filterForHasTranscript: $filterForHasTranscript, sortBy: $sortBy, matchBy: $matchBy, isSafeMode: $isSafeMode){
           searchId
@@ -545,4 +561,4 @@ export const search = async ({
     }
     throw error;
   }
-}
+};

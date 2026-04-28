@@ -1,9 +1,9 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
 import type { Lyrics, StructuredLyrics } from "@/services/openSubsonic/types";
 import { arrayBufferToBase64 } from "@/utils/arrayBufferToBase64";
-import axios from "axios";
 
 export const download = async (id: string) => {
   const rsp = await openSubsonicApiInstance.get<string>("/rest/download", {
@@ -50,7 +50,10 @@ export const getCoverArt = async (id: string, { size }: { size?: number }) => {
 export const getLyrics = async ({
   artist,
   title,
-}: { artist?: string; title?: string }) => {
+}: {
+  artist?: string;
+  title?: string;
+}) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ lyrics: Lyrics }>

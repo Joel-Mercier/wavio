@@ -1,10 +1,10 @@
+import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Genre } from "@/services/openSubsonic/types";
-import { useTranslation } from "react-i18next";
 
 interface GenreListItemProps {
   genre: Genre;

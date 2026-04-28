@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type ImageColorsResult, getColors } from "react-native-image-colors";
+import { getColors, type ImageColorsResult } from "react-native-image-colors";
 
 const useImageColors = (url?: string) => {
   const [colors, setColors] = useState<ImageColorsResult | null>(null);

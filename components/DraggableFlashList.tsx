@@ -1,13 +1,13 @@
 import { FlashList, type FlashListProps } from "@shopify/flash-list";
 import React, {
   type FunctionComponent,
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
   forwardRef,
   type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
   type LayoutChangeEvent,
@@ -16,19 +16,19 @@ import {
   type ViewStyle,
 } from "react-native";
 import {
+  createNativeWrapper,
   Gesture,
   GestureDetector,
   ScrollView,
-  createNativeWrapper,
 } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedScrollHandler,
-  withTiming,
   type SharedValue,
-  withSpring,
   useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 

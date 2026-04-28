@@ -1,3 +1,7 @@
+import { FlashList } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
@@ -10,16 +14,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { useLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function FavoritePodcastsScreen() {
   const { t } = useTranslation();
@@ -36,7 +36,10 @@ export default function FavoritePodcastsScreen() {
   );
 
   return (
-    <Box className="h-full">
+    <Box
+      className="h-full"
+      style={{ paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT }}
+    >
       <HStack
         className="px-6 gap-x-4 my-6 items-center"
         style={{ paddingTop: insets.top }}
@@ -88,7 +91,10 @@ export default function FavoritePodcastsScreen() {
           renderItem={({
             item,
             index,
-          }: { item: PodcastEpisode; index: number }) =>
+          }: {
+            item: PodcastEpisode;
+            index: number;
+          }) =>
             isLoading ? (
               <PodcastListItemSkeleton index={index} />
             ) : (
@@ -109,7 +115,7 @@ export default function FavoritePodcastsScreen() {
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <Box className="items-center justify-center self-center content-center">
+        <Box className="items-center justify-center self-center content-center h-full">
           <Text className="text-primary-50">
             {t("app.podcasts.taddyPodcastsNotConfigured")}
           </Text>

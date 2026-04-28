@@ -1,3 +1,7 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { ArrowDown, Disc3, Heart, ListMusic, User } from "lucide-react-native";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { LibraryLayout } from "@/app/(app)/(tabs)/(library)/index";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -15,10 +19,6 @@ import type {
 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
-import { LinearGradient } from "expo-linear-gradient";
-import { ArrowDown, Disc3, Heart, ListMusic, User } from "lucide-react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 
 export type Favorites = {
   name: string;

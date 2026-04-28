@@ -1,5 +1,5 @@
-import { search, search2, search3 } from "@/services/openSubsonic/searching";
 import { useQuery } from "@tanstack/react-query";
+import { search, search2, search3 } from "@/services/openSubsonic/searching";
 
 export const useSearch = (params: {
   artist?: string;

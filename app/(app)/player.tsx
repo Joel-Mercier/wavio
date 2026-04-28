@@ -1,33 +1,3 @@
-import FadeOut from "@/components/FadeOut";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import TestSlider from "@/components/Slider";
-import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
-import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { ScrollView } from "@/components/ui/scroll-view";
-import {
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-} from "@/components/ui/slider";
-import { Text } from "@/components/ui/text";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import useImageColors from "@/hooks/useImageColors";
-import useQueue from "@/stores/queue";
-import { artworkUrl } from "@/utils/artwork";
-import { downloadUrl } from "@/utils/streaming";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -60,6 +30,36 @@ import {
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AudioPro, AudioProState, useAudioPro } from "react-native-audio-pro";
+import FadeOut from "@/components/FadeOut";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import TestSlider from "@/components/Slider";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Image } from "@/components/ui/image";
+import { SafeAreaView } from "@/components/ui/safe-area-view";
+import { ScrollView } from "@/components/ui/scroll-view";
+import {
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+} from "@/components/ui/slider";
+import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import useImageColors from "@/hooks/useImageColors";
+import useQueue from "@/stores/queue";
+import { artworkUrl } from "@/utils/artwork";
+import { downloadUrl } from "@/utils/streaming";
 
 export default function PlayerScreen() {
   const { t } = useTranslation();

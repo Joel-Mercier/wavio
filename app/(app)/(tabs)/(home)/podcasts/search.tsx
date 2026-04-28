@@ -1,3 +1,17 @@
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { ArrowLeft, Settings2, X } from "lucide-react-native";
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as z from "zod";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -18,6 +32,7 @@ import { themeConfig } from "@/config/theme";
 import { useSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import {
   Country,
   Genre,
@@ -28,21 +43,6 @@ import {
   SearchSortOrder,
 } from "@/services/taddyPodcasts/types";
 import { loadingData } from "@/utils/loadingData";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { ArrowLeft, Settings2, X } from "lucide-react-native";
-import { useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as z from "zod";
 
 const filtersSchema = z.object({
   query: z.string().trim().min(1),

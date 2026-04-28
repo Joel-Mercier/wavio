@@ -1,7 +1,7 @@
-import en from "@/i18n/en";
-import fr from "@/i18n/fr";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import en from "@/i18n/en";
+import fr from "@/i18n/fr";
 
 const resources = {
   en,
@@ -28,11 +28,11 @@ i18n
     },
   });
 
-i18n.services?.formatter?.add('lowercase', (value, lng, options) => {
+i18n.services?.formatter?.add("lowercase", (value, lng, options) => {
   return value.toLowerCase();
 });
 
-i18n.services?.formatter?.add('titlecase', (value, lng, options) => {
+i18n.services?.formatter?.add("titlecase", (value, lng, options) => {
   return `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`;
 });
 

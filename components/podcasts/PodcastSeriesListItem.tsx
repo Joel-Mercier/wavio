@@ -1,3 +1,4 @@
+import { Podcast } from "lucide-react-native";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -7,7 +8,6 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import { cn } from "@/utils/tailwind";
-import { Podcast } from "lucide-react-native";
 
 interface PodcastSeriesListItemProps {
   podcast: PodcastSeries;

@@ -1,12 +1,12 @@
+import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
 import type {
   Playlist,
-  PlaylistWithSongs,
   Playlists,
+  PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
-import axios from "axios";
 
 export const createPlaylist = async (name: string, songId?: string[]) => {
   try {

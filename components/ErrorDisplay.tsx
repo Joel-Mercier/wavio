@@ -1,15 +1,17 @@
+import { useRoute } from "@react-navigation/native";
+import { Link } from "expo-router";
+import { CircleX } from "lucide-react-native";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import type { OpenSubsonicErrorResponse } from "@/services/openSubsonic";
-import { useRoute } from "@react-navigation/native";
-import { Link } from "expo-router";
-import { CircleX } from "lucide-react-native";
 
 export default function ErrorDisplay({
   error,
-}: { error: OpenSubsonicErrorResponse }) {
+}: {
+  error: OpenSubsonicErrorResponse;
+}) {
   const route = useRoute();
   return (
     <Box className="flex-1 items-center justify-center self-center content-center">

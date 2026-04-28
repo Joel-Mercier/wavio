@@ -1,9 +1,9 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect } from "react";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
 
 export const useOfflineDownloads = () => {
   const queryClient = useQueryClient();

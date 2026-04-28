@@ -1,3 +1,10 @@
+import { useForm } from "@tanstack/react-form";
+import axios from "axios";
+import { formatISO } from "date-fns";
+import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Logo from "@/assets/images/logo.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -36,13 +43,6 @@ import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
-import { useForm } from "@tanstack/react-form";
-import axios from "axios";
-import { formatISO } from "date-fns";
-import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
