@@ -24,6 +24,7 @@ import {
   ListPlus,
   PlusCircle,
   Share,
+  Sparkles,
   Star,
   User,
   X,
@@ -269,6 +270,14 @@ export default function TrackListItem({
   const handleInfoPress = () => {
     bottomSheetModalRef.current?.dismiss();
     setShowInfoModal(true);
+  };
+
+  const handleSimilarSongsPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/tracks/[id]/similar",
+      params: { id: track.id, title: track.title },
+    });
   };
 
   const handleCloseInfoModal = () => setShowInfoModal(false);
@@ -742,6 +751,17 @@ export default function TrackListItem({
                         </Text>
                       )}
                     </HStack>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                  <HStack className="items-center">
+                    <Sparkles
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.similarSongs")}
+                    </Text>
                   </HStack>
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSharePress}>

@@ -24,6 +24,7 @@ export function childToTrack(child: Child) {
     starred: child.starred,
     artistId: child.artistId,
     albumId: child.albumId,
+    musicBrainzId: child.musicBrainzId,
     // Add offline indicator
     isOffline: !!offlineTrack,
   };

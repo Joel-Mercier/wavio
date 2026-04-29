@@ -409,6 +409,8 @@ export default {
         getInfo: "Get info",
         download: "Download",
         musicBrainz: "Open in MusicBrainz",
+        similarSongs: "Similar songs",
+        similarSongsTitle: "Tracks similar to: {{title}}",
         trackInfoModalTitle: "Track info",
         rateModalTitle: "Rate track",
         favoriteSuccessMessage: "Track successfully added to favorites",

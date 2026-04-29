@@ -14,6 +14,7 @@ export default function SearchLayout() {
       <Stack.Screen name="playlists/[id]/search" />
       <Stack.Screen name="playlists/add-to-playlist" />
       <Stack.Screen name="genres/[id]" />
+      <Stack.Screen name="tracks/[id]/similar" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />

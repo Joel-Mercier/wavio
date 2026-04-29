@@ -425,6 +425,8 @@ export default {
         getInfo: "Obtenir des informations",
         download: "Télécharger",
         musicBrainz: "Ouvrir dans MusicBrainz",
+        similarSongs: "Titres similaires",
+        similarSongsTitle: "Titres similaires à : {{title}}",
         trackInfoModalTitle: "Informations sur le titre",
         rateModalTitle: "Noter le titre",
         favoriteSuccessMessage: "Titre ajouté avec succès aux favoris",

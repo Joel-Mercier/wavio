@@ -23,10 +23,13 @@ import {
   Shuffle,
   SkipBack,
   SkipForward,
+  Sparkles,
   User,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
+import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -101,6 +104,29 @@ export default function PlayerScreen() {
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate("/artists/1");
+  };
+
+  const handleMusicBrainzPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (
+      playingTrack?.musicBrainzId &&
+      (await Linking.canOpenURL(
+        `https://musicbrainz.org/recording/${playingTrack?.musicBrainzId}`,
+      ))
+    ) {
+      Linking.openURL(
+        `https://musicbrainz.org/recording/${playingTrack?.musicBrainzId}`,
+      );
+    }
+  };
+
+  const handleSimilarSongsPress = () => {
+    if (!playingTrack) return;
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/tracks/[id]/similar",
+      params: { id: playingTrack.id, title: playingTrack.title ?? "" },
+    });
   };
 
   const handlePlayPausePress = () => {
@@ -501,6 +527,17 @@ export default function PlayerScreen() {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                  <HStack className="items-center">
+                    <Sparkles
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.similarSongs")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={() => console.log("share pressed")}>
                   <HStack className="items-center">
                     <Share2
@@ -523,6 +560,20 @@ export default function PlayerScreen() {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {playingTrack?.musicBrainzId && (
+                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                    <HStack className="items-center">
+                      <MusicBrainz
+                        width={24}
+                        height={24}
+                        fill={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.musicBrainz")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
               </VStack>
             </Box>
           </BottomSheetView>
