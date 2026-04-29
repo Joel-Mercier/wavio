@@ -147,13 +147,15 @@ export const getArtistInfo = async (id: string) => {
   }
 };
 
-export const getArtistInfo2 = async (id: string) => {
+export const getArtistInfo2 = async (id: string, { count, includeNotPresent = false }: { count?: number, includeNotPresent?: boolean }) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ artistInfo2: ArtistInfo2 }>
     >("/rest/getArtistInfo2", {
       params: {
         id,
+        count,
+        includeNotPresent,
       },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {

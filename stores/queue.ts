@@ -76,25 +76,22 @@ const useQueueBase = create<QueueStore>()(
           state.contextIds && state.contextIds.length > 0
             ? state.contextIds.filter((id: string) => idsInQueue.includes(id))
             : idsInQueue.slice();
-        // Fisher–Yates shuffle
-        const order = sourceIds.slice();
-        for (let i = order.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [order[i], order[j]] = [order[j], order[i]];
-        }
         const currentId =
           state.currentIndex != null
             ? state.queue[state.currentIndex]?.id
             : undefined;
+        // Shuffle everything except the current id, then pin current at index 0
+        // so the full remaining order sits ahead of the cursor.
+        const rest = sourceIds.filter((id) => id !== currentId);
+        for (let i = rest.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [rest[i], rest[j]] = [rest[j], rest[i]];
+        }
+        const order = currentId ? [currentId, ...rest] : rest;
         let cursor: number | null = null;
         if (currentId) {
-          let pos = order.indexOf(currentId);
-          if (pos === -1 && sourceIds.length > 0) {
-            // Ensure current id is present as first item if not in source
-            order.unshift(currentId);
-            pos = 0;
-          }
-          cursor = pos >= 0 ? pos : null;
+          cursor = order.indexOf(currentId);
+          if (cursor === -1) cursor = null;
         }
         return { orderIds: order, cursor };
       },
@@ -564,20 +561,39 @@ const useQueueBase = create<QueueStore>()(
                   shuffleCursor: nextCursor,
                 } as Partial<QueueStore>;
               }
-              // End reached
-              if (isRepeatAll) {
-                const targetId = order[0];
-                const targetIndex = state.queue.findIndex(
-                  (t) => t.id === targetId,
-                );
-                return {
-                  currentIndex:
-                    targetIndex >= 0 ? targetIndex : state.currentIndex,
-                  shuffleOrderIds: order,
-                  shuffleCursor: 0,
-                } as Partial<QueueStore>;
+              // End of shuffle order reached: regenerate a fresh random
+              // order so shuffle loops indefinitely. Avoid immediately
+              // replaying the current track when alternatives exist.
+              const idsInQueue = state.queue.map((t) => t.id);
+              const sourceIds =
+                state.contextIds && state.contextIds.length > 0
+                  ? state.contextIds.filter((id) => idsInQueue.includes(id))
+                  : idsInQueue.slice();
+              const currentId =
+                state.currentIndex != null
+                  ? state.queue[state.currentIndex]?.id
+                  : undefined;
+              const pool =
+                sourceIds.length > 1 && currentId
+                  ? sourceIds.filter((id) => id !== currentId)
+                  : sourceIds.slice();
+              for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
               }
-              return { currentIndex: null } as Partial<QueueStore>;
+              if (pool.length === 0) {
+                return { currentIndex: null } as Partial<QueueStore>;
+              }
+              const targetId = pool[0];
+              const targetIndex = state.queue.findIndex(
+                (t) => t.id === targetId,
+              );
+              return {
+                currentIndex:
+                  targetIndex >= 0 ? targetIndex : state.currentIndex,
+                shuffleOrderIds: pool,
+                shuffleCursor: 0,
+              } as Partial<QueueStore>;
             }
             {
               // removePlayed path: remove current from queue and move to next id in order (at same position)

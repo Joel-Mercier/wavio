@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/toast";
 import useServers, { serverSchema } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
+import EmptyDisplay from "../EmptyDisplay";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ServersDetail() {
@@ -112,6 +113,7 @@ export default function ServersDetail() {
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
+        ListEmptyComponent={() => <EmptyDisplay />}
       />
       <AlertDialog
         isOpen={showAddServerModal}

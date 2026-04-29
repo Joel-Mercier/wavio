@@ -13,7 +13,8 @@
     "test": "bunx jest",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "typecheck": "bunx tsc --noEmit"
   },
   "jest": {
     "preset": "jest-expo"
@@ -22,21 +23,21 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/html-elements": "^55.0.3",
     "@expo/metro-runtime": "~55.0.10",
-    "@gluestack-ui/core": "^3.0.18",
+    "@gluestack-ui/core": "^3.0.19",
     "@gluestack-ui/utils": "^3.0.21",
-    "@gorhom/bottom-sheet": "^5.2.10",
+    "@gorhom/bottom-sheet": "^5.2.11",
     "@legendapp/motion": "^2.5.3",
     "@react-native-community/netinfo": "^12.0.1",
-    "@react-navigation/bottom-tabs": "^7.15.10",
+    "@react-navigation/bottom-tabs": "^7.15.11",
     "@react-navigation/native": "^7.2.2",
     "@shopify/flash-list": "^2.3.1",
     "@tanstack/react-form": "^1.29.1",
-    "@tanstack/react-query": "^5.100.5",
+    "@tanstack/react-query": "^5.100.6",
     "axios": "^1.15.2",
     "babel-plugin-module-resolver": "^5.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "expo": "55.0.17",
+    "expo": "55.0.18",
     "expo-application": "~55.0.14",
     "expo-audio": "~55.0.14",
     "expo-build-properties": "~55.0.13",
@@ -59,7 +60,7 @@
     "fuse.js": "^7.3.0",
     "html-entities": "^2.6.0",
     "i18next": "^26.0.8",
-    "lucide-react-native": "^1.11.0",
+    "lucide-react-native": "^1.14.0",
     "nativewind": "^4.2.3",
     "patch-package": "^8.0.1",
     "react": "19.2.5",
@@ -96,7 +97,7 @@
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.14",
     "@types/react-test-renderer": "^19.1.0",
-    "jest": "^30.3.0",
+    "jest": "~29.7.0",
     "jest-expo": "~55.0.16",
     "jscodeshift": "^17.3.0",
     "react-native-svg-transformer": "^1.5.3",
@@ -105,7 +106,7 @@
   },
   "overrides": {
     "react": "19.2.5",
-    "@react-navigation/bottom-tabs": "7.15.10"
+    "@react-navigation/bottom-tabs": "7.15.11"
   },
   "private": true
 }

@@ -82,11 +82,11 @@ export const useArtistInfo = (id: string) => {
   return query;
 };
 
-export const useArtistInfo2 = (id: string) => {
+export const useArtistInfo2 = (id: string, params: { count?: number, includeNotPresent?: boolean }) => {
   const query = useQuery({
-    queryKey: ["artistInfo2", id],
+    queryKey: ["artistInfo2", id, params],
     queryFn: () => {
-      return getArtistInfo2(id);
+      return getArtistInfo2(id, params);
     },
   });
 

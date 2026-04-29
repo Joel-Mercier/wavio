@@ -11,7 +11,9 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useGetShares } from "@/hooks/openSubsonic/useSharing";
+import type { Share } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
+import EmptyDisplay from "../EmptyDisplay";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import ShareListItemSkeleton from "./ShareListItemSkeleton";
 
@@ -39,19 +41,16 @@ export default function SharesDetail() {
       </>
       {!error && (
         <FlashList
-          data={data?.shares.share || loadingData(16)}
-          renderItem={({ item }) =>
-            isLoading ? (
-              <ShareListItemSkeleton />
-            ) : (
-              <ShareListItem share={item} />
-            )
+          data={!data ? loadingData(16) : data?.shares.share || []}
+          renderItem={({ item }: { item: Share }) =>
+            !data ? <ShareListItemSkeleton /> : <ShareListItem share={item} />
           }
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
+          ListEmptyComponent={() => <EmptyDisplay />}
         />
       )}
     </Box>

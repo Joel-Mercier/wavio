@@ -828,11 +828,23 @@ export default function AlbumDetail() {
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleRatingPress}>
-                <HStack className="items-center">
-                  <Star size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.albums.rate")}
-                  </Text>
+                <HStack className="items-center justify-between">
+                  <HStack className="items-center">
+                    <Star
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.albums.rate")}
+                    </Text>
+                  </HStack>
+                  <HStack className="items-center">
+                    {!!data?.album?.userRating && (
+                      <Text className="ml-4 text-lg text-emerald-500">
+                        {data?.album?.userRating}/5
+                      </Text>
+                    )}
+                  </HStack>
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleSharePress}>

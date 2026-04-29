@@ -101,7 +101,8 @@ export default function ArtistDetail() {
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
-    useArtistInfo2(id);
+    useArtistInfo2(id, { count: 10 });
+  console.log(data?.artist.userRating);
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
@@ -288,6 +289,7 @@ export default function ArtistDetail() {
           //   ...data.artist,
           //   userRating: rating,
           // });
+          setShowRatingModal(false);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -623,11 +625,23 @@ export default function ArtistDetail() {
             </HStack>
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleRatingPress}>
-                <HStack className="items-center">
-                  <Star size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.artists.rate")}
-                  </Text>
+                <HStack className="items-center justify-between">
+                  <HStack className="items-center">
+                    <Star
+                      size={24}
+                      color={themeConfig.theme.colors.gray[200]}
+                    />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.artists.rate")}
+                    </Text>
+                  </HStack>
+                  <HStack className="items-center">
+                    {data?.artist?.userRating && (
+                      <Text className="ml-4 text-lg text-emerald-500">
+                        {data?.artist?.userRating}/5
+                      </Text>
+                    )}
+                  </HStack>
                 </HStack>
               </FadeOutScaleDown>
               {data?.artist?.musicBrainzId && (
