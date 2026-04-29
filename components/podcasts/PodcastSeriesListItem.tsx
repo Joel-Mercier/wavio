@@ -25,9 +25,14 @@ export default function PodcastSeriesListItem({
   return (
     <FadeOutScaleDown
       href={{
-        pathname: `/(tabs)/(home)/podcast-series/${podcast.uuid}`,
+        pathname: "/podcast-series/[id]",
         params: {
-          ...podcast,
+          id: podcast.uuid,
+          uuid: podcast.uuid,
+          name: podcast.name,
+          description: podcast.description,
+          imageUrl: podcast.imageUrl,
+          authorName: podcast.authorName,
         },
       }}
       className={cn(className, {

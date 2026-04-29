@@ -13,7 +13,7 @@ interface GenreListItemProps {
 export default function GenreListItem({ genre }: GenreListItemProps) {
   const { t } = useTranslation();
   return (
-    <FadeOutScaleDown href={`/(tabs)/(search)/genres/${genre.value}`}>
+    <FadeOutScaleDown href={`/genres/${genre.value}`}>
       <VStack className="bg-primary-600 p-4 w-full rounded-md">
         <Heading size="md" className="text-white mb-8">
           {genre.value}

@@ -144,7 +144,7 @@ export default function PodcastsSearchScreen() {
                       color={themeConfig.theme.colors.white}
                       width={38}
                       height={38}
-                      size="2xl"
+                      size="xl"
                     />
                   </InputSlot>
                 </Input>

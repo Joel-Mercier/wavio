@@ -110,7 +110,8 @@ const TableFooter = React.forwardRef<
 });
 
 const TableHead = React.forwardRef<
-  React.ComponentRef<typeof View | typeof Text>,
+  // biome-ignore lint/suspicious/noExplicitAny: union ref of View | Text is not expressible
+  any,
   ITableHeadProps
 >(function TableHead({ useRNView = false, className, ...props }, ref) {
   if (useRNView) {
@@ -118,7 +119,7 @@ const TableHead = React.forwardRef<
       <View
         ref={ref}
         className={tableHeadStyle({ class: className })}
-        {...props}
+        {...(props as React.ComponentProps<typeof View>)}
       />
     );
   } else {
@@ -126,7 +127,7 @@ const TableHead = React.forwardRef<
       <Text
         ref={ref}
         className={tableHeadStyle({ class: className })}
-        {...props}
+        {...(props as React.ComponentProps<typeof Text>)}
       />
     );
   }
@@ -153,7 +154,8 @@ const TableRow = React.forwardRef<
 });
 
 const TableData = React.forwardRef<
-  React.ComponentRef<typeof View | typeof Text>,
+  // biome-ignore lint/suspicious/noExplicitAny: union ref of View | Text is not expressible
+  any,
   ITableDataProps
 >(function TableData({ useRNView = false, className, ...props }, ref) {
   if (useRNView) {
@@ -161,7 +163,7 @@ const TableData = React.forwardRef<
       <View
         ref={ref}
         className={tableDataStyle({ class: className })}
-        {...props}
+        {...(props as React.ComponentProps<typeof View>)}
       />
     );
   } else {
@@ -169,7 +171,7 @@ const TableData = React.forwardRef<
       <Text
         ref={ref}
         className={tableDataStyle({ class: className })}
-        {...props}
+        {...(props as React.ComponentProps<typeof Text>)}
       />
     );
   }

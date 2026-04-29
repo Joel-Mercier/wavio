@@ -18,8 +18,9 @@ export default function InternetRadioStationListItem({
   return (
     <FadeOutScaleDown
       href={{
-        pathname: `/(app)/(tabs)/(home)/internet-radio-stations/${internetRadioStation.id}`,
+        pathname: "/internet-radio-stations/[id]",
         params: {
+          id: internetRadioStation.id,
           name: internetRadioStation.name,
           streamUrl: internetRadioStation.streamUrl,
           homePageUrl: internetRadioStation?.homePageUrl,

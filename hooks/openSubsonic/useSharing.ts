@@ -42,7 +42,7 @@ export const useUpdateShare = () => {
     mutationFn: (params: {
       id: string;
       description?: string;
-      expires?: string;
+      expires?: number;
     }) => {
       const { id, description, expires } = params;
       return updateShare(id, { description, expires });

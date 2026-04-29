@@ -17,10 +17,7 @@ interface PlaylistListItemProps {
 export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
   const { t } = useTranslation();
   return (
-    <FadeOutScaleDown
-      href={`/(tabs)/(home)/playlists/${playlist.id}`}
-      className="mr-6"
-    >
+    <FadeOutScaleDown href={`/playlists/${playlist.id}`} className="mr-6">
       <VStack className="gap-y-2 w-32">
         {playlist.coverArt ? (
           <Image

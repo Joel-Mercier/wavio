@@ -54,17 +54,18 @@ export default function RecentSearchListItem({
       return `/search-results?query=${recentSearch.title}`;
     }
     if (recentSearch.type === "artist") {
-      return `/(tabs)/(search)/artists/${recentSearch.id}`;
+      return `/artists/${recentSearch.id}`;
     }
     if (recentSearch.type === "album") {
-      return `/(tabs)/(search)/albums/${recentSearch.id}`;
+      return `/albums/${recentSearch.id}`;
     }
     if (recentSearch.type === "playlist") {
-      return `/(tabs)/(search)/playlists/${recentSearch.id}`;
+      return `/playlists/${recentSearch.id}`;
     }
     if (recentSearch.type === "song") {
-      return `/(tabs)/(search)/albums/${recentSearch.albumId}`;
+      return `/albums/${recentSearch.albumId}`;
     }
+    return "/";
   }, [recentSearch]);
 
   return (

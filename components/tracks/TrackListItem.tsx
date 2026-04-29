@@ -216,7 +216,7 @@ export default function TrackListItem({
       {
         onSuccess: (data) => {
           bottomSheetModalRef.current?.dismiss();
-          setClipboardText(data?.shares?.share?.[0]?.url);
+          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetShareModalRef.current?.present();
           toast.show({

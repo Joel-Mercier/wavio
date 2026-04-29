@@ -1,11 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { Home, Library, Plus, Search } from "lucide-react-native";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Pressable } from "react-native";
 import AddBottomSheet from "@/components/AddBottomSheet";
 import DrawerMenu from "@/components/DrawerMenu";
-import { Pressable } from "@/components/ui/pressable";
 import { themeConfig } from "@/config/theme";
 import useApp from "@/stores/app";
 
@@ -39,7 +40,10 @@ export default function TabLayout() {
             shadowOpacity: 0,
           },
           tabBarButton: (props) => (
-            <Pressable {...props} android_ripple={{ color: "transparent" }} />
+            <Pressable
+              {...(props as React.ComponentProps<typeof Pressable>)}
+              android_ripple={{ color: "transparent" }}
+            />
           ),
           tabBarBackground: () => (
             <LinearGradient

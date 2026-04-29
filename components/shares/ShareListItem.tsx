@@ -89,7 +89,7 @@ export default function ShareListItem({ share }: { share: Share }) {
         {
           id: share.id,
           description: value.description,
-          expires: value.expires,
+          expires: value.expires as unknown as number | undefined,
         },
         {
           onSuccess: () => {

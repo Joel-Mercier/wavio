@@ -67,11 +67,17 @@ export default function PodcastListItem({
 
   const handleGoToPodcastSeriesPress = () => {
     bottomSheetModalRef.current?.dismiss();
+    const series = podcast.podcastSeries;
     router.navigate({
-      pathname: `/(app)/(tabs)/(home)/podcast-series/${podcast.podcastSeries.uuid}`,
+      pathname: "/podcast-series/[id]",
       params: {
-        ...podcast.podcastSeries,
-        genres: podcast?.podcastSeries?.genres?.join(","),
+        id: series.uuid,
+        uuid: series.uuid,
+        name: series.name,
+        description: series.description,
+        imageUrl: series.imageUrl,
+        authorName: series.authorName,
+        genres: series.genres?.join(","),
       },
     });
   };
@@ -140,9 +146,15 @@ export default function PodcastListItem({
     <Pressable
       onPress={() =>
         router.navigate({
-          pathname: `/(app)/(tabs)/(home)/podcasts/${podcast.uuid}`,
+          pathname: "/podcasts/[id]",
           params: {
-            ...podcast,
+            id: podcast.uuid,
+            uuid: podcast.uuid,
+            name: podcast.name,
+            description: podcast.description,
+            imageUrl: podcast.imageUrl,
+            datePublished: podcast.datePublished,
+            duration: podcast.duration,
             podcastSeries: JSON.stringify(podcast.podcastSeries),
           },
         })

@@ -33,21 +33,22 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
 export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
   const href = useMemo<Href>(() => {
     if (recentPlay.type === "artist") {
-      return `/(tabs)/(home)/artists/${recentPlay.id}`;
+      return `/artists/${recentPlay.id}`;
     }
     if (recentPlay.type === "album") {
-      return `/(tabs)/(home)/albums/${recentPlay.id}`;
+      return `/albums/${recentPlay.id}`;
     }
     if (recentPlay.type === "playlist") {
-      return `/(tabs)/(home)/playlists/${recentPlay.id}`;
+      return `/playlists/${recentPlay.id}`;
     }
     if (recentPlay.type === "favorites") {
-      return "/(tabs)/(library)/favorites";
+      return "/favorites";
     }
     if (recentPlay.type === "internetRadioStation") {
       return {
-        pathname: `/(tabs)/(home)/internet-radio-stations/${recentPlay.id}`,
+        pathname: "/internet-radio-stations/[id]",
         params: {
+          id: recentPlay.id,
           homePageUrl: recentPlay.homePageUrl,
           streamUrl: recentPlay.streamUrl,
           name: recentPlay.title,

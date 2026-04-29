@@ -58,7 +58,9 @@ export default function PodcastsScreen() {
     error: topChartsByGenreError,
   } = useTopChartsByGenres({
     type: "PODCASTSERIES",
-    genres: recommandationParams?.genres?.[0],
+    genres: recommandationParams?.genres?.[0]
+      ? [recommandationParams.genres[0]]
+      : undefined,
   });
 
   return (

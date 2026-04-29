@@ -205,7 +205,7 @@ export default function PlaylistDetail() {
       { id },
       {
         onSuccess: (data) => {
-          setClipboardText(data?.shares?.share?.[0]?.url);
+          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
           bottomSheetShareModalRef.current?.present();
@@ -436,7 +436,7 @@ export default function PlaylistDetail() {
             <TrackListItem
               track={item}
               index={index}
-              trackList={data}
+              trackList={data ?? undefined}
               handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
               onPlayCallback={handleTrackPressCallback}
             />
@@ -545,8 +545,8 @@ export default function PlaylistDetail() {
               </HStack>
               <FadeOutScaleDown
                 href={{
-                  pathname: `/playlists/${id}/search`,
-                  params: { sort },
+                  pathname: "/playlists/[id]/search",
+                  params: { id, sort },
                 }}
                 className="my-4"
               >

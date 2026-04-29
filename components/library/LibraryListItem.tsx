@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import type { Href } from "expo-router";
 import { ArrowDown, Disc3, Heart, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,32 +58,32 @@ export default function LibraryListItem({
 }: LibraryListItemProps) {
   const { t, i18n } = useTranslation();
   const { offlineModeEnabled } = useOfflineDownloads();
-  const type = useMemo(() => {
+  const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
       return {
         id: "favorites",
         label: t("app.shared.favorites"),
-        url: "/(tabs)/(library)/favorites",
+        url: "/favorites",
       };
     }
     if (item.albumCount) {
       return {
         id: "artist",
         label: t("app.shared.artist_one"),
-        url: `/(tabs)/(library)/artists/${item.id}`,
+        url: `/artists/${item.id}`,
       };
     }
     if (item.year) {
       return {
         id: "album",
         label: t("app.shared.album_one"),
-        url: `/(tabs)/(library)/albums/${item.id}`,
+        url: `/albums/${item.id}`,
       };
     }
     return {
       id: "playlist",
       label: t("app.shared.playlist_one"),
-      url: `/(tabs)/(library)/playlists/${item.id}`,
+      url: `/playlists/${item.id}`,
     };
   }, [item, i18n.language]);
 

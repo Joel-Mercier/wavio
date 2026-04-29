@@ -130,10 +130,10 @@ export default function RecentSearchesScreen() {
           item: RecentSearch | Child | ArtistID3 | AlbumID3;
           index: number;
           target: string;
-          extraData: { query: string };
+          extraData?: { query: string };
         }) => (
           <Box className={cn("px-6", { "mt-6": index === 0 })}>
-            {extraData.query.length === 0 ? (
+            {!extraData?.query?.length ? (
               <RecentSearchListItem
                 recentSearch={item as RecentSearch}
                 handleDeletePress={handleRecentSearchDeletePress}
@@ -147,11 +147,11 @@ export default function RecentSearchesScreen() {
         )}
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={
-          query.length === 0 && (
+          query.length === 0 ? (
             <Heading className="text-white ml-6 my-6">
               {t("app.search.recentSearches")}
             </Heading>
-          )
+          ) : null
         }
         ListFooterComponent={
           <Box>

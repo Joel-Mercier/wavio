@@ -115,7 +115,7 @@ export default function AlbumDetail() {
     data: discoverMoreData,
     isLoading: discoverMoreIsLoading,
     error: discoverMoreError,
-  } = useArtist(data?.album?.artistId);
+  } = useArtist(data?.album?.artistId ?? "");
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const insets = useSafeAreaInsets();
@@ -264,7 +264,7 @@ export default function AlbumDetail() {
       { id },
       {
         onSuccess: (data) => {
-          setClipboardText(data?.shares?.share?.[0]?.url);
+          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetModalRef.current?.dismiss();
           bottomSheetShareModalRef.current?.present();

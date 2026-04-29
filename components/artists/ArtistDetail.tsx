@@ -107,7 +107,7 @@ export default function ArtistDetail() {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
     error: topSongsError,
-  } = useTopSongs(data?.artist?.name, { count: 10 });
+  } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
@@ -520,8 +520,8 @@ export default function ArtistDetail() {
                 <Center>
                   <FadeOutScaleDown
                     href={{
-                      pathname: `/artists/${id}/discography`,
-                      params: { name: data?.artist?.name },
+                      pathname: "/artists/[id]/discography",
+                      params: { id, name: data?.artist?.name },
                     }}
                     className="rounded-full border border-gray-300 py-1 px-3"
                   >
@@ -539,8 +539,9 @@ export default function ArtistDetail() {
                 </Heading>
                 <FadeOutScaleDown
                   href={{
-                    pathname: `/artists/${id}/biography`,
+                    pathname: "/artists/[id]/biography",
                     params: {
+                      id,
                       biography: artistInfoData?.artistInfo2?.biography,
                       name: data?.artist?.name,
                       musicBrainzId: artistInfoData?.artistInfo2?.musicBrainzId,

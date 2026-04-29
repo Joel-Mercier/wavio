@@ -11,10 +11,17 @@ export default function FavoritePodcastListItem({
   return (
     <FadeOutScaleDown
       href={{
-        pathname: `/(app)/(tabs)/(home)/podcast-series/${podcast.uuid}`,
+        pathname: "/podcast-series/[id]",
         params: {
-          ...podcast,
+          id: podcast.uuid,
+          uuid: podcast.uuid,
+          name: podcast.name,
           genres: podcast.genres?.join(","),
+          language: podcast.language,
+          country: podcast.country,
+          imageUrl: podcast.imageUrl,
+          authorName: podcast.authorName,
+          dateAdded: podcast.dateAdded,
         },
       }}
       className="rounded-lg"

@@ -146,9 +146,7 @@ export default function LibrarySearchScreen() {
               <Spinner size="large" />
             )}
             {(playlistsError || starredError) && (
-              <ErrorDisplay
-                error={(playlistsError || starredError) as Error}
-              />
+              <ErrorDisplay error={(playlistsError || starredError) as Error} />
             )}
           </>
         }

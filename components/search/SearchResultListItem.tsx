@@ -53,27 +53,27 @@ export default function SearchResultListItem({
       return {
         id: "artist",
         label: "Artist",
-        url: `(tabs)/(search)/artists/${searchResult.id}`,
+        url: `/artists/${searchResult.id}`,
       };
     }
     if (searchResult.year && searchResult.name) {
       return {
         id: "album",
         label: "Album",
-        url: `/(tabs)/(search)/albums/${searchResult.id}`,
+        url: `/albums/${searchResult.id}`,
       };
     }
     if (searchResult.title) {
       return {
         id: "song",
         label: "Song",
-        url: `/(tabs)/(search)/albums/${searchResult.albumId}`,
+        url: `/albums/${searchResult.albumId}`,
       };
     }
     return {
       id: "playlist",
       label: "Playlist",
-      url: `/(tabs)/(search)/playlists/${searchResult.id}`,
+      url: `/playlists/${searchResult.id}`,
     };
   }, [searchResult]);
 

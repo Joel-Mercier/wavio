@@ -141,13 +141,14 @@ export default function SearchResultsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({
           item,
-          index,
         }: {
-          item: AlbumID3 & Child & ArtistID3;
+          item: AlbumID3 | Child | ArtistID3;
           index: number;
         }) => (
           <Box className="px-6">
-            <SearchResultListItem searchResult={item} />
+            <SearchResultListItem
+              searchResult={item as AlbumID3 & Child & ArtistID3}
+            />
           </Box>
         )}
         ListEmptyComponent={<EmptyDisplay />}

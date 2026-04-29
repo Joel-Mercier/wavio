@@ -58,9 +58,9 @@ const AnimatedImage = Animated.createAnimatedComponent(Image);
 export default function PodcastScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const podcast = useLocalSearchParams<
-    Partial<PodcastEpisode> & { id: string }
-  >();
+  const podcast = useLocalSearchParams<{
+    id: string;
+  }>() as unknown as Partial<PodcastEpisode> & { id: string };
   podcast.podcastSeries = JSON.parse(podcast.podcastSeries as never as string);
   const colors = useImageColors(podcast.imageUrl);
   const insets = useSafeAreaInsets();
@@ -107,17 +107,25 @@ export default function PodcastScreen() {
 
   const handleGoToPodcastSeriesPress = () => {
     bottomSheetModalRef.current?.dismiss();
+    const series = podcast.podcastSeries;
+    if (!series?.uuid) return;
     router.navigate({
-      pathname: `/(app)/(tabs)/(home)/podcast-series/${podcast.podcastSeries?.uuid}`,
+      pathname: "/podcast-series/[id]",
       params: {
-        ...podcast.podcastSeries,
-        genres: podcast?.podcastSeries?.genres?.join(","),
+        id: series.uuid,
+        uuid: series.uuid,
+        name: series.name,
+        description: series.description,
+        imageUrl: series.imageUrl,
+        authorName: series.authorName,
+        genres: series.genres?.join(","),
       },
     });
   };
 
   const handleAddFavoritePodcastPress = () => {
     bottomSheetModalRef.current?.dismiss();
+    if (!podcast.podcastSeries) return;
     addFavoritePodcast(podcast.podcastSeries);
     toast.show({
       placement: "top",
@@ -135,7 +143,8 @@ export default function PodcastScreen() {
 
   const handleRemoveFavoritePodcastPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    removeFavoritePodcast(podcast.podcastSeries?.uuid);
+    if (!podcast.podcastSeries?.uuid) return;
+    removeFavoritePodcast(podcast.podcastSeries.uuid);
     toast.show({
       placement: "top",
       duration: 3000,

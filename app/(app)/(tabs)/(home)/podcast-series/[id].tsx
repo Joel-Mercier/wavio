@@ -45,10 +45,12 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 
 export default function PodcastSeriesScreen() {
   const { t } = useTranslation();
-  const podcastSeries = useLocalSearchParams<
-    Partial<PodcastSeries> & { id: string }
-  >();
-  podcastSeries.genres = (podcastSeries.genres as never as string)?.split(",");
+  const podcastSeries = useLocalSearchParams<{
+    id: string;
+  }>() as unknown as Partial<PodcastSeries> & { id: string };
+  podcastSeries.genres = (podcastSeries.genres as never as string)?.split(
+    ",",
+  ) as PodcastSeries["genres"];
   const { data, isLoading, error } = usePodcastSeries({
     uuid: podcastSeries.id,
   });
@@ -72,7 +74,7 @@ export default function PodcastSeriesScreen() {
   });
 
   const handleAddFavoritePodcastPress = () => {
-    addFavoritePodcast(podcastSeries);
+    addFavoritePodcast(podcastSeries as PodcastSeries);
     toast.show({
       placement: "top",
       duration: 3000,
@@ -209,7 +211,9 @@ export default function PodcastSeriesScreen() {
                       ? podcastSeries?.genres
                           ?.map((genre) => t(`app.podcasts.genres.${genre}`))
                           ?.join(", ")
-                      : t(`app.podcasts.genres.${podcastSeries?.genres}`)}
+                      : t(
+                          `app.podcasts.genres.${podcastSeries?.genres as unknown as string}`,
+                        )}
                   </Text>
                 )}
                 <FadeOutScaleDown

@@ -167,7 +167,9 @@ export default function LoginScreen() {
             <ToastDescription>
               {axios.isAxiosError(error)
                 ? t("auth.login.loginErrorMessage")
-                : error.message}
+                : error instanceof Error
+                  ? error.message
+                  : String(error)}
             </ToastDescription>
           </Toast>
         ),
