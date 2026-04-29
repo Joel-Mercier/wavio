@@ -1,5 +1,7 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
-import { AudioLines, Pause, Play } from "lucide-react-native";
+import { AudioLines, Heart, Pause, Play } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -14,8 +16,15 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import useImageColors from "@/hooks/useImageColors";
 import {
   skipNext,
@@ -25,6 +34,7 @@ import {
   usePlayingTrack,
 } from "@/services/player";
 import useQueue from "@/stores/queue";
+import { invalidateKeys } from "@/utils/invalidateKeys";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 
@@ -32,16 +42,22 @@ const SWIPE_THRESHOLD = 80;
 const MAX_TRANSLATE = 140;
 
 export default function FloatingPlayer() {
+  const { t } = useTranslation();
   const status = usePlayerStatus();
   const playingTrack = usePlayingTrack();
   const router = useRouter();
   const pathname = usePathname();
   const colors = useImageColors(playingTrack?.artwork);
+  const toast = useToast();
+  const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
 
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
   const shuffle = useQueue((s) => s.shuffle);
+  const updateTrack = useQueue((s) => s.updateTrack);
+  const queryClient = useQueryClient();
 
   const canSkipNext =
     shuffle ||
@@ -60,6 +76,137 @@ export default function FloatingPlayer() {
 
   const handlePlayPausePress = () => {
     togglePlayPause();
+  };
+
+  const handleFavoritePress = () => {
+    if (!playingTrack?.id) return;
+    const trackId = playingTrack.id;
+    const starredAt = new Date().toISOString();
+    doFavorite.mutate(
+      { id: trackId },
+      {
+        onSuccess: () => {
+          updateTrack(trackId, { starred: starredAt });
+          const starredTrack = { ...playingTrack, starred: starredAt };
+          queryClient.setQueriesData<{
+            // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
+            "subsonic-response"?: any;
+          }>({ predicate: (q) => q.queryKey[0] === "starred2" }, (old) => {
+            const body = old?.["subsonic-response"];
+            if (!body?.starred2) return old;
+            const existing = body.starred2.song ?? [];
+            if (existing.some((s: { id: string }) => s.id === trackId))
+              return old;
+            return {
+              ...old,
+              "subsonic-response": {
+                ...body,
+                starred2: {
+                  ...body.starred2,
+                  song: [starredTrack, ...existing],
+                },
+              },
+            };
+          });
+          invalidateKeys(queryClient, [
+            ["starred2"],
+            ["starred"],
+            ["album"],
+            ["search3"],
+          ]);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.favoriteSuccessMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.favoriteErrorMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleUnfavoritePress = () => {
+    if (!playingTrack?.id) return;
+    const trackId = playingTrack.id;
+    doUnfavorite.mutate(
+      { id: trackId },
+      {
+        onSuccess: () => {
+          updateTrack(trackId, { starred: undefined });
+          queryClient.setQueriesData<{
+            // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
+            "subsonic-response"?: any;
+          }>({ predicate: (q) => q.queryKey[0] === "starred2" }, (old) => {
+            const body = old?.["subsonic-response"];
+            if (!body?.starred2) return old;
+            return {
+              ...old,
+              "subsonic-response": {
+                ...body,
+                starred2: {
+                  ...body.starred2,
+                  song: body.starred2.song?.filter(
+                    (s: { id: string }) => s.id !== trackId,
+                  ),
+                },
+              },
+            };
+          });
+          invalidateKeys(queryClient, [
+            ["starred2"],
+            ["starred"],
+            ["album"],
+            ["search3"],
+          ]);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.unfavoriteSuccessMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: () => {
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.unfavoriteErrorMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
   };
 
   const textStyle = useAnimatedStyle(() => ({
@@ -144,7 +291,27 @@ export default function FloatingPlayer() {
               </Text>
             </Animated.View>
           </HStack>
-          <HStack className="items-center pl-4" style={{ zIndex: 2 }}>
+          <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
+            <FadeOut
+              onPress={
+                playingTrack.starred
+                  ? handleUnfavoritePress
+                  : handleFavoritePress
+              }
+            >
+              <Heart
+                color={
+                  playingTrack.starred
+                    ? themeConfig.theme.colors.emerald[500]
+                    : themeConfig.theme.colors.white
+                }
+                fill={
+                  playingTrack.starred
+                    ? themeConfig.theme.colors.emerald[500]
+                    : "transparent"
+                }
+              />
+            </FadeOut>
             <FadeOut onPress={handlePlayPausePress}>
               {status.playing ? (
                 <Pause

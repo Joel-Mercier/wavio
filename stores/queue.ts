@@ -42,6 +42,7 @@ interface QueueStore {
   enqueueEnd: (track: QueueTrack | QueueTrack[]) => void;
   playNow: (tracks: QueueTrack[] | QueueTrack, startIndex?: number) => void;
 
+  updateTrack: (id: string, patch: Partial<QueueTrack>) => void;
   removeByIds: (ids: string[]) => void;
   removeAtIndices: (indices: number[]) => void;
   move: (from: number, to: number) => void;
@@ -368,6 +369,16 @@ const useQueueBase = create<QueueStore>()(
             shuffleOrderIds: null,
             shuffleCursor: null,
           } as Partial<QueueStore>;
+        });
+      },
+
+      updateTrack: (id, patch) => {
+        set((state) => {
+          const idx = state.queue.findIndex((t) => t.id === id);
+          if (idx === -1) return state;
+          const nextQueue = state.queue.slice();
+          nextQueue[idx] = { ...nextQueue[idx], ...patch, id: nextQueue[idx].id };
+          return { queue: nextQueue };
         });
       },
 

@@ -1,6 +1,10 @@
 export default {
   translation: {
     app: {
+      offlineBanner: {
+        noConnection: "No internet connection",
+        backOnline: "Back online",
+      },
       home: {
         tabTitle: "Home",
         title: "Hi {{username}}",
