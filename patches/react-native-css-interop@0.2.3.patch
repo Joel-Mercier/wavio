@@ -1,0 +1,515 @@
+diff --git a/dist/metro/index.js b/dist/metro/index.js
+index c91ba6adf049dd5c6eec1ec8301ecc0802f41bfc..a52714966042dce896f61c314e9e7f4e0eaf7880 100644
+--- a/dist/metro/index.js
++++ b/dist/metro/index.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+-    return (mod && mod.__esModule) ? mod : { "default": mod };
++  return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.withCssInterop = withCssInterop;
+@@ -17,264 +17,261 @@ const virtualModules = new Map();
+ const outputDirectory = path_1.default.resolve(__dirname, "../../.cache");
+ const isRadonIDE = "REACT_NATIVE_IDE_LIB_PATH" in process.env;
+ function withCssInterop(config, options) {
+-    return typeof config === "function"
+-        ? async function WithCSSInterop() {
+-            return getConfig(await config(), options);
+-        }
+-        : getConfig(config, options);
++  return typeof config === "function"
++    ? async function WithCSSInterop() {
++      return getConfig(await config(), options);
++    }
++    : getConfig(config, options);
+ }
+ function getConfig(config, options) {
+-    const debug = (0, debug_1.debug)(options.parent?.name || "react-native-css-interop");
+-    debug("withCssInterop");
+-    debug(`outputDirectory ${outputDirectory}`);
+-    debug(`isRadonIDE: ${isRadonIDE}`);
+-    (0, expo_1.expoColorSchemeWarning)();
+-    const originalResolver = config.resolver?.resolveRequest;
+-    const originalGetTransformOptions = config.transformer?.getTransformOptions;
+-    const originalMiddleware = config.server?.enhanceMiddleware;
+-    const poisonPillPath = "./interop-poison.pill";
+-    fs_1.default.mkdirSync(outputDirectory, { recursive: true });
+-    fs_1.default.writeFileSync(platformPath("ios"), "");
+-    fs_1.default.writeFileSync(platformPath("android"), "");
+-    fs_1.default.writeFileSync(platformPath("native"), "");
+-    fs_1.default.writeFileSync(platformPath("macos"), "");
+-    fs_1.default.writeFileSync(platformPath("windows"), "");
+-    return {
+-        ...config,
+-        transformerPath: require.resolve("./transformer"),
+-        transformer: {
+-            ...config.transformer,
+-            ...{
+-                cssInterop_transformerPath: config.transformerPath,
+-                cssInterop_outputDirectory: path_1.default.relative(process.cwd(), outputDirectory),
+-            },
+-            async getTransformOptions(entryPoints, transformOptions, getDependenciesOf) {
+-                debug(`getTransformOptions.dev ${transformOptions.dev}`);
+-                debug(`getTransformOptions.platform ${transformOptions.platform}`);
+-                debug(`getTransformOptions.virtualModulesPossible ${Boolean(virtualModulesPossible)}`);
+-                const platform = transformOptions.platform || "native";
+-                const filePath = platformPath(platform);
+-                if (virtualModulesPossible) {
+-                    await virtualModulesPossible;
+-                    await startCSSProcessor(filePath, platform, transformOptions.dev, options, debug);
+-                }
+-                const writeToFileSystem = !virtualModulesPossible || !transformOptions.dev;
+-                debug(`getTransformOptions.writeToFileSystem ${writeToFileSystem}`);
+-                if (writeToFileSystem) {
+-                    debug(`getTransformOptions.output ${filePath}`);
+-                    const watchFn = isRadonIDE
+-                        ? async (css) => {
+-                            const output = platform === "web"
+-                                ? css.toString()
+-                                : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options, debug), debug);
+-                            await promises_1.default.writeFile(filePath, output);
+-                        }
+-                        : undefined;
+-                    const css = await options.getCSSForPlatform(platform, watchFn);
+-                    const output = platform === "web"
+-                        ? css.toString("utf-8")
+-                        : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options, debug), debug);
+-                    await promises_1.default.mkdir(outputDirectory, { recursive: true });
+-                    await promises_1.default.writeFile(filePath, output);
+-                    if (platform !== "web") {
+-                        await promises_1.default.writeFile(filePath.replace(/\.js$/, ".map"), "");
+-                    }
+-                    debug(`getTransformOptions.finished`);
+-                }
+-                return Object.assign({}, await originalGetTransformOptions?.(entryPoints, transformOptions, getDependenciesOf));
+-            },
+-        },
+-        server: {
+-            ...config.server,
+-            enhanceMiddleware: (middleware, metroServer) => {
+-                debug(`enhanceMiddleware.setup`);
+-                const server = (0, connect_1.default)();
+-                const bundler = metroServer.getBundler().getBundler();
+-                if (options.forceWriteFileSystem) {
+-                    debug(`forceWriteFileSystem true`);
+-                }
+-                else {
+-                    if (!isRadonIDE) {
+-                        virtualModulesPossible = bundler
+-                            .getDependencyGraph()
+-                            .then(async (graph) => {
+-                            haste = graph._haste;
+-                            ensureFileSystemPatched(graph._fileSystem);
+-                            ensureBundlerPatched(bundler);
+-                        });
+-                        server.use(async (_, __, next) => {
+-                            await virtualModulesPossible;
+-                            next();
+-                        });
+-                    }
+-                }
+-                return originalMiddleware
+-                    ? server.use(originalMiddleware(middleware, metroServer))
+-                    : server.use(middleware);
+-            },
+-        },
+-        resolver: {
+-            ...config.resolver,
+-            sourceExts: [...(config?.resolver?.sourceExts || []), "css"],
+-            resolveRequest: (context, moduleName, platform) => {
+-                if (moduleName === poisonPillPath) {
+-                    return { type: "empty" };
+-                }
+-                const resolver = originalResolver ?? context.resolveRequest;
+-                const resolved = resolver(context, moduleName, platform);
+-                if (!("filePath" in resolved && resolved.filePath === options.input)) {
+-                    return resolved;
+-                }
+-                platform = platform || "native";
+-                const filePath = platformPath(platform);
+-                const development = context.isDev || context.dev;
+-                const isWebProduction = !development && platform === "web";
+-                debug(`resolveRequest.input ${resolved.filePath}`);
+-                debug(`resolveRequest.resolvedTo: ${filePath}`);
+-                debug(`resolveRequest.development: ${development}`);
+-                debug(`resolveRequest.platform: ${platform}`);
+-                if (virtualModulesPossible && !isWebProduction) {
+-                    startCSSProcessor(filePath, platform, development, options, debug);
+-                }
+-                return {
+-                    ...resolved,
+-                    filePath,
+-                };
+-            },
+-        },
+-    };
++  const debug = (0, debug_1.debug)(options.parent?.name || "react-native-css-interop");
++  debug("withCssInterop");
++  debug(`outputDirectory ${outputDirectory}`);
++  debug(`isRadonIDE: ${isRadonIDE}`);
++  (0, expo_1.expoColorSchemeWarning)();
++  const originalResolver = config.resolver?.resolveRequest;
++  const originalGetTransformOptions = config.transformer?.getTransformOptions;
++  const originalMiddleware = config.server?.enhanceMiddleware;
++  const poisonPillPath = "./interop-poison.pill";
++  fs_1.default.mkdirSync(outputDirectory, { recursive: true });
++  fs_1.default.writeFileSync(platformPath("ios"), "");
++  fs_1.default.writeFileSync(platformPath("android"), "");
++  fs_1.default.writeFileSync(platformPath("native"), "");
++  fs_1.default.writeFileSync(platformPath("macos"), "");
++  fs_1.default.writeFileSync(platformPath("windows"), "");
++  return {
++    ...config,
++    transformerPath: require.resolve("./transformer"),
++    transformer: {
++      ...config.transformer,
++      ...{
++        cssInterop_transformerPath: config.transformerPath,
++        cssInterop_outputDirectory: path_1.default.relative(process.cwd(), outputDirectory),
++      },
++      async getTransformOptions(entryPoints, transformOptions, getDependenciesOf) {
++        debug(`getTransformOptions.dev ${transformOptions.dev}`);
++        debug(`getTransformOptions.platform ${transformOptions.platform}`);
++        debug(`getTransformOptions.virtualModulesPossible ${Boolean(virtualModulesPossible)}`);
++        const platform = transformOptions.platform || "native";
++        const filePath = platformPath(platform);
++        if (virtualModulesPossible) {
++          await virtualModulesPossible;
++          await startCSSProcessor(filePath, platform, transformOptions.dev, options, debug);
++        }
++        const writeToFileSystem = !virtualModulesPossible || !transformOptions.dev;
++        debug(`getTransformOptions.writeToFileSystem ${writeToFileSystem}`);
++        if (writeToFileSystem) {
++          debug(`getTransformOptions.output ${filePath}`);
++          const watchFn = isRadonIDE
++            ? async (css) => {
++              const output = platform === "web"
++                ? css.toString()
++                : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options, debug), debug);
++              await promises_1.default.writeFile(filePath, output);
++            }
++            : undefined;
++          const css = await options.getCSSForPlatform(platform, watchFn);
++          const output = platform === "web"
++            ? css.toString("utf-8")
++            : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options, debug), debug);
++          await promises_1.default.mkdir(outputDirectory, { recursive: true });
++          await promises_1.default.writeFile(filePath, output);
++          if (platform !== "web") {
++            await promises_1.default.writeFile(filePath.replace(/\.js$/, ".map"), "");
++          }
++          debug(`getTransformOptions.finished`);
++        }
++        return Object.assign({}, await originalGetTransformOptions?.(entryPoints, transformOptions, getDependenciesOf));
++      },
++    },
++    server: {
++      ...config.server,
++      enhanceMiddleware: (middleware, metroServer) => {
++        debug(`enhanceMiddleware.setup`);
++        const server = (0, connect_1.default)();
++        const bundler = metroServer.getBundler().getBundler();
++        if (options.forceWriteFileSystem) {
++          debug(`forceWriteFileSystem true`);
++        }
++        else {
++          if (!isRadonIDE) {
++            virtualModulesPossible = bundler
++              .getDependencyGraph()
++              .then(async (graph) => {
++                haste = graph._haste;
++                ensureFileSystemPatched(graph._fileSystem);
++                ensureBundlerPatched(bundler);
++              });
++            server.use(async (_, __, next) => {
++              await virtualModulesPossible;
++              next();
++            });
++          }
++        }
++        return originalMiddleware
++          ? server.use(originalMiddleware(middleware, metroServer))
++          : server.use(middleware);
++      },
++    },
++    resolver: {
++      ...config.resolver,
++      sourceExts: [...(config?.resolver?.sourceExts || []), "css"],
++      resolveRequest: (context, moduleName, platform) => {
++        if (moduleName === poisonPillPath) {
++          return { type: "empty" };
++        }
++        const resolver = originalResolver ?? context.resolveRequest;
++        const resolved = resolver(context, moduleName, platform);
++        if (!("filePath" in resolved && resolved.filePath === options.input)) {
++          return resolved;
++        }
++        platform = platform || "native";
++        const filePath = platformPath(platform);
++        const development = context.isDev || context.dev;
++        const isWebProduction = !development && platform === "web";
++        debug(`resolveRequest.input ${resolved.filePath}`);
++        debug(`resolveRequest.resolvedTo: ${filePath}`);
++        debug(`resolveRequest.development: ${development}`);
++        debug(`resolveRequest.platform: ${platform}`);
++        if (virtualModulesPossible && !isWebProduction) {
++          startCSSProcessor(filePath, platform, development, options, debug);
++        }
++        return {
++          ...resolved,
++          filePath,
++        };
++      },
++    },
++  };
+ }
+ async function startCSSProcessor(filePath, platform, isDev, { input, getCSSForPlatform, ...options }, debug) {
+-    if (virtualModules.has(filePath)) {
+-        return;
+-    }
+-    debug(`virtualModules ${filePath}`);
+-    debug(`virtualModules.isDev ${isDev}`);
+-    debug(`virtualModules.size ${virtualModules.size}`);
+-    options = {
+-        cache: {
+-            keyframes: new Map(),
+-            rules: new Map(),
+-            rootVariables: {},
+-            universalVariables: {},
++  if (virtualModules.has(filePath)) {
++    return;
++  }
++  debug(`virtualModules ${filePath}`);
++  debug(`virtualModules.isDev ${isDev}`);
++  debug(`virtualModules.size ${virtualModules.size}`);
++  options = {
++    cache: {
++      keyframes: new Map(),
++      rules: new Map(),
++      rootVariables: {},
++      universalVariables: {},
++    },
++    ...options,
++  };
++  if (!isDev) {
++    debug(`virtualModules.fastRefresh disabled`);
++    virtualModules.set(filePath, getCSSForPlatform(platform).then((css) => {
++      return platform === "web"
++        ? css
++        : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug);
++    }));
++  }
++  else {
++    debug(`virtualModules.fastRefresh enabled`);
++    virtualModules.set(filePath, getCSSForPlatform(platform, (css) => {
++      debug(`virtualStyles.update ${platform}`);
++      virtualModules.set(filePath, Promise.resolve(platform === "web"
++        ? css
++        : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug)));
++      debug(`virtualStyles.emit ${platform}`);
++      haste.emit("change", {
++        changes: {
++          addedDirectories: new Set(),
++          removedDirectories: new Set(),
++          addedFiles: [],
++          modifiedFiles: [[filePath, { isSymlink: false, modifiedTime: Date.now() }]],
++          removedFiles: [],
+         },
+-        ...options,
+-    };
+-    if (!isDev) {
+-        debug(`virtualModules.fastRefresh disabled`);
+-        virtualModules.set(filePath, getCSSForPlatform(platform).then((css) => {
+-            return platform === "web"
+-                ? css
+-                : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug);
+-        }));
+-    }
+-    else {
+-        debug(`virtualModules.fastRefresh enabled`);
+-        virtualModules.set(filePath, getCSSForPlatform(platform, (css) => {
+-            debug(`virtualStyles.update ${platform}`);
+-            virtualModules.set(filePath, Promise.resolve(platform === "web"
+-                ? css
+-                : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug)));
+-            debug(`virtualStyles.emit ${platform}`);
+-            haste.emit("change", {
+-                eventsQueue: [
+-                    {
+-                        filePath,
+-                        metadata: {
+-                            modifiedTime: Date.now(),
+-                            size: 1,
+-                            type: "virtual",
+-                        },
+-                        type: "change",
+-                    },
+-                ],
+-            });
+-        }).then((css) => {
+-            debug(`virtualStyles.initial ${platform}`);
+-            return platform === "web"
+-                ? css
+-                : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug);
+-        }));
+-    }
++        rootDir: "",
++      });
++    }).then((css) => {
++      debug(`virtualStyles.initial ${platform}`);
++      return platform === "web"
++        ? css
++        : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug);
++    }));
++  }
+ }
+ function ensureFileSystemPatched(fs) {
+-    if (!fs.getSha1.__css_interop_patched) {
+-        const original_getSha1 = fs.getSha1.bind(fs);
+-        fs.getSha1 = (filename) => {
+-            if (virtualModules.has(filename)) {
+-                return `${filename}-${Date.now()}`;
+-            }
+-            return original_getSha1(filename);
+-        };
+-        fs.getSha1.__css_interop_patched = true;
+-    }
+-    return fs;
++  if (!fs.getSha1.__css_interop_patched) {
++    const original_getSha1 = fs.getSha1.bind(fs);
++    fs.getSha1 = (filename) => {
++      if (virtualModules.has(filename)) {
++        return `${filename}-${Date.now()}`;
++      }
++      return original_getSha1(filename);
++    };
++    fs.getSha1.__css_interop_patched = true;
++  }
++  return fs;
+ }
+ function ensureBundlerPatched(bundler) {
+-    if (bundler.transformFile.__css_interop__patched) {
+-        return;
++  if (bundler.transformFile.__css_interop__patched) {
++    return;
++  }
++  const transformFile = bundler.transformFile.bind(bundler);
++  bundler.transformFile = async function (filePath, transformOptions, fileBuffer) {
++    const virtualModule = virtualModules.get(filePath);
++    if (virtualModule) {
++      fileBuffer = Buffer.from(await virtualModule);
+     }
+-    const transformFile = bundler.transformFile.bind(bundler);
+-    bundler.transformFile = async function (filePath, transformOptions, fileBuffer) {
+-        const virtualModule = virtualModules.get(filePath);
+-        if (virtualModule) {
+-            fileBuffer = Buffer.from(await virtualModule);
+-        }
+-        return transformFile(filePath, transformOptions, fileBuffer);
+-    };
+-    bundler.transformFile.__css_interop__patched = true;
++    return transformFile(filePath, transformOptions, fileBuffer);
++  };
++  bundler.transformFile.__css_interop__patched = true;
+ }
+ function getNativeJS(data = {}, debug) {
+-    debug("Start stringify");
+-    const output = `(${stringify(data)})`;
+-    debug(`Output size: ${Buffer.byteLength(output, "utf8")} bytes`);
+-    return output;
++  debug("Start stringify");
++  const output = `(${stringify(data)})`;
++  debug(`Output size: ${Buffer.byteLength(output, "utf8")} bytes`);
++  return output;
+ }
+ function platformPath(platform = "native") {
+-    return path_1.default.join(outputDirectory, `${platform}.${platform === "web" ? "css" : "js"}`);
++  return path_1.default.join(outputDirectory, `${platform}.${platform === "web" ? "css" : "js"}`);
+ }
+ function stringify(data) {
+-    switch (typeof data) {
+-        case "bigint":
+-        case "symbol":
+-        case "function":
+-            throw new Error(`Cannot stringify ${typeof data}`);
+-        case "string":
+-            return `"${data}"`;
+-        case "number":
+-            return `${Math.round(data * 1000) / 1000}`;
+-        case "boolean":
+-            return `${data}`;
+-        case "undefined":
+-            return "null";
+-        case "object": {
+-            if (data === null) {
+-                return "null";
+-            }
+-            else if (Array.isArray(data)) {
+-                return `[${data
+-                    .map((value) => {
+-                    return value === null || value === undefined
+-                        ? ""
+-                        : stringify(value);
+-                })
+-                    .join(",")}]`;
++  switch (typeof data) {
++    case "bigint":
++    case "symbol":
++    case "function":
++      throw new Error(`Cannot stringify ${typeof data}`);
++    case "string":
++      return `"${data}"`;
++    case "number":
++      return `${Math.round(data * 1000) / 1000}`;
++    case "boolean":
++      return `${data}`;
++    case "undefined":
++      return "null";
++    case "object": {
++      if (data === null) {
++        return "null";
++      }
++      else if (Array.isArray(data)) {
++        return `[${data
++          .map((value) => {
++            return value === null || value === undefined
++              ? ""
++              : stringify(value);
++          })
++          .join(",")}]`;
++      }
++      else {
++        return `{${Object.entries(data)
++          .flatMap(([key, value]) => {
++            if (value === null || value === undefined) {
++              return [];
+             }
+-            else {
+-                return `{${Object.entries(data)
+-                    .flatMap(([key, value]) => {
+-                    if (value === null || value === undefined) {
+-                        return [];
+-                    }
+-                    if (key.match(/[^a-zA-Z]/)) {
+-                        key = `"${key}"`;
+-                    }
+-                    value = stringify(value);
+-                    return [`${key}:${value}`];
+-                })
+-                    .join(",")}}`;
++            if (key.match(/[^a-zA-Z]/)) {
++              key = `"${key}"`;
+             }
+-        }
++            value = stringify(value);
++            return [`${key}:${value}`];
++          })
++          .join(",")}}`;
++      }
+     }
++  }
+ }
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file

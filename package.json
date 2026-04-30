@@ -13,7 +13,6 @@
     "test": "bunx jest",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
-    "postinstall": "patch-package",
     "typecheck": "bunx tsc --noEmit"
   },
   "jest": {
@@ -62,7 +61,6 @@
     "i18next": "^26.0.8",
     "lucide-react-native": "^1.14.0",
     "nativewind": "^4.2.3",
-    "patch-package": "^8.0.1",
     "react": "19.2.5",
     "react-aria": "^3.48.0",
     "react-dom": "19.2.5",
@@ -112,11 +110,14 @@
   "expo": {
     "autolinking": {
       "android": {
-        "buildFromSource": ["expo-audio"]
+        "buildFromSource": [
+          "expo-audio"
+        ]
       }
     }
   },
   "patchedDependencies": {
-    "expo-audio@55.0.14": "patches/expo-audio@55.0.14.patch"
+    "expo-audio@55.0.14": "patches/expo-audio@55.0.14.patch",
+    "react-native-css-interop@0.2.3": "patches/react-native-css-interop@0.2.3.patch"
   }
 }

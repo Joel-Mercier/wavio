@@ -42,11 +42,22 @@ export default function AlbumListItem({
         {album.coverArt ? (
           <Image
             source={{ uri: artworkUrl(album.coverArt) }}
-            className="w-32 h-32 rounded-md aspect-square"
+            className={cn("rounded-md aspect-square", {
+              "w-32 h-32": layout === "horizontal",
+              "w-24 h-24": layout === "vertical",
+            })}
             alt="Album cover"
           />
         ) : (
-          <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">
+          <Box
+            className={cn(
+              "rounded-md bg-primary-600 items-center justify-center",
+              {
+                "w-32 h-32": layout === "horizontal",
+                "w-24 h-24": layout === "vertical",
+              },
+            )}
+          >
             <Disc3 size={48} color={themeConfig.theme.colors.white} />
           </Box>
         )}

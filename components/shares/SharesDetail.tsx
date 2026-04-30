@@ -33,7 +33,7 @@ export default function SharesDetail() {
           <FadeOutScaleDown onPress={() => router.back()}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
-          <Heading className="text-white ml-4" size="xl">
+          <Heading className="text-white ml-4" size="lg">
             {t("app.shares.title")}
           </Heading>
         </HStack>

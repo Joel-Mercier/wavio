@@ -18,7 +18,6 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import {
   Select,
   SelectBackdrop,

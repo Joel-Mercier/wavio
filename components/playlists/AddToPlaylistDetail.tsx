@@ -118,7 +118,10 @@ export default function AddToPlaylistDetail() {
               <X size={24} color={themeConfig.theme.colors.white} />
             </Box>
           </FadeOutScaleDown>
-          <Heading className="text-white font-bold" size="lg">
+          <Heading
+            className="text-white font-bold text-center ml-6 truncate flex-1"
+            size="lg"
+          >
             {t("app.playlists.addToPlaylistTitle")}
           </Heading>
           <Box className="w-10" />

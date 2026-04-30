@@ -286,7 +286,7 @@ export default function SettingsDetail() {
           <FadeOutScaleDown onPress={() => router.back()}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
-          <Heading className="text-white ml-4" size="xl">
+          <Heading className="text-white ml-4" size="lg">
             {t("app.settings.title")}
           </Heading>
         </HStack>
@@ -805,7 +805,7 @@ export default function SettingsDetail() {
                         },
                       )}
                       placeholder={t(
-                        "app.settings.podcastSettings.userIdPlaceholder",
+                        "app.settings.podcastSettings.apiKeyPlaceholder",
                       )}
                       autoCapitalize="none"
                     />

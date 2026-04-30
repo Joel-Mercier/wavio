@@ -468,7 +468,7 @@ export default function AlbumDetail() {
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold"
+              className="text-white text-center font-bold ml-6 truncate flex-1"
               size="lg"
             >
               {data?.album?.name}

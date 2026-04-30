@@ -139,7 +139,7 @@ export default function FavoritesScreen() {
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold"
+              className="text-white font-bold text-center ml-6 truncate flex-1"
               size="lg"
             >
               {t("app.favorites.title")}

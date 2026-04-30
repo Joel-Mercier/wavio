@@ -3,6 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
@@ -113,6 +114,7 @@ export default function FavoritePodcastsScreen() {
             paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => <EmptyDisplay />}
         />
       ) : (
         <Box className="items-center justify-center self-center content-center h-full">
