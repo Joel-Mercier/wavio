@@ -28,7 +28,14 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { Image as RNImage, Linking } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -63,8 +70,37 @@ import {
   usePlayerStatus,
   usePlayingTrack,
 } from "@/services/player";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueTrack } from "@/stores/queue";
 import { downloadUrl } from "@/utils/streaming";
+
+const COVER_SWIPE_THRESHOLD = 80;
+const COVER_SWIPE_BUFFER = 60;
+
+function CoverSlot({
+  track,
+  size,
+}: {
+  track: QueueTrack | null;
+  size: number;
+}) {
+  if (!size) return null;
+  if (track?.artwork) {
+    return (
+      <RNImage
+        source={{ uri: track.artwork }}
+        style={{ width: size, height: size, borderRadius: 6 }}
+      />
+    );
+  }
+  return (
+    <Box
+      style={{ width: size, height: size }}
+      className="rounded-md bg-primary-600 items-center justify-center"
+    >
+      <AudioLines size={64} color={themeConfig.theme.colors.white} />
+    </Box>
+  );
+}
 
 function formatSeconds(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -94,6 +130,69 @@ export default function PlayerScreen() {
   const setRepeatMode = useQueue((store) => store.setRepeatMode);
   const shuffle = useQueue((store) => store.shuffle);
   const setShuffle = useQueue((store) => store.setShuffle);
+  const queue = useQueue((store) => store.queue);
+  const currentIndex = useQueue((store) => store.currentIndex);
+  const queueLength = queue.length;
+  const canSkipNext =
+    shuffle ||
+    repeatMode !== "off" ||
+    (currentIndex != null && currentIndex < queueLength - 1);
+  const canSkipPrevious =
+    shuffle ||
+    repeatMode !== "off" ||
+    (currentIndex != null && currentIndex > 0);
+  const prevTrack =
+    currentIndex != null && currentIndex > 0 ? queue[currentIndex - 1] : null;
+  const nextTrack =
+    currentIndex != null && currentIndex < queueLength - 1
+      ? queue[currentIndex + 1]
+      : null;
+  const [coverWidth, setCoverWidth] = useState(0);
+  const coverTranslateX = useSharedValue(0);
+
+  const coverRowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: coverTranslateX.value }],
+  }));
+
+  const coverPanGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-12, 12])
+    .onUpdate((e) => {
+      let tx = e.translationX;
+      if (tx > 0 && !canSkipPrevious) return;
+      if (tx < 0 && !canSkipNext) return;
+      const max = coverWidth + COVER_SWIPE_BUFFER;
+      if (tx > max) tx = max;
+      if (tx < -max) tx = -max;
+      coverTranslateX.value = tx;
+    })
+    .onEnd((e) => {
+      if (e.translationX <= -COVER_SWIPE_THRESHOLD && canSkipNext) {
+        coverTranslateX.value = withTiming(
+          -coverWidth,
+          { duration: 200 },
+          (finished) => {
+            if (finished) {
+              coverTranslateX.value = 0;
+              runOnJS(skipNext)();
+            }
+          },
+        );
+      } else if (e.translationX >= COVER_SWIPE_THRESHOLD && canSkipPrevious) {
+        coverTranslateX.value = withTiming(
+          coverWidth,
+          { duration: 200 },
+          (finished) => {
+            if (finished) {
+              coverTranslateX.value = 0;
+              runOnJS(skipPrevious)();
+            }
+          },
+        );
+      } else {
+        coverTranslateX.value = withTiming(0, { duration: 200 });
+      }
+    });
   const toast = useToast();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
@@ -283,8 +382,8 @@ export default function PlayerScreen() {
       locations={[0, 0.7]}
     >
       <SafeAreaView>
-        <VStack className="px-6 h-screen">
-          <HStack className="items-center justify-between my-6">
+        <VStack className="h-screen">
+          <HStack className="items-center justify-between my-6 px-6">
             <FadeOutScaleDown
               onPress={() => router.back()}
               className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
@@ -302,147 +401,172 @@ export default function PlayerScreen() {
             </FadeOutScaleDown>
           </HStack>
           <VStack className="mt-12">
-            <HStack className="mb-4">
-              {playingTrack?.artwork ? (
-                <Image
-                  source={{
-                    uri: playingTrack?.artwork,
-                  }}
-                  className="w-full aspect-square rounded-md"
-                  alt="cover"
-                />
-              ) : (
-                <Box className="w-full aspect-square rounded-md bg-primary-600 items-center justify-center">
-                  <AudioLines
-                    size={64}
-                    color={themeConfig.theme.colors.white}
-                  />
-                </Box>
+            <Box
+              className="w-full mb-4 overflow-hidden"
+              style={{ height: Math.max(0, coverWidth - 48) }}
+              onLayout={(e) => setCoverWidth(e.nativeEvent.layout.width)}
+            >
+              {coverWidth > 0 && (
+                <GestureDetector gesture={coverPanGesture}>
+                  <Animated.View
+                    style={[
+                      { width: coverWidth, height: coverWidth - 48 },
+                      coverRowStyle,
+                    ]}
+                  >
+                    <Box style={{ position: "absolute", top: 0, left: 24 }}>
+                      <CoverSlot
+                        track={playingTrack ?? null}
+                        size={coverWidth - 48}
+                      />
+                    </Box>
+                    <Box
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: -coverWidth + 24,
+                      }}
+                    >
+                      <CoverSlot track={prevTrack} size={coverWidth - 48} />
+                    </Box>
+                    <Box
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: coverWidth + 24,
+                      }}
+                    >
+                      <CoverSlot track={nextTrack} size={coverWidth - 48} />
+                    </Box>
+                  </Animated.View>
+                </GestureDetector>
               )}
-            </HStack>
-            <HStack className="items-center justify-between">
-              <VStack className="my-6">
-                <Heading className="text-white" size="xl">
-                  {playingTrack?.title}
-                </Heading>
-                <Text className="text-primary-100 text-lg">
-                  {playingTrack?.artist}
-                </Text>
-              </VStack>
-              <FadeOut
-                onPress={
-                  playingTrack?.starred
-                    ? handleUnfavoritePress
-                    : handleFavoritePress
-                }
-              >
-                <Heart
-                  size={24}
-                  color={
+            </Box>
+            <VStack className="px-6">
+              <HStack className="items-center justify-between">
+                <VStack className="my-6">
+                  <Heading className="text-white" size="xl">
+                    {playingTrack?.title}
+                  </Heading>
+                  <Text className="text-primary-100 text-lg">
+                    {playingTrack?.artist}
+                  </Text>
+                </VStack>
+                <FadeOut
+                  onPress={
                     playingTrack?.starred
-                      ? themeConfig.theme.colors.emerald[500]
-                      : "white"
+                      ? handleUnfavoritePress
+                      : handleFavoritePress
                   }
-                  fill={
-                    playingTrack?.starred
-                      ? themeConfig.theme.colors.emerald[500]
-                      : "transparent"
-                  }
-                />
-              </FadeOut>
-            </HStack>
-            <VStack className="mb-6">
-              <Slider
-                defaultValue={0}
-                value={position}
-                step={1}
-                minValue={0}
-                maxValue={duration}
-                size="md"
-                orientation="horizontal"
-                isDisabled={false}
-                isReversed={false}
-                onChange={handleSliderChange}
-              >
-                <SliderTrack className="bg-primary-400">
-                  <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                </SliderTrack>
-                <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-              </Slider>
-              <Box className="flex-1 h-[50px]" />
-              <HStack className="mt-2 items-center justify-between">
-                <Text className="text-primary-100 text-sm">
-                  {formatSeconds(position)}
-                </Text>
-                <Text className="text-primary-100 text-sm">
-                  {formatSeconds(duration)}
-                </Text>
+                >
+                  <Heart
+                    size={24}
+                    color={
+                      playingTrack?.starred
+                        ? themeConfig.theme.colors.emerald[500]
+                        : "white"
+                    }
+                    fill={
+                      playingTrack?.starred
+                        ? themeConfig.theme.colors.emerald[500]
+                        : "transparent"
+                    }
+                  />
+                </FadeOut>
               </HStack>
-            </VStack>
-            <HStack className="items-center justify-between">
-              <FadeOut onPress={() => handleShufflePress(!shuffle)}>
-                {shuffle ? (
-                  <>
-                    <Shuffle
+              <VStack className="mb-6">
+                <Slider
+                  defaultValue={0}
+                  value={position}
+                  step={1}
+                  minValue={0}
+                  maxValue={duration}
+                  size="md"
+                  orientation="horizontal"
+                  isDisabled={false}
+                  isReversed={false}
+                  onChange={handleSliderChange}
+                >
+                  <SliderTrack className="bg-primary-400">
+                    <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+                  </SliderTrack>
+                  <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+                </Slider>
+                <Box className="flex-1 h-[50px]" />
+                <HStack className="mt-2 items-center justify-between">
+                  <Text className="text-primary-100 text-sm">
+                    {formatSeconds(position)}
+                  </Text>
+                  <Text className="text-primary-100 text-sm">
+                    {formatSeconds(duration)}
+                  </Text>
+                </HStack>
+              </VStack>
+              <HStack className="items-center justify-between">
+                <FadeOut onPress={() => handleShufflePress(!shuffle)}>
+                  {shuffle ? (
+                    <>
+                      <Shuffle
+                        size={24}
+                        color={themeConfig.theme.colors.emerald[500]}
+                      />
+                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                        <Box className="bg-emerald-500 rounded-full size-1" />
+                      </Box>
+                    </>
+                  ) : (
+                    <Shuffle size={24} color="white" />
+                  )}
+                </FadeOut>
+                <FadeOut onPress={handlePreviousPress}>
+                  <SkipBack size={36} color="white" fill="white" />
+                </FadeOut>
+                <FadeOut onPress={handlePlayPausePress}>
+                  <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
+                    {status.playing ? (
+                      <Pause
+                        size={24}
+                        color={themeConfig.theme.colors.gray[800]}
+                        fill={themeConfig.theme.colors.gray[800]}
+                      />
+                    ) : (
+                      <Play
+                        size={24}
+                        color={themeConfig.theme.colors.gray[800]}
+                        fill={themeConfig.theme.colors.gray[800]}
+                      />
+                    )}
+                  </Box>
+                </FadeOut>
+                <FadeOut onPress={handleNextPress}>
+                  <SkipForward size={36} color="white" fill="white" />
+                </FadeOut>
+                {repeatMode === "off" && (
+                  <FadeOut onPress={() => handleRepeatModePress("all")}>
+                    <Repeat size={24} color="white" />
+                  </FadeOut>
+                )}
+                {repeatMode === "all" && (
+                  <FadeOut onPress={() => handleRepeatModePress("one")}>
+                    <Repeat
                       size={24}
                       color={themeConfig.theme.colors.emerald[500]}
                     />
                     <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
                       <Box className="bg-emerald-500 rounded-full size-1" />
                     </Box>
-                  </>
-                ) : (
-                  <Shuffle size={24} color="white" />
+                  </FadeOut>
                 )}
-              </FadeOut>
-              <FadeOut onPress={handlePreviousPress}>
-                <SkipBack size={36} color="white" fill="white" />
-              </FadeOut>
-              <FadeOut onPress={handlePlayPausePress}>
-                <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                  {status.playing ? (
-                    <Pause
+                {repeatMode === "one" && (
+                  <FadeOut onPress={() => handleRepeatModePress("off")}>
+                    <Repeat1
                       size={24}
-                      color={themeConfig.theme.colors.gray[800]}
-                      fill={themeConfig.theme.colors.gray[800]}
+                      color={themeConfig.theme.colors.emerald[500]}
                     />
-                  ) : (
-                    <Play
-                      size={24}
-                      color={themeConfig.theme.colors.gray[800]}
-                      fill={themeConfig.theme.colors.gray[800]}
-                    />
-                  )}
-                </Box>
-              </FadeOut>
-              <FadeOut onPress={handleNextPress}>
-                <SkipForward size={36} color="white" fill="white" />
-              </FadeOut>
-              {repeatMode === "off" && (
-                <FadeOut onPress={() => handleRepeatModePress("all")}>
-                  <Repeat size={24} color="white" />
-                </FadeOut>
-              )}
-              {repeatMode === "all" && (
-                <FadeOut onPress={() => handleRepeatModePress("one")}>
-                  <Repeat
-                    size={24}
-                    color={themeConfig.theme.colors.emerald[500]}
-                  />
-                  <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                    <Box className="bg-emerald-500 rounded-full size-1" />
-                  </Box>
-                </FadeOut>
-              )}
-              {repeatMode === "one" && (
-                <FadeOut onPress={() => handleRepeatModePress("off")}>
-                  <Repeat1
-                    size={24}
-                    color={themeConfig.theme.colors.emerald[500]}
-                  />
-                </FadeOut>
-              )}
-            </HStack>
+                  </FadeOut>
+                )}
+              </HStack>
+            </VStack>
           </VStack>
         </VStack>
         <BottomSheetModal

@@ -22,11 +22,13 @@ import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Animated, {
+  Easing,
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LastFM from "@/assets/images/lastfm.svg";
@@ -93,6 +95,11 @@ export default function ArtistDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [topSongsExpanded, setTopSongsExpanded] = useState<boolean>(false);
+  const [topSongsContentHeight, setTopSongsContentHeight] = useState<number>(0);
+  const TOP_SONGS_COLLAPSED_HEIGHT = 450;
+  const topSongsHeight = useSharedValue<number>(TOP_SONGS_COLLAPSED_HEIGHT);
+  const topSongsOverlayOpacity = useSharedValue<number>(1);
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -127,6 +134,25 @@ export default function ArtistDetail() {
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
+
+  const topSongsAnimatedStyle = useAnimatedStyle(() => ({
+    height: topSongsHeight.value,
+  }));
+  const topSongsOverlayStyle = useAnimatedStyle(() => ({
+    opacity: topSongsOverlayOpacity.value,
+  }));
+  const topSongsSeeLessStyle = useAnimatedStyle(() => ({
+    opacity: 1 - topSongsOverlayOpacity.value,
+  }));
+
+  const handleToggleTopSongs = () => {
+    const next = !topSongsExpanded;
+    const target = next ? topSongsContentHeight : TOP_SONGS_COLLAPSED_HEIGHT;
+    const timing = { duration: 250, easing: Easing.out(Easing.cubic) };
+    topSongsHeight.value = withTiming(target, timing);
+    topSongsOverlayOpacity.value = withTiming(next ? 0 : 1, timing);
+    setTopSongsExpanded(next);
+  };
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -440,67 +466,116 @@ export default function ArtistDetail() {
               <Heading className="text-white">
                 {t("app.artists.topSongs")}
               </Heading>
-              <VStack
-                className={cn("overflow-hidden mb-4", {
-                  "h-[450px]":
-                    (topSongsData?.topSongs.song?.length || 0) > 5 ||
-                    isLoadingTopSongs,
-                })}
+              <AnimatedBox
+                className="overflow-hidden mb-4"
+                style={
+                  (topSongsData?.topSongs.song?.length || 0) > 5 ||
+                  isLoadingTopSongs
+                    ? topSongsAnimatedStyle
+                    : undefined
+                }
               >
-                {topSongsError && <ErrorDisplay error={topSongsError} />}
-                {isLoadingTopSongs ? (
-                  loadingData(6).map((_, index) => (
-                    <TrackListItemSkeleton
-                      key={`top-song-skeleton-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                        index
-                      }`}
-                      index={index}
-                      className="px-6"
-                    />
-                  ))
-                ) : (
-                  <>
-                    {topSongsData?.topSongs.song?.map((song, index) => (
-                      <TrackListItem
-                        key={song.id}
-                        showIndex
-                        track={song}
+                <Box
+                  onLayout={(e) => {
+                    const h = e.nativeEvent.layout.height;
+                    if (h && h !== topSongsContentHeight) {
+                      setTopSongsContentHeight(h);
+                    }
+                  }}
+                >
+                  {topSongsError && <ErrorDisplay error={topSongsError} />}
+                  {isLoadingTopSongs ? (
+                    loadingData(6).map((_, index) => (
+                      <TrackListItemSkeleton
+                        key={`top-song-skeleton-${
+                          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                          index
+                        }`}
                         index={index}
-                        trackList={topSongsData?.topSongs.song}
-                        onPlayCallback={handleTrackPressCallback}
+                        className="px-6"
                       />
-                    ))}
-                  </>
-                )}
+                    ))
+                  ) : (
+                    <>
+                      {topSongsData?.topSongs.song?.map((song, index) => (
+                        <TrackListItem
+                          key={song.id}
+                          showIndex
+                          track={song}
+                          index={index}
+                          trackList={topSongsData?.topSongs.song}
+                          onPlayCallback={handleTrackPressCallback}
+                        />
+                      ))}
+                    </>
+                  )}
 
-                {!isLoadingTopSongs &&
-                  !topSongsError &&
-                  !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
+                  {!isLoadingTopSongs &&
+                    !topSongsError &&
+                    !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
+                </Box>
                 {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
                   <>
-                    <LinearGradient
-                      className="absolute h-[90px] bottom-0 left-0 right-0"
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 90,
-                      }}
-                      colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
-                      locations={[0, 0.3, 0.7]}
-                    />
-                    <Center className="absolute bottom-0 left-0 right-0">
-                      <FadeOutScaleDown className="rounded-full border border-gray-300 py-1 px-3">
-                        <Text className="text-gray-300">
-                          {t("app.shared.seeMore")}
-                        </Text>
-                      </FadeOutScaleDown>
-                    </Center>
+                    <Animated.View
+                      pointerEvents={topSongsExpanded ? "none" : "auto"}
+                      style={[
+                        {
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                        },
+                        topSongsOverlayStyle,
+                      ]}
+                    >
+                      <LinearGradient
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 90,
+                        }}
+                        colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
+                        locations={[0, 0.3, 0.7]}
+                      />
+                      <Center>
+                        <FadeOutScaleDown
+                          onPress={handleToggleTopSongs}
+                          className="rounded-full border border-gray-300 py-1 px-3"
+                        >
+                          <Text className="text-gray-300">
+                            {t("app.shared.seeMore")}
+                          </Text>
+                        </FadeOutScaleDown>
+                      </Center>
+                    </Animated.View>
+                    <Animated.View
+                      pointerEvents={topSongsExpanded ? "auto" : "none"}
+                      style={[
+                        {
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                        },
+                        topSongsSeeLessStyle,
+                      ]}
+                    >
+                      <Center>
+                        <FadeOutScaleDown
+                          onPress={handleToggleTopSongs}
+                          className="rounded-full border border-gray-300 py-1 px-3"
+                        >
+                          <Text className="text-gray-300">
+                            {t("app.shared.seeLess")}
+                          </Text>
+                        </FadeOutScaleDown>
+                      </Center>
+                    </Animated.View>
                   </>
                 )}
-              </VStack>
+              </AnimatedBox>
               <Heading className="text-white mb-6">
                 {t("app.artists.discography")}
               </Heading>

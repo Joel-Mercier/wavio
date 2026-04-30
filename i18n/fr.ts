@@ -548,6 +548,7 @@ export default {
         song_other: "Titres",
         save: "Enregistrer",
         seeMore: "Voir plus",
+        seeLess: "Voir moins",
         seeAll: "Voir tout",
         noData: "Aucune donnée",
         albumCount_one: "{{count}} album",

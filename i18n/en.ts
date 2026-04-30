@@ -527,6 +527,7 @@ export default {
         song_other: "Songs",
         save: "Save",
         seeMore: "See more",
+        seeLess: "See less",
         seeAll: "See all",
         noData: "No data",
         albumCount_one: "{{count}} album",
