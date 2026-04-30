@@ -1,15 +1,9 @@
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import {
-  ArrowDownUp,
-  LogOut,
-  Server,
-  Settings,
-  Share2,
-} from "lucide-react-native";
+import { LogOut, Server, Settings, Share2 } from "lucide-react-native";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Center } from "@/components/ui/center";
 import {
@@ -27,6 +21,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
 import useServers from "@/stores/servers";
+import { switchToServer } from "@/utils/switchServer";
 
 interface DrawerMenuProps {
   showDrawer: boolean;
@@ -63,10 +58,21 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
     onClose();
   };
 
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+
   const handleCurrentServerPress = () => {
-    router.navigate("/servers");
-    onClose();
+    if (!currentServer) return;
+    setShowSwitchConfirm(true);
   };
+
+  const handleConfirmSwitch = () => {
+    if (!currentServer) return;
+    setShowSwitchConfirm(false);
+    onClose();
+    switchToServer(router, currentServer.id);
+  };
+
+  const handleCancelSwitch = () => setShowSwitchConfirm(false);
 
   return (
     <Drawer isOpen={showDrawer} onClose={onClose} size="lg" anchor="left">
@@ -138,36 +144,6 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 </Heading>
               </Pressable>
             </VStack>
-            {currentServer && (
-              <VStack className="my-6">
-                <Text className="text-primary-100 text-center mb-2">
-                  {t("app.shared.sidebar.currentServer")}
-                </Text>
-                <FadeOutScaleDown
-                  onPress={handleCurrentServerPress}
-                  className="border border-primary-200 rounded-lg p-4 mx-6 bg-primary-800"
-                >
-                  <HStack className="items-center justify-between">
-                    <VStack className="flex-1">
-                      <Heading
-                        size="lg"
-                        className="text-white font-normal"
-                        numberOfLines={1}
-                      >
-                        {currentServer.name}
-                      </Heading>
-                      <Text className="text-primary-100" numberOfLines={1}>
-                        {currentServer.url}
-                      </Text>
-                    </VStack>
-                    <ArrowDownUp
-                      size={24}
-                      color={themeConfig.theme.colors.white}
-                    />
-                  </HStack>
-                </FadeOutScaleDown>
-              </VStack>
-            )}
             <Center className="mt-4">
               <Text className="text-primary-100">
                 {t("app.shared.sidebar.version", {

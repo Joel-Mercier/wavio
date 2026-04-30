@@ -500,9 +500,18 @@ export default {
         deleteServerConfirmDescription:
           "Deleting the server will remove it permanently. Please confirm if you want to proceed.",
         defaultServer: "Default server",
+        manageUsers: "Manage users",
+        users: "Users",
+        noUsers: "No users yet for this server.",
+        removeUser: "Remove user",
+        switchServerConfirmTitle: "Switch server?",
+        switchServerConfirmDescription:
+          "You will be logged out and redirected to the sign-in screen.",
+        switchConfirm: "Switch",
       },
       shared: {
         cancel: "Cancel",
+        close: "Close",
         create: "Create",
         delete: "Delete",
         clear: "Clear",

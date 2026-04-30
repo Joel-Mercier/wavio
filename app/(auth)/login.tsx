@@ -1,12 +1,20 @@
+import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import { useForm } from "@tanstack/react-form";
 import axios from "axios";
 import { formatISO } from "date-fns";
-import { AlertCircleIcon, ChevronDownIcon } from "lucide-react-native";
+import { useLocalSearchParams } from "expo-router";
+import { AlertCircleIcon } from "lucide-react-native";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Logo from "@/assets/images/logo.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import {
+  Avatar,
+  AvatarFallbackText,
+  AvatarGroup,
+} from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import {
@@ -17,6 +25,7 @@ import {
 } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { ChevronDownIcon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Select,
@@ -38,24 +47,96 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { themeConfig } from "@/config/theme";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
-import useServers, { type Server } from "@/stores/servers";
+import useServers, { type Server, type ServerUser } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
+
+function ServerSelectRow({
+  server,
+  users,
+}: {
+  server: Server;
+  users: ServerUser[];
+}) {
+  const { onValueChange, handleClose } = useContext(SelectPortalContext);
+  return (
+    <FadeOutScaleDown
+      className="mb-4 w-full"
+      onPress={() => {
+        onValueChange?.(server.id);
+        handleClose?.();
+      }}
+    >
+      <VStack className="bg-primary-600 p-4 w-full rounded-md border border-primary-600">
+        <HStack className="items-center justify-between">
+          <VStack className="flex-1">
+            <Heading
+              size="md"
+              className="text-white mb-2"
+              numberOfLines={1}
+            >
+              {server.name}
+            </Heading>
+            <Text
+              className="text-primary-100 text-sm mb-2"
+              numberOfLines={1}
+            >
+              {server.url}
+            </Text>
+            {users.length > 0 && (
+              <AvatarGroup>
+                {users.slice(0, 4).map((u) => (
+                  <Avatar
+                    key={`${u.serverId}:${u.username}`}
+                    size="sm"
+                    className="bg-primary-400"
+                  >
+                    <AvatarFallbackText>{u.username}</AvatarFallbackText>
+                  </Avatar>
+                ))}
+              </AvatarGroup>
+            )}
+          </VStack>
+        </HStack>
+      </VStack>
+    </FadeOutScaleDown>
+  );
+}
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const toast = useToast();
+  const params = useLocalSearchParams<{
+    serverId?: string;
+    username?: string;
+  }>();
   const servers = useServers((store) => store.servers);
+  const allUsers = useServers((store) => store.users);
   const addServer = useServers((store) => store.addServer);
   const setCurrentServer = useServers((store) => store.setCurrentServer);
+  const addOrUpdateUser = useServers((store) => store.addOrUpdateUser);
   const login = useAuth((store) => store.login);
   const insets = useSafeAreaInsets();
+  // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
+  const usernameRef = useRef<any>(null);
+  // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
+  const passwordRef = useRef<any>(null);
+
+  const preselectedServer = useMemo(
+    () =>
+      params.serverId
+        ? servers.find((s) => s.id === params.serverId)
+        : servers.find((s) => s.current),
+    [params.serverId, servers],
+  );
+
   const form = useForm({
     defaultValues: {
-      username: "",
+      username: params.username ?? "",
       password: "",
-      url: "",
+      url: preselectedServer?.url ?? "",
     },
     validators: {
       onBlur: loginSchema,
@@ -82,13 +163,19 @@ export default function LoginScreen() {
           );
         }
 
-        const newServerName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
-        addServer({
-          ...value,
-          name: newServerName,
-          current: true,
+        const trimmedUrl = value.url.trim();
+        const existing = servers.find((s) => s.url === trimmedUrl);
+        const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
+        const server = addServer({
+          name: existing?.name ?? fallbackName,
+          url: trimmedUrl,
         });
-        setCurrentServer(newServerName);
+        addOrUpdateUser({
+          serverId: server.id,
+          username: value.username.trim(),
+          password: value.password.trim(),
+        });
+        setCurrentServer(server.id);
         login(value.url, value.username, value.password);
         toast.show({
           placement: "top",
@@ -121,60 +208,26 @@ export default function LoginScreen() {
     },
   });
 
-  const handleServerPress = async (server: Server) => {
-    try {
-      setCurrentServer(server.name);
-      const rsp = await axios
-        .create({
-          baseURL: server.url,
-          headers: { "Content-Type": "application/json" },
-        })
-        .get("/rest/ping", {
-          params: {
-            u: server.username,
-            p: server.password,
-            v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
-            c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
-            f: "json",
-          },
-        });
-      if (rsp.data["subsonic-response"]?.status !== "ok") {
-        throw new Error(
-          openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
-        );
-      }
-      login(server.url, server.username, server.password);
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="success">
-            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("auth.login.loginSuccessMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    } catch (error) {
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {axios.isAxiosError(error)
-                ? t("auth.login.loginErrorMessage")
-                : error instanceof Error
-                  ? error.message
-                  : String(error)}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
+  useEffect(() => {
+    if (params.username) {
+      passwordRef.current?.focus();
+    } else if (params.serverId) {
+      usernameRef.current?.focus();
     }
+  }, [params.serverId, params.username]);
+
+  const handleServerChange = (serverId: string) => {
+    const server = servers.find((s) => s.id === serverId);
+    if (!server) return;
+    setCurrentServer(server.id);
+    form.setFieldValue("url", server.url);
+    form.setFieldValue("username", "");
+    form.setFieldValue("password", "");
+    setTimeout(() => usernameRef.current?.focus(), 250);
   };
+
+  const triggerLabel =
+    preselectedServer?.name ?? t("auth.login.serverPlaceholder");
 
   return (
     <Box
@@ -196,15 +249,17 @@ export default function LoginScreen() {
           </Heading>
           {servers && servers.length > 0 && (
             <Box>
-              <Select>
+              <Select onValueChange={handleServerChange}>
                 <SelectTrigger
                   variant="outline"
                   size="xl"
-                  className="justify-between bg-primary-600 border-0 rounded-full"
+                  className="justify-between bg-primary-600 border-0 rounded-full px-6"
                 >
                   <SelectInput
                     placeholder={t("auth.login.serverPlaceholder")}
-                    className="text-md"
+                    value={triggerLabel}
+                    className="text-md placeholder:text-white"
+                    placeholderTextColor={themeConfig.theme.colors.white}
                   />
                   <SelectIcon className="mr-3" as={ChevronDownIcon} />
                 </SelectTrigger>
@@ -217,45 +272,13 @@ export default function LoginScreen() {
                     <SelectScrollView>
                       <Box className="p-6 w-full mb-12 divide-y divide-y-white">
                         {servers.map((server) => (
-                          // <SelectItem
-                          //   key={server.name}
-                          //   label={server.name}
-                          //   value={server.name}
-                          // />
-                          <FadeOutScaleDown
-                            key={server.name}
-                            className="mb-4 w-full"
-                            onPress={() => handleServerPress(server)}
-                          >
-                            <VStack className="bg-primary-600 p-4 w-full rounded-md border border-primary-600">
-                              <HStack className="items-center justify-between">
-                                <VStack>
-                                  <Heading
-                                    size="md"
-                                    className="text-white mb-4"
-                                    numberOfLines={1}
-                                  >
-                                    {server.name}
-                                  </Heading>
-                                  <HStack>
-                                    <Text
-                                      className="text-primary-100 text-sm"
-                                      numberOfLines={1}
-                                    >
-                                      {server.url}
-                                    </Text>
-                                    <Text className="text-primary-100 text-sm">
-                                      {" "}
-                                      ⦁{" "}
-                                    </Text>
-                                    <Text className="text-primary-100 text-sm">
-                                      {server.username}
-                                    </Text>
-                                  </HStack>
-                                </VStack>
-                              </HStack>
-                            </VStack>
-                          </FadeOutScaleDown>
+                          <ServerSelectRow
+                            key={server.id}
+                            server={server}
+                            users={allUsers.filter(
+                              (u) => u.serverId === server.id,
+                            )}
+                          />
                         ))}
                       </Box>
                     </SelectScrollView>
@@ -329,6 +352,7 @@ export default function LoginScreen() {
                   size="xl"
                 >
                   <InputField
+                    ref={usernameRef}
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
@@ -341,6 +365,8 @@ export default function LoginScreen() {
                     placeholder={t("auth.login.usernamePlaceholder")}
                     autoCapitalize="none"
                     textContentType="username"
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordRef.current?.focus()}
                   />
                 </Input>
                 {!field.state.meta.isValid && (
@@ -375,6 +401,7 @@ export default function LoginScreen() {
                   size="xl"
                 >
                   <InputField
+                    ref={passwordRef}
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={field.handleBlur}
@@ -388,6 +415,8 @@ export default function LoginScreen() {
                     secureTextEntry
                     autoCapitalize="none"
                     textContentType="password"
+                    returnKeyType="go"
+                    onSubmitEditing={() => form.handleSubmit()}
                   />
                 </Input>
                 {!field.state.meta.isValid && (

@@ -377,7 +377,11 @@ const useQueueBase = create<QueueStore>()(
           const idx = state.queue.findIndex((t) => t.id === id);
           if (idx === -1) return state;
           const nextQueue = state.queue.slice();
-          nextQueue[idx] = { ...nextQueue[idx], ...patch, id: nextQueue[idx].id };
+          nextQueue[idx] = {
+            ...nextQueue[idx],
+            ...patch,
+            id: nextQueue[idx].id,
+          };
           return { queue: nextQueue };
         });
       },

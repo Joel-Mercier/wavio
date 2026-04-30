@@ -521,9 +521,18 @@ export default {
         deleteServerConfirmDescription:
           "Supprimer le serveur le supprimera définitivement. Êtes-vous sûr de vouloir continuer ?",
         defaultServer: "Serveur par défaut",
+        manageUsers: "Gérer les utilisateurs",
+        users: "Utilisateurs",
+        noUsers: "Aucun utilisateur pour ce serveur.",
+        removeUser: "Supprimer l'utilisateur",
+        switchServerConfirmTitle: "Changer de serveur ?",
+        switchServerConfirmDescription:
+          "Vous serez déconnecté et redirigé vers l'écran de connexion.",
+        switchConfirm: "Changer",
       },
       shared: {
         cancel: "Annuler",
+        close: "Fermer",
         create: "Créer",
         delete: "Supprimer",
         clear: "Effacer",

@@ -33,7 +33,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import useServers, { serverSchema } from "@/stores/servers";
+import useServers, { serverFormSchema } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 import EmptyDisplay from "../EmptyDisplay";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
@@ -50,18 +50,13 @@ export default function ServersDetail() {
   const form = useForm({
     defaultValues: {
       name: "",
-      username: "",
-      password: "",
       url: "",
     },
     validators: {
-      onBlur: serverSchema,
+      onBlur: serverFormSchema,
     },
     onSubmit: async ({ value }) => {
-      addServer({
-        ...value,
-        current: false,
-      });
+      addServer({ name: value.name, url: value.url });
       form.reset();
       toast.show({
         placement: "top",
@@ -109,7 +104,7 @@ export default function ServersDetail() {
         data={servers}
         renderItem={({ item }) => <ServerListItem server={item} />}
         showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
@@ -200,99 +195,6 @@ export default function ServersDetail() {
                       placeholder={t("app.servers.urlPlaceholder")}
                       autoCapitalize="none"
                       textContentType="URL"
-                    />
-                  </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
-                </FormControl>
-              )}
-            </form.Field>
-            <form.Field name="username">
-              {(field) => (
-                <FormControl
-                  isInvalid={!field.state.meta.isValid}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
-                      placeholder={t("app.servers.usernamePlaceholder")}
-                      autoCapitalize="none"
-                      textContentType="username"
-                    />
-                  </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
-                </FormControl>
-              )}
-            </form.Field>
-            <form.Field name="password">
-              {(field) => (
-                <FormControl
-                  isInvalid={!field.state.meta.isValid}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
-                      placeholder={t("app.servers.passwordPlaceholder")}
-                      secureTextEntry
-                      autoCapitalize="none"
-                      textContentType="password"
                     />
                   </Input>
                   {!field.state.meta.isValid && (
