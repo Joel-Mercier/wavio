@@ -73,6 +73,8 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     {
       showSeekBackward: true,
       showSeekForward: true,
+      showSkipPrevious: true,
+      showSkipNext: true,
     },
   );
   if (autoplay) {
@@ -86,6 +88,14 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
 function loadAndPlay(track: QueueTrack | null) {
   loadTrack(track, true);
 }
+
+const remotePreviousSub = player.addListener("remotePrevious", () => {
+  skipPrevious();
+});
+
+const remoteNextSub = player.addListener("remoteNext", () => {
+  skipNext();
+});
 
 const statusSub = player.addListener(
   "playbackStatusUpdate",
@@ -147,6 +157,12 @@ if (
     } catch {}
     try {
       statusSub?.remove?.();
+    } catch {}
+    try {
+      remotePreviousSub?.remove?.();
+    } catch {}
+    try {
+      remoteNextSub?.remove?.();
     } catch {}
     try {
       player.pause();

@@ -2,17 +2,6 @@
 
 Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 
-## TODO
-
-- [ ] Check if https://github.com/PedroBern/react-native-collapsible-tab-view works for podcast series screen
-- [ ] Banner when network is down
-- [ ] Finish top songs feature
-- [ ] Make server switching work
-- [ ] Get good design elements (logo, icon, splash screen, bg elements, ...)
-- [ ] Spotify-like queue handling (https://www.howtogeek.com/spotifys-play-queue-is-the-best-in-the-business-heres-why/#:~:text=do%20they%20work%3F-,How%20a%20Play%20Queue%20Works%20in%20General,to%20play%20after%20each%20other.&text=When%20you%20press%20play%20on,are%20added%20to%20the%20queue.)
-- [ ] Support Android Auto / CarPlay
-- [ ] Support Jellyfin (https://api.jellyfin.org/)
-
 ## Getting started
 
 1. Clone the repository
@@ -62,6 +51,14 @@ TODO
 - Player screen with audio controls
 - Floating player for easy access to currently playing song
 - Settings screen with user information and settings
+- Simlar songs screen with songs similar to the selected song
+- Podcasts screen with podcasts (provided by Taddy API)
+- Internet radio stations from Navidrome
+- Offline downloads of favorited songs
+- Settings screen with server scanning, offline downloads, content and display settings
+- Share screen with shareable links
+- Servers screen with multiple servers support
+- French and English translations
 
 ## Uselful links
 

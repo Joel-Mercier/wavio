@@ -6,7 +6,7 @@ PODS:
   - EXJSONUtils (55.0.2)
   - EXManifests (55.0.16):
     - ExpoModulesCore
-  - Expo (55.0.17):
+  - Expo (55.0.18):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -2942,7 +2942,7 @@ SPEC CHECKSUMS:
   EXConstants: 5caf448ff399f60be9d1053e77aed32e39411900
   EXJSONUtils: 04bc3807d351331a5fe154ce1da596ec15d99169
   EXManifests: f4e50a54115948e206f4c2391bdea755a1aa74ec
-  Expo: bfedba58da14bf45546ae57e6a5bd5152a1546b4
+  Expo: 78ab86e6cf5d123b23e8e697b5c7112eebd276a8
   expo-dev-client: 6802a357b6ee3b36669c4c9e9622be55b3cd4494
   expo-dev-launcher: e7b80352aa5e11e696c1f939c9eafa8ad33a5779
   expo-dev-menu: 8d6cf955ad15b1f33b73aec853a9ec02afc39c04

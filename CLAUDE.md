@@ -22,6 +22,8 @@ Package manager is **bun** (see `bun.lock`), though README still references pnpm
 
 TS path alias: `@/*` → repo root.
 
+Don't execute prebuild and building yourself. Inform the user to do so.
+
 ## Architecture
 
 ### Routing (expo-router, file-based)
