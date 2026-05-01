@@ -28,7 +28,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Image as RNImage, Linking } from "react-native";
+import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,

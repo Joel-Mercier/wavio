@@ -1,6 +1,7 @@
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import useActivity from "@/stores/activity";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
 import useRecentPlays from "@/stores/recentPlays";
@@ -15,6 +16,7 @@ export default function AppLayout() {
       useRecentPlays.persist.rehydrate();
       useRecentSearches.persist.rehydrate();
       usePlaylists.persist.rehydrate();
+      useActivity.persist.rehydrate();
     }
   }, [isAuthenticated]);
 

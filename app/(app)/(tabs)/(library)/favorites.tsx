@@ -12,6 +12,7 @@ import {
   ArrowDownUp,
   ArrowLeft,
   ArrowUp,
+  Pause,
   Play,
   Search,
   Shuffle,
@@ -43,8 +44,15 @@ import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
+import {
+  playTracks,
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
 import useApp from "@/stores/app";
 import useRecentPlays from "@/stores/recentPlays";
+import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -83,6 +91,9 @@ export default function FavoritesScreen() {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
+  const playerStatus = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+
   const handlePresentSortModalPress = useCallback(() => {
     bottomSheetSortModalRef.current?.present();
   }, []);
@@ -117,6 +128,19 @@ export default function FavoritesScreen() {
       });
     }
   }, [starredData, sort]);
+
+  const isPlayingFromList = !!(
+    playingTrack && data?.some((track) => track.id === playingTrack.id)
+  );
+  const handlePlayPress = () => {
+    if (isPlayingFromList) {
+      togglePlayPause();
+      return;
+    }
+    if (!data || data.length === 0) return;
+    playTracks(data.map(childToTrack), 0);
+    addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
+  };
 
   return (
     <Box className="h-full">
@@ -242,12 +266,19 @@ export default function FavoritesScreen() {
                   <Pressable>
                     <Shuffle color={themeConfig.theme.colors.white} />
                   </Pressable>
-                  <Pressable>
+                  <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      <Play
-                        color={themeConfig.theme.colors.white}
-                        fill={themeConfig.theme.colors.white}
-                      />
+                      {isPlayingFromList && playerStatus.playing ? (
+                        <Pause
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      )}
                     </Box>
                   </Pressable>
                 </HStack>

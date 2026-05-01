@@ -5,7 +5,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
-import { useCallback, useEffect, useRef } from "react";
+import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -15,59 +15,29 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 
-interface AddBottomSheetProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function AddBottomSheet({
-  isOpen,
-  onClose,
-}: AddBottomSheetProps) {
+const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-  const handlePresentModalPress = () => {
-    bottomSheetModalRef.current?.present();
+  const dismiss = () => {
+    if (ref && typeof ref !== "function") {
+      ref.current?.dismiss();
+    }
   };
-
-  const handleDismiss = () => {
-    bottomSheetModalRef.current?.dismiss();
-  };
-
-  const handleSheetChanges = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
 
   const handleCreatePlaylistPress = () => {
-    bottomSheetModalRef.current?.dismiss();
+    dismiss();
     router.navigate("/playlists/new");
   };
 
   const handleCreateInternetRadioStationPress = () => {
-    bottomSheetModalRef.current?.dismiss();
+    dismiss();
     router.navigate("/internet-radio-stations/new");
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      handlePresentModalPress();
-    } else {
-      handleDismiss();
-    }
-  }, [isOpen]);
-
   return (
     <BottomSheetModal
-      ref={bottomSheetModalRef}
-      index={0}
-      onChange={handleSheetChanges}
+      ref={ref}
       enablePanDownToClose={true}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
@@ -114,4 +84,8 @@ export default function AddBottomSheet({
       </BottomSheetView>
     </BottomSheetModal>
   );
-}
+});
+
+AddBottomSheet.displayName = "AddBottomSheet";
+
+export default AddBottomSheet;

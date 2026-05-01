@@ -346,6 +346,7 @@ export default {
             "Êtes-vous sûr de vouloir supprimer vos recherches récentes stockées ?",
           recentSearchesConfirmDescription:
             "Supprimer ces recherches est irréversible. Êtes-vous sûr de vouloir continuer ?",
+          recentSearchesSuccessMessage: "Recherches récentes supprimées avec succès",
           recentPlaysLabel: "Joués récemment",
           recentPlaysDescription:
             "Supprimer vos raccourcis de lecture récents sur l'écran d'accueil",
@@ -353,6 +354,15 @@ export default {
             "Êtes-vous sûr de vouloir supprimer vos raccourcis de lecture récents stockés ?",
           recentPlaysConfirmDescription:
             "Supprimer ces raccourcis est irréversible. Êtes-vous sûr de vouloir continuer ?",
+          recentPlaysSuccessMessage: "Lectures récentes supprimées avec succès",
+          activityLabel: "Activité",
+          activityDescription:
+            "Supprimer votre historique d'écoute des albums, artistes et playlists",
+          activityConfirmTitle:
+            "Êtes-vous sûr de vouloir supprimer votre historique d'activité ?",
+          activityConfirmDescription:
+            "Supprimer cet historique est irréversible. Êtes-vous sûr de vouloir continuer ?",
+          activitySuccessMessage: "Historique d'activité supprimé avec succès",
         },
         podcastSettings: {
           title: "Paramètres des podcasts",
@@ -412,6 +422,23 @@ export default {
           "Station de radio en ligne mise à jour avec succès.",
         editInternetRadioStationErrorMessage:
           "Une erreur s'est produite lors de la mise à jour de la station de radio en ligne.",
+      },
+      activity: {
+        title: "Activité",
+        empty:
+          "Rien ici pour l'instant. Les albums, artistes et playlists que vous écoutez apparaîtront ici.",
+        playedAt: "il y a {{distance}}",
+        sections: {
+          today: "Aujourd'hui",
+          yesterday: "Hier",
+          thisWeek: "Cette semaine",
+          older: "Plus ancien",
+        },
+        types: {
+          album: "Album",
+          artist: "Artiste",
+          playlist: "Playlist",
+        },
       },
       tracks: {
         addToFavorites: "Ajouter aux favoris",
@@ -569,6 +596,7 @@ export default {
           create: "Créer",
         },
         sidebar: {
+          activity: "Activité",
           settings: "Paramètres",
           shares: "Partages",
           servers: "Serveurs",

@@ -60,6 +60,7 @@ import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { Country, Language } from "@/services/taddyPodcasts/types";
+import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
@@ -95,6 +96,7 @@ export default function SettingsDetail() {
   const [showRecentSearchesAlertDialog, setShowRecentSearchesAlertDialog] =
     useState(false);
   const [showPodcastsAlertDialog, setShowPodcastsAlertDialog] = useState(false);
+  const [showActivityAlertDialog, setShowActivityAlertDialog] = useState(false);
   const [showDeletePodcastsAlertDialog, setShowDeletePodcastsAlertDialog] =
     useState(false);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
@@ -128,6 +130,7 @@ export default function SettingsDetail() {
   const clearRecentSearches = useRecentSearches(
     (store) => store.clearRecentSearches,
   );
+  const clearActivity = useActivity((store) => store.clearActivity);
   const doStartScan = useStartScan();
   const { data, isLoading, error } = useGetScanStatus();
   const { data: remainingApiRequests } = useRemainingApiRequests(
@@ -191,11 +194,56 @@ export default function SettingsDetail() {
   const handleDeleteRecentPlaysPress = () => {
     clearRecentPlays();
     setShowRecentPlaysAlertDialog(false);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.settings.contentSettings.recentPlaysSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleDeleteRecentSearchesPress = () => {
     clearRecentSearches();
     setShowRecentSearchesAlertDialog(false);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.settings.contentSettings.recentSearchesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleCloseActivityAlertDialog = () => {
+    setShowActivityAlertDialog(false);
+  };
+
+  const handleDeleteActivityPress = () => {
+    clearActivity();
+    setShowActivityAlertDialog(false);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.settings.contentSettings.activitySuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleMediaLibraryScanPress = () => {
@@ -591,6 +639,27 @@ export default function SettingsDetail() {
                 </Text>
               </FadeOutScaleDown>
             </HStack>
+            <HStack className="flex-1 items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.contentSettings.activityLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.contentSettings.activityDescription")}
+                </Text>
+              </VStack>
+              <FadeOutScaleDown
+                onPress={() => setShowActivityAlertDialog(true)}
+                className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+              >
+                <Text
+                  numberOfLines={1}
+                  className="text-primary-800 font-bold text-lg"
+                >
+                  {t("app.shared.delete")}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
           </VStack>
         </ScrollView>
       </Box>
@@ -706,6 +775,43 @@ export default function SettingsDetail() {
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handleDeleteRecentSearchesPress}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={showActivityAlertDialog}
+        onClose={handleCloseActivityAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.settings.contentSettings.activityConfirmTitle")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t("app.settings.contentSettings.activityConfirmDescription")}
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseActivityAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handleDeleteActivityPress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
               <Text className="text-primary-800 font-bold text-lg">

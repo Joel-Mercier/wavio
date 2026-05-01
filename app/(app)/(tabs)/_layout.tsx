@@ -1,8 +1,9 @@
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { Home, Library, Plus, Search } from "lucide-react-native";
 import type React from "react";
-import { useState } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable } from "react-native";
 import AddBottomSheet from "@/components/AddBottomSheet";
@@ -15,14 +16,14 @@ export default function TabLayout() {
   const showDrawer = useApp((store) => store.showDrawer);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const showAddTab = useApp((store) => store.showAddTab);
-  const [showAddSheet, setShowAddSheet] = useState(false);
+  const addBottomSheetRef = useRef<BottomSheetModal>(null);
 
   const handleClose = () => {
     setShowDrawer(false);
   };
 
   const handleAddTabPress = () => {
-    setShowAddSheet(true);
+    addBottomSheetRef.current?.present();
   };
 
   return (
@@ -132,10 +133,7 @@ export default function TabLayout() {
         />
       </Tabs>
       <DrawerMenu onClose={handleClose} showDrawer={showDrawer} />
-      <AddBottomSheet
-        isOpen={showAddSheet}
-        onClose={() => setShowAddSheet(false)}
-      />
+      <AddBottomSheet ref={addBottomSheetRef} />
     </>
   );
 }

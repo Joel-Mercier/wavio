@@ -18,6 +18,7 @@ import {
   EllipsisVertical,
   Heart,
   ListPlus,
+  Pause,
   Play,
   PlusCircle,
   Share2,
@@ -80,8 +81,16 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
+import {
+  playTracks,
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
+import useActivity from "@/stores/activity";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { childToTrack } from "@/utils/childToTrack";
 import { format } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 
@@ -118,6 +127,7 @@ export default function AlbumDetail() {
   } = useArtist(data?.album?.artistId ?? "");
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const recordActivity = useActivity((store) => store.recordActivity);
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const offsetY = useSharedValue(0);
@@ -308,6 +318,36 @@ export default function AlbumDetail() {
     });
   };
 
+  const playerStatus = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+  const albumTracks = data?.album?.song;
+  const isPlayingFromList = !!(
+    playingTrack && albumTracks?.some((track) => track.id === playingTrack.id)
+  );
+  const handlePlayPress = () => {
+    if (isPlayingFromList) {
+      togglePlayPause();
+      return;
+    }
+    if (!albumTracks || albumTracks.length === 0) return;
+    playTracks(albumTracks.map(childToTrack), 0);
+    if (data?.album) {
+      addRecentPlay({
+        id,
+        title: data.album.name,
+        type: "album",
+        coverArt: data.album.coverArt,
+      });
+      recordActivity({
+        id,
+        title: data.album.name,
+        type: "album",
+        coverArt: data.album.coverArt,
+        artist: data.album.artist,
+      });
+    }
+  };
+
   const handleTrackPressCallback = () => {
     if (data?.album) {
       addRecentPlay({
@@ -315,6 +355,13 @@ export default function AlbumDetail() {
         title: data?.album.name,
         type: "album",
         coverArt: data?.album?.coverArt,
+      });
+      recordActivity({
+        id,
+        title: data.album.name,
+        type: "album",
+        coverArt: data.album.coverArt,
+        artist: data.album.artist,
       });
     }
   };
@@ -622,12 +669,19 @@ export default function AlbumDetail() {
                   <FadeOutScaleDown>
                     <Shuffle color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      <Play
-                        color={themeConfig.theme.colors.white}
-                        fill={themeConfig.theme.colors.white}
-                      />
+                      {isPlayingFromList && playerStatus.playing ? (
+                        <Pause
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      )}
                     </Box>
                   </FadeOutScaleDown>
                 </HStack>

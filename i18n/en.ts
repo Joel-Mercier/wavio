@@ -332,6 +332,7 @@ export default {
             "Are you sure you want to delete your stored recent searches?",
           recentSearchesConfirmDescription:
             "Deleting these is irreversible. Please confirm if you want to proceed.",
+          recentSearchesSuccessMessage: "Recent searches successfully deleted",
           recentPlaysLabel: "Recent plays",
           recentPlaysDescription:
             "Delete your recent plays shortcuts on the top of the home screen",
@@ -339,6 +340,15 @@ export default {
             "Are you sure you want to delete your stored recent play shortcuts?",
           recentPlaysConfirmDescription:
             "Deleting these is irreversible. Please confirm if you want to proceed.",
+          recentPlaysSuccessMessage: "Recent plays successfully deleted",
+          activityLabel: "Activity",
+          activityDescription:
+            "Delete your activity history of played albums, artists and playlists",
+          activityConfirmTitle:
+            "Are you sure you want to delete your activity history?",
+          activityConfirmDescription:
+            "Deleting this is irreversible. Please confirm if you want to proceed.",
+          activitySuccessMessage: "Activity history successfully deleted",
         },
         podcastSettings: {
           title: "Podcast settings",
@@ -396,6 +406,23 @@ export default {
           "Internet radio station has been successfully updated.",
         editInternetRadioStationErrorMessage:
           "An error occurred while updating the internet radio station.",
+      },
+      activity: {
+        title: "Activity",
+        empty:
+          "Nothing here yet. Albums, artists and playlists you play will show up here.",
+        playedAt: "{{distance}} ago",
+        sections: {
+          today: "Today",
+          yesterday: "Yesterday",
+          thisWeek: "This week",
+          older: "Older",
+        },
+        types: {
+          album: "Album",
+          artist: "Artist",
+          playlist: "Playlist",
+        },
       },
       tracks: {
         addToFavorites: "Add to favorites",
@@ -548,6 +575,7 @@ export default {
           create: "Create",
         },
         sidebar: {
+          activity: "Activity",
           settings: "Settings",
           shares: "Shares",
           servers: "Servers",

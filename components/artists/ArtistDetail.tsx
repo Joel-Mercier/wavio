@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   EllipsisVertical,
   Heart,
+  Pause,
   Play,
   Shuffle,
   Star,
@@ -78,9 +79,18 @@ import {
 } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { getAlbum } from "@/services/openSubsonic/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import {
+  playTracks,
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
+import useActivity from "@/stores/activity";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
@@ -119,6 +129,7 @@ export default function ArtistDetail() {
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
@@ -260,6 +271,49 @@ export default function ArtistDetail() {
     );
   };
 
+  const playerStatus = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+  const isPlayingFromArtist = playingTrack?.artistId === id;
+  const handlePlayPress = async () => {
+    if (isPlayingFromArtist) {
+      togglePlayPause();
+      return;
+    }
+    const topSongs = topSongsData?.topSongs?.song;
+    if (topSongs && topSongs.length > 0) {
+      playTracks(topSongs.map(childToTrack), 0);
+    } else {
+      const firstAlbumId = data?.artist?.album?.[0]?.id;
+      if (!firstAlbumId) return;
+      try {
+        const albumData = await queryClient.fetchQuery({
+          queryKey: ["album", firstAlbumId],
+          queryFn: () => getAlbum(firstAlbumId),
+        });
+        const songs = albumData?.album?.song;
+        if (!songs || songs.length === 0) return;
+        playTracks(songs.map(childToTrack), 0);
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+    }
+    if (data?.artist) {
+      addRecentPlay({
+        id,
+        title: data.artist.name,
+        type: "artist",
+        coverArt: data.artist.coverArt,
+      });
+      recordActivity({
+        id,
+        title: data.artist.name,
+        type: "artist",
+        coverArt: data.artist.coverArt,
+      });
+    }
+  };
+
   const handleTrackPressCallback = () => {
     if (data?.artist) {
       addRecentPlay({
@@ -267,6 +321,12 @@ export default function ArtistDetail() {
         title: data?.artist.name,
         type: "artist",
         coverArt: data?.artist?.coverArt,
+      });
+      recordActivity({
+        id,
+        title: data.artist.name,
+        type: "artist",
+        coverArt: data.artist.coverArt,
       });
     }
   };
@@ -453,12 +513,19 @@ export default function ArtistDetail() {
                   <FadeOutScaleDown>
                     <Shuffle color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      <Play
-                        color={themeConfig.theme.colors.white}
-                        fill={themeConfig.theme.colors.white}
-                      />
+                      {isPlayingFromArtist && playerStatus.playing ? (
+                        <Pause
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      )}
                     </Box>
                   </FadeOutScaleDown>
                 </HStack>

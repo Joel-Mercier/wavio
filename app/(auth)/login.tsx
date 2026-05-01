@@ -72,17 +72,10 @@ function ServerSelectRow({
       <VStack className="bg-primary-600 p-4 w-full rounded-md border border-primary-600">
         <HStack className="items-center justify-between">
           <VStack className="flex-1">
-            <Heading
-              size="md"
-              className="text-white mb-2"
-              numberOfLines={1}
-            >
+            <Heading size="md" className="text-white mb-2" numberOfLines={1}>
               {server.name}
             </Heading>
-            <Text
-              className="text-primary-100 text-sm mb-2"
-              numberOfLines={1}
-            >
+            <Text className="text-primary-100 text-sm mb-2" numberOfLines={1}>
               {server.url}
             </Text>
             {users.length > 0 && (

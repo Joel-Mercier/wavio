@@ -18,6 +18,7 @@ export default function SearchLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
+      <Stack.Screen name="activity" />
     </Stack>
   );
 }

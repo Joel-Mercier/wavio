@@ -21,6 +21,7 @@ import {
   EllipsisVertical,
   ListMusic,
   Menu,
+  Pause,
   Pencil,
   Play,
   Search,
@@ -71,9 +72,17 @@ import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
+import {
+  playTracks,
+  togglePlayPause,
+  usePlayerStatus,
+  usePlayingTrack,
+} from "@/services/player";
+import useActivity from "@/stores/activity";
 import usePlaylists from "@/stores/playlists";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
@@ -115,6 +124,7 @@ export default function PlaylistDetail() {
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
@@ -280,6 +290,9 @@ export default function PlaylistDetail() {
     );
   };
 
+  const playerStatus = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+
   const handleTrackPressCallback = () => {
     if (playlistData?.playlist) {
       addRecentPlay({
@@ -287,6 +300,12 @@ export default function PlaylistDetail() {
         title: playlistData?.playlist.name,
         type: "playlist",
         coverArt: playlistData?.playlist?.coverArt,
+      });
+      recordActivity({
+        id,
+        title: playlistData.playlist.name,
+        type: "playlist",
+        coverArt: playlistData.playlist.coverArt,
       });
     }
   };
@@ -389,6 +408,32 @@ export default function PlaylistDetail() {
       });
     }
   }, [playlistData, sort, id, getPlaylistTrackPositions]);
+
+  const isPlayingFromList = !!(
+    playingTrack && data?.some((track) => track.id === playingTrack.id)
+  );
+  const handlePlayPress = () => {
+    if (isPlayingFromList) {
+      togglePlayPause();
+      return;
+    }
+    if (!data || data.length === 0) return;
+    playTracks(data.map(childToTrack), 0);
+    if (playlistData?.playlist) {
+      addRecentPlay({
+        id,
+        title: playlistData.playlist.name,
+        type: "playlist",
+        coverArt: playlistData.playlist.coverArt,
+      });
+      recordActivity({
+        id,
+        title: playlistData.playlist.name,
+        type: "playlist",
+        coverArt: playlistData.playlist.coverArt,
+      });
+    }
+  };
 
   return (
     <Box className="h-full">
@@ -533,12 +578,19 @@ export default function PlaylistDetail() {
                   <FadeOutScaleDown>
                     <Shuffle color={themeConfig.theme.colors.white} />
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      <Play
-                        color={themeConfig.theme.colors.white}
-                        fill={themeConfig.theme.colors.white}
-                      />
+                      {isPlayingFromList && playerStatus.playing ? (
+                        <Pause
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      )}
                     </Box>
                   </FadeOutScaleDown>
                 </HStack>
