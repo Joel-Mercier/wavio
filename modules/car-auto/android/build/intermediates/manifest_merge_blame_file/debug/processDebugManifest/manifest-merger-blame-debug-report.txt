@@ -1,0 +1,29 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="expo.modules.carauto" >
+4
+5    <uses-sdk android:minSdkVersion="26" />
+6
+7    <application>
+7-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:2:3-12:17
+8        <service
+8-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:3:5-11:15
+9            android:name="expo.modules.carauto.WavioCarBrowserService"
+9-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:4:7-65
+10            android:exported="true"
+10-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:5:7-30
+11            android:foregroundServiceType="mediaPlayback" >
+11-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:6:7-52
+12            <intent-filter>
+12-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:7:7-10:23
+13                <action android:name="androidx.media3.session.MediaLibraryService" />
+13-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:8:9-78
+13-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:8:17-75
+14                <action android:name="android.media.browse.MediaBrowserService" />
+14-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:9:9-75
+14-->/Users/joel/www/wavio/modules/car-auto/android/src/main/AndroidManifest.xml:9:17-72
+15            </intent-filter>
+16        </service>
+17    </application>
+18
+19</manifest>

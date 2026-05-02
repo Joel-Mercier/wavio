@@ -245,10 +245,11 @@ export function skipNext() {
   state.next();
 }
 
-export function skipPrevious() {
+export function skipPrevious(options?: { force?: boolean }) {
   // Standard music-app behavior: restart current track if > 3s in,
   // otherwise go to the previous track. Never stop playback.
-  if (player.currentTime > 3) {
+  // When force=true, always go to the previous track (used by swipe gestures).
+  if (!options?.force && player.currentTime > 3) {
     player.seekTo(0);
     return;
   }

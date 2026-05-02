@@ -17,6 +17,7 @@ import {
   CircleX,
   ClipboardCheck,
   ClipboardIcon,
+  Disc3,
   Download,
   EllipsisVertical,
   Heart,
@@ -136,6 +137,11 @@ export default function TrackListItem({
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/artists/${track.artistId}`);
+  };
+
+  const handleGoToAlbumPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate(`/albums/${track.albumId}`);
   };
 
   const handleFavoritePress = () => {
@@ -722,6 +728,19 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {track.albumId && (
+                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
+                    <HStack className="items-center">
+                      <Disc3
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.goToAlbum")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown>
                   <HStack className="items-center">
                     <ListPlus

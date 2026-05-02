@@ -84,7 +84,9 @@
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": false
         }
-      ]
+      ],
+      "./plugins/withAndroidAuto",
+      "./plugins/withCarPlay"
     ],
     "experiments": {
       "typedRoutes": true,

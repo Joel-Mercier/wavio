@@ -318,6 +318,44 @@ export default function AlbumDetail() {
     });
   };
 
+  const handleAddAllToFavoritesPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    const songs = data?.album?.song;
+    if (!songs || songs.length === 0) return;
+    try {
+      for (const song of songs) {
+        await doFavorite.mutateAsync({ id: song.id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["starred2"] });
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.albums.addAllToFavoritesSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.albums.addAllToFavoritesErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
   const playerStatus = usePlayerStatus();
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
@@ -701,44 +739,50 @@ export default function AlbumDetail() {
                 © {recordLabel.name}
               </Text>
             ))}
-            {discoverMoreData?.artist?.album && (
-              <VStack>
-                <HStack className="mt-6 mb-4 items-center justify-between">
-                  <Heading numberOfLines={1} size="xl" className="text-white">
-                    {t("app.albums.moreFromArtist", {
-                      artist: discoverMoreData?.artist?.name,
-                    })}
-                  </Heading>
-                  <FadeOutScaleDown
-                    href={`/artists/${discoverMoreData?.artist?.id}/discography`}
-                  >
-                    <Text numberOfLines={1} className="text-gray-200">
-                      {t("app.albums.seeAll")}
-                    </Text>
-                  </FadeOutScaleDown>
-                </HStack>
-                {discoverMoreError ? (
-                  <ErrorDisplay error={discoverMoreError} />
-                ) : (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerClassName="mb-6"
-                  >
-                    {discoverMoreIsLoading ? (
-                      loadingData(4).map((_, index) => (
-                        <AlbumListItemSkeleton
-                          key={`discover-more-${index}`}
-                          index={index}
-                          layout="horizontal"
-                        />
-                      ))
-                    ) : (
-                      <>
-                        {discoverMoreData?.artist?.album
-                          ?.filter((album) => album.id !== data?.album?.id)
-                          ?.slice(0, 4)
-                          .map((album, index) => (
+            {(() => {
+              const moreAlbums = discoverMoreData?.artist?.album
+                ?.filter((album) => album.id !== data?.album?.id)
+                ?.slice(0, 4);
+              if (
+                !discoverMoreIsLoading &&
+                !discoverMoreError &&
+                !moreAlbums?.length
+              ) {
+                return null;
+              }
+              return (
+                <VStack>
+                  <HStack className="mt-6 mb-4 items-center justify-between">
+                    <Heading numberOfLines={1} size="xl" className="text-white">
+                      {t("app.albums.moreFromArtist", {
+                        artist: discoverMoreData?.artist?.name,
+                      })}
+                    </Heading>
+                    <FadeOutScaleDown
+                      href={`/artists/${discoverMoreData?.artist?.id}/discography`}
+                    >
+                      <Text numberOfLines={1} className="text-gray-200">
+                        {t("app.albums.seeAll")}
+                      </Text>
+                    </FadeOutScaleDown>
+                  </HStack>
+                  {discoverMoreError ? (
+                    <ErrorDisplay error={discoverMoreError} />
+                  ) : (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerClassName="mb-6"
+                    >
+                      {discoverMoreIsLoading
+                        ? loadingData(4).map((_, index) => (
+                            <AlbumListItemSkeleton
+                              key={`discover-more-${index}`}
+                              index={index}
+                              layout="horizontal"
+                            />
+                          ))
+                        : moreAlbums?.map((album, index) => (
                             <AlbumListItem
                               key={album.id}
                               album={album}
@@ -746,15 +790,11 @@ export default function AlbumDetail() {
                               layout="horizontal"
                             />
                           ))}
-                      </>
-                    )}
-                  </ScrollView>
-                )}
-                {!discoverMoreIsLoading &&
-                  !discoverMoreError &&
-                  !discoverMoreData?.artist?.album?.length && <EmptyDisplay />}
-              </VStack>
-            )}
+                    </ScrollView>
+                  )}
+                </VStack>
+              );
+            })()}
           </VStack>
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
@@ -851,6 +891,14 @@ export default function AlbumDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown onPress={handleAddAllToFavoritesPress}>
+                <HStack className="items-center">
+                  <Heart size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.addAllToFavorites")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                 <HStack className="items-center">
                   <PlusCircle

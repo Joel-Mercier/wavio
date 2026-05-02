@@ -1725,6 +1725,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
+  - react-native-carplay (2.4.1-beta.0):
+    - React
   - react-native-keyboard-controller (1.21.6):
     - hermes-engine
     - RCTRequired
@@ -2639,6 +2641,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-carplay (from `../node_modules/react-native-carplay`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -2846,6 +2849,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-carplay:
+    :path: "../node_modules/react-native-carplay"
   react-native-keyboard-controller:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
@@ -3015,6 +3020,7 @@ SPEC CHECKSUMS:
   React-logger: 702a49dadb10a6bd63d56b297c3350b5ea552141
   React-Mapbuffer: bcd9f00a498b2981c7b390f00fd2b7cd6e0ead29
   React-microtasksnativemodule: 203b41906d627dac7d697bccba6137b630951fae
+  react-native-carplay: 8f388f6f73e5e0f73ed154ad8794371343ee20c0
   react-native-keyboard-controller: d3b10138cca486acf5beda70959269c4ccceeda7
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a

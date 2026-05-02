@@ -62,6 +62,11 @@ export default {
         shareErrorMessage: "An error occurred while sharing the album",
         rateModalTitle: "Rate album",
         seeAll: "See all",
+        addAllToFavorites: "Add all songs to favorites",
+        addAllToFavoritesSuccessMessage:
+          "All songs successfully added to favorites",
+        addAllToFavoritesErrorMessage:
+          "An error occurred while adding songs to favorites",
       },
       artists: {
         topSongs: "Top songs",
@@ -86,6 +91,7 @@ export default {
         searchPlaceholder: "Search your favorite tracks",
       },
       playlists: {
+        reorder: "Reorder this playlist",
         edit: "Edit this playlist",
         delete: "Delete this playlist",
         share: "Share",
@@ -283,7 +289,10 @@ export default {
       editPlaylist: {
         title: "Edit playlist",
         namePlaceholder: "Enter playlist name",
-        descriptionPlaceholder: "Enter playlist description",
+        descriptionPlaceholder: "Describe your playlist",
+        editPlaylistSuccessMessage: "Playlist successfully updated",
+        editPlaylistErrorMessage:
+          "An error occurred while updating the playlist",
       },
       settings: {
         title: "Settings",
@@ -431,6 +440,7 @@ export default {
         removeFromPlaylist: "Remove from playlist",
         addToQueue: "Add to queue",
         goToArtist: "Go to artist",
+        goToAlbum: "Go to album",
         rate: "Rate",
         share: "Share",
         getInfo: "Get info",
@@ -491,6 +501,7 @@ export default {
         addToPlaylist: "Add to playlist",
         addToQueue: "Add to queue",
         goToArtist: "Go to artist",
+        goToAlbum: "Go to album",
         rate: "Rate",
         share: "Share",
         download: "Download",

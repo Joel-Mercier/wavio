@@ -4,11 +4,11 @@ import { AudioLines, Heart, Pause, Play } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import FadeOut from "@/components/FadeOut";
 import MovingText from "@/components/MovingText";
 import { Box } from "@/components/ui/box";
@@ -22,7 +22,6 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import useImageColors from "@/hooks/useImageColors";
@@ -217,9 +216,18 @@ export default function FloatingPlayer() {
         : 1 - Math.abs(translateX.value) / (SWIPE_THRESHOLD * 2.5),
   }));
 
-  if (!playingTrack || pathname.startsWith("/player")) {
+  if (
+    !playingTrack ||
+    pathname.startsWith("/player") ||
+    pathname.startsWith("/playlists/new")
+  ) {
     return null;
   }
+
+  const progress =
+    status.duration && status.duration > 0
+      ? Math.min(1, Math.max(0, (status.currentTime ?? 0) / status.duration))
+      : 0;
 
   const backgroundColor =
     (colors?.platform === "ios" ? colors.background : colors?.muted) ||
@@ -238,9 +246,9 @@ export default function FloatingPlayer() {
     })
     .onEnd((e) => {
       if (e.translationX <= -SWIPE_THRESHOLD && canSkipNext) {
-        runOnJS(skipNext)();
+        scheduleOnRN(skipNext);
       } else if (e.translationX >= SWIPE_THRESHOLD && canSkipPrevious) {
-        runOnJS(skipPrevious)();
+        scheduleOnRN(skipPrevious, { force: true });
       }
       translateX.value = withTiming(0, { duration: 180 });
     });
@@ -279,13 +287,7 @@ export default function FloatingPlayer() {
               style={[textStyle, { zIndex: 1 }]}
               className="ml-4 flex-1"
             >
-              {/* <MovingText
-                text={activeTrack.title || ""}
-                animationThreshold={45}
-              /> */}
-              <Text numberOfLines={1} className="text-white font-bold text-md">
-                {playingTrack.title}
-              </Text>
+              <MovingText text={playingTrack.title || ""} />
               <Text numberOfLines={1} className="text-gray-300">
                 {playingTrack.artist}
               </Text>
@@ -329,6 +331,15 @@ export default function FloatingPlayer() {
             </FadeOut>
           </HStack>
           <Box className="absolute inset-0 bg-black/30 -z-10" />
+          <Box
+            className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-100"
+            style={{ zIndex: 3 }}
+          >
+            <Box
+              className="h-full bg-white"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </Box>
         </HStack>
       </Pressable>
     </GestureDetector>

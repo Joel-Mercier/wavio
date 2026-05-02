@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import {
   AudioLines,
   ChevronDown,
+  Disc3,
   Download,
   EllipsisVertical,
   Heart,
@@ -36,6 +37,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -174,7 +176,7 @@ export default function PlayerScreen() {
           (finished) => {
             if (finished) {
               coverTranslateX.value = 0;
-              runOnJS(skipNext)();
+              scheduleOnRN(skipNext);
             }
           },
         );
@@ -185,7 +187,7 @@ export default function PlayerScreen() {
           (finished) => {
             if (finished) {
               coverTranslateX.value = 0;
-              runOnJS(skipPrevious)();
+              scheduleOnRN(skipPrevious, { force: true });
             }
           },
         );
@@ -202,7 +204,14 @@ export default function PlayerScreen() {
 
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    router.navigate("/artists/1");
+    if (!playingTrack?.artistId) return;
+    router.navigate(`/artists/${playingTrack.artistId}`);
+  };
+
+  const handleGoToAlbumPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!playingTrack?.albumId) return;
+    router.navigate(`/albums/${playingTrack.albumId}`);
   };
 
   const handleMusicBrainzPress = async () => {
@@ -640,6 +649,19 @@ export default function PlayerScreen() {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {playingTrack?.albumId && (
+                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
+                    <HStack className="items-center">
+                      <Disc3
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.goToAlbum")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown>
                   <HStack className="items-center">
                     <ListPlus

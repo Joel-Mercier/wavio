@@ -81,9 +81,7 @@ describe("podcasts store - favorites", () => {
 
   it("falls back to store country when itunesInfo.country missing", () => {
     get().addFavoritePodcast(makePodcast({ uuid: "a", itunesInfo: undefined }));
-    expect(get().favoritePodcasts[0].country).toBe(
-      "UNITED_STATES_OF_AMERICA",
-    );
+    expect(get().favoritePodcasts[0].country).toBe("UNITED_STATES_OF_AMERICA");
   });
 
   it("removeFavoritePodcast drops by uuid", () => {
@@ -130,12 +128,8 @@ describe("podcasts store - recommendations", () => {
   });
 
   it("getRecommendationParams excludes favorited uuids and rotates index", () => {
-    get().addFavoritePodcast(
-      makePodcast({ uuid: "a", genres: ["G1"] as any }),
-    );
-    get().addFavoritePodcast(
-      makePodcast({ uuid: "b", genres: ["G2"] as any }),
-    );
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
     const before = get().lastUsedGenreIndex;
     const params = get().getRecommendationParams();
     expect(params.excludeUuids?.sort()).toEqual(["a", "b"]);

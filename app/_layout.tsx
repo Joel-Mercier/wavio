@@ -10,6 +10,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { SystemBars } from "react-native-edge-to-edge";
+import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
@@ -136,6 +137,7 @@ export default function RootLayout() {
                   <Stack.Screen name="+not-found" />
                 </Stack>
                 <OfflineBanner />
+                <CarAutoSync />
               </BottomSheetModalProvider>
             </GestureHandlerRootView>
           </ThemeProvider>

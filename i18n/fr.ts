@@ -63,6 +63,11 @@ export default {
           "Une erreur s'est produite lors de la partage de l'album",
         rateModalTitle: "Noter l'album",
         seeAll: "Voir tout",
+        addAllToFavorites: "Ajouter toutes les chansons aux favoris",
+        addAllToFavoritesSuccessMessage:
+          "Toutes les chansons ont été ajoutées aux favoris avec succès",
+        addAllToFavoritesErrorMessage:
+          "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
       },
       artists: {
         topSongs: "Chansons les plus écoutées",
@@ -87,6 +92,7 @@ export default {
         searchPlaceholder: "Rechercher dans vos favoris",
       },
       playlists: {
+        reorder: "Réorganiser cette playlist",
         edit: "Modifier cette playlist",
         delete: "Supprimer cette playlist",
         share: "Partager",
@@ -292,7 +298,10 @@ export default {
       editPlaylist: {
         title: "Modifier la playlist",
         namePlaceholder: "Entrer le nom de la playlist",
-        descriptionPlaceholder: "Entrer la description de la playlist",
+        descriptionPlaceholder: "Décrivez votre playlist",
+        editPlaylistSuccessMessage: "Playlist mise à jour avec succès",
+        editPlaylistErrorMessage:
+          "Une erreur s'est produite lors de la mise à jour de la playlist",
       },
       settings: {
         title: "Paramètres",
@@ -346,7 +355,8 @@ export default {
             "Êtes-vous sûr de vouloir supprimer vos recherches récentes stockées ?",
           recentSearchesConfirmDescription:
             "Supprimer ces recherches est irréversible. Êtes-vous sûr de vouloir continuer ?",
-          recentSearchesSuccessMessage: "Recherches récentes supprimées avec succès",
+          recentSearchesSuccessMessage:
+            "Recherches récentes supprimées avec succès",
           recentPlaysLabel: "Joués récemment",
           recentPlaysDescription:
             "Supprimer vos raccourcis de lecture récents sur l'écran d'accueil",
@@ -447,6 +457,7 @@ export default {
         removeFromPlaylist: "Retirer de la playlist",
         addToQueue: "Ajouter à la file d'attente",
         goToArtist: "Aller à l'artiste",
+        goToAlbum: "Aller à l'album",
         rate: "Noter",
         share: "Partager",
         getInfo: "Obtenir des informations",
@@ -509,6 +520,7 @@ export default {
         addToPlaylist: "Ajouter à la playlist",
         addToQueue: "Ajouter à la file d'attente",
         goToArtist: "Aller à l'artiste",
+        goToAlbum: "Aller à l'album",
         rate: "Noter",
         share: "Partager",
         download: "Télécharger",

@@ -92,7 +92,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
         }}
       >
         <DrawerHeader>
-          <HStack className="w-full items-center m-1 p-4 border-b-2 border-primary-500">
+          <HStack className="flex-1 items-center m-1 p-4 border-b-2 border-primary-500">
             <Avatar size="md" className="mr-4 bg-primary-400">
               <AvatarFallbackText className="font-body">
                 {username}

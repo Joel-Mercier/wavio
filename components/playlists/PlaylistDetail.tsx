@@ -723,7 +723,7 @@ export default function PlaylistDetail() {
                 <HStack className="items-center">
                   <Menu size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
-                    Reorder this playlist
+                    {t("app.playlists.reorder")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

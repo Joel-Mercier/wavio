@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -13,7 +14,12 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { themeConfig } from "@/config/theme";
 import {
   usePlaylist,
@@ -24,6 +30,7 @@ import usePlaylists from "@/stores/playlists";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<Child[]>([]);
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
@@ -66,8 +73,9 @@ export default function ReorderPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                   <ToastDescription>
-                    Playlist successfully updated
+                    {t("app.editPlaylist.editPlaylistSuccessMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -80,8 +88,9 @@ export default function ReorderPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                   <ToastDescription>
-                    An error occurred while updating the playlist
+                    {t("app.editPlaylist.editPlaylistErrorMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -216,7 +225,7 @@ export default function ReorderPlaylistScreen() {
             </Box>
           </FadeOutScaleDown>
           <Heading className="text-white font-bold" size="lg">
-            Edit playlist
+            {t("app.editPlaylist.title")}
           </Heading>
           <FadeOutScaleDown onPress={canSave ? form.handleSubmit : undefined}>
             <Text
@@ -224,7 +233,7 @@ export default function ReorderPlaylistScreen() {
                 "opacity-75": !canSave,
               })}
             >
-              Save
+              {t("app.shared.save")}
             </Text>
           </FadeOutScaleDown>
         </HStack>

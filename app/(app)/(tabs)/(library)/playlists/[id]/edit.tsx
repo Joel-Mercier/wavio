@@ -3,6 +3,7 @@ import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircleIcon, ListMusic, X } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -20,7 +21,12 @@ import { Image } from "@/components/ui/image";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
-import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import {
@@ -36,6 +42,7 @@ const editPlaylistSchema = z.object({
 });
 
 export default function EditPlaylistScreen() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
@@ -64,8 +71,9 @@ export default function EditPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
                   <ToastDescription>
-                    Playlist successfully updated
+                    {t("app.editPlaylist.editPlaylistSuccessMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -78,8 +86,9 @@ export default function EditPlaylistScreen() {
               duration: 3000,
               render: () => (
                 <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
                   <ToastDescription>
-                    An error occurred while updating the playlist
+                    {t("app.editPlaylist.editPlaylistErrorMessage")}
                   </ToastDescription>
                 </Toast>
               ),
@@ -104,7 +113,7 @@ export default function EditPlaylistScreen() {
             </Box>
           </FadeOutScaleDown>
           <Heading className="text-white font-bold" size="lg">
-            Edit playlist
+            {t("app.editPlaylist.title")}
           </Heading>
           <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
             <Text
@@ -112,7 +121,7 @@ export default function EditPlaylistScreen() {
                 "opacity-50": !isDirty,
               })}
             >
-              Save
+              {t("app.shared.save")}
             </Text>
           </FadeOutScaleDown>
         </HStack>
@@ -159,7 +168,7 @@ export default function EditPlaylistScreen() {
                       "border-red-500": !field.state.meta.isValid,
                     },
                   )}
-                  placeholder="Enter playlist name"
+                  placeholder={t("app.editPlaylist.namePlaceholder")}
                 />
               </Input>
               {!field.state.meta.isValid && (
@@ -194,7 +203,7 @@ export default function EditPlaylistScreen() {
                   onChangeText={field.handleChange}
                   onBlur={field.handleBlur}
                   className="text-md font-normal color-white"
-                  placeholder="Describe your playlist"
+                  placeholder={t("app.editPlaylist.descriptionPlaceholder")}
                 />
               </Textarea>
               {!field.state.meta.isValid && (
