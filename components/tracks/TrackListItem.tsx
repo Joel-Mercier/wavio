@@ -71,6 +71,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, usePlayingTrack } from "@/services/player";
+import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDistanceToNow } from "@/utils/date";
@@ -215,6 +216,23 @@ export default function TrackListItem({
         },
       },
     );
+  };
+
+  const handleAddToQueuePress = () => {
+    useQueue.getState().enqueueEnd(childToTrack(track));
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToQueueMessage", { count: 1 })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleSharePress = () => {
@@ -741,7 +759,7 @@ export default function TrackListItem({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleAddToQueuePress}>
                   <HStack className="items-center">
                     <ListPlus
                       size={24}

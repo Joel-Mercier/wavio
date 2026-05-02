@@ -20,6 +20,7 @@ import {
   Clock,
   EllipsisVertical,
   ListMusic,
+  ListPlus,
   Menu,
   Pause,
   Pencil,
@@ -80,6 +81,7 @@ import {
 } from "@/services/player";
 import useActivity from "@/stores/activity";
 import usePlaylists from "@/stores/playlists";
+import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -168,6 +170,26 @@ export default function PlaylistDetail() {
   const handlePlaylistReorderPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/reorder`);
+  };
+
+  const handleAddToQueuePress = () => {
+    const entries = playlistData?.playlist?.entry;
+    if (!entries || entries.length === 0) return;
+    const tracks = entries.map(childToTrack);
+    useQueue.getState().enqueueEnd(tracks);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToQueueMessage", { count: tracks.length })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handlePlaylistDeletePress = () => {
@@ -724,6 +746,17 @@ export default function PlaylistDetail() {
                   <Menu size={24} color={themeConfig.theme.colors.gray[200]} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.reorder")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleAddToQueuePress}>
+                <HStack className="items-center">
+                  <ListPlus
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.playlists.addToQueue")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

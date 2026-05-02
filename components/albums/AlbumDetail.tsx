@@ -88,6 +88,7 @@ import {
   usePlayingTrack,
 } from "@/services/player";
 import useActivity from "@/stores/activity";
+import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -267,6 +268,26 @@ export default function AlbumDetail() {
         },
       },
     );
+  };
+
+  const handleAddToQueuePress = () => {
+    const songs = data?.album?.song;
+    if (!songs || songs.length === 0) return;
+    const tracks = songs.map(childToTrack);
+    useQueue.getState().enqueueEnd(tracks);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToQueueMessage", { count: tracks.length })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleSharePress = () => {
@@ -918,7 +939,7 @@ export default function AlbumDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleAddToQueuePress}>
                 <HStack className="items-center">
                   <ListPlus
                     size={24}

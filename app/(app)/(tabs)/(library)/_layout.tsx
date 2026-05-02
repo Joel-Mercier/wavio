@@ -21,6 +21,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
       <Stack.Screen name="activity" />
+      <Stack.Screen name="queue" />
     </Stack>
   );
 }

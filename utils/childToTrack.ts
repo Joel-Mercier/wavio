@@ -18,6 +18,7 @@ export function childToTrack(child: Child) {
     artist: child.artist,
     album: child.album,
     artwork: artworkUrl(child.coverArt),
+    coverArt: child.coverArt,
     genre: child.genre,
     duration: child.duration,
     contentType: child.contentType,

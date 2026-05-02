@@ -95,6 +95,7 @@ export default {
         edit: "Edit this playlist",
         delete: "Delete this playlist",
         share: "Share",
+        addToQueue: "Add to queue",
         deletePlaylistConfirmTitle:
           "Are you sure you want to delete this playlist?",
         deletePlaylistConfirmDescription:
@@ -433,6 +434,10 @@ export default {
           playlist: "Playlist",
         },
       },
+      queue: {
+        title: "Queue",
+        empty: "The queue is empty.",
+      },
       tracks: {
         addToFavorites: "Add to favorites",
         addToPlaylist: "Add to playlist",
@@ -574,6 +579,8 @@ export default {
         songCount_other: "{{count}} songs",
         toastSuccessTitle: "Success",
         toastErrorTitle: "Error",
+        addedToQueueMessage_one: "Added 1 song to the queue",
+        addedToQueueMessage_other: "Added {{count}} songs to the queue",
         rateSuccessMessage: "Rating successfully set",
         rateErrorMessage: "An error occurred while setting the rating",
         shareUrlCopiedMessage: "Share url copied to clipboard",
@@ -587,6 +594,7 @@ export default {
         },
         sidebar: {
           activity: "Activity",
+          queue: "Queue",
           settings: "Settings",
           shares: "Shares",
           servers: "Servers",

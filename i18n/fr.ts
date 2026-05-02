@@ -96,6 +96,7 @@ export default {
         edit: "Modifier cette playlist",
         delete: "Supprimer cette playlist",
         share: "Partager",
+        addToQueue: "Ajouter à la file d'attente",
         deletePlaylistConfirmTitle:
           "Êtes-vous sûr de vouloir supprimer cette playlist ?",
         deletePlaylistConfirmDescription:
@@ -450,6 +451,10 @@ export default {
           playlist: "Playlist",
         },
       },
+      queue: {
+        title: "File d'attente",
+        empty: "La file d'attente est vide.",
+      },
       tracks: {
         addToFavorites: "Ajouter aux favoris",
         addToPlaylist: "Ajouter à la playlist",
@@ -596,6 +601,9 @@ export default {
         songCount_other: "{{count}} titres",
         toastSuccessTitle: "Succès",
         toastErrorTitle: "Erreur",
+        addedToQueueMessage_one: "1 titre ajouté à la file d'attente",
+        addedToQueueMessage_other:
+          "{{count}} titres ajoutés à la file d'attente",
         rateSuccessMessage: "Notation réussie",
         rateErrorMessage: "Une erreur s'est produite lors de la notation",
         shareUrlCopiedMessage: "URL de partage copiée dans le presse-papier",
@@ -609,6 +617,7 @@ export default {
         },
         sidebar: {
           activity: "Activité",
+          queue: "File d'attente",
           settings: "Paramètres",
           shares: "Partages",
           servers: "Serveurs",

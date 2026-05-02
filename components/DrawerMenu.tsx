@@ -1,6 +1,13 @@
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { History, LogOut, Server, Settings, Share2 } from "lucide-react-native";
+import {
+  History,
+  ListMusic,
+  LogOut,
+  Server,
+  Settings,
+  Share2,
+} from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,6 +52,11 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
 
   const handleActivityPress = () => {
     router.navigate("/activity");
+    onClose();
+  };
+
+  const handleQueuePress = () => {
+    router.navigate("/queue");
     onClose();
   };
 
@@ -119,6 +131,15 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 <History size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.activity")}
+                </Heading>
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleQueuePress}
+              >
+                <ListMusic size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  {t("app.shared.sidebar.queue")}
                 </Heading>
               </Pressable>
               <Pressable
