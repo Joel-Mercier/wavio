@@ -11,6 +11,13 @@ export const player = createAudioPlayer(null, { updateInterval: 1000 });
 
 let isLoading = false;
 let loadedTrackId: string | null = null;
+// True only after a track has been loaded with autoplay (i.e. playback was
+// actually started by user action). The hydration path pre-loads the queue's
+// current track so the FloatingPlayer has metadata to render, but the native
+// source isn't guaranteed to be ready until play() is invoked alongside
+// replace(). Without this flag, tapping play after a fresh app start would
+// short-circuit to player.play() on an unloaded source and do nothing.
+let playbackInitialized = false;
 
 // Scrobble bookkeeping. Navidrome (and the OpenSubsonic spec) expects two
 // distinct calls per playback: a "now playing" notification on start
@@ -80,6 +87,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   if (autoplay) {
     player.play();
     reportNowPlaying(track);
+    playbackInitialized = true;
   }
   loadedTrackId = track.id;
   isLoading = false;
@@ -225,7 +233,8 @@ export function togglePlayPause() {
     return;
   }
   const current = useQueue.getState().getCurrent();
-  if (current && loadedTrackId !== current.id) {
+  if (!current) return;
+  if (loadedTrackId !== current.id || !playbackInitialized) {
     loadAndPlay(current);
     return;
   }

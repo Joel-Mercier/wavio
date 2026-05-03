@@ -77,6 +77,7 @@ export default {
         musicBrainz: "Ouvrir dans MusicBrainz",
         lastFM: "Ouvrir dans Last.fm",
         rateModalTitle: "Noter l'artiste",
+        likedSongs: "Titres likés",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
         favoriteSuccessMessage: "Artiste ajouté avec succès aux favoris",

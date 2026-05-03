@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
+  ChevronRight,
   EllipsisVertical,
   Heart,
   Pause,
@@ -72,6 +73,7 @@ import {
   useArtistInfo2,
   useTopSongs,
 } from "@/hooks/openSubsonic/useBrowsing";
+import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import {
   useSetRating,
   useStar,
@@ -125,6 +127,9 @@ export default function ArtistDetail() {
     isLoading: isLoadingTopSongs,
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
+  const { data: starredData } = useStarred2({});
+  const likedSongs =
+    starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
@@ -530,6 +535,43 @@ export default function ArtistDetail() {
                   </FadeOutScaleDown>
                 </HStack>
               </HStack>
+              {likedSongs.length > 0 && (
+                <FadeOutScaleDown>
+                  <HStack className="items-center mb-6">
+                    <Box className="relative">
+                      <Image
+                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        alt="Liked songs cover"
+                        className="w-16 h-16 rounded-full aspect-square"
+                      />
+                      <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
+                        <Heart
+                          size={14}
+                          color={themeConfig.theme.colors.emerald[500]}
+                          fill={themeConfig.theme.colors.emerald[500]}
+                        />
+                      </Box>
+                    </Box>
+                    <VStack className="ml-4 flex-1">
+                      <Heading
+                        className="text-white"
+                        size="md"
+                        numberOfLines={1}
+                      >
+                        {t("app.artists.likedSongs")}
+                      </Heading>
+                      <Text className="text-gray-400" numberOfLines={1}>
+                        {t("app.shared.songCount", {
+                          count: likedSongs.length,
+                        })}
+                        {" • "}
+                        {data?.artist?.name}
+                      </Text>
+                    </VStack>
+                    <ChevronRight color={themeConfig.theme.colors.white} />
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <Heading className="text-white">
                 {t("app.artists.topSongs")}
               </Heading>
