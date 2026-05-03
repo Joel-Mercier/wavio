@@ -139,6 +139,7 @@ export default {
           "Top des podcasts en {{country, titlecase}} aujourd'hui",
         dailyTopChartsByGenre:
           "Top des podcasts $t(app.podcasts.genres.{{genre}}) aujourd'hui",
+        popularInLanguage: "Populaires en {{language, titlecase}}",
         seeAllEpisodes: "Voir tous les épisodes",
         configureTaddyPodcasts: "Configurer dans les paramètres",
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
@@ -592,6 +593,8 @@ export default {
         artist_other: "Artistes",
         playlist_one: "Playlist",
         playlist_other: "Playlists",
+        podcast_one: "Podcast",
+        podcast_other: "Podcasts",
         song_one: "Titre",
         song_other: "Titres",
         save: "Enregistrer",

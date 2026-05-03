@@ -28,6 +28,15 @@ export interface RecommendationParams {
   excludeUuids?: string[];
 }
 
+const DEFAULT_GENRES: (keyof typeof Genre)[] = [
+  "PODCASTSERIES_NEWS_DAILY_NEWS",
+  "PODCASTSERIES_COMEDY",
+  "PODCASTSERIES_TECHNOLOGY",
+  "PODCASTSERIES_SCIENCE",
+  "PODCASTSERIES_HISTORY",
+  "PODCASTSERIES_BUSINESS",
+];
+
 interface PodcastsStore {
   taddyPodcastsApiKey: string;
   taddyPodcastsUserId: string;
@@ -51,6 +60,7 @@ interface PodcastsStore {
   clearFavoritePodcasts: () => void;
   getRecommendationParams: () => RecommendationParams;
   getGenreRotation: () => (keyof typeof Genre)[];
+  getTopGenres: (limit?: number) => (keyof typeof Genre)[];
   lastUsedGenreIndex: number;
   setLastUsedGenreIndex: (index: number) => void;
   advanceGenreRotation: () => void;
@@ -122,41 +132,39 @@ export const usePodcastsBase = create<PodcastsStore>()(
       },
       getGenreRotation: () => {
         const state = get();
-        const allGenres = state.favoritePodcasts.flatMap(
-          (podcast) => podcast.genres,
+        const topGenres = state.getTopGenres();
+        if (topGenres.length > 0) return topGenres;
+        return DEFAULT_GENRES;
+      },
+      getTopGenres: (limit = 3) => {
+        const state = get();
+        const counts = state.favoritePodcasts.reduce(
+          (acc, podcast) => {
+            for (const genre of podcast.genres ?? []) {
+              acc[genre] = (acc[genre] || 0) + 1;
+            }
+            return acc;
+          },
+          {} as Record<string, number>,
         );
-        const uniqueGenres = [...new Set(allGenres)];
-
-        if (uniqueGenres.length === 0) {
-          return [];
-        }
-
-        const shuffledGenres = [...uniqueGenres].sort(
-          () => Math.random() - 0.5,
-        );
-        return shuffledGenres;
+        return (Object.keys(counts) as (keyof typeof Genre)[])
+          .sort((a, b) => counts[b] - counts[a])
+          .slice(0, limit);
       },
       getRecommendationParams: () => {
         const state = get();
         const favoritePodcasts = state.favoritePodcasts;
 
+        const genres = state.getGenreRotation();
+
         if (favoritePodcasts.length === 0) {
           return {
+            genres,
             language: state.taddyPodcastsLanguage,
             country: state.taddyPodcastsCountry,
+            excludeUuids: [],
           };
         }
-
-        const genreRotation = state.getGenreRotation();
-        let selectedGenre: keyof typeof Genre | undefined;
-        if (genreRotation.length > 0) {
-          const currentGenreIndex =
-            state.lastUsedGenreIndex % genreRotation.length;
-          selectedGenre = genreRotation[currentGenreIndex];
-        }
-
-        const allGenres = favoritePodcasts.flatMap((podcast) => podcast.genres);
-        const uniqueGenres = [...new Set(allGenres)];
 
         const languageCounts = favoritePodcasts.reduce(
           (acc, podcast) => {
@@ -195,7 +203,7 @@ export const usePodcastsBase = create<PodcastsStore>()(
         const excludeUuids = favoritePodcasts.map((podcast) => podcast.uuid);
 
         return {
-          genres: selectedGenre ? [selectedGenre] : uniqueGenres.slice(0, 3), // Limit to 3 genres max
+          genres,
           language: mostCommonLanguage || state.taddyPodcastsLanguage,
           country: mostCommonCountry || state.taddyPodcastsCountry,
           excludeUuids,

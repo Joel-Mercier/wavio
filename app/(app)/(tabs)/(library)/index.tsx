@@ -26,6 +26,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
+  type LibraryPodcast,
 } from "@/components/library/LibraryListItem";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -47,6 +48,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
@@ -61,8 +63,12 @@ export default function LibraryScreen() {
   const setSort = useApp((store) => store.setLibrarySort);
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
-    "artists" | "albums" | "playlists" | null
+    "artists" | "albums" | "playlists" | "podcasts" | null
   >(null);
+  const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  const podcastsEnabled = Boolean(taddyPodcastsApiKey && taddyPodcastsUserId);
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -90,7 +96,9 @@ export default function LibraryScreen() {
     setLayout(layout === "list" ? "grid" : "list");
   };
 
-  const handleFilterPress = (type: "artists" | "albums" | "playlists") => {
+  const handleFilterPress = (
+    type: "artists" | "albums" | "playlists" | "podcasts",
+  ) => {
     setFilter(type === filter ? null : type);
   };
 
@@ -158,12 +166,28 @@ export default function LibraryScreen() {
         data.push(playlistsData.playlists.playlist);
       }
     }
+    if (podcastsEnabled && (!filter || filter === "podcasts")) {
+      data.push(
+        favoritePodcasts.map((p) => ({
+          id: p.uuid,
+          name: p.name,
+          isPodcast: true,
+          imageUrl: p.imageUrl,
+          authorName: p.authorName,
+          dateAdded: p.dateAdded,
+        })),
+      );
+    }
     data = data.flat();
     const sortTime = (item: (typeof data)[number]) => {
       const value =
         ("starred" in item ? item.starred : undefined) ??
         ("created" in item ? item.created : undefined);
-      return value ? new Date(value).getTime() : 0;
+      if (value) return new Date(value).getTime();
+      if ("dateAdded" in item && typeof item.dateAdded === "number") {
+        return item.dateAdded;
+      }
+      return 0;
     };
     return data.sort((a, b) => {
       if (sort === "addedAtAsc") {
@@ -180,7 +204,14 @@ export default function LibraryScreen() {
       }
       return 0;
     });
-  }, [starredData, playlistsData, filter, sort]);
+  }, [
+    starredData,
+    playlistsData,
+    filter,
+    sort,
+    podcastsEnabled,
+    favoritePodcasts,
+  ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
   const error = playlistsError || starredError;
@@ -242,6 +273,7 @@ export default function LibraryScreen() {
               <Badge
                 className={cn("rounded-full bg-gray-800 px-4 py-1", {
                   "bg-emerald-500 text-primary-800": filter === "artists",
+                  "mr-2": podcastsEnabled,
                 })}
               >
                 <BadgeText className="normal-case text-md text-white">
@@ -249,6 +281,19 @@ export default function LibraryScreen() {
                 </BadgeText>
               </Badge>
             </FadeOutScaleDown>
+            {podcastsEnabled && (
+              <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                    "bg-emerald-500 text-primary-800": filter === "podcasts",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.podcast_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+            )}
           </ScrollView>
         </Box>
         <HStack className="px-6 pb-6 items-center justify-between">
@@ -286,7 +331,7 @@ export default function LibraryScreen() {
           key={`library-${layout}`}
           data={
             (data || loadingData(16)) as Array<
-              Playlist & AlbumID3 & ArtistID3 & Favorites
+              Playlist & AlbumID3 & ArtistID3 & Favorites & LibraryPodcast
             >
           }
           keyExtractor={(item) => item.id}

@@ -86,8 +86,8 @@ export const getPodcastSeries = async ({
         searchTerm,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -129,8 +129,8 @@ export const getLatestPodcastEpisodes = async (uuids: string[]) => {
         uuids,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -164,8 +164,8 @@ export const getMultiplePodcastSeries = async (uuids: string[]) => {
         uuids,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -207,8 +207,8 @@ export const getMultiplePodcastEpisodes = async (uuids: string[]) => {
         uuids,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -225,7 +225,7 @@ export const getTopChartsByCountry = async ({
   page,
   limitPerPage,
 }: {
-  type?: keyof typeof TaddyType;
+  type: keyof typeof TaddyType;
   country?: keyof typeof Country;
   page?: number;
   limitPerPage?: number;
@@ -283,8 +283,8 @@ export const getTopChartsByCountry = async ({
         limitPerPage,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -362,8 +362,8 @@ export const getTopChartsByGenres = async ({
         limitPerPage,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
@@ -381,7 +381,7 @@ export const getPopularContent = async ({
   limitPerPage,
 }: {
   language?: keyof typeof Language;
-  genres?: keyof (typeof Genre)[];
+  genres?: (keyof typeof Genre)[];
   page?: number;
   limitPerPage?: number;
 }) => {
@@ -389,17 +389,20 @@ export const getPopularContent = async ({
     const rsp = await taddyPodcastsApiInstance.post<
       TaddyPodcastsResponse<{ podcastSeries: PodcastSeries[] }>
     >("", {
-      query: `query($language: Language, $genres: [Genre], $page: Int, $limitPerPage: Int) {
+      query: `query($language: Language, $genres: [Genre!], $page: Int, $limitPerPage: Int) {
         getPopularContent(filterByLanguage: $language, filterByGenres: $genres, page: $page, limitPerPage: $limitPerPage){
           popularityRankId
           podcastSeries{
             uuid
+            name
             language
             genres
-            name
-            description
-            popularityRank
+            description(shouldStripHtmlTags: false)
+            datePublished
+            imageUrl
+            websiteUrl
             authorName
+            popularityRank
           }
         }
       }`,
@@ -410,12 +413,21 @@ export const getPopularContent = async ({
         limitPerPage,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      console.error(
+        "[taddy] getPopularContent GraphQL errors:",
+        JSON.stringify(rsp.data.errors, null, 2),
+      );
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.error(
+        "[taddy] getPopularContent HTTP error:",
+        error.response?.status,
+        JSON.stringify(error.response?.data, null, 2),
+      );
       throw error;
     }
     throw error;
@@ -551,8 +563,8 @@ export const search = async ({
         isSafeMode,
       },
     });
-    if (rsp.data?.data?.errors) {
-      throw rsp.data?.data?.errors;
+    if (rsp.data?.errors) {
+      throw rsp.data.errors;
     }
     return rsp.data;
   } catch (error) {

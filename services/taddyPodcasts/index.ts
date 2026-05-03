@@ -4,6 +4,10 @@ import usePodcasts from "@/stores/podcasts";
 
 export type TaddyPodcastsResponse<T> = {
   data: { [key: string]: T };
+  errors?: {
+    code?: keyof typeof taddyPodcastsErrorCodes;
+    message: string;
+  }[];
 };
 
 export type TaddyPodcastsErrorResponse = {

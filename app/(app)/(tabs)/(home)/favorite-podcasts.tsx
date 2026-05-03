@@ -37,10 +37,7 @@ export default function FavoritePodcastsScreen() {
   );
 
   return (
-    <Box
-      className="h-full"
-      style={{ paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT }}
-    >
+    <Box className="h-full">
       <HStack
         className="px-6 gap-x-4 my-6 items-center"
         style={{ paddingTop: insets.top }}
@@ -66,7 +63,7 @@ export default function FavoritePodcastsScreen() {
             <FadeOutScaleDown
               onPress={() => router.navigate("/(app)/(tabs)/(home)/podcasts")}
             >
-              <Badge className="rounded-full rounded-r-none bg-gray-800 px-4 py-1 pr-4">
+              <Badge className="rounded-full rounded-r-none bg-emerald-500 px-4 py-1 pr-4">
                 <BadgeText className="normal-case text-md text-white">
                   {t("app.home.tabs.podcasts")}
                 </BadgeText>
@@ -77,7 +74,7 @@ export default function FavoritePodcastsScreen() {
                 router.navigate("/(app)/(tabs)/(home)/favorite-podcasts")
               }
             >
-              <Badge className="rounded-full rounded-l-none bg-emerald-500 text-primary-800 px-4 py-1 mr-2">
+              <Badge className="rounded-full rounded-l-none bg-emerald-600 text-primary-800 px-4 py-1 mr-2">
                 <BadgeText className="normal-case text-md text-white">
                   {t("app.home.tabs.favoritePodcasts")}
                 </BadgeText>

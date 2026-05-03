@@ -243,7 +243,7 @@ export const usePopularContent = ({
   limitPerPage,
 }: {
   language?: keyof typeof Language;
-  genres?: keyof (typeof Genre)[];
+  genres?: (keyof typeof Genre)[];
   page?: number;
   limitPerPage?: number;
 }) => {
@@ -270,6 +270,7 @@ export const usePopularContent = ({
           podcastSeries.isFavorite = favoriteUuids.has(podcastSeries.uuid);
         }
       }
+      return response;
     },
   });
 };

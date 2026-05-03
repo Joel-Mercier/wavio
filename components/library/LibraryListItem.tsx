@@ -1,6 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
-import { ArrowDown, Disc3, Heart, ListMusic, User } from "lucide-react-native";
+import {
+  ArrowDown,
+  Disc3,
+  Heart,
+  ListMusic,
+  Podcast,
+  User,
+} from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { LibraryLayout } from "@/app/(app)/(tabs)/(library)/index";
@@ -26,8 +33,14 @@ export type Favorites = {
   isFavorites: boolean;
   songCount: number;
 };
+export type LibraryPodcast = {
+  isPodcast?: boolean;
+  imageUrl?: string;
+  authorName?: string;
+  description?: string;
+};
 interface LibraryListItemProps {
-  item: Playlist & AlbumID3 & ArtistID3 & Favorites;
+  item: Playlist & AlbumID3 & ArtistID3 & Favorites & LibraryPodcast;
   layout: LibraryLayout;
   index: number;
 }
@@ -48,6 +61,9 @@ function LibraryListItemIcon({ type }: { type: string }) {
   if (type === "artist") {
     return <User size={48} color={themeConfig.theme.colors.white} />;
   }
+  if (type === "podcast") {
+    return <Podcast size={48} color={themeConfig.theme.colors.white} />;
+  }
   return <ListMusic size={48} color={themeConfig.theme.colors.white} />;
 }
 
@@ -64,6 +80,23 @@ export default function LibraryListItem({
         id: "favorites",
         label: t("app.shared.favorites"),
         url: "/favorites",
+      };
+    }
+    if (item.isPodcast) {
+      return {
+        id: "podcast",
+        label: t("app.shared.podcast_one"),
+        url: {
+          pathname: "/podcast-series/[id]",
+          params: {
+            id: item.id,
+            uuid: item.id,
+            name: item.name,
+            description: item.description ?? "",
+            imageUrl: item.imageUrl,
+            authorName: item.authorName,
+          },
+        } as Href,
       };
     }
     if (item.albumCount) {
@@ -102,11 +135,14 @@ export default function LibraryListItem({
           "flex-col items-start": layout === "grid",
         })}
       >
-        {item.coverArt ? (
+        {item.coverArt || item.imageUrl ? (
           <HStack>
             <Image
               source={{
-                uri: item.artistImageUrl || artworkUrl(item.coverArt),
+                uri:
+                  item.imageUrl ||
+                  item.artistImageUrl ||
+                  artworkUrl(item.coverArt),
               }}
               className={cn("rounded-md aspect-square", {
                 "w-full": layout === "grid",
@@ -162,10 +198,11 @@ export default function LibraryListItem({
               </Box>
             )}
             <Text numberOfLines={1} className="text-md text-primary-100">
-              {type.label} ⦁{" "}
-              {type.id === "artist"
-                ? t("app.shared.albumCount", { count: item.albumCount })
-                : t("app.shared.songCount", { count: item.songCount })}
+              {type.id === "podcast"
+                ? `${type.label} ⦁ ${item.authorName}`
+                : type.id === "artist"
+                  ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
+                  : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
             </Text>
           </HStack>
         </VStack>

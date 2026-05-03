@@ -22,6 +22,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="shares" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="queue" />
+      <Stack.Screen name="podcast-series/[id]" />
     </Stack>
   );
 }

@@ -1,33 +1,30 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
-import { type ReactElement, useEffect } from "react";
+import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import EmptyDisplay from "@/components/EmptyDisplay";
-import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import FavoritePodcastListItem from "@/components/podcasts/FavoritePodcastListItem";
-import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
-import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
+import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
-import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  usePopularContent,
   useTopChartsByCountry,
   useTopChartsByGenres,
 } from "@/hooks/taddyPodcasts/usePodcasts";
+import type { Genre } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";
-import { loadingData } from "@/utils/loadingData";
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();
@@ -41,14 +38,19 @@ export default function PodcastsScreen() {
   const getRecommendationParams = usePodcasts(
     (store) => store.getRecommendationParams,
   );
-  const advanceGenreRotation = usePodcasts(
-    (store) => store.advanceGenreRotation,
-  );
+  const lastUsedGenreIndex = usePodcasts((store) => store.lastUsedGenreIndex);
   const insets = useSafeAreaInsets();
-  const recommandationParams = getRecommendationParams();
-  useEffect(() => {
-    advanceGenreRotation();
-  }, [advanceGenreRotation]);
+  const recommandationParams = useMemo(
+    () => getRecommendationParams(),
+    // getRecommendationParams reads favoritePodcasts and lastUsedGenreIndex
+    // from the store; subscribe via these deps so the memo refreshes.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: store getter deps
+    [getRecommendationParams, favorites, lastUsedGenreIndex],
+  );
+  const genreRows = (recommandationParams.genres ?? []).slice(
+    0,
+    3,
+  ) as (keyof typeof Genre)[];
   const {
     data: topChartsByCountry,
     isLoading: isLoadingTopChartsByCountry,
@@ -58,21 +60,15 @@ export default function PodcastsScreen() {
     country: recommandationParams.country,
   });
   const {
-    data: topChartsByGenre,
-    isLoading: isLoadingTopChartsByGenre,
-    error: topChartsByGenreError,
-  } = useTopChartsByGenres({
-    type: "PODCASTSERIES",
-    genres: recommandationParams?.genres?.[0]
-      ? [recommandationParams.genres[0]]
-      : undefined,
+    data: popularContent,
+    isLoading: isLoadingPopularContent,
+    error: popularContentError,
+  } = usePopularContent({
+    language: recommandationParams.language,
   });
 
   return (
-    <Box
-      className="flex-1"
-      style={{ paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT }}
-    >
+    <Box>
       <HStack
         className="px-6 gap-x-4 my-6 items-center"
         style={{ paddingTop: insets.top }}
@@ -121,7 +117,13 @@ export default function PodcastsScreen() {
         </ScrollView>
       </HStack>
       {taddyPodcastApiKey && taddyPodcastUserId ? (
-        <>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom:
+              tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
           <FadeOutScaleDown
             href={"/(app)/(tabs)/(home)/podcasts/search"}
             className="mb-4"
@@ -177,93 +179,34 @@ export default function PodcastsScreen() {
                 }, [])}
             </VStack>
           )}
-          <Box className="px-6 mt-4 mb-4">
-            <Heading size="xl" className="text-white">
-              {t("app.podcasts.dailyTopChartsByCountry", {
-                country: recommandationParams.country,
+          <PodcastSeriesRow
+            title={t("app.podcasts.dailyTopChartsByCountry", {
+              country: recommandationParams.country,
+            })}
+            isLoading={isLoadingTopChartsByCountry}
+            error={topChartsByCountryError}
+            podcastSeries={
+              topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries
+            }
+            skeletonKey="top-charts-by-country"
+          />
+          {genreRows.map((genre) => (
+            <GenreChartRow key={genre} genre={genre} />
+          ))}
+          {recommandationParams.language && (
+            <PodcastSeriesRow
+              title={t("app.podcasts.popularInLanguage", {
+                language: recommandationParams.language,
               })}
-            </Heading>
-          </Box>
-          {topChartsByCountryError ? (
-            <ErrorDisplay error={topChartsByCountryError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="mb-6 pl-6"
-            >
-              {isLoadingTopChartsByCountry ? (
-                loadingData(4).map((_, index) => (
-                  <PodcastSeriesListItemSkeleton
-                    key={`top-charts-by-country-${index}`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              ) : (
-                <>
-                  {topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries?.map(
-                    (podcast, index) => (
-                      <PodcastSeriesListItem
-                        key={podcast.uuid}
-                        podcast={podcast}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ),
-                  )}
-                </>
-              )}
-            </ScrollView>
+              isLoading={isLoadingPopularContent}
+              error={popularContentError}
+              podcastSeries={
+                popularContent?.data?.getPopularContent?.podcastSeries
+              }
+              skeletonKey="popular-content"
+            />
           )}
-          {!isLoadingTopChartsByCountry &&
-            !topChartsByCountryError &&
-            !topChartsByCountry?.data?.getTopChartsByCountry?.podcastSeries
-              ?.length && <EmptyDisplay />}
-          <Box className="px-6 mt-4 mb-4">
-            <Heading size="xl" className="text-white">
-              {t("app.podcasts.dailyTopChartsByGenre", {
-                genre: recommandationParams?.genres?.[0],
-              })}
-            </Heading>
-          </Box>
-          {topChartsByGenreError ? (
-            <ErrorDisplay error={topChartsByGenreError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="mb-6 pl-6"
-            >
-              {isLoadingTopChartsByGenre ? (
-                loadingData(4).map((_, index) => (
-                  <PodcastSeriesListItemSkeleton
-                    key={`top-charts-by-genre-${index}`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              ) : (
-                <>
-                  {topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries?.map(
-                    (podcast, index) => (
-                      <PodcastSeriesListItem
-                        key={podcast.uuid}
-                        podcast={podcast}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ),
-                  )}
-                </>
-              )}
-            </ScrollView>
-          )}
-          {!isLoadingTopChartsByGenre &&
-            !topChartsByGenreError &&
-            !topChartsByGenre?.data?.getTopChartsByGenres?.podcastSeries
-              ?.length && <EmptyDisplay />}
-        </>
+        </ScrollView>
       ) : (
         <Box className="items-center justify-center self-center content-center h-full">
           <Text className="text-primary-50">
@@ -282,5 +225,22 @@ export default function PodcastsScreen() {
         </Box>
       )}
     </Box>
+  );
+}
+
+function GenreChartRow({ genre }: { genre: keyof typeof Genre }) {
+  const { t } = useTranslation();
+  const { data, isLoading, error } = useTopChartsByGenres({
+    type: "PODCASTSERIES",
+    genres: [genre],
+  });
+  return (
+    <PodcastSeriesRow
+      title={t("app.podcasts.dailyTopChartsByGenre", { genre })}
+      isLoading={isLoading}
+      error={error}
+      podcastSeries={data?.data?.getTopChartsByGenres?.podcastSeries}
+      skeletonKey={`top-charts-by-genre-${genre}`}
+    />
   );
 }
