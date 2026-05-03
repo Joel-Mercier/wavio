@@ -137,6 +137,7 @@ export default {
           "Top podcasts in $t(app.podcasts.genres.{{genre}}) today",
         popularInLanguage: "Popular in {{language, titlecase}}",
         seeAllEpisodes: "See all episodes",
+        publishedAt: "{{distance}} ago",
         configureTaddyPodcasts: "Configure in settings",
         taddyPodcastsNotConfigured: "Podcast access is not configured",
         search: {

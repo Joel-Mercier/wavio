@@ -98,13 +98,21 @@ export const getPodcastSeries = async ({
   }
 };
 
-export const getLatestPodcastEpisodes = async (uuids: string[]) => {
+export const getLatestPodcastEpisodes = async ({
+  uuids,
+  page,
+  limitPerPage,
+}: {
+  uuids: string[];
+  page?: number;
+  limitPerPage?: number;
+}) => {
   try {
     const rsp = await taddyPodcastsApiInstance.post<
       TaddyPodcastsResponse<PodcastEpisode[]>
     >("", {
-      query: `query($uuids: [ID]) {
-        getLatestPodcastEpisodes(uuids: $uuids){
+      query: `query($uuids: [ID], $page: Int, $limitPerPage: Int) {
+        getLatestPodcastEpisodes(uuids: $uuids, page: $page, limitPerPage: $limitPerPage){
           uuid
           name
           subtitle
@@ -127,6 +135,8 @@ export const getLatestPodcastEpisodes = async (uuids: string[]) => {
       }`,
       variables: {
         uuids,
+        page,
+        limitPerPage,
       },
     });
     if (rsp.data?.errors) {

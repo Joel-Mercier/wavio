@@ -187,7 +187,11 @@ export default function PodcastListItem({
         </RichText>
         <Text className="flex-1 text-white">
           {podcast.datePublished &&
-            `${formatDistanceToNow(fromUnixTime(podcast.datePublished))} ago`}
+            t("app.podcasts.publishedAt", {
+              distance: formatDistanceToNow(
+                fromUnixTime(podcast.datePublished),
+              ),
+            })}
           {" ⦁ "}
           {`${secondsToMinutes(podcast.duration)} min`}
         </Text>

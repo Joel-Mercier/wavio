@@ -15,7 +15,7 @@ import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { useLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
+import { useInfiniteLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -32,9 +32,20 @@ export default function FavoritePodcastsScreen() {
   const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
-  const { data, isLoading, error } = useLatestPodcastEpisodes(
-    favoritePodcasts.map((podcast) => podcast.uuid),
-  );
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteLatestPodcastEpisodes({
+    uuids: favoritePodcasts.map((podcast) => podcast.uuid),
+  });
+  const episodes =
+    data?.pages.flatMap(
+      (page) => page.data?.getLatestPodcastEpisodes ?? [],
+    ) ?? [];
 
   return (
     <Box className="h-full">
@@ -85,7 +96,7 @@ export default function FavoritePodcastsScreen() {
       </HStack>
       {taddyPodcastApiKey && taddyPodcastUserId ? (
         <FlashList
-          data={data?.data?.getLatestPodcastEpisodes || loadingData(16)}
+          data={isLoading ? loadingData(16) : episodes}
           renderItem={({
             item,
             index,
@@ -99,7 +110,18 @@ export default function FavoritePodcastsScreen() {
               <PodcastListItem podcast={item} index={index} />
             )
           }
-          keyExtractor={(item) => item.uuid}
+          keyExtractor={(item, index) => item.uuid ?? String(index)}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() =>
+            isFetchingNextPage ? (
+              <PodcastListItemSkeleton index={1} />
+            ) : null
+          }
           ListHeaderComponent={() => (
             <Box className="px-6">
               <Heading className="text-white" size="2xl">

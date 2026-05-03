@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { usePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
+import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import useImageColors from "@/hooks/useImageColors";
 import type {
   Genre,
@@ -51,9 +51,20 @@ export default function PodcastSeriesScreen() {
   podcastSeries.genres = (podcastSeries.genres as never as string)?.split(
     ",",
   ) as PodcastSeries["genres"];
-  const { data, isLoading, error } = usePodcastSeries({
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfinitePodcastSeries({
     uuid: podcastSeries.id,
   });
+  const episodes =
+    data?.pages.flatMap(
+      (page) => page.data?.getPodcastSeries?.episodes ?? [],
+    ) ?? [];
   const colors = useImageColors(podcastSeries.imageUrl);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -145,7 +156,7 @@ export default function PodcastSeriesScreen() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.data?.getPodcastSeries?.episodes || loadingData(4)}
+        data={isLoading ? loadingData(4) : episodes}
         renderItem={({
           item,
           index,
@@ -163,6 +174,17 @@ export default function PodcastSeriesScreen() {
               seriesName={podcastSeries.name}
             />
           )
+        }
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() =>
+          isFetchingNextPage ? (
+            <PodcastListItemSkeleton index={1} />
+          ) : null
         }
         ListHeaderComponent={() => (
           <LinearGradient

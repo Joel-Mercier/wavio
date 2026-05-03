@@ -65,7 +65,6 @@ export default function QueueDetail() {
           <FlashList
             data={tracks}
             keyExtractor={(item, index) => `${item.id}:${index}`}
-            estimatedItemSize={72}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingBottom:

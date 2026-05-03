@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   getLatestPodcastEpisodes,
   getMultiplePodcastEpisodes,
@@ -87,7 +87,7 @@ export const useLatestPodcastEpisodes = (uuids: string[]) => {
   return useQuery({
     queryKey: ["taddyPodcasts:getLatestPodcastEpisodes", uuids],
     queryFn: async () => {
-      const response = await getLatestPodcastEpisodes(uuids);
+      const response = await getLatestPodcastEpisodes({ uuids });
       if (response.data?.getLatestPodcastEpisodes) {
         const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
         for (const episode of response.data.getLatestPodcastEpisodes) {
@@ -97,6 +97,111 @@ export const useLatestPodcastEpisodes = (uuids: string[]) => {
         }
       }
       return response;
+    },
+  });
+};
+
+export const useInfiniteLatestPodcastEpisodes = ({
+  uuids,
+  limitPerPage = 25,
+}: {
+  uuids: string[];
+  limitPerPage?: number;
+}) => {
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  return useInfiniteQuery({
+    queryKey: [
+      "taddyPodcasts:getLatestPodcastEpisodes:infinite",
+      uuids,
+      limitPerPage,
+    ],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await getLatestPodcastEpisodes({
+        uuids,
+        page: pageParam,
+        limitPerPage,
+      });
+      if (response.data?.getLatestPodcastEpisodes) {
+        const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
+        for (const episode of response.data.getLatestPodcastEpisodes) {
+          episode.podcastSeries.isFavorite = favoriteUuids.has(
+            episode.podcastSeries.uuid,
+          );
+        }
+      }
+      return response;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const episodes = lastPage.data?.getLatestPodcastEpisodes ?? [];
+      if (episodes.length < limitPerPage) {
+        return undefined;
+      }
+      return allPages.length + 1;
+    },
+    enabled: uuids.length > 0,
+  });
+};
+
+export const useInfinitePodcastSeries = ({
+  uuid,
+  itunesId,
+  rssUrl,
+  name,
+  limitPerPage = 25,
+  sortOrder,
+  searchTerm,
+}: {
+  uuid?: string;
+  itunesId?: number;
+  rssUrl?: string;
+  name?: string;
+  limitPerPage?: number;
+  sortOrder?: keyof typeof SortOrder;
+  searchTerm?: string;
+}) => {
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  return useInfiniteQuery({
+    queryKey: [
+      "taddyPodcasts:getPodcastSeries:infinite",
+      uuid,
+      itunesId,
+      rssUrl,
+      name,
+      limitPerPage,
+      sortOrder,
+      searchTerm,
+    ],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await getPodcastSeries({
+        uuid,
+        itunesId,
+        rssUrl,
+        name,
+        page: pageParam,
+        limitPerPage,
+        sortOrder,
+        searchTerm,
+      });
+      if (response.data?.getPodcastSeries) {
+        const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
+        const isFavorite = favoriteUuids.has(
+          response.data.getPodcastSeries.uuid,
+        );
+        response.data.getPodcastSeries.isFavorite = isFavorite;
+        for (const episode of response.data.getPodcastSeries.episodes ?? []) {
+          episode.podcastSeries.isFavorite = isFavorite;
+        }
+      }
+      return response;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const episodes = lastPage.data?.getPodcastSeries?.episodes ?? [];
+      if (episodes.length < limitPerPage) {
+        return undefined;
+      }
+      return allPages.length + 1;
     },
   });
 };
