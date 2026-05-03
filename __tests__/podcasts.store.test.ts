@@ -104,8 +104,15 @@ describe("podcasts store - recommendations", () => {
     expect(get().lastUsedGenreIndex).toBe(3);
   });
 
-  it("getGenreRotation returns empty when no favorites", () => {
-    expect(get().getGenreRotation()).toEqual([]);
+  it("getGenreRotation returns default genres when no favorites", () => {
+    expect(get().getGenreRotation()).toEqual([
+      "PODCASTSERIES_NEWS_DAILY_NEWS",
+      "PODCASTSERIES_COMEDY",
+      "PODCASTSERIES_TECHNOLOGY",
+      "PODCASTSERIES_SCIENCE",
+      "PODCASTSERIES_HISTORY",
+      "PODCASTSERIES_BUSINESS",
+    ]);
   });
 
   it("getGenreRotation returns unique genres across favorites", () => {
@@ -124,6 +131,15 @@ describe("podcasts store - recommendations", () => {
     expect(params).toEqual({
       language: "ENGLISH",
       country: "UNITED_STATES_OF_AMERICA",
+      excludeUuids: [],
+      genres: [
+        "PODCASTSERIES_NEWS_DAILY_NEWS",
+        "PODCASTSERIES_COMEDY",
+        "PODCASTSERIES_TECHNOLOGY",
+        "PODCASTSERIES_SCIENCE",
+        "PODCASTSERIES_HISTORY",
+        "PODCASTSERIES_BUSINESS",
+      ],
     });
   });
 
@@ -133,7 +149,7 @@ describe("podcasts store - recommendations", () => {
     const before = get().lastUsedGenreIndex;
     const params = get().getRecommendationParams();
     expect(params.excludeUuids?.sort()).toEqual(["a", "b"]);
-    expect(params.genres).toHaveLength(1);
+    expect(params.genres).toHaveLength(2);
     expect(get().lastUsedGenreIndex).toBe(before);
   });
 
