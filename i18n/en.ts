@@ -131,6 +131,11 @@ export default {
         shareErrorMessage: "An error occurred while sharing the podcast",
         subscribe: "Subscribe",
         unsubscribe: "Unsubscribe",
+        tabEpisodes: "Episodes",
+        tabAbout: "About",
+        tabMoreLikeThis: "More like this",
+        moreLikeThisEmpty: "No similar podcasts found",
+        aboutEmpty: "No description available",
         searchPlaceholder: "Search podcasts",
         dailyTopChartsByCountry: "Top podcasts in {{country, titlecase}} today",
         dailyTopChartsByGenre:

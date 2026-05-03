@@ -1794,6 +1794,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-pager-view (8.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - SwiftUIIntrospect (~> 1.0)
+    - Yoga
   - react-native-safe-area-context (5.7.0):
     - hermes-engine
     - RCTRequired
@@ -2564,6 +2587,7 @@ PODS:
   - SwiftDraw (0.27.0):
     - SwiftDrawDOM (~> 0.27.0)
   - SwiftDrawDOM (0.27.0)
+  - SwiftUIIntrospect (1.3.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2644,6 +2668,7 @@ DEPENDENCIES:
   - react-native-carplay (from `../node_modules/react-native-carplay`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
+  - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2700,6 +2725,7 @@ SPEC REPOS:
     - SDWebImageWebPCoder
     - SwiftDraw
     - SwiftDrawDOM
+    - SwiftUIIntrospect
 
 EXTERNAL SOURCES:
   EXApplication:
@@ -2855,6 +2881,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
+  react-native-pager-view:
+    :path: "../node_modules/react-native-pager-view"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-webview:
@@ -3023,6 +3051,7 @@ SPEC CHECKSUMS:
   react-native-carplay: 8f388f6f73e5e0f73ed154ad8794371343ee20c0
   react-native-keyboard-controller: d3b10138cca486acf5beda70959269c4ccceeda7
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
+  react-native-pager-view: adc7d78123fb395e03a70d19e8d75805b49838b5
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a
   react-native-webview: 0ed52ddb2eafc64a502871218440b8b4d37961c3
   React-NativeModulesApple: 9068613f7650828eed29ead6fc0d0a1620117e6a
@@ -3071,6 +3100,7 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SwiftDraw: c3fb77c08081f1255f33bcc0fd3c2e00fbc9bd46
   SwiftDrawDOM: 8e7d9812af1ef6e06230e72769e97838e6c7c765
+  SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: e41d64347f52d634dd8c2f6bac33f95081959fd3
 
 PODFILE CHECKSUM: 3ba5de50ab4e0502ba18464ab1f82f235e2cd215

@@ -3,18 +3,24 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Podcast } from "lucide-react-native";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CollapsibleTabs, {
+  type CollapsibleSceneProps,
+} from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
+import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
+import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -28,20 +34,26 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
+import {
+  useInfinitePodcastSeries,
+  usePopularContent,
+} from "@/hooks/taddyPodcasts/usePodcasts";
 import useImageColors from "@/hooks/useImageColors";
 import type {
   Genre,
+  Language,
   PodcastEpisode,
   PodcastSeries,
 } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
+
+const APP_BAR_ROW_HEIGHT = 56;
+const TAB_BAR_HEIGHT = 48;
 
 export default function PodcastSeriesScreen() {
   const { t } = useTranslation();
@@ -51,25 +63,35 @@ export default function PodcastSeriesScreen() {
   podcastSeries.genres = (podcastSeries.genres as never as string)?.split(
     ",",
   ) as PodcastSeries["genres"];
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfinitePodcastSeries({
-    uuid: podcastSeries.id,
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfinitePodcastSeries({
+      uuid: podcastSeries.id,
+    });
+  const episodes = useMemo(
+    () =>
+      data?.pages.flatMap(
+        (page) => page.data?.getPodcastSeries?.episodes ?? [],
+      ) ?? [],
+    [data],
+  );
+  const series = data?.pages?.[0]?.data?.getPodcastSeries ?? null;
+  const description = series?.description ?? null;
+  const firstGenre = podcastSeries.genres?.[0];
+  const seriesLanguage = series?.language as keyof typeof Language | undefined;
+  const { data: similarData, isLoading: isLoadingSimilar } = usePopularContent({
+    genres: firstGenre ? [firstGenre as keyof typeof Genre] : undefined,
+    language: seriesLanguage,
+    limitPerPage: 25,
   });
-  const episodes =
-    data?.pages.flatMap(
-      (page) => page.data?.getPodcastSeries?.episodes ?? [],
-    ) ?? [];
+  const similarPodcasts = useMemo(() => {
+    const list = similarData?.data?.getPopularContent?.podcastSeries ?? [];
+    return list.filter((p) => p.uuid !== podcastSeries.id);
+  }, [similarData, podcastSeries.id]);
   const colors = useImageColors(podcastSeries.imageUrl);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const toast = useToast();
-  const offsetY = useSharedValue(0);
+  const scrollY = useSharedValue(0);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
@@ -80,12 +102,11 @@ export default function PodcastSeriesScreen() {
   );
   const headerStyle = useAnimatedStyle(() => {
     return {
-      opacity: interpolate(offsetY.value, [0, 60], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(scrollY.value, [0, 60], [0, 1], Extrapolation.CLAMP),
     };
   });
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
-  });
+
+  const minTopInset = insets.top + APP_BAR_ROW_HEIGHT;
 
   const handleAddFavoritePodcastPress = () => {
     addFavoritePodcast(podcastSeries as PodcastSeries);
@@ -119,10 +140,206 @@ export default function PodcastSeriesScreen() {
     });
   };
 
+  const renderHeader = () => (
+    <LinearGradient
+      colors={[
+        (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+          "#000",
+        "#000",
+      ]}
+      locations={[0, 1]}
+      style={{ paddingTop: minTopInset, paddingHorizontal: 24 }}
+    >
+      <VStack className="pt-2 pb-6">
+        <HStack className="items-center gap-x-4">
+          {podcastSeries.imageUrl ? (
+            <Image
+              source={{ uri: podcastSeries.imageUrl }}
+              className="w-32 h-32 rounded-md aspect-square"
+              alt={podcastSeries.name}
+            />
+          ) : (
+            <Box className="w-32 h-32 aspect-square rounded-md bg-primary-800 items-center justify-center">
+              <Podcast size={24} color={themeConfig.theme.colors.white} />
+            </Box>
+          )}
+          <VStack className="flex-1">
+            <Heading
+              numberOfLines={2}
+              className="text-white font-bold"
+              size="xl"
+            >
+              {podcastSeries.name}
+            </Heading>
+            <Text className="text-white" numberOfLines={1}>
+              {podcastSeries.authorName}
+            </Text>
+          </VStack>
+        </HStack>
+        <VStack className="mt-4">
+          {podcastSeries?.genres && (
+            <Text className="text-primary-100">
+              {Array.isArray(podcastSeries?.genres)
+                ? podcastSeries?.genres
+                    ?.map((genre) => t(`app.podcasts.genres.${genre}`))
+                    ?.join(", ")
+                : t(
+                    `app.podcasts.genres.${podcastSeries?.genres as unknown as string}`,
+                  )}
+            </Text>
+          )}
+          <FadeOutScaleDown
+            onPress={() =>
+              isFavorite
+                ? handleRemoveFavoritePodcastPress()
+                : handleAddFavoritePodcastPress()
+            }
+            className="border border-white rounded-full self-start mt-4 py-1 px-2.5"
+          >
+            <Text className="text-white">
+              {isFavorite
+                ? t("app.podcasts.unsubscribe")
+                : t("app.podcasts.subscribe")}
+            </Text>
+          </FadeOutScaleDown>
+        </VStack>
+      </VStack>
+    </LinearGradient>
+  );
+
+  const renderEpisodes = ({
+    scrollHandler,
+    ref,
+    contentTopInset,
+  }: CollapsibleSceneProps) => (
+    <AnimatedFlashList
+      ref={ref}
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
+      data={isLoading ? loadingData(4) : episodes}
+      renderItem={({ item, index }: { item: PodcastEpisode; index: number }) =>
+        isLoading ? (
+          <PodcastListItemSkeleton index={index} />
+        ) : (
+          <PodcastListItem
+            podcast={item}
+            index={index}
+            isFavorite={isFavorite}
+            seriesName={podcastSeries.name}
+          />
+        )
+      }
+      onEndReached={() => {
+        if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={() =>
+        isFetchingNextPage ? <PodcastListItemSkeleton index={1} /> : null
+      }
+      contentContainerStyle={{
+        paddingTop: contentTopInset,
+        paddingBottom: insets.bottom + bottomTabBarHeight,
+      }}
+      scrollIndicatorInsets={{ top: contentTopInset }}
+      showsVerticalScrollIndicator={false}
+    />
+  );
+
+  const renderAbout = ({
+    scrollHandler,
+    ref,
+    contentTopInset,
+  }: CollapsibleSceneProps) => (
+    <Animated.ScrollView
+      ref={ref}
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
+      contentContainerStyle={{
+        paddingTop: contentTopInset + 24,
+        paddingHorizontal: 24,
+        paddingBottom:
+          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        minHeight: contentTopInset + 600,
+      }}
+      scrollIndicatorInsets={{ top: contentTopInset }}
+      showsVerticalScrollIndicator={false}
+    >
+      {description ? (
+        <RichText className="text-white">{description}</RichText>
+      ) : (
+        <Text className="text-primary-100">{t("app.podcasts.aboutEmpty")}</Text>
+      )}
+    </Animated.ScrollView>
+  );
+
+  const renderMoreLikeThis = ({
+    scrollHandler,
+    ref,
+    contentTopInset,
+  }: CollapsibleSceneProps) => (
+    <AnimatedFlashList
+      ref={ref}
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
+      data={isLoadingSimilar ? loadingData(4) : similarPodcasts}
+      renderItem={({ item, index }: { item: PodcastSeries; index: number }) =>
+        isLoadingSimilar ? (
+          <PodcastListItemSkeleton index={index} />
+        ) : (
+          <PodcastSeriesListItem podcast={item} index={index} />
+        )
+      }
+      ListEmptyComponent={() =>
+        !isLoadingSimilar ? (
+          <Box className="px-6 mt-8">
+            <Text className="text-primary-100">
+              {t("app.podcasts.moreLikeThisEmpty")}
+            </Text>
+          </Box>
+        ) : null
+      }
+      contentContainerStyle={{
+        paddingTop: contentTopInset,
+        paddingBottom:
+          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+      }}
+      scrollIndicatorInsets={{ top: contentTopInset }}
+      showsVerticalScrollIndicator={false}
+    />
+  );
+
+  const tabs = [
+    {
+      key: "episodes",
+      title: t("app.podcasts.tabEpisodes"),
+      render: renderEpisodes,
+    },
+    {
+      key: "about",
+      title: t("app.podcasts.tabAbout"),
+      render: renderAbout,
+    },
+    {
+      key: "more",
+      title: t("app.podcasts.tabMoreLikeThis"),
+      render: renderMoreLikeThis,
+    },
+  ];
+
   return (
-    <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
+    <Box className="h-full bg-black">
+      <CollapsibleTabs
+        tabs={tabs}
+        renderHeader={renderHeader}
+        tabBarHeight={TAB_BAR_HEIGHT}
+        minTopInset={minTopInset}
+        scrollY={scrollY}
+      />
+      <Animated.View
+        pointerEvents="box-none"
+        className="w-full z-20 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
         <LinearGradient
@@ -138,11 +355,7 @@ export default function PodcastSeriesScreen() {
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
-            <FadeOutScaleDown onPress={() => router.back()}>
-              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
-              </Box>
-            </FadeOutScaleDown>
+            <Box className="w-10" />
             <Heading
               numberOfLines={1}
               className="text-white text-center font-bold ml-6 truncate flex-1"
@@ -153,119 +366,20 @@ export default function PodcastSeriesScreen() {
             <Box className="w-10" />
           </HStack>
         </LinearGradient>
-      </AnimatedBox>
-      <AnimatedFlashList
-        onScroll={scrollHandler}
-        data={isLoading ? loadingData(4) : episodes}
-        renderItem={({
-          item,
-          index,
-        }: {
-          item: PodcastEpisode;
-          index: number;
-        }) =>
-          isLoading ? (
-            <PodcastListItemSkeleton index={index} />
-          ) : (
-            <PodcastListItem
-              podcast={item}
-              index={index}
-              isFavorite={isFavorite}
-              seriesName={podcastSeries.name}
-            />
-          )
-        }
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={() =>
-          isFetchingNextPage ? (
-            <PodcastListItemSkeleton index={1} />
-          ) : null
-        }
-        ListHeaderComponent={() => (
-          <LinearGradient
-            colors={[
-              (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-                "#000",
-              "#000",
-            ]}
-            locations={[0, 0.8]}
-            className="px-6"
-            style={{ paddingTop: insets.top, paddingHorizontal: 24 }}
-          >
-            <VStack className="mt-6">
-              <FadeOutScaleDown
-                onPress={() => router.back()}
-                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center mb-6"
-              >
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
-              </FadeOutScaleDown>
-              <HStack className="items-center gap-x-4">
-                {podcastSeries.imageUrl ? (
-                  <Image
-                    source={{ uri: podcastSeries.imageUrl }}
-                    className="w-32 h-32 rounded-md aspect-square"
-                    alt={podcastSeries.name}
-                  />
-                ) : (
-                  <Box className="w-32 h-32 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                    <Podcast size={24} color={themeConfig.theme.colors.white} />
-                  </Box>
-                )}
-                <VStack className="flex-1">
-                  <Heading
-                    numberOfLines={2}
-                    className="text-white font-bold"
-                    size="xl"
-                  >
-                    {podcastSeries.name}
-                  </Heading>
-                  <Text className="text-white" numberOfLines={1}>
-                    {podcastSeries.authorName}
-                  </Text>
-                </VStack>
-              </HStack>
-              <VStack className="mt-4">
-                {podcastSeries?.genres && (
-                  <Text className="text-primary-100">
-                    {Array.isArray(podcastSeries?.genres)
-                      ? podcastSeries?.genres
-                          ?.map((genre) => t(`app.podcasts.genres.${genre}`))
-                          ?.join(", ")
-                      : t(
-                          `app.podcasts.genres.${podcastSeries?.genres as unknown as string}`,
-                        )}
-                  </Text>
-                )}
-                <FadeOutScaleDown
-                  onPress={() =>
-                    isFavorite
-                      ? handleRemoveFavoritePodcastPress()
-                      : handleAddFavoritePodcastPress()
-                  }
-                  className="border border-white rounded-full self-start mt-4 py-1 px-2.5"
-                >
-                  <Text className="text-white">
-                    {isFavorite
-                      ? t("app.podcasts.unsubscribe")
-                      : t("app.podcasts.subscribe")}
-                  </Text>
-                </FadeOutScaleDown>
-              </VStack>
-            </VStack>
-          </LinearGradient>
-        )}
-        contentContainerStyle={{
-          paddingBottom: insets.bottom + bottomTabBarHeight,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
-        }}
-        showsVerticalScrollIndicator={false}
-      />
+      </Animated.View>
+      <Box
+        pointerEvents="box-none"
+        className="absolute left-0 right-0 z-30"
+        style={{ top: insets.top + 8 }}
+      >
+        <Box className="px-6">
+          <FadeOutScaleDown onPress={() => router.back()}>
+            <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+              <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+            </Box>
+          </FadeOutScaleDown>
+        </Box>
+      </Box>
     </Box>
   );
 }

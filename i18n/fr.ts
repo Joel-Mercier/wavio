@@ -134,6 +134,11 @@ export default {
           "Une erreur s'est produite lors du partage du podcast",
         subscribe: "S'abonner",
         unsubscribe: "Se désabonner",
+        tabEpisodes: "Épisodes",
+        tabAbout: "À propos",
+        tabMoreLikeThis: "Plus comme ça",
+        moreLikeThisEmpty: "Aucun podcast similaire trouvé",
+        aboutEmpty: "Aucune description disponible",
         searchPlaceholder: "Rechercher des podcasts",
         dailyTopChartsByCountry:
           "Top des podcasts en {{country, titlecase}} aujourd'hui",
