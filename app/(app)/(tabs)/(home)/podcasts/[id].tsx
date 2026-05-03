@@ -33,6 +33,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -304,9 +305,9 @@ export default function PodcastScreen() {
               </HStack>
             </HStack>
             {podcast.description && (
-              <Text className="text-md text-primary-100 mt-4">
+              <RichText className="text-md text-primary-100 mt-4">
                 {podcast.description}
-              </Text>
+              </RichText>
             )}
             <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
               <HStack className="mt-6 items-center justify-between">

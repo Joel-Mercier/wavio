@@ -47,7 +47,7 @@ export const getPodcastSeries = async ({
           name
           language
           genres
-          description(shouldStripHtmlTags: true)
+          description(shouldStripHtmlTags: false)
           datePublished
           imageUrl
           websiteUrl
@@ -58,7 +58,7 @@ export const getPodcastSeries = async ({
             uuid
             name
             duration
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             audioUrl
             imageUrl
@@ -67,7 +67,7 @@ export const getPodcastSeries = async ({
               uuid
               name
               imageUrl
-              description(shouldStripHtmlTags: true)
+              description(shouldStripHtmlTags: false)
               genres
               language
               authorName
@@ -109,7 +109,7 @@ export const getLatestPodcastEpisodes = async (uuids: string[]) => {
           name
           subtitle
           duration
-          description(shouldStripHtmlTags: true)
+          description(shouldStripHtmlTags: false)
           datePublished
           audioUrl
           imageUrl
@@ -120,7 +120,7 @@ export const getLatestPodcastEpisodes = async (uuids: string[]) => {
             imageUrl
             genres
             language
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             authorName
           }
         }
@@ -151,7 +151,7 @@ export const getMultiplePodcastSeries = async (uuids: string[]) => {
           uuid
           name
           duration
-          description(shouldStripHtmlTags: true)
+          description(shouldStripHtmlTags: false)
           datePublished
           imageUrl
           authorName
@@ -187,7 +187,7 @@ export const getMultiplePodcastEpisodes = async (uuids: string[]) => {
           name
           subtitle
           duration
-          description(shouldStripHtmlTags: true)
+          description(shouldStripHtmlTags: false)
           datePublished
           audioUrl
           imageUrl
@@ -196,7 +196,7 @@ export const getMultiplePodcastEpisodes = async (uuids: string[]) => {
             uuid
             name
             imageUrl
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             genres
             language
             authorName
@@ -246,7 +246,7 @@ export const getTopChartsByCountry = async ({
             name
             language
             genres
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             imageUrl
             websiteUrl
@@ -257,7 +257,7 @@ export const getTopChartsByCountry = async ({
             name
             subtitle
             duration
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             audioUrl
             imageUrl
@@ -267,7 +267,7 @@ export const getTopChartsByCountry = async ({
               name
               language
               genres
-              description(shouldStripHtmlTags: true)
+              description(shouldStripHtmlTags: false)
               datePublished
               imageUrl
               authorName
@@ -324,7 +324,7 @@ export const getTopChartsByGenres = async ({
             name
             language
             genres
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             imageUrl
             websiteUrl
@@ -335,7 +335,7 @@ export const getTopChartsByGenres = async ({
             name
             subtitle
             duration
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             audioUrl
             imageUrl
@@ -345,7 +345,7 @@ export const getTopChartsByGenres = async ({
               name
               language
               genres
-              description(shouldStripHtmlTags: true)
+              description(shouldStripHtmlTags: false)
               datePublished
               imageUrl
               websiteUrl
@@ -487,7 +487,7 @@ export const search = async ({
             name
             language
             genres
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             imageUrl
             websiteUrl
@@ -498,7 +498,7 @@ export const search = async ({
             name
             subtitle
             duration
-            description(shouldStripHtmlTags: true)
+            description(shouldStripHtmlTags: false)
             datePublished
             audioUrl
             imageUrl
@@ -507,7 +507,7 @@ export const search = async ({
               uuid
               name
               imageUrl
-              description(shouldStripHtmlTags: true)
+              description(shouldStripHtmlTags: false)
               genres
               language
               authorName

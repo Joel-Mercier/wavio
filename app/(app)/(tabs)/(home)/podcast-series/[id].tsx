@@ -64,6 +64,9 @@ export default function PodcastSeriesScreen() {
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
   );
+  const isFavorite = usePodcasts((store) =>
+    store.favoritePodcasts.some((fav) => fav.uuid === podcastSeries.id),
+  );
   const headerStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(offsetY.value, [0, 60], [0, 1], Extrapolation.CLAMP),
@@ -156,7 +159,7 @@ export default function PodcastSeriesScreen() {
             <PodcastListItem
               podcast={item}
               index={index}
-              isFavorite={data?.data?.getPodcastSeries?.isFavorite}
+              isFavorite={isFavorite}
               seriesName={podcastSeries.name}
             />
           )
@@ -218,14 +221,14 @@ export default function PodcastSeriesScreen() {
                 )}
                 <FadeOutScaleDown
                   onPress={() =>
-                    podcastSeries.isFavorite
+                    isFavorite
                       ? handleRemoveFavoritePodcastPress()
                       : handleAddFavoritePodcastPress()
                   }
                   className="border border-white rounded-full self-start mt-4 py-1 px-2.5"
                 >
                   <Text className="text-white">
-                    {podcastSeries.isFavorite
+                    {isFavorite
                       ? t("app.podcasts.unsubscribe")
                       : t("app.podcasts.subscribe")}
                   </Text>

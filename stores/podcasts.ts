@@ -53,6 +53,7 @@ interface PodcastsStore {
   getGenreRotation: () => (keyof typeof Genre)[];
   lastUsedGenreIndex: number;
   setLastUsedGenreIndex: (index: number) => void;
+  advanceGenreRotation: () => void;
 }
 
 export const usePodcastsBase = create<PodcastsStore>()(
@@ -112,6 +113,13 @@ export const usePodcastsBase = create<PodcastsStore>()(
       setLastUsedGenreIndex: (index: number) => {
         set({ lastUsedGenreIndex: index });
       },
+      advanceGenreRotation: () => {
+        const state = get();
+        const genreRotation = state.getGenreRotation();
+        if (genreRotation.length === 0) return;
+        const nextIndex = (state.lastUsedGenreIndex + 1) % genreRotation.length;
+        set({ lastUsedGenreIndex: nextIndex });
+      },
       getGenreRotation: () => {
         const state = get();
         const allGenres = state.favoritePodcasts.flatMap(
@@ -145,10 +153,6 @@ export const usePodcastsBase = create<PodcastsStore>()(
           const currentGenreIndex =
             state.lastUsedGenreIndex % genreRotation.length;
           selectedGenre = genreRotation[currentGenreIndex];
-
-          const nextIndex =
-            (state.lastUsedGenreIndex + 1) % genreRotation.length;
-          set({ lastUsedGenreIndex: nextIndex });
         }
 
         const allGenres = favoritePodcasts.flatMap((podcast) => podcast.genres);

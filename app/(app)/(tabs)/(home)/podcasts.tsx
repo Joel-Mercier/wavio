@@ -1,7 +1,7 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
-import type { ReactElement } from "react";
+import { type ReactElement, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -41,8 +41,14 @@ export default function PodcastsScreen() {
   const getRecommendationParams = usePodcasts(
     (store) => store.getRecommendationParams,
   );
+  const advanceGenreRotation = usePodcasts(
+    (store) => store.advanceGenreRotation,
+  );
   const insets = useSafeAreaInsets();
   const recommandationParams = getRecommendationParams();
+  useEffect(() => {
+    advanceGenreRotation();
+  }, [advanceGenreRotation]);
   const {
     data: topChartsByCountry,
     isLoading: isLoadingTopChartsByCountry,

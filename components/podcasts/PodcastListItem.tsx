@@ -17,6 +17,7 @@ import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -181,9 +182,9 @@ export default function PodcastListItem({
             </Text>
           </VStack>
         </HStack>
-        <Text className="flex-1 text-primary-100" numberOfLines={2}>
+        <RichText className="flex-1 text-primary-100" numberOfLines={2}>
           {podcast.description}
-        </Text>
+        </RichText>
         <Text className="flex-1 text-white">
           {podcast.datePublished &&
             `${formatDistanceToNow(fromUnixTime(podcast.datePublished))} ago`}

@@ -128,6 +128,10 @@ export default {
         goToPodcastSeries: "Voir le podcast",
         addToFavorites: "S'abonner",
         removeFromFavorites: "Se désabonner",
+        addToFavoritesSuccessMessage: "Abonné au podcast",
+        removeFromFavoritesSuccessMessage: "Désabonné du podcast",
+        shareErrorMessage:
+          "Une erreur s'est produite lors du partage du podcast",
         subscribe: "S'abonner",
         unsubscribe: "Se désabonner",
         searchPlaceholder: "Rechercher des podcasts",

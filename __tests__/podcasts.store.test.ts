@@ -127,13 +127,21 @@ describe("podcasts store - recommendations", () => {
     });
   });
 
-  it("getRecommendationParams excludes favorited uuids and rotates index", () => {
+  it("getRecommendationParams excludes favorited uuids without mutating state", () => {
     get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
     get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
     const before = get().lastUsedGenreIndex;
     const params = get().getRecommendationParams();
     expect(params.excludeUuids?.sort()).toEqual(["a", "b"]);
     expect(params.genres).toHaveLength(1);
+    expect(get().lastUsedGenreIndex).toBe(before);
+  });
+
+  it("advanceGenreRotation increments the rotation index", () => {
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
+    const before = get().lastUsedGenreIndex;
+    get().advanceGenreRotation();
     expect(get().lastUsedGenreIndex).not.toBe(before);
   });
 });
