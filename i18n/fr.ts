@@ -78,6 +78,7 @@ export default {
         lastFM: "Ouvrir dans Last.fm",
         rateModalTitle: "Noter l'artiste",
         likedSongs: "Titres likés",
+        likedAlbums: "Albums likés",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
         favoriteSuccessMessage: "Artiste ajouté avec succès aux favoris",
@@ -541,6 +542,9 @@ export default {
         rate: "Noter",
         share: "Partager",
         download: "Télécharger",
+        lyrics: "Paroles",
+        lyricsUnavailable:
+          "Aucune parole synchronisée disponible pour ce titre.",
       },
       shares: {
         title: "Partages",

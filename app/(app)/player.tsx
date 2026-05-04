@@ -15,6 +15,7 @@ import {
   EllipsisVertical,
   Heart,
   ListPlus,
+  Mic2,
   Pause,
   Play,
   PlusCircle,
@@ -32,7 +33,6 @@ import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -41,6 +41,8 @@ import { scheduleOnRN } from "react-native-worklets";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import CurrentLyricLine from "@/components/player/CurrentLyricLine";
+import LyricsDialog from "@/components/player/LyricsDialog";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -64,6 +66,7 @@ import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { useSyncedLyrics } from "@/hooks/useSyncedLyrics";
 import {
   seekTo,
   skipNext,
@@ -150,6 +153,9 @@ export default function PlayerScreen() {
       ? queue[currentIndex + 1]
       : null;
   const [coverWidth, setCoverWidth] = useState(0);
+  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
+  const { lyrics } = useSyncedLyrics(playingTrack?.id);
+  const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
   const coverTranslateX = useSharedValue(0);
 
   const coverRowStyle = useAnimatedStyle(() => ({
@@ -226,6 +232,11 @@ export default function PlayerScreen() {
         `https://musicbrainz.org/recording/${playingTrack?.musicBrainzId}`,
       );
     }
+  };
+
+  const handleShowLyricsPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowLyricsDialog(true);
   };
 
   const handleSimilarSongsPress = () => {
@@ -409,7 +420,7 @@ export default function PlayerScreen() {
               <EllipsisVertical size={24} color="white" />
             </FadeOutScaleDown>
           </HStack>
-          <VStack className="mt-12">
+          <VStack className={hasSyncedLyrics ? "mt-2" : "mt-12"}>
             <Box
               className="w-full mb-4 overflow-hidden"
               style={{ height: Math.max(0, coverWidth - 48) }}
@@ -451,6 +462,12 @@ export default function PlayerScreen() {
                 </GestureDetector>
               )}
             </Box>
+            {hasSyncedLyrics && (
+              <CurrentLyricLine
+                lyrics={lyrics}
+                positionSeconds={position ?? 0}
+              />
+            )}
             <VStack className="px-6">
               <HStack className="items-center justify-between">
                 <VStack className="my-6">
@@ -673,6 +690,19 @@ export default function PlayerScreen() {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {hasSyncedLyrics && (
+                  <FadeOutScaleDown onPress={handleShowLyricsPress}>
+                    <HStack className="items-center">
+                      <Mic2
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.lyrics")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleSimilarSongsPress}>
                   <HStack className="items-center">
                     <Sparkles
@@ -724,6 +754,12 @@ export default function PlayerScreen() {
             </Box>
           </BottomSheetView>
         </BottomSheetModal>
+        <LyricsDialog
+          isOpen={showLyricsDialog}
+          onClose={() => setShowLyricsDialog(false)}
+          lyrics={lyrics}
+          positionSeconds={position ?? 0}
+        />
       </SafeAreaView>
     </LinearGradient>
   );

@@ -75,13 +75,19 @@ export const getLyrics = async ({
   }
 };
 
-export const getLyricsBySongId = async (id: string) => {
+export const getLyricsBySongId = async (
+  id: string,
+  { enhanced }: { enhanced?: boolean } = {},
+) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ lyricsList: StructuredLyrics[] }>
+      OpenSubsonicResponse<{
+        lyricsList: { structuredLyrics?: StructuredLyrics[] };
+      }>
     >("/rest/getLyricsBySongId", {
       params: {
         id,
+        enhanced,
       },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {

@@ -1,24 +1,27 @@
 "use client";
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
+import { ImageBackground as ExpoImageBackground } from "expo-image";
+import { cssInterop } from "nativewind";
 import React from "react";
-import { ImageBackground as RNImageBackground } from "react-native";
+
+cssInterop(ExpoImageBackground, { className: "style" });
 
 const imageBackgroundStyle = tva({});
 
-const ImageBackground = React.forwardRef<
-  React.ComponentRef<typeof RNImageBackground>,
-  React.ComponentProps<typeof RNImageBackground>
->(function ImageBackground({ className, ...props }, ref) {
+type ImageBackgroundProps = React.ComponentProps<typeof ExpoImageBackground> & {
+  className?: string;
+};
+
+function ImageBackground({ className, ...props }: ImageBackgroundProps) {
   return (
-    <RNImageBackground
+    <ExpoImageBackground
+      {...props}
       className={imageBackgroundStyle({
         class: className,
       })}
-      {...props}
-      ref={ref}
     />
   );
-});
+}
 
 ImageBackground.displayName = "ImageBackground";
 

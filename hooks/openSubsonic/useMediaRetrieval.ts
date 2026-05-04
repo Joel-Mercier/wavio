@@ -63,12 +63,17 @@ export const useGetLyrics = (params: { artist?: string; title?: string }) => {
   });
 };
 
-export const useGetLyricsBySongId = (id: string) => {
+export const useGetLyricsBySongId = (
+  id: string,
+  { enhanced }: { enhanced?: boolean } = {},
+  enabled = true,
+) => {
   return useQuery({
-    queryKey: ["getLyricsBySongId", id],
+    queryKey: ["getLyricsBySongId", id, { enhanced }],
     queryFn: () => {
-      return getLyricsBySongId(id);
+      return getLyricsBySongId(id, { enhanced });
     },
+    enabled: enabled && !!id,
   });
 };
 

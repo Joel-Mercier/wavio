@@ -77,6 +77,7 @@ export default {
         lastFM: "Open in Last.fm",
         rateModalTitle: "Rate artist",
         likedSongs: "Liked songs",
+        likedAlbums: "Liked albums",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
         favoriteSuccessMessage: "Artist successfully added to favorites",
@@ -521,6 +522,8 @@ export default {
         rate: "Rate",
         share: "Share",
         download: "Download",
+        lyrics: "Lyrics",
+        lyricsUnavailable: "No synced lyrics available for this track.",
       },
       shares: {
         title: "Shares",

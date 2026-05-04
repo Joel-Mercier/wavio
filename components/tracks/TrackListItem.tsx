@@ -65,7 +65,6 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useUpdatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
@@ -576,7 +575,7 @@ export default function TrackListItem({
             >
               {track.title}
             </Heading>
-            <HStack className="flex-1 items-center">
+            <HStack className="items-center">
               {offlineModeEnabled && isTrackDownloaded(track.id) && (
                 <Box className="flex items-center justify-center rounded-full size-4 bg-emerald-500 mr-2">
                   <ArrowDown color={themeConfig.theme.colors.black} size={12} />

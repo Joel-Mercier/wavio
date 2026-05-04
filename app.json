@@ -66,6 +66,7 @@
         }
       ],
       "expo-font",
+      "expo-image",
       "expo-web-browser",
       "expo-localization",
       [

@@ -94,7 +94,6 @@ import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
-import { cn } from "@/utils/tailwind";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -130,6 +129,9 @@ export default function ArtistDetail() {
   const { data: starredData } = useStarred2({});
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
+  const likedAlbums =
+    starredData?.starred2?.album?.filter((album) => album.artistId === id) ??
+    [];
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
@@ -452,7 +454,7 @@ export default function ArtistDetail() {
         source={{ uri: artworkUrl(data?.artist?.coverArt) }}
         alt="Artist cover"
         className="h-96 absolute top-0 left-0 right-0"
-        resizeMode="cover"
+        contentFit="cover"
       />
 
       <AnimatedFlashList
@@ -536,7 +538,12 @@ export default function ArtistDetail() {
                 </HStack>
               </HStack>
               {likedSongs.length > 0 && (
-                <FadeOutScaleDown>
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/artists/[id]/liked-songs",
+                    params: { id },
+                  }}
+                >
                   <HStack className="items-center mb-6">
                     <Box className="relative">
                       <Image
@@ -560,10 +567,18 @@ export default function ArtistDetail() {
                       >
                         {t("app.artists.likedSongs")}
                       </Heading>
-                      <Text className="text-gray-400" numberOfLines={1}>
+                      <Text className="text-primary-100" numberOfLines={1}>
                         {t("app.shared.songCount", {
                           count: likedSongs.length,
                         })}
+                        {likedAlbums.length > 0 && (
+                          <>
+                            {" • "}
+                            {t("app.shared.albumCount", {
+                              count: likedAlbums.length,
+                            })}
+                          </>
+                        )}
                         {" • "}
                         {data?.artist?.name}
                       </Text>
@@ -738,7 +753,7 @@ export default function ArtistDetail() {
                       uri: artistInfoData?.artistInfo2?.mediumImageUrl,
                     }}
                     alt="Artist cover"
-                    resizeMode="cover"
+                    contentFit="cover"
                     className="aspect-square"
                   >
                     <Box className="absolute inset-0">
