@@ -21,6 +21,7 @@ import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 
 export default function FavoritesSearch() {
@@ -29,7 +30,12 @@ export default function FavoritesSearch() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const sort = useApp((store) => store.favoritesSort);
-  const { data: starredData, isLoading, error } = useStarred2({});
+  const musicFolderId = useCurrentMusicFolderId();
+  const {
+    data: starredData,
+    isLoading,
+    error,
+  } = useStarred2({ musicFolderId });
   const form = useForm({
     defaultValues: {
       query: "",

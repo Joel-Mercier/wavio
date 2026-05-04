@@ -23,6 +23,7 @@ import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRad
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentPlays from "@/stores/recentPlays";
 import { loadingData } from "@/utils/loadingData";
 
@@ -34,26 +35,27 @@ export default function HomeScreen() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const recentPlays = useRecentPlays((store) => store.recentPlays);
+  const musicFolderId = useCurrentMusicFolderId();
   const {
     data: recentlyPlayedData,
     isLoading: isLoadingRecentlyPlayed,
     error: recentlyPlayedError,
-  } = useAlbumList2({ type: "recent", size: 12 });
+  } = useAlbumList2({ type: "recent", size: 12, musicFolderId });
   const {
     data: recentData,
     isLoading: isLoadingRecent,
     error: recentError,
-  } = useAlbumList2({ type: "newest", size: 12 });
+  } = useAlbumList2({ type: "newest", size: 12, musicFolderId });
   const {
     data: mostPlayedData,
     isLoading: isLoadingMostPlayed,
     error: mostPlayedError,
-  } = useAlbumList2({ type: "frequent", size: 12 });
+  } = useAlbumList2({ type: "frequent", size: 12, musicFolderId });
   const {
     data: highestRatedData,
     isLoading: isLoadingHighestRated,
     error: highestRatedError,
-  } = useAlbumList2({ type: "highest", size: 12 });
+  } = useAlbumList2({ type: "highest", size: 12, musicFolderId });
   const {
     data: internetRadioStationsData,
     isLoading: isLoadingInternetRadioStations,

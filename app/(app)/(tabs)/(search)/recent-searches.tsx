@@ -20,6 +20,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { cn } from "@/utils/tailwind";
 
@@ -41,6 +42,7 @@ export default function RecentSearchesScreen() {
     },
   });
   const query = useStore(form.store, (state) => state.values.query);
+  const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSearch3(query, {
     albumCount: 12,
     albumOffset: 0,
@@ -48,6 +50,7 @@ export default function RecentSearchesScreen() {
     songOffset: 0,
     artistCount: 12,
     artistOffset: 0,
+    musicFolderId,
   });
 
   const searchData = useMemo(() => {

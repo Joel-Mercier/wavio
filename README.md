@@ -29,13 +29,14 @@ TODO
 ## Useful commands
 
 - `bun run start`: Start the app in development mode
+- `bun run android`: Start the app in development mode on Android
+- `bun run ios`: Start the app in development mode on iOS
 - `bun run web`: Start the app in development mode with web support
-- `bunx --bun expo build:android`: Build the app for Android
-- `bunx --bun expo build:ios`: Build the app for iOS
 - `bun run prebuild`: Prebuild the native development app
 - `bun run doctor`: Check the app for any potential issues
 - `bun run lint`: Lint the codebase
 - `bun run lint:fix`: Fix linting issues
+- `bun run test`: Run the test suite
 - `eas build --profile preview --platform android`: Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo
@@ -43,29 +44,30 @@ TODO
 ## Features
 
 - Home screen with recently added, most played, highest rated, and favorites
-- Artist screen with albums, songs, and similar artists
-- Album screen with songs, and similar albums
+- Artist screen with albums, songs, liked songs, and similar artists
+- Album screen with songs and similar albums
 - Playlist screen with songs
 - Search screen with genres, artists, albums, and songs
+- Recent searches history
 - Library screen with starred, playlists, albums, and artists
-- Player screen with audio controls
-- Floating player for easy access to currently playing song
-- Settings screen with user information and settings
-- Simlar songs screen with songs similar to the selected song
-- Podcasts screen with podcasts (provided by Taddy API)
+- Liked songs screen
+- Player screen with audio controls and synchronized lyrics
+- Floating player for easy access to the currently playing song
+- Queue screen with reordering support
+- Similar songs screen with songs similar to the selected song
+- Podcasts screen with podcast series and episodes (provided by Taddy API)
 - Internet radio stations from Navidrome
 - Offline downloads of favorited songs
-- Settings screen with server scanning, offline downloads, content and display settings
+- Music folders (libraries) filtering across home, search, and library
+- Activity screen with now playing users
 - Share screen with shareable links
 - Servers screen with multiple servers support
+- Settings screen with server scanning, offline downloads, content and display settings
 - French and English translations
 
-## Uselful links
+## Useful links
 
 - OpenSubsonic API documentation: https://opensubsonic.netlify.app/docs/
 - Navidrome documentation: https://www.navidrome.org/docs/
 - Expo documentation: https://docs.expo.dev/
 - React Native documentation: https://reactnative.dev/
-- React Native Audio Pro documentation: https://rnap.dev/
-- React Navigation documentation: https://reactnavigation.org/docs/getting-started/
-- Gluestack UI documentation: https://gluestack.io/ui/docs

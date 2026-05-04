@@ -2,6 +2,7 @@ import * as Application from "expo-application";
 import { useRouter } from "expo-router";
 import {
   History,
+  Library,
   ListMusic,
   LogOut,
   Server,
@@ -67,6 +68,11 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
 
   const handleServersPress = () => {
     router.navigate("/servers");
+    onClose();
+  };
+
+  const handleLibrariesPress = () => {
+    router.navigate("/libraries");
     onClose();
   };
 
@@ -167,6 +173,15 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 <Server size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.servers")}
+                </Heading>
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleLibrariesPress}
+              >
+                <Library size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  {t("app.shared.sidebar.libraries")}
                 </Heading>
               </Pressable>
               <Pressable

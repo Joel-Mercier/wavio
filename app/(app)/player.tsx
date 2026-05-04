@@ -248,6 +248,15 @@ export default function PlayerScreen() {
     });
   };
 
+  const handleAddToPlaylistPress = () => {
+    if (!playingTrack) return;
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/playlists/add-to-playlist",
+      params: { ids: [playingTrack.id] },
+    });
+  };
+
   const handlePlayPausePress = () => {
     togglePlayPause();
   };
@@ -644,7 +653,7 @@ export default function PlayerScreen() {
                 </VStack>
               </HStack>
               <VStack className="mt-6 gap-y-8">
-                <FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
                     <PlusCircle
                       size={24}

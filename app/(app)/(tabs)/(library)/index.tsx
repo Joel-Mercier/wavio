@@ -48,6 +48,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
@@ -77,13 +78,14 @@ export default function LibraryScreen() {
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { handleSheetPositionChange: handleSheetPositionChangeSort } =
     useBottomSheetBackHandler(bottomSheetModalSortRef);
+  const musicFolderId = useCurrentMusicFolderId();
   const {
     data: starredData,
     isLoading: isLoadingStarred,
     isFetching: isFetchingStarred,
     error: starredError,
     refetch: refetchStarred,
-  } = useStarred2({});
+  } = useStarred2({ musicFolderId });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,

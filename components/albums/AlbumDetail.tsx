@@ -773,8 +773,12 @@ export default function AlbumDetail() {
               }
               return (
                 <VStack>
-                  <HStack className="mt-6 mb-4 items-center justify-between">
-                    <Heading numberOfLines={1} size="xl" className="text-white">
+                  <HStack className="mt-6 mb-4 items-center justify-between gap-x-4">
+                    <Heading
+                      numberOfLines={1}
+                      size="xl"
+                      className="text-white flex-1 truncate"
+                    >
                       {t("app.albums.moreFromArtist", {
                         artist: discoverMoreData?.artist?.name,
                       })}

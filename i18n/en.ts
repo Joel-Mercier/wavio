@@ -541,6 +541,12 @@ export default {
           "Deleting the share will remove it permanently and will prevent others from accessing the shared sounds. Please confirm if you want to proceed.",
         editShareModalTitle: "Edit share",
       },
+      libraries: {
+        title: "Libraries",
+        allLibraries: "All libraries",
+        default: "Default library",
+        empty: "No libraries available",
+      },
       servers: {
         title: "Servers",
         addServer: "Add server",
@@ -614,6 +620,7 @@ export default {
           settings: "Settings",
           shares: "Shares",
           servers: "Servers",
+          libraries: "Libraries",
           logout: "Logout",
           currentServer: "Current server",
           version: "version {{version}}",

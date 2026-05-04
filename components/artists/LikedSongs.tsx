@@ -75,6 +75,7 @@ import {
   usePlayingTrack,
 } from "@/services/player";
 import useActivity from "@/stores/activity";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -94,7 +95,8 @@ export default function LikedSongs() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data } = useArtist(id);
-  const { data: starredData } = useStarred2({});
+  const musicFolderId = useCurrentMusicFolderId();
+  const { data: starredData } = useStarred2({ musicFolderId });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
   const likedAlbums =

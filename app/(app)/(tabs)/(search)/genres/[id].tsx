@@ -25,6 +25,7 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -46,9 +47,11 @@ export default function GenreScreen() {
     offsetY.value = event.contentOffset.y;
   });
   const { id } = useLocalSearchParams<{ id: string }>();
+  const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useAlbumList2({
     type: "byGenre",
     genre: id,
+    musicFolderId,
   });
   return (
     <Box className="h-full">

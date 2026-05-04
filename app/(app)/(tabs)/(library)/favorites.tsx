@@ -51,6 +51,7 @@ import {
   usePlayingTrack,
 } from "@/services/player";
 import useApp from "@/stores/app";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -68,7 +69,12 @@ export default function FavoritesScreen() {
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleSortSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetSortModalRef);
-  const { data: starredData, isLoading, error } = useStarred2({});
+  const musicFolderId = useCurrentMusicFolderId();
+  const {
+    data: starredData,
+    isLoading,
+    error,
+  } = useStarred2({ musicFolderId });
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const { offlineModeEnabled } = useOfflineDownloads();
   const sort = useApp((store) => store.favoritesSort);

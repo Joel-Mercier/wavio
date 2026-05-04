@@ -24,6 +24,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 
 export default function LibrarySearchScreen() {
   const { t } = useTranslation();
@@ -34,6 +35,7 @@ export default function LibrarySearchScreen() {
     },
   });
   const query = useStore(form.store, (state) => state.values.query);
+  const musicFolderId = useCurrentMusicFolderId();
 
   const {
     data: starredData,
@@ -41,7 +43,7 @@ export default function LibrarySearchScreen() {
     isFetching: isFetchingStarred,
     error: starredError,
     refetch: refetchStarred,
-  } = useStarred2({});
+  } = useStarred2({ musicFolderId });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,

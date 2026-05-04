@@ -17,6 +17,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { cn } from "@/utils/tailwind";
 
 export default function SearchResultsScreen() {
@@ -27,6 +28,7 @@ export default function SearchResultsScreen() {
   >(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
+  const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSearch3(query, {
     albumCount: 12,
     albumOffset: 0,
@@ -34,6 +36,7 @@ export default function SearchResultsScreen() {
     songOffset: 0,
     artistCount: 12,
     artistOffset: 0,
+    musicFolderId,
   });
   const router = useRouter();
   const form = useForm({

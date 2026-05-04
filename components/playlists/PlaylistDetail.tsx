@@ -494,10 +494,10 @@ export default function PlaylistDetail() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data || loadingData(16)}
+        data={!playlistData ? loadingData(16) : data || []}
         keyExtractor={(item: Child) => item.id}
         renderItem={({ item, index }: { item: Child; index: number }) =>
-          isLoading ? (
+          !playlistData ? (
             <TrackListItemSkeleton index={index} />
           ) : (
             <TrackListItem

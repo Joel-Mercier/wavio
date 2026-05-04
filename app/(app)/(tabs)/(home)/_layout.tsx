@@ -17,6 +17,7 @@ export default function HomeLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
+      <Stack.Screen name="libraries" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="queue" />
       <Stack.Screen name="podcasts" />
