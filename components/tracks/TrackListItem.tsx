@@ -66,10 +66,11 @@ import {
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
-import { playTracks, usePlayingTrack } from "@/services/player";
+import { playTracks } from "@/services/player";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";

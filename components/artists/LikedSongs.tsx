@@ -66,14 +66,10 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import {
-  playTracks,
-  togglePlayPause,
-  usePlayerStatus,
-  usePlayingTrack,
-} from "@/services/player";
+import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentPlays from "@/stores/recentPlays";

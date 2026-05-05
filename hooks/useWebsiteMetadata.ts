@@ -1,169 +1,108 @@
 import { decode } from "html-entities";
 import { useEffect, useState } from "react";
 
-function findOGTags(content: string, url: string) {
-  const metaTagOGRegex =
-    /<meta[^>]*(?:property=[ '"]*og:([^'"]*))?[^>]*(?:content=["]([^"]*)["])?[^>]*>/gi;
-  const matches = content.match(metaTagOGRegex);
-  const meta: Record<string, string> = {};
+const META_TAG_REGEX = /<meta\b[^>]*>/gi;
+const LINK_TAG_REGEX = /<link\b[^>]*>/gi;
+const ATTR_REGEX = /(\w[\w:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+const TITLE_REGEX = /<title[^>]*>([^<]*)<\/title>/i;
 
-  if (matches) {
-    const metaPropertyRegex = /<meta[^>]*property=[ "]*og:([^"]*)[^>]*>/i;
-    const metaContentRegex = /<meta[^>]*content=[ "]([^"]*)[^>]*>/i;
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+};
 
-    for (let i = matches.length; i--; ) {
-      let propertyMatch: RegExpExecArray | null;
-      let contentMatch: RegExpExecArray | null;
-      let metaName: string;
-      let metaValue: string;
-
-      try {
-        propertyMatch = metaPropertyRegex.exec(matches[i]);
-        contentMatch = metaContentRegex.exec(matches[i]);
-
-        if (!propertyMatch || !contentMatch) {
-          continue;
-        }
-
-        metaName = propertyMatch[1].trim();
-        metaValue = contentMatch[1].trim();
-
-        if (!metaName || !metaValue) {
-          continue;
-        }
-      } catch (error) {
-        if (__DEV__) {
-          console.log("Error on ", matches[i]);
-          console.log(error);
-        }
-
-        continue;
-      }
-
-      if (metaValue.length > 0) {
-        if (metaValue[0] === "/") {
-          if (metaValue.length <= 1 || metaValue[1] !== "/") {
-            if (url[url.length - 1] === "/") {
-              metaValue = url + metaValue.substring(1);
-            } else {
-              metaValue = url + metaValue;
-            }
-          } else {
-            // handle protocol agnostic meta URLs
-            if (url.indexOf("https://") === 0) {
-              metaValue = `https:${metaValue}`;
-            } else if (url.indexOf("http://") === 0) {
-              metaValue = `http:${metaValue}`;
-            }
-          }
-        }
-      } else {
-        continue;
-      }
-
-      meta[metaName] = decode(metaValue);
-    }
+function parseAttrs(tag: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  ATTR_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = ATTR_REGEX.exec(tag)) !== null) {
+    const [, name, dq, sq, uq] = match;
+    attrs[name.toLowerCase()] = dq ?? sq ?? uq ?? "";
   }
-
-  return meta;
+  return attrs;
 }
 
-function findHTMLMetaTags(content: string, url: string) {
-  const metaTagHTMLRegex =
-    /<meta(?:[^>]*(?:name|itemprop)=[ '"]([^'"]*))?[^>]*(?:[^>]*content=["]([^"]*)["])?[^>]*>/gi;
-  const matches = content.match(metaTagHTMLRegex);
-  const meta: Record<string, string> = {};
-
-  if (matches) {
-    const metaPropertyRegex = /<meta[^>]*(?:name|itemprop)=[ "]([^"]*)[^>]*>/i;
-    const metaContentRegex = /<meta[^>]*content=[ "]([^"]*)[^>]*>/i;
-
-    for (let i = matches.length; i--; ) {
-      let propertyMatch: RegExpExecArray | null;
-      let contentMatch: RegExpExecArray | null;
-      let metaName: string;
-      let metaValue: string;
-
-      try {
-        propertyMatch = metaPropertyRegex.exec(matches[i]);
-        contentMatch = metaContentRegex.exec(matches[i]);
-
-        if (!propertyMatch || !contentMatch) {
-          continue;
-        }
-
-        metaName = propertyMatch[1].trim();
-        metaValue = contentMatch[1].trim();
-
-        if (!metaName || !metaValue) {
-          continue;
-        }
-      } catch (error) {
-        if (__DEV__) {
-          console.log("Error on ", matches[i]);
-          console.log(error);
-        }
-
-        continue;
-      }
-
-      if (metaValue.length > 0) {
-        if (metaValue[0] === "/") {
-          if (metaValue.length <= 1 || metaValue[1] !== "/") {
-            if (url[url.length - 1] === "/") {
-              metaValue = url + metaValue.substring(1);
-            } else {
-              metaValue = url + metaValue;
-            }
-          } else {
-            // handle protocol agnostic meta URLs
-            if (url.indexOf("https://") === 0) {
-              metaValue = `https:${metaValue}`;
-            } else if (url.indexOf("http://") === 0) {
-              metaValue = `http:${metaValue}`;
-            }
-          }
-        }
-      } else {
-        continue;
-      }
-
-      meta[metaName] = decode(metaValue);
-    }
-
-    if (!meta.title) {
-      const titleRegex = /<title>([^>]*)<\/title>/i;
-      const titleMatch = content.match(titleRegex);
-
-      if (titleMatch) {
-        meta.title = decode(titleMatch[1]);
-      }
-    }
+function resolveUrl(value: string, baseUrl: string): string {
+  try {
+    return new URL(value, baseUrl).href;
+  } catch {
+    return value;
   }
-
-  return meta;
 }
 
-function parseMeta(
-  html: string,
-  url: string,
-  options: { fallbackOnHTMLTags: boolean },
-) {
-  let meta = findOGTags(html, url);
-  if (options.fallbackOnHTMLTags) {
-    try {
-      meta = {
-        ...findHTMLMetaTags(html, url),
-        ...meta,
-      };
-    } catch (error) {
-      if (__DEV__) {
-        console.log("Error in fallback", error);
+function findMetaTags(content: string, url: string): Record<string, string> {
+  const meta: Record<string, string> = {};
+  const htmlMeta: Record<string, string> = {};
+
+  const tags = content.match(META_TAG_REGEX);
+  if (tags) {
+    for (const tag of tags) {
+      const attrs = parseAttrs(tag);
+      const rawContent = attrs.content?.trim();
+      if (!rawContent) continue;
+
+      const value = decode(resolveUrl(rawContent, url));
+
+      if (attrs.property?.startsWith("og:")) {
+        const key = attrs.property.slice(3).trim();
+        if (key) meta[key] = value;
+      } else {
+        const htmlKey = (attrs.name || attrs.itemprop)?.trim();
+        if (htmlKey) htmlMeta[htmlKey] = value;
       }
     }
   }
 
-  return meta;
+  if (!htmlMeta.title) {
+    const titleMatch = content.match(TITLE_REGEX);
+    if (titleMatch) htmlMeta.title = decode(titleMatch[1].trim());
+  }
+
+  return { ...htmlMeta, ...meta };
+}
+
+function findIconLinks(content: string, url: string): string[] {
+  const icons: { href: string; priority: number }[] = [];
+  const tags = content.match(LINK_TAG_REGEX);
+  if (!tags) return [];
+
+  for (const tag of tags) {
+    const attrs = parseAttrs(tag);
+    const rel = attrs.rel?.toLowerCase();
+    const href = attrs.href?.trim();
+    if (!rel || !href) continue;
+    if (!/(^|\s)(icon|apple-touch-icon|shortcut)(\s|$)/.test(rel)) continue;
+    const priority = rel.includes("apple-touch-icon") ? 0 : 1;
+    icons.push({ href: decode(resolveUrl(href, url)), priority });
+  }
+
+  return icons.sort((a, b) => a.priority - b.priority).map((i) => i.href);
+}
+
+async function isImageUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      headers: BROWSER_HEADERS,
+    });
+    if (!response.ok) return false;
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.toLowerCase().startsWith("image/");
+  } catch {
+    return false;
+  }
+}
+
+async function pickFirstImage(candidates: string[]): Promise<string | null> {
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate || seen.has(candidate)) continue;
+    seen.add(candidate);
+    if (await isImageUrl(candidate)) return candidate;
+  }
+  return null;
 }
 
 const useWebsiteMetadata = (url?: string) => {
@@ -171,19 +110,56 @@ const useWebsiteMetadata = (url?: string) => {
 
   useEffect(() => {
     if (!url) return;
-    const fetchImage = async () => {
+    let cancelled = false;
+    const fetchMetadata = async () => {
       try {
         const response = await fetch(url, {
           method: "GET",
+          headers: BROWSER_HEADERS,
         });
         const data = await response.text();
-        const parsedMeta = parseMeta(data, url, { fallbackOnHTMLTags: true });
-        setMeta(parsedMeta);
+        const parsedMeta = findMetaTags(data, url);
+        const iconLinks = findIconLinks(data, url);
+
+        const rawCandidates = [
+          parsedMeta.image,
+          parsedMeta["twitter:image"],
+          parsedMeta["twitter:image:src"],
+          parsedMeta["msapplication-tileimage"],
+          ...iconLinks,
+        ].filter(Boolean) as string[];
+
+        const candidates = rawCandidates.flatMap((c) =>
+          c.includes("/wp-content/thumbnails/")
+            ? [c, c.replace("/wp-content/thumbnails/", "/wp-content/")]
+            : [c],
+        );
+
+        const validImage = await pickFirstImage(candidates);
+        if (validImage) {
+          parsedMeta.image = validImage;
+          parsedMeta["twitter:image"] = validImage;
+        } else {
+          delete parsedMeta.image;
+          delete parsedMeta["twitter:image"];
+        }
+
+        if (__DEV__) {
+          console.log("[useWebsiteMetadata]", url, {
+            status: response.status,
+            candidates,
+            picked: validImage,
+          });
+        }
+        if (!cancelled) setMeta(parsedMeta);
       } catch (error) {
-        console.error(error);
+        if (__DEV__) console.error("[useWebsiteMetadata]", url, error);
       }
     };
-    fetchImage();
+    fetchMetadata();
+    return () => {
+      cancelled = true;
+    };
   }, [url]);
 
   return meta;

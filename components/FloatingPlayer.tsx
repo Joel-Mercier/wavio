@@ -11,6 +11,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import FadeOut from "@/components/FadeOut";
 import MovingText from "@/components/MovingText";
+import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -24,14 +25,9 @@ import {
 } from "@/components/ui/toast";
 import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
-import {
-  skipNext,
-  skipPrevious,
-  togglePlayPause,
-  usePlayerStatus,
-  usePlayingTrack,
-} from "@/services/player";
+import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
@@ -42,7 +38,7 @@ const MAX_TRANSLATE = 140;
 
 export default function FloatingPlayer() {
   const { t } = useTranslation();
-  const status = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,14 +54,17 @@ export default function FloatingPlayer() {
   const updateTrack = useQueue((s) => s.updateTrack);
   const queryClient = useQueryClient();
 
+  const isRadio = !!playingTrack?.isRadio;
   const canSkipNext =
-    shuffle ||
-    repeatMode !== "off" ||
-    (currentIndex != null && currentIndex < queueLength - 1);
+    !isRadio &&
+    (shuffle ||
+      repeatMode !== "off" ||
+      (currentIndex != null && currentIndex < queueLength - 1));
   const canSkipPrevious =
-    shuffle ||
-    repeatMode !== "off" ||
-    (currentIndex != null && currentIndex > 0);
+    !isRadio &&
+    (shuffle ||
+      repeatMode !== "off" ||
+      (currentIndex != null && currentIndex > 0));
 
   const translateX = useSharedValue(0);
 
@@ -224,11 +223,6 @@ export default function FloatingPlayer() {
     return null;
   }
 
-  const progress =
-    status.duration && status.duration > 0
-      ? Math.min(1, Math.max(0, (status.currentTime ?? 0) / status.duration))
-      : 0;
-
   const backgroundColor =
     (colors?.platform === "ios" ? colors.background : colors?.muted) ||
     themeConfig.theme.colors.primary[500];
@@ -272,6 +266,7 @@ export default function FloatingPlayer() {
                   source={{ uri: playingTrack.artwork }}
                   className="w-12 h-12 rounded-md aspect-square"
                   alt="Track cover"
+                  contentFit={playingTrack.isRadio ? "contain" : "cover"}
                 />
               ) : (
                 <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
@@ -294,28 +289,30 @@ export default function FloatingPlayer() {
             </Animated.View>
           </HStack>
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-            <FadeOut
-              onPress={
-                playingTrack.starred
-                  ? handleUnfavoritePress
-                  : handleFavoritePress
-              }
-            >
-              <Heart
-                color={
+            {!playingTrack.isRadio && (
+              <FadeOut
+                onPress={
                   playingTrack.starred
-                    ? themeConfig.theme.colors.emerald[500]
-                    : themeConfig.theme.colors.white
+                    ? handleUnfavoritePress
+                    : handleFavoritePress
                 }
-                fill={
-                  playingTrack.starred
-                    ? themeConfig.theme.colors.emerald[500]
-                    : "transparent"
-                }
-              />
-            </FadeOut>
+              >
+                <Heart
+                  color={
+                    playingTrack.starred
+                      ? themeConfig.theme.colors.emerald[500]
+                      : themeConfig.theme.colors.white
+                  }
+                  fill={
+                    playingTrack.starred
+                      ? themeConfig.theme.colors.emerald[500]
+                      : "transparent"
+                  }
+                />
+              </FadeOut>
+            )}
             <FadeOut onPress={handlePlayPausePress}>
-              {status.playing ? (
+              {isPlaying ? (
                 <Pause
                   color={themeConfig.theme.colors.white}
                   stroke={undefined}
@@ -331,15 +328,7 @@ export default function FloatingPlayer() {
             </FadeOut>
           </HStack>
           <Box className="absolute inset-0 bg-black/30 -z-10" />
-          <Box
-            className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-100"
-            style={{ zIndex: 3 }}
-          >
-            <Box
-              className="h-full bg-white"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </Box>
+          <PlaybackProgressBar />
         </HStack>
       </Pressable>
     </GestureDetector>

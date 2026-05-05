@@ -34,6 +34,7 @@ export default function InternetRadioStationListItem({
             source={{ uri: meta.image || meta["twitter:image"] }}
             className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center"
             alt="Internet radio station cover"
+            contentFit="contain"
           />
         ) : (
           <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">

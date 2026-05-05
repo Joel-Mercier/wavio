@@ -78,15 +78,11 @@ import {
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
-import {
-  playTracks,
-  togglePlayPause,
-  usePlayerStatus,
-  usePlayingTrack,
-} from "@/services/player";
+import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -377,7 +373,7 @@ export default function AlbumDetail() {
     }
   };
 
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
   const isPlayingFromList = !!(
@@ -730,7 +726,7 @@ export default function AlbumDetail() {
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && playerStatus.playing ? (
+                      {isPlayingFromList && isPlaying ? (
                         <Pause
                           color={themeConfig.theme.colors.white}
                           fill={themeConfig.theme.colors.white}

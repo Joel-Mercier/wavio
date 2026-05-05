@@ -41,15 +41,11 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
-import {
-  playTracks,
-  togglePlayPause,
-  usePlayerStatus,
-  usePlayingTrack,
-} from "@/services/player";
+import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentPlays from "@/stores/recentPlays";

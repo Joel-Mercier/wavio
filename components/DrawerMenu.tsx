@@ -9,7 +9,6 @@ import {
   Settings,
   Share2,
 } from "lucide-react-native";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -28,8 +27,6 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
-import useServers from "@/stores/servers";
-import { switchToServer } from "@/utils/switchServer";
 
 interface DrawerMenuProps {
   showDrawer: boolean;
@@ -42,9 +39,6 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
   const username = useAuth((store) => store.username);
-  const currentServer = useServers((state) =>
-    state.servers.find((server) => server.current === true),
-  );
 
   const handleSettingsPress = () => {
     router.navigate("/settings");
@@ -80,22 +74,6 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
     logout();
     onClose();
   };
-
-  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
-
-  const handleCurrentServerPress = () => {
-    if (!currentServer) return;
-    setShowSwitchConfirm(true);
-  };
-
-  const handleConfirmSwitch = () => {
-    if (!currentServer) return;
-    setShowSwitchConfirm(false);
-    onClose();
-    switchToServer(router, currentServer.id);
-  };
-
-  const handleCancelSwitch = () => setShowSwitchConfirm(false);
 
   return (
     <Drawer isOpen={showDrawer} onClose={onClose} size="lg" anchor="left">
@@ -150,20 +128,11 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               </Pressable>
               <Pressable
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-                onPress={handleSettingsPress}
+                onPress={handleLibrariesPress}
               >
-                <Settings size={24} color={themeConfig.theme.colors.white} />
+                <Library size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.settings")}
-                </Heading>
-              </Pressable>
-              <Pressable
-                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-                onPress={handleSharesPress}
-              >
-                <Share2 size={24} color={themeConfig.theme.colors.white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.shares")}
+                  {t("app.shared.sidebar.libraries")}
                 </Heading>
               </Pressable>
               <Pressable
@@ -177,11 +146,20 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               </Pressable>
               <Pressable
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-                onPress={handleLibrariesPress}
+                onPress={handleSharesPress}
               >
-                <Library size={24} color={themeConfig.theme.colors.white} />
+                <Share2 size={24} color={themeConfig.theme.colors.white} />
                 <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.libraries")}
+                  {t("app.shared.sidebar.shares")}
+                </Heading>
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                onPress={handleSettingsPress}
+              >
+                <Settings size={24} color={themeConfig.theme.colors.white} />
+                <Heading size="lg" className="text-white font-normal">
+                  {t("app.shared.sidebar.settings")}
                 </Heading>
               </Pressable>
               <Pressable

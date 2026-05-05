@@ -70,15 +70,11 @@ import {
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
-import {
-  playTracks,
-  togglePlayPause,
-  usePlayerStatus,
-  usePlayingTrack,
-} from "@/services/player";
+import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";

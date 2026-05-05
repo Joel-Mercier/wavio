@@ -5,18 +5,18 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Box } from "@/components/ui/box";
+import { usePlaybackProgress } from "@/hooks/player";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { findCurrentLineIndex } from "@/utils/lyrics";
 
 export default function CurrentLyricLine({
   lyrics,
-  positionSeconds,
 }: {
   lyrics: StructuredLyrics | null;
-  positionSeconds: number;
 }) {
+  const { currentTime } = usePlaybackProgress();
   const offsetMs = lyrics?.offset ?? 0;
-  const positionMs = positionSeconds * 1000 + offsetMs;
+  const positionMs = (currentTime ?? 0) * 1000 + offsetMs;
   const currentIndex = useMemo(
     () => (lyrics ? findCurrentLineIndex(lyrics.line, positionMs) : -1),
     [lyrics, positionMs],

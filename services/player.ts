@@ -2,7 +2,6 @@ import {
   type AudioStatus,
   createAudioPlayer,
   setAudioModeAsync,
-  useAudioPlayerStatus,
 } from "expo-audio";
 import { scrobble } from "@/services/openSubsonic/mediaAnnotation";
 import useQueue, { type QueueTrack } from "@/stores/queue";
@@ -203,16 +202,6 @@ export async function configurePlayback() {
     shouldPlayInBackground: true,
     interruptionMode: "doNotMix",
   });
-}
-
-export function usePlayerStatus() {
-  return useAudioPlayerStatus(player);
-}
-
-export function usePlayingTrack() {
-  return useQueue((store) =>
-    store.currentIndex != null ? store.queue[store.currentIndex] : null,
-  );
 }
 
 export function playTracks(tracks: QueueTrack[], startIndex = 0) {

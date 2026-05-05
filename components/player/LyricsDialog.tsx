@@ -15,6 +15,7 @@ import {
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { usePlaybackProgress } from "@/hooks/player";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { findCurrentLineIndex } from "@/utils/lyrics";
 
@@ -22,18 +23,17 @@ export default function LyricsDialog({
   isOpen,
   onClose,
   lyrics,
-  positionSeconds,
 }: {
   isOpen: boolean;
   onClose: () => void;
   lyrics: StructuredLyrics | null;
-  positionSeconds: number;
 }) {
   const { t } = useTranslation();
+  const { currentTime } = usePlaybackProgress();
   const scrollRef = useRef<ScrollView>(null);
   const [containerHeight, setContainerHeight] = useState(0);
   const offsetMs = lyrics?.offset ?? 0;
-  const positionMs = positionSeconds * 1000 + offsetMs;
+  const positionMs = (currentTime ?? 0) * 1000 + offsetMs;
   const currentIndex = useMemo(
     () => (lyrics ? findCurrentLineIndex(lyrics.line, positionMs) : -1),
     [lyrics, positionMs],

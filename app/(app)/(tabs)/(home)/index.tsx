@@ -101,7 +101,7 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingBottom:
-            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2,
+            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2 + 16,
         }}
         showsVerticalScrollIndicator={false}
       >
