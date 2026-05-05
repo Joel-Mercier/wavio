@@ -2,7 +2,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Pause, Play, Shuffle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -22,10 +22,15 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useSimilarSongs2 } from "@/hooks/openSubsonic/useBrowsing";
+import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
 import type { Child } from "@/services/openSubsonic/types";
+import { playTracks, togglePlayPause } from "@/services/player";
+import useQueue from "@/stores/queue";
+import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -51,6 +56,29 @@ export default function SimilarSongsScreen() {
   const { data, isLoading, error } = useSimilarSongs2(id, { count: 50 });
   const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
   const songs = data?.similarSongs2.song;
+  const playerStatus = usePlayerStatus();
+  const playingTrack = usePlayingTrack();
+  const isPlayingFromList = !!(
+    playingTrack && songs?.some((track) => track.id === playingTrack.id)
+  );
+
+  const handlePlayPress = () => {
+    if (isPlayingFromList) {
+      togglePlayPause();
+      return;
+    }
+    if (!songs || songs.length === 0) return;
+    useQueue.getState().setShuffle(false);
+    playTracks(songs.map(childToTrack), 0);
+  };
+
+  const handleShufflePress = () => {
+    if (!songs || songs.length === 0) return;
+    useQueue.getState().setShuffle(true);
+    const startIndex = Math.floor(Math.random() * songs.length);
+    playTracks(songs.map(childToTrack), startIndex);
+  };
+
   return (
     <Box className="h-full">
       <AnimatedBox
@@ -98,43 +126,74 @@ export default function SimilarSongsScreen() {
           )
         }
         ListHeaderComponent={() => (
-          <LinearGradient
-            colors={[themeConfig.theme.colors.emerald[500], "#000000"]}
-            className="h-48"
-            style={{ height: 192 }}
-          >
-            <Box
-              className="bg-black/25 flex-1"
-              style={{ paddingTop: insets.top }}
+          <>
+            <LinearGradient
+              colors={[themeConfig.theme.colors.emerald[500], "#000000"]}
+              className="h-48"
+              style={{ height: 192 }}
             >
-              <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                <Pressable onPress={() => router.back()}>
-                  {({ pressed }) => (
-                    <Animated.View
-                      className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                      style={{
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                        opacity: pressed ? 0.5 : 1,
-                      }}
-                    >
-                      <ArrowLeft
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
-                    </Animated.View>
-                  )}
-                </Pressable>
-                <Heading
-                  numberOfLines={2}
-                  className="text-white mb-12"
-                  size="xl"
-                >
-                  {heading}
-                </Heading>
-              </VStack>
+              <Box
+                className="bg-black/25 flex-1"
+                style={{ paddingTop: insets.top }}
+              >
+                <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
+                  <Pressable onPress={() => router.back()}>
+                    {({ pressed }) => (
+                      <Animated.View
+                        className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                        style={{
+                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                          opacity: pressed ? 0.5 : 1,
+                        }}
+                      >
+                        <ArrowLeft
+                          size={24}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      </Animated.View>
+                    )}
+                  </Pressable>
+                  <Heading
+                    numberOfLines={2}
+                    className="text-white mb-12"
+                    size="xl"
+                  >
+                    {heading}
+                  </Heading>
+                </VStack>
+              </Box>
+            </LinearGradient>
+            <VStack className="px-6">
+              <HStack className="items-center gap-x-4 mb-4">
+                <Text className="text-primary-100" numberOfLines={1}>
+                  {t("app.shared.songCount", { count: songs?.length || 0 })}
+                </Text>
+              </HStack>
+              <HStack className="items-center justify-end">
+                <HStack className="items-center gap-x-4">
+                  <Pressable onPress={handleShufflePress}>
+                    <Shuffle color={themeConfig.theme.colors.white} />
+                  </Pressable>
+                  <Pressable onPress={handlePlayPress}>
+                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                      {isPlayingFromList && playerStatus.playing ? (
+                        <Pause
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <Play
+                          color={themeConfig.theme.colors.white}
+                          fill={themeConfig.theme.colors.white}
+                        />
+                      )}
+                    </Box>
+                  </Pressable>
+                </HStack>
+              </HStack>
               {error && <ErrorDisplay error={error} />}
-            </Box>
-          </LinearGradient>
+            </VStack>
+          </>
         )}
         ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
         contentContainerStyle={{
