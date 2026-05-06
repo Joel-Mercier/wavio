@@ -164,7 +164,14 @@ export interface Child {
   channelCount?: number;
   played?: Date;
   genres?: { name: string }[];
-  replayGain?: { albumPeak: number; trackPeak: number };
+  replayGain?: {
+    trackGain?: number;
+    albumGain?: number;
+    trackPeak?: number;
+    albumPeak?: number;
+    baseGain?: number;
+    fallbackGain?: number;
+  };
   artists?: { id: string; name: string }[];
   name?: string;
   musicBrainzId?: string;

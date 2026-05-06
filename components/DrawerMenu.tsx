@@ -1,6 +1,8 @@
+import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
 import {
+  ArrowLeftRight,
   History,
   Library,
   ListMusic,
@@ -9,9 +11,11 @@ import {
   Settings,
   Share2,
 } from "lucide-react-native";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
+import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import {
   Drawer,
@@ -23,14 +27,53 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectPortal,
+  SelectScrollView,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
+import useServers, { type ServerUser } from "@/stores/servers";
 
 interface DrawerMenuProps {
   showDrawer: boolean;
   onClose: () => void;
+}
+
+function SwitchUserRow({
+  user,
+  onSelect,
+}: {
+  user: ServerUser;
+  onSelect: (username: string) => void;
+}) {
+  const { handleClose } = useContext(SelectPortalContext);
+  return (
+    <Pressable
+      className="flex-row items-center p-4 gap-x-4 rounded-md active:bg-primary-700"
+      onPress={() => {
+        handleClose?.();
+        onSelect(user.username);
+      }}
+    >
+      <Avatar size="md" className="bg-primary-400">
+        <AvatarFallbackText className="font-body">
+          {user.username}
+        </AvatarFallbackText>
+      </Avatar>
+      <Heading size="md" className="text-white font-normal" numberOfLines={1}>
+        {user.username}
+      </Heading>
+    </Pressable>
+  );
 }
 
 export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
@@ -39,6 +82,15 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
   const username = useAuth((store) => store.username);
+  const url = useAuth((store) => store.url);
+  const servers = useServers((store) => store.servers);
+  const allUsers = useServers((store) => store.users);
+  const currentServer = servers.find((s) => s.url === url);
+  const otherUsers = currentServer
+    ? allUsers.filter(
+        (u) => u.serverId === currentServer.id && u.username !== username,
+      )
+    : [];
 
   const handleSettingsPress = () => {
     router.navigate("/settings");
@@ -75,6 +127,16 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
     onClose();
   };
 
+  const handleSwitchUser = (nextUsername: string) => {
+    if (!currentServer) return;
+    onClose();
+    router.replace({
+      pathname: "/(auth)/login",
+      params: { serverId: currentServer.id, username: nextUsername },
+    });
+    logout();
+  };
+
   return (
     <Drawer isOpen={showDrawer} onClose={onClose} size="lg" anchor="left">
       <DrawerBackdrop />
@@ -94,7 +156,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 {username}
               </AvatarFallbackText>
             </Avatar>
-            <VStack>
+            <VStack className="flex-1">
               <Heading
                 numberOfLines={1}
                 size="xl"
@@ -103,6 +165,39 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 {username}
               </Heading>
             </VStack>
+            {otherUsers.length > 0 && (
+              <Select>
+                <SelectTrigger
+                  variant="outline"
+                  className="border-0 p-2 rounded-full active:bg-primary-800"
+                  accessibilityLabel={t("app.shared.sidebar.switchUser")}
+                >
+                  <ArrowLeftRight
+                    size={22}
+                    color={themeConfig.theme.colors.white}
+                  />
+                </SelectTrigger>
+                <SelectPortal snapPoints={[50]}>
+                  <SelectBackdrop />
+                  <SelectContent className="bg-primary-600">
+                    <SelectDragIndicatorWrapper className="mb-4">
+                      <SelectDragIndicator />
+                    </SelectDragIndicatorWrapper>
+                    <SelectScrollView>
+                      <Box className="px-4 pb-12 w-full">
+                        {otherUsers.map((u) => (
+                          <SwitchUserRow
+                            key={`${u.serverId}:${u.username}`}
+                            user={u}
+                            onSelect={handleSwitchUser}
+                          />
+                        ))}
+                      </Box>
+                    </SelectScrollView>
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
+            )}
           </HStack>
         </DrawerHeader>
         <DrawerBody>

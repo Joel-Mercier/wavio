@@ -29,10 +29,11 @@ import {
   Sparkles,
   User,
 } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { CastButton, useRemoteMediaClient } from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -66,7 +67,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useQueue, { type QueueTrack } from "@/stores/queue";
-import { downloadUrl } from "@/utils/streaming";
+import { downloadUrl, streamUrl } from "@/utils/streaming";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -191,6 +192,31 @@ export default function PlayerScreen() {
     });
   const toast = useToast();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const castClient = useRemoteMediaClient();
+
+  useEffect(() => {
+    if (!castClient || !playingTrack) return;
+    const contentUrl = isRadio
+      ? (playingTrack.streamUrl ?? playingTrack.url)
+      : streamUrl(playingTrack.id);
+    if (!contentUrl) return;
+    castClient.loadMedia({
+      mediaInfo: {
+        contentUrl,
+        contentType: "audio/mpeg",
+        metadata: {
+          type: "musicTrack",
+          title: playingTrack.title,
+          albumTitle: playingTrack.album,
+          artist: playingTrack.artist,
+          images: playingTrack.artwork
+            ? [{ url: playingTrack.artwork }]
+            : undefined,
+        },
+        streamDuration: playingTrack.duration,
+      },
+    });
+  }, [castClient, playingTrack, isRadio]);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -465,7 +491,7 @@ export default function PlayerScreen() {
                       router.navigate(`/albums/${playingTrack.albumId}`);
                     }}
                   >
-                    <Heading className="text-white" size="xl">
+                    <Heading className="text-white" size="xl" numberOfLines={2}>
                       {playingTrack?.title}
                     </Heading>
                   </FadeOut>
@@ -581,6 +607,11 @@ export default function PlayerScreen() {
                     />
                   </FadeOut>
                 )}
+              </HStack>
+              <HStack className="items-center justify-start mt-8">
+                <CastButton
+                  style={{ width: 24, height: 24, tintColor: "white" }}
+                />
               </HStack>
             </VStack>
           </VStack>

@@ -9,7 +9,6 @@ import {
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { SystemBars } from "react-native-edge-to-edge";
 import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
@@ -121,10 +120,6 @@ export default function RootLayout() {
       <KeyboardProvider>
         <GluestackUIProvider mode="light">
           <ThemeProvider value={DarkTheme}>
-            <SystemBars
-              style="light"
-              hidden={{ statusBar: false, navigationBar: false }}
-            />
             <GestureHandlerRootView style={{ flex: 1 }}>
               <BottomSheetModalProvider>
                 <Stack

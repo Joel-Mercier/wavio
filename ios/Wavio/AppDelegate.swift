@@ -1,4 +1,9 @@
 internal import Expo
+// @generated begin react-native-google-cast-import - expo prebuild (DO NOT MODIFY) sync-4cd300bca26a1d1fcc83f4baf37b0e62afcc1867
+#if canImport(GoogleCast) && os(iOS)
+import GoogleCast
+#endif
+// @generated end react-native-google-cast-import
 import React
 import ReactAppDependencyProvider
 
@@ -13,6 +18,18 @@ class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+// @generated begin react-native-google-cast-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-b83f3fabf49797475a3f26a5bfeb5cfd51fa39c4
+#if canImport(GoogleCast) && os(iOS)
+    let receiverAppID = kGCKDefaultMediaReceiverApplicationID
+    let criteria = GCKDiscoveryCriteria(applicationID: receiverAppID)
+    let options = GCKCastOptions(discoveryCriteria: criteria)
+    options.disableDiscoveryAutostart = false
+    options.startDiscoveryAfterFirstTapOnCastButton = true
+    options.suspendSessionsWhenBackgrounded = true
+    GCKCastContext.setSharedInstanceWith(options)
+    GCKCastContext.sharedInstance().useDefaultExpandedMediaControls = true
+#endif
+// @generated end react-native-google-cast-didFinishLaunchingWithOptions
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()

@@ -26,6 +26,9 @@
       },
       "package": "com.jmercier.wavio"
     },
+    "androidNavigationBar": {
+      "enforceContrast": false
+    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -56,15 +59,6 @@
           }
         }
       ],
-      [
-        "react-native-edge-to-edge",
-        {
-          "android": {
-            "parentTheme": "Default",
-            "enforceNavigationBarContrast": false
-          }
-        }
-      ],
       "expo-font",
       "expo-image",
       "expo-web-browser",
@@ -86,6 +80,7 @@
           "enableBackgroundRecording": false
         }
       ],
+      "react-native-google-cast",
       "./plugins/withAndroidAuto",
       "./plugins/withCarPlay"
     ],

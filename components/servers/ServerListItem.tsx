@@ -165,7 +165,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               {server.url}
             </Text>
             {users.length > 0 ? (
-              <AvatarGroup>
+              <AvatarGroup className="gap-x-4">
                 {overflowCount > 0 && (
                   <Avatar size="sm" className="bg-primary-400">
                     <AvatarFallbackText>{`+${overflowCount}`}</AvatarFallbackText>

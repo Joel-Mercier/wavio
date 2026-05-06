@@ -12,6 +12,7 @@ export default {
         recentlyAdded: "Ajoutés récemment",
         mostPlayed: "Les plus joués",
         topRated: "Les mieux notés",
+        random: "Au hasard",
         internetRadioStations: "Stations de radio en ligne",
         tabs: {
           music: "Musique",
@@ -361,6 +362,26 @@ export default {
           createTabDescription:
             "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
         },
+        streamingSettings: {
+          title: "Paramètres de streaming",
+          audioQualityLabel: "Qualité audio",
+          audioQualityDescription:
+            "Limite le débit maximum utilisé pour le streaming. Une valeur plus basse économise la bande passante, une valeur plus haute améliore la qualité.",
+          audioQualityOriginal: "Original (sans limite)",
+          audioQualityKbps: "{{bitrate}} kbps",
+          replayGainLabel: "Normalisation du volume",
+          replayGainDescription:
+            "Utilise les tags ReplayGain pour égaliser le volume entre les morceaux.",
+          replayGainModes: {
+            off: "Désactivée",
+            track: "Par morceau",
+            album: "Par album",
+          },
+          replayGainPreampLabel: "Pré-amplification",
+          replayGainPreampDescription:
+            "Amplifie ou atténue le volume global en dB. Utile si les morceaux normalisés sont trop faibles.",
+          replayGainPreampValue: "{{db}} dB",
+        },
         contentSettings: {
           title: "Paramètres de contenu",
           recentSearchesLabel: "Recherches récentes",
@@ -647,6 +668,7 @@ export default {
           servers: "Serveurs",
           libraries: "Bibliothèques",
           logout: "Déconnexion",
+          switchUser: "Changer d'utilisateur",
           currentServer: "Serveur actuel",
           version: "version {{version}}",
         },

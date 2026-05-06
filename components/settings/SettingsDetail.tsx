@@ -103,6 +103,12 @@ export default function SettingsDetail() {
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
     bottomSheetLanguageModalRef,
   );
+  const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleBitRateSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetBitRateModalRef);
+  const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -112,6 +118,12 @@ export default function SettingsDetail() {
   const setLocale = useApp((store) => store.setLocale);
   const showAddTab = useApp((store) => store.showAddTab);
   const setShowAddTab = useApp((store) => store.setShowAddTab);
+  const maxBitRate = useApp((store) => store.maxBitRate);
+  const setMaxBitRate = useApp((store) => store.setMaxBitRate);
+  const replayGainMode = useApp((store) => store.replayGainMode);
+  const setReplayGainMode = useApp((store) => store.setReplayGainMode);
+  const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
+  const setReplayGainPreampDb = useApp((store) => store.setReplayGainPreampDb);
   const setTaddyPodcastsConfig = usePodcasts(
     (store) => store.setTaddyPodcastsConfig,
   );
@@ -178,6 +190,34 @@ export default function SettingsDetail() {
   const handlePresentLanguageModalPress = () => {
     bottomSheetLanguageModalRef.current?.present();
   };
+
+  const handlePresentBitRateModalPress = () => {
+    bottomSheetBitRateModalRef.current?.present();
+  };
+
+  const handlePresentReplayGainModalPress = () => {
+    bottomSheetReplayGainModalRef.current?.present();
+  };
+
+  const replayGainOptions: ("off" | "track" | "album")[] = [
+    "off",
+    "track",
+    "album",
+  ];
+
+  const adjustPreamp = (delta: number) => {
+    const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
+    setReplayGainPreampDb(next);
+  };
+
+  const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
+
+  const formatBitRate = (value: number | null) =>
+    value === null
+      ? t("app.settings.streamingSettings.audioQualityOriginal")
+      : t("app.settings.streamingSettings.audioQualityKbps", {
+          bitrate: value,
+        });
 
   const handleCloseRecentPlaysAlertDialog = () => {
     setShowRecentPlaysAlertDialog(false);
@@ -517,7 +557,7 @@ export default function SettingsDetail() {
                 )}
                 {taddyPodcastApiKey && (
                   <Text className="text-primary-100 text-sm">
-                    {`${t("app.settings.podcastSettings.apiKey")}: ${taddyPodcastApiKey}`}
+                    {`${t("app.settings.podcastSettings.apiKey")}: ${taddyPodcastApiKey.slice(0, 4)}${"•".repeat(Math.max(0, taddyPodcastApiKey.length - 4))}`}
                   </Text>
                 )}
                 {remainingApiRequests?.data?.getApiRequestsRemaining && (
@@ -593,6 +633,98 @@ export default function SettingsDetail() {
                 onToggle={(value) => setShowAddTab(value)}
               />
             </HStack>
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.streamingSettings.title")}
+            </Heading>
+            <FadeOutScaleDown onPress={handlePresentBitRateModalPress}>
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-1/2">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.streamingSettings.audioQualityLabel")}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t(
+                      "app.settings.streamingSettings.audioQualityDescription",
+                    )}
+                  </Text>
+                </VStack>
+                <Badge
+                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                  size="lg"
+                  variant="solid"
+                  action="success"
+                >
+                  <BadgeText className="normal-case text-center text-emerald-700">
+                    {formatBitRate(maxBitRate)}
+                  </BadgeText>
+                </Badge>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={handlePresentReplayGainModalPress}>
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-1/2">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.streamingSettings.replayGainLabel")}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.settings.streamingSettings.replayGainDescription")}
+                  </Text>
+                </VStack>
+                <Badge
+                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                  size="lg"
+                  variant="solid"
+                  action="success"
+                >
+                  <BadgeText className="normal-case text-center text-emerald-700">
+                    {t(
+                      `app.settings.streamingSettings.replayGainModes.${replayGainMode}`,
+                    )}
+                  </BadgeText>
+                </Badge>
+              </HStack>
+            </FadeOutScaleDown>
+            {replayGainMode !== "off" && (
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-1/2">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.streamingSettings.replayGainPreampLabel")}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t(
+                      "app.settings.streamingSettings.replayGainPreampDescription",
+                    )}
+                  </Text>
+                </VStack>
+                <HStack className="items-center gap-x-3">
+                  <FadeOutScaleDown
+                    onPress={() => adjustPreamp(-1)}
+                    className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
+                  >
+                    <Text className="text-primary-800 font-bold text-lg">
+                      -
+                    </Text>
+                  </FadeOutScaleDown>
+                  <Text className="text-white font-bold w-16 text-center">
+                    {t("app.settings.streamingSettings.replayGainPreampValue", {
+                      db:
+                        replayGainPreampDb > 0
+                          ? `+${replayGainPreampDb}`
+                          : replayGainPreampDb,
+                    })}
+                  </Text>
+                  <FadeOutScaleDown
+                    onPress={() => adjustPreamp(1)}
+                    className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
+                  >
+                    <Text className="text-primary-800 font-bold text-lg">
+                      +
+                    </Text>
+                  </FadeOutScaleDown>
+                </HStack>
+              </HStack>
+            )}
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.contentSettings.title")}
@@ -696,6 +828,94 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {locale === language && (
+                      <Check
+                        size={24}
+                        color={themeConfig.theme.colors.emerald[500]}
+                      />
+                    )}
+                  </HStack>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetBitRateModalRef}
+        onChange={handleBitRateSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="mt-6 gap-y-8">
+              {bitRateOptions.map((option) => (
+                <FadeOutScaleDown
+                  key={option ?? "original"}
+                  onPress={() => setMaxBitRate(option)}
+                >
+                  <HStack className="items-center justify-between">
+                    <VStack className="ml-4">
+                      <Text className="text-lg text-gray-200">
+                        {formatBitRate(option)}
+                      </Text>
+                    </VStack>
+                    {maxBitRate === option && (
+                      <Check
+                        size={24}
+                        color={themeConfig.theme.colors.emerald[500]}
+                      />
+                    )}
+                  </HStack>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetReplayGainModalRef}
+        onChange={handleReplayGainSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="mt-6 gap-y-8">
+              {replayGainOptions.map((option) => (
+                <FadeOutScaleDown
+                  key={option}
+                  onPress={() => setReplayGainMode(option)}
+                >
+                  <HStack className="items-center justify-between">
+                    <VStack className="ml-4">
+                      <Text className="text-lg text-gray-200">
+                        {t(
+                          `app.settings.streamingSettings.replayGainModes.${option}`,
+                        )}
+                      </Text>
+                    </VStack>
+                    {replayGainMode === option && (
                       <Check
                         size={24}
                         color={themeConfig.theme.colors.emerald[500]}
@@ -914,6 +1134,7 @@ export default function SettingsDetail() {
                         "app.settings.podcastSettings.apiKeyPlaceholder",
                       )}
                       autoCapitalize="none"
+                      secureTextEntry
                     />
                   </Input>
                   {!field.state.meta.isValid && (

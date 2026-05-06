@@ -4,7 +4,9 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { scrobble } from "@/services/openSubsonic/mediaAnnotation";
+import { useAppBase } from "@/stores/app";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { computeReplayGainFactor } from "@/utils/replayGain";
 
 export const player = createAudioPlayer(null, { updateInterval: 1000 });
 
@@ -58,6 +60,25 @@ function resetScrobbleState() {
   scrobbleStartedAt = null;
 }
 
+function applyReplayGain(track: QueueTrack) {
+  const { replayGainMode, replayGainPreampDb } = useAppBase.getState();
+  const factor = computeReplayGainFactor(
+    track,
+    replayGainMode,
+    replayGainPreampDb,
+  );
+  console.log("[replayGain]", {
+    trackId: track.id,
+    title: track.title,
+    mode: replayGainMode,
+    preampDb: replayGainPreampDb,
+    tags: track.replayGain ?? null,
+    factor,
+    volumeDb: factor > 0 ? 20 * Math.log10(factor) : -Infinity,
+  });
+  player.volume = factor;
+}
+
 function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   resetScrobbleState();
   if (!track) {
@@ -68,6 +89,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   }
   isLoading = true;
   player.replace({ uri: track.url });
+  applyReplayGain(track);
   player.setActiveForLockScreen(
     true,
     {
@@ -139,6 +161,16 @@ const statusSub = player.addListener(
   },
 );
 
+const appUnsub = useAppBase.subscribe((state, prev) => {
+  if (
+    state.replayGainMode === prev.replayGainMode &&
+    state.replayGainPreampDb === prev.replayGainPreampDb
+  )
+    return;
+  const current = useQueue.getState().getCurrent();
+  if (current) applyReplayGain(current);
+});
+
 let lastTrackId: string | null = null;
 const queueUnsub = useQueue.subscribe((state) => {
   const current =
@@ -161,6 +193,9 @@ if (
   ).hot.dispose(() => {
     try {
       queueUnsub();
+    } catch {}
+    try {
+      appUnsub();
     } catch {}
     try {
       statusSub?.remove?.();

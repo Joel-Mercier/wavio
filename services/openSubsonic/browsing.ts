@@ -5,7 +5,6 @@ import openSubsonicApiInstance, {
 import type {
   AlbumInfo,
   AlbumWithSongsID3,
-  Artist,
   ArtistInfo,
   ArtistInfo2,
   ArtistsID3,

@@ -35,10 +35,16 @@ export default function PlaybackSlider() {
         isReversed={false}
         onChange={seekTo}
       >
-        <SliderTrack className="bg-primary-400">
+        <SliderTrack
+          className="bg-primary-400"
+          hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
+        >
           <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
         </SliderTrack>
-        <SliderThumb className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+        <SliderThumb
+          className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        />
       </Slider>
       <Box className="flex-1 h-[50px]" />
       <HStack className="mt-2 items-center justify-between">

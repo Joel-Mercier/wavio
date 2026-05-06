@@ -259,6 +259,7 @@ PODS:
   - EXUpdatesInterface (55.1.6):
     - ExpoModulesCore
   - FBLazyVector (0.83.6)
+  - google-cast-sdk (4.8.4)
   - hermes-engine (0.14.1):
     - hermes-engine/Pre-built (= 0.14.1)
   - hermes-engine/Pre-built (0.14.1)
@@ -331,6 +332,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - PromisesObjC (2.4.0)
   - RCTDeprecation (0.83.6)
   - RCTRequired (0.83.6)
   - RCTSwiftUI (0.83.6)
@@ -1727,6 +1729,10 @@ PODS:
     - ReactNativeDependencies
   - react-native-carplay (2.4.1-beta.0):
     - React
+  - react-native-google-cast (4.9.1):
+    - google-cast-sdk
+    - PromisesObjC
+    - React
   - react-native-keyboard-controller (1.21.6):
     - hermes-engine
     - RCTRequired
@@ -2666,6 +2672,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-carplay (from `../node_modules/react-native-carplay`)
+  - react-native-google-cast (from `../node_modules/react-native-google-cast`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
@@ -2715,10 +2722,12 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - google-cast-sdk
     - libavif
     - libdav1d
     - libwebp
     - MMKVCore
+    - PromisesObjC
     - SDWebImage
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
@@ -2877,6 +2886,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-carplay:
     :path: "../node_modules/react-native-carplay"
+  react-native-google-cast:
+    :path: "../node_modules/react-native-google-cast"
   react-native-keyboard-controller:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
@@ -3004,6 +3015,7 @@ SPEC CHECKSUMS:
   ExpoWebBrowser: f88a3ba50a025b673236a46d2654a49b985953d6
   EXUpdatesInterface: 4c11f4d1594526258f14d09817dc407acbf24e3b
   FBLazyVector: 427fa1856a481856091061293ce865a75aa4f20f
+  google-cast-sdk: 32f65af50d164e3c475e79ad123db3cc26fbcd37
   hermes-engine: 92bb5f0b998ce0dd990959691d21a8b01923d8e7
   ImageColors: 3019b37809023d67795162135628e367d70e1766
   libavif: 5f8e715bea24debec477006f21ef9e95432e254d
@@ -3012,6 +3024,7 @@ SPEC CHECKSUMS:
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   NitroMmkv: 7a7572934538ba6748e05dffc6ee8b06caad91cc
   NitroModules: 5a0f735f3f834ac1d998c28fc65be992849c30f3
+  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCTDeprecation: 9502b5eb8e3c9eb75ff5a333b2c591bab9d91e28
   RCTRequired: 0268a5d86aef1defea2e04289d74fdf3570197c1
   RCTSwiftUI: cff211c5e4d94e491dda240d663b8effd25296d7
@@ -3049,6 +3062,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: bcd9f00a498b2981c7b390f00fd2b7cd6e0ead29
   React-microtasksnativemodule: 203b41906d627dac7d697bccba6137b630951fae
   react-native-carplay: 8f388f6f73e5e0f73ed154ad8794371343ee20c0
+  react-native-google-cast: 7be68a5d0b7eeb95a5924c3ecef8d319ef6c0a44
   react-native-keyboard-controller: d3b10138cca486acf5beda70959269c4ccceeda7
   react-native-netinfo: 7e0b1936e928fa8ddb60da9e572a33767db7805f
   react-native-pager-view: adc7d78123fb395e03a70d19e8d75805b49838b5

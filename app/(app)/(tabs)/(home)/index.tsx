@@ -57,6 +57,11 @@ export default function HomeScreen() {
     error: highestRatedError,
   } = useAlbumList2({ type: "highest", size: 12, musicFolderId });
   const {
+    data: randomData,
+    isLoading: isLoadingRandom,
+    error: randomError,
+  } = useAlbumList2({ type: "random", size: 12, musicFolderId });
+  const {
     data: internetRadioStationsData,
     isLoading: isLoadingInternetRadioStations,
     error: internetRadioStationsError,
@@ -261,6 +266,40 @@ export default function HomeScreen() {
         {!isLoadingHighestRated &&
           !highestRatedError &&
           !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
+        <Box className="px-6 mt-4 mb-4">
+          <Heading size="xl" className="text-white">
+            {t("app.home.random")}
+          </Heading>
+        </Box>
+        {randomError ? (
+          <ErrorDisplay error={randomError} />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="pl-6 mb-6"
+          >
+            {isLoadingRandom
+              ? loadingData(4).map((_, index) => (
+                  <AlbumListItemSkeleton
+                    key={`random-${index}`}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))
+              : randomData?.albumList2?.album?.map((album, index) => (
+                  <AlbumListItem
+                    key={album.id}
+                    album={album}
+                    index={index}
+                    layout="horizontal"
+                  />
+                ))}
+          </ScrollView>
+        )}
+        {!isLoadingRandom &&
+          !randomError &&
+          !randomData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
             {t("app.home.internetRadioStations")}

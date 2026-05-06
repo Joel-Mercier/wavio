@@ -36,6 +36,12 @@ interface AppStore {
       | "alphabeticalAsc"
       | "alphabeticalDesc",
   ) => void;
+  maxBitRate: number | null;
+  setMaxBitRate: (maxBitRate: number | null) => void;
+  replayGainMode: "off" | "track" | "album";
+  setReplayGainMode: (mode: "off" | "track" | "album") => void;
+  replayGainPreampDb: number;
+  setReplayGainPreampDb: (db: number) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -74,6 +80,18 @@ export const useAppBase = create<AppStore>()(
           | "alphabeticalDesc",
       ) => {
         set({ favoritesSort });
+      },
+      maxBitRate: null,
+      setMaxBitRate: (maxBitRate: number | null) => {
+        set({ maxBitRate });
+      },
+      replayGainMode: "off",
+      setReplayGainMode: (replayGainMode: "off" | "track" | "album") => {
+        set({ replayGainMode });
+      },
+      replayGainPreampDb: 0,
+      setReplayGainPreampDb: (replayGainPreampDb: number) => {
+        set({ replayGainPreampDb });
       },
     }),
     {

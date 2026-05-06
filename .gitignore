@@ -10,6 +10,11 @@ web-build/
 expo-env.d.ts
 
 # Native
+android/build/
+android/app/build/
+android/.gradle/
+**/android/build/
+*.iml
 *.orig.*
 *.jks
 *.p8
@@ -41,3 +46,5 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+.fallow

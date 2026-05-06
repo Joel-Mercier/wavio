@@ -1,5 +1,6 @@
 package com.jmercier.wavio
 import expo.modules.splashscreen.SplashScreenManager
+import com.reactnative.googlecast.api.RNGCCastContext
 
 import android.os.Build
 import android.os.Bundle
@@ -21,6 +22,9 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+// @generated begin react-native-google-cast-onCreate - expo prebuild (DO NOT MODIFY) sync-489050f2bf9933a98bbd9d93137016ae14c22faa
+    RNGCCastContext.getSharedInstance(this)
+// @generated end react-native-google-cast-onCreate
   }
 
   /**
