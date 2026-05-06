@@ -79,7 +79,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { getAlbum } from "@/services/openSubsonic/browsing";
@@ -276,7 +276,7 @@ export default function ArtistDetail() {
     );
   };
 
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isPlayingFromArtist = playingTrack?.artistId === id;
   const handlePlayPress = async () => {
@@ -520,7 +520,7 @@ export default function ArtistDetail() {
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromArtist && playerStatus.playing ? (
+                      {isPlayingFromArtist && isPlaying ? (
                         <Pause
                           color={themeConfig.theme.colors.white}
                           fill={themeConfig.theme.colors.white}

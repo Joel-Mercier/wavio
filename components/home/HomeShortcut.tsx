@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
 import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -31,6 +31,7 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
 }
 
 export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
+  const [imageFailed, setImageFailed] = useState(false);
   const href = useMemo<Href>(() => {
     if (recentPlay.type === "artist") {
       return `/artists/${recentPlay.id}`;
@@ -61,8 +62,9 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
   return (
     <FadeOutScaleDown href={href} className="w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
-        {recentPlay.coverArt ? (
+        {recentPlay.coverArt && !imageFailed ? (
           <Image
+            size="none"
             source={{
               uri:
                 recentPlay.type === "internetRadioStation"
@@ -71,6 +73,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
             }}
             className="w-16 h-16 aspect-square"
             alt="Home shortcut cover"
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">

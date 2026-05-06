@@ -28,7 +28,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
-import { usePlayerStatus } from "@/hooks/player";
+import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
@@ -50,7 +50,7 @@ export default function InternetRadioStationDetail() {
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const status = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const meta = useWebsiteMetadata(homePageUrl);
   const colors = useImageColors(meta.image || meta["twitter:image"]);
 
@@ -66,7 +66,7 @@ export default function InternetRadioStationDetail() {
   };
 
   const handlePlayPausePress = () => {
-    if (status.playing) {
+    if (isPlaying) {
       pausePlayback();
     } else {
       playTracks(
@@ -149,7 +149,7 @@ export default function InternetRadioStationDetail() {
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handlePlayPausePress}>
                 <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  {status.playing ? (
+                  {isPlaying ? (
                     <Pause
                       color={themeConfig.theme.colors.white}
                       fill={themeConfig.theme.colors.white}

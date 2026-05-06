@@ -41,7 +41,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
-import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
@@ -93,7 +93,7 @@ export default function FavoritesScreen() {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
 
   const handlePresentSortModalPress = useCallback(() => {
@@ -270,7 +270,7 @@ export default function FavoritesScreen() {
                   </Pressable>
                   <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && playerStatus.playing ? (
+                      {isPlayingFromList && isPlaying ? (
                         <Pause
                           color={themeConfig.theme.colors.white}
                           fill={themeConfig.theme.colors.white}

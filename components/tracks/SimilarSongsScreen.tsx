@@ -26,7 +26,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import { useSimilarSongs2 } from "@/hooks/openSubsonic/useBrowsing";
-import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useQueue from "@/stores/queue";
@@ -56,7 +56,7 @@ export default function SimilarSongsScreen() {
   const { data, isLoading, error } = useSimilarSongs2(id, { count: 50 });
   const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
   const songs = data?.similarSongs2.song;
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isPlayingFromList = !!(
     playingTrack && songs?.some((track) => track.id === playingTrack.id)
@@ -176,7 +176,7 @@ export default function SimilarSongsScreen() {
                   </Pressable>
                   <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && playerStatus.playing ? (
+                      {isPlayingFromList && isPlaying ? (
                         <Pause
                           color={themeConfig.theme.colors.white}
                           fill={themeConfig.theme.colors.white}

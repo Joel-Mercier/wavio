@@ -70,7 +70,7 @@ import {
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
-import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
@@ -308,7 +308,7 @@ export default function PlaylistDetail() {
     );
   };
 
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
 
   const handleTrackPressCallback = () => {
@@ -598,7 +598,7 @@ export default function PlaylistDetail() {
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && playerStatus.playing ? (
+                      {isPlayingFromList && isPlaying ? (
                         <Pause
                           color={themeConfig.theme.colors.white}
                           fill={themeConfig.theme.colors.white}

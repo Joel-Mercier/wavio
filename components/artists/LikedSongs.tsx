@@ -66,7 +66,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { usePlayerStatus, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -129,7 +129,7 @@ export default function LikedSongs() {
     bottomSheetModalRef.current?.present();
   }, []);
 
-  const playerStatus = usePlayerStatus();
+  const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isPlayingFromList = !!(
     playingTrack && likedSongs.some((track) => track.id === playingTrack.id)
@@ -434,7 +434,7 @@ export default function LikedSongs() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handlePlayPress}>
                 <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  {isPlayingFromList && playerStatus.playing ? (
+                  {isPlayingFromList && isPlaying ? (
                     <Pause
                       color={themeConfig.theme.colors.white}
                       fill={themeConfig.theme.colors.white}
