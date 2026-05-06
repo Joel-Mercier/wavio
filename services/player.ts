@@ -269,6 +269,24 @@ export function pause() {
   player.pause();
 }
 
+export function play() {
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  if (loadedTrackId !== current.id || !playbackInitialized) {
+    loadAndPlay(current);
+    return;
+  }
+  player.play();
+}
+
+export function getCurrentTime() {
+  return player.currentTime ?? 0;
+}
+
+export function isPlaying() {
+  return player.playing;
+}
+
 export function skipNext() {
   const state = useQueue.getState();
   if (state.queue.length === 0 || state.currentIndex == null) return;

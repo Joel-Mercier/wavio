@@ -2,7 +2,7 @@
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
 import { ImageBackground as ExpoImageBackground } from "expo-image";
 import { cssInterop } from "nativewind";
-import React from "react";
+import type React from "react";
 
 cssInterop(ExpoImageBackground, { className: "style" });
 

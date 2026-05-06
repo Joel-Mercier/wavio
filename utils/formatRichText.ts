@@ -59,10 +59,7 @@ export function parseRichText(input?: string | null): Paragraph[] {
   text = text.replace(/<\s*hr\s*\/?\s*>/gi, "\n\n");
   text = text.replace(/<\/\s*li\s*>/gi, "\n");
   text = text.replace(/<\s*li[^>]*>/gi, "• ");
-  text = text.replace(
-    /<\/\s*(p|div|ul|ol|h[1-6]|blockquote|tr)\s*>/gi,
-    "\n\n",
-  );
+  text = text.replace(/<\/\s*(p|div|ul|ol|h[1-6]|blockquote|tr)\s*>/gi, "\n\n");
 
   return text
     .split(/\n{2,}/)

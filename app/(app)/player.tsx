@@ -33,7 +33,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { CastButton, useRemoteMediaClient } from "react-native-google-cast";
+import {
+  CastButton,
+  useCastSession,
+  useMediaStatus,
+} from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -65,7 +69,16 @@ import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import {
+  getCurrentTime,
+  isPlaying as isLocalPlaying,
+  pause as pauseLocal,
+  play as playLocal,
+  seekTo as seekLocal,
+  skipNext,
+  skipPrevious,
+  togglePlayPause,
+} from "@/services/player";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
 
@@ -192,14 +205,75 @@ export default function PlayerScreen() {
     });
   const toast = useToast();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
-  const castClient = useRemoteMediaClient();
+  const castSession = useCastSession();
+  const castClient = castSession?.client ?? null;
+  const castMediaStatus = useMediaStatus();
+  const previousSessionIdRef = useRef<string | null>(null);
+  const wasPlayingBeforeCastRef = useRef(false);
+  const lastReceiverPositionRef = useRef(0);
+  const lastLoadedCastTrackIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!castClient || !playingTrack) return;
+    const pos = castMediaStatus?.streamPosition;
+    if (typeof pos === "number" && Number.isFinite(pos)) {
+      lastReceiverPositionRef.current = pos;
+    }
+  }, [castMediaStatus?.streamPosition]);
+
+  useEffect(() => {
+    const currentSessionId = castSession?.id ?? null;
+    const previousSessionId = previousSessionIdRef.current;
+    if (currentSessionId === previousSessionId) return;
+    previousSessionIdRef.current = currentSessionId;
+
+    if (currentSessionId && !previousSessionId) {
+      wasPlayingBeforeCastRef.current = isLocalPlaying();
+      const localPos = getCurrentTime();
+      pauseLocal();
+      if (castClient && playingTrack) {
+        const contentUrl = isRadio
+          ? (playingTrack.streamUrl ?? playingTrack.url)
+          : streamUrl(playingTrack.id);
+        if (contentUrl) {
+          lastLoadedCastTrackIdRef.current = playingTrack.id;
+          castClient.loadMedia({
+            autoplay: wasPlayingBeforeCastRef.current,
+            startTime: isRadio ? undefined : localPos,
+            mediaInfo: {
+              contentUrl,
+              contentType: "audio/mpeg",
+              metadata: {
+                type: "musicTrack",
+                title: playingTrack.title,
+                albumTitle: playingTrack.album,
+                artist: playingTrack.artist,
+                images: playingTrack.artwork
+                  ? [{ url: playingTrack.artwork }]
+                  : undefined,
+              },
+              streamDuration: playingTrack.duration,
+            },
+          });
+        }
+      }
+    } else if (!currentSessionId && previousSessionId) {
+      const resumePos = lastReceiverPositionRef.current;
+      lastLoadedCastTrackIdRef.current = null;
+      if (!isRadio && resumePos > 0) seekLocal(resumePos);
+      if (wasPlayingBeforeCastRef.current) playLocal();
+      wasPlayingBeforeCastRef.current = false;
+      lastReceiverPositionRef.current = 0;
+    }
+  }, [castSession, castClient, playingTrack, isRadio]);
+
+  useEffect(() => {
+    if (!castClient || !castSession || !playingTrack) return;
+    if (lastLoadedCastTrackIdRef.current === playingTrack.id) return;
     const contentUrl = isRadio
       ? (playingTrack.streamUrl ?? playingTrack.url)
       : streamUrl(playingTrack.id);
     if (!contentUrl) return;
+    lastLoadedCastTrackIdRef.current = playingTrack.id;
     castClient.loadMedia({
       mediaInfo: {
         contentUrl,
@@ -216,7 +290,7 @@ export default function PlayerScreen() {
         streamDuration: playingTrack.duration,
       },
     });
-  }, [castClient, playingTrack, isRadio]);
+  }, [castClient, castSession, playingTrack, isRadio]);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();

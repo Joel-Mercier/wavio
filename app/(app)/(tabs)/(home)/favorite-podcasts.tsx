@@ -43,9 +43,8 @@ export default function FavoritePodcastsScreen() {
     uuids: favoritePodcasts.map((podcast) => podcast.uuid),
   });
   const episodes =
-    data?.pages.flatMap(
-      (page) => page.data?.getLatestPodcastEpisodes ?? [],
-    ) ?? [];
+    data?.pages.flatMap((page) => page.data?.getLatestPodcastEpisodes ?? []) ??
+    [];
 
   return (
     <Box className="h-full">
@@ -118,9 +117,7 @@ export default function FavoritePodcastsScreen() {
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={() =>
-            isFetchingNextPage ? (
-              <PodcastListItemSkeleton index={1} />
-            ) : null
+            isFetchingNextPage ? <PodcastListItemSkeleton index={1} /> : null
           }
           ListHeaderComponent={() => (
             <Box className="px-6">
