@@ -119,8 +119,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="add"
           options={{
-            // @ts-expect-error
-            href: showAddTab ? "" : null,
+            href: (showAddTab ? "" : null) as never,
             title: t("app.create.title"),
             tabBarIcon: ({ color }) => <Plus size={24} color={color} />,
           }}
