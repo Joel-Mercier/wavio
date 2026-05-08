@@ -1,7 +1,18 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
-import { type ReactElement, useMemo } from "react";
+import {
+  type ReactElement,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
+import type {
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
@@ -49,21 +60,86 @@ export default function HomeScreen() {
     isLoading: isLoadingRecent,
     error: recentError,
   } = useAlbumList2({ type: "newest", size: 12, musicFolderId });
+  const [lazyEnabled, setLazyEnabled] = useState({
+    mostPlayed: false,
+    moreFromArtist: false,
+    highestRated: false,
+    random: false,
+    internetRadioStations: false,
+  });
+  const sectionYRef = useRef<Partial<Record<keyof typeof lazyEnabled, number>>>(
+    {},
+  );
+  const viewportHRef = useRef(0);
+  const scrollYRef = useRef(0);
+
+  const evaluateTriggers = useCallback(() => {
+    const vh = viewportHRef.current;
+    if (!vh) return;
+    const threshold = scrollYRef.current + vh + vh; // generous: one full viewport of prefetch
+    setLazyEnabled((prev) => {
+      let next = prev;
+      for (const key of Object.keys(prev) as (keyof typeof prev)[]) {
+        if (prev[key]) continue;
+        const y = sectionYRef.current[key];
+        if (y !== undefined && y <= threshold) {
+          if (next === prev) next = { ...prev };
+          next[key] = true;
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollYRef.current = e.nativeEvent.contentOffset.y;
+      viewportHRef.current = e.nativeEvent.layoutMeasurement.height;
+      evaluateTriggers();
+    },
+    [evaluateTriggers],
+  );
+
+  const handleScrollViewLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      viewportHRef.current = e.nativeEvent.layout.height;
+      evaluateTriggers();
+    },
+    [evaluateTriggers],
+  );
+
+  const makeSectionOnLayout = useCallback(
+    (key: keyof typeof lazyEnabled) => (e: LayoutChangeEvent) => {
+      sectionYRef.current[key] = e.nativeEvent.layout.y;
+      evaluateTriggers();
+    },
+    [evaluateTriggers],
+  );
+
   const {
     data: mostPlayedData,
     isLoading: isLoadingMostPlayed,
     error: mostPlayedError,
-  } = useAlbumList2({ type: "frequent", size: 12, musicFolderId });
+  } = useAlbumList2(
+    { type: "frequent", size: 12, musicFolderId },
+    { enabled: lazyEnabled.mostPlayed },
+  );
   const {
     data: highestRatedData,
     isLoading: isLoadingHighestRated,
     error: highestRatedError,
-  } = useAlbumList2({ type: "highest", size: 12, musicFolderId });
+  } = useAlbumList2(
+    { type: "highest", size: 12, musicFolderId },
+    { enabled: lazyEnabled.highestRated },
+  );
   const {
     data: randomData,
     isLoading: isLoadingRandom,
     error: randomError,
-  } = useAlbumList2({ type: "random", size: 12, musicFolderId });
+  } = useAlbumList2(
+    { type: "random", size: 12, musicFolderId },
+    { enabled: lazyEnabled.random },
+  );
   const moreFromArtistId = useMemo(() => {
     const pickRandom = (albums?: AlbumID3[]) => {
       const candidates = (albums ?? []).filter((album) => !!album.artistId);
@@ -84,12 +160,16 @@ export default function HomeScreen() {
     data: moreFromArtistData,
     isLoading: isLoadingMoreFromArtist,
     error: moreFromArtistError,
-  } = useArtist(moreFromArtistId ?? "");
+  } = useArtist(
+    lazyEnabled.moreFromArtist && moreFromArtistId ? moreFromArtistId : "",
+  );
   const {
     data: internetRadioStationsData,
     isLoading: isLoadingInternetRadioStations,
     error: internetRadioStationsError,
-  } = useGetInternetRadioStations();
+  } = useGetInternetRadioStations({
+    enabled: lazyEnabled.internetRadioStations,
+  });
   return (
     <Box>
       <HStack
@@ -123,9 +203,6 @@ export default function HomeScreen() {
             </Badge>
           </FadeOutScaleDown>
         </HStack>
-        {/* <Heading size="2xl" className="text-white font-bold">
-          {t("app.home.title", { username })}
-        </Heading> */}
       </HStack>
       <ScrollView
         contentContainerStyle={{
@@ -133,6 +210,9 @@ export default function HomeScreen() {
             tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2 + 16,
         }}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        onLayout={handleScrollViewLayout}
+        scrollEventThrottle={64}
       >
         <Box className="px-6 mb-4">
           <VStack className="gap-y-4">
@@ -222,42 +302,45 @@ export default function HomeScreen() {
         {!isLoadingRecent &&
           !recentError &&
           !recentData?.albumList2?.album?.length && <EmptyDisplay />}
-        <Box className="px-6 mt-4 mb-4">
-          <Heading size="xl" className="text-white">
-            {t("app.home.mostPlayed")}
-          </Heading>
+        <Box onLayout={makeSectionOnLayout("mostPlayed")}>
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              {t("app.home.mostPlayed")}
+            </Heading>
+          </Box>
+          {mostPlayedError ? (
+            <ErrorDisplay error={mostPlayedError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="pl-6 mb-6"
+            >
+              {!lazyEnabled.mostPlayed || isLoadingMostPlayed
+                ? loadingData(4).map((_, index) => (
+                    <AlbumListItemSkeleton
+                      key={`most-played-${index}`}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))
+                : mostPlayedData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))}
+            </ScrollView>
+          )}
+          {lazyEnabled.mostPlayed &&
+            !isLoadingMostPlayed &&
+            !mostPlayedError &&
+            !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         </Box>
-        {mostPlayedError ? (
-          <ErrorDisplay error={mostPlayedError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="pl-6 mb-6"
-          >
-            {isLoadingMostPlayed
-              ? loadingData(4).map((_, index) => (
-                  <AlbumListItemSkeleton
-                    key={`most-played-${index}`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              : mostPlayedData?.albumList2?.album?.map((album, index) => (
-                  <AlbumListItem
-                    key={album.id}
-                    album={album}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))}
-          </ScrollView>
-        )}
-        {!isLoadingMostPlayed &&
-          !mostPlayedError &&
-          !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         {moreFromArtistId && (
-          <>
+          <Box onLayout={makeSectionOnLayout("moreFromArtist")}>
             <Box className="px-6 mt-4 mb-4">
               <Heading size="xl" className="text-white">
                 {t("app.albums.moreFromArtist", {
@@ -273,7 +356,7 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerClassName="pl-6 mb-6"
               >
-                {isLoadingMoreFromArtist
+                {!lazyEnabled.moreFromArtist || isLoadingMoreFromArtist
                   ? loadingData(4).map((_, index) => (
                       <AlbumListItemSkeleton
                         key={`more-from-artist-${index}`}
@@ -291,117 +374,127 @@ export default function HomeScreen() {
                     ))}
               </ScrollView>
             )}
-          </>
+          </Box>
         )}
-        <Box className="px-6 mt-4 mb-4">
-          <Heading size="xl" className="text-white">
-            {t("app.home.topRated")}
-          </Heading>
-        </Box>
-        {highestRatedError ? (
-          <ErrorDisplay error={highestRatedError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="pl-6 mb-6"
-          >
-            {isLoadingHighestRated
-              ? loadingData(4).map((_, index) => (
-                  <AlbumListItemSkeleton
-                    key={`highest-rated-${index}`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              : highestRatedData?.albumList2?.album?.map((album, index) => (
-                  <AlbumListItem
-                    key={album.id}
-                    album={album}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))}
-          </ScrollView>
-        )}
-        {!isLoadingHighestRated &&
-          !highestRatedError &&
-          !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
-        <Box className="px-6 mt-4 mb-4">
-          <Heading size="xl" className="text-white">
-            {t("app.home.random")}
-          </Heading>
-        </Box>
-        {randomError ? (
-          <ErrorDisplay error={randomError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="pl-6 mb-6"
-          >
-            {isLoadingRandom
-              ? loadingData(4).map((_, index) => (
-                  <AlbumListItemSkeleton
-                    key={`random-${index}`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              : randomData?.albumList2?.album?.map((album, index) => (
-                  <AlbumListItem
-                    key={album.id}
-                    album={album}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))}
-          </ScrollView>
-        )}
-        {!isLoadingRandom &&
-          !randomError &&
-          !randomData?.albumList2?.album?.length && <EmptyDisplay />}
-        <HStack className="px-6 mt-4 mb-4 items-center justify-between">
-          <Heading size="xl" className="text-white">
-            {t("app.home.internetRadioStations")}
-          </Heading>
-          {!!internetRadioStationsData?.internetRadioStations
-            ?.internetRadioStation?.length && (
-            <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
-              <Text className="text-primary-100">
-                {t("app.shared.seeAll")}
-              </Text>
-            </FadeOutScaleDown>
-          )}
-        </HStack>
-        {internetRadioStationsError ? (
-          <ErrorDisplay error={internetRadioStationsError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="pl-6 mb-6"
-          >
-            {isLoadingInternetRadioStations
-              ? loadingData(4).map((_, index) => (
-                  <InternetRadioStationListItemSkeleton
-                    key={`internet-radio-stations-${index}`}
-                  />
-                ))
-              : internetRadioStationsData?.internetRadioStations?.internetRadioStation
-                  ?.slice(0, 12)
-                  .map((radioStation) => (
-                    <InternetRadioStationListItem
-                      key={radioStation.id}
-                      internetRadioStation={radioStation}
+        <Box onLayout={makeSectionOnLayout("highestRated")}>
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              {t("app.home.topRated")}
+            </Heading>
+          </Box>
+          {highestRatedError ? (
+            <ErrorDisplay error={highestRatedError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="pl-6 mb-6"
+            >
+              {!lazyEnabled.highestRated || isLoadingHighestRated
+                ? loadingData(4).map((_, index) => (
+                    <AlbumListItemSkeleton
+                      key={`highest-rated-${index}`}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))
+                : highestRatedData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
                     />
                   ))}
-          </ScrollView>
-        )}
-        {!isLoadingInternetRadioStations &&
-          !internetRadioStationsError &&
-          !internetRadioStationsData?.internetRadioStations
-            ?.internetRadioStation?.length && <EmptyDisplay />}
+            </ScrollView>
+          )}
+          {lazyEnabled.highestRated &&
+            !isLoadingHighestRated &&
+            !highestRatedError &&
+            !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
+        </Box>
+        <Box onLayout={makeSectionOnLayout("random")}>
+          <Box className="px-6 mt-4 mb-4">
+            <Heading size="xl" className="text-white">
+              {t("app.home.random")}
+            </Heading>
+          </Box>
+          {randomError ? (
+            <ErrorDisplay error={randomError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="pl-6 mb-6"
+            >
+              {!lazyEnabled.random || isLoadingRandom
+                ? loadingData(4).map((_, index) => (
+                    <AlbumListItemSkeleton
+                      key={`random-${index}`}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))
+                : randomData?.albumList2?.album?.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))}
+            </ScrollView>
+          )}
+          {lazyEnabled.random &&
+            !isLoadingRandom &&
+            !randomError &&
+            !randomData?.albumList2?.album?.length && <EmptyDisplay />}
+        </Box>
+        <Box onLayout={makeSectionOnLayout("internetRadioStations")}>
+          <HStack className="px-6 mt-4 mb-4 items-center justify-between">
+            <Heading size="xl" className="text-white">
+              {t("app.home.internetRadioStations")}
+            </Heading>
+            {!!internetRadioStationsData?.internetRadioStations
+              ?.internetRadioStation?.length && (
+              <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
+                <Text className="text-primary-100">
+                  {t("app.shared.seeAll")}
+                </Text>
+              </FadeOutScaleDown>
+            )}
+          </HStack>
+          {internetRadioStationsError ? (
+            <ErrorDisplay error={internetRadioStationsError} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerClassName="pl-6 mb-6"
+            >
+              {!lazyEnabled.internetRadioStations ||
+              isLoadingInternetRadioStations
+                ? loadingData(4).map((_, index) => (
+                    <InternetRadioStationListItemSkeleton
+                      key={`internet-radio-stations-${index}`}
+                    />
+                  ))
+                : internetRadioStationsData?.internetRadioStations?.internetRadioStation
+                    ?.slice(0, 12)
+                    .map((radioStation) => (
+                      <InternetRadioStationListItem
+                        key={radioStation.id}
+                        internetRadioStation={radioStation}
+                      />
+                    ))}
+            </ScrollView>
+          )}
+          {lazyEnabled.internetRadioStations &&
+            !isLoadingInternetRadioStations &&
+            !internetRadioStationsError &&
+            !internetRadioStationsData?.internetRadioStations
+              ?.internetRadioStation?.length && <EmptyDisplay />}
+        </Box>
       </ScrollView>
     </Box>
   );

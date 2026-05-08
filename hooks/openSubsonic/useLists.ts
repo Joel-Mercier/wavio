@@ -28,21 +28,25 @@ export const useAlbumList = (params: {
   });
 };
 
-export const useAlbumList2 = (params: {
-  type: AlbumListType;
-  size?: number;
-  offset?: number;
-  fromYear?: number;
-  toYear?: number;
-  genre?: string;
-  musicFolderId?: string;
-}) => {
+export const useAlbumList2 = (
+  params: {
+    type: AlbumListType;
+    size?: number;
+    offset?: number;
+    fromYear?: number;
+    toYear?: number;
+    genre?: string;
+    musicFolderId?: string;
+  },
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["albumList2", params],
     queryFn: () => {
       const { type, ...rest } = params;
       return getAlbumList2(type, rest);
     },
+    enabled: options?.enabled,
   });
 };
 

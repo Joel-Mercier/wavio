@@ -28,12 +28,15 @@ export const useDeleteInternetRadioStation = () => {
   });
 };
 
-export const useGetInternetRadioStations = () => {
+export const useGetInternetRadioStations = (options?: {
+  enabled?: boolean;
+}) => {
   return useQuery({
     queryKey: ["internet_radio_stations"],
     queryFn: () => {
       return getInternetRadioStations();
     },
+    enabled: options?.enabled,
   });
 };
 
