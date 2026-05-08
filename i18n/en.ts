@@ -363,6 +363,12 @@ export default {
             "Overlap the end of one track with the start of the next.",
           crossfadeOff: "Off",
           crossfadeSeconds: "{{seconds}} s",
+          equalizerLabel: "Equalizer",
+          equalizerDescription:
+            "Open the system equalizer to tune the sound for the current playback session.",
+          equalizerAction: "Open",
+          equalizerErrorMessage:
+            "No system equalizer is available on this device.",
         },
         streamingSettings: {
           title: "Streaming settings",

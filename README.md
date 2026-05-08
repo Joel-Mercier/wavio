@@ -62,7 +62,8 @@ TODO
 - Activity screen with now playing users
 - Share screen with shareable links
 - Servers screen with multiple servers support
-- Settings screen with server scanning, offline downloads, content and display settings
+- Settings screen with server scanning, offline downloads, playback, content and display settings
+- Gapless playback, crossfade, replay gain, equalizer and sleep timer
 - French and English translations
 
 ## Useful links

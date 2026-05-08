@@ -379,6 +379,12 @@ export default {
             "Superpose la fin d'un morceau avec le début du suivant.",
           crossfadeOff: "Désactivé",
           crossfadeSeconds: "{{seconds}} s",
+          equalizerLabel: "Égaliseur",
+          equalizerDescription:
+            "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours.",
+          equalizerAction: "Ouvrir",
+          equalizerErrorMessage:
+            "Aucun égaliseur système n'est disponible sur cet appareil.",
         },
         streamingSettings: {
           title: "Paramètres de streaming",

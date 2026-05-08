@@ -7,6 +7,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
+import * as Application from "expo-application";
 import { useRouter } from "expo-router";
 import {
   AlertCircleIcon,
@@ -59,6 +60,10 @@ import {
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import {
+  isEqualizerAvailable,
+  openSystemEqualizer,
+} from "@/services/equalizer";
 import { Country, Language } from "@/services/taddyPodcasts/types";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
@@ -218,6 +223,25 @@ export default function SettingsDetail() {
 
   const adjustCrossfade = (delta: number) => {
     setCrossfadeSeconds(crossfadeSeconds + delta);
+  };
+
+  const handleOpenEqualizerPress = async () => {
+    try {
+      await openSystemEqualizer(Application.applicationId ?? "");
+    } catch {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.settings.playbackSettings.equalizerErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
@@ -704,6 +728,26 @@ export default function SettingsDetail() {
                 </FadeOutScaleDown>
               </HStack>
             </HStack>
+            {isEqualizerAvailable() && (
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-3/5">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.playbackSettings.equalizerLabel")}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.settings.playbackSettings.equalizerDescription")}
+                  </Text>
+                </VStack>
+                <FadeOutScaleDown
+                  onPress={handleOpenEqualizerPress}
+                  className="items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+                >
+                  <Text className="text-primary-800 font-bold text-lg">
+                    {t("app.settings.playbackSettings.equalizerAction")}
+                  </Text>
+                </FadeOutScaleDown>
+              </HStack>
+            )}
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.streamingSettings.title")}
