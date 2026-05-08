@@ -68,7 +68,8 @@ export default function AlbumListItem({
                 .map((type) =>
                   type.toLowerCase() === "ep"
                     ? type.toUpperCase()
-                    : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(),
+                    : type.charAt(0).toUpperCase() +
+                      type.slice(1).toLowerCase(),
                 )
                 .join(" · ")}
             </Text>

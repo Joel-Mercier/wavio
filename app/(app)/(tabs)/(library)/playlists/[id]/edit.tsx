@@ -125,9 +125,7 @@ export default function EditPlaylistScreen() {
             {t("app.editPlaylist.title")}
           </Heading>
           <Box className="flex-1 items-end">
-            <FadeOutScaleDown
-              onPress={isDirty ? form.handleSubmit : undefined}
-            >
+            <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
               <Text
                 className={cn("text-emerald-500 font-bold text-lg", {
                   "opacity-50": !isDirty,

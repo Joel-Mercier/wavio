@@ -95,41 +95,41 @@ export default function SearchResultListItem({
   return (
     <FadeOutScaleDown onPress={handlePress}>
       <HStack className="items-center justify-between mb-4">
-          <HStack className="items-center">
-            {searchResult.coverArt ? (
-              <Image
-                source={{ uri: artworkUrl(searchResult.coverArt) }}
-                className={cn("w-16 h-16 rounded-md aspect-square", {
+        <HStack className="items-center">
+          {searchResult.coverArt ? (
+            <Image
+              source={{ uri: artworkUrl(searchResult.coverArt) }}
+              className={cn("w-16 h-16 rounded-md aspect-square", {
+                "rounded-full": type.id === "artist",
+              })}
+              alt="Recent search cover"
+            />
+          ) : (
+            <Box
+              className={cn(
+                "w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center",
+                {
                   "rounded-full": type.id === "artist",
-                })}
-                alt="Recent search cover"
-              />
-            ) : (
-              <Box
-                className={cn(
-                  "w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center",
-                  {
-                    "rounded-full": type.id === "artist",
-                  },
-                )}
-              >
-                <SearchResultListItemIcon type={type.id} />
-              </Box>
-            )}
-            <VStack className="ml-4">
-              <Heading className="text-white font-normal" numberOfLines={1}>
-                {searchResult.title || searchResult.name}
-              </Heading>
-              <HStack className="items-center">
-                <Text className="text-primary-100">{type.label}</Text>
-                {searchResult.artist && (
-                  <Text className="text-primary-100">
-                    {` ⦁ ${searchResult.artist}`}
-                  </Text>
-                )}
-              </HStack>
-            </VStack>
-          </HStack>
+                },
+              )}
+            >
+              <SearchResultListItemIcon type={type.id} />
+            </Box>
+          )}
+          <VStack className="ml-4">
+            <Heading className="text-white font-normal" numberOfLines={1}>
+              {searchResult.title || searchResult.name}
+            </Heading>
+            <HStack className="items-center">
+              <Text className="text-primary-100">{type.label}</Text>
+              {searchResult.artist && (
+                <Text className="text-primary-100">
+                  {` ⦁ ${searchResult.artist}`}
+                </Text>
+              )}
+            </HStack>
+          </VStack>
+        </HStack>
       </HStack>
     </FadeOutScaleDown>
   );

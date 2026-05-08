@@ -243,9 +243,7 @@ export default function ReorderPlaylistScreen() {
             {t("app.editPlaylist.title")}
           </Heading>
           <Box className="flex-1 items-end">
-            <FadeOutScaleDown
-              onPress={canSave ? form.handleSubmit : undefined}
-            >
+            <FadeOutScaleDown onPress={canSave ? form.handleSubmit : undefined}>
               <Text
                 className={cn("text-emerald-500 font-bold text-lg", {
                   "opacity-75": !canSave,

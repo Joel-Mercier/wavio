@@ -369,6 +369,17 @@ export default {
           createTabDescription:
             "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
         },
+        playbackSettings: {
+          title: "Lecture",
+          gaplessLabel: "Lecture sans coupure",
+          gaplessDescription:
+            "Élimine le silence entre les morceaux en préchargeant le suivant.",
+          crossfadeLabel: "Fondu enchaîné",
+          crossfadeDescription:
+            "Superpose la fin d'un morceau avec le début du suivant.",
+          crossfadeOff: "Désactivé",
+          crossfadeSeconds: "{{seconds}} s",
+        },
         streamingSettings: {
           title: "Paramètres de streaming",
           audioQualityLabel: "Qualité audio",

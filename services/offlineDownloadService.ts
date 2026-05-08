@@ -83,7 +83,9 @@ export class OfflineDownloadService {
     // session is stale: nothing is actually downloading it. Mark as failed
     // unless the track is still in the queue (in which case we'll resume it).
     const queuedIds = new Set(offlineStore.downloadQueue.map((t) => t.id));
-    for (const [id, progress] of Object.entries(offlineStore.downloadProgress)) {
+    for (const [id, progress] of Object.entries(
+      offlineStore.downloadProgress,
+    )) {
       if (
         (progress.status === "downloading" || progress.status === "pending") &&
         !queuedIds.has(id)

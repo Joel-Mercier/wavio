@@ -353,6 +353,17 @@ export default {
           createTabLabel: "Create tab",
           createTabDescription: "Show the 'create' tab in the bottom tab bar",
         },
+        playbackSettings: {
+          title: "Playback",
+          gaplessLabel: "Gapless playback",
+          gaplessDescription:
+            "Eliminate silence between consecutive tracks by preloading the next one.",
+          crossfadeLabel: "Crossfade",
+          crossfadeDescription:
+            "Overlap the end of one track with the start of the next.",
+          crossfadeOff: "Off",
+          crossfadeSeconds: "{{seconds}} s",
+        },
         streamingSettings: {
           title: "Streaming settings",
           audioQualityLabel: "Audio quality",

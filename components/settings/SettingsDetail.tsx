@@ -126,6 +126,10 @@ export default function SettingsDetail() {
   const setReplayGainMode = useApp((store) => store.setReplayGainMode);
   const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
   const setReplayGainPreampDb = useApp((store) => store.setReplayGainPreampDb);
+  const crossfadeSeconds = useApp((store) => store.crossfadeSeconds);
+  const setCrossfadeSeconds = useApp((store) => store.setCrossfadeSeconds);
+  const gaplessEnabled = useApp((store) => store.gaplessEnabled);
+  const setGaplessEnabled = useApp((store) => store.setGaplessEnabled);
   const setTaddyPodcastsConfig = usePodcasts(
     (store) => store.setTaddyPodcastsConfig,
   );
@@ -210,6 +214,10 @@ export default function SettingsDetail() {
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
     setReplayGainPreampDb(next);
+  };
+
+  const adjustCrossfade = (delta: number) => {
+    setCrossfadeSeconds(crossfadeSeconds + delta);
   };
 
   const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
@@ -639,6 +647,62 @@ export default function SettingsDetail() {
                 value={showAddTab}
                 onToggle={(value) => setShowAddTab(value)}
               />
+            </HStack>
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.playbackSettings.title")}
+            </Heading>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.playbackSettings.gaplessLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.playbackSettings.gaplessDescription")}
+                </Text>
+              </VStack>
+              <Switch
+                size="md"
+                trackColor={{
+                  false: themeConfig.theme.colors.gray[500],
+                  true: themeConfig.theme.colors.emerald[500],
+                }}
+                thumbColor={themeConfig.theme.colors.white}
+                ios_backgroundColor={themeConfig.theme.colors.white}
+                value={gaplessEnabled}
+                onToggle={(value) => setGaplessEnabled(value)}
+              />
+            </HStack>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.playbackSettings.crossfadeLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.playbackSettings.crossfadeDescription")}
+                </Text>
+              </VStack>
+              <HStack className="items-center gap-x-3">
+                <FadeOutScaleDown
+                  onPress={() => adjustCrossfade(-1)}
+                  className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
+                >
+                  <Text className="text-primary-800 font-bold text-lg">-</Text>
+                </FadeOutScaleDown>
+                <Text className="text-white font-bold text-center">
+                  {crossfadeSeconds === 0
+                    ? t("app.settings.playbackSettings.crossfadeOff")
+                    : t("app.settings.playbackSettings.crossfadeSeconds", {
+                        seconds: crossfadeSeconds,
+                      })}
+                </Text>
+                <FadeOutScaleDown
+                  onPress={() => adjustCrossfade(1)}
+                  className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
+                >
+                  <Text className="text-primary-800 font-bold text-lg">+</Text>
+                </FadeOutScaleDown>
+              </HStack>
             </HStack>
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
