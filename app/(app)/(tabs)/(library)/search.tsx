@@ -3,20 +3,24 @@ import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
 import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import LibraryListItem, {
   type Favorites,
+  type LibraryFolder,
 } from "@/components/library/LibraryListItem";
+import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
+import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { themeConfig } from "@/config/theme";
+import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import type {
@@ -25,6 +29,9 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { cn } from "@/utils/tailwind";
+
+type SearchFilter = "albums" | "artists" | "playlists" | "folders" | null;
 
 export default function LibrarySearchScreen() {
   const { t } = useTranslation();
@@ -36,24 +43,30 @@ export default function LibrarySearchScreen() {
   });
   const query = useStore(form.store, (state) => state.values.query);
   const musicFolderId = useCurrentMusicFolderId();
+  const [filter, setFilter] = useState<SearchFilter>(null);
 
   const {
     data: starredData,
     isLoading: isLoadingStarred,
-    isFetching: isFetchingStarred,
     error: starredError,
-    refetch: refetchStarred,
   } = useStarred2({ musicFolderId });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,
-    isFetching: isFetchingPlaylists,
     error: playlistsError,
-    refetch: refetchPlaylists,
   } = usePlaylists({});
+  const {
+    data: musicFoldersData,
+    isLoading: isLoadingMusicFolders,
+    error: musicFoldersError,
+  } = useMusicFolders();
 
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
+  };
+
+  const handleFilterPress = (type: NonNullable<SearchFilter>) => {
+    setFilter(type === filter ? null : type);
   };
 
   const data = useMemo(() => {
@@ -61,32 +74,50 @@ export default function LibrarySearchScreen() {
       return [];
     }
     let data = [];
-    if (starredData.starred2.artist) {
+    if ((!filter || filter === "artists") && starredData.starred2.artist) {
       data.push(starredData.starred2.artist);
     }
-    if (starredData.starred2.album) {
+    if ((!filter || filter === "albums") && starredData.starred2.album) {
       data.push(starredData.starred2.album);
     }
-    if (playlistsData.playlists.playlist) {
+    if (
+      (!filter || filter === "playlists") &&
+      playlistsData.playlists.playlist
+    ) {
       data.push(playlistsData.playlists.playlist);
+    }
+    if (
+      (!filter || filter === "folders") &&
+      musicFoldersData?.musicFolders?.musicFolder
+    ) {
+      data.push(
+        musicFoldersData.musicFolders.musicFolder.map((f) => ({
+          id: String(f.id),
+          name: f.name ?? `Library ${f.id}`,
+          isFolder: true,
+        })),
+      );
     }
 
     data = data.flat();
     const options = {
       includeScore: true,
       ignoreDiacritics: true,
-      // Search in `author` and in `tags` array
       keys: ["name"],
     };
 
-    const fuse = new Fuse<AlbumID3 & Playlist & ArtistID3 & Favorites>(
-      data as Array<AlbumID3 & Playlist & ArtistID3 & Favorites>,
+    const fuse = new Fuse<
+      AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+    >(
+      data as Array<
+        AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+      >,
       options,
     );
 
     const result = fuse.search(query);
     return result;
-  }, [starredData, playlistsData, query]);
+  }, [starredData, playlistsData, musicFoldersData, query, filter]);
 
   return (
     <SafeAreaView className="h-full" edges={["bottom", "left", "right"]}>
@@ -97,7 +128,9 @@ export default function LibrarySearchScreen() {
           item,
           index,
         }: {
-          item: FuseResult<AlbumID3 & Playlist & ArtistID3 & Favorites>;
+          item: FuseResult<
+            AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+          >;
           index: number;
         }) => (
           <Box className="px-6">
@@ -144,11 +177,67 @@ export default function LibrarySearchScreen() {
                 </HStack>
               </SafeAreaView>
             </Box>
-            {(isLoadingPlaylists || isLoadingStarred) && (
-              <Spinner size="large" />
-            )}
-            {(playlistsError || starredError) && (
-              <ErrorDisplay error={(playlistsError || starredError) as Error} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="px-6 mb-6"
+            >
+              <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500": filter === "albums",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.album_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500": filter === "artists",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.artist_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500": filter === "playlists",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.playlist_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                    "bg-emerald-500": filter === "folders",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.folder_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+            </ScrollView>
+            {(isLoadingPlaylists ||
+              isLoadingStarred ||
+              isLoadingMusicFolders) && <Spinner size="large" />}
+            {(playlistsError || starredError || musicFoldersError) && (
+              <ErrorDisplay
+                error={
+                  (playlistsError ||
+                    starredError ||
+                    musicFoldersError) as Error
+                }
+              />
             )}
           </>
         }

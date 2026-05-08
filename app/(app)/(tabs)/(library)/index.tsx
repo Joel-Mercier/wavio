@@ -65,9 +65,8 @@ export default function LibraryScreen() {
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
   const [layout, setLayout] = useState<LibraryLayout>("list");
-  const [filter, setFilter] = useState<
-    "artists" | "albums" | "playlists" | "podcasts" | "folders" | null
-  >(null);
+  const filter = useApp((store) => store.libraryFilter);
+  const setFilter = useApp((store) => store.setLibraryFilter);
   const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);

@@ -24,6 +24,22 @@ interface AppStore {
       | "alphabeticalAsc"
       | "alphabeticalDesc",
   ) => void;
+  libraryFilter:
+    | "artists"
+    | "albums"
+    | "playlists"
+    | "podcasts"
+    | "folders"
+    | null;
+  setLibraryFilter: (
+    libraryFilter:
+      | "artists"
+      | "albums"
+      | "playlists"
+      | "podcasts"
+      | "folders"
+      | null,
+  ) => void;
   favoritesSort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -74,6 +90,18 @@ export const useAppBase = create<AppStore>()(
           | "alphabeticalDesc",
       ) => {
         set({ librarySort });
+      },
+      libraryFilter: null,
+      setLibraryFilter: (
+        libraryFilter:
+          | "artists"
+          | "albums"
+          | "playlists"
+          | "podcasts"
+          | "folders"
+          | null,
+      ) => {
+        set({ libraryFilter });
       },
       favoritesSort: "addedAtAsc",
       setFavoritesSort: (

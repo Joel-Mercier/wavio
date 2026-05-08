@@ -33,7 +33,7 @@ export default {
         recentSort: "Récent",
         alphabeticalSort: "Alphabétique",
         search: {
-          inputPlaceholder: "Rechercher dans votre bibliothèque",
+          inputPlaceholder: "Rechercher",
         },
       },
       create: {
