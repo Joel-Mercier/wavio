@@ -18,6 +18,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
@@ -300,11 +301,19 @@ export default function HomeScreen() {
         {!isLoadingRandom &&
           !randomError &&
           !randomData?.albumList2?.album?.length && <EmptyDisplay />}
-        <Box className="px-6 mt-4 mb-4">
+        <HStack className="px-6 mt-4 mb-4 items-center justify-between">
           <Heading size="xl" className="text-white">
             {t("app.home.internetRadioStations")}
           </Heading>
-        </Box>
+          {!!internetRadioStationsData?.internetRadioStations
+            ?.internetRadioStation?.length && (
+            <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
+              <Text className="text-primary-100">
+                {t("app.shared.seeAll")}
+              </Text>
+            </FadeOutScaleDown>
+          )}
+        </HStack>
         {internetRadioStationsError ? (
           <ErrorDisplay error={internetRadioStationsError} />
         ) : (
@@ -319,14 +328,14 @@ export default function HomeScreen() {
                     key={`internet-radio-stations-${index}`}
                   />
                 ))
-              : internetRadioStationsData?.internetRadioStations?.internetRadioStation?.map(
-                  (radioStation, _index) => (
+              : internetRadioStationsData?.internetRadioStations?.internetRadioStation
+                  ?.slice(0, 12)
+                  .map((radioStation) => (
                     <InternetRadioStationListItem
                       key={radioStation.id}
                       internetRadioStation={radioStation}
                     />
-                  ),
-                )}
+                  ))}
           </ScrollView>
         )}
         {!isLoadingInternetRadioStations &&

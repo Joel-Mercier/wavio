@@ -8,13 +8,23 @@ import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
+import { cn } from "@/utils/tailwind";
+
+interface InternetRadioStationListItemProps {
+  internetRadioStation: InternetRadioStation;
+  index?: number;
+  layout?: "vertical" | "horizontal";
+  className?: string;
+}
 
 export default function InternetRadioStationListItem({
   internetRadioStation,
-}: {
-  internetRadioStation: InternetRadioStation;
-}) {
+  index = 0,
+  layout = "horizontal",
+  className = "",
+}: InternetRadioStationListItemProps) {
   const meta = useWebsiteMetadata(internetRadioStation?.homePageUrl);
+  const image = meta.image || meta["twitter:image"];
   return (
     <FadeOutScaleDown
       href={{
@@ -26,26 +36,61 @@ export default function InternetRadioStationListItem({
           homePageUrl: internetRadioStation?.homePageUrl,
         },
       }}
-      className="mr-6"
+      className={cn(className, {
+        "mr-6": layout === "horizontal",
+        "px-6": layout === "vertical",
+        "mt-0": layout === "vertical" && index === 0,
+        "pt-4": layout === "vertical" && index !== 0,
+      })}
     >
-      <VStack className="transition duration-100 gap-y-2 w-32">
-        {meta.image || meta["twitter:image"] ? (
+      <VStack
+        className={cn("transition duration-100 gap-y-2", {
+          "w-32": layout === "horizontal",
+          "flex-row items-center": layout === "vertical",
+        })}
+      >
+        {image ? (
           <Image
-            source={{ uri: meta.image || meta["twitter:image"] }}
-            className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center"
+            source={{ uri: image }}
+            className={cn("rounded-md bg-primary-600 aspect-square", {
+              "w-32 h-32": layout === "horizontal",
+              "w-16 h-16": layout === "vertical",
+            })}
             alt="Internet radio station cover"
             contentFit="contain"
           />
         ) : (
-          <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">
-            <Radio size={48} color={themeConfig.theme.colors.white} />
+          <Box
+            className={cn(
+              "rounded-md bg-primary-600 items-center justify-center",
+              {
+                "w-32 h-32": layout === "horizontal",
+                "w-16 h-16": layout === "vertical",
+              },
+            )}
+          >
+            <Radio
+              size={layout === "horizontal" ? 48 : 28}
+              color={themeConfig.theme.colors.white}
+            />
           </Box>
         )}
-        <VStack>
-          <Heading size="sm" className="text-white" numberOfLines={1}>
+        <VStack
+          className={cn({
+            "flex-col ml-4 flex-1": layout === "vertical",
+          })}
+        >
+          <Heading
+            size={layout === "horizontal" ? "sm" : "md"}
+            className="text-white"
+            numberOfLines={1}
+          >
             {internetRadioStation.name}
           </Heading>
-          <Text numberOfLines={2} className="text-md text-primary-100">
+          <Text
+            numberOfLines={layout === "horizontal" ? 2 : 1}
+            className="text-md text-primary-100"
+          >
             {internetRadioStation?.homePageUrl}
           </Text>
         </VStack>
