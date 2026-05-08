@@ -1,5 +1,7 @@
 jest.mock("@/config/storage", () => {
-  const mem = new Map<string, string>();
+  const g = globalThis as unknown as { __offlineMockMem?: Map<string, string> };
+  if (!g.__offlineMockMem) g.__offlineMockMem = new Map<string, string>();
+  const mem = g.__offlineMockMem;
   return {
     storage: {
       set: (k: string, v: string) => mem.set(k, v),
@@ -14,9 +16,14 @@ jest.mock("@/config/storage", () => {
   };
 });
 
+import type { Child } from "@/services/openSubsonic/types";
 import useOffline, { type OfflineTrack } from "@/stores/offline";
 
 const get = () => useOffline.getState();
+
+const mockMem = (
+  globalThis as unknown as { __offlineMockMem: Map<string, string> }
+).__offlineMockMem;
 
 const makeTrack = (id: string, size = 1000): OfflineTrack => ({
   id,
@@ -27,7 +34,18 @@ const makeTrack = (id: string, size = 1000): OfflineTrack => ({
   downloadedAt: new Date().toISOString(),
 });
 
+const makeChild = (id: string, overrides: Partial<Child> = {}): Child => ({
+  id,
+  isDir: false,
+  title: `Track ${id}`,
+  suffix: "mp3",
+  duration: 180,
+  size: 1000,
+  ...overrides,
+});
+
 beforeEach(() => {
+  mockMem.clear();
   useOffline.setState(
     {
       offlineModeEnabled: false,
@@ -92,7 +110,7 @@ describe("offline store - downloaded tracks", () => {
       status: "completed",
       progress: 100,
     });
-    get().addToDownloadQueue("b");
+    get().addToDownloadQueue(makeChild("b"));
     get().clearAllDownloads();
     expect(get().getDownloadedTracksCount()).toBe(0);
     expect(get().downloadProgress).toEqual({});
@@ -111,22 +129,127 @@ describe("offline store - progress", () => {
     get().removeDownloadProgress("a");
     expect(get().downloadProgress.a).toBeUndefined();
   });
+
+  it("setDownloadProgress overwrites the existing entry for that id", () => {
+    get().setDownloadProgress("a", {
+      trackId: "a",
+      status: "downloading",
+      progress: 10,
+    });
+    get().setDownloadProgress("a", {
+      trackId: "a",
+      status: "completed",
+      progress: 100,
+    });
+    expect(get().downloadProgress.a).toEqual({
+      trackId: "a",
+      status: "completed",
+      progress: 100,
+    });
+  });
+
+  it("clearFailedDownloads removes only failed entries", () => {
+    get().setDownloadProgress("a", {
+      trackId: "a",
+      status: "failed",
+      progress: 0,
+      error: "boom",
+    });
+    get().setDownloadProgress("b", {
+      trackId: "b",
+      status: "completed",
+      progress: 100,
+    });
+    get().setDownloadProgress("c", {
+      trackId: "c",
+      status: "downloading",
+      progress: 50,
+    });
+    get().clearFailedDownloads();
+    expect(get().downloadProgress.a).toBeUndefined();
+    expect(get().downloadProgress.b?.status).toBe("completed");
+    expect(get().downloadProgress.c?.status).toBe("downloading");
+  });
 });
 
 describe("offline store - download queue", () => {
-  it("adds without duplicates and removes", () => {
-    get().addToDownloadQueue("a");
-    get().addToDownloadQueue("a");
-    get().addToDownloadQueue("b");
-    expect(get().downloadQueue).toEqual(["a", "b"]);
+  it("adds without duplicates and removes by id", () => {
+    get().addToDownloadQueue(makeChild("a"));
+    get().addToDownloadQueue(makeChild("a"));
+    get().addToDownloadQueue(makeChild("b"));
+    expect(get().downloadQueue.map((t) => t.id)).toEqual(["a", "b"]);
     get().removeFromDownloadQueue("a");
-    expect(get().downloadQueue).toEqual(["b"]);
+    expect(get().downloadQueue.map((t) => t.id)).toEqual(["b"]);
+  });
+
+  it("preserves full Child data so resumable downloads have what they need", () => {
+    const child = makeChild("a", {
+      suffix: "flac",
+      size: 12345,
+      artist: "X",
+      album: "Y",
+    });
+    get().addToDownloadQueue(child);
+    expect(get().downloadQueue[0]).toEqual(child);
+  });
+
+  it("removeFromDownloadQueue is a no-op for an unknown id", () => {
+    get().addToDownloadQueue(makeChild("a"));
+    get().removeFromDownloadQueue("missing");
+    expect(get().downloadQueue.map((t) => t.id)).toEqual(["a"]);
   });
 
   it("clearDownloadQueue empties the queue", () => {
-    get().addToDownloadQueue("a");
-    get().addToDownloadQueue("b");
+    get().addToDownloadQueue(makeChild("a"));
+    get().addToDownloadQueue(makeChild("b"));
     get().clearDownloadQueue();
     expect(get().downloadQueue).toEqual([]);
+  });
+});
+
+describe("offline store - persistence", () => {
+  const seedAndRehydrate = (storedValue: unknown) => {
+    mockMem.set("offlineStore", JSON.stringify(storedValue));
+    let hydrated: ReturnType<typeof get> | undefined;
+    jest.isolateModules(() => {
+      const mod = require("@/stores/offline");
+      hydrated = mod.default.getState();
+    });
+    if (!hydrated) throw new Error("rehydration failed");
+    return hydrated;
+  };
+
+  it("persists downloadProgress and downloadQueue across reloads", () => {
+    const child = makeChild("a", { suffix: "flac" });
+    const state = seedAndRehydrate({
+      state: {
+        offlineModeEnabled: true,
+        downloadedTracks: { x: makeTrack("x") },
+        downloadQueue: [child],
+        downloadProgress: {
+          a: { trackId: "a", status: "failed", progress: 0, error: "boom" },
+        },
+      },
+      version: 2,
+    });
+
+    expect(state.offlineModeEnabled).toBe(true);
+    expect(state.downloadedTracks.x?.id).toBe("x");
+    expect(state.downloadQueue).toEqual([child]);
+    expect(state.downloadProgress.a?.status).toBe("failed");
+  });
+
+  it("v1 → v2 migration drops the legacy string[] queue (ids alone can't be resumed)", () => {
+    const state = seedAndRehydrate({
+      state: {
+        offlineModeEnabled: true,
+        downloadedTracks: {},
+        downloadQueue: ["legacy-id-1", "legacy-id-2"],
+      },
+      version: 1,
+    });
+
+    expect(state.downloadQueue).toEqual([]);
+    expect(state.offlineModeEnabled).toBe(true);
   });
 });

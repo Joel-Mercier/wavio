@@ -16,7 +16,7 @@ interface PlaylistEditSongListItemProps {
   index: number;
   beginDrag: () => void;
   isActive: boolean;
-  handleRemoveFromPlaylistPress: (index: number) => void;
+  handleRemoveFromPlaylistPress: () => void;
 }
 
 export default function PlaylistEditSongListItem({
@@ -35,7 +35,7 @@ export default function PlaylistEditSongListItem({
       <HStack className="items-center">
         <FadeOutScaleDown
           className="mr-4"
-          onPress={() => handleRemoveFromPlaylistPress(index + 1)}
+          onPress={handleRemoveFromPlaylistPress}
         >
           <CircleMinus size={24} color={themeConfig.theme.colors.gray[400]} />
         </FadeOutScaleDown>

@@ -304,6 +304,8 @@ export default {
         title: "Edit playlist",
         namePlaceholder: "Enter playlist name",
         descriptionPlaceholder: "Describe your playlist",
+        publicLabel: "Public playlist",
+        publicDescription: "Other users on this server can see this playlist",
         editPlaylistSuccessMessage: "Playlist successfully updated",
         editPlaylistErrorMessage:
           "An error occurred while updating the playlist",
@@ -321,6 +323,10 @@ export default {
           clearDownloadsDescription: "Remove all downloaded tracks from device",
           clearDownloadsSuccessMessage: "All downloads cleared successfully",
           clearDownloadsErrorMessage: "Failed to clear downloads",
+          clearDownloadsConfirmTitle:
+            "Are you sure you want to delete all downloaded tracks?",
+          clearDownloadsConfirmDescription:
+            "Deleting these is irreversible. Please confirm if you want to proceed.",
         },
         musicLibrarySettings: {
           title: "Music library settings",
@@ -545,6 +551,11 @@ export default {
         download: "Download",
         lyrics: "Lyrics",
         lyricsUnavailable: "No synced lyrics available for this track.",
+        sleepTimer: "Sleep timer",
+        sleepTimerOff: "Off",
+        sleepTimerEndOfTrack: "End of track",
+        sleepTimerMinutes: "{{count}} minutes",
+        sleepTimerActive: "Sleep timer · {{label}}",
       },
       shares: {
         title: "Shares",
@@ -667,6 +678,8 @@ export default {
         loginErrorMessage:
           "Couldn't reach the requested server. Try again after verifying your server informations",
         serverAlreadyExists: "Server already exists",
+        showPassword: "Show password",
+        hidePassword: "Hide password",
       },
     },
     openSubsonic: {

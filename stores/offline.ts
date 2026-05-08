@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storage } from "@/config/storage";
+import type { Child } from "@/services/openSubsonic/types";
 import createSelectors from "@/utils/createSelectors";
 
 export type OfflineTrack = {
@@ -13,9 +14,7 @@ export type OfflineTrack = {
   path: string;
   size: number;
   downloadedAt: string;
-  // Allow extra metadata without the store needing to know its shape
-  // biome-ignore lint/suspicious/noExplicitAny: allow arbitrary metadata for tracks
-  [key: string]: any;
+  metadata?: Record<string, unknown>;
 };
 
 export type DownloadStatus =
@@ -33,7 +32,6 @@ export type DownloadProgress = {
 };
 
 interface OfflineStore {
-  // Settings
   offlineModeEnabled: boolean;
   setOfflineModeEnabled: (enabled: boolean) => void;
 
@@ -45,9 +43,10 @@ interface OfflineStore {
   downloadProgress: Record<string, DownloadProgress>;
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
   removeDownloadProgress: (trackId: string) => void;
+  clearFailedDownloads: () => void;
 
-  downloadQueue: string[];
-  addToDownloadQueue: (trackId: string) => void;
+  downloadQueue: Child[];
+  addToDownloadQueue: (track: Child) => void;
   removeFromDownloadQueue: (trackId: string) => void;
   clearDownloadQueue: () => void;
 
@@ -81,7 +80,7 @@ const useOfflineBase = create<OfflineStore>()(
 
       removeDownloadedTrack: (trackId) => {
         set((state) => {
-          const { [trackId]: removed, ...remainingTracks } =
+          const { [trackId]: _removed, ...remainingTracks } =
             state.downloadedTracks;
           return {
             downloadedTracks: remainingTracks,
@@ -108,7 +107,7 @@ const useOfflineBase = create<OfflineStore>()(
 
       removeDownloadProgress: (trackId) => {
         set((state) => {
-          const { [trackId]: removed, ...remainingProgress } =
+          const { [trackId]: _removed, ...remainingProgress } =
             state.downloadProgress;
           return {
             downloadProgress: remainingProgress,
@@ -116,20 +115,32 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
-      addToDownloadQueue: (trackId) => {
+      clearFailedDownloads: () => {
         set((state) => {
-          if (!state.downloadQueue.includes(trackId)) {
-            return {
-              downloadQueue: [...state.downloadQueue, trackId],
-            };
+          const remaining: Record<string, DownloadProgress> = {};
+          for (const [id, progress] of Object.entries(state.downloadProgress)) {
+            if (progress.status !== "failed") {
+              remaining[id] = progress;
+            }
           }
-          return state;
+          return { downloadProgress: remaining };
+        });
+      },
+
+      addToDownloadQueue: (track) => {
+        set((state) => {
+          if (state.downloadQueue.some((t) => t.id === track.id)) {
+            return state;
+          }
+          return {
+            downloadQueue: [...state.downloadQueue, track],
+          };
         });
       },
 
       removeFromDownloadQueue: (trackId) => {
         set((state) => ({
-          downloadQueue: state.downloadQueue.filter((id) => id !== trackId),
+          downloadQueue: state.downloadQueue.filter((t) => t.id !== trackId),
         }));
       },
 
@@ -167,16 +178,27 @@ const useOfflineBase = create<OfflineStore>()(
     }),
     {
       name: "offlineStore",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => ({
         getItem: (name: string) => storage.getString(name) ?? null,
         setItem: (name: string, value: string) => storage.set(name, value),
         removeItem: (name: string) => storage.remove(name),
       })),
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<OfflineStore> | undefined;
+        if (!state) return state;
+        if (version < 2) {
+          // v1 stored downloadQueue as string[] of track ids. v2 stores Child[].
+          // The ids alone are insufficient to resume (no title/suffix/size), so drop them.
+          state.downloadQueue = [];
+        }
+        return state;
+      },
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,
         downloadedTracks: state.downloadedTracks,
         downloadQueue: state.downloadQueue,
+        downloadProgress: state.downloadProgress,
       }),
     },
   ),

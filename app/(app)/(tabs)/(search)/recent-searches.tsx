@@ -59,11 +59,11 @@ export default function RecentSearchesScreen() {
     }
 
     const searchData = [];
-    if (data?.searchResult3?.album) {
-      searchData.push(...data.searchResult3.album);
-    }
     if (data?.searchResult3?.artist) {
       searchData.push(...data.searchResult3.artist);
+    }
+    if (data?.searchResult3?.album) {
+      searchData.push(...data.searchResult3.album);
     }
     if (data?.searchResult3?.song) {
       searchData.push(...data.searchResult3.song);

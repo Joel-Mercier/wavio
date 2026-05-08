@@ -1,5 +1,5 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { X } from "lucide-react-native";
@@ -34,6 +34,7 @@ export default function ReorderPlaylistScreen() {
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<Child[]>([]);
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const bottomTabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -50,10 +51,8 @@ export default function ReorderPlaylistScreen() {
   const { data: playlistData, isLoading, error } = usePlaylist(id);
   const doUpdatePlaylist = useUpdatePlaylist();
   const form = useForm({
-    defaultValues: {
-      songIndexToRemove: [] as string[],
-    },
-    onSubmit: async ({ value }) => {
+    defaultValues: {},
+    onSubmit: async () => {
       if (order.length > 0) {
         const positions: Record<string, number> = {};
         order.forEach((item, index) => {
@@ -62,8 +61,15 @@ export default function ReorderPlaylistScreen() {
         setPlaylistTrackPositions(id, positions);
       }
 
+      const serverEntries = playlistData?.playlist?.entry || [];
+      const songIndexToRemove = serverEntries
+        .map((entry, index) =>
+          removedIds.has(entry.id) ? String(index) : null,
+        )
+        .filter((value): value is string => value !== null);
+
       doUpdatePlaylist.mutate(
-        { id, ...value },
+        { id, songIndexToRemove },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["playlist", id] });
@@ -113,7 +119,9 @@ export default function ReorderPlaylistScreen() {
         index={index}
         beginDrag={beginDrag}
         isActive={isActive}
-        handleRemoveFromPlaylistPress={handleRemoveFromPlaylistPress}
+        handleRemoveFromPlaylistPress={() =>
+          handleRemoveFromPlaylistPress(item.id)
+        }
       />
     );
   };
@@ -127,11 +135,13 @@ export default function ReorderPlaylistScreen() {
     setOrder(copy);
   };
 
-  const handleRemoveFromPlaylistPress = (index: number) => {
-    form.setFieldValue("songIndexToRemove", (input) => [
-      ...input,
-      String(index),
-    ]);
+  const handleRemoveFromPlaylistPress = (trackId: string) => {
+    setRemovedIds((prev) => {
+      const next = new Set(prev);
+      next.add(trackId);
+      return next;
+    });
+    setOrder((prev) => prev.filter((item) => item.id !== trackId));
   };
 
   useEffect(() => {
@@ -204,38 +214,47 @@ export default function ReorderPlaylistScreen() {
     }
   }, [playlistData, sort, id, getPlaylistTrackPositions]);
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
   const hasOrderChanged = useMemo(() => {
     if (order.length !== initialOrder.length) return true;
     return order.some((item, index) => item.id !== initialOrder[index]?.id);
   }, [order, initialOrder]);
 
-  const canSave = isDirty || hasOrderChanged;
+  const canSave = hasOrderChanged || removedIds.size > 0;
 
   return (
     <Box className="h-full flex-1">
       <Box className="px-6 pb-6 bg-black">
         <HStack
-          className="items-center justify-between"
+          className="items-center"
           style={{ paddingTop: insets.top + 16 }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
-            <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-              <X size={24} color={themeConfig.theme.colors.white} />
-            </Box>
-          </FadeOutScaleDown>
-          <Heading className="text-white font-bold" size="lg">
+          <Box className="flex-1 items-start">
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <X size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+          </Box>
+          <Heading
+            className="text-white font-bold text-center px-2"
+            size="lg"
+            numberOfLines={1}
+          >
             {t("app.editPlaylist.title")}
           </Heading>
-          <FadeOutScaleDown onPress={canSave ? form.handleSubmit : undefined}>
-            <Text
-              className={cn("text-emerald-500 font-bold text-lg", {
-                "opacity-75": !canSave,
-              })}
+          <Box className="flex-1 items-end">
+            <FadeOutScaleDown
+              onPress={canSave ? form.handleSubmit : undefined}
             >
-              {t("app.shared.save")}
-            </Text>
-          </FadeOutScaleDown>
+              <Text
+                className={cn("text-emerald-500 font-bold text-lg", {
+                  "opacity-75": !canSave,
+                })}
+              >
+                {t("app.shared.save")}
+              </Text>
+            </FadeOutScaleDown>
+          </Box>
         </HStack>
       </Box>
       <DraggableFlashList
@@ -245,7 +264,8 @@ export default function ReorderPlaylistScreen() {
         itemHeight={70}
         onSort={handleListSort}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
       />
     </Box>

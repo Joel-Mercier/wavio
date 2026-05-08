@@ -1,6 +1,7 @@
-import { type Href, Link } from "expo-router";
+import { type Href, router } from "expo-router";
 import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -10,6 +11,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
+import useRecentSearches from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
@@ -44,6 +46,7 @@ export default function SearchResultListItem({
 }: {
   searchResult: AlbumID3 & Child & ArtistID3;
 }) {
+  const { t } = useTranslation();
   const type = useMemo<{
     id: "artist" | "album" | "playlist" | "song";
     label: string;
@@ -52,35 +55,46 @@ export default function SearchResultListItem({
     if (searchResult.albumCount) {
       return {
         id: "artist",
-        label: "Artist",
+        label: t("app.shared.artist_one"),
         url: `/artists/${searchResult.id}`,
       };
     }
     if (searchResult.year && searchResult.name) {
       return {
         id: "album",
-        label: "Album",
+        label: t("app.shared.album_one"),
         url: `/albums/${searchResult.id}`,
       };
     }
     if (searchResult.title) {
       return {
         id: "song",
-        label: "Song",
+        label: t("app.shared.song_one"),
         url: `/albums/${searchResult.albumId}`,
       };
     }
     return {
       id: "playlist",
-      label: "Playlist",
+      label: t("app.shared.playlist_one"),
       url: `/playlists/${searchResult.id}`,
     };
-  }, [searchResult]);
+  }, [searchResult, t]);
+
+  const handlePress = () => {
+    useRecentSearches.getState().addRecentSearch({
+      id: searchResult.id,
+      title: searchResult.title || searchResult.name,
+      type: type.id,
+      coverArt: searchResult.coverArt,
+      albumId: searchResult.albumId,
+      artist: searchResult.artist,
+    });
+    router.navigate(type.url);
+  };
 
   return (
-    <Link href={type.url} asChild>
-      <FadeOutScaleDown>
-        <HStack className="items-center justify-between mb-4">
+    <FadeOutScaleDown onPress={handlePress}>
+      <HStack className="items-center justify-between mb-4">
           <HStack className="items-center">
             {searchResult.coverArt ? (
               <Image
@@ -116,8 +130,7 @@ export default function SearchResultListItem({
               </HStack>
             </VStack>
           </HStack>
-        </HStack>
-      </FadeOutScaleDown>
-    </Link>
+      </HStack>
+    </FadeOutScaleDown>
   );
 }

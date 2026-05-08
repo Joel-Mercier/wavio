@@ -19,6 +19,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Input, InputField } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import {
@@ -39,6 +40,7 @@ import { cn } from "@/utils/tailwind";
 const editPlaylistSchema = z.object({
   name: z.string().min(1).trim(),
   comment: z.string().trim().optional(),
+  isPublic: z.boolean(),
 });
 
 export default function EditPlaylistScreen() {
@@ -55,6 +57,7 @@ export default function EditPlaylistScreen() {
     defaultValues: {
       name: data?.playlist.name ?? "",
       comment: data?.playlist?.comment ?? "",
+      isPublic: data?.playlist?.public ?? false,
     } as z.input<typeof editPlaylistSchema>,
     validators: {
       onBlur: editPlaylistSchema,
@@ -104,26 +107,36 @@ export default function EditPlaylistScreen() {
     <Box className="h-full flex-1">
       <Box className="px-6 pb-6 bg-black">
         <HStack
-          className="items-center justify-between"
+          className="items-center"
           style={{ paddingTop: insets.top + 16 }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
-            <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-              <X size={24} color={themeConfig.theme.colors.white} />
-            </Box>
-          </FadeOutScaleDown>
-          <Heading className="text-white font-bold" size="lg">
+          <Box className="flex-1 items-start">
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <X size={24} color={themeConfig.theme.colors.white} />
+              </Box>
+            </FadeOutScaleDown>
+          </Box>
+          <Heading
+            className="text-white font-bold text-center px-2"
+            size="lg"
+            numberOfLines={1}
+          >
             {t("app.editPlaylist.title")}
           </Heading>
-          <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
-            <Text
-              className={cn("text-emerald-500 font-bold text-lg", {
-                "opacity-50": !isDirty,
-              })}
+          <Box className="flex-1 items-end">
+            <FadeOutScaleDown
+              onPress={isDirty ? form.handleSubmit : undefined}
             >
-              {t("app.shared.save")}
-            </Text>
-          </FadeOutScaleDown>
+              <Text
+                className={cn("text-emerald-500 font-bold text-lg", {
+                  "opacity-50": !isDirty,
+                })}
+              >
+                {t("app.shared.save")}
+              </Text>
+            </FadeOutScaleDown>
+          </Box>
         </HStack>
       </Box>
       <VStack
@@ -220,6 +233,29 @@ export default function EditPlaylistScreen() {
                 </FormControlError>
               )}
             </FormControl>
+          )}
+        </form.Field>
+        <form.Field name="isPublic">
+          {(field) => (
+            <HStack className="items-center justify-between">
+              <VStack className="shrink pr-4">
+                <Text className="text-white font-bold">
+                  {t("app.editPlaylist.publicLabel")}
+                </Text>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.editPlaylist.publicDescription")}
+                </Text>
+              </VStack>
+              <Switch
+                value={field.state.value}
+                onValueChange={field.handleChange}
+                trackColor={{
+                  false: themeConfig.theme.colors.gray[600],
+                  true: themeConfig.theme.colors.emerald[500],
+                }}
+                thumbColor={themeConfig.theme.colors.white}
+              />
+            </HStack>
           )}
         </form.Field>
       </VStack>

@@ -62,6 +62,17 @@ export default function AlbumListItem({
           </Box>
         )}
         <VStack className={cn({ "flex-col ml-4": layout === "vertical" })}>
+          {album.releaseTypes && album.releaseTypes.length > 0 ? (
+            <Text numberOfLines={1} className="text-md text-primary-100">
+              {album.releaseTypes
+                .map((type) =>
+                  type.toLowerCase() === "ep"
+                    ? type.toUpperCase()
+                    : type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(),
+                )
+                .join(" · ")}
+            </Text>
+          ) : null}
           <Heading
             size={layout === "horizontal" ? "sm" : "lg"}
             className="text-white"

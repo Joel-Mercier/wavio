@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
@@ -6,7 +5,6 @@ import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 
 export const useOfflineDownloads = () => {
-  const queryClient = useQueryClient();
   const offlineStore = useOffline();
   const { data: starredTracksData } = useStarred2({});
 
@@ -83,9 +81,9 @@ export const useOfflineDownloads = () => {
     }
   }, []);
 
-  const pauseAllDownloads = useCallback(() => {
-    offlineDownloadService.pauseAllDownloads();
-  }, []);
+  const clearFailedDownloads = useCallback(() => {
+    offlineStore.clearFailedDownloads();
+  }, [offlineStore.clearFailedDownloads]);
 
   const getDownloadProgress = useCallback((trackId: string) => {
     return offlineDownloadService.getDownloadProgress(trackId);
@@ -121,6 +119,6 @@ export const useOfflineDownloads = () => {
     downloadTracks,
     removeDownloadedTrack,
     clearAllDownloads,
-    pauseAllDownloads,
+    clearFailedDownloads,
   };
 };

@@ -314,6 +314,9 @@ export default {
         title: "Modifier la playlist",
         namePlaceholder: "Entrer le nom de la playlist",
         descriptionPlaceholder: "Décrivez votre playlist",
+        publicLabel: "Playlist publique",
+        publicDescription:
+          "Les autres utilisateurs de ce serveur peuvent voir cette playlist",
         editPlaylistSuccessMessage: "Playlist mise à jour avec succès",
         editPlaylistErrorMessage:
           "Une erreur s'est produite lors de la mise à jour de la playlist",
@@ -334,6 +337,10 @@ export default {
             "Tous les téléchargements ont été effacé avec succès",
           clearDownloadsErrorMessage:
             "Échec de l'effacement des téléchargements",
+          clearDownloadsConfirmTitle:
+            "Êtes-vous sûr de vouloir supprimer tous les titres téléchargés ?",
+          clearDownloadsConfirmDescription:
+            "Cette suppression est irréversible. Veuillez confirmer si vous souhaitez continuer.",
         },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
@@ -566,6 +573,11 @@ export default {
         lyrics: "Paroles",
         lyricsUnavailable:
           "Aucune parole synchronisée disponible pour ce titre.",
+        sleepTimer: "Minuteur de veille",
+        sleepTimerOff: "Désactivé",
+        sleepTimerEndOfTrack: "Fin du titre",
+        sleepTimerMinutes: "{{count}} minutes",
+        sleepTimerActive: "Minuteur · {{label}}",
       },
       shares: {
         title: "Partages",
@@ -692,6 +704,8 @@ export default {
         loginErrorMessage:
           "Impossible de se connecter au serveur. Vérifiez les informations de votre serveur",
         serverAlreadyExists: "Ce serveur existe déjà",
+        showPassword: "Afficher le mot de passe",
+        hidePassword: "Masquer le mot de passe",
       },
     },
     openSubsonic: {

@@ -19,6 +19,7 @@ export interface AlbumID3 {
   played?: Date;
   recordLabels?: { name: string }[];
   releaseDate?: { day: number; month: number; year: number };
+  releaseTypes?: string[];
   sortName?: string;
   userRating?: number;
   version?: string;

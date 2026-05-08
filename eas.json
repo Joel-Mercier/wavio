@@ -13,6 +13,9 @@
       }
     },
     "preview": {
+      "android": {
+        "buildType": "apk"
+      },
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",

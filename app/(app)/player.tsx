@@ -27,6 +27,7 @@ import {
   SkipBack,
   SkipForward,
   Sparkles,
+  Timer,
   User,
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -79,6 +80,7 @@ import {
   skipPrevious,
   togglePlayPause,
 } from "@/services/player";
+import { useSleepTimer } from "@/services/sleepTimer";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
 
@@ -123,8 +125,32 @@ export default function PlayerScreen() {
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
+  const { handleSheetPositionChange: handleSleepSheetPositionChange } =
+    useBottomSheetBackHandler(sleepTimerSheetRef);
+  const sleepEndsAt = useSleepTimer((s) => s.endsAt);
+  const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
+  const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
+  const setSleepEndOfTrack = useSleepTimer((s) => s.setEndOfTrack);
+  const cancelSleepTimer = useSleepTimer((s) => s.cancel);
+  const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
+  const [sleepNow, setSleepNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (sleepEndsAt == null) return;
+    const id = setInterval(() => setSleepNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [sleepEndsAt]);
+  const sleepRemainingLabel = (() => {
+    if (sleepEndOfTrack) return t("app.player.sleepTimerEndOfTrack");
+    if (sleepEndsAt == null) return null;
+    const remaining = Math.max(0, sleepEndsAt - sleepNow);
+    const totalSec = Math.ceil(remaining / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  })();
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const colors = useImageColors(playingTrack?.artwork);
@@ -334,6 +360,26 @@ export default function PlayerScreen() {
       pathname: "/tracks/[id]/similar",
       params: { id: playingTrack.id, title: playingTrack.title ?? "" },
     });
+  };
+
+  const handleSleepTimerPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    sleepTimerSheetRef.current?.present();
+  };
+
+  const handleSleepPresetPress = (minutes: number) => {
+    setSleepMinutes(minutes);
+    sleepTimerSheetRef.current?.dismiss();
+  };
+
+  const handleSleepEndOfTrackPress = () => {
+    setSleepEndOfTrack();
+    sleepTimerSheetRef.current?.dismiss();
+  };
+
+  const handleSleepCancelPress = () => {
+    cancelSleepTimer();
+    sleepTimerSheetRef.current?.dismiss();
   };
 
   const handleAddToPlaylistPress = () => {
@@ -864,6 +910,32 @@ export default function PlayerScreen() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                    <HStack className="items-center">
+                      <Timer
+                        size={24}
+                        color={
+                          sleepActive
+                            ? themeConfig.theme.colors.emerald[500]
+                            : themeConfig.theme.colors.gray[200]
+                        }
+                      />
+                      <Text
+                        className="ml-4 text-lg"
+                        style={{
+                          color: sleepActive
+                            ? themeConfig.theme.colors.emerald[500]
+                            : themeConfig.theme.colors.gray[200],
+                        }}
+                      >
+                        {sleepActive && sleepRemainingLabel
+                          ? t("app.player.sleepTimerActive", {
+                              label: sleepRemainingLabel,
+                            })
+                          : t("app.player.sleepTimer")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
                   {playingTrack?.musicBrainzId && (
                     <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                       <HStack className="items-center">
@@ -880,6 +952,81 @@ export default function PlayerScreen() {
                   )}
                 </VStack>
               )}
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={sleepTimerSheetRef}
+          onChange={handleSleepSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+            <Box className="p-6 w-full mb-12">
+              <HStack className="items-center mb-6">
+                <Timer size={24} color={themeConfig.theme.colors.gray[200]} />
+                <Heading
+                  className="ml-4 text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {t("app.player.sleepTimer")}
+                </Heading>
+              </HStack>
+              <VStack className="gap-y-6">
+                <FadeOutScaleDown onPress={handleSleepCancelPress}>
+                  <Text
+                    className="text-lg"
+                    style={{
+                      color: !sleepActive
+                        ? themeConfig.theme.colors.emerald[500]
+                        : themeConfig.theme.colors.gray[200],
+                    }}
+                  >
+                    {t("app.player.sleepTimerOff")}
+                  </Text>
+                </FadeOutScaleDown>
+                {[5, 10, 15, 30, 45, 60].map((minutes) => {
+                  const active =
+                    !sleepEndOfTrack &&
+                    sleepEndsAt != null &&
+                    Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
+                  return (
+                    <FadeOutScaleDown
+                      key={minutes}
+                      onPress={() => handleSleepPresetPress(minutes)}
+                    >
+                      <Text
+                        className="text-lg"
+                        style={{
+                          color: active
+                            ? themeConfig.theme.colors.emerald[500]
+                            : themeConfig.theme.colors.gray[200],
+                        }}
+                      >
+                        {t("app.player.sleepTimerMinutes", { count: minutes })}
+                      </Text>
+                    </FadeOutScaleDown>
+                  );
+                })}
+                <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
+                  <Text
+                    className="text-lg"
+                    style={{
+                      color: sleepEndOfTrack
+                        ? themeConfig.theme.colors.emerald[500]
+                        : themeConfig.theme.colors.gray[200],
+                    }}
+                  >
+                    {t("app.player.sleepTimerEndOfTrack")}
+                  </Text>
+                </FadeOutScaleDown>
+              </VStack>
             </Box>
           </BottomSheetView>
         </BottomSheetModal>

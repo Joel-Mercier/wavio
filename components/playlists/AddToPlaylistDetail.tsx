@@ -119,7 +119,7 @@ export default function AddToPlaylistDetail() {
             </Box>
           </FadeOutScaleDown>
           <Heading
-            className="text-white font-bold text-center ml-6 truncate flex-1"
+            className="text-white font-bold text-center truncate flex-1"
             size="lg"
           >
             {t("app.playlists.addToPlaylistTitle")}

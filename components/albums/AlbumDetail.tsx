@@ -690,7 +690,20 @@ export default function AlbumDetail() {
               </HStack>
               <HStack className="mt-2 items-center">
                 <Text className="text-primary-100">
-                  {data?.album?.isCompilation ? "Compilation" : "Album"} ⦁{" "}
+                  {data?.album?.releaseTypes &&
+                  data.album.releaseTypes.length > 0
+                    ? data.album.releaseTypes
+                        .map((type) =>
+                          type.toLowerCase() === "ep"
+                            ? type.toUpperCase()
+                            : type.charAt(0).toUpperCase() +
+                              type.slice(1).toLowerCase(),
+                        )
+                        .join(" · ")
+                    : data?.album?.isCompilation
+                      ? "Compilation"
+                      : "Album"}{" "}
+                  ⦁{" "}
                   {data?.album?.originalReleaseDate &&
                     format(
                       parse(
@@ -780,7 +793,15 @@ export default function AlbumDetail() {
                       })}
                     </Heading>
                     <FadeOutScaleDown
-                      href={`/artists/${discoverMoreData?.artist?.id}/discography`}
+                      href={{
+                        pathname: "/artists/[id]/discography",
+                        params: {
+                          id: discoverMoreData?.artist?.id ?? "",
+                          name: t("app.albums.moreFromArtist", {
+                            artist: discoverMoreData?.artist?.name,
+                          }),
+                        },
+                      }}
                     >
                       <Text numberOfLines={1} className="text-gray-200">
                         {t("app.albums.seeAll")}

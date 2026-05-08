@@ -4,6 +4,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { scrobble } from "@/services/openSubsonic/mediaAnnotation";
+import { consumeSleepEndOfTrack } from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
@@ -144,6 +145,10 @@ const statusSub = player.addListener(
           submission: true,
           time: scrobbleStartedAt ?? Date.now(),
         }).catch(() => {});
+      }
+      if (consumeSleepEndOfTrack()) {
+        player.pause();
+        return;
       }
       useQueue.getState().next();
       const current = useQueue.getState().getCurrent();

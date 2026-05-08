@@ -3,8 +3,8 @@ import { useForm } from "@tanstack/react-form";
 import axios from "axios";
 import { formatISO } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
-import { AlertCircleIcon } from "lucide-react-native";
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "lucide-react-native";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +26,8 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ChevronDownIcon } from "@/components/ui/icon";
-import { Input, InputField } from "@/components/ui/input";
+import { Input, InputField, InputSlot } from "@/components/ui/input";
+import { Pressable } from "@/components/ui/pressable";
 import {
   Select,
   SelectBackdrop,
@@ -125,11 +126,13 @@ export default function LoginScreen() {
     [params.serverId, servers],
   );
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm({
     defaultValues: {
       username: params.username ?? "",
       password: "",
-      url: preselectedServer?.url ?? "",
+      url: preselectedServer?.url ?? "https://",
     },
     validators: {
       onBlur: loginSchema,
@@ -284,50 +287,74 @@ export default function LoginScreen() {
             </Box>
           )}
           <form.Field name="url">
-            {(field) => (
-              <FormControl
-                isInvalid={!field.state.meta.isValid}
-                size="md"
-                isDisabled={false}
-                isReadOnly={false}
-                isRequired={false}
-                className="mb-2 mt-0"
-              >
-                <Input
-                  className="bg-primary-600 border-0 rounded-full"
-                  variant="rounded"
-                  size="xl"
+            {(field) => {
+              const protocol = field.state.value.startsWith("http://")
+                ? "http://"
+                : "https://";
+              const host = field.state.value.replace(/^https?:\/\//, "");
+              const toggleProtocol = () => {
+                const next = protocol === "https://" ? "http://" : "https://";
+                field.handleChange(`${next}${host}`);
+              };
+              const handleHostChange = (text: string) => {
+                field.handleChange(
+                  `${protocol}${text.replace(/^https?:\/\//, "")}`,
+                );
+              };
+              return (
+                <FormControl
+                  isInvalid={!field.state.meta.isValid}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="mb-2 mt-0"
                 >
-                  <InputField
-                    value={field.state.value}
-                    onChangeText={field.handleChange}
-                    onBlur={field.handleBlur}
-                    className={cn(
-                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                      {
-                        "border-red-500": !field.state.meta.isValid,
-                      },
-                    )}
-                    placeholder={t("auth.login.urlPlaceholder")}
-                    textContentType="URL"
-                    autoCapitalize="none"
-                  />
-                </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
+                  <Input
+                    className="bg-primary-600 border-0 rounded-full"
+                    variant="rounded"
+                    size="xl"
+                  >
+                    <InputSlot>
+                      <Pressable
+                        onPress={toggleProtocol}
+                        className="pl-5 pr-2 h-full justify-center"
+                      >
+                        <Text className="text-white text-md">{protocol}</Text>
+                      </Pressable>
+                    </InputSlot>
+                    <InputField
+                      value={host}
+                      onChangeText={handleHostChange}
+                      onBlur={field.handleBlur}
+                      className={cn(
+                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full pl-1",
+                        {
+                          "border-red-500": !field.state.meta.isValid,
+                        },
+                      )}
+                      placeholder={t("auth.login.urlPlaceholder")}
+                      textContentType="URL"
+                      autoCapitalize="none"
+                      keyboardType="url"
                     />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
-              </FormControl>
-            )}
+                  </Input>
+                  {!field.state.meta.isValid && (
+                    <FormControlError className="items-start">
+                      <FormControlErrorIcon
+                        as={AlertCircleIcon}
+                        className="text-red-500"
+                      />
+                      <FormControlErrorText className="text-red-500 shrink">
+                        {field.state.meta.errors
+                          .map((error) => error?.message)
+                          .join("\n")}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              );
+            }}
           </form.Field>
           <form.Field name="username">
             {(field) => (
@@ -405,12 +432,36 @@ export default function LoginScreen() {
                       },
                     )}
                     placeholder={t("auth.login.passwordPlaceholder")}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     textContentType="password"
                     returnKeyType="go"
                     onSubmitEditing={() => form.handleSubmit()}
                   />
+                  <InputSlot>
+                    <Pressable
+                      onPress={() => setShowPassword((v) => !v)}
+                      className="px-5 h-full justify-center"
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showPassword
+                          ? t("auth.login.hidePassword")
+                          : t("auth.login.showPassword")
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon
+                          size={20}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      ) : (
+                        <EyeIcon
+                          size={20}
+                          color={themeConfig.theme.colors.white}
+                        />
+                      )}
+                    </Pressable>
+                  </InputSlot>
                 </Input>
                 {!field.state.meta.isValid && (
                   <FormControlError className="items-start">
