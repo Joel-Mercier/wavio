@@ -637,6 +637,8 @@ export default {
         playlist_other: "Playlists",
         podcast_one: "Podcast",
         podcast_other: "Podcasts",
+        folder_one: "Folder",
+        folder_other: "Folders",
         song_one: "Song",
         song_other: "Songs",
         save: "Save",

@@ -3,6 +3,7 @@ import type { Href } from "expo-router";
 import {
   ArrowDown,
   Disc3,
+  Folder,
   Heart,
   ListMusic,
   Podcast,
@@ -39,8 +40,16 @@ export type LibraryPodcast = {
   authorName?: string;
   description?: string;
 };
+export type LibraryFolder = {
+  isFolder?: boolean;
+};
 interface LibraryListItemProps {
-  item: Playlist & AlbumID3 & ArtistID3 & Favorites & LibraryPodcast;
+  item: Playlist &
+    AlbumID3 &
+    ArtistID3 &
+    Favorites &
+    LibraryPodcast &
+    LibraryFolder;
   layout: LibraryLayout;
   index: number;
 }
@@ -64,6 +73,9 @@ function LibraryListItemIcon({ type }: { type: string }) {
   if (type === "podcast") {
     return <Podcast size={48} color={themeConfig.theme.colors.white} />;
   }
+  if (type === "folder") {
+    return <Folder size={48} color={themeConfig.theme.colors.white} />;
+  }
   return <ListMusic size={48} color={themeConfig.theme.colors.white} />;
 }
 
@@ -80,6 +92,16 @@ export default function LibraryListItem({
         id: "favorites",
         label: t("app.shared.favorites"),
         url: "/favorites",
+      };
+    }
+    if (item.isFolder) {
+      return {
+        id: "folder",
+        label: t("app.shared.folder_one"),
+        url: {
+          pathname: "/folders/[id]",
+          params: { id: item.id, name: item.name, root: "1" },
+        } as Href,
       };
     }
     if (item.isPodcast) {
@@ -202,7 +224,9 @@ export default function LibraryListItem({
                 ? `${type.label} ⦁ ${item.authorName}`
                 : type.id === "artist"
                   ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
-                  : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
+                  : type.id === "folder"
+                    ? type.label
+                    : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
             </Text>
           </HStack>
         </VStack>

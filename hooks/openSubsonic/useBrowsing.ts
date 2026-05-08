@@ -139,6 +139,7 @@ export const useMusicDirectory = (id: string) => {
     queryFn: () => {
       return getMusicDirectory(id);
     },
+    enabled: !!id,
   });
 
   return query;

@@ -22,6 +22,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
       <Stack.Screen name="libraries" />
+      <Stack.Screen name="folders/[id]" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="queue" />
       <Stack.Screen name="podcast-series/[id]" />

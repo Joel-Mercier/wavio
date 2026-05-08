@@ -26,6 +26,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
+  type LibraryFolder,
   type LibraryPodcast,
 } from "@/components/library/LibraryListItem";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
@@ -38,6 +39,7 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { themeConfig } from "@/config/theme";
+import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -64,7 +66,7 @@ export default function LibraryScreen() {
   const setSort = useApp((store) => store.setLibrarySort);
   const [layout, setLayout] = useState<LibraryLayout>("list");
   const [filter, setFilter] = useState<
-    "artists" | "albums" | "playlists" | "podcasts" | null
+    "artists" | "albums" | "playlists" | "podcasts" | "folders" | null
   >(null);
   const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -93,13 +95,18 @@ export default function LibraryScreen() {
     error: playlistsError,
     refetch: refetchPlaylists,
   } = usePlaylists({});
+  const {
+    data: musicFoldersData,
+    isFetching: isFetchingMusicFolders,
+    refetch: refetchMusicFolders,
+  } = useMusicFolders();
 
   const handleLayoutPress = () => {
     setLayout(layout === "list" ? "grid" : "list");
   };
 
   const handleFilterPress = (
-    type: "artists" | "albums" | "playlists" | "podcasts",
+    type: "artists" | "albums" | "playlists" | "podcasts" | "folders",
   ) => {
     setFilter(type === filter ? null : type);
   };
@@ -180,6 +187,18 @@ export default function LibraryScreen() {
         })),
       );
     }
+    if (
+      (!filter || filter === "folders") &&
+      musicFoldersData?.musicFolders?.musicFolder
+    ) {
+      data.push(
+        musicFoldersData.musicFolders.musicFolder.map((f) => ({
+          id: String(f.id),
+          name: f.name ?? `Library ${f.id}`,
+          isFolder: true,
+        })),
+      );
+    }
     data = data.flat();
     const sortTime = (item: (typeof data)[number]) => {
       const value =
@@ -213,6 +232,7 @@ export default function LibraryScreen() {
     sort,
     podcastsEnabled,
     favoritePodcasts,
+    musicFoldersData,
   ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
@@ -286,7 +306,7 @@ export default function LibraryScreen() {
             {podcastsEnabled && (
               <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
                 <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
                     "bg-emerald-500 text-primary-800": filter === "podcasts",
                   })}
                 >
@@ -296,6 +316,17 @@ export default function LibraryScreen() {
                 </Badge>
               </FadeOutScaleDown>
             )}
+            <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
+              <Badge
+                className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                  "bg-emerald-500 text-primary-800": filter === "folders",
+                })}
+              >
+                <BadgeText className="normal-case text-md text-white">
+                  {t("app.shared.folder_other")}
+                </BadgeText>
+              </Badge>
+            </FadeOutScaleDown>
           </ScrollView>
         </Box>
         <HStack className="px-6 pb-6 items-center justify-between">
@@ -333,18 +364,25 @@ export default function LibraryScreen() {
           key={`library-${layout}`}
           data={
             (data || loadingData(16)) as Array<
-              Playlist & AlbumID3 & ArtistID3 & Favorites & LibraryPodcast
+              Playlist &
+                AlbumID3 &
+                ArtistID3 &
+                Favorites &
+                LibraryPodcast &
+                LibraryFolder
             >
           }
           keyExtractor={(item) => item.id}
           numColumns={layout === "grid" ? 3 : 1}
           refreshing={
             (isFetchingStarred && !isLoadingStarred) ||
-            (isFetchingPlaylists && !isLoadingPlaylists)
+            (isFetchingPlaylists && !isLoadingPlaylists) ||
+            isFetchingMusicFolders
           }
           onRefresh={() => {
             refetchPlaylists();
             refetchStarred();
+            refetchMusicFolders();
           }}
           renderItem={({ item, index, extraData }) => {
             const { layout: itemLayout } = extraData as {
