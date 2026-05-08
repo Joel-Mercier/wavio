@@ -66,6 +66,7 @@ export const useArtist = (id: string) => {
     queryFn: () => {
       return getArtist(id);
     },
+    enabled: !!id,
   });
 
   return query;

@@ -1,6 +1,6 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
-import type { ReactElement } from "react";
+import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AlbumListItem from "@/components/albums/AlbumListItem";
@@ -20,8 +20,10 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
 import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -62,6 +64,27 @@ export default function HomeScreen() {
     isLoading: isLoadingRandom,
     error: randomError,
   } = useAlbumList2({ type: "random", size: 12, musicFolderId });
+  const moreFromArtistId = useMemo(() => {
+    const pickRandom = (albums?: AlbumID3[]) => {
+      const candidates = (albums ?? []).filter((album) => !!album.artistId);
+      if (!candidates.length) return undefined;
+      return candidates[Math.floor(Math.random() * candidates.length)].artistId;
+    };
+    return (
+      pickRandom(recentlyPlayedData?.albumList2?.album) ??
+      pickRandom(mostPlayedData?.albumList2?.album) ??
+      pickRandom(recentData?.albumList2?.album)
+    );
+  }, [
+    recentlyPlayedData?.albumList2?.album,
+    mostPlayedData?.albumList2?.album,
+    recentData?.albumList2?.album,
+  ]);
+  const {
+    data: moreFromArtistData,
+    isLoading: isLoadingMoreFromArtist,
+    error: moreFromArtistError,
+  } = useArtist(moreFromArtistId ?? "");
   const {
     data: internetRadioStationsData,
     isLoading: isLoadingInternetRadioStations,
@@ -233,6 +256,43 @@ export default function HomeScreen() {
         {!isLoadingMostPlayed &&
           !mostPlayedError &&
           !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
+        {moreFromArtistId && (
+          <>
+            <Box className="px-6 mt-4 mb-4">
+              <Heading size="xl" className="text-white">
+                {t("app.albums.moreFromArtist", {
+                  artist: moreFromArtistData?.artist?.name ?? "",
+                })}
+              </Heading>
+            </Box>
+            {moreFromArtistError ? (
+              <ErrorDisplay error={moreFromArtistError} />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="pl-6 mb-6"
+              >
+                {isLoadingMoreFromArtist
+                  ? loadingData(4).map((_, index) => (
+                      <AlbumListItemSkeleton
+                        key={`more-from-artist-${index}`}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ))
+                  : moreFromArtistData?.artist?.album?.map((album, index) => (
+                      <AlbumListItem
+                        key={album.id}
+                        album={album}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ))}
+              </ScrollView>
+            )}
+          </>
+        )}
         <Box className="px-6 mt-4 mb-4">
           <Heading size="xl" className="text-white">
             {t("app.home.topRated")}
