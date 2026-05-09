@@ -14,14 +14,13 @@ import {
   ArrowDownUp,
   ArrowLeft,
   ArrowUp,
-  Check,
   ClipboardCheck,
   ClipboardIcon,
   Clock,
   EllipsisVertical,
   ListMusic,
+  ListOrdered,
   ListPlus,
-  Menu,
   Pause,
   Pencil,
   Play,
@@ -739,7 +738,10 @@ export default function PlaylistDetail() {
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
                 <HStack className="items-center">
-                  <Menu size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <ListOrdered
+                    size={24}
+                    color={themeConfig.theme.colors.gray[200]}
+                  />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.reorder")}
                   </Text>

@@ -77,7 +77,10 @@ export default function FolderDetail() {
   }, [isRoot, indexesQuery, directoryQuery, name]);
 
   const entries: Entry[] = useMemo(
-    () => [...dirs, ...tracks.map((c) => ({ kind: "track" as const, child: c }))],
+    () => [
+      ...dirs,
+      ...tracks.map((c) => ({ kind: "track" as const, child: c })),
+    ],
     [dirs, tracks],
   );
 

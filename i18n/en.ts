@@ -493,6 +493,21 @@ export default {
       queue: {
         title: "Queue",
         empty: "The queue is empty.",
+        edit: "Edit",
+        done: "Done",
+        clear: "Clear queue",
+        clearConfirmTitle: "Clear queue?",
+        clearConfirmMessage:
+          "All tracks will be removed from the queue and playback will stop.",
+        clearedMessage: "Queue cleared",
+        removeFromQueue: "Remove from queue",
+        createPlaylist: "Create playlist from queue",
+        createPlaylistTitle: "New playlist from queue",
+        createPlaylistNamePlaceholder: "My queue playlist",
+        createPlaylistSuccessMessage: "Playlist created from queue",
+        createPlaylistErrorMessage:
+          "An error occurred while creating the playlist",
+        sleepTimer: "Sleep timer",
       },
       tracks: {
         addToFavorites: "Add to favorites",

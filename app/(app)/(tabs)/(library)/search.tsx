@@ -233,9 +233,7 @@ export default function LibrarySearchScreen() {
             {(playlistsError || starredError || musicFoldersError) && (
               <ErrorDisplay
                 error={
-                  (playlistsError ||
-                    starredError ||
-                    musicFoldersError) as Error
+                  (playlistsError || starredError || musicFoldersError) as Error
                 }
               />
             )}

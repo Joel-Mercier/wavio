@@ -14,6 +14,7 @@ import {
   Download,
   EllipsisVertical,
   Heart,
+  ListMusic,
   ListPlus,
   Mic2,
   Pause,
@@ -728,10 +729,13 @@ export default function PlayerScreen() {
                   </FadeOut>
                 )}
               </HStack>
-              <HStack className="items-center justify-start mt-8">
+              <HStack className="items-center justify-between mt-8">
                 <CastButton
                   style={{ width: 24, height: 24, tintColor: "white" }}
                 />
+                <FadeOut onPress={() => router.navigate("/queue")}>
+                  <ListMusic size={24} color="white" />
+                </FadeOut>
               </HStack>
             </VStack>
           </VStack>

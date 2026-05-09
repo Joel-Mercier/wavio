@@ -512,6 +512,21 @@ export default {
       queue: {
         title: "File d'attente",
         empty: "La file d'attente est vide.",
+        edit: "Modifier",
+        done: "Terminer",
+        clear: "Vider la file",
+        clearConfirmTitle: "Vider la file ?",
+        clearConfirmMessage:
+          "Tous les morceaux seront retirés de la file et la lecture s'arrêtera.",
+        clearedMessage: "File vidée",
+        removeFromQueue: "Retirer de la file",
+        createPlaylist: "Créer une playlist depuis la file",
+        createPlaylistTitle: "Nouvelle playlist depuis la file",
+        createPlaylistNamePlaceholder: "Ma playlist depuis la file",
+        createPlaylistSuccessMessage: "Playlist créée depuis la file",
+        createPlaylistErrorMessage:
+          "Une erreur est survenue lors de la création de la playlist",
+        sleepTimer: "Minuteur de sommeil",
       },
       tracks: {
         addToFavorites: "Ajouter aux favoris",

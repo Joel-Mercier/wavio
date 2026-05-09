@@ -17,6 +17,9 @@ export const createPlaylist = async (name: string, songId?: string[]) => {
         name,
         songId,
       },
+      paramsSerializer: {
+        indexes: null,
+      },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error;

@@ -10,7 +10,6 @@ import {
   ArrowDown,
   ArrowDownUp,
   ArrowUp,
-  Check,
   LayoutGrid,
   List,
   ListMusic,
@@ -328,7 +327,7 @@ export default function LibraryScreen() {
             </FadeOutScaleDown>
           </ScrollView>
         </Box>
-        <HStack className="px-6 pb-6 items-center justify-between">
+        <HStack className="px-6 pb-4 items-center justify-between">
           <FadeOutScaleDown onPress={handlePresentSortModalPress}>
             <HStack className="items-center gap-x-2">
               {sort.endsWith("Asc") && (
