@@ -544,7 +544,6 @@ export default function AlbumDetail() {
     }
   };
 
-  console.log("[albumDetail]", JSON.stringify(data?.album?.song || ""));
   return (
     <Box className="h-full w-full">
       <AnimatedBox

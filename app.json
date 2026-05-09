@@ -80,6 +80,12 @@
           "enableBackgroundRecording": false
         }
       ],
+      [
+        "expo-navigation-bar",
+        {
+          "buttonStyle": "light"
+        }
+      ],
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
       "./plugins/withCarPlay"

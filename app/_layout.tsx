@@ -22,6 +22,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
+import * as NavigationBar from "expo-navigation-bar";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -58,6 +59,9 @@ function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active");
   }
+  if (Platform.OS === "android" && status === "active") {
+    NavigationBar.setButtonStyleAsync("light");
+  }
 }
 
 export default function RootLayout() {
@@ -77,6 +81,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     configurePlayback();
+    if (Platform.OS === "android") {
+      NavigationBar.setButtonStyleAsync("light");
+    }
   }, []);
 
   useEffect(() => {
