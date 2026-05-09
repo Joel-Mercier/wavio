@@ -9,6 +9,7 @@ import {
   type ReactElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -42,28 +43,30 @@ type ItemWrapperProps = PropsWithChildren<{
   index: number;
   activeIndex: SharedValue<number>;
   insertIndex: SharedValue<number>;
+  hiddenSlot: SharedValue<number>;
   itemHeight: number;
   isActive: boolean;
   style?: ViewStyle;
 }>;
 
 const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
-  const { isActive, itemHeight, insertIndex, activeIndex, index } = props;
+  const { isActive, itemHeight, insertIndex, activeIndex, hiddenSlot, index } =
+    props;
 
   const position = useSharedValue(0);
 
   useAnimatedReaction(
-    () => insertIndex.value,
-    (newInsertIndex) => {
-      if (newInsertIndex < 0 || activeIndex.value < 0) {
-        position.value = withSpring(0);
+    () => ({ insert: insertIndex.value, active: activeIndex.value }),
+    ({ insert, active }) => {
+      if (insert < 0 || active < 0) {
+        position.value = 0;
         return;
       }
-      if (index > activeIndex.value && index <= newInsertIndex + 0.5) {
+      if (index > active && index <= insert + 0.5) {
         position.value = withSpring(-itemHeight);
         return;
       }
-      if (index < activeIndex.value && index >= newInsertIndex - 0.5) {
+      if (index < active && index >= insert - 0.5) {
         position.value = withSpring(itemHeight);
         return;
       }
@@ -75,7 +78,7 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
   );
 
   const animatedStyle = useAnimatedStyle(() => {
-    if (isActive && activeIndex.value === index) {
+    if (isActive && hiddenSlot.value === index) {
       return {
         opacity: 0,
         transform: [{ translateY: 0 }],
@@ -132,14 +135,34 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   const { itemHeight, autoScrollSpeed = AUTO_SCROLL_SPEED } = props;
 
   const [data, setData] = useState(props.data);
-  const avoidDataUpdate = useRef(false);
+  const [draggedSnapshot, setDraggedSnapshot] = useState<{
+    item: T;
+    index: number;
+  } | null>(null);
+  const optimisticDataRef = useRef<T[] | null>(null);
+  const pendingResetRef = useRef(false);
+  const { keyExtractor } = props;
 
   const isIOS = Platform.OS === "ios";
 
   useEffect(() => {
-    if (avoidDataUpdate.current) return;
+    const expected = optimisticDataRef.current;
+    if (expected && expected.length === props.data.length) {
+      let same = true;
+      for (let i = 0; i < expected.length; i++) {
+        if (keyExtractor(expected[i], i) !== keyExtractor(props.data[i], i)) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        optimisticDataRef.current = null;
+        return;
+      }
+    }
+    optimisticDataRef.current = null;
     setData(props.data);
-  }, [props.data]);
+  }, [props.data, keyExtractor]);
 
   const [layout, setLayout] = useState<Layout | null>(null);
   const scrollViewRef = useRef<FlashListRef<T>>(null);
@@ -148,6 +171,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   const [activeIndexState, setActiveIndexState] = useState(-1);
   const [isDragging, setIsDragging] = useState(false);
   const insertIndex = useSharedValue(-1);
+  const hiddenSlot = useSharedValue(-1);
 
   const scrollOffset = useSharedValue(0);
   const autoScrollVelocity = useSharedValue(0);
@@ -160,47 +184,56 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   const dragScrollOffset = useSharedValue(0);
   const dragOffset = useSharedValue(0);
 
+  useLayoutEffect(() => {
+    if (!pendingResetRef.current) return;
+    pendingResetRef.current = false;
+    activeIndex.value = -1;
+    insertIndex.value = -1;
+  }, [data, activeIndex, insertIndex]);
+
   const endDrag = useCallback(
     (fromIndex: number, toIndex: number) => {
-      const endAnimationDuration = 300;
+      const endAnimationDuration = 180;
+      const changed = fromIndex !== toIndex;
+
       dragPosition.value = withTiming(
         toIndex * itemHeight + itemHeight / 2 - scrollOffset.value,
-        {
-          duration: endAnimationDuration,
-        },
+        { duration: endAnimationDuration },
       );
 
-      setTimeout(() => {
-        const changed = fromIndex !== toIndex;
-        avoidDataUpdate.current = true;
-
-        if (changed) {
-          const copy = [...data];
-          const removed = copy.splice(fromIndex, 1);
-          if (removed[0]) {
-            copy.splice(toIndex, 0, removed[0]);
-            setData(copy);
-          }
+      if (changed) {
+        const copy = [...data];
+        const removed = copy.splice(fromIndex, 1);
+        if (removed[0]) {
+          copy.splice(toIndex, 0, removed[0]);
+          optimisticDataRef.current = copy;
+          pendingResetRef.current = true;
+          hiddenSlot.value = toIndex;
+          setData(copy);
         }
+      } else {
+        activeIndex.value = -1;
+        insertIndex.value = -1;
+      }
 
+      autoScrollVelocity.value = 0;
+      autoScrollAcceleration.value = 1;
+      fromIndexRef.current = fromIndex;
+      toIndexRef.current = toIndex;
+
+      if (changed && props.onSort) {
+        props.onSort(fromIndex, toIndex);
+      }
+
+      setTimeout(() => {
+        setIsDragging(false);
+        setActiveIndexState(-1);
+        setDraggedSnapshot(null);
+        hiddenSlot.value = -1;
         dragOffset.value = 0;
         dragPosition.value = -1;
         dragScrollOffset.value = 0;
-        activeIndex.value = -1;
-        setActiveIndexState(-1);
-        insertIndex.value = -1;
-        autoScrollVelocity.value = 0;
-        autoScrollAcceleration.value = 1;
-        setIsDragging(false);
-        fromIndexRef.current = fromIndex;
-        toIndexRef.current = toIndex;
-
-        if (changed && props.onSort) {
-          props.onSort(fromIndex, toIndex);
-        }
-
-        avoidDataUpdate.current = false;
-      }, endAnimationDuration + 1);
+      }, endAnimationDuration);
     },
     [
       data,
@@ -212,6 +245,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
       dragScrollOffset,
       activeIndex,
       insertIndex,
+      hiddenSlot,
       autoScrollVelocity,
       autoScrollAcceleration,
     ],
@@ -220,10 +254,15 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   const beginDrag = useCallback(
     (index: number) => {
       activeIndex.value = index;
+      hiddenSlot.value = index;
       setActiveIndexState(index);
+      const item = data[index];
+      if (item !== undefined) {
+        setDraggedSnapshot({ item, index });
+      }
       setIsDragging(true);
     },
-    [activeIndex],
+    [activeIndex, hiddenSlot, data],
   );
 
   useEffect(() => {
@@ -232,11 +271,13 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
         scrollIntervalRef.current = setInterval(() => {
           if (!scrollViewRef.current || autoScrollVelocity.value === 0) return;
           scrollViewRef.current.scrollToOffset({
-            offset:
+            offset: Math.max(
+              0,
               scrollOffset.value +
-              autoScrollVelocity.value *
-                autoScrollSpeed *
-                autoScrollAcceleration.value,
+                autoScrollVelocity.value *
+                  autoScrollSpeed *
+                  autoScrollAcceleration.value,
+            ),
             animated: false,
           });
           autoScrollAcceleration.value = Math.min(
@@ -357,21 +398,14 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   );
 
   const draggingAnimatedStyle = useAnimatedStyle(() => {
-    if (activeIndex.value < 0) {
-      return {
-        opacity: 0,
-        transform: [{ translateY: 0 }],
-      };
-    }
     return {
-      opacity: 1,
       transform: [
         {
           translateY: dragPosition.value - itemHeight / 2,
         },
       ],
     };
-  }, [itemHeight, dragPosition, activeIndex]);
+  }, [itemHeight, dragPosition]);
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -391,6 +425,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
               {...rowProps}
               activeIndex={activeIndex}
               insertIndex={insertIndex}
+              hiddenSlot={hiddenSlot}
               itemHeight={itemHeight}
               isActive={isDragging}
             />
@@ -401,7 +436,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
           extraData={extraData}
           renderScrollComponent={ScrollView}
         />
-        {isDragging && activeIndexState >= 0 && data[activeIndexState] && (
+        {isDragging && draggedSnapshot && (
           <Animated.View
             pointerEvents="none"
             style={[
@@ -415,8 +450,8 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
             ]}
           >
             {props.renderItem(
-              data[activeIndexState],
-              activeIndexState,
+              draggedSnapshot.item,
+              draggedSnapshot.index,
               true,
               () => {},
             )}
