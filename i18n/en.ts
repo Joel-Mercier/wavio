@@ -87,6 +87,7 @@ export default {
       artists: {
         topSongs: "Top songs",
         discography: "Discography",
+        appearsOn: "Appears on",
         about: "About",
         rate: "Rate",
         musicBrainz: "Open in MusicBrainz",
@@ -530,7 +531,8 @@ export default {
         addToAnotherPlaylist: "Add to another playlist",
         removeFromPlaylist: "Remove from playlist",
         addToQueue: "Add to queue",
-        goToArtist: "Go to artist",
+        goToArtist_one: "Go to artist",
+        goToArtist_other: "Go to artists",
         goToAlbum: "Go to album",
         rate: "Rate",
         share: "Share",

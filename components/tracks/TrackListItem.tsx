@@ -114,6 +114,9 @@ export default function TrackListItem({
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleShareSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetShareModalRef);
+  const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetArtistsModalRef);
   const playingTrack = usePlayingTrack();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
@@ -135,9 +138,28 @@ export default function TrackListItem({
     bottomSheetModalRef.current?.present();
   }, []);
 
+  const trackArtists = track.artists?.length
+    ? track.artists
+    : track.artistId
+      ? [{ id: track.artistId, name: track.artist ?? "" }]
+      : [];
+  const hasMultipleArtists = trackArtists.length > 1;
+
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    router.navigate(`/artists/${track.artistId}`);
+    if (hasMultipleArtists) {
+      bottomSheetArtistsModalRef.current?.present();
+      return;
+    }
+    const artistId = trackArtists[0]?.id ?? track.artistId;
+    if (artistId) {
+      router.navigate(`/artists/${artistId}`);
+    }
+  };
+
+  const handleArtistPickPress = (artistId: string) => {
+    bottomSheetArtistsModalRef.current?.dismiss();
+    router.navigate(`/artists/${artistId}`);
   };
 
   const handleGoToAlbumPress = () => {
@@ -604,6 +626,48 @@ export default function TrackListItem({
           </FadeOutScaleDown>
         </HStack>
         <BottomSheetModal
+          ref={bottomSheetArtistsModalRef}
+          onChange={handleArtistsSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+            }}
+          >
+            <Box className="p-6 w-full mb-12">
+              <VStack className="gap-y-6">
+                {trackArtists.map((artist) => (
+                  <FadeOutScaleDown
+                    key={artist.id}
+                    onPress={() => handleArtistPickPress(artist.id)}
+                  >
+                    <HStack className="items-center">
+                      <User
+                        size={24}
+                        color={themeConfig.theme.colors.gray[200]}
+                      />
+                      <Text
+                        className="ml-4 text-lg text-gray-200"
+                        numberOfLines={1}
+                      >
+                        {artist.name}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                ))}
+              </VStack>
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
           ref={bottomSheetShareModalRef}
           onChange={handleShareSheetPositionChange}
           backgroundStyle={{
@@ -742,7 +806,9 @@ export default function TrackListItem({
                       color={themeConfig.theme.colors.gray[200]}
                     />
                     <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.goToArtist")}
+                      {t("app.tracks.goToArtist", {
+                        count: trackArtists.length || 1,
+                      })}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>

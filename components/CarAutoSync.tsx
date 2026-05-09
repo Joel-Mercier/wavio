@@ -5,7 +5,10 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackStatus,
 } from "@/hooks/player/playbackSnapshot";
-import { CarAutoBridge, type NowPlayingPayload } from "@/services/carAuto/bridge";
+import {
+  CarAutoBridge,
+  type NowPlayingPayload,
+} from "@/services/carAuto/bridge";
 import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
 import { handleBrowsePlay } from "@/services/carAuto/play";
 import { buildBrowseTree } from "@/services/carAuto/tree";
@@ -125,10 +128,16 @@ export default function CarAutoSync() {
       const prevId =
         prev.currentIndex != null ? prev.queue[prev.currentIndex]?.id : null;
       if (curId !== prevId) pushNowPlaying();
-      if (state.queue !== prev.queue || state.currentIndex !== prev.currentIndex) {
+      if (
+        state.queue !== prev.queue ||
+        state.currentIndex !== prev.currentIndex
+      ) {
         pushQueue();
       }
-      if (state.shuffle !== prev.shuffle || state.repeatMode !== prev.repeatMode) {
+      if (
+        state.shuffle !== prev.shuffle ||
+        state.repeatMode !== prev.repeatMode
+      ) {
         pushPlaybackState();
       }
     });

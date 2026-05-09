@@ -22,7 +22,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { Linking, ScrollView } from "react-native";
 import Animated, {
   Easing,
   Extrapolation,
@@ -79,6 +79,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
@@ -124,6 +125,35 @@ export default function ArtistDetail() {
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const musicFolderId = useCurrentMusicFolderId();
+  const { data: searchData } = useSearch3(data?.artist?.name ?? "", {
+    artistCount: 0,
+    albumCount: 0,
+    songCount: 500,
+    musicFolderId,
+  });
+  const ownAlbumIds = new Set(
+    (data?.artist?.album ?? []).map((album) => album.id),
+  );
+  const appearsOnAlbums: AlbumID3[] = [];
+  const seenAlbumIds = new Set<string>();
+  for (const song of searchData?.searchResult3?.song ?? []) {
+    if (!song.albumId || song.artistId === id) continue;
+    if (ownAlbumIds.has(song.albumId) || seenAlbumIds.has(song.albumId))
+      continue;
+    if (!song.artists?.some((a) => a.id === id)) continue;
+    seenAlbumIds.add(song.albumId);
+    appearsOnAlbums.push({
+      id: song.albumId,
+      name: song.album ?? "",
+      artist: song.artist,
+      artistId: song.artistId,
+      coverArt: song.coverArt,
+      year: song.year,
+      created: song.created ?? new Date(),
+      duration: 0,
+      songCount: 0,
+    });
+  }
   const { data: starredData } = useStarred2({ musicFolderId });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
@@ -457,10 +487,14 @@ export default function ArtistDetail() {
 
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.artist?.album?.slice(0, 3) || loadingData(3)}
+        data={
+          isLoading ? loadingData(3) : (data?.artist?.album?.slice(0, 3) ?? [])
+        }
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
-            <AlbumListItemSkeleton index={index} />
+            <Box className="bg-black">
+              <AlbumListItemSkeleton index={index} />
+            </Box>
           ) : (
             <Box className="bg-black">
               <AlbumListItem album={item} index={index} />
@@ -706,7 +740,7 @@ export default function ArtistDetail() {
           </>
         )}
         ListFooterComponent={() => (
-          <>
+          <Box className="bg-black">
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
                 {t("app.artists.albumCount", {
@@ -729,6 +763,23 @@ export default function ArtistDetail() {
                 </Center>
               )}
             </VStack>
+            {appearsOnAlbums.length > 0 && (
+              <VStack className="px-6 bg-black pb-6">
+                <Heading className="text-white mb-4">
+                  {t("app.artists.appearsOn")}
+                </Heading>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {appearsOnAlbums.map((album, index) => (
+                    <AlbumListItem
+                      key={album.id}
+                      album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))}
+                </ScrollView>
+              </VStack>
+            )}
             {artistInfoData?.artistInfo2?.biography && (
               <VStack className="px-6 bg-black">
                 <Heading className="text-white mb-6">
@@ -773,9 +824,13 @@ export default function ArtistDetail() {
                 </FadeOutScaleDown>
               </VStack>
             )}
-          </>
+          </Box>
         )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+        ListEmptyComponent={() => (
+          <Box className="bg-black">
+            <EmptyDisplay />
+          </Box>
+        )}
         contentContainerStyle={{
           paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}

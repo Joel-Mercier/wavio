@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { handleBrowsePlay } from "./play";
-import { ROOT_ID } from "./types";
 import type { BrowseNode, BrowseTree } from "./types";
+import { ROOT_ID } from "./types";
 
 // Lazy require so Android (and bundling environments without the native
 // module installed) don't try to load the iOS-only library at import time.

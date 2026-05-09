@@ -17,8 +17,8 @@ import type {
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
-import { ROOT_ID } from "./types";
 import type { BrowseNode, BrowseTree } from "./types";
+import { ROOT_ID } from "./types";
 
 // In-memory snapshots used by play.ts to resolve leaf mediaIds without
 // refetching. Refreshed every time buildBrowseTree() runs.
@@ -100,10 +100,26 @@ const HOME_SECTIONS: Array<{
   titleKey: string;
   type: "recent" | "newest" | "frequent" | "highest" | "random";
 }> = [
-  { id: "home:section:recent", titleKey: "app.carAuto.recentlyPlayed", type: "recent" },
-  { id: "home:section:newest", titleKey: "app.carAuto.recentlyAdded", type: "newest" },
-  { id: "home:section:frequent", titleKey: "app.carAuto.mostPlayed", type: "frequent" },
-  { id: "home:section:highest", titleKey: "app.carAuto.topRated", type: "highest" },
+  {
+    id: "home:section:recent",
+    titleKey: "app.carAuto.recentlyPlayed",
+    type: "recent",
+  },
+  {
+    id: "home:section:newest",
+    titleKey: "app.carAuto.recentlyAdded",
+    type: "newest",
+  },
+  {
+    id: "home:section:frequent",
+    titleKey: "app.carAuto.mostPlayed",
+    type: "frequent",
+  },
+  {
+    id: "home:section:highest",
+    titleKey: "app.carAuto.topRated",
+    type: "highest",
+  },
   { id: "home:section:random", titleKey: "app.carAuto.random", type: "random" },
 ];
 
@@ -144,9 +160,9 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
   // === Home tab ===
   const homeSectionsResults = await Promise.all(
     HOME_SECTIONS.map(async (s) => {
-      const rsp = await getAlbumList2(s.type, { size: HOME_SECTION_SIZE }).catch(
-        () => null,
-      );
+      const rsp = await getAlbumList2(s.type, {
+        size: HOME_SECTION_SIZE,
+      }).catch(() => null);
       return { section: s, albums: rsp?.albumList2?.album ?? [] };
     }),
   );

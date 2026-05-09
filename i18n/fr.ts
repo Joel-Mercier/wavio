@@ -88,6 +88,7 @@ export default {
       artists: {
         topSongs: "Chansons les plus écoutées",
         discography: "Discographie",
+        appearsOn: "Apparait sur",
         about: "À propos",
         rate: "Noter",
         musicBrainz: "Ouvrir dans MusicBrainz",
@@ -549,7 +550,8 @@ export default {
         addToAnotherPlaylist: "Ajouter à une autre playlist",
         removeFromPlaylist: "Retirer de la playlist",
         addToQueue: "Ajouter à la file d'attente",
-        goToArtist: "Aller à l'artiste",
+        goToArtist_one: "Aller à l'artiste",
+        goToArtist_other: "Aller aux artistes",
         goToAlbum: "Aller à l'album",
         rate: "Noter",
         share: "Partager",
