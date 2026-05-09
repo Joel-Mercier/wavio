@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { handleBrowsePlay } from "./play";
+import { ROOT_ID } from "./types";
 import type { BrowseNode, BrowseTree } from "./types";
 
 // Lazy require so Android (and bundling environments without the native
@@ -26,37 +27,45 @@ const sectionToItems = (nodes: BrowseNode[]) =>
     image: node.artworkUrl ? { uri: node.artworkUrl } : undefined,
   }));
 
-// rn-carplay's ListTemplate fires onItemSelect with a row index; we need to
-// resolve the index back to a BrowseNode to dispatch the play event.
+// Push or play depending on the node type. CarPlay's stack handles back nav.
 const buildList = (
   rn: NonNullable<typeof RN>,
   title: string,
-  nodes: BrowseNode[],
-) =>
-  new rn.ListTemplate({
+  parentId: string,
+): import("react-native-carplay").ListTemplate => {
+  const nodes = currentTree?.[parentId] ?? [];
+  return new rn.ListTemplate({
     title,
     sections: [{ items: sectionToItems(nodes) }],
     onItemSelect: async ({ index }) => {
       const node = nodes[index];
-      if (node) await handleBrowsePlay(node.id);
+      if (!node) return;
+      if (node.playable) {
+        await handleBrowsePlay(node.id, parentId);
+        return;
+      }
+      try {
+        const child = buildList(rn, node.title, node.id);
+        rn.CarPlay.pushTemplate(child, true);
+      } catch {}
     },
   });
+};
 
-const buildRoot = (rn: NonNullable<typeof RN>, tree: BrowseTree) =>
-  new rn.TabBarTemplate({
-    templates: [
-      buildList(rn, "Recently Played", tree.recent),
-      buildList(rn, "Playlists", tree.playlists),
-      buildList(rn, "Starred", tree.starred),
-    ],
+const buildRoot = (rn: NonNullable<typeof RN>) => {
+  const root = currentTree?.[ROOT_ID] ?? [];
+  const tabs = root.map((tab) => buildList(rn, tab.title, tab.id));
+  return new rn.TabBarTemplate({
+    templates: tabs,
     onTemplateSelect: () => {},
   });
+};
 
 const applyTree = () => {
   const rn = loadRn();
   if (!rn || !connected || !currentTree) return;
   try {
-    const root = buildRoot(rn, currentTree);
+    const root = buildRoot(rn);
     rn.CarPlay.setRootTemplate(root, false);
   } catch {}
 };

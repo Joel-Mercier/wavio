@@ -144,13 +144,13 @@ const useWebsiteMetadata = (url?: string) => {
           delete parsedMeta["twitter:image"];
         }
 
-        if (__DEV__) {
-          console.log("[useWebsiteMetadata]", url, {
-            status: response.status,
-            candidates,
-            picked: validImage,
-          });
-        }
+        // if (__DEV__) {
+        //   console.log("[useWebsiteMetadata]", url, {
+        //     status: response.status,
+        //     candidates,
+        //     picked: validImage,
+        //   });
+        // }
         if (!cancelled) setMeta(parsedMeta);
       } catch (error) {
         if (__DEV__) console.error("[useWebsiteMetadata]", url, error);

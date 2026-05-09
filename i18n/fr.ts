@@ -44,6 +44,21 @@ export default {
         internetRadioStationDescription:
           "Créer une station de radio en ligne que vous pouvez diffuser depuis l'application",
       },
+      carAuto: {
+        home: "Accueil",
+        recentlyPlayed: "Écoutés récemment",
+        recentlyAdded: "Ajoutés récemment",
+        mostPlayed: "Les plus écoutés",
+        topRated: "Les mieux notés",
+        random: "Aléatoire",
+        library: "Bibliothèque",
+        playlists: "Playlists",
+        albums: "Albums",
+        podcasts: "Podcasts",
+        favorites: "Favoris",
+        songCount_one: "{{count}} titre",
+        songCount_other: "{{count}} titres",
+      },
       albums: {
         addToPlaylist: "Ajouter à la playlist",
         addToQueue: "Ajouter à la file d'attente",

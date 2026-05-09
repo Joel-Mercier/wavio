@@ -44,6 +44,21 @@ export default {
         internetRadioStationDescription:
           "Create an internet radio station you can stream from the app",
       },
+      carAuto: {
+        home: "Home",
+        recentlyPlayed: "Recently played",
+        recentlyAdded: "Recently added",
+        mostPlayed: "Most played",
+        topRated: "Top rated",
+        random: "Random",
+        library: "Library",
+        playlists: "Playlists",
+        albums: "Albums",
+        podcasts: "Podcasts",
+        favorites: "Favorites",
+        songCount_one: "{{count}} song",
+        songCount_other: "{{count}} songs",
+      },
       albums: {
         addToPlaylist: "Add to playlist",
         addToQueue: "Add to queue",
