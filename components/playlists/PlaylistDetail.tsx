@@ -725,7 +725,7 @@ export default function PlaylistDetail() {
                   <ListMusic size={24} color={themeConfig.theme.colors.white} />
                 </Box>
               )}
-              <VStack className="ml-4">
+              <VStack className="ml-4 flex-1">
                 <Heading
                   className="text-white font-normal"
                   size="lg"
@@ -787,8 +787,8 @@ export default function PlaylistDetail() {
                 }}
               >
                 <HStack className="items-center">
-                  <X size={24} color={themeConfig.theme.colors.gray[200]} />
-                  <Text className="ml-4 text-lg text-gray-200">
+                  <X size={24} color={themeConfig.theme.colors.red[500]} />
+                  <Text className="ml-4 text-lg text-red-400">
                     {t("app.playlists.delete")}
                   </Text>
                 </HStack>

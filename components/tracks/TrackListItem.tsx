@@ -24,7 +24,7 @@ import {
   Info,
   ListPlus,
   PlusCircle,
-  Share,
+  Share2,
   Sparkles,
   Star,
   User,
@@ -682,7 +682,7 @@ export default function TrackListItem({
                     />
                   </Box>
                 )}
-                <VStack className="ml-4">
+                <VStack className="ml-4 flex-1">
                   <Heading
                     className="text-white font-normal"
                     size="lg"
@@ -803,7 +803,7 @@ export default function TrackListItem({
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSharePress}>
                   <HStack className="items-center">
-                    <Share
+                    <Share2
                       size={24}
                       color={themeConfig.theme.colors.gray[200]}
                     />

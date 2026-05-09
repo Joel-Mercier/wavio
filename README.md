@@ -53,12 +53,12 @@ TODO
 - Liked songs screen
 - Player screen with audio controls and synchronized lyrics
 - Floating player for easy access to the currently playing song
-- Queue screen with reordering support
+- Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
 - Podcasts screen with podcast series and episodes (provided by Taddy API)
 - Internet radio stations from Navidrome
 - Offline downloads of favorited songs
-- Music folders (libraries) filtering across home, search, and library
+- Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen with now playing users
 - Share screen with shareable links
 - Servers screen with multiple servers support

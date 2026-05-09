@@ -919,7 +919,7 @@ export default function AlbumDetail() {
                   <Disc3 size={24} color={themeConfig.theme.colors.white} />
                 </Box>
               )}
-              <VStack className="ml-4">
+              <VStack className="ml-4 flex-1">
                 <Heading
                   className="text-white font-normal"
                   size="lg"
