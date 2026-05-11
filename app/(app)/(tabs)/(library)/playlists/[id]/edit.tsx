@@ -2,19 +2,19 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { AlertCircleIcon, ListMusic, X } from "lucide-react-native";
+import { ListMusic, X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import { Box } from "@/components/ui/box";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -29,7 +29,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   usePlaylist,
   useUpdatePlaylist,
@@ -44,11 +43,16 @@ const editPlaylistSchema = z.object({
 });
 
 export default function EditPlaylistScreen() {
+  const [white, gray600, emerald500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-600",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
-  const bottomTabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
@@ -60,7 +64,7 @@ export default function EditPlaylistScreen() {
       isPublic: data?.playlist?.public ?? false,
     } as z.input<typeof editPlaylistSchema>,
     validators: {
-      onBlur: editPlaylistSchema,
+      onChange: editPlaylistSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdatePlaylist.mutate(
@@ -113,7 +117,7 @@ export default function EditPlaylistScreen() {
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <X size={24} color={themeConfig.theme.colors.white} />
+                <X size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
           </Box>
@@ -139,7 +143,9 @@ export default function EditPlaylistScreen() {
       </Box>
       <VStack
         className="px-6 mt-6"
-        style={{ paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT }}
+        style={{
+          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
       >
         <HStack className="items-center justify-center mb-6">
           {data?.playlist?.coverArt ? (
@@ -150,14 +156,14 @@ export default function EditPlaylistScreen() {
             />
           ) : (
             <Box className="w-[50%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-              <ListMusic size={48} color={themeConfig.theme.colors.white} />
+              <ListMusic size={48} color={white} />
             </Box>
           )}
         </HStack>
         <form.Field name="name">
           {(field) => (
             <FormControl
-              isInvalid={!field.state.meta.isValid}
+              isInvalid={showFieldError(field)}
               size="md"
               isDisabled={false}
               isReadOnly={false}
@@ -172,36 +178,24 @@ export default function EditPlaylistScreen() {
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
-                  onBlur={field.handleBlur}
+                  onBlur={() => handleFieldBlur(field)}
                   className={cn(
                     "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
                     {
-                      "border-red-500": !field.state.meta.isValid,
+                      "border-red-500": showFieldError(field),
                     },
                   )}
                   placeholder={t("app.editPlaylist.namePlaceholder")}
                 />
               </Input>
-              {!field.state.meta.isValid && (
-                <FormControlError className="items-start">
-                  <FormControlErrorIcon
-                    as={AlertCircleIcon}
-                    className="text-red-500"
-                  />
-                  <FormControlErrorText className="text-red-500 shrink">
-                    {field.state.meta.errors
-                      .map((error) => error?.message)
-                      .join("\n")}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
+              <FieldError field={field} />
             </FormControl>
           )}
         </form.Field>
         <form.Field name="comment">
           {(field) => (
             <FormControl
-              isInvalid={!field.state.meta.isValid}
+              isInvalid={showFieldError(field)}
               size="md"
               isDisabled={false}
               isReadOnly={false}
@@ -212,24 +206,12 @@ export default function EditPlaylistScreen() {
                 <TextareaInput
                   value={field.state.value}
                   onChangeText={field.handleChange}
-                  onBlur={field.handleBlur}
+                  onBlur={() => handleFieldBlur(field)}
                   className="text-md font-normal color-white"
                   placeholder={t("app.editPlaylist.descriptionPlaceholder")}
                 />
               </Textarea>
-              {!field.state.meta.isValid && (
-                <FormControlError className="items-start">
-                  <FormControlErrorIcon
-                    as={AlertCircleIcon}
-                    className="text-red-500"
-                  />
-                  <FormControlErrorText className="text-red-500 shrink">
-                    {field.state.meta.errors
-                      .map((error) => error?.message)
-                      .join("\n")}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
+              <FieldError field={field} />
             </FormControl>
           )}
         </form.Field>
@@ -248,10 +230,10 @@ export default function EditPlaylistScreen() {
                 value={field.state.value}
                 onValueChange={field.handleChange}
                 trackColor={{
-                  false: themeConfig.theme.colors.gray[600],
-                  true: themeConfig.theme.colors.emerald[500],
+                  false: gray600,
+                  true: emerald500,
                 }}
-                thumbColor={themeConfig.theme.colors.white}
+                thumbColor={white}
               />
             </HStack>
           )}

@@ -2,19 +2,18 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { AlertCircleIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -26,7 +25,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 
 const newPlaylistSchema = z.object({
@@ -34,6 +32,10 @@ const newPlaylistSchema = z.object({
 });
 
 export default function NewPlaylistScreen() {
+  const [gray300, gray400] = Uniwind.getCSSVariable([
+    "--color-gray-300",
+    "--color-gray-400",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -45,7 +47,7 @@ export default function NewPlaylistScreen() {
       name: "",
     },
     validators: {
-      onBlur: newPlaylistSchema,
+      onChange: newPlaylistSchema,
     },
     onSubmit: async ({ value }) => {
       doCreatePlaylist.mutate(
@@ -93,7 +95,7 @@ export default function NewPlaylistScreen() {
 
   return (
     <LinearGradient
-      colors={[themeConfig.theme.colors.gray[300], "transparent"]}
+      colors={[gray300, "transparent"]}
       className="h-full"
       style={{ height: "100%" }}
     >
@@ -115,35 +117,25 @@ export default function NewPlaylistScreen() {
           <form.Field name="name">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
+                className="mb-6"
               >
-                <Input className="border-white my-6 h-16" variant="underlined">
+                <Input className="border-0 bg-primary-400 px-6 py-4">
                   <InputField
                     value={field.state.value}
-                    onBlur={field.handleBlur}
+                    onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold placeholder:text-gray-400"
+                    className="text-3xl text-white text-center font-bold rounded-md"
                     placeholder={t("app.newPlaylist.namePlaceholder")}
+                    placeholderTextColor={gray400}
                   />
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>

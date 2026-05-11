@@ -6,7 +6,6 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import {
-  AlertCircleIcon,
   EllipsisVertical,
   Pencil,
   Trash,
@@ -14,7 +13,12 @@ import {
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -29,12 +33,7 @@ import {
   AvatarGroup,
 } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -46,7 +45,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useAuthBase } from "@/stores/auth";
 import useServers, { type Server, serverFormSchema } from "@/stores/servers";
@@ -60,6 +58,10 @@ interface ServerListItemProps {
 const MAX_VISIBLE_AVATARS = 4;
 
 export default function ServerListItem({ server }: ServerListItemProps) {
+  const [gray300, gray200] = Uniwind.getCSSVariable([
+    "--color-gray-300",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -85,7 +87,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const form = useForm({
     defaultValues: { name: server.name, url: server.url },
     validators: {
-      onBlur: serverFormSchema,
+      onChange: serverFormSchema,
     },
     onSubmit: async ({ value }) => {
       editServer(server.id, { name: value.name, url: value.url });
@@ -153,7 +155,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         )}
       >
         <HStack className="items-center justify-between">
-          <VStack className="flex-1">
+          <VStack className="flex-1 items-start">
             <Heading
               size="md"
               className="text-white mb-3 flex-1"
@@ -167,7 +169,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             {users.length > 0 ? (
               <AvatarGroup className="gap-x-4">
                 {overflowCount > 0 && (
-                  <Avatar size="sm" className="bg-primary-400">
+                  <Avatar size="sm" className="bg-primary-400 w-8 h-8">
                     <AvatarFallbackText>{`+${overflowCount}`}</AvatarFallbackText>
                   </Avatar>
                 )}
@@ -176,7 +178,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     key={`${u.serverId}:${u.username}`}
                     onPress={() => handleAvatarPress(u.username)}
                   >
-                    <Avatar size="sm" className="bg-primary-400">
+                    <Avatar size="sm" className="bg-primary-400 w-8 h-8">
                       <AvatarFallbackText>{u.username}</AvatarFallbackText>
                     </Avatar>
                   </FadeOutScaleDown>
@@ -185,7 +187,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             ) : null}
           </VStack>
           <FadeOutScaleDown onPress={handlePresentModalPress}>
-            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+            <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
         </HStack>
       </VStack>
@@ -215,10 +217,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                 }}
               >
                 <HStack className="items-center">
-                  <Pencil
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Pencil size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.servers.editServer")}
                   </Text>
@@ -231,10 +230,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                 }}
               >
                 <HStack className="items-center">
-                  <UsersIcon
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <UsersIcon size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.servers.manageUsers")}
                   </Text>
@@ -247,7 +243,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                 }}
               >
                 <HStack className="items-center">
-                  <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Trash size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.servers.deleteServer")}
                   </Text>
@@ -369,10 +365,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     <FadeOutScaleDown
                       onPress={() => removeUser(u.serverId, u.username)}
                     >
-                      <Trash
-                        size={20}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Trash size={20} color={gray200} />
                     </FadeOutScaleDown>
                   </HStack>
                 ))}
@@ -407,90 +400,48 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             <form.Field name="name">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t("app.servers.namePlaceholder")}
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
             <form.Field name="url">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t("app.servers.urlPlaceholder")}
                       autoCapitalize="none"
                       textContentType="URL"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>

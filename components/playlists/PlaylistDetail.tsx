@@ -39,6 +39,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -62,7 +63,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useDeletePlaylist,
   usePlaylist,
@@ -91,6 +91,12 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function PlaylistDetail() {
+  const [white, emerald500, gray200, red500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+    "--color-gray-200",
+    "--color-red-500",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -473,12 +479,12 @@ export default function PlaylistDetail() {
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold text-center ml-6 truncate flex-1"
+              className="text-white font-bold text-center truncate flex-1"
               size="lg"
             >
               {playlistData?.playlist.name}
@@ -523,7 +529,7 @@ export default function PlaylistDetail() {
           <VStack>
             <HStack className="mt-6 items-start justify-between">
               <FadeOutScaleDown onPress={() => router.back()}>
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </FadeOutScaleDown>
               {/* https://github.com/navidrome/navidrome/issues/406 */}
               {playlistData?.playlist?.coverArt ? (
@@ -535,7 +541,7 @@ export default function PlaylistDetail() {
                 />
               ) : (
                 <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                  <ListMusic size={48} color={themeConfig.theme.colors.white} />
+                  <ListMusic size={48} color={white} />
                 </Box>
               )}
 
@@ -563,22 +569,13 @@ export default function PlaylistDetail() {
                   <FadeOutScaleDown onPress={handlePresentSortModalPress}>
                     <HStack className="items-center gap-x-2">
                       {sort.endsWith("Asc") && (
-                        <ArrowUp
-                          size={16}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <ArrowUp size={16} color={white} />
                       )}
                       {sort.endsWith("Desc") && (
-                        <ArrowDown
-                          size={16}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <ArrowDown size={16} color={white} />
                       )}
                       {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                        <ArrowDownUp
-                          size={16}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <ArrowDownUp size={16} color={white} />
                       )}
                       <Text className="text-white font-bold">
                         {sort.startsWith("addedAt")
@@ -588,25 +585,19 @@ export default function PlaylistDetail() {
                     </HStack>
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
-                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                    <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown>
-                    <Shuffle color={themeConfig.theme.colors.white} />
+                    <Shuffle color={white} />
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                       {isPlayingFromList && isPlaying ? (
-                        <Pause
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Pause color={white} fill={white} />
                       ) : (
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Play color={white} fill={white} />
                       )}
                     </Box>
                   </FadeOutScaleDown>
@@ -645,7 +636,8 @@ export default function PlaylistDetail() {
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: insets.top,
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />
@@ -673,15 +665,9 @@ export default function PlaylistDetail() {
                 onPress={handleCopyShareUrlPress}
               >
                 {clipoardCopyDone ? (
-                  <ClipboardCheck
-                    size={24}
-                    color={themeConfig.theme.colors.emerald[500]}
-                  />
+                  <ClipboardCheck size={24} color={emerald500} />
                 ) : (
-                  <ClipboardIcon
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ClipboardIcon size={24} color={gray200} />
                 )}
                 <Text
                   className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
@@ -722,7 +708,7 @@ export default function PlaylistDetail() {
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <ListMusic size={24} color={themeConfig.theme.colors.white} />
+                  <ListMusic size={24} color={white} />
                 </Box>
               )}
               <VStack className="ml-4 flex-1">
@@ -738,10 +724,7 @@ export default function PlaylistDetail() {
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
                 <HStack className="items-center">
-                  <ListOrdered
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ListOrdered size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.reorder")}
                   </Text>
@@ -749,10 +732,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleAddToQueuePress}>
                 <HStack className="items-center">
-                  <ListPlus
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ListPlus size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.addToQueue")}
                   </Text>
@@ -760,10 +740,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
-                  <Pencil
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Pencil size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.edit")}
                   </Text>
@@ -771,10 +748,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleSharePress}>
                 <HStack className="items-center">
-                  <Share2
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Share2 size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.share")}
                   </Text>
@@ -787,7 +761,7 @@ export default function PlaylistDetail() {
                 }}
               >
                 <HStack className="items-center">
-                  <X size={24} color={themeConfig.theme.colors.red[500]} />
+                  <X size={24} color={red500} />
                   <Text className="ml-4 text-lg text-red-400">
                     {t("app.playlists.delete")}
                   </Text>
@@ -830,16 +804,10 @@ export default function PlaylistDetail() {
                     </Text>
                   </VStack>
                   {sort === "addedAtAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "addedAtDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>
@@ -859,16 +827,10 @@ export default function PlaylistDetail() {
                     </Text>
                   </VStack>
                   {sort === "alphabeticalAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "alphabeticalDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>

@@ -1,12 +1,12 @@
 import { ListMusic } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -15,6 +15,7 @@ interface PlaylistListItemProps {
 }
 
 export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   return (
     <FadeOutScaleDown href={`/playlists/${playlist.id}`} className="mr-6">
@@ -27,7 +28,7 @@ export default function PlaylistListItem({ playlist }: PlaylistListItemProps) {
           />
         ) : (
           <Box className="w-32 h-32 rounded-md bg-primary-600 items-center justify-center">
-            <ListMusic size={48} color={themeConfig.theme.colors.white} />
+            <ListMusic size={48} color={white} />
           </Box>
         )}
 

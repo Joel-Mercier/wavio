@@ -6,6 +6,7 @@ import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -17,7 +18,6 @@ import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { themeConfig } from "@/config/theme";
 import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -25,6 +25,7 @@ import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { cn } from "@/utils/tailwind";
 
 export default function RecentSearchesScreen() {
+  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -104,7 +105,7 @@ export default function RecentSearchesScreen() {
                   autoFocus
                   className="text-white text-xl"
                   placeholder={t("app.search.inputPlaceholder")}
-                  placeholderTextColor={themeConfig.theme.colors.primary[50]}
+                  placeholderTextColor={primary50}
                   type="text"
                   value={field.state.value}
                   onChangeText={field.handleChange}
@@ -177,7 +178,8 @@ export default function RecentSearchesScreen() {
           </Box>
         }
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

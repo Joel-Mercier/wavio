@@ -57,10 +57,7 @@ export default function ArtistBiography() {
         <FadeOutScaleDown onPress={() => router.back()}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
-        <Heading
-          className="text-white text-center ml-6 truncate flex-1"
-          size="lg"
-        >
+        <Heading className="text-white text-center truncate flex-1" size="lg">
           {name}
         </Heading>
         <Box className="w-6" />

@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { SectionList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import ActivityListItem from "@/components/activity/ActivityListItem";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -14,7 +15,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import useActivity, {
   type ActivityEntry,
   type ActivityType,
@@ -49,7 +49,7 @@ const routeFor = (entry: ActivityEntry) =>
   `/${entry.type}s/${entry.id}` as const;
 
 const TypeIcon = ({ type }: { type: ActivityType }) => {
-  const color = themeConfig.theme.colors.primary[100];
+  const [color] = Uniwind.getCSSVariable(["--color-primary-100"]) as string[];
   if (type === "album") return <Disc3 size={14} color={color} />;
   if (type === "artist") return <Mic2 size={14} color={color} />;
   return <ListMusic size={14} color={color} />;

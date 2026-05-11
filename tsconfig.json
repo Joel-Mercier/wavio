@@ -4,8 +4,7 @@
     "strict": true,
     "types": ["jest", "node"],
     "paths": {
-      "@/*": ["./*"],
-      "tailwind.config": ["./tailwind.config.js"]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -13,6 +12,6 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
+    "uniwind-types.d.ts"
   ]
 }

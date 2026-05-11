@@ -25,30 +25,27 @@ export default function SharesDetail() {
   const { data, isLoading, error } = useGetShares();
   return (
     <Box className="px-6 mt-6 pb-6 h-full">
-      <>
-        <HStack
-          className="items-center mb-6"
-          style={{ paddingTop: insets.top }}
-        >
-          <FadeOutScaleDown onPress={() => router.back()}>
-            <ArrowLeft size={24} color="white" />
-          </FadeOutScaleDown>
-          <Heading className="text-white ml-4" size="lg">
-            {t("app.shares.title")}
-          </Heading>
-        </HStack>
-        {error && <ErrorDisplay error={error} />}
-      </>
+      <HStack className="items-center mb-6" style={{ paddingTop: insets.top }}>
+        <FadeOutScaleDown onPress={() => router.back()}>
+          <ArrowLeft size={24} color="white" />
+        </FadeOutScaleDown>
+        <Heading className="text-white ml-4" size="lg">
+          {t("app.shares.title")}
+        </Heading>
+        <Box className="w-10" />
+      </HStack>
+      {error && <ErrorDisplay error={error} />}
       {!error && (
         <FlashList
           data={!data ? loadingData(16) : data?.shares.share || []}
           renderItem={({ item }: { item: Share }) =>
             !data ? <ShareListItemSkeleton /> : <ShareListItem share={item} />
           }
-          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
-            paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           ListEmptyComponent={() => <EmptyDisplay />}
         />

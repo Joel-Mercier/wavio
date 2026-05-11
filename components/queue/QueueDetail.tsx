@@ -17,6 +17,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -42,7 +43,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import { useSleepTimer } from "@/services/sleepTimer";
@@ -67,6 +67,12 @@ const queueTrackToChild = (track: QueueTrack): Child =>
   }) as Child;
 
 export default function QueueDetail() {
+  const [white, gray500, emerald500, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-500",
+    "--color-emerald-500",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const toast = useToast();
@@ -171,8 +177,8 @@ export default function QueueDetail() {
   const handleCreatePlaylistPress = () => setShowCreatePlaylist(true);
 
   const isEmpty = queue.length === 0;
-  const iconActiveColor = themeConfig.theme.colors.white;
-  const iconDisabledColor = themeConfig.theme.colors.gray[500];
+  const iconActiveColor = white;
+  const iconDisabledColor = gray500;
 
   return (
     <Box className="h-full">
@@ -197,11 +203,7 @@ export default function QueueDetail() {
           <FadeOutScaleDown onPress={handleSleepTimerPress}>
             <Timer
               size={22}
-              color={
-                sleepActive
-                  ? themeConfig.theme.colors.emerald[500]
-                  : iconActiveColor
-              }
+              color={sleepActive ? emerald500 : iconActiveColor}
             />
           </FadeOutScaleDown>
           <FadeOutScaleDown
@@ -224,7 +226,7 @@ export default function QueueDetail() {
             }
           >
             {editMode ? (
-              <Check size={22} color={themeConfig.theme.colors.emerald[500]} />
+              <Check size={22} color={emerald500} />
             ) : (
               <ListOrdered
                 size={22}
@@ -326,7 +328,7 @@ export default function QueueDetail() {
         <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center mb-6">
-              <Timer size={24} color={themeConfig.theme.colors.gray[200]} />
+              <Timer size={24} color={gray200} />
               <Heading
                 className="ml-4 text-white font-normal"
                 size="lg"
@@ -340,9 +342,7 @@ export default function QueueDetail() {
                 <Text
                   className="text-lg"
                   style={{
-                    color: !sleepActive
-                      ? themeConfig.theme.colors.emerald[500]
-                      : themeConfig.theme.colors.gray[200],
+                    color: !sleepActive ? emerald500 : gray200,
                   }}
                 >
                   {t("app.player.sleepTimerOff")}
@@ -361,9 +361,7 @@ export default function QueueDetail() {
                     <Text
                       className="text-lg"
                       style={{
-                        color: active
-                          ? themeConfig.theme.colors.emerald[500]
-                          : themeConfig.theme.colors.gray[200],
+                        color: active ? emerald500 : gray200,
                       }}
                     >
                       {t("app.player.sleepTimerMinutes", { count: minutes })}
@@ -375,9 +373,7 @@ export default function QueueDetail() {
                 <Text
                   className="text-lg"
                   style={{
-                    color: sleepEndOfTrack
-                      ? themeConfig.theme.colors.emerald[500]
-                      : themeConfig.theme.colors.gray[200],
+                    color: sleepEndOfTrack ? emerald500 : gray200,
                   }}
                 >
                   {t("app.player.sleepTimerEndOfTrack")}

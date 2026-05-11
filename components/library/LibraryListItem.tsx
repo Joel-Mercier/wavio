@@ -11,6 +11,7 @@ import {
 } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import type { LibraryLayout } from "@/app/(app)/(tabs)/(library)/index";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -19,7 +20,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type {
   AlbumID3,
@@ -55,28 +55,23 @@ interface LibraryListItemProps {
 }
 
 function LibraryListItemIcon({ type }: { type: string }) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   if (type === "favorites") {
-    return (
-      <Heart
-        size={24}
-        color={themeConfig.theme.colors.white}
-        fill={themeConfig.theme.colors.white}
-      />
-    );
+    return <Heart size={24} color={white} fill={white} />;
   }
   if (type === "album") {
-    return <Disc3 size={48} color={themeConfig.theme.colors.white} />;
+    return <Disc3 size={48} color={white} />;
   }
   if (type === "artist") {
-    return <User size={48} color={themeConfig.theme.colors.white} />;
+    return <User size={48} color={white} />;
   }
   if (type === "podcast") {
-    return <Podcast size={48} color={themeConfig.theme.colors.white} />;
+    return <Podcast size={48} color={white} />;
   }
   if (type === "folder") {
-    return <Folder size={48} color={themeConfig.theme.colors.white} />;
+    return <Folder size={48} color={white} />;
   }
-  return <ListMusic size={48} color={themeConfig.theme.colors.white} />;
+  return <ListMusic size={48} color={white} />;
 }
 
 export default function LibraryListItem({
@@ -84,6 +79,11 @@ export default function LibraryListItem({
   layout,
   index,
 }: LibraryListItemProps) {
+  const [blue500, emerald500, black] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-emerald-500",
+    "--color-black",
+  ]) as string[];
   const { t, i18n } = useTranslation();
   const { offlineModeEnabled } = useOfflineDownloads();
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
@@ -187,10 +187,7 @@ export default function LibraryListItem({
           >
             {type.id === "favorites" ? (
               <LinearGradient
-                colors={[
-                  themeConfig.theme.colors.blue[500],
-                  themeConfig.theme.colors.emerald[500],
-                ]}
+                colors={[blue500, emerald500]}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -216,7 +213,7 @@ export default function LibraryListItem({
           <HStack className="items-center">
             {offlineModeEnabled && type.id === "favorites" && (
               <Box className="size-4 rounded-full bg-emerald-500 items-center justify-center mr-2">
-                <ArrowDown size={12} color={themeConfig.theme.colors.black} />
+                <ArrowDown size={12} color={black} />
               </Box>
             )}
             <Text numberOfLines={1} className="text-md text-primary-100">

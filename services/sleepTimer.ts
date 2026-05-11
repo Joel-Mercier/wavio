@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { pause } from "@/services/player";
+
+let pauseHandler: (() => void) | null = null;
+
+export function registerSleepTimerPauseHandler(handler: () => void) {
+  pauseHandler = handler;
+}
 
 type State = {
   endsAt: number | null;
@@ -21,7 +26,7 @@ export const useSleepTimer = create<State & Actions>((set) => ({
     if (timeoutId) clearTimeout(timeoutId);
     const ms = minutes * 60 * 1000;
     timeoutId = setTimeout(() => {
-      pause();
+      pauseHandler?.();
       timeoutId = null;
       useSleepTimer.setState({ endsAt: null, endOfTrack: false });
     }, ms);

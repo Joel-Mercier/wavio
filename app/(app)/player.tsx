@@ -46,6 +46,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -66,7 +67,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -95,6 +95,7 @@ function CoverSlot({
   track: QueueTrack | null;
   size: number;
 }) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   if (!size) return null;
   if (track?.artwork) {
     return (
@@ -111,15 +112,24 @@ function CoverSlot({
       className="rounded-md bg-primary-600 items-center justify-center"
     >
       {track?.isRadio ? (
-        <RadioIcon size={64} color={themeConfig.theme.colors.white} />
+        <RadioIcon size={64} color={white} />
       ) : (
-        <AudioLines size={64} color={themeConfig.theme.colors.white} />
+        <AudioLines size={64} color={white} />
       )}
     </Box>
   );
 }
 
 export default function PlayerScreen() {
+  const [blue500, emerald500, gray800, white, gray200] = Uniwind.getCSSVariable(
+    [
+      "--color-blue-500",
+      "--color-emerald-500",
+      "--color-gray-800",
+      "--color-white",
+      "--color-gray-200",
+    ],
+  ) as string[];
   const { t } = useTranslation();
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
@@ -127,10 +137,13 @@ export default function PlayerScreen() {
   const router = useRouter();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { handleSheetPositionChange: handleSleepSheetPositionChange } =
     useBottomSheetBackHandler(sleepTimerSheetRef);
+  const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetArtistsModalRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -323,10 +336,29 @@ export default function PlayerScreen() {
     bottomSheetModalRef.current?.present();
   }, []);
 
+  const trackArtists: { id: string; name: string }[] = playingTrack?.artists
+    ?.length
+    ? playingTrack.artists
+    : playingTrack?.artistId
+      ? [{ id: playingTrack.artistId, name: playingTrack.artist ?? "" }]
+      : [];
+  const hasMultipleArtists = trackArtists.length > 1;
+
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
-    if (!playingTrack?.artistId) return;
-    router.navigate(`/artists/${playingTrack.artistId}`);
+    if (hasMultipleArtists) {
+      bottomSheetArtistsModalRef.current?.present();
+      return;
+    }
+    const artistId = trackArtists[0]?.id ?? playingTrack?.artistId;
+    if (artistId) {
+      router.navigate(`/artists/${artistId}`);
+    }
+  };
+
+  const handleArtistPickPress = (artistId: string) => {
+    bottomSheetArtistsModalRef.current?.dismiss();
+    router.navigate(`/artists/${artistId}`);
   };
 
   const handleGoToAlbumPress = () => {
@@ -536,7 +568,7 @@ export default function PlayerScreen() {
     <LinearGradient
       colors={[
         (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-          themeConfig.theme.colors.blue[500],
+          blue500,
         "#191A1F",
       ]}
       locations={[0, 0.7]}
@@ -637,16 +669,8 @@ export default function PlayerScreen() {
                   >
                     <Heart
                       size={24}
-                      color={
-                        playingTrack?.starred
-                          ? themeConfig.theme.colors.emerald[500]
-                          : "white"
-                      }
-                      fill={
-                        playingTrack?.starred
-                          ? themeConfig.theme.colors.emerald[500]
-                          : "transparent"
-                      }
+                      color={playingTrack?.starred ? emerald500 : "white"}
+                      fill={playingTrack?.starred ? emerald500 : "transparent"}
                     />
                   </FadeOut>
                 )}
@@ -664,10 +688,7 @@ export default function PlayerScreen() {
                   <FadeOut onPress={() => handleShufflePress(!shuffle)}>
                     {shuffle ? (
                       <>
-                        <Shuffle
-                          size={24}
-                          color={themeConfig.theme.colors.emerald[500]}
-                        />
+                        <Shuffle size={24} color={emerald500} />
                         <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
                           <Box className="bg-emerald-500 rounded-full size-1" />
                         </Box>
@@ -685,17 +706,9 @@ export default function PlayerScreen() {
                 <FadeOut onPress={handlePlayPausePress}>
                   <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
                     {isPlaying ? (
-                      <Pause
-                        size={24}
-                        color={themeConfig.theme.colors.gray[800]}
-                        fill={themeConfig.theme.colors.gray[800]}
-                      />
+                      <Pause size={24} color={gray800} fill={gray800} />
                     ) : (
-                      <Play
-                        size={24}
-                        color={themeConfig.theme.colors.gray[800]}
-                        fill={themeConfig.theme.colors.gray[800]}
-                      />
+                      <Play size={24} color={gray800} fill={gray800} />
                     )}
                   </Box>
                 </FadeOut>
@@ -711,10 +724,7 @@ export default function PlayerScreen() {
                 )}
                 {!isRadio && repeatMode === "all" && (
                   <FadeOut onPress={() => handleRepeatModePress("one")}>
-                    <Repeat
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <Repeat size={24} color={emerald500} />
                     <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
                       <Box className="bg-emerald-500 rounded-full size-1" />
                     </Box>
@@ -722,10 +732,7 @@ export default function PlayerScreen() {
                 )}
                 {!isRadio && repeatMode === "one" && (
                   <FadeOut onPress={() => handleRepeatModePress("off")}>
-                    <Repeat1
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <Repeat1 size={24} color={emerald500} />
                   </FadeOut>
                 )}
               </HStack>
@@ -771,15 +778,9 @@ export default function PlayerScreen() {
                 ) : (
                   <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
                     {isRadio ? (
-                      <RadioIcon
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <RadioIcon size={24} color={white} />
                     ) : (
-                      <AudioLines
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <AudioLines size={24} color={white} />
                     )}
                   </Box>
                 )}
@@ -822,10 +823,7 @@ export default function PlayerScreen() {
                 <VStack className="mt-6 gap-y-8">
                   <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                     <HStack className="items-center">
-                      <PlusCircle
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <PlusCircle size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.addToPlaylist")}
                       </Text>
@@ -833,22 +831,18 @@ export default function PlayerScreen() {
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handleGoToArtistPress}>
                     <HStack className="items-center">
-                      <User
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <User size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.goToArtist")}
+                        {t("app.tracks.goToArtist", {
+                          count: trackArtists.length || 1,
+                        })}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
                   {playingTrack?.albumId && (
                     <FadeOutScaleDown onPress={handleGoToAlbumPress}>
                       <HStack className="items-center">
-                        <Disc3
-                          size={24}
-                          color={themeConfig.theme.colors.gray[200]}
-                        />
+                        <Disc3 size={24} color={gray200} />
                         <Text className="ml-4 text-lg text-gray-200">
                           {t("app.tracks.goToAlbum")}
                         </Text>
@@ -857,10 +851,7 @@ export default function PlayerScreen() {
                   )}
                   <FadeOutScaleDown>
                     <HStack className="items-center">
-                      <ListPlus
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <ListPlus size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.addToQueue")}
                       </Text>
@@ -869,10 +860,7 @@ export default function PlayerScreen() {
                   {hasSyncedLyrics && (
                     <FadeOutScaleDown onPress={handleShowLyricsPress}>
                       <HStack className="items-center">
-                        <Mic2
-                          size={24}
-                          color={themeConfig.theme.colors.gray[200]}
-                        />
+                        <Mic2 size={24} color={gray200} />
                         <Text className="ml-4 text-lg text-gray-200">
                           {t("app.player.lyrics")}
                         </Text>
@@ -881,10 +869,7 @@ export default function PlayerScreen() {
                   )}
                   <FadeOutScaleDown onPress={handleSimilarSongsPress}>
                     <HStack className="items-center">
-                      <Sparkles
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Sparkles size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.similarSongs")}
                       </Text>
@@ -894,10 +879,7 @@ export default function PlayerScreen() {
                     onPress={() => console.log("share pressed")}
                   >
                     <HStack className="items-center">
-                      <Share2
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Share2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.share")}
                       </Text>
@@ -905,10 +887,7 @@ export default function PlayerScreen() {
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handleDownloadPress}>
                     <HStack className="items-center">
-                      <Download
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Download size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.download")}
                       </Text>
@@ -918,18 +897,12 @@ export default function PlayerScreen() {
                     <HStack className="items-center">
                       <Timer
                         size={24}
-                        color={
-                          sleepActive
-                            ? themeConfig.theme.colors.emerald[500]
-                            : themeConfig.theme.colors.gray[200]
-                        }
+                        color={sleepActive ? emerald500 : gray200}
                       />
                       <Text
                         className="ml-4 text-lg"
                         style={{
-                          color: sleepActive
-                            ? themeConfig.theme.colors.emerald[500]
-                            : themeConfig.theme.colors.gray[200],
+                          color: sleepActive ? emerald500 : gray200,
                         }}
                       >
                         {sleepActive && sleepRemainingLabel
@@ -943,11 +916,7 @@ export default function PlayerScreen() {
                   {playingTrack?.musicBrainzId && (
                     <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                       <HStack className="items-center">
-                        <MusicBrainz
-                          width={24}
-                          height={24}
-                          fill={themeConfig.theme.colors.gray[200]}
-                        />
+                        <MusicBrainz width={24} height={24} fill={gray200} />
                         <Text className="ml-4 text-lg text-gray-200">
                           {t("app.tracks.musicBrainz")}
                         </Text>
@@ -973,7 +942,7 @@ export default function PlayerScreen() {
           <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
             <Box className="p-6 w-full mb-12">
               <HStack className="items-center mb-6">
-                <Timer size={24} color={themeConfig.theme.colors.gray[200]} />
+                <Timer size={24} color={gray200} />
                 <Heading
                   className="ml-4 text-white font-normal"
                   size="lg"
@@ -987,9 +956,7 @@ export default function PlayerScreen() {
                   <Text
                     className="text-lg"
                     style={{
-                      color: !sleepActive
-                        ? themeConfig.theme.colors.emerald[500]
-                        : themeConfig.theme.colors.gray[200],
+                      color: !sleepActive ? emerald500 : gray200,
                     }}
                   >
                     {t("app.player.sleepTimerOff")}
@@ -1008,9 +975,7 @@ export default function PlayerScreen() {
                       <Text
                         className="text-lg"
                         style={{
-                          color: active
-                            ? themeConfig.theme.colors.emerald[500]
-                            : themeConfig.theme.colors.gray[200],
+                          color: active ? emerald500 : gray200,
                         }}
                       >
                         {t("app.player.sleepTimerMinutes", { count: minutes })}
@@ -1022,14 +987,51 @@ export default function PlayerScreen() {
                   <Text
                     className="text-lg"
                     style={{
-                      color: sleepEndOfTrack
-                        ? themeConfig.theme.colors.emerald[500]
-                        : themeConfig.theme.colors.gray[200],
+                      color: sleepEndOfTrack ? emerald500 : gray200,
                     }}
                   >
                     {t("app.player.sleepTimerEndOfTrack")}
                   </Text>
                 </FadeOutScaleDown>
+              </VStack>
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={bottomSheetArtistsModalRef}
+          onChange={handleArtistsSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+            }}
+          >
+            <Box className="p-6 w-full mb-12">
+              <VStack className="gap-y-6">
+                {trackArtists.map((artist) => (
+                  <FadeOutScaleDown
+                    key={artist.id}
+                    onPress={() => handleArtistPickPress(artist.id)}
+                  >
+                    <HStack className="items-center">
+                      <User size={24} color={gray200} />
+                      <Text
+                        className="ml-4 text-lg text-gray-200"
+                        numberOfLines={1}
+                      >
+                        {artist.name}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                ))}
               </VStack>
             </Box>
           </BottomSheetView>

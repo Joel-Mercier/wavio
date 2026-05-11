@@ -20,6 +20,7 @@ import {
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -37,7 +38,6 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
@@ -57,6 +57,11 @@ import { cn } from "@/utils/tailwind";
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
+  const [white, gray200, emerald500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-200",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
@@ -243,7 +248,7 @@ export default function LibraryScreen() {
           <HStack className="mt-6 items-center justify-between">
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-                <Avatar size="sm" className="border-emerald-500 border-2">
+                <Avatar className="border-emerald-500 border-2 w-10 h-10">
                   <AvatarFallbackText className="font-body ">
                     {username}
                   </AvatarFallbackText>
@@ -255,10 +260,10 @@ export default function LibraryScreen() {
             </HStack>
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handleSearchPress}>
-                <Search color={themeConfig.theme.colors.white} />
+                <Search color={white} />
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handlePresentModalPress}>
-                <Plus color={themeConfig.theme.colors.white} />
+                <Plus color={white} />
               </FadeOutScaleDown>
             </HStack>
           </HStack>
@@ -330,14 +335,10 @@ export default function LibraryScreen() {
         <HStack className="px-6 pb-4 items-center justify-between">
           <FadeOutScaleDown onPress={handlePresentSortModalPress}>
             <HStack className="items-center gap-x-2">
-              {sort.endsWith("Asc") && (
-                <ArrowUp size={16} color={themeConfig.theme.colors.white} />
-              )}
-              {sort.endsWith("Desc") && (
-                <ArrowDown size={16} color={themeConfig.theme.colors.white} />
-              )}
+              {sort.endsWith("Asc") && <ArrowUp size={16} color={white} />}
+              {sort.endsWith("Desc") && <ArrowDown size={16} color={white} />}
               {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                <ArrowDownUp size={16} color={themeConfig.theme.colors.white} />
+                <ArrowDownUp size={16} color={white} />
               )}
               <Text className="text-white font-bold">
                 {sort.startsWith("addedAt")
@@ -348,9 +349,9 @@ export default function LibraryScreen() {
           </FadeOutScaleDown>
           <FadeOutScaleDown onPress={handleLayoutPress}>
             {layout === "list" ? (
-              <LayoutGrid size={16} color={themeConfig.theme.colors.white} />
+              <LayoutGrid size={16} color={white} />
             ) : (
-              <List size={16} color={themeConfig.theme.colors.white} />
+              <List size={16} color={white} />
             )}
           </FadeOutScaleDown>
         </HStack>
@@ -400,7 +401,8 @@ export default function LibraryScreen() {
           extraData={{ layout }}
           contentContainerStyle={{
             paddingHorizontal: 24,
-            paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom:
+              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           showsVerticalScrollIndicator={false}
         />
@@ -426,10 +428,7 @@ export default function LibraryScreen() {
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
                 <HStack className="items-center">
-                  <ListMusic
-                    size={32}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ListMusic size={32} color={gray200} />
                   <VStack className="ml-4">
                     <Heading className="text-white">
                       {t("app.create.playlistTitle")}
@@ -442,7 +441,7 @@ export default function LibraryScreen() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
                 <HStack className="items-center">
-                  <Radio size={32} color={themeConfig.theme.colors.gray[200]} />
+                  <Radio size={32} color={gray200} />
                   <VStack className="ml-4">
                     <Heading className="text-white">
                       {t("app.create.internetRadioStationTitle")}
@@ -490,16 +489,10 @@ export default function LibraryScreen() {
                     </Text>
                   </VStack>
                   {sort === "addedAtAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "addedAtDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>
@@ -519,16 +512,10 @@ export default function LibraryScreen() {
                     </Text>
                   </VStack>
                   {sort === "alphabeticalAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "alphabeticalDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>

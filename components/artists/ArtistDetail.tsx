@@ -33,6 +33,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AlbumListItem from "@/components/albums/AlbumListItem";
@@ -67,7 +68,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useArtist,
   useArtistInfo2,
@@ -99,6 +99,11 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function ArtistDetail() {
+  const [white, emerald500, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -464,12 +469,12 @@ export default function ArtistDetail() {
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold ml-6 truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1"
               size="lg"
             >
               {data?.artist?.name}
@@ -513,10 +518,7 @@ export default function ArtistDetail() {
                 <VStack className="mt-6 px-6 items-start justify-between h-full">
                   <FadeOutScaleDown onPress={() => router.back()}>
                     <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                      <ArrowLeft
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <ArrowLeft size={24} color={white} />
                     </Box>
                   </FadeOutScaleDown>
                   <Heading
@@ -534,36 +536,27 @@ export default function ArtistDetail() {
                 <HStack className="items-center gap-x-4">
                   {data?.artist?.starred ? (
                     <FadeOutScaleDown onPress={handleUnfavoritePress}>
-                      <Heart
-                        color={themeConfig.theme.colors.emerald[500]}
-                        fill={themeConfig.theme.colors.emerald[500]}
-                      />
+                      <Heart color={emerald500} fill={emerald500} />
                     </FadeOutScaleDown>
                   ) : (
                     <FadeOutScaleDown onPress={handleFavoritePress}>
-                      <Heart color={themeConfig.theme.colors.white} />
+                      <Heart color={white} />
                     </FadeOutScaleDown>
                   )}
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
-                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                    <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown>
-                    <Shuffle color={themeConfig.theme.colors.white} />
+                    <Shuffle color={white} />
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                       {isPlayingFromArtist && isPlaying ? (
-                        <Pause
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Pause color={white} fill={white} />
                       ) : (
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Play color={white} fill={white} />
                       )}
                     </Box>
                   </FadeOutScaleDown>
@@ -584,11 +577,7 @@ export default function ArtistDetail() {
                         className="w-16 h-16 rounded-full aspect-square"
                       />
                       <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
-                        <Heart
-                          size={14}
-                          color={themeConfig.theme.colors.emerald[500]}
-                          fill={themeConfig.theme.colors.emerald[500]}
-                        />
+                        <Heart size={14} color={emerald500} fill={emerald500} />
                       </Box>
                     </Box>
                     <VStack className="ml-4 flex-1">
@@ -615,7 +604,7 @@ export default function ArtistDetail() {
                         {data?.artist?.name}
                       </Text>
                     </VStack>
-                    <ChevronRight color={themeConfig.theme.colors.white} />
+                    <ChevronRight color={white} />
                   </HStack>
                 </FadeOutScaleDown>
               )}
@@ -832,7 +821,8 @@ export default function ArtistDetail() {
           </Box>
         )}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />
@@ -863,7 +853,7 @@ export default function ArtistDetail() {
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <User size={24} color={themeConfig.theme.colors.white} />
+                  <User size={24} color={white} />
                 </Box>
               )}
               <VStack className="ml-4 flex-1">
@@ -880,10 +870,7 @@ export default function ArtistDetail() {
               <FadeOutScaleDown onPress={handleRatingPress}>
                 <HStack className="items-center justify-between">
                   <HStack className="items-center">
-                    <Star
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Star size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.artists.rate")}
                     </Text>
@@ -900,11 +887,7 @@ export default function ArtistDetail() {
               {data?.artist?.musicBrainzId && (
                 <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                   <HStack className="items-center">
-                    <MusicBrainz
-                      width={24}
-                      height={24}
-                      fill={themeConfig.theme.colors.gray[200]}
-                    />
+                    <MusicBrainz width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.artists.musicBrainz")}
                     </Text>
@@ -914,11 +897,7 @@ export default function ArtistDetail() {
               {data?.artist?.name && (
                 <FadeOutScaleDown onPress={handleLastFMPress}>
                   <HStack className="items-center">
-                    <LastFM
-                      width={24}
-                      height={24}
-                      fill={themeConfig.theme.colors.gray[200]}
-                    />
+                    <LastFM width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.artists.lastFM")}
                     </Text>

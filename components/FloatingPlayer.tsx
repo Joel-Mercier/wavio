@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";
 import MovingText from "@/components/MovingText";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
@@ -23,7 +24,6 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { themeConfig } from "@/config/theme";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
@@ -46,7 +46,11 @@ export default function FloatingPlayer() {
   const toast = useToast();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-
+  const [emerald, white, primary] = Uniwind.getCSSVariable([
+    "--color-emerald-500",
+    "--color-white",
+    "--color-primary-500",
+  ]) as string[];
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
@@ -218,14 +222,14 @@ export default function FloatingPlayer() {
   if (
     !playingTrack ||
     pathname.startsWith("/player") ||
-    pathname.startsWith("/playlists/new")
+    pathname.startsWith("/playlists/new") ||
+    pathname.startsWith("/internet-radio-stations/new")
   ) {
     return null;
   }
 
   const backgroundColor =
-    (colors?.platform === "ios" ? colors.background : colors?.muted) ||
-    themeConfig.theme.colors.primary[500];
+    (colors?.platform === "ios" ? colors.background : colors?.muted) || primary;
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
@@ -270,10 +274,7 @@ export default function FloatingPlayer() {
                 />
               ) : (
                 <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
-                  <AudioLines
-                    size={24}
-                    color={themeConfig.theme.colors.white}
-                  />
+                  <AudioLines size={24} color={white} />
                 </Box>
               )}
             </Box>
@@ -298,32 +299,16 @@ export default function FloatingPlayer() {
                 }
               >
                 <Heart
-                  color={
-                    playingTrack.starred
-                      ? themeConfig.theme.colors.emerald[500]
-                      : themeConfig.theme.colors.white
-                  }
-                  fill={
-                    playingTrack.starred
-                      ? themeConfig.theme.colors.emerald[500]
-                      : "transparent"
-                  }
+                  color={playingTrack.starred ? emerald : white}
+                  fill={playingTrack.starred ? emerald : "transparent"}
                 />
               </FadeOut>
             )}
             <FadeOut onPress={handlePlayPausePress}>
               {isPlaying ? (
-                <Pause
-                  color={themeConfig.theme.colors.white}
-                  stroke={undefined}
-                  fill={themeConfig.theme.colors.white}
-                />
+                <Pause color={white} stroke={undefined} fill={white} />
               ) : (
-                <Play
-                  color={themeConfig.theme.colors.white}
-                  stroke={undefined}
-                  fill={themeConfig.theme.colors.white}
-                />
+                <Play color={white} stroke={undefined} fill={white} />
               )}
             </FadeOut>
           </HStack>

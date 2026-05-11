@@ -3,13 +3,18 @@ import { useForm } from "@tanstack/react-form";
 import axios from "axios";
 import { formatISO } from "date-fns";
 import { useLocalSearchParams } from "expo-router";
-import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "lucide-react-native";
+import { EyeIcon, EyeOffIcon } from "lucide-react-native";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import Logo from "@/assets/images/logo.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import {
   Avatar,
   AvatarFallbackText,
@@ -17,12 +22,7 @@ import {
 } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ChevronDownIcon } from "@/components/ui/icon";
@@ -48,11 +48,9 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server, type ServerUser } from "@/stores/servers";
-import { cn } from "@/utils/tailwind";
 
 function ServerSelectRow({
   server,
@@ -84,8 +82,7 @@ function ServerSelectRow({
                 {users.slice(0, 4).map((u) => (
                   <Avatar
                     key={`${u.serverId}:${u.username}`}
-                    size="sm"
-                    className="bg-primary-400"
+                    className="bg-primary-400 w-8 h-8"
                   >
                     <AvatarFallbackText>{u.username}</AvatarFallbackText>
                   </Avatar>
@@ -100,6 +97,7 @@ function ServerSelectRow({
 }
 
 export default function LoginScreen() {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
   const params = useLocalSearchParams<{
@@ -135,7 +133,7 @@ export default function LoginScreen() {
       url: preselectedServer?.url ?? "https://",
     },
     validators: {
-      onBlur: loginSchema,
+      onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
       try {
@@ -246,18 +244,14 @@ export default function LoginScreen() {
           {servers && servers.length > 0 && (
             <Box>
               <Select onValueChange={handleServerChange}>
-                <SelectTrigger
-                  variant="outline"
-                  size="xl"
-                  className="justify-between bg-primary-600 border-0 rounded-full px-6"
-                >
+                <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
                   <SelectInput
                     placeholder={t("auth.login.serverPlaceholder")}
                     value={triggerLabel}
-                    className="text-md placeholder:text-white"
-                    placeholderTextColor={themeConfig.theme.colors.white}
+                    className="text-md text-white"
+                    placeholderTextColor={white}
                   />
-                  <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  <SelectIcon as={ChevronDownIcon} />
                 </SelectTrigger>
                 <SelectPortal snapPoints={[50]}>
                   <SelectBackdrop />
@@ -303,22 +297,17 @@ export default function LoginScreen() {
               };
               return (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
-                  size="md"
+                  isInvalid={showFieldError(field)}
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="mb-2 mt-0"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputSlot>
                       <Pressable
                         onPress={toggleProtocol}
-                        className="pl-5 pr-2 h-full justify-center"
+                        className="pr-2 justify-center"
                       >
                         <Text className="text-white text-md">{protocol}</Text>
                       </Pressable>
@@ -326,32 +315,15 @@ export default function LoginScreen() {
                     <InputField
                       value={host}
                       onChangeText={handleHostChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full pl-1",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t("auth.login.urlPlaceholder")}
                       textContentType="URL"
                       autoCapitalize="none"
                       keyboardType="url"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               );
             }}
@@ -359,29 +331,20 @@ export default function LoginScreen() {
           <form.Field name="username">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
                 className="my-2"
               >
-                <Input
-                  className="bg-primary-600 border-0 rounded-full"
-                  variant="rounded"
-                  size="xl"
-                >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                   <InputField
                     ref={usernameRef}
                     value={field.state.value}
                     onChangeText={field.handleChange}
-                    onBlur={field.handleBlur}
-                    className={cn(
-                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                      {
-                        "border-red-500": !field.state.meta.isValid,
-                      },
-                    )}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
                     placeholder={t("auth.login.usernamePlaceholder")}
                     autoCapitalize="none"
                     textContentType="username"
@@ -389,48 +352,27 @@ export default function LoginScreen() {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                   />
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>
           <form.Field name="password">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
                 className="my-2"
               >
-                <Input
-                  className="bg-primary-600 border-0 rounded-full"
-                  variant="rounded"
-                  size="xl"
-                >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                   <InputField
                     ref={passwordRef}
                     value={field.state.value}
                     onChangeText={field.handleChange}
-                    onBlur={field.handleBlur}
-                    className={cn(
-                      "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                      {
-                        "border-red-500": !field.state.meta.isValid,
-                      },
-                    )}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
                     placeholder={t("auth.login.passwordPlaceholder")}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
@@ -441,7 +383,6 @@ export default function LoginScreen() {
                   <InputSlot>
                     <Pressable
                       onPress={() => setShowPassword((v) => !v)}
-                      className="px-5 h-full justify-center"
                       accessibilityRole="button"
                       accessibilityLabel={
                         showPassword
@@ -450,32 +391,14 @@ export default function LoginScreen() {
                       }
                     >
                       {showPassword ? (
-                        <EyeOffIcon
-                          size={20}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <EyeOffIcon size={20} color={white} />
                       ) : (
-                        <EyeIcon
-                          size={20}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <EyeIcon size={20} color={white} />
                       )}
                     </Pressable>
                   </InputSlot>
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>

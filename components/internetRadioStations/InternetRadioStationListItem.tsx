@@ -1,11 +1,11 @@
 import { Radio } from "lucide-react-native";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 import { cn } from "@/utils/tailwind";
@@ -23,6 +23,7 @@ export default function InternetRadioStationListItem({
   layout = "horizontal",
   className = "",
 }: InternetRadioStationListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const meta = useWebsiteMetadata(internetRadioStation?.homePageUrl);
   const image = meta.image || meta["twitter:image"];
   return (
@@ -69,10 +70,7 @@ export default function InternetRadioStationListItem({
               },
             )}
           >
-            <Radio
-              size={layout === "horizontal" ? 48 : 28}
-              color={themeConfig.theme.colors.white}
-            />
+            <Radio size={layout === "horizontal" ? 48 : 28} color={white} />
           </Box>
         )}
         <VStack

@@ -27,6 +27,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -39,7 +40,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
@@ -58,6 +58,12 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function FavoritesScreen() {
+  const [blue500, white, black, emerald500] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-white",
+    "--color-black",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -150,22 +156,19 @@ export default function FavoritesScreen() {
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient
-          colors={["#000", themeConfig.theme.colors.blue[500]]}
-          locations={[0, 0.7]}
-        >
+        <LinearGradient colors={[blue500, "#000"]} locations={[0, 0.7]}>
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold text-center ml-6 truncate flex-1"
+              className="text-white font-bold text-center truncate flex-1"
               size="lg"
             >
               {t("app.favorites.title")}
@@ -193,7 +196,7 @@ export default function FavoritesScreen() {
         ListHeaderComponent={() => (
           <>
             <LinearGradient
-              colors={[themeConfig.theme.colors.blue[500], "#000000"]}
+              colors={[blue500, "#000000"]}
               className="h-48"
               style={{ height: 192 }}
             >
@@ -204,10 +207,7 @@ export default function FavoritesScreen() {
                 <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
                   <Pressable onPress={() => router.back()}>
                     <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                      <ArrowLeft
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <ArrowLeft size={24} color={white} />
                     </Box>
                   </Pressable>
                   <Heading
@@ -229,10 +229,7 @@ export default function FavoritesScreen() {
                 </Text>
                 {offlineModeEnabled && (
                   <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                    <ArrowDown
-                      size={20}
-                      color={themeConfig.theme.colors.black}
-                    />
+                    <ArrowDown size={20} color={black} />
                   </Box>
                 )}
               </HStack>
@@ -240,22 +237,13 @@ export default function FavoritesScreen() {
                 <FadeOutScaleDown onPress={handlePresentSortModalPress}>
                   <HStack className="items-center gap-x-2">
                     {sort.endsWith("Asc") && (
-                      <ArrowUp
-                        size={16}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <ArrowUp size={16} color={white} />
                     )}
                     {sort.endsWith("Desc") && (
-                      <ArrowDown
-                        size={16}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <ArrowDown size={16} color={white} />
                     )}
                     {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                      <ArrowDownUp
-                        size={16}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <ArrowDownUp size={16} color={white} />
                     )}
                     <Text className="text-white font-bold">
                       {sort.startsWith("addedAt")
@@ -266,20 +254,14 @@ export default function FavoritesScreen() {
                 </FadeOutScaleDown>
                 <HStack className="items-center gap-x-4">
                   <Pressable>
-                    <Shuffle color={themeConfig.theme.colors.white} />
+                    <Shuffle color={white} />
                   </Pressable>
                   <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                       {isPlayingFromList && isPlaying ? (
-                        <Pause
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Pause color={white} fill={white} />
                       ) : (
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Play color={white} fill={white} />
                       )}
                     </Box>
                   </Pressable>
@@ -303,7 +285,8 @@ export default function FavoritesScreen() {
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />
@@ -340,16 +323,10 @@ export default function FavoritesScreen() {
                     </Text>
                   </VStack>
                   {sort === "addedAtAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "addedAtDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>
@@ -369,16 +346,10 @@ export default function FavoritesScreen() {
                     </Text>
                   </VStack>
                   {sort === "alphabeticalAsc" && (
-                    <ArrowUp
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "alphabeticalDesc" && (
-                    <ArrowDown
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>
               </FadeOutScaleDown>

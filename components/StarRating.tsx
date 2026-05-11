@@ -12,9 +12,9 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
 import { Pressable } from "@/components/ui/pressable";
-import { themeConfig } from "@/config/theme";
 
 type StarRatingProps = {
   value: number;
@@ -84,12 +84,18 @@ export const StarRating = memo(function StarRating({
   onChange,
   max = 5,
   size = 24,
-  color = themeConfig.theme.colors.emerald[500], // emerald-500
-  emptyColor = themeConfig.theme.colors.gray[400], // gray-400
+  color: colorProp,
+  emptyColor: emptyColorProp,
   spacing = 8,
   disabled = false,
   style,
 }: StarRatingProps) {
+  const [emerald500, gray400] = Uniwind.getCSSVariable([
+    "--color-emerald-500",
+    "--color-gray-400",
+  ]) as string[];
+  const color = colorProp ?? emerald500;
+  const emptyColor = emptyColorProp ?? gray400;
   const [currentValue, setCurrentValue] = useState(value || 0);
   const clampedValue = Math.max(0, Math.min(max, Math.round(currentValue)));
 

@@ -6,6 +6,7 @@ import { X } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -18,13 +19,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   usePlaylists,
   useUpdatePlaylist,
 } from "@/hooks/openSubsonic/usePlaylists";
 
 export default function AddToPlaylistDetail() {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { ids } = useLocalSearchParams<{ ids: string }>();
@@ -92,6 +93,7 @@ export default function AddToPlaylistDetail() {
             },
           },
         );
+        return playlistId;
       });
     }
   };
@@ -115,7 +117,7 @@ export default function AddToPlaylistDetail() {
         >
           <FadeOutScaleDown onPress={() => router.back()}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-              <X size={24} color={themeConfig.theme.colors.white} />
+              <X size={24} color={white} />
             </Box>
           </FadeOutScaleDown>
           <Heading
@@ -159,7 +161,9 @@ export default function AddToPlaylistDetail() {
       />
       <Center
         className="absolute left-0 right-0"
-        style={{ bottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT }}
+        style={{
+          bottom: insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        }}
       >
         <FadeOutScaleDown
           className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"

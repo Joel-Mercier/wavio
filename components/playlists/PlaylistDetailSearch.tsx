@@ -7,6 +7,7 @@ import { ArrowLeft, X } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -16,13 +17,13 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { themeConfig } from "@/config/theme";
 import { usePlaylist } from "@/hooks/openSubsonic/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 
 export default function PlaylistDetailSearch() {
+  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
   const { id } = useLocalSearchParams<{
     id: string;
   }>();
@@ -118,7 +119,7 @@ export default function PlaylistDetailSearch() {
                   <InputField
                     className="text-white text-xl"
                     placeholder={t("app.playlists.searchPlaceholder")}
-                    placeholderTextColor={themeConfig.theme.colors.primary[50]}
+                    placeholderTextColor={primary50}
                     type="text"
                     value={field.state.value}
                     onChangeText={field.handleChange}
@@ -160,7 +161,7 @@ export default function PlaylistDetailSearch() {
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={error && <ErrorDisplay error={error} />}
         contentContainerStyle={{
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

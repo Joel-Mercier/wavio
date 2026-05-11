@@ -5,7 +5,10 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { scrobble } from "@/services/openSubsonic/mediaAnnotation";
-import { consumeSleepEndOfTrack } from "@/services/sleepTimer";
+import {
+  consumeSleepEndOfTrack,
+  registerSleepTimerPauseHandler,
+} from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
@@ -525,6 +528,8 @@ export function togglePlayPause() {
 export function pause() {
   players[activeSlot].pause();
 }
+
+registerSleepTimerPauseHandler(pause);
 
 export function play() {
   const current = useQueue.getState().getCurrent();

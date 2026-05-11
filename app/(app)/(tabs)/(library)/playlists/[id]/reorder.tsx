@@ -6,6 +6,7 @@ import { X } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
@@ -20,7 +21,6 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { themeConfig } from "@/config/theme";
 import {
   usePlaylist,
   useUpdatePlaylist,
@@ -30,6 +30,7 @@ import usePlaylists from "@/stores/playlists";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<Child[]>([]);
@@ -231,7 +232,7 @@ export default function ReorderPlaylistScreen() {
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <X size={24} color={themeConfig.theme.colors.white} />
+                <X size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
           </Box>

@@ -9,18 +9,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import {
-  AlertCircleIcon,
-  ArrowLeft,
-  Check,
-  ChevronDownIcon,
-} from "lucide-react-native";
+import { ArrowLeft, Check, ChevronDownIcon } from "lucide-react-native";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -32,12 +32,7 @@ import {
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Divider } from "@/components/ui/divider";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -52,7 +47,6 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { SupportedLanguages } from "@/config/i18n";
-import { themeConfig } from "@/config/theme";
 import {
   useGetScanStatus,
   useStartScan,
@@ -95,7 +89,12 @@ const podcastConfigSchema = z.object({
 });
 
 export default function SettingsDetail() {
-  const { t, i18n } = useTranslation();
+  const [gray500, emerald500, white] = Uniwind.getCSSVariable([
+    "--color-gray-500",
+    "--color-emerald-500",
+    "--color-white",
+  ]) as string[];
+  const { t } = useTranslation();
   const [showRecentPlaysAlertDialog, setShowRecentPlaysAlertDialog] =
     useState(false);
   const [showRecentSearchesAlertDialog, setShowRecentSearchesAlertDialog] =
@@ -176,7 +175,7 @@ export default function SettingsDetail() {
       country: taddyPodcastCountry,
     },
     validators: {
-      onBlur: podcastConfigSchema,
+      onChange: podcastConfigSchema,
     },
     onSubmit: ({ value }) => {
       setTaddyPodcastsConfig(value);
@@ -508,11 +507,11 @@ export default function SettingsDetail() {
               <Switch
                 size="md"
                 trackColor={{
-                  false: themeConfig.theme.colors.gray[500],
-                  true: themeConfig.theme.colors.emerald[500],
+                  false: gray500,
+                  true: emerald500,
                 }}
-                thumbColor={themeConfig.theme.colors.white}
-                ios_backgroundColor={themeConfig.theme.colors.white}
+                thumbColor={white}
+                ios_backgroundColor={white}
                 value={offlineModeEnabled}
                 onToggle={(value) => setOfflineModeEnabled(value)}
               />
@@ -663,11 +662,11 @@ export default function SettingsDetail() {
               <Switch
                 size="md"
                 trackColor={{
-                  false: themeConfig.theme.colors.gray[500],
-                  true: themeConfig.theme.colors.emerald[500],
+                  false: gray500,
+                  true: emerald500,
                 }}
-                thumbColor={themeConfig.theme.colors.white}
-                ios_backgroundColor={themeConfig.theme.colors.white}
+                thumbColor={white}
+                ios_backgroundColor={white}
                 value={showAddTab}
                 onToggle={(value) => setShowAddTab(value)}
               />
@@ -688,11 +687,11 @@ export default function SettingsDetail() {
               <Switch
                 size="md"
                 trackColor={{
-                  false: themeConfig.theme.colors.gray[500],
-                  true: themeConfig.theme.colors.emerald[500],
+                  false: gray500,
+                  true: emerald500,
                 }}
-                thumbColor={themeConfig.theme.colors.white}
-                ios_backgroundColor={themeConfig.theme.colors.white}
+                thumbColor={white}
+                ios_backgroundColor={white}
                 value={gaplessEnabled}
                 onToggle={(value) => setGaplessEnabled(value)}
               />
@@ -943,10 +942,7 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {locale === language && (
-                      <Check
-                        size={24}
-                        color={themeConfig.theme.colors.emerald[500]}
-                      />
+                      <Check size={24} color={emerald500} />
                     )}
                   </HStack>
                 </FadeOutScaleDown>
@@ -986,10 +982,7 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {maxBitRate === option && (
-                      <Check
-                        size={24}
-                        color={themeConfig.theme.colors.emerald[500]}
-                      />
+                      <Check size={24} color={emerald500} />
                     )}
                   </HStack>
                 </FadeOutScaleDown>
@@ -1031,10 +1024,7 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {replayGainMode === option && (
-                      <Check
-                        size={24}
-                        color={themeConfig.theme.colors.emerald[500]}
-                      />
+                      <Check size={24} color={emerald500} />
                     )}
                   </HStack>
                 </FadeOutScaleDown>
@@ -1207,35 +1197,29 @@ export default function SettingsDetail() {
               {t("app.settings.podcastSettings.podcastConfigFormTitle")}
             </Heading>
           </AlertDialogHeader>
-          <AlertDialogBody className="mt-3 mb-4">
+          <AlertDialogBody
+            className="mt-3 mb-4"
+            showsVerticalScrollIndicator={false}
+          >
             <Text className="text-primary-50" size="sm">
               {t("app.settings.podcastSettings.podcastConfigFormDescription")}
             </Text>
             <podcastConfigForm.Field name="userId">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t(
                         "app.settings.podcastSettings.userIdPlaceholder",
                       )}
@@ -1243,47 +1227,26 @@ export default function SettingsDetail() {
                       keyboardType="numeric"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </podcastConfigForm.Field>
             <podcastConfigForm.Field name="apiKey">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t(
                         "app.settings.podcastSettings.apiKeyPlaceholder",
                       )}
@@ -1291,26 +1254,14 @@ export default function SettingsDetail() {
                       secureTextEntry
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </podcastConfigForm.Field>
             <podcastConfigForm.Field name="country">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
@@ -1322,22 +1273,13 @@ export default function SettingsDetail() {
                     onValueChange={(value) =>
                       field.handleChange(value as keyof typeof Country)
                     }
-                    onClose={field.handleBlur}
+                    onClose={() => handleFieldBlur(field)}
                     closeOnOverlayClick
-                    isInvalid={!field.state.meta.isValid}
+                    isInvalid={showFieldError(field)}
                   >
-                    <SelectTrigger
-                      variant="rounded"
-                      size="xl"
-                      className="bg-primary-600 border-0 rounded-full"
-                    >
+                    <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
                       <SelectInput
-                        className={cn(
-                          "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full flex-1 pl-4",
-                          {
-                            "border-red-500": !field.state.meta.isValid,
-                          },
-                        )}
+                        className="text-md text-white"
                         placeholder={t(
                           "app.settings.podcastSettings.countryPlaceholder",
                         )}
@@ -1368,26 +1310,14 @@ export default function SettingsDetail() {
                       </SelectContent>
                     </SelectPortal>
                   </Select>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </podcastConfigForm.Field>
             <podcastConfigForm.Field name="language">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
@@ -1399,22 +1329,13 @@ export default function SettingsDetail() {
                     onValueChange={(value) =>
                       field.handleChange(value as keyof typeof Language)
                     }
-                    onClose={field.handleBlur}
+                    onClose={() => handleFieldBlur(field)}
                     closeOnOverlayClick
-                    isInvalid={!field.state.meta.isValid}
+                    isInvalid={showFieldError(field)}
                   >
-                    <SelectTrigger
-                      variant="rounded"
-                      size="xl"
-                      className="bg-primary-600 border-0 rounded-full"
-                    >
+                    <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
                       <SelectInput
-                        className={cn(
-                          "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full flex-1 pl-4",
-                          {
-                            "border-red-500": !field.state.meta.isValid,
-                          },
-                        )}
+                        className="text-md text-white"
                         placeholder={t(
                           "app.settings.podcastSettings.countryPlaceholder",
                         )}
@@ -1445,19 +1366,7 @@ export default function SettingsDetail() {
                       </SelectContent>
                     </SelectPortal>
                   </Select>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </podcastConfigForm.Field>

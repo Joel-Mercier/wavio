@@ -1,13 +1,10 @@
 "use client";
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
-import { cssInterop } from "nativewind";
 import React from "react";
 import { ActivityIndicator } from "react-native";
+import { withUniwind } from "uniwind";
 
-cssInterop(ActivityIndicator, {
-  className: { target: "style", nativeStyleToProp: { color: true } },
-});
-
+const StyledActivityIndicator = withUniwind(ActivityIndicator);
 const spinnerStyle = tva({});
 
 const Spinner = React.forwardRef<
@@ -24,7 +21,7 @@ const Spinner = React.forwardRef<
   ref,
 ) {
   return (
-    <ActivityIndicator
+    <StyledActivityIndicator
       ref={ref}
       focusable={focusable}
       aria-label={ariaLabel}

@@ -1,4 +1,5 @@
 import { AudioLines, CircleMinus, Menu } from "lucide-react-native";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -6,7 +7,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { QueueTrack } from "@/stores/queue";
 import { cn } from "@/utils/tailwind";
 
@@ -25,6 +25,10 @@ export default function QueueEditTrackItem({
   isPlaying,
   onRemovePress,
 }: QueueEditTrackItemProps) {
+  const [gray400, white] = Uniwind.getCSSVariable([
+    "--color-gray-400",
+    "--color-white",
+  ]) as string[];
   return (
     <HStack
       className={cn("items-center justify-between py-2", {
@@ -34,7 +38,7 @@ export default function QueueEditTrackItem({
     >
       <HStack className="items-center flex-1 mr-2">
         <FadeOutScaleDown className="mr-4" onPress={onRemovePress}>
-          <CircleMinus size={24} color={themeConfig.theme.colors.gray[400]} />
+          <CircleMinus size={24} color={gray400} />
         </FadeOutScaleDown>
         {item.artwork ? (
           <Image
@@ -44,7 +48,7 @@ export default function QueueEditTrackItem({
           />
         ) : (
           <Box className="w-14 h-14 aspect-square rounded-md bg-primary-600 items-center justify-center">
-            <AudioLines size={20} color={themeConfig.theme.colors.white} />
+            <AudioLines size={20} color={white} />
           </Box>
         )}
         <VStack className="ml-4 flex-1">
@@ -63,7 +67,7 @@ export default function QueueEditTrackItem({
         </VStack>
       </HStack>
       <FadeOutScaleDown onPress={beginDrag}>
-        <Menu size={24} color={themeConfig.theme.colors.gray[400]} />
+        <Menu size={24} color={gray400} />
       </FadeOutScaleDown>
     </HStack>
   );

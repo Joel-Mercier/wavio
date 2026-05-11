@@ -1,11 +1,16 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, Info, Pencil, Trash } from "lucide-react-native";
+import { Info, Pencil, Trash } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -14,12 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -31,7 +31,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useDeleteInternetRadioStation,
   useUpdateInternetRadioStation,
@@ -61,6 +60,7 @@ export default function InternetRadioStationActions({
   onActionStart,
   onDeleted,
 }: Props) {
+  const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -75,7 +75,7 @@ export default function InternetRadioStationActions({
       streamUrl,
       homePageUrl,
     } as z.input<typeof updateInternetRadioStationSchema>,
-    validators: { onBlur: updateInternetRadioStationSchema },
+    validators: { onChange: updateInternetRadioStationSchema },
     onSubmit: async ({ value }) => {
       doUpdateInternetRadioStation.mutate(
         { id, ...value },
@@ -184,7 +184,7 @@ export default function InternetRadioStationActions({
         {homePageUrl && (
           <FadeOutScaleDown onPress={handleVisitHomePagePress}>
             <HStack className="items-center">
-              <Info size={24} color={themeConfig.theme.colors.gray[200]} />
+              <Info size={24} color={gray200} />
               <Text className="ml-4 text-lg text-gray-200">
                 {t("app.internetRadioStations.visitHomePage")}
               </Text>
@@ -193,7 +193,7 @@ export default function InternetRadioStationActions({
         )}
         <FadeOutScaleDown onPress={handleEditPress}>
           <HStack className="items-center">
-            <Pencil size={24} color={themeConfig.theme.colors.gray[200]} />
+            <Pencil size={24} color={gray200} />
             <Text className="ml-4 text-lg text-gray-200">
               {t("app.internetRadioStations.editInternetRadioStation")}
             </Text>
@@ -201,7 +201,7 @@ export default function InternetRadioStationActions({
         </FadeOutScaleDown>
         <FadeOutScaleDown onPress={() => setShowDeleteDialog(true)}>
           <HStack className="items-center">
-            <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
+            <Trash size={24} color={gray200} />
             <Text className="ml-4 text-lg text-gray-200">
               {t("app.internetRadioStations.deleteInternetRadioStation")}
             </Text>
@@ -270,7 +270,7 @@ export default function InternetRadioStationActions({
             <form.Field name="name">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   className="my-4"
                 >
@@ -282,36 +282,24 @@ export default function InternetRadioStationActions({
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
+                      onBlur={() => handleFieldBlur(field)}
                       className={cn(
                         "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        { "border-red-500": !field.state.meta.isValid },
+                        { "border-red-500": showFieldError(field) },
                       )}
                       placeholder={t(
                         "app.internetRadioStations.namePlaceholder",
                       )}
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
             <form.Field name="streamUrl">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   className="my-4"
                 >
@@ -323,10 +311,10 @@ export default function InternetRadioStationActions({
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
+                      onBlur={() => handleFieldBlur(field)}
                       className={cn(
                         "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        { "border-red-500": !field.state.meta.isValid },
+                        { "border-red-500": showFieldError(field) },
                       )}
                       placeholder={t(
                         "app.internetRadioStations.streamUrlPlaceholder",
@@ -335,26 +323,14 @@ export default function InternetRadioStationActions({
                       autoCapitalize="none"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
             <form.Field name="homePageUrl">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   className="my-4"
                 >
@@ -366,10 +342,10 @@ export default function InternetRadioStationActions({
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
+                      onBlur={() => handleFieldBlur(field)}
                       className={cn(
                         "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        { "border-red-500": !field.state.meta.isValid },
+                        { "border-red-500": showFieldError(field) },
                       )}
                       placeholder={t(
                         "app.internetRadioStations.homePageUrlPlaceholder",
@@ -378,19 +354,7 @@ export default function InternetRadioStationActions({
                       autoCapitalize="none"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>

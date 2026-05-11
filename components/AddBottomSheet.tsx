@@ -7,17 +7,18 @@ import { useRouter } from "expo-router";
 import { ListMusic, Radio } from "lucide-react-native";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 
 const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
 
   const dismiss = () => {
     if (ref && typeof ref !== "function") {
@@ -52,10 +53,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
           <VStack className="mt-6 gap-y-8">
             <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
               <HStack className="items-center">
-                <ListMusic
-                  size={32}
-                  color={themeConfig.theme.colors.gray[200]}
-                />
+                <ListMusic size={32} color={gray200} />
                 <VStack className="ml-4 flex-1">
                   <Heading numberOfLines={1} className="text-white">
                     {t("app.create.playlistTitle")}
@@ -68,7 +66,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
               <HStack className="items-center">
-                <Radio size={32} color={themeConfig.theme.colors.gray[200]} />
+                <Radio size={32} color={gray200} />
                 <VStack className="ml-4 flex-1">
                   <Heading numberOfLines={1} className="text-white">
                     {t("app.create.internetRadioStationTitle")}

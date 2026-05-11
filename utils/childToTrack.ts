@@ -24,6 +24,7 @@ export function childToTrack(child: Child) {
     contentType: child.contentType,
     starred: child.starred,
     artistId: child.artistId,
+    artists: child.artists,
     albumId: child.albumId,
     musicBrainzId: child.musicBrainzId,
     replayGain: child.replayGain,

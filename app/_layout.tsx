@@ -60,7 +60,7 @@ function onAppStateChange(status: AppStateStatus) {
     focusManager.setFocused(status === "active");
   }
   if (Platform.OS === "android" && status === "active") {
-    NavigationBar.setButtonStyleAsync("light");
+    NavigationBar.setStyle("dark");
   }
 }
 
@@ -82,7 +82,7 @@ export default function RootLayout() {
   useEffect(() => {
     configurePlayback();
     if (Platform.OS === "android") {
-      NavigationBar.setButtonStyleAsync("light");
+      NavigationBar.setStyle("dark");
     }
   }, []);
 
@@ -125,7 +125,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <KeyboardProvider>
-        <GluestackUIProvider mode="light">
+        <GluestackUIProvider mode="dark">
           <ThemeProvider value={DarkTheme}>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <BottomSheetModalProvider>

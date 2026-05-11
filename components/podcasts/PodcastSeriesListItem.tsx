@@ -1,11 +1,11 @@
 import { Podcast } from "lucide-react-native";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import { cn } from "@/utils/tailwind";
 
@@ -22,6 +22,7 @@ export default function PodcastSeriesListItem({
   layout = "vertical",
   className = "",
 }: PodcastSeriesListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   return (
     <FadeOutScaleDown
       href={{
@@ -63,10 +64,7 @@ export default function PodcastSeriesListItem({
               { "w-16 h-16": layout === "vertical" },
             )}
           >
-            <Podcast
-              size={layout === "vertical" ? 24 : 48}
-              color={themeConfig.theme.colors.white}
-            />
+            <Podcast size={layout === "vertical" ? 24 : 48} color={white} />
           </Box>
         )}
         <VStack className={cn({ "flex-col ml-4": layout === "vertical" })}>

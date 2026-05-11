@@ -2,11 +2,17 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { AlertCircleIcon, ArrowLeft, Plus } from "lucide-react-native";
+import { ArrowLeft, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import ServerListItem from "@/components/servers/ServerListItem";
 import {
   AlertDialog,
@@ -17,12 +23,7 @@ import {
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -34,9 +35,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import useServers, { serverFormSchema } from "@/stores/servers";
-import { cn } from "@/utils/tailwind";
-import EmptyDisplay from "../EmptyDisplay";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ServersDetail() {
   const { t } = useTranslation();
@@ -53,7 +51,7 @@ export default function ServersDetail() {
       url: "",
     },
     validators: {
-      onBlur: serverFormSchema,
+      onChange: serverFormSchema,
     },
     onSubmit: async ({ value }) => {
       addServer({ name: value.name, url: value.url });
@@ -106,7 +104,8 @@ export default function ServersDetail() {
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         ListEmptyComponent={() => <EmptyDisplay />}
       />
@@ -126,90 +125,48 @@ export default function ServersDetail() {
             <form.Field name="name">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t("app.servers.namePlaceholder")}
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
             <form.Field name="url">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
                       placeholder={t("app.servers.urlPlaceholder")}
                       autoCapitalize="none"
                       textContentType="URL"
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>

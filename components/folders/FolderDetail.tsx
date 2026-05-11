@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, ChevronRight, Folder, Play } from "lucide-react-native";
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -14,7 +15,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useIndexes,
   useMusicDirectory,
@@ -28,6 +28,10 @@ type Entry =
   | { kind: "track"; child: Child };
 
 export default function FolderDetail() {
+  const [white, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-200",
+  ]) as string[];
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -94,7 +98,7 @@ export default function FolderDetail() {
       <Box className="px-6 pb-4" style={{ paddingTop: insets.top + 16 }}>
         <HStack className="items-center justify-between">
           <FadeOutScaleDown onPress={() => router.back()}>
-            <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+            <ArrowLeft size={24} color={white} />
           </FadeOutScaleDown>
           <Heading
             numberOfLines={1}
@@ -106,11 +110,7 @@ export default function FolderDetail() {
           {tracks.length > 0 ? (
             <FadeOutScaleDown onPress={handlePlayAllPress}>
               <Box className="w-10 h-10 rounded-full bg-emerald-500 items-center justify-center">
-                <Play
-                  size={18}
-                  color={themeConfig.theme.colors.white}
-                  fill={themeConfig.theme.colors.white}
-                />
+                <Play size={18} color={white} fill={white} />
               </Box>
             </FadeOutScaleDown>
           ) : (
@@ -137,10 +137,7 @@ export default function FolderDetail() {
                 >
                   <HStack className="items-center">
                     <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center mr-4">
-                      <Folder
-                        size={24}
-                        color={themeConfig.theme.colors.white}
-                      />
+                      <Folder size={24} color={white} />
                     </Box>
                     <VStack className="flex-1">
                       <Text
@@ -150,10 +147,7 @@ export default function FolderDetail() {
                         {item.name}
                       </Text>
                     </VStack>
-                    <ChevronRight
-                      size={20}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <ChevronRight size={20} color={gray200} />
                   </HStack>
                 </FadeOutScaleDown>
               );
@@ -169,7 +163,8 @@ export default function FolderDetail() {
           }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
-            paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           showsVerticalScrollIndicator={false}
         />

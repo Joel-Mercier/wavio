@@ -1,10 +1,10 @@
 import { Check, Library } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { themeConfig } from "@/config/theme";
 import { cn } from "@/utils/tailwind";
 
 interface LibraryRowProps {
@@ -20,6 +20,10 @@ export default function LibraryRow({
   isDefault,
   onPress,
 }: LibraryRowProps) {
+  const [white, emerald500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   return (
     <FadeOutScaleDown className="mb-3" onPress={onPress}>
@@ -30,7 +34,7 @@ export default function LibraryRow({
         )}
       >
         <HStack className="items-center flex-1">
-          <Library size={20} color={themeConfig.theme.colors.white} />
+          <Library size={20} color={white} />
           <Heading
             size="md"
             className="text-white ml-3 flex-1 truncate"
@@ -44,9 +48,7 @@ export default function LibraryRow({
             </Text>
           )}
         </HStack>
-        {isSelected && (
-          <Check size={20} color={themeConfig.theme.colors.emerald[500]} />
-        )}
+        {isSelected && <Check size={20} color={emerald500} />}
       </HStack>
     </FadeOutScaleDown>
   );

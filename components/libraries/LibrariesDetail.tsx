@@ -93,7 +93,8 @@ export default function LibrariesDetail() {
           )}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{
-            paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
         />

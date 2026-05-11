@@ -18,6 +18,7 @@ import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import { Box } from "@/components/ui/box";
@@ -27,7 +28,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
@@ -36,6 +36,11 @@ import { pause as pausePlayback, playTracks } from "@/services/player";
 import useRecentPlays from "@/stores/recentPlays";
 
 export default function InternetRadioStationDetail() {
+  const [blue500, white, gray800] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-white",
+    "--color-gray-800",
+  ]) as string[];
   const { t } = useTranslation();
   const { id, streamUrl, name, homePageUrl } = useLocalSearchParams<{
     id: string;
@@ -107,7 +112,7 @@ export default function InternetRadioStationDetail() {
       <LinearGradient
         colors={[
           (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-            themeConfig.theme.colors.blue[500],
+            blue500,
           "#000000",
         ]}
         className="px-6"
@@ -118,7 +123,7 @@ export default function InternetRadioStationDetail() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
-            <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+            <ArrowLeft size={24} color={white} />
           </FadeOutScaleDown>
           {meta.image || meta["twitter:image"] ? (
             <Image
@@ -129,7 +134,7 @@ export default function InternetRadioStationDetail() {
             />
           ) : (
             <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-              <Radio size={48} color={themeConfig.theme.colors.white} />
+              <Radio size={48} color={white} />
             </Box>
           )}
           <Box className="w-10" />
@@ -143,22 +148,16 @@ export default function InternetRadioStationDetail() {
           <HStack className="mt-4 items-center justify-between">
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handlePresentModalPress}>
-                <EllipsisVertical color={themeConfig.theme.colors.white} />
+                <EllipsisVertical color={white} />
               </FadeOutScaleDown>
             </HStack>
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handlePlayPausePress}>
                 <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                   {isPlaying ? (
-                    <Pause
-                      color={themeConfig.theme.colors.white}
-                      fill={themeConfig.theme.colors.white}
-                    />
+                    <Pause color={white} fill={white} />
                   ) : (
-                    <Play
-                      color={themeConfig.theme.colors.white}
-                      fill={themeConfig.theme.colors.white}
-                    />
+                    <Play color={white} fill={white} />
                   )}
                 </Box>
               </FadeOutScaleDown>
@@ -173,10 +172,7 @@ export default function InternetRadioStationDetail() {
               className="flex flex-row gap-x-2 items-center justify-center py-3 px-8 border border-white bg-white rounded-full ml-4 mt-4"
               onPress={handleVisitHomePagePress}
             >
-              <SquareArrowOutUpRight
-                size={20}
-                color={themeConfig.theme.colors.gray[800]}
-              />
+              <SquareArrowOutUpRight size={20} color={gray800} />
               <Text className="text-primary-800 font-bold text-lg">
                 {t("app.internetRadioStations.visitHomePage")}
               </Text>
@@ -204,7 +200,7 @@ export default function InternetRadioStationDetail() {
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                <Radio size={24} color={themeConfig.theme.colors.white} />
+                <Radio size={24} color={white} />
               </Box>
               <VStack className="ml-4 flex-1">
                 <Heading

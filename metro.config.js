@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require("nativewind/metro");
+const { withUniwindConfig } = require("uniwind/metro");
 
 const config = getDefaultConfig(__dirname);
 const { transformer, resolver } = config;
@@ -14,4 +14,10 @@ config.resolver = {
   sourceExts: [...resolver.sourceExts, "svg"],
 };
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: "./global.css",
+  themes: ["light", "dark"],
+  polyfills: {
+    rem: 14,
+  },
+});

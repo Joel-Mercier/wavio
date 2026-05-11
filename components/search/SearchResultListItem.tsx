@@ -2,6 +2,7 @@ import { type Href, router } from "expo-router";
 import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -9,7 +10,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import useRecentSearches from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
@@ -20,25 +20,20 @@ function SearchResultListItemIcon({
 }: {
   type: "artist" | "album" | "playlist" | "song";
 }) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   if (type === "song") {
-    return (
-      <AudioLines
-        size={24}
-        color={themeConfig.theme.colors.white}
-        fill={themeConfig.theme.colors.white}
-      />
-    );
+    return <AudioLines size={24} color={white} fill={white} />;
   }
   if (type === "album") {
-    return <Disc3 size={24} color={themeConfig.theme.colors.white} />;
+    return <Disc3 size={24} color={white} />;
   }
   if (type === "artist") {
-    return <User size={24} color={themeConfig.theme.colors.white} />;
+    return <User size={24} color={white} />;
   }
   if (type === "playlist") {
-    return <ListMusic size={24} color={themeConfig.theme.colors.white} />;
+    return <ListMusic size={24} color={white} />;
   }
-  return <Clock size={24} color={themeConfig.theme.colors.white} />;
+  return <Clock size={24} color={white} />;
 }
 
 export default function SearchResultListItem({

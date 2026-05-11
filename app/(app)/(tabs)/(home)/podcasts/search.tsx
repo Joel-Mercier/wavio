@@ -12,11 +12,13 @@ import { ArrowLeft, Settings2, X } from "lucide-react-native";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { handleFieldBlur, showFieldError } from "@/components/forms/FieldError";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
 import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -29,7 +31,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { themeConfig } from "@/config/theme";
 import { useSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
@@ -61,6 +62,12 @@ const filtersSchema = z.object({
 });
 
 export default function PodcastsSearchScreen() {
+  const [primary50, white, gray500, emerald500] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+    "--color-white",
+    "--color-gray-500",
+    "--color-emerald-500",
+  ]) as string[];
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -87,7 +94,7 @@ export default function PodcastsSearchScreen() {
       isSafeMode: undefined,
     } as z.input<typeof filtersSchema>,
     validators: {
-      onBlur: filtersSchema,
+      onChange: filtersSchema,
     },
     onSubmit: async ({ value }) => {
       bottomSheetModalRef.current?.dismiss();
@@ -127,11 +134,11 @@ export default function PodcastsSearchScreen() {
                   <InputField
                     className="text-white text-xl"
                     placeholder={t("app.podcasts.search.inputPlaceholder")}
-                    placeholderTextColor={themeConfig.theme.colors.primary[50]}
+                    placeholderTextColor={primary50}
                     type="text"
                     value={field.state.value}
                     onChangeText={field.handleChange}
-                    onBlur={field.handleBlur}
+                    onBlur={() => handleFieldBlur(field)}
                     enterKeyHint="search"
                     autoFocus
                   />
@@ -141,7 +148,7 @@ export default function PodcastsSearchScreen() {
                   <InputSlot className="pr-3" onPress={handlePresentModalPress}>
                     <InputIcon
                       as={Settings2}
-                      color={themeConfig.theme.colors.white}
+                      color={white}
                       width={38}
                       height={38}
                       size="xl"
@@ -176,7 +183,7 @@ export default function PodcastsSearchScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={error && <ErrorDisplay error={error} />}
         contentContainerStyle={{
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />
@@ -204,7 +211,7 @@ export default function PodcastsSearchScreen() {
             <form.Field name="isSafeMode">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
@@ -219,11 +226,11 @@ export default function PodcastsSearchScreen() {
                   <Switch
                     size="md"
                     trackColor={{
-                      false: themeConfig.theme.colors.gray[500],
-                      true: themeConfig.theme.colors.emerald[500],
+                      false: gray500,
+                      true: emerald500,
                     }}
-                    thumbColor={themeConfig.theme.colors.white}
-                    ios_backgroundColor={themeConfig.theme.colors.white}
+                    thumbColor={white}
+                    ios_backgroundColor={white}
                     value={!!field.state.value}
                     onToggle={field.handleChange}
                   />

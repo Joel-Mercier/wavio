@@ -10,13 +10,13 @@ const UISwitch = createSwitch({
 });
 
 const switchStyle = tva({
-  base: "data-[focus=true]:outline-0 data-[focus=true]:ring-2 data-[focus=true]:ring-indicator-primary web:cursor-pointer disabled:cursor-not-allowed data-[disabled=true]:opacity-40 data-[invalid=true]:border-error-700 data-[invalid=true]:rounded-xl data-[invalid=true]:border-2",
+  base: "data-[focus=true]:outline-0 data-[focus=true]:ring-2 data-[focus=true]:ring-indicator-primary web:cursor-pointer disabled:cursor-not-allowed data-[disabled=true]:opacity-40 data-[invalid=true]:border-destructive data-[invalid=true]:rounded-xl data-[invalid=true]:border-2",
 
   variants: {
     size: {
-      sm: "scale-75",
+      sm: "scale-[0.75]",
       md: "",
-      lg: "scale-125",
+      lg: "scale-[1.25]",
     },
   },
 });

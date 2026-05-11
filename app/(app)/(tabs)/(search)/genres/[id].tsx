@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -22,7 +23,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -34,6 +34,10 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
+  const [blue500, white] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-white",
+  ]) as string[];
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -59,22 +63,19 @@ export default function GenreScreen() {
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient
-          colors={["#000", themeConfig.theme.colors.blue[500]]}
-          locations={[0, 0.7]}
-        >
+        <LinearGradient colors={[blue500, "#000"]} locations={[0, 0.7]}>
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold text-center ml-6 truncate flex-1"
+              className="text-white font-bold text-center truncate flex-1"
               size="lg"
             >
               {id}
@@ -96,7 +97,7 @@ export default function GenreScreen() {
         ListHeaderComponent={() => (
           <>
             <LinearGradient
-              colors={[themeConfig.theme.colors.blue[500], "#000000"]}
+              colors={[blue500, "#000000"]}
               className="h-48"
               style={{ height: 192 }}
             >
@@ -114,10 +115,7 @@ export default function GenreScreen() {
                           opacity: pressed ? 0.5 : 1,
                         }}
                       >
-                        <ArrowLeft
-                          size={24}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <ArrowLeft size={24} color={white} />
                       </Animated.View>
                     )}
                   </Pressable>
@@ -136,7 +134,8 @@ export default function GenreScreen() {
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

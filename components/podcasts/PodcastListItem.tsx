@@ -16,6 +16,7 @@ import {
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
@@ -31,7 +32,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
@@ -51,6 +51,11 @@ export default function PodcastListItem({
   seriesName,
   isFavorite,
 }: PodcastListItemProps) {
+  const [white, black, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-black",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
@@ -198,22 +203,15 @@ export default function PodcastListItem({
         <HStack className="items-center justify-between mb-4">
           <HStack className="items-center gap-x-4">
             <FadeOutScaleDown onPress={handleSharePress}>
-              <Share2 size={24} color={themeConfig.theme.colors.white} />
+              <Share2 size={24} color={white} />
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={handlePresentModalPress}>
-              <EllipsisVertical
-                size={24}
-                color={themeConfig.theme.colors.white}
-              />
+              <EllipsisVertical size={24} color={white} />
             </FadeOutScaleDown>
           </HStack>
           <FadeOutScaleDown>
             <Box className="w-10 h-10 rounded-full bg-white items-center justify-center">
-              <Play
-                size={20}
-                color={themeConfig.theme.colors.black}
-                fill={themeConfig.theme.colors.black}
-              />
+              <Play size={20} color={black} fill={black} />
             </Box>
           </FadeOutScaleDown>
         </HStack>
@@ -245,7 +243,7 @@ export default function PodcastListItem({
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <Podcast size={24} color={themeConfig.theme.colors.white} />
+                  <Podcast size={24} color={white} />
                 </Box>
               )}
               <VStack className="ml-4 flex-1">
@@ -264,10 +262,7 @@ export default function PodcastListItem({
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
                 <HStack className="items-center">
-                  <Podcast
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Podcast size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.podcasts.goToPodcastSeries")}
                   </Text>
@@ -276,10 +271,7 @@ export default function PodcastListItem({
               {isFavorite || podcast?.podcastSeries?.isFavorite ? (
                 <FadeOutScaleDown onPress={handleRemoveFavoritePodcastPress}>
                   <HStack className="items-center">
-                    <CircleMinus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <CircleMinus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.podcasts.removeFromFavorites")}
                     </Text>
@@ -288,10 +280,7 @@ export default function PodcastListItem({
               ) : (
                 <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
                   <HStack className="items-center">
-                    <CirclePlus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <CirclePlus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.podcasts.addToFavorites")}
                     </Text>

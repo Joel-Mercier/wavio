@@ -5,8 +5,8 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useForm } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
+import { openBrowserAsync } from "expo-web-browser";
 import {
-  AlertCircleIcon,
   AudioLines,
   ClipboardCheck,
   Clipboard as ClipboardIcon,
@@ -17,9 +17,14 @@ import {
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
-import { ExternalLink } from "@/components/ExternalLink";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -30,12 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -49,7 +49,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useDeleteShare,
   useUpdateShare,
@@ -65,6 +64,12 @@ const updateShareSchema = z.object({
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
+  const [white, gray300, emerald500, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-300",
+    "--color-emerald-500",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const [clipoardCopyDone, setClipoardCopyDone] = useState<boolean>(false);
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -82,7 +87,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       expires: share.expires as unknown as string,
     } as z.input<typeof updateShareSchema>,
     validators: {
-      onBlur: updateShareSchema,
+      onChange: updateShareSchema,
     },
     onSubmit: async ({ value }) => {
       doUpdateShare.mutate(
@@ -217,15 +222,18 @@ export default function ShareListItem({ share }: { share: Share }) {
     }
   };
 
+  const handleSharePress = async () => {
+    if (Platform.OS !== "web") {
+      // Open the link in an in-app browser.
+      await openBrowserAsync(share.url);
+    }
+  };
+
   const isPlaylist = (share?.entry?.length || 0) > 1;
   const hasEntries = (share?.entry?.length || 0) > 0;
   return (
-    <ExternalLink href={share.url}>
-      <Card
-        size="md"
-        variant="ghost"
-        className="rounded-md w-full p-0 pb-4 border-b-white"
-      >
+    <FadeOutScaleDown onPress={handleSharePress} className="mb-4">
+      <Card className="w-full p-4 rounded-md bg-primary-600">
         <HStack className="items-center justify-between">
           <HStack className="items-center">
             {share?.entry && hasEntries && share?.entry[0]?.coverArt ? (
@@ -239,12 +247,9 @@ export default function ShareListItem({ share }: { share: Share }) {
                 {share?.entry &&
                 hasEntries &&
                 share.entry[0].mediaType === "album" ? (
-                  <Disc3 size={24} color={themeConfig.theme.colors.white} />
+                  <Disc3 size={24} color={white} />
                 ) : (
-                  <AudioLines
-                    size={24}
-                    color={themeConfig.theme.colors.white}
-                  />
+                  <AudioLines size={24} color={white} />
                 )}
               </Box>
             )}
@@ -260,8 +265,10 @@ export default function ShareListItem({ share }: { share: Share }) {
                 <Text className="text-md text-primary-100 capitalize">
                   {isPlaylist
                     ? t("app.shared.playlist_one")
-                    : hasEntries && share?.entry
-                      ? share.entry[0].mediaType
+                    : hasEntries && share?.entry && share.entry[0].mediaType
+                      ? t(`app.shares.mediaType_${share.entry[0].mediaType}`, {
+                          defaultValue: share.entry[0].mediaType,
+                        })
                       : t("app.shared.unknown")}
                 </Text>
                 <Text className="text-md text-primary-100">
@@ -271,7 +278,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             </VStack>
           </HStack>
           <FadeOutScaleDown onPress={handlePresentModalPress}>
-            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+            <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
         </HStack>
       </Card>
@@ -299,15 +306,9 @@ export default function ShareListItem({ share }: { share: Share }) {
                 onPress={handleCopyShareUrlPress}
               >
                 {clipoardCopyDone ? (
-                  <ClipboardCheck
-                    size={24}
-                    color={themeConfig.theme.colors.emerald[500]}
-                  />
+                  <ClipboardCheck size={24} color={emerald500} />
                 ) : (
-                  <ClipboardIcon
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ClipboardIcon size={24} color={gray200} />
                 )}
                 <Text
                   className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
@@ -326,10 +327,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 }}
               >
                 <HStack className="items-center">
-                  <Pencil
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Pencil size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.shares.editShare")}
                   </Text>
@@ -342,7 +340,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 }}
               >
                 <HStack className="items-center">
-                  <Trash size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Trash size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.shares.deleteShare")}
                   </Text>
@@ -405,7 +403,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             <form.Field name="description">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
@@ -413,79 +411,46 @@ export default function ShareListItem({ share }: { share: Share }) {
                   className="my-4"
                 >
                   <Textarea
-                    className="bg-primary-600 border-0 rounded-lg"
+                    className="bg-primary-600 border-0 rounded-md"
                     size="xl"
                   >
                     <TextareaInput
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
+                      onBlur={() => handleFieldBlur(field)}
                       className={cn(
                         "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-lg",
                         {
-                          "border-red-500": !field.state.meta.isValid,
+                          "border-red-500": showFieldError(field),
                         },
                       )}
-                      placeholder="Description (displayed in the link preview)"
+                      placeholder={t("app.shares.descriptionPlaceholder")}
                     />
                   </Textarea>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
             <form.Field name="expires">
               {(field) => (
                 <FormControl
-                  isInvalid={!field.state.meta.isValid}
+                  isInvalid={showFieldError(field)}
                   size="md"
                   isDisabled={false}
                   isReadOnly={false}
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
-                      onBlur={field.handleBlur}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                        {
-                          "border-red-500": !field.state.meta.isValid,
-                        },
-                      )}
-                      placeholder="Expires at"
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
+                      placeholder={t("app.shares.expiresPlaceholder")}
                     />
                   </Input>
-                  {!field.state.meta.isValid && (
-                    <FormControlError className="items-start">
-                      <FormControlErrorIcon
-                        as={AlertCircleIcon}
-                        className="text-red-500"
-                      />
-                      <FormControlErrorText className="text-red-500 shrink">
-                        {field.state.meta.errors
-                          .map((error) => error?.message)
-                          .join("\n")}{" "}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
+                  <FieldError field={field} />
                 </FormControl>
               )}
             </form.Field>
@@ -513,6 +478,6 @@ export default function ShareListItem({ share }: { share: Share }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ExternalLink>
+    </FadeOutScaleDown>
   );
 }

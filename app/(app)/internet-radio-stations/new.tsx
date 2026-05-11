@@ -2,19 +2,18 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { AlertCircleIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-} from "@/components/ui/form-control";
+import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
@@ -26,7 +25,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useCreateInternetRadioStation } from "@/hooks/openSubsonic/useInternetRadioStations";
 
 const newInternetRadioStationSchema = z.object({
@@ -35,6 +33,10 @@ const newInternetRadioStationSchema = z.object({
   homePageUrl: z.url().trim().optional(),
 });
 export default function NewInternetRadioStationScreen() {
+  const [gray300, gray400] = Uniwind.getCSSVariable([
+    "--color-gray-300",
+    "--color-gray-400",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -48,7 +50,7 @@ export default function NewInternetRadioStationScreen() {
       homePageUrl: "",
     } as z.input<typeof newInternetRadioStationSchema>,
     validators: {
-      onBlur: newInternetRadioStationSchema,
+      onChange: newInternetRadioStationSchema,
     },
     onSubmit: async ({ value }) => {
       doCreateInternetRadioStation.mutate(
@@ -98,7 +100,7 @@ export default function NewInternetRadioStationScreen() {
 
   return (
     <LinearGradient
-      colors={[themeConfig.theme.colors.gray[300], "transparent"]}
+      colors={[gray300, "transparent"]}
       className="h-full"
       style={{ height: "100%" }}
     >
@@ -120,113 +122,83 @@ export default function NewInternetRadioStationScreen() {
           <form.Field name="name">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
+                className="mb-6"
               >
-                <Input className="border-white my-6 h-16" variant="underlined">
+                <Input className="border-0 bg-primary-400 px-6 py-4">
                   <InputField
                     value={field.state.value}
-                    onBlur={field.handleBlur}
+                    onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold placeholder:text-gray-400"
+                    className="text-3xl text-white text-center font-bold"
                     placeholder={t("app.internetRadioStations.namePlaceholder")}
+                    placeholderTextColor={gray400}
                   />
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>
           <form.Field name="streamUrl">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
+                className="mb-6"
               >
-                <Input className="border-white my-6 h-16" variant="underlined">
+                <Input className="border-0 bg-primary-400 px-6 py-4">
                   <InputField
                     value={field.state.value}
-                    onBlur={field.handleBlur}
+                    onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold placeholder:text-gray-400"
+                    className="text-3xl text-white text-center font-bold"
                     placeholder={t(
                       "app.internetRadioStations.streamUrlPlaceholder",
                     )}
+                    placeholderTextColor={gray400}
                     textContentType="URL"
                     autoCapitalize="none"
                   />
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>
           <form.Field name="homePageUrl">
             {(field) => (
               <FormControl
-                isInvalid={!field.state.meta.isValid}
+                isInvalid={showFieldError(field)}
                 size="md"
                 isDisabled={false}
                 isReadOnly={false}
                 isRequired={false}
+                className="mb-6"
               >
-                <Input className="border-white my-6 h-16" variant="underlined">
+                <Input className="border-0 bg-primary-400 px-6 py-4">
                   <InputField
                     value={field.state.value}
-                    onBlur={field.handleBlur}
+                    onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold placeholder:text-gray-400"
+                    className="text-3xl text-white text-center font-bold"
                     placeholder={t(
                       "app.internetRadioStations.homePageUrlPlaceholder",
                     )}
+                    placeholderTextColor={gray400}
                     textContentType="URL"
                     autoCapitalize="none"
                   />
                 </Input>
-                {!field.state.meta.isValid && (
-                  <FormControlError className="items-start">
-                    <FormControlErrorIcon
-                      as={AlertCircleIcon}
-                      className="text-red-500"
-                    />
-                    <FormControlErrorText className="text-red-500 shrink">
-                      {field.state.meta.errors
-                        .map((error) => error?.message)
-                        .join("\n")}
-                    </FormControlErrorText>
-                  </FormControlError>
-                )}
+                <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>

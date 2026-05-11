@@ -6,9 +6,9 @@ import type React from "react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable } from "react-native";
+import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
 import DrawerMenu from "@/components/DrawerMenu";
-import { themeConfig } from "@/config/theme";
 import useApp from "@/stores/app";
 
 export default function TabLayout() {
@@ -17,6 +17,8 @@ export default function TabLayout() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const showAddTab = useApp((store) => store.showAddTab);
   const addBottomSheetRef = useRef<BottomSheetModal>(null);
+  const emerald = useCSSVariable("--color-emerald-500") as string | undefined;
+  const gray = useCSSVariable("--color-gray-200") as string | undefined;
 
   const handleClose = () => {
     setShowDrawer(false);
@@ -58,8 +60,8 @@ export default function TabLayout() {
               locations={[0, 0.1, 0.5, 1]}
             />
           ),
-          tabBarActiveTintColor: themeConfig.theme.colors.emerald[500],
-          tabBarInactiveTintColor: themeConfig.theme.colors.gray[200],
+          tabBarActiveTintColor: emerald,
+          tabBarInactiveTintColor: gray,
         }}
       >
         <Tabs.Screen

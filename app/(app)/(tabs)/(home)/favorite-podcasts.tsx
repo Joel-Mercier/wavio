@@ -53,7 +53,7 @@ export default function FavoritePodcastsScreen() {
         style={{ paddingTop: insets.top }}
       >
         <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-          <Avatar size="sm" className="border-emerald-500 border-2">
+          <Avatar className="border-emerald-500 border-2 w-10 h-10">
             <AvatarFallbackText className="font-body ">
               {username}
             </AvatarFallbackText>
@@ -127,7 +127,8 @@ export default function FavoritePodcastsScreen() {
             </Box>
           )}
           contentContainerStyle={{
-            paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom:
+              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={() => <EmptyDisplay />}

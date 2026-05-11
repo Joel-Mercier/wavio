@@ -1,11 +1,11 @@
 import { Disc3 } from "lucide-react-native";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -23,6 +23,7 @@ export default function AlbumListItem({
   layout = "vertical",
   className = "",
 }: AlbumListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   return (
     <FadeOutScaleDown
       href={`/albums/${album.id}`}
@@ -58,7 +59,7 @@ export default function AlbumListItem({
               },
             )}
           >
-            <Disc3 size={48} color={themeConfig.theme.colors.white} />
+            <Disc3 size={48} color={white} />
           </Box>
         )}
         <VStack className={cn({ "flex-col ml-4": layout === "vertical" })}>

@@ -74,7 +74,7 @@ export default function PodcastsScreen() {
         style={{ paddingTop: insets.top }}
       >
         <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-          <Avatar size="sm" className="border-emerald-500 border-2">
+          <Avatar className="border-emerald-500 border-2 w-10 h-10">
             <AvatarFallbackText className="font-body ">
               {username}
             </AvatarFallbackText>

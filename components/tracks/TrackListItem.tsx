@@ -34,6 +34,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
@@ -59,7 +60,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useSetRating,
   useStar,
@@ -100,6 +100,16 @@ export default function TrackListItem({
   onPlayCallback,
   showCoverArt = true,
 }: TrackListItemProps) {
+  const [white, black, emerald500, gray300, gray200, gray400, red500] =
+    Uniwind.getCSSVariable([
+      "--color-white",
+      "--color-black",
+      "--color-emerald-500",
+      "--color-gray-300",
+      "--color-gray-200",
+      "--color-gray-400",
+      "--color-red-500",
+    ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -582,7 +592,7 @@ export default function TrackListItem({
               />
             ) : (
               <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
-                <AudioLines size={24} color={themeConfig.theme.colors.white} />
+                <AudioLines size={24} color={white} />
               </Box>
             ))}
           <VStack
@@ -601,7 +611,7 @@ export default function TrackListItem({
             <HStack className="items-center">
               {offlineModeEnabled && isTrackDownloaded(track.id) && (
                 <Box className="flex items-center justify-center rounded-full size-4 bg-emerald-500 mr-2">
-                  <ArrowDown color={themeConfig.theme.colors.black} size={12} />
+                  <ArrowDown color={black} size={12} />
                 </Box>
               )}
               <Text numberOfLines={1} className="text-md text-primary-100">
@@ -614,15 +624,15 @@ export default function TrackListItem({
           {track.starred && (
             <FadeOutScaleDown onPress={handleUnfavoritePress} className="mr-3">
               <Heart
-                color={themeConfig.theme.colors.emerald[500]}
+                color={emerald500}
                 size={24}
                 stroke={undefined}
-                fill={themeConfig.theme.colors.emerald[500]}
+                fill={emerald500}
               />
             </FadeOutScaleDown>
           )}
           <FadeOutScaleDown onPress={handlePresentModalPress}>
-            <EllipsisVertical color={themeConfig.theme.colors.gray[300]} />
+            <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
         </HStack>
         <BottomSheetModal
@@ -650,10 +660,7 @@ export default function TrackListItem({
                     onPress={() => handleArtistPickPress(artist.id)}
                   >
                     <HStack className="items-center">
-                      <User
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <User size={24} color={gray200} />
                       <Text
                         className="ml-4 text-lg text-gray-200"
                         numberOfLines={1}
@@ -691,15 +698,9 @@ export default function TrackListItem({
                   onPress={handleCopyShareUrlPress}
                 >
                   {clipoardCopyDone ? (
-                    <ClipboardCheck
-                      size={24}
-                      color={themeConfig.theme.colors.emerald[500]}
-                    />
+                    <ClipboardCheck size={24} color={emerald500} />
                   ) : (
-                    <ClipboardIcon
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <ClipboardIcon size={24} color={gray200} />
                   )}
                   <Text
                     className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
@@ -740,10 +741,7 @@ export default function TrackListItem({
                   />
                 ) : (
                   <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                    <AudioLines
-                      size={24}
-                      color={themeConfig.theme.colors.white}
-                    />
+                    <AudioLines size={24} color={white} />
                   </Box>
                 )}
                 <VStack className="ml-4 flex-1">
@@ -763,10 +761,7 @@ export default function TrackListItem({
                 {!track.starred && (
                   <FadeOutScaleDown onPress={handleFavoritePress}>
                     <HStack className="items-center">
-                      <Heart
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Heart size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.addToFavorites")}
                       </Text>
@@ -775,10 +770,7 @@ export default function TrackListItem({
                 )}
                 <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
-                    <PlusCircle
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <PlusCircle size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {route.name === "playlists/[id]/index"
                         ? t("app.tracks.addToAnotherPlaylist")
@@ -789,10 +781,7 @@ export default function TrackListItem({
                 {route.name === "playlists/[id]/index" && (
                   <FadeOutScaleDown onPress={handleRemoveFromPlaylistPress}>
                     <HStack className="items-center">
-                      <CircleX
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <CircleX size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.removeFromPlaylist")}
                       </Text>
@@ -801,10 +790,7 @@ export default function TrackListItem({
                 )}
                 <FadeOutScaleDown onPress={handleGoToArtistPress}>
                   <HStack className="items-center">
-                    <User
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <User size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.goToArtist", {
                         count: trackArtists.length || 1,
@@ -815,10 +801,7 @@ export default function TrackListItem({
                 {track.albumId && (
                   <FadeOutScaleDown onPress={handleGoToAlbumPress}>
                     <HStack className="items-center">
-                      <Disc3
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Disc3 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.goToAlbum")}
                       </Text>
@@ -827,10 +810,7 @@ export default function TrackListItem({
                 )}
                 <FadeOutScaleDown onPress={handleAddToQueuePress}>
                   <HStack className="items-center">
-                    <ListPlus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <ListPlus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.addToQueue")}
                     </Text>
@@ -839,10 +819,7 @@ export default function TrackListItem({
                 <FadeOutScaleDown onPress={handleRatingPress}>
                   <HStack className="items-center justify-between">
                     <HStack className="items-center">
-                      <Star
-                        size={24}
-                        color={themeConfig.theme.colors.gray[200]}
-                      />
+                      <Star size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.rate")}
                       </Text>
@@ -858,10 +835,7 @@ export default function TrackListItem({
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSimilarSongsPress}>
                   <HStack className="items-center">
-                    <Sparkles
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Sparkles size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.similarSongs")}
                     </Text>
@@ -869,10 +843,7 @@ export default function TrackListItem({
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleSharePress}>
                   <HStack className="items-center">
-                    <Share2
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Share2 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.share")}
                     </Text>
@@ -880,10 +851,7 @@ export default function TrackListItem({
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleInfoPress}>
                   <HStack className="items-center">
-                    <Info
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Info size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.getInfo")}
                     </Text>
@@ -891,10 +859,7 @@ export default function TrackListItem({
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleDownloadPress}>
                   <HStack className="items-center">
-                    <Download
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Download size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.download")}
                     </Text>
@@ -907,10 +872,7 @@ export default function TrackListItem({
                         <FadeOutScaleDown onPress={handleOfflineDownloadPress}>
                           <HStack className="items-center">
                             <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                              <ArrowDown
-                                size={20}
-                                color={themeConfig.theme.colors.black}
-                              />
+                              <ArrowDown size={20} color={black} />
                             </Box>
                             <Text className="ml-4 text-lg text-emerald-400">
                               {t("app.tracks.downloadForOffline")}
@@ -920,10 +882,7 @@ export default function TrackListItem({
                       )}
                     {isTrackDownloading(track.id) && (
                       <HStack className="items-center">
-                        <Download
-                          size={24}
-                          color={themeConfig.theme.colors.gray[400]}
-                        />
+                        <Download size={24} color={gray400} />
                         <Text className="ml-4 text-lg text-gray-400">
                           {t("app.tracks.downloadingForOffline")} (
                           {getDownloadProgress(track.id)?.progress || 0}%)
@@ -935,10 +894,7 @@ export default function TrackListItem({
                         onPress={handleRemoveOfflineDownloadPress}
                       >
                         <HStack className="items-center">
-                          <X
-                            size={24}
-                            color={themeConfig.theme.colors.red[500]}
-                          />
+                          <X size={24} color={red500} />
                           <Text className="ml-4 text-lg text-red-400">
                             {t("app.tracks.removeOfflineDownload")}
                           </Text>
@@ -950,11 +906,7 @@ export default function TrackListItem({
                 {track?.musicBrainzId && (
                   <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                     <HStack className="items-center">
-                      <MusicBrainz
-                        width={24}
-                        height={24}
-                        fill={themeConfig.theme.colors.gray[200]}
-                      />
+                      <MusicBrainz width={24} height={24} fill={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.musicBrainz")}
                       </Text>
@@ -1009,7 +961,10 @@ export default function TrackListItem({
                 <Icon as={X} size="md" className="color-white" />
               </ModalCloseButton>
             </ModalHeader>
-            <ModalBody className="mb-0 pb-0">
+            <ModalBody
+              className="mb-0 pb-0"
+              showsVerticalScrollIndicator={false}
+            >
               <VStack className="gap-y-2">
                 <VStack className="border-b border-primary-600 py-2">
                   <Text className="text-primary-100 text-sm">
@@ -1076,7 +1031,7 @@ export default function TrackListItem({
                   <Text className="text-white">
                     {track.duration
                       ? `${secondsToMinutes(track?.duration)}:${track?.duration % 60}`
-                      : "Unknown"}
+                      : t("app.tracks.infoModal.unknownDuration")}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">
@@ -1111,9 +1066,9 @@ export default function TrackListItem({
                   </Text>
                   <Text className="text-white">
                     {track.starred ? (
-                      <Check color={themeConfig.theme.colors.white} size={14} />
+                      <Check color={white} size={14} />
                     ) : (
-                      <X color={themeConfig.theme.colors.white} size={14} />
+                      <X color={white} size={14} />
                     )}
                   </Text>
                 </VStack>
@@ -1129,8 +1084,10 @@ export default function TrackListItem({
                   </Text>
                   <Text className="text-white">
                     {track.played
-                      ? `${formatDistanceToNow(new Date(track.played))} ago`
-                      : "Never"}
+                      ? t("app.tracks.infoModal.lastPlayedDistance", {
+                          distance: formatDistanceToNow(new Date(track.played)),
+                        })
+                      : t("app.tracks.infoModal.neverPlayed")}
                   </Text>
                 </VStack>
                 <VStack className="border-b border-primary-600 py-2">

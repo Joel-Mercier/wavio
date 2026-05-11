@@ -38,6 +38,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AlbumListItem from "@/components/albums/AlbumListItem";
@@ -70,7 +71,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useAlbum, useArtist } from "@/hooks/openSubsonic/useBrowsing";
 import {
   useSetRating,
@@ -98,6 +98,11 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function AlbumDetail() {
+  const [white, emerald500, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -565,12 +570,12 @@ export default function AlbumDetail() {
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold ml-6 truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1"
               size="lg"
             >
               {data?.album?.name}
@@ -624,11 +629,11 @@ export default function AlbumDetail() {
                 onPress={() => router.back()}
                 className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
               >
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </FadeOutScaleDown>
               {!data?.album?.coverArt ? (
                 <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                  <Disc3 size={48} color={themeConfig.theme.colors.white} />
+                  <Disc3 size={48} color={white} />
                 </Box>
               ) : (
                 <AnimatedImage
@@ -657,7 +662,7 @@ export default function AlbumDetail() {
                   />
                 ) : (
                   <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
-                    <User size={16} color={themeConfig.theme.colors.white} />
+                    <User size={16} color={white} />
                   </Box>
                 )}
                 <Text
@@ -719,36 +724,27 @@ export default function AlbumDetail() {
                 <HStack className="items-center gap-x-4">
                   {data?.album?.starred ? (
                     <FadeOutScaleDown onPress={handleUnfavoritePress}>
-                      <Heart
-                        color={themeConfig.theme.colors.emerald[500]}
-                        fill={themeConfig.theme.colors.emerald[500]}
-                      />
+                      <Heart color={emerald500} fill={emerald500} />
                     </FadeOutScaleDown>
                   ) : (
                     <FadeOutScaleDown onPress={handleFavoritePress}>
-                      <Heart color={themeConfig.theme.colors.white} />
+                      <Heart color={white} />
                     </FadeOutScaleDown>
                   )}
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
-                    <EllipsisVertical color={themeConfig.theme.colors.white} />
+                    <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown>
-                    <Shuffle color={themeConfig.theme.colors.white} />
+                    <Shuffle color={white} />
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                       {isPlayingFromList && isPlaying ? (
-                        <Pause
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Pause color={white} fill={white} />
                       ) : (
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Play color={white} fill={white} />
                       )}
                     </Box>
                   </FadeOutScaleDown>
@@ -867,15 +863,9 @@ export default function AlbumDetail() {
                 onPress={handleCopyShareUrlPress}
               >
                 {clipoardCopyDone ? (
-                  <ClipboardCheck
-                    size={24}
-                    color={themeConfig.theme.colors.emerald[500]}
-                  />
+                  <ClipboardCheck size={24} color={emerald500} />
                 ) : (
-                  <ClipboardIcon
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ClipboardIcon size={24} color={gray200} />
                 )}
                 <Text
                   className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
@@ -916,7 +906,7 @@ export default function AlbumDetail() {
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <Disc3 size={24} color={themeConfig.theme.colors.white} />
+                  <Disc3 size={24} color={white} />
                 </Box>
               )}
               <VStack className="ml-4 flex-1">
@@ -935,7 +925,7 @@ export default function AlbumDetail() {
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleAddAllToFavoritesPress}>
                 <HStack className="items-center">
-                  <Heart size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <Heart size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.addAllToFavorites")}
                   </Text>
@@ -943,10 +933,7 @@ export default function AlbumDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                 <HStack className="items-center">
-                  <PlusCircle
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <PlusCircle size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.addToPlaylist")}
                   </Text>
@@ -954,7 +941,7 @@ export default function AlbumDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleGoToArtistPress}>
                 <HStack className="items-center">
-                  <User size={24} color={themeConfig.theme.colors.gray[200]} />
+                  <User size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.goToArtist")}
                   </Text>
@@ -962,10 +949,7 @@ export default function AlbumDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleAddToQueuePress}>
                 <HStack className="items-center">
-                  <ListPlus
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <ListPlus size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.addToQueue")}
                   </Text>
@@ -974,10 +958,7 @@ export default function AlbumDetail() {
               <FadeOutScaleDown onPress={handleRatingPress}>
                 <HStack className="items-center justify-between">
                   <HStack className="items-center">
-                    <Star
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <Star size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.albums.rate")}
                     </Text>
@@ -993,10 +974,7 @@ export default function AlbumDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleSharePress}>
                 <HStack className="items-center">
-                  <Share2
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Share2 size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.share")}
                   </Text>
@@ -1005,11 +983,7 @@ export default function AlbumDetail() {
               {data?.album?.musicBrainzId && (
                 <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                   <HStack className="items-center">
-                    <MusicBrainz
-                      width={24}
-                      height={24}
-                      fill={themeConfig.theme.colors.gray[200]}
-                    />
+                    <MusicBrainz width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.albums.musicBrainz")}
                     </Text>
@@ -1019,11 +993,7 @@ export default function AlbumDetail() {
               {data?.album?.name && data?.album?.artist && (
                 <FadeOutScaleDown onPress={handleLastFMPress}>
                   <HStack className="items-center">
-                    <LastFM
-                      width={24}
-                      height={24}
-                      fill={themeConfig.theme.colors.gray[200]}
-                    />
+                    <LastFM width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.albums.lastFM")}
                     </Text>

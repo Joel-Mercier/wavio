@@ -13,7 +13,9 @@ import {
 } from "lucide-react-native";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
@@ -39,7 +41,6 @@ import {
 } from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import useAuth from "@/stores/auth";
 import useServers, { type ServerUser } from "@/stores/servers";
 
@@ -64,7 +65,7 @@ function SwitchUserRow({
         onSelect(user.username);
       }}
     >
-      <Avatar size="md" className="bg-primary-400">
+      <Avatar className="bg-primary-400">
         <AvatarFallbackText className="font-body">
           {user.username}
         </AvatarFallbackText>
@@ -77,6 +78,10 @@ function SwitchUserRow({
 }
 
 export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
+  const [white, red500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-red-500",
+  ]) as string[];
   const { t } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
   const router = useRouter();
@@ -151,7 +156,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
       >
         <DrawerHeader>
           <HStack className="flex-1 items-center m-1 p-4 border-b-2 border-primary-500">
-            <Avatar size="md" className="mr-4 bg-primary-400">
+            <Avatar className="mr-4 bg-primary-400 w-10 h-10">
               <AvatarFallbackText className="font-body">
                 {username}
               </AvatarFallbackText>
@@ -172,10 +177,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                   className="border-0 p-2 rounded-full active:bg-primary-800"
                   accessibilityLabel={t("app.shared.sidebar.switchUser")}
                 >
-                  <ArrowLeftRight
-                    size={22}
-                    color={themeConfig.theme.colors.white}
-                  />
+                  <ArrowLeftRight size={22} color={white} />
                 </SelectTrigger>
                 <SelectPortal snapPoints={[50]}>
                   <SelectBackdrop />
@@ -207,7 +209,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleActivityPress}
               >
-                <History size={24} color={themeConfig.theme.colors.white} />
+                <History size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.activity")}
                 </Heading>
@@ -216,7 +218,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleQueuePress}
               >
-                <ListMusic size={24} color={themeConfig.theme.colors.white} />
+                <ListMusic size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.queue")}
                 </Heading>
@@ -225,7 +227,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleLibrariesPress}
               >
-                <Library size={24} color={themeConfig.theme.colors.white} />
+                <Library size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.libraries")}
                 </Heading>
@@ -234,7 +236,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleServersPress}
               >
-                <Server size={24} color={themeConfig.theme.colors.white} />
+                <Server size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.servers")}
                 </Heading>
@@ -243,7 +245,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleSharesPress}
               >
-                <Share2 size={24} color={themeConfig.theme.colors.white} />
+                <Share2 size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.shares")}
                 </Heading>
@@ -252,7 +254,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleSettingsPress}
               >
-                <Settings size={24} color={themeConfig.theme.colors.white} />
+                <Settings size={24} color={white} />
                 <Heading size="lg" className="text-white font-normal">
                   {t("app.shared.sidebar.settings")}
                 </Heading>
@@ -261,7 +263,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleLogoutPress}
               >
-                <LogOut size={24} color={themeConfig.theme.colors.red[500]} />
+                <LogOut size={24} color={red500} />
                 <Heading size="lg" className="text-red-500 font-normal">
                   {t("app.shared.sidebar.logout")}
                 </Heading>

@@ -1,5 +1,6 @@
 import { Check, ListMusic } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";
 import { Box } from "@/components/ui/box";
 import {
@@ -12,7 +13,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -25,6 +25,7 @@ export default function AddToPlaylistListItem({
   selected: boolean;
   onPress: (id: string) => void;
 }) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   return (
     <FadeOut className="px-6 mb-4" onPress={() => onPress(playlist.id)}>
@@ -38,7 +39,7 @@ export default function AddToPlaylistListItem({
             />
           ) : (
             <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-              <ListMusic size={24} color={themeConfig.theme.colors.white} />
+              <ListMusic size={24} color={white} />
             </Box>
           )}
           <VStack className="ml-4">

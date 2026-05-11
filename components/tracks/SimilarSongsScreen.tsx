@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -24,7 +25,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useSimilarSongs2 } from "@/hooks/openSubsonic/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import type { Child } from "@/services/openSubsonic/types";
@@ -39,6 +39,10 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function SimilarSongsScreen() {
+  const [emerald500, white] = Uniwind.getCSSVariable([
+    "--color-emerald-500",
+    "--color-white",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -85,17 +89,14 @@ export default function SimilarSongsScreen() {
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient
-          colors={["#000", themeConfig.theme.colors.emerald[500]]}
-          locations={[0, 0.7]}
-        >
+        <LinearGradient colors={["#000", emerald500]} locations={[0, 0.7]}>
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
@@ -128,7 +129,7 @@ export default function SimilarSongsScreen() {
         ListHeaderComponent={() => (
           <>
             <LinearGradient
-              colors={[themeConfig.theme.colors.emerald[500], "#000000"]}
+              colors={[emerald500, "#000000"]}
               className="h-48"
               style={{ height: 192 }}
             >
@@ -146,10 +147,7 @@ export default function SimilarSongsScreen() {
                           opacity: pressed ? 0.5 : 1,
                         }}
                       >
-                        <ArrowLeft
-                          size={24}
-                          color={themeConfig.theme.colors.white}
-                        />
+                        <ArrowLeft size={24} color={white} />
                       </Animated.View>
                     )}
                   </Pressable>
@@ -172,20 +170,14 @@ export default function SimilarSongsScreen() {
               <HStack className="items-center justify-end">
                 <HStack className="items-center gap-x-4">
                   <Pressable onPress={handleShufflePress}>
-                    <Shuffle color={themeConfig.theme.colors.white} />
+                    <Shuffle color={white} />
                   </Pressable>
                   <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
                       {isPlayingFromList && isPlaying ? (
-                        <Pause
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Pause color={white} fill={white} />
                       ) : (
-                        <Play
-                          color={themeConfig.theme.colors.white}
-                          fill={themeConfig.theme.colors.white}
-                        />
+                        <Play color={white} fill={white} />
                       )}
                     </Box>
                   </Pressable>
@@ -197,7 +189,8 @@ export default function SimilarSongsScreen() {
         )}
         ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
         contentContainerStyle={{
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

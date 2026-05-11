@@ -68,20 +68,20 @@ export default {
         musicBrainz: "Ouvrir dans MusicBrainz",
         lastFM: "Ouvrir dans Last.fm",
         moreFromArtist: "Plus de {{artist}}",
-        favoriteSuccessMessage: "Album ajouté avec succès aux favoris",
+        favoriteSuccessMessage: "Album ajouté aux favoris",
         favoriteErrorMessage:
           "Une erreur s'est produite lors de l'ajout de l'album aux favoris",
-        unfavoriteSuccessMessage: "Album supprimé avec succès des favoris",
+        unfavoriteSuccessMessage: "Album supprimé des favoris",
         unfavoriteErrorMessage:
           "Une erreur s'est produite lors de la suppression de l'album des favoris",
-        shareSuccessMessage: "Album partagé avec succès",
+        shareSuccessMessage: "Album partagé",
         shareErrorMessage:
           "Une erreur s'est produite lors de la partage de l'album",
         rateModalTitle: "Noter l'album",
         seeAll: "Voir tout",
         addAllToFavorites: "Ajouter toutes les chansons aux favoris",
         addAllToFavoritesSuccessMessage:
-          "Toutes les chansons ont été ajoutées aux favoris avec succès",
+          "Toutes les chansons ont été ajoutées aux favoris",
         addAllToFavoritesErrorMessage:
           "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
       },
@@ -98,10 +98,10 @@ export default {
         likedAlbums: "Albums likés",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
-        favoriteSuccessMessage: "Artiste ajouté avec succès aux favoris",
+        favoriteSuccessMessage: "Artiste ajouté aux favoris",
         favoriteErrorMessage:
           "Une erreur s'est produite lors de l'ajout de l'artiste aux favoris",
-        unfavoriteSuccessMessage: "Artiste supprimé avec succès des favoris",
+        unfavoriteSuccessMessage: "Artiste supprimé des favoris",
         unfavoriteErrorMessage:
           "Une erreur s'est produite lors de la suppression de l'artiste des favoris",
       },
@@ -120,21 +120,21 @@ export default {
           "Êtes-vous sûr de vouloir supprimer cette playlist ?",
         deletePlaylistConfirmDescription:
           "Supprimer cette playlist la supprimera définitivement et ne peut pas être annulé. Êtes-vous sûr de vouloir continuer ?",
-        deletePlaylistSuccessMessage: "Playlist supprimée avec succès",
+        deletePlaylistSuccessMessage: "Playlist supprimée",
         deletePlaylistErrorMessage:
           "Une erreur s'est produite lors de la suppression de la playlist",
-        sharePlaylistSuccessMessage: "Playlist partagée avec succès",
+        sharePlaylistSuccessMessage: "Playlist partagée",
         sharePlaylistErrorMessage:
           "Une erreur s'est produite lors du partage de la playlist",
-        removeTrackSuccessMessage: "Titre supprimé avec succès de la playlist",
+        removeTrackSuccessMessage: "Titre supprimé de la playlist",
         removeTrackErrorMessage:
           "Une erreur s'est produite lors de la suppression du titre de la playlist",
         addToPlaylistTitle: "Ajouter à la playlist",
         newPlaylist: "Nouvelle playlist",
         finished: "Terminé",
-        addTrackSuccessMessage_one: "Titre ajouté avec succès à la playlist",
+        addTrackSuccessMessage_one: "Titre ajouté à la playlist",
         addTrackSuccessMessage_other:
-          "Titres ajoutés avec succès à la playlist",
+          "Titres ajoutés à la playlist",
         addTrackErrorMessage_one:
           "Une erreur s'est produite lors de l'ajout du titre à la playlist",
         addTrackErrorMessage_other:
@@ -321,7 +321,7 @@ export default {
       },
       newPlaylist: {
         title: "Donnez un nom à votre playlist",
-        newPlaylistSuccessMessage: "Playlist créée avec succès",
+        newPlaylistSuccessMessage: "Playlist créée",
         newPlaylistErrorMessage:
           "Une erreur s'est produite lors de la création de la playlist",
         namePlaceholder: "Ma super playlist",
@@ -333,7 +333,7 @@ export default {
         publicLabel: "Playlist publique",
         publicDescription:
           "Les autres utilisateurs de ce serveur peuvent voir cette playlist",
-        editPlaylistSuccessMessage: "Playlist mise à jour avec succès",
+        editPlaylistSuccessMessage: "Playlist mise à jour",
         editPlaylistErrorMessage:
           "Une erreur s'est produite lors de la mise à jour de la playlist",
       },
@@ -350,7 +350,7 @@ export default {
           clearDownloadsDescription:
             "Supprimer tous les téléchargements de l'appareil",
           clearDownloadsSuccessMessage:
-            "Tous les téléchargements ont été effacé avec succès",
+            "Tous les téléchargements ont été effacé",
           clearDownloadsErrorMessage:
             "Échec de l'effacement des téléchargements",
           clearDownloadsConfirmTitle:
@@ -364,7 +364,7 @@ export default {
           scanMusicLibraryDescription:
             "Initie un nouveau scan de la bibliothèque musicale sur votre serveur",
           scanMusicLibraryAction: "Scanner",
-          scanMusicLibrarySuccessDescription: "Scan commencé avec succès",
+          scanMusicLibrarySuccessDescription: "Scan commencé",
           scanMusicLibraryErrorDescription:
             "Une erreur s'est produite lors du démarrage d'un scan",
           scanStatusLabel: "Statut du scan",
@@ -389,18 +389,18 @@ export default {
           title: "Lecture",
           gaplessLabel: "Lecture sans coupure",
           gaplessDescription:
-            "Élimine le silence entre les morceaux en préchargeant le suivant.",
+            "Élimine le silence entre les morceaux en préchargeant le suivant",
           crossfadeLabel: "Fondu enchaîné",
           crossfadeDescription:
-            "Superpose la fin d'un morceau avec le début du suivant.",
+            "Superpose la fin d'un morceau avec le début du suivant",
           crossfadeOff: "Désactivé",
           crossfadeSeconds: "{{seconds}} s",
           equalizerLabel: "Égaliseur",
           equalizerDescription:
-            "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours.",
+            "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours",
           equalizerAction: "Ouvrir",
           equalizerErrorMessage:
-            "Aucun égaliseur système n'est disponible sur cet appareil.",
+            "Aucun égaliseur système n'est disponible sur cet appareil",
         },
         streamingSettings: {
           title: "Paramètres de streaming",
@@ -411,7 +411,7 @@ export default {
           audioQualityKbps: "{{bitrate}} kbps",
           replayGainLabel: "Normalisation du volume",
           replayGainDescription:
-            "Utilise les tags ReplayGain pour égaliser le volume entre les morceaux.",
+            "Utilise les tags ReplayGain pour égaliser le volume entre les morceaux",
           replayGainModes: {
             off: "Désactivée",
             track: "Par morceau",
@@ -431,7 +431,7 @@ export default {
           recentSearchesConfirmDescription:
             "Supprimer ces recherches est irréversible. Êtes-vous sûr de vouloir continuer ?",
           recentSearchesSuccessMessage:
-            "Recherches récentes supprimées avec succès",
+            "Recherches récentes supprimées",
           recentPlaysLabel: "Joués récemment",
           recentPlaysDescription:
             "Supprimer vos raccourcis de lecture récents sur l'écran d'accueil",
@@ -439,7 +439,7 @@ export default {
             "Êtes-vous sûr de vouloir supprimer vos raccourcis de lecture récents stockés ?",
           recentPlaysConfirmDescription:
             "Supprimer ces raccourcis est irréversible. Êtes-vous sûr de vouloir continuer ?",
-          recentPlaysSuccessMessage: "Lectures récentes supprimées avec succès",
+          recentPlaysSuccessMessage: "Lectures récentes supprimées",
           activityLabel: "Activité",
           activityDescription:
             "Supprimer votre historique d'écoute des albums, artistes et playlists",
@@ -447,7 +447,7 @@ export default {
             "Êtes-vous sûr de vouloir supprimer votre historique d'activité ?",
           activityConfirmDescription:
             "Supprimer cet historique est irréversible. Êtes-vous sûr de vouloir continuer ?",
-          activitySuccessMessage: "Historique d'activité supprimé avec succès",
+          activitySuccessMessage: "Historique d'activité supprimé",
         },
         podcastSettings: {
           title: "Paramètres des podcasts",
@@ -455,7 +455,7 @@ export default {
           configurePodcastsDescription:
             "Configurez vos podcasts pour les diffuser depuis l'application",
           configurePodcastsAction: "Configurer",
-          configurePodcastsSuccessMessage: "Podcasts configurés avec succès",
+          configurePodcastsSuccessMessage: "Podcasts configurés",
           configurePodcastsErrorMessage:
             "Une erreur s'est produite lors de la configuration des podcasts",
           podcastConfigFormTitle: "Configurer les podcasts",
@@ -487,16 +487,16 @@ export default {
         homePageUrlPlaceholder: "URL de la page d'accueil",
         edit: "Modifier la station de radio en ligne",
         delete: "Supprimer la station de radio en ligne",
-        newSuccessMessage: "Station de radio en ligne créée avec succès",
+        newSuccessMessage: "Station de radio en ligne créée",
         newErrorMessage:
           "Une erreur s'est produite lors de la création de la station de radio en ligne",
         visitHomePage: "Visiter la page d'accueil",
         editInternetRadioStation: "Modifier la station de radio en ligne",
         deleteInternetRadioStation: "Supprimer la station de radio en ligne",
         deleteInternetRadioStationSuccessMessage:
-          "Station de radio en ligne supprimée avec succès",
+          "Station de radio en ligne supprimée",
         deleteInternetRadioStationErrorMessage:
-          "Une erreur s'est produite lors de la suppression de la station de radio en ligne.",
+          "Une erreur s'est produite lors de la suppression de la station de radio en ligne",
         deleteInternetRadioStationConfirmTitle:
           "Êtes-vous sûr de vouloir supprimer cette station de radio en ligne?",
         deleteInternetRadioStationConfirmDescription:
@@ -504,9 +504,9 @@ export default {
         editInternetRadioStationModalTitle:
           "Modifier la station de radio en ligne",
         editInternetRadioStationSuccessMessage:
-          "Station de radio en ligne mise à jour avec succès.",
+          "Station de radio en ligne mise à jour",
         editInternetRadioStationErrorMessage:
-          "Une erreur s'est produite lors de la mise à jour de la station de radio en ligne.",
+          "Une erreur s'est produite lors de la mise à jour de la station de radio en ligne",
       },
       activity: {
         title: "Activité",
@@ -527,13 +527,13 @@ export default {
       },
       queue: {
         title: "File d'attente",
-        empty: "La file d'attente est vide.",
+        empty: "La file d'attente est vide",
         edit: "Modifier",
         done: "Terminer",
         clear: "Vider la file",
         clearConfirmTitle: "Vider la file ?",
         clearConfirmMessage:
-          "Tous les morceaux seront retirés de la file et la lecture s'arrêtera.",
+          "Tous les morceaux seront retirés de la file et la lecture s'arrêtera",
         clearedMessage: "File vidée",
         removeFromQueue: "Retirer de la file",
         createPlaylist: "Créer une playlist depuis la file",
@@ -550,6 +550,7 @@ export default {
         addToAnotherPlaylist: "Ajouter à une autre playlist",
         removeFromPlaylist: "Retirer de la playlist",
         addToQueue: "Ajouter à la file d'attente",
+        goToArtist: "Aller à l'artiste",
         goToArtist_one: "Aller à l'artiste",
         goToArtist_other: "Aller aux artistes",
         goToAlbum: "Aller à l'album",
@@ -562,15 +563,15 @@ export default {
         similarSongsTitle: "Titres similaires à : {{title}}",
         trackInfoModalTitle: "Informations sur le titre",
         rateModalTitle: "Noter le titre",
-        favoriteSuccessMessage: "Titre ajouté avec succès aux favoris",
+        favoriteSuccessMessage: "Titre ajouté aux favoris",
         favoriteErrorMessage:
           "Une erreur s'est produite lors de l'ajout du titre aux favoris",
-        unfavoriteSuccessMessage: "Titre supprimé avec succès des favoris",
+        unfavoriteSuccessMessage: "Titre supprimé des favoris",
         unfavoriteErrorMessage:
           "Une erreur s'est produite lors de la suppression du titre des favoris",
-        shareSuccessMessage: "Titre partagé avec succès",
+        shareSuccessMessage: "Titre partagé",
         shareErrorMessage: "Une erreur s'est produite lors du partage du titre",
-        downloadSuccessMessage: "Titre téléchargé avec succès",
+        downloadSuccessMessage: "Titre téléchargé",
         downloadErrorMessage:
           "Une erreur s'est produite lors du téléchargement du titre",
         downloadForOffline: "Rendre accessible en mode hors ligne",
@@ -581,7 +582,7 @@ export default {
         offlineDownloadErrorMessage:
           "Une erreur s'est produite lors du téléchargement du titre pour le mode hors ligne",
         removeOfflineDownloadSuccessMessage:
-          "Titre supprimé avec succès du mode hors ligne",
+          "Titre supprimé du mode hors ligne",
         removeOfflineDownloadErrorMessage:
           "Une erreur s'est produite lors de la suppression du titre du mode hors ligne",
         rateSuccessMessage: "Notation du titre réussie",
@@ -608,6 +609,9 @@ export default {
           modified: "Date de modification",
           albumPeak: "Point de coupe de l'album",
           trackPeak: "Point de coupe de la piste",
+          unknownDuration: "Inconnue",
+          neverPlayed: "Jamais",
+          lastPlayedDistance: "Il y a {{distance}}",
         },
       },
       player: {
@@ -621,7 +625,7 @@ export default {
         download: "Télécharger",
         lyrics: "Paroles",
         lyricsUnavailable:
-          "Aucune parole synchronisée disponible pour ce titre.",
+          "Aucune parole synchronisée disponible pour ce titre",
         sleepTimer: "Minuteur de veille",
         sleepTimerOff: "Désactivé",
         sleepTimerEndOfTrack: "Fin du titre",
@@ -634,10 +638,10 @@ export default {
         visitCount_other: "{{count}} visites",
         editShare: "Modifier le partage",
         deleteShare: "Supprimer le partage",
-        editShareSuccessMessage: "Partage mis à jour avec succès",
+        editShareSuccessMessage: "Partage mis à jour",
         editShareErrorMessage:
           "Une erreur s'est produite lors de la mise à jour du partage",
-        deleteShareSuccessMessage: "Partage supprimé avec succès",
+        deleteShareSuccessMessage: "Partage supprimé",
         deleteShareErrorMessage:
           "Une erreur s'est produite lors de la suppression du partage",
         noDescription: "Aucune description",
@@ -646,6 +650,14 @@ export default {
         deleteShareConfirmDescription:
           "Supprimer le partage le supprimera définitivement et empêchera d'autres d'accéder aux titre partagés. Êtes-vous sûr de vouloir continuer ?",
         editShareModalTitle: "Modifier le partage",
+        descriptionPlaceholder: "Description (affichée dans l'aperçu du lien)",
+        expiresPlaceholder: "Expire le",
+        mediaType_music: "Titre",
+        mediaType_song: "Titre",
+        mediaType_album: "Album",
+        mediaType_podcast: "Podcast",
+        mediaType_audiobook: "Livre audio",
+        mediaType_video: "Vidéo",
       },
       libraries: {
         title: "Bibliothèques",
@@ -662,8 +674,8 @@ export default {
         passwordPlaceholder: "Entrer le mot de passe du serveur",
         editServer: "Modifier le serveur",
         deleteServer: "Supprimer le serveur",
-        createServerSuccessMessage: "Serveur ajouté avec succès",
-        editServerSuccessMessage: "Serveur mis à jour avec succès",
+        createServerSuccessMessage: "Serveur ajouté",
+        editServerSuccessMessage: "Serveur mis à jour",
         deleteServerConfirmTitle:
           "Êtes-vous sûr de vouloir supprimer ce serveur ?",
         deleteServerConfirmDescription:
@@ -671,11 +683,11 @@ export default {
         defaultServer: "Serveur par défaut",
         manageUsers: "Gérer les utilisateurs",
         users: "Utilisateurs",
-        noUsers: "Aucun utilisateur pour ce serveur.",
+        noUsers: "Aucun utilisateur pour ce serveur",
         removeUser: "Supprimer l'utilisateur",
         switchServerConfirmTitle: "Changer de serveur ?",
         switchServerConfirmDescription:
-          "Vous serez déconnecté et redirigé vers l'écran de connexion.",
+          "Vous serez déconnecté et redirigé vers l'écran de connexion",
         switchConfirm: "Changer",
       },
       shared: {
@@ -748,7 +760,7 @@ export default {
         serverPlaceholder: "Sélectionner un serveur",
         urlPlaceholder: "Entrer l'URL du serveur",
         usernamePlaceholder: "Entrer le nom d'utilisateur",
-        passwordPlaceholder: "Entrer le mot de passe de l'utilisateur",
+        passwordPlaceholder: "Entrer le mot de passe",
         choice: "Ou entrer vos détails de serveur",
         login: "Connexion",
         loginSuccessMessage: "Connexion réussie",
@@ -761,25 +773,25 @@ export default {
     },
     openSubsonic: {
       errorCodes: {
-        10: "Le paramètre requis est manquant.",
+        10: "Le paramètre requis est manquant",
         20: "La version de protocole Subsonic REST incompatible. Le client doit se mettre à jour.",
         30: "La version de protocole Subsonic REST incompatible. Le serveur doit se mettre à jour.",
-        40: "Nom d'utilisateur ou mot de passe incorrect.",
+        40: "Nom d'utilisateur ou mot de passe incorrect",
         41: "L'authentification par jeton n'est pas prise en charge pour les utilisateurs LDAP.",
-        42: "Le mécanisme d'authentification fourni n'est pas pris en charge.",
-        43: "Plusieurs mécanismes d'authentification incompatibles fournis.",
-        44: "Clé API invalide.",
-        50: "L'utilisateur n'est pas autorisé pour cette opération.",
+        42: "Le mécanisme d'authentification fourni n'est pas pris en charge",
+        43: "Plusieurs mécanismes d'authentification incompatibles fournis",
+        44: "Clé API invalide",
+        50: "L'utilisateur n'est pas autorisé pour cette opération",
         60: "La période d'essai de Subsonic est expirée. Veuillez mettre à niveau vers Subsonic Premium. Visitez subsonic.org pour plus de détails.",
-        70: "Les données demandées n'ont pas été trouvées.",
+        70: "Les données demandées n'ont pas été trouvées",
       },
     },
     taddyPodcasts: {
       errorCodes: {
         API_KEY_INVALID:
-          "La clé API ou l'ID utilisateur que vous utilisez dans vos en-têtes est invalide.",
+          "La clé API ou l'ID utilisateur que vous utilisez dans vos en-têtes est invalide",
         API_RATE_LIMIT_EXCEEDED:
-          "Vous avez dépassé votre quota mensuel de requêtes API.",
+          "Vous avez dépassé votre quota mensuel de requêtes API",
         INVALID_QUERY_OR_SYNTAX:
           "Votre requête est trop complexe ou il y a une faute de frappe ou de syntaxe quelque part dans votre requête. Utilisez la valeur de message comme un indice de ce qui peut être corrigé.",
         BAD_USER_INPUT:
@@ -787,9 +799,9 @@ export default {
         QUERY_TOO_COMPLEX:
           "La requête que vous passez dans cette requête est trop complexe. Veuillez simplifier votre requête (en supprimant des éléments de votre requête)",
         REQUIRES_USER_AUTHENTICATION:
-          "Vous devez être connecté pour faire cette requête.",
+          "Vous devez être connecté pour faire cette requête",
         ACCESS_NOT_ALLOWED:
-          "Vous n'êtes pas autorisé à accéder à cette requête ou mutation.",
+          "Vous n'êtes pas autorisé à accéder à cette requête ou mutation",
         TADDY_SERVER_ERROR:
           "Quelque chose ne va pas. Nous avons des systèmes en place pour surveiller cela mais n'hésitez pas à nous contacter à danny@taddy.org si vous obtenez cette erreur.",
       },

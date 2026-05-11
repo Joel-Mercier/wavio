@@ -1,10 +1,10 @@
 "use client";
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
 import { ImageBackground as ExpoImageBackground } from "expo-image";
-import { cssInterop } from "nativewind";
-import type React from "react";
+import React from "react";
+import { withUniwind } from "uniwind";
 
-cssInterop(ExpoImageBackground, { className: "style" });
+const StyledExpoImageBackground = withUniwind(ExpoImageBackground);
 
 const imageBackgroundStyle = tva({});
 
@@ -14,7 +14,7 @@ type ImageBackgroundProps = React.ComponentProps<typeof ExpoImageBackground> & {
 
 function ImageBackground({ className, ...props }: ImageBackgroundProps) {
   return (
-    <ExpoImageBackground
+    <StyledExpoImageBackground
       {...props}
       className={imageBackgroundStyle({
         class: className,

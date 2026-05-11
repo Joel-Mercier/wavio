@@ -5,11 +5,11 @@ import React from "react";
 import { Platform, View } from "react-native";
 
 const dividerStyle = tva({
-  base: "bg-background-200",
+  base: "bg-border",
   variants: {
     orientation: {
       vertical: "w-px h-full",
-      horizontal: "h-px w-full",
+      horizontal: "h-px w-auto",
     },
   },
 });

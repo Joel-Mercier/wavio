@@ -531,6 +531,7 @@ export default {
         addToAnotherPlaylist: "Add to another playlist",
         removeFromPlaylist: "Remove from playlist",
         addToQueue: "Add to queue",
+        goToArtist: "Go to artist",
         goToArtist_one: "Go to artist",
         goToArtist_other: "Go to artists",
         goToAlbum: "Go to album",
@@ -587,6 +588,9 @@ export default {
           modified: "Modified",
           albumPeak: "Album peak",
           trackPeak: "Track peak",
+          unknownDuration: "Unknown",
+          neverPlayed: "Never",
+          lastPlayedDistance: "{{distance}} ago",
         },
       },
       player: {
@@ -621,6 +625,14 @@ export default {
         deleteShareConfirmDescription:
           "Deleting the share will remove it permanently and will prevent others from accessing the shared sounds. Please confirm if you want to proceed.",
         editShareModalTitle: "Edit share",
+        descriptionPlaceholder: "Description (displayed in the link preview)",
+        expiresPlaceholder: "Expires at",
+        mediaType_music: "Song",
+        mediaType_song: "Song",
+        mediaType_album: "Album",
+        mediaType_podcast: "Podcast",
+        mediaType_audiobook: "Audiobook",
+        mediaType_video: "Video",
       },
       libraries: {
         title: "Libraries",

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { Search } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -15,7 +16,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { themeConfig } from "@/config/theme";
 import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
@@ -24,6 +24,7 @@ import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
 export default function SearchScreen() {
+  const [gray500] = Uniwind.getCSSVariable(["--color-gray-500"]) as string[];
   const { t } = useTranslation();
   const username = useAuth((store) => store.username);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
@@ -42,7 +43,7 @@ export default function SearchScreen() {
         style={{ paddingTop: insets.top }}
       >
         <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-          <Avatar size="sm" className="border-emerald-500 border-2">
+          <Avatar className="border-emerald-500 border-2 w-10 h-10">
             <AvatarFallbackText className="font-body ">
               {username}
             </AvatarFallbackText>
@@ -54,7 +55,7 @@ export default function SearchScreen() {
       </HStack>
       <FadeOutScaleDown className="mx-6 mb-6" onPress={handleSearchPress}>
         <HStack className="bg-white rounded-md py-3 px-3">
-          <Search size={22} color={themeConfig.theme.colors.gray[500]} />
+          <Search size={22} color={gray500} />
           <Text className="text-gray-500 text-xl ml-4">
             {t("app.search.inputPlaceholder")}
           </Text>
@@ -88,7 +89,7 @@ export default function SearchScreen() {
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

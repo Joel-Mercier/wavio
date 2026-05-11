@@ -31,6 +31,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import RichText from "@/components/RichText";
@@ -46,7 +47,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
@@ -57,6 +57,10 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function PodcastScreen() {
+  const [white, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-200",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const podcast = useLocalSearchParams<{
@@ -207,12 +211,12 @@ export default function PodcastScreen() {
           >
             <FadeOutScaleDown onPress={() => router.back()}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+                <ArrowLeft size={24} color={white} />
               </Box>
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold ml-6 truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1"
               size="lg"
             >
               {podcast.name}
@@ -225,7 +229,8 @@ export default function PodcastScreen() {
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: insets.top,
-          paddingBottom: bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
@@ -233,7 +238,7 @@ export default function PodcastScreen() {
         <VStack>
           <HStack className="mt-6 items-start justify-between">
             <FadeOutScaleDown onPress={() => router.back()}>
-              <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              <ArrowLeft size={24} color={white} />
             </FadeOutScaleDown>
             {podcast.imageUrl ? (
               <AnimatedImage
@@ -244,7 +249,7 @@ export default function PodcastScreen() {
               />
             ) : (
               <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                <ListMusic size={48} color={themeConfig.theme.colors.white} />
+                <ListMusic size={48} color={white} />
               </Box>
             )}
 
@@ -265,7 +270,7 @@ export default function PodcastScreen() {
                     />
                   ) : (
                     <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
-                      <User size={16} color={themeConfig.theme.colors.white} />
+                      <User size={16} color={white} />
                     </Box>
                   )}
                   <Text
@@ -287,19 +292,16 @@ export default function PodcastScreen() {
             <HStack className="mt-4 items-center justify-between">
               <HStack className="items-center gap-x-4">
                 <FadeOutScaleDown onPress={handleSharePress}>
-                  <Share2 color={themeConfig.theme.colors.white} />
+                  <Share2 color={white} />
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handlePresentModalPress}>
-                  <EllipsisVertical color={themeConfig.theme.colors.white} />
+                  <EllipsisVertical color={white} />
                 </FadeOutScaleDown>
               </HStack>
               <HStack className="items-center gap-x-4">
                 <FadeOutScaleDown>
                   <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                    <Play
-                      color={themeConfig.theme.colors.white}
-                      fill={themeConfig.theme.colors.white}
-                    />
+                    <Play color={white} fill={white} />
                   </Box>
                 </FadeOutScaleDown>
               </HStack>
@@ -314,10 +316,7 @@ export default function PodcastScreen() {
                 <Text className="text-white text-lg">
                   {t("app.podcasts.seeAllEpisodes")}
                 </Text>
-                <ChevronRight
-                  size={24}
-                  color={themeConfig.theme.colors.white}
-                />
+                <ChevronRight size={24} color={white} />
               </HStack>
             </FadeOutScaleDown>
           </VStack>
@@ -350,7 +349,7 @@ export default function PodcastScreen() {
                 />
               ) : (
                 <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <Podcast size={24} color={themeConfig.theme.colors.white} />
+                  <Podcast size={24} color={white} />
                 </Box>
               )}
               <VStack className="ml-4 flex-1">
@@ -369,10 +368,7 @@ export default function PodcastScreen() {
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
                 <HStack className="items-center">
-                  <Podcast
-                    size={24}
-                    color={themeConfig.theme.colors.gray[200]}
-                  />
+                  <Podcast size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.podcasts.goToPodcastSeries")}
                   </Text>
@@ -381,10 +377,7 @@ export default function PodcastScreen() {
               {podcast?.podcastSeries?.isFavorite ? (
                 <FadeOutScaleDown onPress={handleRemoveFavoritePodcastPress}>
                   <HStack className="items-center">
-                    <CircleMinus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <CircleMinus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.podcasts.removeFromFavorites")}
                     </Text>
@@ -393,10 +386,7 @@ export default function PodcastScreen() {
               ) : (
                 <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
                   <HStack className="items-center">
-                    <CirclePlus
-                      size={24}
-                      color={themeConfig.theme.colors.gray[200]}
-                    />
+                    <CirclePlus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.podcasts.addToFavorites")}
                     </Text>

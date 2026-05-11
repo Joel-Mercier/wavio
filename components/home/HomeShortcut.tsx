@@ -2,12 +2,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
 import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
 import { useMemo, useState } from "react";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { themeConfig } from "@/config/theme";
 import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -31,6 +31,10 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
 }
 
 export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
+  const [blue500, emerald500] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-emerald-500",
+  ]) as string[];
   const [imageFailed, setImageFailed] = useState(false);
   const href = useMemo<Href>(() => {
     if (recentPlay.type === "artist") {
@@ -79,10 +83,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
           <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
             {recentPlay.type === "favorites" ? (
               <LinearGradient
-                colors={[
-                  themeConfig.theme.colors.blue[500],
-                  themeConfig.theme.colors.emerald[500],
-                ]}
+                colors={[blue500, emerald500]}
                 style={{
                   width: "100%",
                   height: "100%",

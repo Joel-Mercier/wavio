@@ -1,11 +1,11 @@
 import { User } from "lucide-react-native";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -14,6 +14,7 @@ interface ArtistListItemProps {
 }
 
 export default function ArtistListItem({ artist }: ArtistListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   return (
     <FadeOutScaleDown href={`/artists/${artist.id}`} className="mr-6">
       <VStack className="gap-y-2 w-32">
@@ -25,7 +26,7 @@ export default function ArtistListItem({ artist }: ArtistListItemProps) {
           />
         ) : (
           <Box className="w-32 h-32 rounded-full bg-primary-600 items-center justify-center">
-            <User size={48} color={themeConfig.theme.colors.white} />
+            <User size={48} color={white} />
           </Box>
         )}
         <Heading size="sm" className="text-white" numberOfLines={1}>

@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import CollapsibleTabs, {
   type CollapsibleSceneProps,
 } from "@/components/CollapsibleTabs";
@@ -33,7 +34,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { themeConfig } from "@/config/theme";
 import {
   useInfinitePodcastSeries,
   usePopularContent,
@@ -56,6 +56,7 @@ const APP_BAR_ROW_HEIGHT = 56;
 const TAB_BAR_HEIGHT = 48;
 
 export default function PodcastSeriesScreen() {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const podcastSeries = useLocalSearchParams<{
     id: string;
@@ -160,7 +161,7 @@ export default function PodcastSeriesScreen() {
             />
           ) : (
             <Box className="w-32 h-32 aspect-square rounded-md bg-primary-800 items-center justify-center">
-              <Podcast size={24} color={themeConfig.theme.colors.white} />
+              <Podcast size={24} color={white} />
             </Box>
           )}
           <VStack className="flex-1">
@@ -358,7 +359,7 @@ export default function PodcastSeriesScreen() {
             <Box className="w-10" />
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold ml-6 truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1"
               size="lg"
             >
               {podcastSeries.name}
@@ -375,7 +376,7 @@ export default function PodcastSeriesScreen() {
         <Box className="px-6">
           <FadeOutScaleDown onPress={() => router.back()}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-              <ArrowLeft size={24} color={themeConfig.theme.colors.white} />
+              <ArrowLeft size={24} color={white} />
             </Box>
           </FadeOutScaleDown>
         </Box>
