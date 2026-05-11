@@ -1,4 +1,5 @@
 import { Disc3 } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -23,6 +24,7 @@ export default function AlbumListItem({
   layout = "vertical",
   className = "",
 }: AlbumListItemProps) {
+  const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   return (
     <FadeOutScaleDown
@@ -74,7 +76,11 @@ export default function AlbumListItem({
                 )
                 .join(" · ")}
             </Text>
-          ) : null}
+          ) : (
+            <Text className="text-md text-primary-100" numberOfLines={1}>
+              {" "}
+            </Text>
+          )}
           <Heading
             size={layout === "horizontal" ? "sm" : "lg"}
             className="text-white"

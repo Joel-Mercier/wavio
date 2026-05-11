@@ -352,6 +352,21 @@ export default {
           videoConversion: "Video conversion",
           scrobbling: "Scrobbling",
         },
+        roleDescriptions: {
+          admin: "Can manage users, servers, settings, and more",
+          settings: "Can change personal settings and password",
+          stream: "Can play files",
+          jukebox: "Can play files in jukebox mode",
+          download: "Can download files",
+          upload: "Can upload files",
+          playlist: "Can create and edit playlists",
+          coverArt: "Can change cover art and tags",
+          comment: "Can create and edit comments and ratings",
+          podcast: "Can administrate podcasts",
+          share: "Can share files with anyone",
+          videoConversion: "Can convert videos",
+          scrobbling: "Can scrobble tracks",
+        }
       },
       editPlaylist: {
         title: "Edit playlist",

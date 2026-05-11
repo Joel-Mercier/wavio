@@ -3,6 +3,8 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useQueryClient } from "@tanstack/react-query";
+import * as Clipboard from "expo-clipboard";
 import { Directory, File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -10,6 +12,8 @@ import { useRouter } from "expo-router";
 import {
   AudioLines,
   ChevronDown,
+  ClipboardCheck,
+  ClipboardIcon,
   Disc3,
   Download,
   EllipsisVertical,
@@ -68,6 +72,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
@@ -135,15 +140,19 @@ export default function PlayerScreen() {
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { handleSheetPositionChange: handleSleepSheetPositionChange } =
     useBottomSheetBackHandler(sleepTimerSheetRef);
   const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetArtistsModalRef);
+  const { handleSheetPositionChange: handleShareSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -170,6 +179,7 @@ export default function PlayerScreen() {
   const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doShare = useCreateShare();
   const repeatMode = useQueue((store) => store.repeatMode);
   const setRepeatMode = useQueue((store) => store.setRepeatMode);
   const shuffle = useQueue((store) => store.shuffle);
@@ -514,6 +524,94 @@ export default function PlayerScreen() {
 
   const handleShufflePress = (enabled: boolean) => {
     setShuffle(enabled);
+  };
+
+  useEffect(() => {
+    if (clipoardCopyDone) {
+      const timer = setTimeout(() => {
+        setClipoardCopyDone(false);
+      }, 1000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [clipoardCopyDone]);
+
+  const handleSharePress = () => {
+    if (!playingTrack) return;
+    doShare.mutate(
+      { id: playingTrack.id },
+      {
+        onSuccess: (data) => {
+          bottomSheetModalRef.current?.dismiss();
+          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
+          queryClient.invalidateQueries({ queryKey: ["shares"] });
+          bottomSheetShareModalRef.current?.present();
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.shareSuccessMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          console.error(error);
+          toast.show({
+            placement: "top",
+            duration: 3000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.shareErrorMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleCopyShareUrlPress = async () => {
+    try {
+      if (clipboardText) {
+        await Clipboard.setStringAsync(clipboardText);
+        setClipoardCopyDone(true);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.shared.shareUrlCopiedMessage")}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.shareUrlErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   const handleDownloadPress = async () => {
@@ -875,9 +973,7 @@ export default function PlayerScreen() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown
-                    onPress={() => console.log("share pressed")}
-                  >
+                  <FadeOutScaleDown onPress={handleSharePress}>
                     <HStack className="items-center">
                       <Share2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -1033,6 +1129,46 @@ export default function PlayerScreen() {
                   </FadeOutScaleDown>
                 ))}
               </VStack>
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={bottomSheetShareModalRef}
+          onChange={handleShareSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView
+            style={{
+              flex: 1,
+              alignItems: "center",
+            }}
+          >
+            <Box className="p-6 w-full mb-12">
+              <HStack className="items-center">
+                <FadeOutScaleDown
+                  className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                  onPress={handleCopyShareUrlPress}
+                >
+                  {clipoardCopyDone ? (
+                    <ClipboardCheck size={24} color={emerald500} />
+                  ) : (
+                    <ClipboardIcon size={24} color={gray200} />
+                  )}
+                  <Text
+                    className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                  >
+                    {clipboardText}
+                  </Text>
+                </FadeOutScaleDown>
+              </HStack>
             </Box>
           </BottomSheetView>
         </BottomSheetModal>

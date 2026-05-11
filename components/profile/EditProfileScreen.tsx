@@ -114,11 +114,10 @@ function parseFolderIds(input?: string): number[] | undefined {
 }
 
 export default function EditProfileScreen() {
-  const [white, gray600, emerald500, gray400] = Uniwind.getCSSVariable([
+  const [white, gray600, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-600",
     "--color-emerald-500",
-    "--color-gray-400",
   ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
@@ -281,17 +280,13 @@ export default function EditProfileScreen() {
               size="md"
               className="mb-4"
             >
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className={cn(
-                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                    { "border-red-500": showFieldError(field) },
-                  )}
+                  className="text-md text-white"
                   placeholder={t("app.editProfile.emailPlaceholder")}
-                  placeholderTextColor={gray400}
                   autoCapitalize="none"
                   keyboardType="email-address"
                 />
@@ -313,17 +308,13 @@ export default function EditProfileScreen() {
               size="md"
               className="mb-2"
             >
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className={cn(
-                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                    { "border-red-500": showFieldError(field) },
-                  )}
+                  className="text-md text-white"
                   placeholder={t("app.editProfile.newPasswordPlaceholder")}
-                  placeholderTextColor={gray400}
                   secureTextEntry
                   autoCapitalize="none"
                 />
@@ -339,17 +330,13 @@ export default function EditProfileScreen() {
               size="md"
               className="mb-4"
             >
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className={cn(
-                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                    { "border-red-500": showFieldError(field) },
-                  )}
+                  className="text-md text-white"
                   placeholder={t("app.editProfile.confirmPasswordPlaceholder")}
-                  placeholderTextColor={gray400}
                   secureTextEntry
                   autoCapitalize="none"
                 />
@@ -371,14 +358,13 @@ export default function EditProfileScreen() {
         <form.Field name="maxBitRate">
           {(field) => (
             <FormControl size="md" className="mb-2">
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full"
+                  className="text-md text-white"
                   placeholder={t("app.editProfile.maxBitRatePlaceholder")}
-                  placeholderTextColor={gray400}
                   keyboardType="number-pad"
                 />
               </Input>
@@ -388,14 +374,13 @@ export default function EditProfileScreen() {
         <form.Field name="musicFolderId">
           {(field) => (
             <FormControl size="md" className="mb-4">
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full"
+                  className="text-md text-white"
                   placeholder={t("app.editProfile.musicFolderIdPlaceholder")}
-                  placeholderTextColor={gray400}
                   autoCapitalize="none"
                 />
               </Input>
@@ -412,12 +397,19 @@ export default function EditProfileScreen() {
           {ROLE_FIELDS.map((roleField) => (
             <form.Field key={roleField} name={roleField}>
               {(field) => (
-                <HStack className="items-center justify-between">
-                  <Text className="text-white shrink pr-4">
-                    {t(
-                      `app.editProfile.roleLabels.${ROLE_I18N_KEYS[roleField]}`,
-                    )}
-                  </Text>
+                <HStack className="items-start justify-between gap-x-4">
+                  <VStack className="flex-1">
+                    <Text className="text-white shrink pr-4">
+                      {t(
+                        `app.editProfile.roleLabels.${ROLE_I18N_KEYS[roleField]}`,
+                      )}
+                    </Text>
+                    <Text className="text-primary-100 text-sm flex-1 truncate">
+                      {t(
+                        `app.editProfile.roleDescriptions.${ROLE_I18N_KEYS[roleField]}`,
+                      )}
+                    </Text>
+                  </VStack>
                   <Switch
                     value={Boolean(field.state.value)}
                     onValueChange={field.handleChange}
