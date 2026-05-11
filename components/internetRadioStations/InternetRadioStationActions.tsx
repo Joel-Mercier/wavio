@@ -274,11 +274,7 @@ export default function InternetRadioStationActions({
                   size="md"
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="bg-primary-600 border-0 rounded-full">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
@@ -303,11 +299,7 @@ export default function InternetRadioStationActions({
                   size="md"
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="bg-primary-600 border-0 rounded-full">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
@@ -334,11 +326,7 @@ export default function InternetRadioStationActions({
                   size="md"
                   className="my-4"
                 >
-                  <Input
-                    className="bg-primary-600 border-0 rounded-full"
-                    variant="rounded"
-                    size="xl"
-                  >
+                  <Input className="bg-primary-600 border-0 rounded-full">
                     <InputField
                       value={field.state.value}
                       onChangeText={field.handleChange}

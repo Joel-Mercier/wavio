@@ -170,11 +170,7 @@ export default function EditPlaylistScreen() {
               isRequired={false}
               className="mb-2 mt-0"
             >
-              <Input
-                className="bg-primary-600 border-0 rounded-full"
-                variant="rounded"
-                size="xl"
-              >
+              <Input className="bg-primary-600 border-0 rounded-full">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}

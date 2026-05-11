@@ -96,7 +96,7 @@ export default function CreatePlaylistFromQueueDialog({
           </Heading>
         </AlertDialogHeader>
         <AlertDialogBody className="mt-3 mb-4">
-          <Input className="border-white" variant="underlined">
+          <Input className="border-white">
             <InputField
               value={name}
               onChangeText={setName}
