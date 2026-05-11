@@ -3,10 +3,21 @@ import { createSwitch } from "@gluestack-ui/core/switch/creator";
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
 import { tva, withStyleContext } from "@gluestack-ui/utils/nativewind-utils";
 import React from "react";
-import { Switch as RNSwitch } from "react-native";
+import { Switch as RNSwitch, View } from "react-native";
+
+const SwitchRoot = React.forwardRef<
+  React.ComponentRef<typeof RNSwitch>,
+  React.ComponentProps<typeof RNSwitch> & { wrapperClassName?: string }
+>(function SwitchRoot({ wrapperClassName, ...props }, ref) {
+  return (
+    <View className={wrapperClassName}>
+      <RNSwitch ref={ref} {...props} />
+    </View>
+  );
+});
 
 const UISwitch = createSwitch({
-  Root: withStyleContext(RNSwitch),
+  Root: withStyleContext(SwitchRoot),
 });
 
 const switchStyle = tva({
@@ -21,7 +32,7 @@ const switchStyle = tva({
   },
 });
 
-type ISwitchProps = React.ComponentProps<typeof UISwitch> &
+type ISwitchProps = Omit<React.ComponentProps<typeof UISwitch>, "wrapperClassName"> &
   VariantProps<typeof switchStyle>;
 const Switch = React.forwardRef<
   React.ComponentRef<typeof UISwitch>,
@@ -31,7 +42,7 @@ const Switch = React.forwardRef<
     <UISwitch
       ref={ref}
       {...props}
-      className={switchStyle({ size, class: className })}
+      wrapperClassName={switchStyle({ size, class: className })}
     />
   );
 });
