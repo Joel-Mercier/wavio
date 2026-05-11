@@ -30,6 +30,7 @@ interface RecentPlaysStore {
   addRecentPlay: (recentPlay: RecentPlay) => void;
   insertRecentPlayAtTop: (recentPlay: RecentPlay) => void;
   clearRecentPlays: () => void;
+  __reset: () => void;
 }
 
 let storeRef: { getState: () => RecentPlaysStore } | null = null;
@@ -75,6 +76,9 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
               ),
             };
           });
+        },
+        __reset: () => {
+          set({ recentPlays: [] });
         },
       };
     },

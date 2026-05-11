@@ -27,7 +27,7 @@ const StyledUIIcon = withUniwind(UIIcon);
 const IconWrapper = React.forwardRef<
   React.ComponentRef<typeof UIIcon>,
   React.ComponentPropsWithoutRef<typeof UIIcon>
-// biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
+  // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
 >(function IconWrapper({ ...props }, ref: any) {
   return <StyledUIIcon {...props} ref={ref} />;
 });

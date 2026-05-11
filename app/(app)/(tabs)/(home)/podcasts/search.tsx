@@ -118,8 +118,6 @@ export default function PodcastsSearchScreen() {
     bottomSheetModalRef.current?.present();
   };
 
-  console.log(query, data);
-
   return (
     <Box className="h-full">
       <Box className="bg-primary-600 px-6 py-6">

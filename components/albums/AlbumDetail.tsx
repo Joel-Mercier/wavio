@@ -709,7 +709,9 @@ export default function AlbumDetail() {
                       ? "Compilation"
                       : "Album"}{" "}
                   ⦁{" "}
-                  {data?.album?.originalReleaseDate &&
+                  {data?.album?.originalReleaseDate?.day &&
+                    data?.album.originalReleaseDate?.month &&
+                    data?.album.originalReleaseDate?.year &&
                     format(
                       parse(
                         `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,

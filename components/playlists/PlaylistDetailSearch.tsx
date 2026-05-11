@@ -23,7 +23,9 @@ import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 
 export default function PlaylistDetailSearch() {
-  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
   const { id } = useLocalSearchParams<{
     id: string;
   }>();

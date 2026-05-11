@@ -189,7 +189,7 @@ export default function PodcastScreen() {
       });
     }
   };
-  console.log(podcast.podcastSeries);
+
   return (
     <Box className="h-full">
       <AnimatedBox

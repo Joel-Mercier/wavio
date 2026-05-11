@@ -18,6 +18,7 @@ interface RecentSearchesStore {
   addRecentSearch: (search: RecentSearch) => void;
   clearRecentSearches: () => void;
   removeRecentSearch: (id: string) => void;
+  __reset: () => void;
 }
 
 const useRecentSearchesBase = create<RecentSearchesStore>()(
@@ -47,6 +48,9 @@ const useRecentSearchesBase = create<RecentSearchesStore>()(
             ),
           };
         });
+      },
+      __reset: () => {
+        set({ recentSearches: [] });
       },
     }),
     {

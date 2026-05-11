@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { storage } from "@/config/storage";
+import { createScopedStorage, getAuthScope } from "@/config/storage";
+import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type QueueTrack = {
@@ -51,19 +52,27 @@ interface QueueStore {
   previous: () => void;
 
   getCurrent: () => QueueTrack | null;
+  __reset: () => void;
 }
+
+const initialQueueState = {
+  queue: [] as QueueTrack[],
+  currentIndex: null as number | null,
+  removePlayed: false,
+  repeatMode: "off" as "off" | "all" | "one",
+  contextIds: null as string[] | null,
+  shuffle: false,
+  shuffleOrderIds: null as string[] | null,
+  shuffleCursor: null as number | null,
+};
 
 const useQueueBase = create<QueueStore>()(
   persist(
     (set, get) => ({
-      queue: [],
-      currentIndex: null,
-      removePlayed: false,
-      repeatMode: "off",
-      contextIds: null,
-      shuffle: false,
-      shuffleOrderIds: null,
-      shuffleCursor: null,
+      ...initialQueueState,
+      __reset: () => {
+        set(() => ({ ...initialQueueState }));
+      },
 
       // Build a new shuffle order constrained by current context (if any)
       // and ensure the current track id is placed at the cursor position.
@@ -782,11 +791,12 @@ const useQueueBase = create<QueueStore>()(
     {
       name: "queueStore",
       version: 2,
-      storage: createJSONStorage(() => ({
-        getItem: (name: string) => storage.getString(name) ?? null,
-        setItem: (name: string, value: string) => storage.set(name, value),
-        removeItem: (name: string) => storage.remove(name),
-      })),
+      storage: createJSONStorage(() => {
+        const { url, username } = useAuthBase.getState();
+        const scope = getAuthScope(url, username);
+        return createScopedStorage(scope);
+      }),
+      skipHydration: true,
       partialize: (state) => ({
         queue: state.queue,
         currentIndex: state.currentIndex,

@@ -25,7 +25,9 @@ import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 
 export default function FavoritesSearch() {
-  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();

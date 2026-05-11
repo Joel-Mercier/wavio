@@ -21,6 +21,7 @@ interface ActivityStore {
   activity: ActivityEntry[];
   recordActivity: (entry: Omit<ActivityEntry, "playedAt">) => void;
   clearActivity: () => void;
+  __reset: () => void;
 }
 
 const useActivityBase = create<ActivityStore>()(
@@ -43,6 +44,9 @@ const useActivityBase = create<ActivityStore>()(
         });
       },
       clearActivity: () => {
+        set({ activity: [] });
+      },
+      __reset: () => {
         set({ activity: [] });
       },
     }),

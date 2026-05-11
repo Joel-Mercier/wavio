@@ -22,7 +22,9 @@ import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { cn } from "@/utils/tailwind";
 
 export default function SearchResultsScreen() {
-  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
   const { t } = useTranslation();
   const { query } = useLocalSearchParams<{ query: string }>();
   const [filter, setFilter] = useState<

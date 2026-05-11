@@ -11,7 +11,7 @@ import {
   useStyleContext,
   withStyleContext,
 } from "@gluestack-ui/utils/nativewind-utils";
-// @ts-ignore: optional dependency, not installed
+// @ts-expect-error: optional dependency, not installed
 import DateTimePickerNative from "@react-native-community/datetimepicker";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -123,7 +123,7 @@ const DateTimePicker = React.forwardRef<
         <UIDateTimePicker
           className={dateTimePickerStyle({ class: className })}
           // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
-      ref={ref as any}
+          ref={ref as any}
           {...props}
         >
           {children}
@@ -160,7 +160,7 @@ const DateTimePicker = React.forwardRef<
       <UIDateTimePicker
         className={dateTimePickerStyle({ class: className })}
         // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
-      ref={ref as any}
+        ref={ref as any}
         {...props}
       >
         {children}
@@ -533,7 +533,7 @@ const DateTimePickerIcon = React.forwardRef<
     return (
       <UIDateTimePicker.Icon
         // biome-ignore lint/suspicious/noExplicitAny: gluestack ref typing
-      ref={ref as any}
+        ref={ref as any}
         {...props}
         className={dateTimePickerIconStyle({ class: className })}
         size={size}

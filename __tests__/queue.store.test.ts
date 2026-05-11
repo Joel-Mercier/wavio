@@ -1,22 +1,28 @@
-import useQueue from "@/stores/queue";
-
 // Mock MMKV-backed storage with an in-memory implementation
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
+  const make = () => ({
+    setItem: (k: string, v: string) => mem.set(k, v),
+    getItem: (k: string) => mem.get(k) ?? null,
+    removeItem: (k: string) => mem.delete(k),
+  });
   return {
     storage: {
-      set: (key: string, value: string) => {
-        mem.set(key, value);
-      },
-      getString: (key: string) => {
-        return mem.get(key) ?? null;
-      },
-      delete: (key: string) => {
-        mem.delete(key);
-      },
+      set: (k: string, v: string) => mem.set(k, v),
+      getString: (k: string) => mem.get(k) ?? null,
+      remove: (k: string) => mem.delete(k),
     },
+    zustandStorage: make(),
+    createScopedStorage: () => make(),
+    getAuthScope: () => "scope",
   };
 });
+
+jest.mock("@/stores/auth", () => ({
+  useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
+}));
+
+import useQueue from "@/stores/queue";
 
 type TestTrack = { id: string; url: string };
 

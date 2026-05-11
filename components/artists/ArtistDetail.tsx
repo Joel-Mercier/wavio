@@ -123,7 +123,6 @@ export default function ArtistDetail() {
   const { data, isLoading, error } = useArtist(id);
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
     useArtistInfo2(id, { count: 10 });
-  console.log(data?.artist.userRating);
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,

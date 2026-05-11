@@ -36,7 +36,9 @@ import { cn } from "@/utils/tailwind";
 type SearchFilter = "albums" | "artists" | "playlists" | "folders" | null;
 
 export default function LibrarySearchScreen() {
-  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();

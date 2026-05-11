@@ -25,7 +25,9 @@ import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { cn } from "@/utils/tailwind";
 
 export default function RecentSearchesScreen() {
-  const [primary50] = Uniwind.getCSSVariable(["--color-primary-50"]) as string[];
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const bottomTabBarHeight = useBottomTabBarHeight();

@@ -133,8 +133,7 @@ export default {
         newPlaylist: "Nouvelle playlist",
         finished: "Terminé",
         addTrackSuccessMessage_one: "Titre ajouté à la playlist",
-        addTrackSuccessMessage_other:
-          "Titres ajoutés à la playlist",
+        addTrackSuccessMessage_other: "Titres ajoutés à la playlist",
         addTrackErrorMessage_one:
           "Une erreur s'est produite lors de l'ajout du titre à la playlist",
         addTrackErrorMessage_other:
@@ -326,6 +325,45 @@ export default {
           "Une erreur s'est produite lors de la création de la playlist",
         namePlaceholder: "Ma super playlist",
       },
+      profile: {
+        title: "Profil",
+        playlists: "Playlists",
+        edit: "Modifier",
+        noPlaylists: "Aucune playlist",
+      },
+      editProfile: {
+        title: "Modifier le profil",
+        infoSection: "Compte",
+        passwordSection: "Mot de passe",
+        streamingSection: "Diffusion",
+        rolesSection: "Rôles",
+        usernameLabel: "Nom d'utilisateur",
+        emailPlaceholder: "Entrez l'email",
+        newPasswordPlaceholder: "Nouveau mot de passe",
+        confirmPasswordPlaceholder: "Confirmer le nouveau mot de passe",
+        maxBitRatePlaceholder: "Débit maximum (kbps)",
+        musicFolderIdPlaceholder:
+          "Identifiants des dossiers musicaux (séparés par des virgules)",
+        passwordMismatch: "Les mots de passe ne correspondent pas",
+        successMessage: "Profil mis à jour",
+        errorMessage:
+          "Une erreur s'est produite lors de la mise à jour du profil",
+        roleLabels: {
+          admin: "Administrateur",
+          settings: "Paramètres",
+          stream: "Diffusion",
+          jukebox: "Jukebox",
+          download: "Téléchargement",
+          upload: "Envoi",
+          playlist: "Playlist",
+          coverArt: "Pochette",
+          comment: "Commentaire",
+          podcast: "Podcast",
+          share: "Partage",
+          videoConversion: "Conversion vidéo",
+          scrobbling: "Scrobbling",
+        },
+      },
       editPlaylist: {
         title: "Modifier la playlist",
         namePlaceholder: "Entrer le nom de la playlist",
@@ -430,8 +468,7 @@ export default {
             "Êtes-vous sûr de vouloir supprimer vos recherches récentes stockées ?",
           recentSearchesConfirmDescription:
             "Supprimer ces recherches est irréversible. Êtes-vous sûr de vouloir continuer ?",
-          recentSearchesSuccessMessage:
-            "Recherches récentes supprimées",
+          recentSearchesSuccessMessage: "Recherches récentes supprimées",
           recentPlaysLabel: "Joués récemment",
           recentPlaysDescription:
             "Supprimer vos raccourcis de lecture récents sur l'écran d'accueil",
@@ -746,6 +783,7 @@ export default {
           switchUser: "Changer d'utilisateur",
           currentServer: "Serveur actuel",
           version: "version {{version}}",
+          seeProfile: "Voir le profil",
         },
         languages: {
           en: "English",

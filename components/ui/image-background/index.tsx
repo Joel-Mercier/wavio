@@ -1,7 +1,7 @@
 "use client";
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
 import { ImageBackground as ExpoImageBackground } from "expo-image";
-import React from "react";
+import type React from "react";
 import { withUniwind } from "uniwind";
 
 const StyledExpoImageBackground = withUniwind(ExpoImageBackground);

@@ -13,7 +13,6 @@ import {
 } from "lucide-react-native";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -156,20 +155,31 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
       >
         <DrawerHeader>
           <HStack className="flex-1 items-center m-1 p-4 border-b-2 border-primary-500">
-            <Avatar className="mr-4 bg-primary-400 w-10 h-10">
-              <AvatarFallbackText className="font-body">
-                {username}
-              </AvatarFallbackText>
-            </Avatar>
-            <VStack className="flex-1">
-              <Heading
-                numberOfLines={1}
-                size="xl"
-                className="text-white font-bold"
-              >
-                {username}
-              </Heading>
-            </VStack>
+            <Pressable
+              className="flex-row flex-1 items-center active:opacity-60"
+              onPress={() => {
+                onClose();
+                router.navigate(`/profile/${username}`);
+              }}
+            >
+              <Avatar className="mr-4 bg-primary-400 w-10 h-10">
+                <AvatarFallbackText className="font-body">
+                  {username}
+                </AvatarFallbackText>
+              </Avatar>
+              <VStack className="flex-1">
+                <Heading
+                  numberOfLines={1}
+                  size="lg"
+                  className="text-white font-bold"
+                >
+                  {username}
+                </Heading>
+                <Text className="text-primary-300 text-sm">
+                  {t("app.shared.sidebar.seeProfile")}
+                </Text>
+              </VStack>
+            </Pressable>
             {otherUsers.length > 0 && (
               <Select>
                 <SelectTrigger

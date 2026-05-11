@@ -51,6 +51,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -558,6 +559,28 @@ export default function PlaylistDetail() {
                   </Text>
                 )}
               </VStack>
+              {playlistData?.playlist?.owner && (
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate(`/profile/${playlistData?.playlist?.owner}`)
+                  }
+                  className="mt-4"
+                >
+                  <HStack className="items-center">
+                    <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
+                      <AvatarFallbackText>
+                        {playlistData?.playlist?.owner}
+                      </AvatarFallbackText>
+                    </Avatar>
+                    <Text
+                      className="text-white text-md font-bold"
+                      numberOfLines={1}
+                    >
+                      {playlistData?.playlist?.owner}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <HStack className="mt-2 items-center">
                 <Clock color={"#808080"} size={16} />
                 <Text className="ml-2 text-primary-100">

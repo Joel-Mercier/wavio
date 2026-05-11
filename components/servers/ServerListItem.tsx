@@ -351,17 +351,25 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     key={`${u.serverId}:${u.username}`}
                     className="items-center justify-between"
                   >
-                    <HStack className="items-center flex-1">
-                      <Avatar size="sm" className="bg-primary-400 mr-3">
-                        <AvatarFallbackText>{u.username}</AvatarFallbackText>
-                      </Avatar>
-                      <Text
-                        className="text-white text-base flex-1"
-                        numberOfLines={1}
-                      >
-                        {u.username}
-                      </Text>
-                    </HStack>
+                    <FadeOutScaleDown
+                      onPress={() => {
+                        handleCloseManageUsersDialog();
+                        router.navigate(`/profile/${u.username}`);
+                      }}
+                      className="flex-1"
+                    >
+                      <HStack className="items-center flex-1">
+                        <Avatar size="sm" className="bg-primary-400 mr-3">
+                          <AvatarFallbackText>{u.username}</AvatarFallbackText>
+                        </Avatar>
+                        <Text
+                          className="text-white text-base flex-1"
+                          numberOfLines={1}
+                        >
+                          {u.username}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
                     <FadeOutScaleDown
                       onPress={() => removeUser(u.serverId, u.username)}
                     >

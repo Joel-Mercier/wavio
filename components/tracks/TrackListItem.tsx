@@ -196,7 +196,6 @@ export default function TrackListItem({
           });
         },
         onError: (error) => {
-          console.log(error);
           toast.show({
             placement: "top",
             duration: 3000,

@@ -1,0 +1,435 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { X } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
+import * as z from "zod";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import FieldError, {
+  handleFieldBlur,
+  showFieldError,
+} from "@/components/forms/FieldError";
+import { Box } from "@/components/ui/box";
+import { Divider } from "@/components/ui/divider";
+import { FormControl } from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Input, InputField } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
+import {
+  useChangePassword,
+  useGetUser,
+  useUpdateUser,
+} from "@/hooks/openSubsonic/useUsers";
+import useAuth from "@/stores/auth";
+import { cn } from "@/utils/tailwind";
+
+const ROLE_FIELDS = [
+  "adminRole",
+  "settingsRole",
+  "streamRole",
+  "jukeboxRole",
+  "downloadRole",
+  "uploadRole",
+  "playlistRole",
+  "coverArtRole",
+  "commentRole",
+  "podcastRole",
+  "shareRole",
+  "videoConversionRole",
+  "scrobblingEnabled",
+] as const;
+
+type RoleField = (typeof ROLE_FIELDS)[number];
+
+const ROLE_I18N_KEYS: Record<RoleField, string> = {
+  adminRole: "admin",
+  settingsRole: "settings",
+  streamRole: "stream",
+  jukeboxRole: "jukebox",
+  downloadRole: "download",
+  uploadRole: "upload",
+  playlistRole: "playlist",
+  coverArtRole: "coverArt",
+  commentRole: "comment",
+  podcastRole: "podcast",
+  shareRole: "share",
+  videoConversionRole: "videoConversion",
+  scrobblingEnabled: "scrobbling",
+};
+
+const editProfileSchema = z
+  .object({
+    email: z.string().trim().email().optional().or(z.literal("")),
+    password: z.string().optional().or(z.literal("")),
+    passwordConfirm: z.string().optional().or(z.literal("")),
+    maxBitRate: z.string().optional(),
+    musicFolderId: z.string().optional(),
+    adminRole: z.boolean(),
+    settingsRole: z.boolean(),
+    streamRole: z.boolean(),
+    jukeboxRole: z.boolean(),
+    downloadRole: z.boolean(),
+    uploadRole: z.boolean(),
+    playlistRole: z.boolean(),
+    coverArtRole: z.boolean(),
+    commentRole: z.boolean(),
+    podcastRole: z.boolean(),
+    shareRole: z.boolean(),
+    videoConversionRole: z.boolean(),
+    scrobblingEnabled: z.boolean(),
+  })
+  .refine(
+    (data) =>
+      !data.password || data.password.length === 0
+        ? true
+        : data.password === data.passwordConfirm,
+    {
+      path: ["passwordConfirm"],
+      message: "passwordMismatch",
+    },
+  );
+
+type EditProfileValues = z.input<typeof editProfileSchema>;
+
+function parseFolderIds(input?: string): number[] | undefined {
+  if (!input) return undefined;
+  const ids = input
+    .split(",")
+    .map((part) => Number.parseInt(part.trim(), 10))
+    .filter((n) => Number.isFinite(n));
+  return ids.length > 0 ? ids : undefined;
+}
+
+export default function EditProfileScreen() {
+  const [white, gray600, emerald500, gray400] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-600",
+    "--color-emerald-500",
+    "--color-gray-400",
+  ]) as string[];
+  const { t } = useTranslation();
+  const router = useRouter();
+  const toast = useToast();
+  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  const { username } = useLocalSearchParams<{ username: string }>();
+  const currentUsername = useAuth((store) => store.username);
+  const { data } = useGetUser(currentUsername);
+  const doUpdateUser = useUpdateUser();
+  const doChangePassword = useChangePassword();
+  const user = data?.user;
+
+  const form = useForm({
+    defaultValues: {
+      email: user?.email ?? "",
+      password: "",
+      passwordConfirm: "",
+      maxBitRate: user?.maxBitRate !== undefined ? String(user.maxBitRate) : "",
+      musicFolderId: user?.folder?.join(",") ?? "",
+      adminRole: user?.adminRole ?? false,
+      settingsRole: user?.settingsRole ?? false,
+      streamRole: user?.streamRole ?? false,
+      jukeboxRole: user?.jukeboxRole ?? false,
+      downloadRole: user?.downloadRole ?? false,
+      uploadRole: user?.uploadRole ?? false,
+      playlistRole: user?.playlistRole ?? false,
+      coverArtRole: user?.coverArtRole ?? false,
+      commentRole: user?.commentRole ?? false,
+      podcastRole: user?.podcastRole ?? false,
+      shareRole: user?.shareRole ?? false,
+      videoConversionRole: user?.videoConversionRole ?? false,
+      scrobblingEnabled: user?.scrobblingEnabled ?? false,
+    } as EditProfileValues,
+    validators: {
+      onChange: editProfileSchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        if (value.password && value.password.length > 0) {
+          await doChangePassword.mutateAsync({
+            username: currentUsername,
+            password: value.password,
+          });
+        }
+        const maxBitRate =
+          value.maxBitRate && value.maxBitRate.length > 0
+            ? Number.parseInt(value.maxBitRate, 10)
+            : undefined;
+        await doUpdateUser.mutateAsync({
+          username: currentUsername,
+          email: value.email || undefined,
+          maxBitRate: Number.isFinite(maxBitRate as number)
+            ? (maxBitRate as number)
+            : undefined,
+          musicFolderId: parseFolderIds(value.musicFolderId),
+          adminRole: value.adminRole,
+          settingsRole: value.settingsRole,
+          streamRole: value.streamRole,
+          jukeboxRole: value.jukeboxRole,
+          downloadRole: value.downloadRole,
+          uploadRole: value.uploadRole,
+          playlistRole: value.playlistRole,
+          coverArtRole: value.coverArtRole,
+          commentRole: value.commentRole,
+          podcastRole: value.podcastRole,
+          shareRole: value.shareRole,
+          videoConversionRole: value.videoConversionRole,
+          scrobblingEnabled: value.scrobblingEnabled,
+        });
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.editProfile.successMessage")}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+        router.back();
+      } catch (error) {
+        console.error(error);
+        toast.show({
+          placement: "top",
+          duration: 3000,
+          render: () => (
+            <Toast action="error">
+              <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.editProfile.errorMessage")}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      }
+    },
+  });
+
+  const isDirty = useStore(form.store, (state) => state.isDirty);
+
+  return (
+    <Box className="h-full flex-1 bg-black">
+      <Box className="px-6 pb-6 bg-black">
+        <HStack
+          className="items-center"
+          style={{ paddingTop: insets.top + 16 }}
+        >
+          <Box className="flex-1 items-start">
+            <FadeOutScaleDown onPress={() => router.back()}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                <X size={24} color={white} />
+              </Box>
+            </FadeOutScaleDown>
+          </Box>
+          <Heading
+            className="text-white font-bold text-center px-2"
+            size="lg"
+            numberOfLines={1}
+          >
+            {t("app.editProfile.title")}
+          </Heading>
+          <Box className="flex-1 items-end">
+            <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
+              <Text
+                className={cn("text-emerald-500 font-bold text-lg", {
+                  "opacity-50": !isDirty,
+                })}
+              >
+                {t("app.shared.save")}
+              </Text>
+            </FadeOutScaleDown>
+          </Box>
+        </HStack>
+      </Box>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 8,
+          paddingBottom:
+            insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT + 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Heading size="md" className="text-white mb-3">
+          {t("app.editProfile.infoSection")}
+        </Heading>
+        <VStack className="mb-2">
+          <Text className="text-primary-100 text-sm mb-1">
+            {t("app.editProfile.usernameLabel")}
+          </Text>
+          <Text className="text-white font-bold mb-3">{username}</Text>
+        </VStack>
+        <form.Field name="email">
+          {(field) => (
+            <FormControl
+              isInvalid={showFieldError(field)}
+              size="md"
+              className="mb-4"
+            >
+              <Input className="bg-primary-600 border-0 rounded-full">
+                <InputField
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={() => handleFieldBlur(field)}
+                  className={cn(
+                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                    { "border-red-500": showFieldError(field) },
+                  )}
+                  placeholder={t("app.editProfile.emailPlaceholder")}
+                  placeholderTextColor={gray400}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </Input>
+              <FieldError field={field} />
+            </FormControl>
+          )}
+        </form.Field>
+
+        <Divider className="my-4 bg-primary-600" />
+
+        <Heading size="md" className="text-white mb-3">
+          {t("app.editProfile.passwordSection")}
+        </Heading>
+        <form.Field name="password">
+          {(field) => (
+            <FormControl
+              isInvalid={showFieldError(field)}
+              size="md"
+              className="mb-2"
+            >
+              <Input className="bg-primary-600 border-0 rounded-full">
+                <InputField
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={() => handleFieldBlur(field)}
+                  className={cn(
+                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                    { "border-red-500": showFieldError(field) },
+                  )}
+                  placeholder={t("app.editProfile.newPasswordPlaceholder")}
+                  placeholderTextColor={gray400}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </Input>
+              <FieldError field={field} />
+            </FormControl>
+          )}
+        </form.Field>
+        <form.Field name="passwordConfirm">
+          {(field) => (
+            <FormControl
+              isInvalid={showFieldError(field)}
+              size="md"
+              className="mb-4"
+            >
+              <Input className="bg-primary-600 border-0 rounded-full">
+                <InputField
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={() => handleFieldBlur(field)}
+                  className={cn(
+                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
+                    { "border-red-500": showFieldError(field) },
+                  )}
+                  placeholder={t("app.editProfile.confirmPasswordPlaceholder")}
+                  placeholderTextColor={gray400}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </Input>
+              {showFieldError(field) && (
+                <Text className="text-red-500 text-sm mt-1">
+                  {t("app.editProfile.passwordMismatch")}
+                </Text>
+              )}
+            </FormControl>
+          )}
+        </form.Field>
+
+        <Divider className="my-4 bg-primary-600" />
+
+        <Heading size="md" className="text-white mb-3">
+          {t("app.editProfile.streamingSection")}
+        </Heading>
+        <form.Field name="maxBitRate">
+          {(field) => (
+            <FormControl size="md" className="mb-2">
+              <Input className="bg-primary-600 border-0 rounded-full">
+                <InputField
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={() => handleFieldBlur(field)}
+                  className="text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full"
+                  placeholder={t("app.editProfile.maxBitRatePlaceholder")}
+                  placeholderTextColor={gray400}
+                  keyboardType="number-pad"
+                />
+              </Input>
+            </FormControl>
+          )}
+        </form.Field>
+        <form.Field name="musicFolderId">
+          {(field) => (
+            <FormControl size="md" className="mb-4">
+              <Input className="bg-primary-600 border-0 rounded-full">
+                <InputField
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onBlur={() => handleFieldBlur(field)}
+                  className="text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full"
+                  placeholder={t("app.editProfile.musicFolderIdPlaceholder")}
+                  placeholderTextColor={gray400}
+                  autoCapitalize="none"
+                />
+              </Input>
+            </FormControl>
+          )}
+        </form.Field>
+
+        <Divider className="my-4 bg-primary-600" />
+
+        <Heading size="md" className="text-white mb-3">
+          {t("app.editProfile.rolesSection")}
+        </Heading>
+        <VStack className="gap-y-3">
+          {ROLE_FIELDS.map((roleField) => (
+            <form.Field key={roleField} name={roleField}>
+              {(field) => (
+                <HStack className="items-center justify-between">
+                  <Text className="text-white shrink pr-4">
+                    {t(
+                      `app.editProfile.roleLabels.${ROLE_I18N_KEYS[roleField]}`,
+                    )}
+                  </Text>
+                  <Switch
+                    value={Boolean(field.state.value)}
+                    onValueChange={field.handleChange}
+                    trackColor={{ false: gray600, true: emerald500 }}
+                    thumbColor={white}
+                  />
+                </HStack>
+              )}
+            </form.Field>
+          ))}
+        </VStack>
+      </ScrollView>
+    </Box>
+  );
+}

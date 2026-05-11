@@ -32,7 +32,10 @@ const switchStyle = tva({
   },
 });
 
-type ISwitchProps = Omit<React.ComponentProps<typeof UISwitch>, "wrapperClassName"> &
+type ISwitchProps = Omit<
+  React.ComponentProps<typeof UISwitch>,
+  "wrapperClassName"
+> &
   VariantProps<typeof switchStyle>;
 const Switch = React.forwardRef<
   React.ComponentRef<typeof UISwitch>,
