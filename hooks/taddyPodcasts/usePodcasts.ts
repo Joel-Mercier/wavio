@@ -252,6 +252,8 @@ export const useTopChartsByCountry = ({
   limitPerPage?: number;
 }) => {
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  const apiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const userId = usePodcasts((store) => store.taddyPodcastsUserId);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getTopChartsByCountry",
@@ -285,6 +287,7 @@ export const useTopChartsByCountry = ({
       }
       return response;
     },
+    enabled: !!apiKey && !!userId,
   });
 };
 
@@ -302,6 +305,8 @@ export const useTopChartsByGenres = ({
   limitPerPage?: number;
 }) => {
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  const apiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const userId = usePodcasts((store) => store.taddyPodcastsUserId);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getTopChartsByGenres",
@@ -337,7 +342,7 @@ export const useTopChartsByGenres = ({
       }
       return response;
     },
-    enabled: !!genres,
+    enabled: !!genres && !!apiKey && !!userId,
   });
 };
 
@@ -353,6 +358,8 @@ export const usePopularContent = ({
   limitPerPage?: number;
 }) => {
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  const apiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
+  const userId = usePodcasts((store) => store.taddyPodcastsUserId);
   return useQuery({
     queryKey: [
       "taddyPodcasts:getPopularContent",
@@ -377,6 +384,7 @@ export const usePopularContent = ({
       }
       return response;
     },
+    enabled: !!apiKey && !!userId,
   });
 };
 
