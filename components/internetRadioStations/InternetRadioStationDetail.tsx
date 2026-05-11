@@ -111,7 +111,7 @@ export default function InternetRadioStationDetail() {
     >
       <LinearGradient
         colors={[
-          (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+          (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
             blue500,
           "#000000",
         ]}

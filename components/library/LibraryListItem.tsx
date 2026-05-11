@@ -60,18 +60,18 @@ function LibraryListItemIcon({ type }: { type: string }) {
     return <Heart size={24} color={white} fill={white} />;
   }
   if (type === "album") {
-    return <Disc3 size={48} color={white} />;
+    return <Disc3 size={32} color={white} />;
   }
   if (type === "artist") {
-    return <User size={48} color={white} />;
+    return <User size={32} color={white} />;
   }
   if (type === "podcast") {
-    return <Podcast size={48} color={white} />;
+    return <Podcast size={32} color={white} />;
   }
   if (type === "folder") {
-    return <Folder size={48} color={white} />;
+    return <Folder size={32} color={white} />;
   }
-  return <ListMusic size={48} color={white} />;
+  return <ListMusic size={32} color={white} />;
 }
 
 export default function LibraryListItem({

@@ -557,11 +557,11 @@ export default function AlbumDetail() {
       >
         <LinearGradient
           colors={[
-            (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-              "#000",
             (colors?.platform === "ios"
               ? colors.primary
-              : colors?.darkVibrant) || "#000",
+              : colors?.lightMuted) || "#000",
+            (colors?.platform === "ios" ? colors.primary : colors?.darkMuted) ||
+              "#000",
           ]}
         >
           <HStack
@@ -613,8 +613,9 @@ export default function AlbumDetail() {
         ListHeaderComponent={() => (
           <LinearGradient
             colors={[
-              (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-                "#000",
+              (colors?.platform === "ios"
+                ? colors.primary
+                : colors?.lightMuted) || "#000",
               "#000",
             ]}
             locations={[0, 0.8]}

@@ -144,7 +144,7 @@ export default function PodcastSeriesScreen() {
   const renderHeader = () => (
     <LinearGradient
       colors={[
-        (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
+        (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
           "#000",
         "#000",
       ]}
@@ -345,11 +345,11 @@ export default function PodcastSeriesScreen() {
       >
         <LinearGradient
           colors={[
-            (colors?.platform === "ios" ? colors.primary : colors?.vibrant) ||
-              "#000",
             (colors?.platform === "ios"
               ? colors.primary
-              : colors?.darkVibrant) || "#000",
+              : colors?.lightMuted) || "#000",
+            (colors?.platform === "ios" ? colors.primary : colors?.darkMuted) ||
+              "#000",
           ]}
         >
           <HStack

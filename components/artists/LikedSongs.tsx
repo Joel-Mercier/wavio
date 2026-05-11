@@ -110,10 +110,10 @@ export default function LikedSongs() {
   const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const gradientPrimary =
-    (colors?.platform === "ios" ? colors.primary : colors?.vibrant) || "#000";
-  const gradientSecondary =
-    (colors?.platform === "ios" ? colors.primary : colors?.darkVibrant) ||
+    (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
     "#000";
+  const gradientSecondary =
+    (colors?.platform === "ios" ? colors.primary : colors?.darkMuted) || "#000";
 
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
