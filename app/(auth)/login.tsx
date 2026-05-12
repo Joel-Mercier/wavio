@@ -167,7 +167,6 @@ export default function LoginScreen() {
         addOrUpdateUser({
           serverId: server.id,
           username: value.username.trim(),
-          password: value.password.trim(),
         });
         setCurrentServer(server.id);
         login(value.url, value.username, value.password);

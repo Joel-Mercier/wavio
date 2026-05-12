@@ -3,7 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Plus } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -34,6 +34,8 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { useUsers } from "@/hooks/openSubsonic/useUsers";
+import useAuth from "@/stores/auth";
 import useServers, { serverFormSchema } from "@/stores/servers";
 
 export default function ServersDetail() {
@@ -45,6 +47,19 @@ export default function ServersDetail() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const servers = useServers((store) => store.servers);
   const addServer = useServers((store) => store.addServer);
+  const syncServerUsers = useServers((store) => store.syncServerUsers);
+  const isAuthenticated = useAuth((store) => store.isAuthenticated);
+  const currentServer = servers.find((s) => s.current);
+  const { data: usersData } = useUsers({
+    enabled: isAuthenticated && !!currentServer,
+  });
+  useEffect(() => {
+    if (!currentServer || !usersData?.users?.user) return;
+    syncServerUsers(
+      currentServer.id,
+      usersData.users.user.map((u) => u.username),
+    );
+  }, [currentServer, usersData, syncServerUsers]);
   const form = useForm({
     defaultValues: {
       name: "",

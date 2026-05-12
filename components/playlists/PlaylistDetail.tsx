@@ -500,7 +500,7 @@ export default function PlaylistDetail() {
         keyExtractor={(item: Child) => item.id}
         renderItem={({ item, index }: { item: Child; index: number }) =>
           !playlistData ? (
-            <TrackListItemSkeleton index={index} />
+            <TrackListItemSkeleton index={index} className="px-6" />
           ) : (
             <TrackListItem
               track={item}
@@ -508,6 +508,7 @@ export default function PlaylistDetail() {
               trackList={data ?? undefined}
               handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
               onPlayCallback={handleTrackPressCallback}
+              className="px-6"
             />
           )
         }
@@ -527,7 +528,20 @@ export default function PlaylistDetail() {
           </VStack>
         )}
         ListHeaderComponent={() => (
-          <VStack>
+          <LinearGradient
+            colors={[
+              (colors?.platform === "ios"
+                ? colors.primary
+                : colors?.lightMuted) || "#000",
+              "#000",
+            ]}
+            locations={[0, 0.8]}
+            className="px-6"
+            style={{
+              paddingTop: insets.top,
+              paddingHorizontal: 24,
+            }}
+          >
             <HStack className="mt-6 items-start justify-between">
               <FadeOutScaleDown onPress={() => router.back()}>
                 <ArrowLeft size={24} color={white} />
@@ -560,26 +574,19 @@ export default function PlaylistDetail() {
                 )}
               </VStack>
               {playlistData?.playlist?.owner && (
-                <FadeOutScaleDown
-                  onPress={() =>
-                    router.navigate(`/profile/${playlistData?.playlist?.owner}`)
-                  }
-                  className="mt-4"
-                >
-                  <HStack className="items-center">
-                    <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
-                      <AvatarFallbackText>
-                        {playlistData?.playlist?.owner}
-                      </AvatarFallbackText>
-                    </Avatar>
-                    <Text
-                      className="text-white text-md font-bold"
-                      numberOfLines={1}
-                    >
+                <HStack className="mt-4 mb-2 items-center">
+                  <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
+                    <AvatarFallbackText>
                       {playlistData?.playlist?.owner}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                    </AvatarFallbackText>
+                  </Avatar>
+                  <Text
+                    className="text-white text-md font-bold"
+                    numberOfLines={1}
+                  >
+                    {playlistData?.playlist?.owner}
+                  </Text>
+                </HStack>
               )}
               <HStack className="mt-2 items-center">
                 <Clock color={"#808080"} size={16} />
@@ -646,10 +653,10 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
             </VStack>
             {error && <ErrorDisplay error={error} />}
-          </VStack>
+          </LinearGradient>
         )}
         ListFooterComponent={() => (
-          <VStack className="my-6">
+          <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
               {`${t("app.shared.songCount", { count: playlistData?.playlist.songCount })} `}{" "}
               ⦁ {Math.round((playlistData?.playlist.duration || 0) / 60)} min
@@ -657,8 +664,8 @@ export default function PlaylistDetail() {
           </VStack>
         )}
         contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: insets.top,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}

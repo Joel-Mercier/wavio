@@ -77,19 +77,19 @@ const editProfileSchema = z
     passwordConfirm: z.string().optional().or(z.literal("")),
     maxBitRate: z.string().optional(),
     musicFolderId: z.string().optional(),
-    adminRole: z.boolean(),
-    settingsRole: z.boolean(),
-    streamRole: z.boolean(),
-    jukeboxRole: z.boolean(),
-    downloadRole: z.boolean(),
-    uploadRole: z.boolean(),
-    playlistRole: z.boolean(),
-    coverArtRole: z.boolean(),
-    commentRole: z.boolean(),
-    podcastRole: z.boolean(),
-    shareRole: z.boolean(),
-    videoConversionRole: z.boolean(),
-    scrobblingEnabled: z.boolean(),
+    adminRole: z.boolean().optional(),
+    settingsRole: z.boolean().optional(),
+    streamRole: z.boolean().optional(),
+    jukeboxRole: z.boolean().optional(),
+    downloadRole: z.boolean().optional(),
+    uploadRole: z.boolean().optional(),
+    playlistRole: z.boolean().optional(),
+    coverArtRole: z.boolean().optional(),
+    commentRole: z.boolean().optional(),
+    podcastRole: z.boolean().optional(),
+    shareRole: z.boolean().optional(),
+    videoConversionRole: z.boolean().optional(),
+    scrobblingEnabled: z.boolean().optional(),
   })
   .refine(
     (data) =>
@@ -174,19 +174,23 @@ export default function EditProfileScreen() {
             ? (maxBitRate as number)
             : undefined,
           musicFolderId: parseFolderIds(value.musicFolderId),
-          adminRole: value.adminRole,
-          settingsRole: value.settingsRole,
-          streamRole: value.streamRole,
-          jukeboxRole: value.jukeboxRole,
-          downloadRole: value.downloadRole,
-          uploadRole: value.uploadRole,
-          playlistRole: value.playlistRole,
-          coverArtRole: value.coverArtRole,
-          commentRole: value.commentRole,
-          podcastRole: value.podcastRole,
-          shareRole: value.shareRole,
-          videoConversionRole: value.videoConversionRole,
-          scrobblingEnabled: value.scrobblingEnabled,
+          ...(user?.adminRole
+            ? {
+                adminRole: value.adminRole,
+                settingsRole: value.settingsRole,
+                streamRole: value.streamRole,
+                jukeboxRole: value.jukeboxRole,
+                downloadRole: value.downloadRole,
+                uploadRole: value.uploadRole,
+                playlistRole: value.playlistRole,
+                coverArtRole: value.coverArtRole,
+                commentRole: value.commentRole,
+                podcastRole: value.podcastRole,
+                shareRole: value.shareRole,
+                videoConversionRole: value.videoConversionRole,
+                scrobblingEnabled: value.scrobblingEnabled,
+              }
+            : {}),
         });
         toast.show({
           placement: "top",
@@ -388,39 +392,43 @@ export default function EditProfileScreen() {
           )}
         </form.Field>
 
-        <Divider className="my-4 bg-primary-600" />
+        {user?.adminRole && (
+          <>
+            <Divider className="my-4 bg-primary-600" />
 
-        <Heading size="md" className="text-white mb-3">
-          {t("app.editProfile.rolesSection")}
-        </Heading>
-        <VStack className="gap-y-3">
-          {ROLE_FIELDS.map((roleField) => (
-            <form.Field key={roleField} name={roleField}>
-              {(field) => (
-                <HStack className="items-start justify-between gap-x-4">
-                  <VStack className="flex-1">
-                    <Text className="text-white shrink pr-4">
-                      {t(
-                        `app.editProfile.roleLabels.${ROLE_I18N_KEYS[roleField]}`,
-                      )}
-                    </Text>
-                    <Text className="text-primary-100 text-sm flex-1 truncate">
-                      {t(
-                        `app.editProfile.roleDescriptions.${ROLE_I18N_KEYS[roleField]}`,
-                      )}
-                    </Text>
-                  </VStack>
-                  <Switch
-                    value={Boolean(field.state.value)}
-                    onValueChange={field.handleChange}
-                    trackColor={{ false: gray600, true: emerald500 }}
-                    thumbColor={white}
-                  />
-                </HStack>
-              )}
-            </form.Field>
-          ))}
-        </VStack>
+            <Heading size="md" className="text-white mb-3">
+              {t("app.editProfile.rolesSection")}
+            </Heading>
+            <VStack className="gap-y-3">
+              {ROLE_FIELDS.map((roleField) => (
+                <form.Field key={roleField} name={roleField}>
+                  {(field) => (
+                    <HStack className="items-start justify-between gap-x-4">
+                      <VStack className="flex-1">
+                        <Text className="text-white shrink pr-4">
+                          {t(
+                            `app.editProfile.roleLabels.${ROLE_I18N_KEYS[roleField]}`,
+                          )}
+                        </Text>
+                        <Text className="text-primary-100 text-sm flex-1 truncate">
+                          {t(
+                            `app.editProfile.roleDescriptions.${ROLE_I18N_KEYS[roleField]}`,
+                          )}
+                        </Text>
+                      </VStack>
+                      <Switch
+                        value={Boolean(field.state.value)}
+                        onValueChange={field.handleChange}
+                        trackColor={{ false: gray600, true: emerald500 }}
+                        thumbColor={white}
+                      />
+                    </HStack>
+                  )}
+                </form.Field>
+              ))}
+            </VStack>
+          </>
+        )}
       </ScrollView>
     </Box>
   );

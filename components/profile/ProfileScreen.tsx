@@ -26,7 +26,6 @@ import { VStack } from "@/components/ui/vstack";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import { useGetUser } from "@/hooks/openSubsonic/useUsers";
 import type { Playlist } from "@/services/openSubsonic/types";
-import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -73,8 +72,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
-  const currentUsername = useAuth((store) => store.username);
-  const isCurrentUser = username === currentUsername;
   const { data: userData, error } = useGetUser(username);
   const { data: playlistsData } = usePlaylists({ username });
   const offsetY = useSharedValue(0);
@@ -152,20 +149,6 @@ export default function ProfileScreen() {
                       {displayName}
                     </Heading>
                   </HStack>
-                  {isCurrentUser && (
-                    <HStack className="mt-4">
-                      <FadeOutScaleDown
-                        onPress={() =>
-                          router.navigate(`/profile/${username}/edit`)
-                        }
-                        className="items-center justify-center py-2 px-6 border border-white rounded-full"
-                      >
-                        <Text className="text-white font-bold">
-                          {t("app.profile.edit")}
-                        </Text>
-                      </FadeOutScaleDown>
-                    </HStack>
-                  )}
                 </VStack>
               </Box>
             </LinearGradient>

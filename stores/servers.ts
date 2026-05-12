@@ -12,7 +12,6 @@ export const serverFormSchema = z.object({
 export const serverUserSchema = z.object({
   serverId: z.string().min(1),
   username: z.string().trim().min(1),
-  password: z.string().trim().min(1),
 });
 
 export type Server = {
@@ -25,7 +24,6 @@ export type Server = {
 export type ServerUser = {
   serverId: string;
   username: string;
-  password: string;
 };
 
 interface ServersStore {
@@ -40,52 +38,11 @@ interface ServersStore {
   getUsersForServer: (id: string) => ServerUser[];
   addOrUpdateUser: (user: ServerUser) => void;
   removeUser: (serverId: string, username: string) => void;
+  syncServerUsers: (serverId: string, usernames: string[]) => void;
 }
 
 const generateId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-
-type LegacyServer = {
-  name: string;
-  url: string;
-  username: string;
-  password: string;
-  current?: boolean;
-};
-
-export const migrateServersState = (
-  persisted: { servers?: LegacyServer[] } | undefined,
-): { servers: Server[]; users: ServerUser[] } => {
-  const servers: Server[] = [];
-  const users: ServerUser[] = [];
-  const oldServers = persisted?.servers ?? [];
-  for (const s of oldServers) {
-    const trimmedUrl = (s.url ?? "").trim();
-    let target = servers.find((x) => x.url === trimmedUrl);
-    if (!target) {
-      target = {
-        id: generateId(),
-        name: s.name,
-        url: trimmedUrl,
-        current: !!s.current,
-      };
-      servers.push(target);
-    } else if (s.current) {
-      target.current = true;
-    }
-    if (
-      s.username &&
-      !users.some((u) => u.serverId === target!.id && u.username === s.username)
-    ) {
-      users.push({
-        serverId: target.id,
-        username: s.username,
-        password: s.password,
-      });
-    }
-  }
-  return { servers, users };
-};
 
 const useServersBase = create<ServersStore>()(
   persist(
@@ -154,20 +111,15 @@ const useServersBase = create<ServersStore>()(
         const trimmed: ServerUser = {
           serverId: user.serverId,
           username: user.username.trim(),
-          password: user.password.trim(),
         };
         set((state) => {
-          const idx = state.users.findIndex(
+          const exists = state.users.some(
             (u) =>
               u.serverId === trimmed.serverId &&
               u.username === trimmed.username,
           );
-          if (idx === -1) {
-            return { users: [...state.users, trimmed] };
-          }
-          const next = state.users.slice();
-          next[idx] = trimmed;
-          return { users: next };
+          if (exists) return state;
+          return { users: [...state.users, trimmed] };
         });
       },
       removeUser: (serverId, username) => {
@@ -177,20 +129,21 @@ const useServersBase = create<ServersStore>()(
           ),
         }));
       },
+      syncServerUsers: (serverId, usernames) => {
+        const unique = Array.from(
+          new Set(usernames.map((u) => u.trim()).filter(Boolean)),
+        );
+        set((state) => ({
+          users: [
+            ...state.users.filter((u) => u.serverId !== serverId),
+            ...unique.map((username) => ({ serverId, username })),
+          ],
+        }));
+      },
     }),
     {
       name: "servers",
-      version: 1,
       storage: createJSONStorage(() => zustandStorage),
-      migrate: (persisted, version) => {
-        if (!persisted || version >= 1) {
-          return persisted as ServersStore;
-        }
-        const migrated = migrateServersState(
-          persisted as { servers?: LegacyServer[] },
-        );
-        return { ...(persisted as object), ...migrated } as ServersStore;
-      },
     },
   ),
 );

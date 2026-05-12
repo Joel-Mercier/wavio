@@ -14,11 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  type LayoutChangeEvent,
-  View,
-  type ViewStyle,
-} from "react-native";
+import { type LayoutChangeEvent, View, type ViewStyle } from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -94,7 +90,6 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
 });
 
 ItemWrapper.displayName = "ItemWrapper";
-
 
 type DraggableFlashListProps<T> = Omit<
   FlashListProps<T>,

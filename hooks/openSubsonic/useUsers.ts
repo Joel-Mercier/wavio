@@ -7,12 +7,13 @@ import {
   updateUser,
 } from "@/services/openSubsonic/users";
 
-export const useUsers = () => {
+export const useUsers = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["users"],
     queryFn: () => {
       return getUsers();
     },
+    enabled: options?.enabled ?? true,
   });
 };
 

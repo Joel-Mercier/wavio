@@ -1,4 +1,4 @@
-import { migrateServersState, useServersBase } from "@/stores/servers";
+import { useServersBase } from "@/stores/servers";
 
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
@@ -27,63 +27,6 @@ jest.mock("@/config/storage", () => {
 });
 
 const reset = () => useServersBase.setState({ servers: [], users: [] }, false);
-
-describe("servers store migration", () => {
-  it("splits embedded credentials into servers + users, deduping by URL", () => {
-    const legacy = {
-      servers: [
-        {
-          name: "Home",
-          url: "https://music.example.com",
-          username: "alice",
-          password: "pw1",
-          current: true,
-        },
-        {
-          name: "Home alt",
-          url: "https://music.example.com",
-          username: "bob",
-          password: "pw2",
-        },
-        {
-          name: "Other",
-          url: "https://other.example.com",
-          username: "alice",
-          password: "pw3",
-        },
-      ],
-    };
-    const migrated = migrateServersState(legacy);
-    expect(migrated.servers).toHaveLength(2);
-    expect(migrated.servers[0]).toMatchObject({
-      name: "Home",
-      url: "https://music.example.com",
-      current: true,
-    });
-    expect(migrated.servers[1]).toMatchObject({
-      name: "Other",
-      current: false,
-    });
-    expect(migrated.users).toHaveLength(3);
-    const homeId = migrated.servers[0].id;
-    const otherId = migrated.servers[1].id;
-    expect(
-      migrated.users
-        .filter((u) => u.serverId === homeId)
-        .map((u) => u.username),
-    ).toEqual(["alice", "bob"]);
-    expect(
-      migrated.users
-        .filter((u) => u.serverId === otherId)
-        .map((u) => u.username),
-    ).toEqual(["alice"]);
-  });
-
-  it("returns empty arrays when persisted is undefined", () => {
-    const migrated = migrateServersState(undefined);
-    expect(migrated).toEqual({ servers: [], users: [] });
-  });
-});
 
 describe("servers store actions", () => {
   beforeEach(reset);
@@ -125,19 +68,19 @@ describe("servers store actions", () => {
     expect(servers.find((s) => s.id === b.id)?.current).toBe(true);
   });
 
-  it("addOrUpdateUser upserts on (serverId, username)", () => {
+  it("addOrUpdateUser is idempotent on (serverId, username)", () => {
     const s = useServersBase
       .getState()
       .addServer({ name: "A", url: "https://a.example.com" });
     useServersBase
       .getState()
-      .addOrUpdateUser({ serverId: s.id, username: "u", password: "p1" });
+      .addOrUpdateUser({ serverId: s.id, username: "u" });
     useServersBase
       .getState()
-      .addOrUpdateUser({ serverId: s.id, username: "u", password: "p2" });
+      .addOrUpdateUser({ serverId: s.id, username: "u" });
     const users = useServersBase.getState().getUsersForServer(s.id);
     expect(users).toHaveLength(1);
-    expect(users[0].password).toBe("p2");
+    expect(users[0].username).toBe("u");
   });
 
   it("removeServer cascades to users", () => {
@@ -146,7 +89,7 @@ describe("servers store actions", () => {
       .addServer({ name: "A", url: "https://a.example.com" });
     useServersBase
       .getState()
-      .addOrUpdateUser({ serverId: s.id, username: "u", password: "p" });
+      .addOrUpdateUser({ serverId: s.id, username: "u" });
     useServersBase.getState().removeServer(s.id);
     expect(useServersBase.getState().servers).toHaveLength(0);
     expect(useServersBase.getState().users).toHaveLength(0);
@@ -158,13 +101,39 @@ describe("servers store actions", () => {
       .addServer({ name: "A", url: "https://a.example.com" });
     useServersBase
       .getState()
-      .addOrUpdateUser({ serverId: s.id, username: "u1", password: "p" });
+      .addOrUpdateUser({ serverId: s.id, username: "u1" });
     useServersBase
       .getState()
-      .addOrUpdateUser({ serverId: s.id, username: "u2", password: "p" });
+      .addOrUpdateUser({ serverId: s.id, username: "u2" });
     useServersBase.getState().removeUser(s.id, "u1");
     const users = useServersBase.getState().getUsersForServer(s.id);
     expect(users.map((u) => u.username)).toEqual(["u2"]);
+  });
+
+  it("syncServerUsers replaces users for a server only", () => {
+    const a = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    const b = useServersBase
+      .getState()
+      .addServer({ name: "B", url: "https://b.example.com" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: a.id, username: "old" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: b.id, username: "keep" });
+    useServersBase.getState().syncServerUsers(a.id, ["x", "y", "y", " z "]);
+    const aUsers = useServersBase
+      .getState()
+      .getUsersForServer(a.id)
+      .map((u) => u.username);
+    const bUsers = useServersBase
+      .getState()
+      .getUsersForServer(b.id)
+      .map((u) => u.username);
+    expect(aUsers).toEqual(["x", "y", "z"]);
+    expect(bUsers).toEqual(["keep"]);
   });
 
   it("editServer preserves id and current", () => {

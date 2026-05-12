@@ -72,6 +72,9 @@ export const updateUser = async (params: UpdateUserParams) => {
       OpenSubsonicResponse<Record<string, never>>
     >("/rest/updateUser", {
       params,
+      paramsSerializer: {
+        indexes: null,
+      },
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error;
