@@ -251,6 +251,7 @@ export default function QueueDetail() {
               paddingBottom:
                 insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
             }}
+            showsVerticalScrollIndicator={false}
             renderItem={(item, _index, isActive, beginDrag) => (
               <QueueEditTrackItem
                 item={item}

@@ -117,7 +117,6 @@ export default function ReorderPlaylistScreen() {
     return (
       <PlaylistEditSongListItem
         item={item}
-        index={index}
         beginDrag={beginDrag}
         isActive={isActive}
         handleRemoveFromPlaylistPress={() =>
@@ -262,6 +261,7 @@ export default function ReorderPlaylistScreen() {
         renderItem={renderItem}
         itemHeight={70}
         onSort={handleListSort}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

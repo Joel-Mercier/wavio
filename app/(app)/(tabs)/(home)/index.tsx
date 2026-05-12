@@ -250,7 +250,10 @@ export default function HomeScreen() {
             {isLoadingRecentlyPlayed
               ? loadingData(4).map((_, index) => (
                   <AlbumListItemSkeleton
-                    key={`recently-played-${index}`}
+                    key={`recently-played-${
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                      index
+                    }`}
                     index={index}
                     layout="horizontal"
                   />
@@ -284,7 +287,10 @@ export default function HomeScreen() {
             {isLoadingRecent
               ? loadingData(4).map((_, index) => (
                   <AlbumListItemSkeleton
-                    key={`recently-added-${index}`}
+                    key={`recently-added-${
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                      index
+                    }`}
                     index={index}
                     layout="horizontal"
                   />
@@ -319,7 +325,10 @@ export default function HomeScreen() {
               {!lazyEnabled.mostPlayed || isLoadingMostPlayed
                 ? loadingData(4).map((_, index) => (
                     <AlbumListItemSkeleton
-                      key={`most-played-${index}`}
+                      key={`most-played-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                        index
+                      }`}
                       index={index}
                       layout="horizontal"
                     />
@@ -359,7 +368,10 @@ export default function HomeScreen() {
                 {!lazyEnabled.moreFromArtist || isLoadingMoreFromArtist
                   ? loadingData(4).map((_, index) => (
                       <AlbumListItemSkeleton
-                        key={`more-from-artist-${index}`}
+                        key={`more-from-artist-${
+                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                          index
+                        }`}
                         index={index}
                         layout="horizontal"
                       />
@@ -393,7 +405,10 @@ export default function HomeScreen() {
               {!lazyEnabled.highestRated || isLoadingHighestRated
                 ? loadingData(4).map((_, index) => (
                     <AlbumListItemSkeleton
-                      key={`highest-rated-${index}`}
+                      key={`highest-rated-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                        index
+                      }`}
                       index={index}
                       layout="horizontal"
                     />
@@ -430,7 +445,10 @@ export default function HomeScreen() {
               {!lazyEnabled.random || isLoadingRandom
                 ? loadingData(4).map((_, index) => (
                     <AlbumListItemSkeleton
-                      key={`random-${index}`}
+                      key={`random-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                        index
+                      }`}
                       index={index}
                       layout="horizontal"
                     />
@@ -476,7 +494,10 @@ export default function HomeScreen() {
               isLoadingInternetRadioStations
                 ? loadingData(4).map((_, index) => (
                     <InternetRadioStationListItemSkeleton
-                      key={`internet-radio-stations-${index}`}
+                      key={`internet-radio-stations-${
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                        index
+                      }`}
                     />
                   ))
                 : internetRadioStationsData?.internetRadioStations?.internetRadioStation

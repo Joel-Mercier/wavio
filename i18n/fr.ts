@@ -364,8 +364,10 @@ export default {
           scrobbling: "Scrobbling",
         },
         roleDescriptions: {
-          admin: "Peut gérer les utilisateurs, les serveurs, les paramètres et plus",
-          settings: "Peut modifier les paramètres personnels et le mot de passe",
+          admin:
+            "Peut gérer les utilisateurs, les serveurs, les paramètres et plus",
+          settings:
+            "Peut modifier les paramètres personnels et le mot de passe",
           stream: "Peut jouer des fichiers",
           jukebox: "Peut jouer des fichiers en mode jukebox",
           download: "Peut télécharger des fichiers",

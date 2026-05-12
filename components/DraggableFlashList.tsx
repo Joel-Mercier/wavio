@@ -16,12 +16,10 @@ import {
 } from "react";
 import {
   type LayoutChangeEvent,
-  Platform,
   View,
   type ViewStyle,
 } from "react-native";
 import {
-  createNativeWrapper,
   Gesture,
   GestureDetector,
   ScrollView,
@@ -38,6 +36,10 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 
 const AnimatedCellContainer = Animated.createAnimatedComponent(View);
+
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 
 type ItemWrapperProps = PropsWithChildren<{
   index: number;
@@ -56,23 +58,17 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
   const position = useSharedValue(0);
 
   useAnimatedReaction(
-    () => ({ insert: insertIndex.value, active: activeIndex.value }),
-    ({ insert, active }) => {
-      if (insert < 0 || active < 0) {
-        position.value = 0;
-        return;
-      }
-      if (index > active && index <= insert + 0.5) {
-        position.value = withSpring(-itemHeight);
-        return;
-      }
-      if (index < active && index >= insert - 0.5) {
-        position.value = withSpring(itemHeight);
-        return;
-      }
-      if (position.value !== 0) {
-        position.value = withSpring(0);
-      }
+    () => {
+      const insert = insertIndex.value;
+      const active = activeIndex.value;
+      if (insert < 0 || active < 0) return 0;
+      if (index > active && index <= insert + 0.5) return -itemHeight;
+      if (index < active && index >= insert - 0.5) return itemHeight;
+      return 0;
+    },
+    (target, prev) => {
+      if (target === prev) return;
+      position.value = withSpring(target);
     },
     [index, itemHeight],
   );
@@ -99,10 +95,6 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
 
 ItemWrapper.displayName = "ItemWrapper";
 
-const GestureFlashList = createNativeWrapper(FlashList);
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  GestureFlashList,
-) as unknown as typeof FlashList;
 
 type DraggableFlashListProps<T> = Omit<
   FlashListProps<T>,
@@ -142,8 +134,6 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   const optimisticDataRef = useRef<T[] | null>(null);
   const pendingResetRef = useRef(false);
   const { keyExtractor } = props;
-
-  const isIOS = Platform.OS === "ios";
 
   useEffect(() => {
     const expected = optimisticDataRef.current;
@@ -316,12 +306,11 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
   }, []);
 
   const panGesture = Gesture.Pan()
-    .manualActivation(isIOS)
+    .manualActivation(true)
     .enabled(layout !== null)
     .shouldCancelWhenOutside(false)
     .onTouchesMove((_evt, stateManager) => {
       "worklet";
-      if (!isIOS) return;
       if (isDragging || activeIndexState >= 0 || activeIndex.value >= 0) {
         stateManager.activate();
       } else {

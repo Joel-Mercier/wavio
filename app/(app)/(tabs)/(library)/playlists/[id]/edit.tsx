@@ -43,9 +43,10 @@ const editPlaylistSchema = z.object({
 });
 
 export default function EditPlaylistScreen() {
-  const [white, gray600, emerald500] = Uniwind.getCSSVariable([
+  const [white, gray600, gray400, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-600",
+    "--color-gray-400",
     "--color-emerald-500",
   ]) as string[];
   const { t } = useTranslation();
@@ -168,20 +169,16 @@ export default function EditPlaylistScreen() {
               isDisabled={false}
               isReadOnly={false}
               isRequired={false}
-              className="mb-2 mt-0"
+              className="mb-4 mt-0"
             >
-              <Input className="bg-primary-600 border-0 rounded-full">
+              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <InputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className={cn(
-                    "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-full",
-                    {
-                      "border-red-500": showFieldError(field),
-                    },
-                  )}
+                  className="text-md text-white"
                   placeholder={t("app.editPlaylist.namePlaceholder")}
+                  placeholderTextColor={gray400}
                 />
               </Input>
               <FieldError field={field} />
@@ -196,15 +193,16 @@ export default function EditPlaylistScreen() {
               isDisabled={false}
               isReadOnly={false}
               isRequired={false}
-              className="mb-2 mt-0"
+              className="mb-4 mt-0"
             >
-              <Textarea className="bg-primary-600 border-0 rounded-xl my-6 text-white">
+              <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                 <TextareaInput
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  className="text-md font-normal color-white"
+                  className="text-md font-normal text-white"
                   placeholder={t("app.editPlaylist.descriptionPlaceholder")}
+                  placeholderTextColor={gray400}
                 />
               </Textarea>
               <FieldError field={field} />

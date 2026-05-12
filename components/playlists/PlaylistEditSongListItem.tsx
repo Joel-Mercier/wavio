@@ -13,7 +13,6 @@ import { cn } from "@/utils/tailwind";
 
 interface PlaylistEditSongListItemProps {
   item: Child;
-  index: number;
   beginDrag: () => void;
   isActive: boolean;
   handleRemoveFromPlaylistPress: () => void;
@@ -21,7 +20,6 @@ interface PlaylistEditSongListItemProps {
 
 export default function PlaylistEditSongListItem({
   item,
-  index,
   beginDrag,
   isActive,
   handleRemoveFromPlaylistPress,
@@ -36,7 +34,7 @@ export default function PlaylistEditSongListItem({
         "bg-primary-600": isActive,
       })}
     >
-      <HStack className="items-center">
+      <HStack className="items-center flex-1">
         <FadeOutScaleDown
           className="mr-4"
           onPress={handleRemoveFromPlaylistPress}
@@ -56,8 +54,11 @@ export default function PlaylistEditSongListItem({
             <AudioLines size={24} color={white} />
           </Box>
         )}
-        <VStack className="ml-4">
-          <Heading className="text-white text-lg font-normal">
+        <VStack className="ml-4 flex-1">
+          <Heading
+            className="text-white text-lg font-normal mr-4"
+            numberOfLines={1}
+          >
             {item.title}
           </Heading>
           <Text className="text-primary-100 text-sm">{item.artist}</Text>

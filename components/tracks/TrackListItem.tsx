@@ -576,7 +576,7 @@ export default function TrackListItem({
           className,
         )}
       >
-        <HStack className="items-center">
+        <HStack className="items-center flex-1">
           {showIndex && (
             <Text className="text-sm text-white mr-4">{index + 1}</Text>
           )}
@@ -595,12 +595,12 @@ export default function TrackListItem({
               </Box>
             ))}
           <VStack
-            className={cn({
+            className={cn("flex-1", {
               "ml-4": showCoverArt,
             })}
           >
             <Heading
-              className={cn("text-white text-md font-normal capitalize", {
+              className={cn("text-white text-md font-normal capitalize mr-4", {
                 "text-emerald-500": playingTrack?.title === track.title,
               })}
               numberOfLines={1}

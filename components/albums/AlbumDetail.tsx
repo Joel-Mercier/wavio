@@ -711,16 +711,17 @@ export default function AlbumDetail() {
                       : "Album"}{" "}
                   ⦁{" "}
                   {data?.album?.originalReleaseDate?.day &&
-                    data?.album.originalReleaseDate?.month &&
-                    data?.album.originalReleaseDate?.year &&
-                    format(
-                      parse(
-                        `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
-                        "d/M/yyyy",
-                        new Date(),
-                      ),
-                      "dd MMM yyyy",
-                    )}
+                  data?.album.originalReleaseDate?.month &&
+                  data?.album.originalReleaseDate?.year
+                    ? format(
+                        parse(
+                          `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
+                          "d/M/yyyy",
+                          new Date(),
+                        ),
+                        "dd MMM yyyy",
+                      )
+                    : data?.album?.year}
                 </Text>
               </HStack>
               <HStack className="mt-4 items-center justify-between">

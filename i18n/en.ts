@@ -366,7 +366,7 @@ export default {
           share: "Can share files with anyone",
           videoConversion: "Can convert videos",
           scrobbling: "Can scrobble tracks",
-        }
+        },
       },
       editPlaylist: {
         title: "Edit playlist",
