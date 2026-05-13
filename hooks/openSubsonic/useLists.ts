@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   type AlbumListType,
   getAlbumList,
@@ -45,6 +45,36 @@ export const useAlbumList2 = (
     queryFn: () => {
       const { type, ...rest } = params;
       return getAlbumList2(type, rest);
+    },
+    enabled: options?.enabled,
+  });
+};
+
+export const useInfiniteAlbumList2 = (
+  params: {
+    type: AlbumListType;
+    size?: number;
+    fromYear?: number;
+    toYear?: number;
+    genre?: string;
+    musicFolderId?: string;
+  },
+  options?: { enabled?: boolean },
+) => {
+  const size = params.size ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["albumList2:infinite", { ...params, size }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      const { type, ...rest } = params;
+      return getAlbumList2(type, { ...rest, size, offset: pageParam });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const albums = lastPage?.albumList2?.album ?? [];
+      if (albums.length < size) {
+        return undefined;
+      }
+      return allPages.length * size;
     },
     enabled: options?.enabled,
   });

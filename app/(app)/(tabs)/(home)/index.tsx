@@ -235,9 +235,23 @@ export default function HomeScreen() {
           </VStack>
         </Box>
         <Box className="px-6 mt-4 mb-4">
-          <Heading size="xl" className="text-white">
-            {t("app.home.recentlyPlayed")}
-          </Heading>
+          <HStack className="items-center justify-between">
+            <Heading size="xl" className="text-white">
+              {t("app.home.recentlyPlayed")}
+            </Heading>
+            {!!recentlyPlayedData?.albumList2?.album?.length && (
+              <FadeOutScaleDown
+                href={{
+                  pathname: "/(app)/(tabs)/(home)/recently-played",
+                  params: { type: "recent" },
+                }}
+              >
+                <Text className="text-primary-100">
+                  {t("app.shared.seeAll")}
+                </Text>
+              </FadeOutScaleDown>
+            )}
+          </HStack>
         </Box>
         {recentlyPlayedError ? (
           <ErrorDisplay error={recentlyPlayedError} />
@@ -272,9 +286,23 @@ export default function HomeScreen() {
           !recentlyPlayedError &&
           !recentlyPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
-          <Heading size="xl" className="text-white">
-            {t("app.home.recentlyAdded")}
-          </Heading>
+          <HStack className="items-center justify-between">
+            <Heading size="xl" className="text-white">
+              {t("app.home.recentlyAdded")}
+            </Heading>
+            {!!recentData?.albumList2?.album?.length && (
+              <FadeOutScaleDown
+                href={{
+                  pathname: "/(app)/(tabs)/(home)/recently-added",
+                  params: { type: "newest" },
+                }}
+              >
+                <Text className="text-primary-100">
+                  {t("app.shared.seeAll")}
+                </Text>
+              </FadeOutScaleDown>
+            )}
+          </HStack>
         </Box>
         {recentError ? (
           <ErrorDisplay error={recentError} />
@@ -310,9 +338,23 @@ export default function HomeScreen() {
           !recentData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box onLayout={makeSectionOnLayout("mostPlayed")}>
           <Box className="px-6 mt-4 mb-4">
-            <Heading size="xl" className="text-white">
-              {t("app.home.mostPlayed")}
-            </Heading>
+            <HStack className="items-center justify-between">
+              <Heading size="xl" className="text-white">
+                {t("app.home.mostPlayed")}
+              </Heading>
+              {!!mostPlayedData?.albumList2?.album?.length && (
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/(app)/(tabs)/(home)/most-played",
+                    params: { type: "frequent" },
+                  }}
+                >
+                  <Text className="text-primary-100">
+                    {t("app.shared.seeAll")}
+                  </Text>
+                </FadeOutScaleDown>
+              )}
+            </HStack>
           </Box>
           {mostPlayedError ? (
             <ErrorDisplay error={mostPlayedError} />
@@ -351,11 +393,26 @@ export default function HomeScreen() {
         {moreFromArtistId && (
           <Box onLayout={makeSectionOnLayout("moreFromArtist")}>
             <Box className="px-6 mt-4 mb-4">
-              <Heading size="xl" className="text-white">
-                {t("app.albums.moreFromArtist", {
-                  artist: moreFromArtistData?.artist?.name ?? "",
-                })}
-              </Heading>
+              <HStack className="items-center justify-between">
+                <Heading size="xl" className="text-white">
+                  {t("app.albums.moreFromArtist", {
+                    artist: moreFromArtistData?.artist?.name ?? "",
+                  })}
+                </Heading>
+
+                {!!moreFromArtistData?.artist?.album?.length && (
+                  <FadeOutScaleDown
+                    href={{
+                      pathname: "/artists/[id]",
+                      params: { id: moreFromArtistData?.artist?.id },
+                    }}
+                  >
+                    <Text className="text-primary-100">
+                      {t("app.shared.seeAll")}
+                    </Text>
+                  </FadeOutScaleDown>
+                )}
+              </HStack>
             </Box>
             {moreFromArtistError ? (
               <ErrorDisplay error={moreFromArtistError} />
@@ -390,9 +447,23 @@ export default function HomeScreen() {
         )}
         <Box onLayout={makeSectionOnLayout("highestRated")}>
           <Box className="px-6 mt-4 mb-4">
-            <Heading size="xl" className="text-white">
-              {t("app.home.topRated")}
-            </Heading>
+            <HStack className="items-center justify-between">
+              <Heading size="xl" className="text-white">
+                {t("app.home.topRated")}
+              </Heading>
+              {!!highestRatedData?.albumList2?.album?.length && (
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/(app)/(tabs)/(home)/highest-rated",
+                    params: { type: "highest" },
+                  }}
+                >
+                  <Text className="text-primary-100">
+                    {t("app.shared.seeAll")}
+                  </Text>
+                </FadeOutScaleDown>
+              )}
+            </HStack>
           </Box>
           {highestRatedError ? (
             <ErrorDisplay error={highestRatedError} />
@@ -430,9 +501,23 @@ export default function HomeScreen() {
         </Box>
         <Box onLayout={makeSectionOnLayout("random")}>
           <Box className="px-6 mt-4 mb-4">
-            <Heading size="xl" className="text-white">
-              {t("app.home.random")}
-            </Heading>
+            <HStack className="items-center justify-between">
+              <Heading size="xl" className="text-white">
+                {t("app.home.random")}
+              </Heading>
+              {!!randomData?.albumList2?.album?.length && (
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/(app)/(tabs)/(home)/random",
+                    params: { type: "random" },
+                  }}
+                >
+                  <Text className="text-primary-100">
+                    {t("app.shared.seeAll")}
+                  </Text>
+                </FadeOutScaleDown>
+              )}
+            </HStack>
           </Box>
           {randomError ? (
             <ErrorDisplay error={randomError} />

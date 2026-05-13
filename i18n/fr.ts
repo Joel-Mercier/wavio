@@ -19,6 +19,13 @@ export default {
           podcasts: "Podcasts",
           favoritePodcasts: "Abonné",
         },
+        sections: {
+          recent: "Joués récemment",
+          newest: "Ajoutés récemment",
+          highest: "Les mieux notés",
+          frequent: "Les plus joués",
+          random: "Au hasard",
+        }
       },
       search: {
         title: "Recherche",

@@ -19,6 +19,13 @@ export default {
           podcasts: "Podcasts",
           favoritePodcasts: "Subscribed",
         },
+        sections: {
+          recent: "Recently played",
+          newest: "Recently added",
+          highest: "Top rated",
+          frequent: "Most played",
+          random: "Random",
+        }
       },
       search: {
         title: "Search",
