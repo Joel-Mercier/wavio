@@ -803,6 +803,7 @@ export default {
         serverAlreadyExists: "Server already exists",
         showPassword: "Show password",
         hidePassword: "Hide password",
+        demo: "Demo mode",
       },
     },
     openSubsonic: {

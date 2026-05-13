@@ -219,6 +219,12 @@ export default function LoginScreen() {
     setTimeout(() => usernameRef.current?.focus(), 250);
   };
 
+  const handleDemoModePress = () => {
+    form.setFieldValue("url", "https://demo.navidrome.org");
+    form.setFieldValue("username", "demo");
+    form.setFieldValue("password", "demo");
+  };
+
   const triggerLabel =
     preselectedServer?.name ?? t("auth.login.serverPlaceholder");
 
@@ -409,6 +415,11 @@ export default function LoginScreen() {
           >
             <Text className="text-primary-800 font-bold text-lg">
               {t("auth.login.login")}
+            </Text>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={handleDemoModePress} className="mt-12">
+            <Text className="text-primary-100 text-center text-sm">
+              {t("auth.login.demo")}
             </Text>
           </FadeOutScaleDown>
         </Box>

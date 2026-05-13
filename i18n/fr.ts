@@ -831,6 +831,7 @@ export default {
         serverAlreadyExists: "Ce serveur existe déjà",
         showPassword: "Afficher le mot de passe",
         hidePassword: "Masquer le mot de passe",
+        demo: "Mode démo",
       },
     },
     openSubsonic: {

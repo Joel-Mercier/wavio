@@ -64,7 +64,11 @@ export default function AlbumListItem({
             <Disc3 size={48} color={white} />
           </Box>
         )}
-        <VStack className={cn({ "flex-col ml-4": layout === "vertical" })}>
+        <VStack
+          className={cn({
+            "flex-col ml-4 flex-1": layout === "vertical",
+          })}
+        >
           {album.releaseTypes && album.releaseTypes.length > 0 ? (
             <Text numberOfLines={1} className="text-md text-primary-100">
               {album.releaseTypes
