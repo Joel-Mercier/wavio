@@ -3,6 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
+import { useMemo } from "react";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -23,7 +24,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
-import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import { useInfiniteAlbumList2 } from "@/hooks/openSubsonic/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -52,11 +53,23 @@ export default function GenreScreen() {
   });
   const { id } = useLocalSearchParams<{ id: string }>();
   const musicFolderId = useCurrentMusicFolderId();
-  const { data, isLoading, error } = useAlbumList2({
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAlbumList2({
     type: "byGenre",
     genre: id,
+    size: 12,
     musicFolderId,
   });
+  const albums = useMemo(
+    () => data?.pages.flatMap((page) => page.albumList2?.album ?? []) ?? [],
+    [data],
+  );
   return (
     <Box className="h-full">
       <AnimatedBox
@@ -86,7 +99,7 @@ export default function GenreScreen() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={data?.albumList2.album || loadingData(6)}
+        data={isLoading ? loadingData(12) : albums}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <AlbumListItemSkeleton index={index} />
@@ -138,6 +151,12 @@ export default function GenreScreen() {
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
       />
     </Box>
   );

@@ -296,7 +296,7 @@ export default function LibraryScreen() {
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
                   "bg-emerald-500 text-primary-800": filter === "artists",
                   "mr-2": podcastsEnabled,
                 })}
@@ -373,11 +373,6 @@ export default function LibraryScreen() {
           }
           keyExtractor={(item) => item.id}
           numColumns={layout === "grid" ? 3 : 1}
-          refreshing={
-            (isFetchingStarred && !isLoadingStarred) ||
-            (isFetchingPlaylists && !isLoadingPlaylists) ||
-            isFetchingMusicFolders
-          }
           onRefresh={() => {
             refetchPlaylists();
             refetchStarred();
