@@ -223,6 +223,7 @@ export default function FloatingPlayer() {
     !playingTrack ||
     pathname.startsWith("/player") ||
     pathname.startsWith("/playlists/new") ||
+    pathname.includes("/edit-rules") ||
     pathname.startsWith("/internet-radio-stations/new")
   ) {
     return null;

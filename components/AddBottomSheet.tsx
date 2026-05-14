@@ -4,7 +4,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { ListMusic, Radio } from "lucide-react-native";
+import { ListMusic, Radio, Wand2 } from "lucide-react-native";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -14,11 +14,17 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import useAuth from "@/stores/auth";
+import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 
 const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
+  const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
+  const serverVersion = useAuth((s) => s.serverVersion);
+  const showSmartPlaylist =
+    hasNavidromeNative && supportsSmartPlaylists(serverVersion);
 
   const dismiss = () => {
     if (ref && typeof ref !== "function") {
@@ -29,6 +35,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const handleCreatePlaylistPress = () => {
     dismiss();
     router.navigate("/playlists/new");
+  };
+
+  const handleCreateSmartPlaylistPress = () => {
+    dismiss();
+    router.navigate("/playlists/new-smart");
   };
 
   const handleCreateInternetRadioStationPress = () => {
@@ -64,6 +75,21 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                 </VStack>
               </HStack>
             </FadeOutScaleDown>
+            {showSmartPlaylist && (
+              <FadeOutScaleDown onPress={handleCreateSmartPlaylistPress}>
+                <HStack className="items-center">
+                  <Wand2 size={32} color={gray200} />
+                  <VStack className="ml-4 flex-1">
+                    <Heading numberOfLines={1} className="text-white">
+                      {t("app.create.smartPlaylistTitle")}
+                    </Heading>
+                    <Text className="text-md text-gray-200 flex-1">
+                      {t("app.create.smartPlaylistDescription")}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
             <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
               <HStack className="items-center">
                 <Radio size={32} color={gray200} />

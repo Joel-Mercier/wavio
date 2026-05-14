@@ -25,6 +25,7 @@ type AuthStore = {
   userId: string | null;
   isAdmin: boolean;
   hasNavidromeNative: boolean;
+  serverVersion: string | null;
   login: (
     url: string,
     username: string,
@@ -34,6 +35,7 @@ type AuthStore = {
   setNavidromeSession: (session: NavidromeNativeSession | null) => void;
   setToken: (token: string) => void;
   setPassword: (password: string) => void;
+  setServerVersion: (version: string | null) => void;
   logout: () => void;
 };
 
@@ -48,6 +50,7 @@ export const useAuthBase = create<AuthStore>()(
       userId: null,
       isAdmin: false,
       hasNavidromeNative: false,
+      serverVersion: null,
       login: (
         url: string,
         username: string,
@@ -79,6 +82,9 @@ export const useAuthBase = create<AuthStore>()(
       setPassword: (password: string) => {
         set({ password });
       },
+      setServerVersion: (version: string | null) => {
+        set({ serverVersion: version });
+      },
       logout: () => {
         set({
           url: "",
@@ -89,6 +95,7 @@ export const useAuthBase = create<AuthStore>()(
           userId: null,
           isAdmin: false,
           hasNavidromeNative: false,
+          serverVersion: null,
         });
       },
     }),

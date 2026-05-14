@@ -1,3 +1,22 @@
+import type { SmartPlaylistCriteria } from "@/services/navidrome/smartPlaylists";
+
+export interface NavidromePlaylist {
+  id: string;
+  name: string;
+  comment?: string;
+  ownerId?: string;
+  ownerName?: string;
+  public?: boolean;
+  songCount?: number;
+  duration?: number;
+  size?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  rules?: SmartPlaylistCriteria | null;
+}
+
+export type NavidromePlaylistDetail = NavidromePlaylist;
+
 export interface NavidromeUser {
   id: string;
   userName: string;

@@ -52,6 +52,8 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="playlists/new" />
+        <Stack.Screen name="playlists/new-smart" />
+        <Stack.Screen name="playlists/[id]/edit-rules" />
         <Stack.Screen name="internet-radio-stations/new" />
         <Stack.Screen
           name="player"

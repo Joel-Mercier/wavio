@@ -1,18 +1,7 @@
 import navidromeApiInstance from "@/services/navidrome";
+import type { NavidromePlaylist } from "@/services/navidrome/types";
 
-export interface NavidromePlaylist {
-  id: string;
-  name: string;
-  comment?: string;
-  ownerId?: string;
-  ownerName?: string;
-  public?: boolean;
-  songCount?: number;
-  duration?: number;
-  size?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type { NavidromePlaylist } from "@/services/navidrome/types";
 
 export const getPlaylistsByOwner = async (
   ownerId: string,

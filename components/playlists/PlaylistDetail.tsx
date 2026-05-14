@@ -27,6 +27,7 @@ import {
   Search,
   Share2,
   Shuffle,
+  Wand2,
   X,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -64,6 +65,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import {
   useDeletePlaylist,
   usePlaylist,
@@ -76,6 +78,7 @@ import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
+import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -124,6 +127,9 @@ export default function PlaylistDetail() {
   const { handleSheetPositionChange: handleSortSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetSortModalRef);
   const { data: playlistData, isLoading, error } = usePlaylist(id);
+  const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
+  const { data: ndPlaylist } = useSmartPlaylist(hasNavidromeNative ? id : null);
+  const isSmartPlaylist = !!ndPlaylist?.rules;
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
@@ -172,6 +178,11 @@ export default function PlaylistDetail() {
   const handlePlaylistReorderPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/reorder`);
+  };
+
+  const handleEditRulesPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate(`/playlists/${id}/edit-rules`);
   };
 
   const handleAddToQueuePress = () => {
@@ -758,14 +769,26 @@ export default function PlaylistDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
-                <HStack className="items-center">
-                  <ListOrdered size={24} color={gray200} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.playlists.reorder")}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
+              {!isSmartPlaylist && (
+                <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
+                  <HStack className="items-center">
+                    <ListOrdered size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.playlists.reorder")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {isSmartPlaylist && (
+                <FadeOutScaleDown onPress={handleEditRulesPress}>
+                  <HStack className="items-center">
+                    <Wand2 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.playlists.editRules")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown onPress={handleAddToQueuePress}>
                 <HStack className="items-center">
                   <ListPlus size={24} color={gray200} />

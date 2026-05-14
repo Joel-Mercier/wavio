@@ -16,6 +16,7 @@ import {
   Plus,
   Radio,
   Search,
+  Wand2,
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,6 +53,7 @@ import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
+import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
@@ -65,6 +67,10 @@ export default function LibraryScreen() {
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
+  const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
+  const serverVersion = useAuth((store) => store.serverVersion);
+  const showSmartPlaylist =
+    hasNavidromeNative && supportsSmartPlaylists(serverVersion);
   const router = useRouter();
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
@@ -125,6 +131,11 @@ export default function LibraryScreen() {
   const handleCreatePlaylistPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate("/playlists/new");
+  };
+
+  const handleCreateSmartPlaylistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate("/playlists/new-smart");
   };
 
   const handleCreateInternetRadioStationPress = () => {
@@ -424,7 +435,7 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
                 <HStack className="items-center">
                   <ListMusic size={32} color={gray200} />
-                  <VStack className="ml-4">
+                  <VStack className="ml-4 flex-1">
                     <Heading className="text-white">
                       {t("app.create.playlistTitle")}
                     </Heading>
@@ -434,10 +445,25 @@ export default function LibraryScreen() {
                   </VStack>
                 </HStack>
               </FadeOutScaleDown>
+              {showSmartPlaylist && (
+                <FadeOutScaleDown onPress={handleCreateSmartPlaylistPress}>
+                  <HStack className="items-center">
+                    <Wand2 size={32} color={gray200} />
+                    <VStack className="ml-4 flex-1">
+                      <Heading className="text-white">
+                        {t("app.create.smartPlaylistTitle")}
+                      </Heading>
+                      <Text className="text-md text-gray-200">
+                        {t("app.create.smartPlaylistDescription")}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
                 <HStack className="items-center">
                   <Radio size={32} color={gray200} />
-                  <VStack className="ml-4">
+                  <VStack className="ml-4 flex-1">
                     <Heading className="text-white">
                       {t("app.create.internetRadioStationTitle")}
                     </Heading>

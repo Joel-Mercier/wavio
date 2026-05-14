@@ -57,6 +57,14 @@ openSubsonicApiInstance.interceptors.request.use(
 
 openSubsonicApiInstance.interceptors.response.use(
   (response) => {
+    const envelope = response.data?.["subsonic-response"];
+    const version = envelope?.serverVersion;
+    if (typeof version === "string" && version.length > 0) {
+      const current = useAuthBase.getState().serverVersion;
+      if (current !== version) {
+        useAuthBase.getState().setServerVersion(version);
+      }
+    }
     return response;
   },
   (error) => {
