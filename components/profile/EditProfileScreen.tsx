@@ -1,7 +1,8 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { X } from "lucide-react-native";
+import { EyeIcon, EyeOffIcon, X } from "lucide-react-native";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,7 +19,8 @@ import { Divider } from "@/components/ui/divider";
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Input, InputField } from "@/components/ui/input";
+import { Input, InputField, InputSlot } from "@/components/ui/input";
+import { Pressable } from "@/components/ui/pressable";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import {
@@ -130,6 +132,9 @@ export default function EditProfileScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const currentUsername = useAuth((store) => store.username);
   const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
   const navidromeUserId = useAuth((store) => store.userId);
@@ -388,9 +393,26 @@ export default function EditProfileScreen() {
                     placeholder={t(
                       "app.editProfile.currentPasswordPlaceholder",
                     )}
-                    secureTextEntry
+                    secureTextEntry={!showCurrentPassword}
                     autoCapitalize="none"
                   />
+                  <InputSlot>
+                    <Pressable
+                      onPress={() => setShowCurrentPassword((v) => !v)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showCurrentPassword
+                          ? t("auth.login.hidePassword")
+                          : t("auth.login.showPassword")
+                      }
+                    >
+                      {showCurrentPassword ? (
+                        <EyeOffIcon size={20} color={white} />
+                      ) : (
+                        <EyeIcon size={20} color={white} />
+                      )}
+                    </Pressable>
+                  </InputSlot>
                 </Input>
                 <FieldError field={field} />
               </FormControl>
@@ -411,9 +433,26 @@ export default function EditProfileScreen() {
                   onBlur={() => handleFieldBlur(field)}
                   className="text-md text-white"
                   placeholder={t("app.editProfile.newPasswordPlaceholder")}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
+                <InputSlot>
+                  <Pressable
+                    onPress={() => setShowPassword((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showPassword
+                        ? t("auth.login.hidePassword")
+                        : t("auth.login.showPassword")
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon size={20} color={white} />
+                    ) : (
+                      <EyeIcon size={20} color={white} />
+                    )}
+                  </Pressable>
+                </InputSlot>
               </Input>
               <FieldError field={field} />
             </FormControl>
@@ -433,9 +472,26 @@ export default function EditProfileScreen() {
                   onBlur={() => handleFieldBlur(field)}
                   className="text-md text-white"
                   placeholder={t("app.editProfile.confirmPasswordPlaceholder")}
-                  secureTextEntry
+                  secureTextEntry={!showPasswordConfirm}
                   autoCapitalize="none"
                 />
+                <InputSlot>
+                  <Pressable
+                    onPress={() => setShowPasswordConfirm((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showPasswordConfirm
+                        ? t("auth.login.hidePassword")
+                        : t("auth.login.showPassword")
+                    }
+                  >
+                    {showPasswordConfirm ? (
+                      <EyeOffIcon size={20} color={white} />
+                    ) : (
+                      <EyeIcon size={20} color={white} />
+                    )}
+                  </Pressable>
+                </InputSlot>
               </Input>
               {showFieldError(field) && (
                 <Text className="text-red-500 text-sm mt-1">

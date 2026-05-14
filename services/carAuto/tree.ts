@@ -84,10 +84,17 @@ const artistNode = (a: ArtistID3): BrowseNode => ({
   contentStyle: "list",
 });
 
-const trackNode = (c: Child): BrowseNode => {
+// Track mediaIds embed the parent that produced them so the play handler can
+// enqueue the right collection. The same song can appear under many parents
+// (a playlist, the favorites list, the album it belongs to, an artist's top
+// songs, a home section), and Android Auto doesn't tell us which parent the
+// user was browsing when they tapped — relying on a "last-browsed" hint is
+// racy because AA prefetches siblings/related parents around playback. By
+// making each (parent, song) pair its own mediaId we always know the source.
+const trackNode = (c: Child, parentId: string): BrowseNode => {
   snapshot.tracks.set(c.id, c);
   return {
-    id: `track:${c.id}`,
+    id: `track|${parentId}|${c.id}`,
     title: c.title ?? "Unknown",
     subtitle: c.artist,
     artworkUrl: c.coverArt ? artworkUrl(c.coverArt) : undefined,
@@ -267,7 +274,7 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
     },
     ...userPlaylists.map(playlistNode),
   ];
-  tree.favorites = starredSongs.map(trackNode);
+  tree.favorites = starredSongs.map((s) => trackNode(s, "favorites"));
   recordParentTracks("favorites", tree.favorites);
 
   // Library → Albums (starred albums)
@@ -326,8 +333,9 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         snapshot.playlists.set(id, pl);
         const entries = pl.entry ?? [];
         for (const e of entries) snapshot.tracks.set(e.id, e);
-        tree[`playlist:${id}`] = entries.map(trackNode);
-        recordParentTracks(`playlist:${id}`, tree[`playlist:${id}`]);
+        const parent = `playlist:${id}`;
+        tree[parent] = entries.map((e) => trackNode(e, parent));
+        recordParentTracks(parent, tree[parent]);
       } catch {
         tree[`playlist:${id}`] = [];
       }
@@ -343,8 +351,9 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         snapshot.albums.set(id, album);
         const songs = album.song ?? [];
         for (const s of songs) snapshot.tracks.set(s.id, s);
-        tree[`album:${id}`] = songs.map(trackNode);
-        recordParentTracks(`album:${id}`, tree[`album:${id}`]);
+        const parent = `album:${id}`;
+        tree[parent] = songs.map((s) => trackNode(s, parent));
+        recordParentTracks(parent, tree[parent]);
       } catch {
         tree[`album:${id}`] = [];
       }
@@ -369,24 +378,26 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         for (const s of topSongs) snapshot.tracks.set(s.id, s);
         // Children: top songs (playable) followed by albums (browsable). Drill
         // into each album to see its tracks.
+        const artistParent = `artist:${id}`;
         const children: BrowseNode[] = [
-          ...topSongs.map(trackNode),
+          ...topSongs.map((s) => trackNode(s, artistParent)),
           ...albums.map((a) => albumNode(a, true)),
         ];
-        tree[`artist:${id}`] = children;
-        recordParentTracks(`artist:${id}`, children);
+        tree[artistParent] = children;
+        recordParentTracks(artistParent, children);
         // Ensure each linked album also has a tracklist node prefetched.
         for (const a of albums) {
-          if (!tree[`album:${a.id}`]) {
+          const albumParent = `album:${a.id}`;
+          if (!tree[albumParent]) {
             try {
               const rsp = await getAlbum(a.id);
               const songs = rsp.album.song ?? [];
               snapshot.albums.set(a.id, rsp.album);
               for (const s of songs) snapshot.tracks.set(s.id, s);
-              tree[`album:${a.id}`] = songs.map(trackNode);
-              recordParentTracks(`album:${a.id}`, tree[`album:${a.id}`]);
+              tree[albumParent] = songs.map((s) => trackNode(s, albumParent));
+              recordParentTracks(albumParent, tree[albumParent]);
             } catch {
-              tree[`album:${a.id}`] = [];
+              tree[albumParent] = [];
             }
           }
         }

@@ -27,6 +27,8 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 - Servers screen with multiple servers support
 - Settings screen with server scanning, offline downloads, playback, content and display settings
 - Gapless playback, crossfade, replay gain, equalizer and sleep timer
+- Profile screen with user playlists
+- Edit profile screen with account info and password change
 - French and English translations
 
 ## Development

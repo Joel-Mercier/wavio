@@ -9,6 +9,20 @@ import type { QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { getSnapshot } from "./tree";
 
+// Track mediaIds carry their parent inline (`track|<parentId>|<songId>`) so
+// the play resolver doesn't have to guess which collection the user was in.
+function parseTrackMediaId(
+  mediaId: string,
+): { parentId: string; songId: string } | null {
+  if (!mediaId.startsWith("track|")) return null;
+  const parts = mediaId.split("|");
+  if (parts.length < 3) return null;
+  const parentId = parts[1];
+  const songId = parts.slice(2).join("|");
+  if (!parentId || !songId) return null;
+  return { parentId, songId };
+}
+
 // Called when Android Auto forwards a tap. If the tap originated from inside
 // a collection (album, playlist, home section, artist screen…), enqueue the
 // whole collection starting at the tapped track. Otherwise fall back to the
@@ -18,8 +32,10 @@ export async function handleBrowsePlay(
   parentId?: string,
 ): Promise<boolean> {
   try {
-    if (parentId && mediaId.startsWith("track:")) {
-      const enqueued = await playFromParent(mediaId, parentId);
+    const parsed = parseTrackMediaId(mediaId);
+    const effectiveParent = parsed?.parentId ?? parentId;
+    if (parsed && effectiveParent) {
+      const enqueued = await playFromParent(mediaId, effectiveParent);
       if (enqueued) return true;
     }
     const tracks = await resolveTracksForMediaId(mediaId);
@@ -59,9 +75,16 @@ async function playFromParent(
 export async function resolveTracksForMediaId(
   mediaId: string,
 ): Promise<QueueTrack[] | null> {
+  const snap = getSnapshot();
+
+  const parsedTrack = parseTrackMediaId(mediaId);
+  if (parsedTrack) {
+    const cached = snap.tracks.get(parsedTrack.songId);
+    return cached ? [childToTrack(cached)] : null;
+  }
+
   const [prefix, ...rest] = mediaId.split(":");
   const id = rest.join(":");
-  const snap = getSnapshot();
 
   switch (prefix) {
     case "track": {

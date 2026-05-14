@@ -57,7 +57,9 @@ object BrowseTreeCache {
 
   // Best-effort: if the tapped track lives in a known parent, return that
   // parent's id. Falls back to the last-browsed parent when the track isn't
-  // resolvable from the cache (rare — happens during warmup).
+  // resolvable from the cache (rare — happens during warmup). The JS side is
+  // authoritative now (track mediaIds embed their parent), so this is only a
+  // backstop for legacy ids without an embedded parent.
   fun findParentOf(childId: String): String? {
     for ((pid, list) in nodes) {
       if (list.any { it.id == childId }) return pid
