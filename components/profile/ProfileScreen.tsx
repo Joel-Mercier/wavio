@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -75,6 +76,7 @@ export default function ProfileScreen() {
     "--color-white",
   ]) as string[];
   const { t } = useTranslation();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -236,7 +238,8 @@ export default function ProfileScreen() {
         )}
         ListEmptyComponent={() => <EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
       />

@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
@@ -20,6 +21,7 @@ import { HStack } from "../ui/hstack";
 
 export default function HomeSectionDetail() {
   const { t } = useTranslation();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: AlbumListType }>();
@@ -68,7 +70,8 @@ export default function HomeSectionDetail() {
         ListEmptyComponent={() => <EmptyDisplay />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {
