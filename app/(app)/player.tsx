@@ -675,7 +675,10 @@ export default function PlayerScreen() {
         <VStack className="h-screen">
           <HStack className="items-center justify-between my-6 px-6">
             <FadeOutScaleDown
-              onPress={() => router.back()}
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace("/");
+              }}
               className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
             >
               <ChevronDown size={24} color="white" />
@@ -915,7 +918,10 @@ export default function PlayerScreen() {
                   streamUrl={playingTrack?.streamUrl ?? playingTrack?.url ?? ""}
                   homePageUrl={playingTrack?.homePageUrl}
                   onActionStart={() => bottomSheetModalRef.current?.dismiss()}
-                  onDeleted={() => router.back()}
+                  onDeleted={() => {
+                    if (router.canGoBack()) router.back();
+                    else router.replace("/");
+                  }}
                 />
               ) : (
                 <VStack className="mt-6 gap-y-8">
