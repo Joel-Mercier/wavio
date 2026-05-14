@@ -37,6 +37,7 @@ import i18n, {
   type TSupportedLanguages,
 } from "@/config/i18n";
 import { configurePlayback } from "@/services/player";
+import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -81,6 +82,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     configurePlayback();
+    initWidget(queryClient);
     if (Platform.OS === "android") {
       NavigationBar.setStyle("dark");
     }

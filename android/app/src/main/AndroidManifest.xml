@@ -42,5 +42,22 @@
         <data android:scheme="exp+wavio"/>
       </intent-filter>
     </activity>
+    <receiver android:name="com.jmercier.wavio.widget.NowPlayingWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_now_playing_info"/>
+    </receiver>
+    <receiver android:name="com.jmercier.wavio.widget.RecentPlaysWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_recent_info"/>
+    </receiver>
+    <receiver android:name="com.jmercier.wavio.widget.WidgetActionReceiver" android:exported="false">
+      <intent-filter>
+        <action android:name="com.jmercier.wavio.WIDGET_ACTION"/>
+      </intent-filter>
+    </receiver>
   </application>
 </manifest>

@@ -88,7 +88,8 @@
       ],
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
-      "./plugins/withCarPlay"
+      "./plugins/withCarPlay",
+      "./plugins/withWidgets"
     ],
     "experiments": {
       "typedRoutes": true,

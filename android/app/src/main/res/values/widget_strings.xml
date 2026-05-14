@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_empty_title">Wavio</string>
+    <string name="widget_empty_subtitle">Tap to open</string>
+</resources>
