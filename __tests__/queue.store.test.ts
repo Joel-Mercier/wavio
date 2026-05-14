@@ -378,3 +378,164 @@ describe("queue store - navigation with context (repeat all)", () => {
     expect(get().currentIndex).toBe(0);
   });
 });
+
+describe("queue store - updateTrack", () => {
+  test("merges patch into the matching track and preserves id", () => {
+    get().setQueue(makeTracks(2), 0);
+    get().updateTrack("t2", { title: "Hello", id: "hijacked" } as Partial<
+      TestTrack & { title: string }
+    >);
+    const t2 = get().queue.find((t) => t.id === "t2") as TestTrack & {
+      title?: string;
+    };
+    expect(t2).toBeDefined();
+    expect(t2?.title).toBe("Hello");
+    expect(get().queue.map((t) => t.id)).toEqual(["t1", "t2"]);
+  });
+
+  test("is a no-op when id does not exist", () => {
+    get().setQueue(makeTracks(2), 0);
+    const before = get().queue;
+    get().updateTrack("missing", { title: "X" } as Partial<
+      TestTrack & { title: string }
+    >);
+    expect(get().queue).toBe(before);
+  });
+});
+
+describe("queue store - move guards and shifts", () => {
+  test("no-op for from === to or out-of-range indices", () => {
+    get().setQueue(makeTracks(3), 1);
+    const before = get().queue;
+    get().move(1, 1);
+    expect(get().queue).toBe(before);
+    get().move(-1, 0);
+    expect(get().queue).toBe(before);
+    get().move(0, 99);
+    expect(get().queue).toBe(before);
+  });
+
+  test("from < currentIndex && to >= currentIndex shifts current down", () => {
+    get().setQueue(makeTracks(4), 2); // t3 current
+    get().move(0, 2); // [t2, t3, t1, t4], current must still point to t3
+    expect(get().queue.map((t) => t.id)).toEqual(["t2", "t3", "t1", "t4"]);
+    expect(get().currentIndex).toBe(1);
+    expect(get().getCurrent()?.id).toBe("t3");
+  });
+
+  test("from > currentIndex && to <= currentIndex shifts current up", () => {
+    get().setQueue(makeTracks(4), 1); // t2 current
+    get().move(3, 1); // [t1, t4, t2, t3], current must still point to t2
+    expect(get().queue.map((t) => t.id)).toEqual(["t1", "t4", "t2", "t3"]);
+    expect(get().currentIndex).toBe(2);
+    expect(get().getCurrent()?.id).toBe("t2");
+  });
+});
+
+describe("queue store - enqueue with null currentIndex", () => {
+  test("enqueueNext on empty queue inserts and sets index to 0", () => {
+    get().enqueueNext({ id: "x", url: "url://x" });
+    expect(get().queue.map((t) => t.id)).toEqual(["x"]);
+    expect(get().currentIndex).toBe(0);
+  });
+
+  test("enqueueEnd on empty queue inserts and sets index to 0", () => {
+    get().enqueueEnd([
+      { id: "x", url: "url://x" },
+      { id: "y", url: "url://y" },
+    ]);
+    expect(get().queue.map((t) => t.id)).toEqual(["x", "y"]);
+    expect(get().currentIndex).toBe(0);
+  });
+
+  test("enqueueNext while shuffle on extends order with new ids", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setShuffle(true);
+    const orderBefore = get().shuffleOrderIds as string[];
+    get().enqueueNext([{ id: "x", url: "url://x" }]);
+    const orderAfter = get().shuffleOrderIds as string[];
+    expect(orderAfter).toContain("x");
+    expect(orderAfter.length).toBe(orderBefore.length + 1);
+  });
+
+  test("enqueueEnd while shuffle on appends new ids to order", () => {
+    get().setQueue(makeTracks(2), 0);
+    get().setShuffle(true);
+    const orderBefore = get().shuffleOrderIds as string[];
+    get().enqueueEnd([{ id: "x", url: "url://x" }]);
+    const orderAfter = get().shuffleOrderIds as string[];
+    expect(orderAfter[orderAfter.length - 1]).toBe("x");
+    expect(orderAfter.length).toBe(orderBefore.length + 1);
+  });
+});
+
+describe("queue store - removal edge cases", () => {
+  test("removeAtIndices is a no-op when indices are all out of range", () => {
+    get().setQueue(makeTracks(3), 1);
+    const before = get().queue;
+    get().removeAtIndices([-1, 99]);
+    expect(get().queue).toBe(before);
+  });
+
+  test("removeAtIndices is a no-op when called with empty array", () => {
+    get().setQueue(makeTracks(2), 0);
+    const before = get().queue;
+    get().removeAtIndices([]);
+    expect(get().queue).toBe(before);
+  });
+
+  test("removeByIds is a no-op when called with empty array", () => {
+    get().setQueue(makeTracks(2), 0);
+    const before = get().queue;
+    get().removeByIds([]);
+    expect(get().queue).toBe(before);
+  });
+
+  test("setQueue with empty array clears currentIndex", () => {
+    get().setQueue(makeTracks(2), 1);
+    get().setQueue([], 0);
+    expect(get().queue).toEqual([]);
+    expect(get().currentIndex).toBeNull();
+  });
+});
+
+describe("queue store - shuffle / repeat interactions", () => {
+  test("setRepeatMode rebuilds shuffle order when shuffle is on", () => {
+    get().setQueue(makeTracks(4), 1);
+    get().setShuffle(true);
+    const before = get().shuffleOrderIds;
+    get().setRepeatMode("all");
+    expect(get().repeatMode).toBe("all");
+    expect(get().shuffleOrderIds).not.toBeNull();
+    // order may be regenerated; only require it's a fresh array (not the same ref)
+    expect(get().shuffleOrderIds).not.toBe(before);
+  });
+
+  test("previous in shuffle wraps to last with repeat all when at start", () => {
+    const base = makeTracks(3);
+    get().setQueue(base, 0);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setShuffle(true);
+    const order = get().shuffleOrderIds as string[];
+    // ensure cursor is at 0
+    expect(get().shuffleCursor).toBe(0);
+    get().previous();
+    expect(get().shuffleCursor).toBe(order.length - 1);
+  });
+
+  test("next at end of shuffle order regenerates a fresh pool", () => {
+    const base = makeTracks(3);
+    get().setQueue(base, 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    // Drive cursor to last position
+    const order = get().shuffleOrderIds as string[];
+    while ((get().shuffleCursor as number) < order.length - 1) {
+      get().next();
+    }
+    get().next(); // hits end-of-order regen branch
+    expect(get().shuffleCursor).toBe(0);
+    expect(get().shuffleOrderIds?.length ?? 0).toBeGreaterThan(0);
+  });
+});

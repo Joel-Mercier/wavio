@@ -160,4 +160,84 @@ describe("podcasts store - recommendations", () => {
     get().advanceGenreRotation();
     expect(get().lastUsedGenreIndex).not.toBe(before);
   });
+
+  it("advanceGenreRotation wraps to 0 at the end of rotation", () => {
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
+    // rotation length is 2 (G1, G2)
+    get().setLastUsedGenreIndex(1);
+    get().advanceGenreRotation();
+    expect(get().lastUsedGenreIndex).toBe(0);
+  });
+
+  it("getTopGenres orders by frequency and respects the limit", () => {
+    get().addFavoritePodcast(
+      makePodcast({ uuid: "a", genres: ["G1", "G2"] as any }),
+    );
+    get().addFavoritePodcast(
+      makePodcast({ uuid: "b", genres: ["G2", "G3"] as any }),
+    );
+    get().addFavoritePodcast(makePodcast({ uuid: "c", genres: ["G2"] as any }));
+    const top3 = get().getTopGenres();
+    expect(top3[0]).toBe("G2");
+    expect(top3.slice(1).sort()).toEqual(["G1", "G3"]);
+    expect(get().getTopGenres(1)).toEqual(["G2"]);
+    expect(get().getTopGenres(2)[0]).toBe("G2");
+    expect(get().getTopGenres(2)).toHaveLength(2);
+  });
+
+  it("getRecommendationParams picks the most common language and country", () => {
+    get().addFavoritePodcast(
+      makePodcast({
+        uuid: "a",
+        genres: ["G1"] as any,
+        language: "ENGLISH",
+        itunesInfo: { country: "FRANCE" },
+      }),
+    );
+    get().addFavoritePodcast(
+      makePodcast({
+        uuid: "b",
+        genres: ["G2"] as any,
+        language: "FRENCH",
+        itunesInfo: { country: "FRANCE" },
+      }),
+    );
+    get().addFavoritePodcast(
+      makePodcast({
+        uuid: "c",
+        genres: ["G3"] as any,
+        language: "FRENCH",
+        itunesInfo: { country: "UNITED_STATES_OF_AMERICA" },
+      }),
+    );
+    const params = get().getRecommendationParams();
+    expect(params.language).toBe("FRENCH");
+    expect(params.country).toBe("FRANCE");
+  });
+
+  it("getRecommendationParams falls back to store defaults when favorites lack language/country", () => {
+    get().addFavoritePodcast(
+      makePodcast({
+        uuid: "a",
+        genres: ["G1"] as any,
+        language: undefined,
+        itunesInfo: undefined,
+        country: undefined,
+      }),
+    );
+    // wipe country fallback that addFavoritePodcast applied to keep counts empty
+    usePodcastsBase.setState({
+      favoritePodcasts: [
+        {
+          ...get().favoritePodcasts[0],
+          language: undefined as any,
+          country: undefined as any,
+        },
+      ],
+    });
+    const params = get().getRecommendationParams();
+    expect(params.language).toBe("ENGLISH");
+    expect(params.country).toBe("UNITED_STATES_OF_AMERICA");
+  });
 });

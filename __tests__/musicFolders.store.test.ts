@@ -1,5 +1,3 @@
-import { useMusicFoldersBase } from "@/stores/musicFolders";
-
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
   return {
@@ -20,15 +18,40 @@ jest.mock("@/config/storage", () => {
   };
 });
 
+const authState = { url: "", username: "" };
 jest.mock("@/stores/auth", () => ({
   useAuthBase: Object.assign(
     (selector: (s: { url: string; username: string }) => unknown) =>
-      selector({ url: "", username: "" }),
-    { getState: () => ({ url: "", username: "" }) },
+      selector(authState),
+    { getState: () => authState },
   ),
 }));
 
+import * as React from "react";
+import TestRenderer from "react-test-renderer";
+import {
+  useCurrentAuthScope,
+  useCurrentMusicFolderId,
+  useMusicFoldersBase,
+} from "@/stores/musicFolders";
+
 const get = () => useMusicFoldersBase.getState();
+
+const callHook = <T>(hook: () => T): T => {
+  let value!: T;
+  const Probe = () => {
+    value = hook();
+    return null;
+  };
+  let root!: TestRenderer.ReactTestRenderer;
+  TestRenderer.act(() => {
+    root = TestRenderer.create(React.createElement(Probe));
+  });
+  TestRenderer.act(() => {
+    root.unmount();
+  });
+  return value;
+};
 
 beforeEach(() => {
   useMusicFoldersBase.setState({ selections: {} });
@@ -77,5 +100,46 @@ describe("musicFolders store", () => {
     get().setCurrentFolder("scopeA", "folder-1");
     get().clearScope("scopeB");
     expect(get().selections).toEqual({ scopeA: "folder-1" });
+  });
+});
+
+describe("useCurrentAuthScope / useCurrentMusicFolderId", () => {
+  beforeEach(() => {
+    authState.url = "";
+    authState.username = "";
+    useMusicFoldersBase.setState({ selections: {} });
+  });
+
+  test("useCurrentAuthScope returns undefined when url is missing", () => {
+    authState.url = "";
+    authState.username = "alice";
+    expect(callHook(useCurrentAuthScope)).toBeUndefined();
+  });
+
+  test("useCurrentAuthScope returns undefined when username is missing", () => {
+    authState.url = "https://x.example.com";
+    authState.username = "";
+    expect(callHook(useCurrentAuthScope)).toBeUndefined();
+  });
+
+  test("useCurrentAuthScope derives scope from url + username", () => {
+    authState.url = "https://x.example.com";
+    authState.username = "alice";
+    expect(callHook(useCurrentAuthScope)).toBe("https___x_example_com_alice");
+  });
+
+  test("useCurrentMusicFolderId returns undefined when no scope", () => {
+    authState.url = "";
+    authState.username = "";
+    useMusicFoldersBase.setState({ selections: { anything: "f1" } });
+    expect(callHook(useCurrentMusicFolderId)).toBeUndefined();
+  });
+
+  test("useCurrentMusicFolderId reads selection for the active scope", () => {
+    authState.url = "https://x.example.com";
+    authState.username = "alice";
+    const scope = "https___x_example_com_alice";
+    useMusicFoldersBase.setState({ selections: { [scope]: "folder-9" } });
+    expect(callHook(useCurrentMusicFolderId)).toBe("folder-9");
   });
 });

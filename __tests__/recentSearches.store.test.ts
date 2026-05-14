@@ -69,4 +69,21 @@ describe("recentSearches store", () => {
     get().clearRecentSearches();
     expect(get().recentSearches).toEqual([]);
   });
+
+  it("dedup is reference-based: a fresh object with same id duplicates", () => {
+    // The store uses Array.includes (reference equality) for dedup, so two
+    // distinct objects with the same id will both end up in the list. This
+    // test pins that behavior so a future change to id-based dedup is a
+    // deliberate choice rather than a silent regression.
+    get().addRecentSearch(make("a"));
+    get().addRecentSearch(make("a"));
+    expect(get().recentSearches).toHaveLength(2);
+    expect(get().recentSearches.map((s) => s.id)).toEqual(["a", "a"]);
+  });
+
+  it("__reset empties the list", () => {
+    get().addRecentSearch(make("a"));
+    get().__reset();
+    expect(get().recentSearches).toEqual([]);
+  });
 });

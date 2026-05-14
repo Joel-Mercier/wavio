@@ -1,4 +1,8 @@
-import { useServersBase } from "@/stores/servers";
+import {
+  serverFormSchema,
+  serverUserSchema,
+  useServersBase,
+} from "@/stores/servers";
 
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
@@ -145,5 +149,130 @@ describe("servers store actions", () => {
     expect(updated?.name).toBe("A2");
     expect(updated?.url).toBe("https://a.example.com");
     expect(updated?.current).toBe(true);
+  });
+
+  it("addServer trims name and url", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "  A  ", url: "  https://a.example.com  " });
+    expect(s.name).toBe("A");
+    expect(s.url).toBe("https://a.example.com");
+  });
+
+  it("addServer caps the list at 24 entries", () => {
+    for (let i = 0; i < 30; i++) {
+      useServersBase
+        .getState()
+        .addServer({ name: `S${i}`, url: `https://s${i}.example.com` });
+    }
+    const servers = useServersBase.getState().servers;
+    expect(servers).toHaveLength(24);
+    // newest is at the head; oldest preserved entries are at the tail
+    expect(servers[0].name).toBe("S29");
+  });
+
+  it("getServerByUrl finds by trimmed url", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    expect(
+      useServersBase.getState().getServerByUrl("  https://a.example.com  ")?.id,
+    ).toBe(s.id);
+    expect(
+      useServersBase.getState().getServerByUrl("https://nope.example.com"),
+    ).toBeUndefined();
+  });
+
+  it("editServer trims url and is a no-op for unknown id", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .editServer(s.id, { url: "  https://a2.example.com  " });
+    expect(useServersBase.getState().getServerById(s.id)?.url).toBe(
+      "https://a2.example.com",
+    );
+    const before = useServersBase.getState().servers;
+    useServersBase.getState().editServer("missing", { name: "X" });
+    expect(useServersBase.getState().servers).toEqual(before);
+  });
+
+  it("removeServer does not promote a new current", () => {
+    const a = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .addServer({ name: "B", url: "https://b.example.com" });
+    useServersBase.getState().removeServer(a.id);
+    const servers = useServersBase.getState().servers;
+    expect(servers.every((s) => !s.current)).toBe(true);
+  });
+
+  it("setCurrentServer with unknown id clears every current flag", () => {
+    const a = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    expect(useServersBase.getState().getServerById(a.id)?.current).toBe(true);
+    useServersBase.getState().setCurrentServer("missing");
+    expect(useServersBase.getState().servers.every((s) => !s.current)).toBe(
+      true,
+    );
+  });
+
+  it("addOrUpdateUser trims username", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "  alice  " });
+    const users = useServersBase.getState().getUsersForServer(s.id);
+    expect(users).toEqual([{ serverId: s.id, username: "alice" }]);
+  });
+
+  it("syncServerUsers filters out empty/whitespace usernames", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .syncServerUsers(s.id, ["", "   ", "alice", "   "]);
+    expect(
+      useServersBase
+        .getState()
+        .getUsersForServer(s.id)
+        .map((u) => u.username),
+    ).toEqual(["alice"]);
+  });
+});
+
+describe("server schemas", () => {
+  it("serverFormSchema accepts valid input and rejects bad url", () => {
+    expect(
+      serverFormSchema.safeParse({ name: "A", url: "https://a.example.com" })
+        .success,
+    ).toBe(true);
+    expect(
+      serverFormSchema.safeParse({ name: "A", url: "not-a-url" }).success,
+    ).toBe(false);
+    expect(
+      serverFormSchema.safeParse({ name: "   ", url: "https://a.example.com" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("serverUserSchema requires non-empty fields", () => {
+    expect(
+      serverUserSchema.safeParse({ serverId: "abc", username: "alice" })
+        .success,
+    ).toBe(true);
+    expect(
+      serverUserSchema.safeParse({ serverId: "", username: "alice" }).success,
+    ).toBe(false);
+    expect(
+      serverUserSchema.safeParse({ serverId: "abc", username: "   " }).success,
+    ).toBe(false);
   });
 });

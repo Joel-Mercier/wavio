@@ -6,10 +6,10 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 
 ## Features
 
-- Home screen with recently added, most played, highest rated, and favorites
+- Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random and internet radio stations sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums
-- Playlist screen with songs
+- Playlist screen with songs list and editing
 - Search screen with genres, artists, albums, and songs
 - Recent searches history
 - Library screen with starred, playlists, albums, and artists
@@ -18,8 +18,8 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
-- Podcasts screen with podcast series and episodes (provided by Taddy API)
-- Internet radio stations from Navidrome
+- Podcasts screen with podcast series and episodes (provided by Taddy API, 500 monthly free requests)
+- Internet radio stations, listen to radio streams
 - Offline downloads of favorited songs
 - Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen with now playing users
@@ -30,6 +30,8 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Widgets
+- Android Auto support
+- Navidrome smart playlists beta support
 - French and English translations
 
 ## Development
