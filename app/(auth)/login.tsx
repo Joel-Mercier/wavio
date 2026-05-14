@@ -48,6 +48,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, { type Server, type ServerUser } from "@/stores/servers";
@@ -169,7 +170,29 @@ export default function LoginScreen() {
           username: value.username.trim(),
         });
         setCurrentServer(server.id);
-        login(value.url, value.username, value.password);
+
+        let navidromeSession = null;
+        try {
+          const payload = await nativeLogin(
+            trimmedUrl,
+            value.username.trim(),
+            value.password.trim(),
+          );
+          if (payload?.token && payload?.id) {
+            navidromeSession = {
+              token: payload.token,
+              userId: payload.id,
+              isAdmin: !!payload.isAdmin,
+            };
+          }
+        } catch (err) {
+          console.warn(
+            "[auth] Navidrome native /auth/login unavailable, falling back to Subsonic-only mode",
+            err,
+          );
+        }
+
+        login(value.url, value.username, value.password, navidromeSession);
         toast.show({
           placement: "top",
           duration: 3000,

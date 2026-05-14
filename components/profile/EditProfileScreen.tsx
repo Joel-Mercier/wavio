@@ -29,6 +29,10 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useGetUser as useGetNavidromeUser,
+  useUpdateUser as useUpdateNavidromeUser,
+} from "@/hooks/navidrome/useUsers";
+import {
   useChangePassword,
   useGetUser,
   useUpdateUser,
@@ -75,6 +79,7 @@ const editProfileSchema = z
     email: z.string().trim().email().optional().or(z.literal("")),
     password: z.string().optional().or(z.literal("")),
     passwordConfirm: z.string().optional().or(z.literal("")),
+    currentPassword: z.string().optional().or(z.literal("")),
     maxBitRate: z.string().optional(),
     musicFolderId: z.string().optional(),
     adminRole: z.boolean().optional(),
@@ -126,16 +131,48 @@ export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
   const currentUsername = useAuth((store) => store.username);
-  const { data } = useGetUser(currentUsername);
+  const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
+  const navidromeUserId = useAuth((store) => store.userId);
+  const setStoredPassword = useAuth((store) => store.setPassword);
+  const { data: subsonicData } = useGetUser(
+    hasNavidromeNative ? "" : currentUsername,
+  );
+  const { data: navidromeUser } = useGetNavidromeUser(
+    hasNavidromeNative ? navidromeUserId : null,
+  );
   const doUpdateUser = useUpdateUser();
   const doChangePassword = useChangePassword();
-  const user = data?.user;
+  const doUpdateNavidromeUser = useUpdateNavidromeUser();
+  const subsonicUser = subsonicData?.user;
+  const user = hasNavidromeNative
+    ? navidromeUser
+      ? {
+          email: navidromeUser.email,
+          adminRole: navidromeUser.isAdmin,
+          maxBitRate: undefined as number | undefined,
+          folder: undefined as number[] | undefined,
+          settingsRole: false,
+          streamRole: false,
+          jukeboxRole: false,
+          downloadRole: false,
+          uploadRole: false,
+          playlistRole: false,
+          coverArtRole: false,
+          commentRole: false,
+          podcastRole: false,
+          shareRole: false,
+          videoConversionRole: false,
+          scrobblingEnabled: false,
+        }
+      : undefined
+    : subsonicUser;
 
   const form = useForm({
     defaultValues: {
       email: user?.email ?? "",
       password: "",
       passwordConfirm: "",
+      currentPassword: "",
       maxBitRate: user?.maxBitRate !== undefined ? String(user.maxBitRate) : "",
       musicFolderId: user?.folder?.join(",") ?? "",
       adminRole: user?.adminRole ?? false,
@@ -157,41 +194,70 @@ export default function EditProfileScreen() {
     },
     onSubmit: async ({ value }) => {
       try {
-        if (value.password && value.password.length > 0) {
-          await doChangePassword.mutateAsync({
+        if (hasNavidromeNative) {
+          if (!navidromeUserId || !navidromeUser) {
+            throw new Error("Missing Navidrome user id");
+          }
+          const changingPassword =
+            !!value.password && value.password.length > 0;
+          await doUpdateNavidromeUser.mutateAsync({
+            id: navidromeUserId,
+            body: {
+              userName: navidromeUser.userName,
+              name: navidromeUser.name,
+              email: value.email ?? "",
+              isAdmin: user?.adminRole
+                ? !!value.adminRole
+                : navidromeUser.isAdmin,
+              ...(changingPassword ? { password: value.password } : {}),
+              ...(changingPassword && value.currentPassword
+                ? { currentPassword: value.currentPassword }
+                : {}),
+            },
+          });
+          if (changingPassword && currentUsername === navidromeUser.userName) {
+            setStoredPassword(value.password as string);
+          }
+        } else {
+          if (value.password && value.password.length > 0) {
+            await doChangePassword.mutateAsync({
+              username: currentUsername,
+              password: value.password,
+            });
+            if (currentUsername === username) {
+              setStoredPassword(value.password);
+            }
+          }
+          const maxBitRate =
+            value.maxBitRate && value.maxBitRate.length > 0
+              ? Number.parseInt(value.maxBitRate, 10)
+              : undefined;
+          await doUpdateUser.mutateAsync({
             username: currentUsername,
-            password: value.password,
+            email: value.email || undefined,
+            maxBitRate: Number.isFinite(maxBitRate as number)
+              ? (maxBitRate as number)
+              : undefined,
+            musicFolderId: parseFolderIds(value.musicFolderId),
+            ...(user?.adminRole
+              ? {
+                  adminRole: value.adminRole,
+                  settingsRole: value.settingsRole,
+                  streamRole: value.streamRole,
+                  jukeboxRole: value.jukeboxRole,
+                  downloadRole: value.downloadRole,
+                  uploadRole: value.uploadRole,
+                  playlistRole: value.playlistRole,
+                  coverArtRole: value.coverArtRole,
+                  commentRole: value.commentRole,
+                  podcastRole: value.podcastRole,
+                  shareRole: value.shareRole,
+                  videoConversionRole: value.videoConversionRole,
+                  scrobblingEnabled: value.scrobblingEnabled,
+                }
+              : {}),
           });
         }
-        const maxBitRate =
-          value.maxBitRate && value.maxBitRate.length > 0
-            ? Number.parseInt(value.maxBitRate, 10)
-            : undefined;
-        await doUpdateUser.mutateAsync({
-          username: currentUsername,
-          email: value.email || undefined,
-          maxBitRate: Number.isFinite(maxBitRate as number)
-            ? (maxBitRate as number)
-            : undefined,
-          musicFolderId: parseFolderIds(value.musicFolderId),
-          ...(user?.adminRole
-            ? {
-                adminRole: value.adminRole,
-                settingsRole: value.settingsRole,
-                streamRole: value.streamRole,
-                jukeboxRole: value.jukeboxRole,
-                downloadRole: value.downloadRole,
-                uploadRole: value.uploadRole,
-                playlistRole: value.playlistRole,
-                coverArtRole: value.coverArtRole,
-                commentRole: value.commentRole,
-                podcastRole: value.podcastRole,
-                shareRole: value.shareRole,
-                videoConversionRole: value.videoConversionRole,
-                scrobblingEnabled: value.scrobblingEnabled,
-              }
-            : {}),
-        });
         toast.show({
           placement: "top",
           duration: 3000,
@@ -305,6 +371,32 @@ export default function EditProfileScreen() {
         <Heading size="md" className="text-white mb-3">
           {t("app.editProfile.passwordSection")}
         </Heading>
+        {hasNavidromeNative && (
+          <form.Field name="currentPassword">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                className="mb-2"
+              >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <InputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
+                    placeholder={t(
+                      "app.editProfile.currentPasswordPlaceholder",
+                    )}
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
+                </Input>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </form.Field>
+        )}
         <form.Field name="password">
           {(field) => (
             <FormControl
@@ -354,45 +446,51 @@ export default function EditProfileScreen() {
           )}
         </form.Field>
 
-        <Divider className="my-4 bg-primary-600" />
+        {!hasNavidromeNative && (
+          <>
+            <Divider className="my-4 bg-primary-600" />
 
-        <Heading size="md" className="text-white mb-3">
-          {t("app.editProfile.streamingSection")}
-        </Heading>
-        <form.Field name="maxBitRate">
-          {(field) => (
-            <FormControl size="md" className="mb-2">
-              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                <InputField
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white"
-                  placeholder={t("app.editProfile.maxBitRatePlaceholder")}
-                  keyboardType="number-pad"
-                />
-              </Input>
-            </FormControl>
-          )}
-        </form.Field>
-        <form.Field name="musicFolderId">
-          {(field) => (
-            <FormControl size="md" className="mb-4">
-              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                <InputField
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white"
-                  placeholder={t("app.editProfile.musicFolderIdPlaceholder")}
-                  autoCapitalize="none"
-                />
-              </Input>
-            </FormControl>
-          )}
-        </form.Field>
+            <Heading size="md" className="text-white mb-3">
+              {t("app.editProfile.streamingSection")}
+            </Heading>
+            <form.Field name="maxBitRate">
+              {(field) => (
+                <FormControl size="md" className="mb-2">
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
+                      placeholder={t("app.editProfile.maxBitRatePlaceholder")}
+                      keyboardType="number-pad"
+                    />
+                  </Input>
+                </FormControl>
+              )}
+            </form.Field>
+            <form.Field name="musicFolderId">
+              {(field) => (
+                <FormControl size="md" className="mb-4">
+                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                    <InputField
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md text-white"
+                      placeholder={t(
+                        "app.editProfile.musicFolderIdPlaceholder",
+                      )}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                </FormControl>
+              )}
+            </form.Field>
+          </>
+        )}
 
-        {user?.adminRole && (
+        {!hasNavidromeNative && user?.adminRole && (
           <>
             <Divider className="my-4 bg-primary-600" />
 

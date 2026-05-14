@@ -25,7 +25,7 @@ export default {
           highest: "Top rated",
           frequent: "Most played",
           random: "Random",
-        }
+        },
       },
       search: {
         title: "Search",
@@ -339,6 +339,7 @@ export default {
         emailPlaceholder: "Enter email",
         newPasswordPlaceholder: "New password",
         confirmPasswordPlaceholder: "Confirm new password",
+        currentPasswordPlaceholder: "Current password",
         maxBitRatePlaceholder: "Max bitrate (kbps)",
         musicFolderIdPlaceholder: "Music folder IDs (comma-separated)",
         passwordMismatch: "Passwords do not match",

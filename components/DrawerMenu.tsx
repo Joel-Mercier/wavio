@@ -157,10 +157,10 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
           <HStack className="flex-1 items-center m-1 p-4 border-b-2 border-primary-500">
             <Pressable
               className="flex-row flex-1 items-center"
-              // onPress={() => {
-              //   onClose();
-              //   router.navigate(`/profile/${username}`);
-              // }}
+              onPress={() => {
+                onClose();
+                router.navigate(`/profile/${username}`);
+              }}
             >
               <Avatar className="mr-4 bg-primary-400 w-10 h-10">
                 <AvatarFallbackText className="font-body">
@@ -175,9 +175,9 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 >
                   {username}
                 </Heading>
-                {/* <Text className="text-primary-300 text-sm">
+                <Text className="text-primary-300 text-sm">
                   {t("app.shared.sidebar.seeProfile")}
-                </Text> */}
+                </Text>
               </VStack>
             </Pressable>
             {otherUsers.length > 0 && (

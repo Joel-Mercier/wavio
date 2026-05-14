@@ -23,9 +23,15 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useNavidromePlaylistsByOwner } from "@/hooks/navidrome/usePlaylists";
+import {
+  useGetUser as useGetNavidromeUser,
+  useUsers as useNavidromeUsers,
+} from "@/hooks/navidrome/useUsers";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import { useGetUser } from "@/hooks/openSubsonic/useUsers";
 import type { Playlist } from "@/services/openSubsonic/types";
+import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -72,8 +78,39 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { data: userData, error } = useGetUser(username);
+  const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
+  const isAdmin = useAuth((s) => s.isAdmin);
+  const authUsername = useAuth((s) => s.username);
+  const authUserId = useAuth((s) => s.userId);
+
+  const isOwnProfile = username === authUsername;
+
+  // Resolve the target user ID for Navidrome native calls: own profile uses
+  // the stored auth userId; otherwise (admin viewing someone else) look it up
+  // from the Navidrome user list.
+  const { data: ndUsers } = useNavidromeUsers({
+    enabled: hasNavidromeNative && !isOwnProfile && isAdmin,
+  });
+  const otherUserId = ndUsers?.find((u) => u.userName === username)?.id;
+  const targetOwnerId = hasNavidromeNative
+    ? isOwnProfile
+      ? authUserId
+      : (otherUserId ?? null)
+    : null;
+
+  const useNavidrome = hasNavidromeNative && !!targetOwnerId;
+  const { data: navidromeUser, error: navidromeError } = useGetNavidromeUser(
+    useNavidrome ? targetOwnerId : null,
+  );
+  const { data: subsonicData, error: subsonicError } = useGetUser(
+    hasNavidromeNative ? "" : username,
+  );
+  const error = useNavidrome ? navidromeError : subsonicError;
+  const { data: ndPlaylistsData } = useNavidromePlaylistsByOwner(targetOwnerId);
   const { data: playlistsData } = usePlaylists({ username });
+  const fetchedUsername = useNavidrome
+    ? navidromeUser?.userName
+    : subsonicData?.user?.username;
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(offsetY.value, [0, 100], [0, 1], Extrapolation.CLAMP),
@@ -82,8 +119,27 @@ export default function ProfileScreen() {
     offsetY.value = event.contentOffset.y;
   });
 
-  const playlists = playlistsData?.playlists?.playlist ?? [];
-  const displayName = userData?.user?.username ?? username;
+  const playlists: Playlist[] = hasNavidromeNative
+    ? ((ndPlaylistsData ?? []).map((p) => {
+        const updatedUnix = p.updatedAt
+          ? Math.floor(new Date(p.updatedAt).getTime() / 1000)
+          : 0;
+        const coverArt = `pl-${p.id}_${updatedUnix > 0 ? updatedUnix.toString(16) : "0"}`;
+        return {
+          id: p.id,
+          name: p.name,
+          comment: p.comment,
+          owner: p.ownerName,
+          public: p.public,
+          songCount: p.songCount,
+          duration: p.duration,
+          created: p.createdAt,
+          changed: p.updatedAt,
+          coverArt,
+        };
+      }) as unknown as Playlist[])
+    : (playlistsData?.playlists?.playlist ?? []);
+  const displayName = fetchedUsername ?? username;
 
   return (
     <Box className="h-full">
@@ -149,6 +205,20 @@ export default function ProfileScreen() {
                       {displayName}
                     </Heading>
                   </HStack>
+                  {useNavidrome && isOwnProfile && (
+                    <HStack className="mt-4">
+                      <FadeOutScaleDown
+                        onPress={() =>
+                          router.navigate(`/profile/${username}/edit`)
+                        }
+                        className="items-center justify-center py-2 px-6 border border-white rounded-full"
+                      >
+                        <Text className="text-white font-bold">
+                          {t("app.profile.edit")}
+                        </Text>
+                      </FadeOutScaleDown>
+                    </HStack>
+                  )}
                 </VStack>
               </Box>
             </LinearGradient>

@@ -574,19 +574,25 @@ export default function PlaylistDetail() {
                 )}
               </VStack>
               {playlistData?.playlist?.owner && (
-                <HStack className="mt-4 mb-2 items-center">
-                  <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
-                    <AvatarFallbackText>
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate(`/profile/${playlistData?.playlist?.owner}`)
+                  }
+                >
+                  <HStack className="mt-4 mb-2 items-center">
+                    <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
+                      <AvatarFallbackText>
+                        {playlistData?.playlist?.owner}
+                      </AvatarFallbackText>
+                    </Avatar>
+                    <Text
+                      className="text-white text-md font-bold"
+                      numberOfLines={1}
+                    >
                       {playlistData?.playlist?.owner}
-                    </AvatarFallbackText>
-                  </Avatar>
-                  <Text
-                    className="text-white text-md font-bold"
-                    numberOfLines={1}
-                  >
-                    {playlistData?.playlist?.owner}
-                  </Text>
-                </HStack>
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
               )}
               <HStack className="mt-2 items-center">
                 <Clock color={"#808080"} size={16} />

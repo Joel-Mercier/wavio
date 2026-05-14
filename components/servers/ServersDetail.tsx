@@ -34,6 +34,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import { useUsers } from "@/hooks/openSubsonic/useUsers";
 import useAuth from "@/stores/auth";
 import useServers, { serverFormSchema } from "@/stores/servers";
@@ -49,17 +50,38 @@ export default function ServersDetail() {
   const addServer = useServers((store) => store.addServer);
   const syncServerUsers = useServers((store) => store.syncServerUsers);
   const isAuthenticated = useAuth((store) => store.isAuthenticated);
+  const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
+  const isAdmin = useAuth((store) => store.isAdmin);
   const currentServer = servers.find((s) => s.current);
-  const { data: usersData } = useUsers({
-    enabled: isAuthenticated && !!currentServer,
+  const { data: subsonicUsers } = useUsers({
+    enabled: !hasNavidromeNative && isAuthenticated && !!currentServer,
+  });
+  const { data: navidromeUsers } = useNavidromeUsers({
+    enabled:
+      hasNavidromeNative && isAdmin && isAuthenticated && !!currentServer,
   });
   useEffect(() => {
-    if (!currentServer || !usersData?.users?.user) return;
-    syncServerUsers(
-      currentServer.id,
-      usersData.users.user.map((u) => u.username),
-    );
-  }, [currentServer, usersData, syncServerUsers]);
+    if (!currentServer) return;
+    if (hasNavidromeNative) {
+      if (!navidromeUsers) return;
+      syncServerUsers(
+        currentServer.id,
+        navidromeUsers.map((u) => u.userName),
+      );
+    } else {
+      if (!subsonicUsers?.users?.user) return;
+      syncServerUsers(
+        currentServer.id,
+        subsonicUsers.users.user.map((u) => u.username),
+      );
+    }
+  }, [
+    currentServer,
+    hasNavidromeNative,
+    subsonicUsers,
+    navidromeUsers,
+    syncServerUsers,
+  ]);
   const form = useForm({
     defaultValues: {
       name: "",
