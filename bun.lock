@@ -96,6 +96,7 @@
   },
   "patchedDependencies": {
     "expo-audio@55.0.14": "patches/expo-audio@55.0.14.patch",
+    "lucide-react-native@1.16.0": "patches/lucide-react-native@1.16.0.patch",
   },
   "overrides": {
     "@react-navigation/core": "7.17.2",

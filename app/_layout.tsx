@@ -23,12 +23,7 @@ import {
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
 import * as NavigationBar from "expo-navigation-bar";
-import {
-  AppState,
-  type AppStateStatus,
-  InteractionManager,
-  Platform,
-} from "react-native";
+import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -87,13 +82,23 @@ export default function RootLayout() {
     if (Platform.OS === "android") {
       NavigationBar.setStyle("dark");
     }
-    const task = InteractionManager.runAfterInteractions(() => {
-      configurePlayback();
-      initWidget(queryClient);
-    });
+    const idle =
+      typeof requestIdleCallback === "function"
+        ? requestIdleCallback(() => {
+            configurePlayback();
+            initWidget(queryClient);
+          })
+        : (setTimeout(() => {
+            configurePlayback();
+            initWidget(queryClient);
+          }, 0) as unknown as number);
     const subscription = AppState.addEventListener("change", onAppStateChange);
     return () => {
-      task.cancel();
+      if (typeof cancelIdleCallback === "function") {
+        cancelIdleCallback(idle);
+      } else {
+        clearTimeout(idle);
+      }
       subscription.remove();
     };
   }, []);

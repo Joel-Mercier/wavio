@@ -1,0 +1,20 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -39,7 +39,15 @@
+       "import": "./dist/esm/icons/index.mjs",
+       "browser": "./dist/esm/icons/index.mjs",
+       "require": "./dist/cjs/icons/index.js"
+-    }
++    },
++    "./dist/esm/icons/*.mjs": {
++      "import": "./dist/esm/icons/*.mjs",
++      "default": "./dist/esm/icons/*.mjs"
++    },
++    "./dist/cjs/icons/*.js": {
++      "require": "./dist/cjs/icons/*.js",
++      "default": "./dist/cjs/icons/*.js"
++    }
+   },
+   "sideEffects": false,
+   "files": [
