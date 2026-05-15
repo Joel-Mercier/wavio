@@ -1,6 +1,6 @@
 # Wavio
 
-Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
+Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic APIs.
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 

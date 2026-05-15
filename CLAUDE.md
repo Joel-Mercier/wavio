@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to [OpenSubsonic](https://opensubsonic.netlify.app/docs/) / Navidrome servers. Podcast features use the Taddy API.
+Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: [OpenSubsonic](https://opensubsonic.netlify.app/docs/) / Navidrome (Subsonic API) and Jellyfin. Podcast features use the Taddy API.
 
 ## Commands
 
@@ -34,13 +34,23 @@ Don't execute prebuild and building yourself. Inform the user to do so.
 - `app/(app)/player.tsx`, `app/(app)/playlists/`, `app/(app)/internet-radio-stations/` — modal / full-screen routes outside the tab bar
 - Root `app/_layout.tsx` wires all providers: `QueryClientProvider`, `KeyboardProvider`, `GluestackUIProvider`, `ThemeProvider`, `GestureHandlerRootView`, `BottomSheetModalProvider`, plus online/focus managers (NetInfo → react-query `onlineManager`, AppState → `focusManager`) and i18n/zod locale bootstrapping.
 
-### Subsonic API layer
+### Server backends (multi-protocol)
 
-Two parallel trees mirror the OpenSubsonic API spec sections:
-- `services/openSubsonic/*.ts` — axios calls. `services/openSubsonic/index.ts` exports a shared axios instance whose request interceptor injects `u`, `p`, `v`, `c`, `f=json` from `useAuthBase` (zustand) and sets `baseURL` from the active server URL. Response interceptor logs out on `ERR_NETWORK`.
-- `hooks/openSubsonic/*.ts` — `@tanstack/react-query` hooks wrapping those services (one hook file per API section: browsing, lists, searching, playlists, mediaAnnotation, mediaRetrieval, sharing, bookmarks, users, system, mediaLibraryScanning, internetRadioStations).
+Three server types are supported, tracked by `ServerType` in `stores/servers.ts`: `navidrome`, `opensubsonic`, `jellyfin`. The active server's type is mirrored on `useAuthBase().serverType` (`stores/auth.ts`).
 
-When adding a Subsonic endpoint, add the raw call in `services/openSubsonic/<section>.ts` and expose it through the matching `hooks/openSubsonic/use<Section>.ts`. Types live in `services/openSubsonic/types.ts`. Error codes are translated via `openSubsonicErrorCodes` using `config/i18n`.
+Each backend has its own service tree mirroring the same API sections:
+- `services/openSubsonic/*.ts` — axios calls for Subsonic / OpenSubsonic / Navidrome. `services/openSubsonic/index.ts` exports a shared axios instance whose request interceptor injects `u`, `p`, `v`, `c`, `f=json` from `useAuthBase` and sets `baseURL` from the active server URL. Response interceptor logs out on `ERR_NETWORK`.
+- `services/jellyfin/*.ts` — axios calls for Jellyfin. `services/jellyfin/index.ts` builds the `Authorization` header (Client/Device/DeviceId/Token via `getDeviceId`). `services/jellyfin/mappers.ts` adapts Jellyfin DTOs to the Subsonic envelope shape so the rest of the app can stay protocol-agnostic. `unsupported.ts` throws for endpoints Jellyfin doesn't expose.
+- `services/backend/*.ts` — the unified dispatch layer. Each file (one per API section: browsing, lists, searching, playlists, mediaAnnotation, mediaRetrieval, sharing, bookmarks, users, system, mediaLibraryScanning, internetRadioStations, streaming, capabilities) re-exports functions that pick the right implementation via `dispatch(subsonicFn, jellyfinFn)` from `services/backend/dispatch.ts` (`isJellyfin()` reads `useAuthBase.getState().serverType`). Callers consume Subsonic-shaped responses regardless of backend.
+- `hooks/backend/*.ts` — `@tanstack/react-query` hooks wrapping the dispatched services. **Always import from `@/services/backend` and `@/hooks/backend` in app code** — don't call `services/openSubsonic` or `services/jellyfin` directly from screens/components.
+
+When adding an endpoint:
+1. Add the Subsonic implementation in `services/openSubsonic/<section>.ts` (types in `services/openSubsonic/types.ts`).
+2. Add the Jellyfin implementation in `services/jellyfin/<section>.ts` (or re-export from `unsupported.ts`), mapping the response to the Subsonic envelope shape.
+3. Wire both through `services/backend/<section>.ts` using `dispatch(...)`.
+4. Expose via `hooks/backend/use<Section>.ts`.
+
+Subsonic error codes are translated via `openSubsonicErrorCodes` using `config/i18n`. Navidrome-specific (non-Subsonic) endpoints live under `hooks/navidrome/` and bypass the dispatch layer.
 
 Podcast services (`services/taddyPodcasts`, `hooks/taddyPodcasts`) follow the same split for the Taddy GraphQL API.
 
@@ -60,6 +70,22 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 ### Playback
 
 `expo-audio` is the audio engine. `services/player.ts` is the registered background service; the queue store drives it. Offline downloads go through `services/offlineDownloadService.ts` + `hooks/useOfflineDownloads.ts` using `expo-file-system`.
+
+Realtime playback state for non-React consumers (widget, Android Auto) goes through `hooks/player/playbackSnapshot.ts`: call `getPlaybackSnapshot()` for the current state and `subscribePlaybackStatus(cb)` to observe changes.
+
+### Android Auto / CarPlay
+
+- `modules/car-auto/` — a local Expo Module that ships the Android Auto `MediaBrowserServiceCompat` implementation (registered as the `CarAuto` native module). The JS bridge in `services/carAuto/bridge.ts` calls `requireOptionalNativeModule("CarAuto")` and exposes `setNodes(json)` / `setNowPlaying(json)` to push the browse tree and now-playing metadata to the car head unit.
+- `services/carAuto/tree.ts` builds the browse tree from `services/backend` (so both Subsonic and Jellyfin servers work in the car).
+- `services/carAuto/play.ts` handles play intents originating from the car.
+- `services/carAuto/carplay.ts` is the iOS counterpart, using `react-native-carplay`. `bridge.ts` is a no-op on iOS.
+- Native wiring is generated by `plugins/withAndroidAuto.js` and `plugins/withCarPlay.js` during `expo prebuild` — edit those plugins rather than `android/` / `ios/` directly.
+
+### Android home-screen widgets
+
+- Native widgets are bundled by `plugins/withWidgets.js` (Kotlin sources injected into `android/` during prebuild). The native module is exposed to JS as `NativeModules.WavioWidget`.
+- `services/widget.ts` is the JS-side controller. It subscribes to the queue store and `subscribePlaybackStatus` to push now-playing updates (`updateNowPlaying`, `setIsPlaying`) and recently played items (`updateRecent`) to the widget. Cover art dominant color is computed with `react-native-image-colors`.
+- Widget is Android-only; the module is gated on `Platform.OS === "android"` and a non-null `NativeModules.WavioWidget`.
 
 ### UI
 
