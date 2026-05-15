@@ -369,6 +369,21 @@ function makeStatusListener(slot: Slot) {
         }
         transition = { kind: "idle" };
       }
+      // End of queue with no repeat/shuffle: keep the current track loaded so
+      // the player UI keeps its title/artist/cover, just stop playback.
+      const qstate = useQueue.getState();
+      if (
+        qstate.repeatMode === "off" &&
+        !qstate.shuffle &&
+        qstate.currentIndex != null &&
+        qstate.currentIndex >= qstate.queue.length - 1
+      ) {
+        try {
+          players[activeSlot].pause();
+          players[activeSlot].seekTo(0);
+        } catch {}
+        return;
+      }
       // Default path: advance queue and load on active.
       useQueue.getState().next();
       const c = useQueue.getState().getCurrent();

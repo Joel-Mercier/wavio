@@ -293,6 +293,7 @@ export default function FloatingPlayer() {
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
             {!playingTrack.isRadio && (
               <FadeOut
+                hitSlop={12}
                 onPress={
                   playingTrack.starred
                     ? handleUnfavoritePress
@@ -305,7 +306,7 @@ export default function FloatingPlayer() {
                 />
               </FadeOut>
             )}
-            <FadeOut onPress={handlePlayPausePress}>
+            <FadeOut hitSlop={12} onPress={handlePlayPausePress}>
               {isPlaying ? (
                 <Pause color={white} stroke={undefined} fill={white} />
               ) : (
