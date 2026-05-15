@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useGetLyricsBySongId } from "@/hooks/openSubsonic/useMediaRetrieval";
+import { useGetLyricsBySongId } from "@/hooks/backend/useMediaRetrieval";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 
 function pickSyncedLyrics(

@@ -17,7 +17,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { useSearch3 } from "@/hooks/openSubsonic/useSearching";
+import { useSearch3 } from "@/hooks/backend/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { cn } from "@/utils/tailwind";

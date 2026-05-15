@@ -5,7 +5,7 @@ import {
   getPlaylist,
   getPlaylists,
   updatePlaylist,
-} from "@/services/openSubsonic/playlists";
+} from "@/services/backend/playlists";
 
 export const usePlaylists = (params: { username?: string }) => {
   return useQuery({

@@ -25,7 +25,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
 
 const newPlaylistSchema = z.object({
   name: z.string().trim().min(1),

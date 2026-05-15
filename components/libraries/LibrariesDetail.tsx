@@ -13,7 +13,7 @@ import LibraryRow from "@/components/libraries/LibraryRow";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/openSubsonic/useBrowsing";
+import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
 import type { MusicFolder } from "@/services/openSubsonic/types";
 import {
   useCurrentAuthScope,

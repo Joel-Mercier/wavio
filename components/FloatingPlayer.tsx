@@ -27,7 +27,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
+import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";

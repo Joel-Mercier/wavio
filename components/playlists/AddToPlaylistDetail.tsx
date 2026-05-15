@@ -22,7 +22,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   usePlaylists,
   useUpdatePlaylist,
-} from "@/hooks/openSubsonic/usePlaylists";
+} from "@/hooks/backend/usePlaylists";
 
 export default function AddToPlaylistDetail() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];

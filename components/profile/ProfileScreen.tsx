@@ -30,8 +30,8 @@ import {
   useGetUser as useGetNavidromeUser,
   useUsers as useNavidromeUsers,
 } from "@/hooks/navidrome/useUsers";
-import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
-import { useGetUser } from "@/hooks/openSubsonic/useUsers";
+import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import { useGetUser } from "@/hooks/backend/useUsers";
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";

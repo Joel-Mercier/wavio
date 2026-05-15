@@ -37,9 +37,10 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
-import { useStarred2 } from "@/hooks/openSubsonic/useLists";
-import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useMusicFolders } from "@/hooks/backend/useBrowsing";
+import { useStarred2 } from "@/hooks/backend/useLists";
+import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type {
   AlbumID3,
@@ -67,8 +68,11 @@ export default function LibraryScreen() {
   const username = useAuth((store) => store.username);
   const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
   const serverVersion = useAuth((store) => store.serverVersion);
+  const capabilities = useCapabilities();
   const showSmartPlaylist =
-    hasNavidromeNative && supportsSmartPlaylists(serverVersion);
+    capabilities.smartPlaylists &&
+    hasNavidromeNative &&
+    supportsSmartPlaylists(serverVersion);
   const router = useRouter();
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
@@ -458,19 +462,23 @@ export default function LibraryScreen() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
-                <HStack className="items-center">
-                  <Radio size={32} color={gray200} />
-                  <VStack className="ml-4 flex-1">
-                    <Heading className="text-white">
-                      {t("app.create.internetRadioStationTitle")}
-                    </Heading>
-                    <Text className="text-md text-gray-200">
-                      {t("app.create.internetRadioStationDescription")}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </FadeOutScaleDown>
+              {capabilities.internetRadio && (
+                <FadeOutScaleDown
+                  onPress={handleCreateInternetRadioStationPress}
+                >
+                  <HStack className="items-center">
+                    <Radio size={32} color={gray200} />
+                    <VStack className="ml-4 flex-1">
+                      <Heading className="text-white">
+                        {t("app.create.internetRadioStationTitle")}
+                      </Heading>
+                      <Text className="text-md text-gray-200">
+                        {t("app.create.internetRadioStationDescription")}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
             </VStack>
           </Box>
         </BottomSheetView>

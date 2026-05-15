@@ -5,7 +5,7 @@ import {
   getBookmarks,
   getPlayQueue,
   savePlayQueue,
-} from "@/services/openSubsonic/bookmarks";
+} from "@/services/backend/bookmarks";
 
 export const useCreateBookmark = () => {
   const query = useMutation({

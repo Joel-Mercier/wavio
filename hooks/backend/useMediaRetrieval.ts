@@ -8,7 +8,7 @@ import {
   getLyricsBySongId,
   hls,
   stream,
-} from "@/services/openSubsonic/mediaRetrieval";
+} from "@/services/backend/mediaRetrieval";
 
 export const useDownload = (id: string) => {
   return useQuery({

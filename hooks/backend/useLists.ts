@@ -8,7 +8,7 @@ import {
   getSongsByGenre,
   getStarred,
   getStarred2,
-} from "@/services/openSubsonic/lists";
+} from "@/services/backend/lists";
 
 export const useAlbumList = (params: {
   type: AlbumListType;

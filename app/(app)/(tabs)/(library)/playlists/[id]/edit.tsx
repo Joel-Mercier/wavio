@@ -33,7 +33,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   usePlaylist,
   useUpdatePlaylist,
-} from "@/hooks/openSubsonic/usePlaylists";
+} from "@/hooks/backend/usePlaylists";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 

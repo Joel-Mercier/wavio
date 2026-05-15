@@ -74,9 +74,7 @@ describe("auth store", () => {
 
   it("login with navidrome session populates native fields", () => {
     useAuthBase.getState().login("https://x", "u", "p", {
-      token: "tok-1",
-      userId: "user-1",
-      isAdmin: true,
+      navidrome: { token: "tok-1", userId: "user-1", isAdmin: true },
     });
     const s = useAuthBase.getState();
     expect(s.token).toBe("tok-1");
@@ -87,9 +85,7 @@ describe("auth store", () => {
 
   it("logout resets navidrome and serverVersion fields", () => {
     useAuthBase.getState().login("https://x", "u", "p", {
-      token: "tok-1",
-      userId: "user-1",
-      isAdmin: true,
+      navidrome: { token: "tok-1", userId: "user-1", isAdmin: true },
     });
     useAuthBase.getState().setServerVersion("0.50.0");
     useAuthBase.getState().logout();
@@ -153,6 +149,7 @@ describe("auth login schema", () => {
       url: "https://music.example.com",
       username: "alice",
       password: "secret",
+      type: "navidrome",
     });
     expect(result.success).toBe(true);
   });

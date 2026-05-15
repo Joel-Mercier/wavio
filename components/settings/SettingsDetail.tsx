@@ -52,7 +52,7 @@ import { SupportedLanguages } from "@/config/i18n";
 import {
   useGetScanStatus,
   useStartScan,
-} from "@/hooks/openSubsonic/useMediaLibraryScanning";
+} from "@/hooks/backend/useMediaLibraryScanning";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";

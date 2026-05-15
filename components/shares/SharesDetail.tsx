@@ -10,7 +10,7 @@ import ShareListItem from "@/components/shares/ShareListItem";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { useGetShares } from "@/hooks/openSubsonic/useSharing";
+import { useGetShares } from "@/hooks/backend/useSharing";
 import type { Share } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
 import EmptyDisplay from "../EmptyDisplay";

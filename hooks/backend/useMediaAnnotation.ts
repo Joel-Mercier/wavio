@@ -4,7 +4,7 @@ import {
   setRating,
   star,
   unstar,
-} from "@/services/openSubsonic/mediaAnnotation";
+} from "@/services/backend/mediaAnnotation";
 
 export const useScrobble = () => {
   const query = useMutation({

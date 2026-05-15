@@ -6,6 +6,7 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 
 ## Features
 
+- Supports Navidrome, OpenSubsonic and Jellyfin (beta) servers
 - Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random and internet radio stations sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums
@@ -29,7 +30,7 @@ Music streaming app for Android compatible with Navidrome and OpenSubsonic APIs.
 - Gapless playback, crossfade, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
-- Widgets
+- Android homescreen widgets
 - Android Auto support
 - Navidrome smart playlists beta support
 - French and English translations

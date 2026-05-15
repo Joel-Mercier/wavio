@@ -16,7 +16,7 @@ import {
   getTopSongs,
   getVideoInfo,
   getVideos,
-} from "@/services/openSubsonic/browsing";
+} from "@/services/backend/browsing";
 
 export const useMusicFolders = () => {
   return useQuery({

@@ -5,7 +5,7 @@ import {
   getUsers,
   type UpdateUserParams,
   updateUser,
-} from "@/services/openSubsonic/users";
+} from "@/services/backend/users";
 
 export const useUsers = (options?: { enabled?: boolean }) => {
   return useQuery({

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useStarred2 } from "@/hooks/backend/useLists";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
 import type { Child } from "@/services/openSubsonic/types";

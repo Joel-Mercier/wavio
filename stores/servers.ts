@@ -4,9 +4,17 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
 
+export const serverTypeSchema = z.enum([
+  "navidrome",
+  "opensubsonic",
+  "jellyfin",
+]);
+export type ServerType = z.infer<typeof serverTypeSchema>;
+
 export const serverFormSchema = z.object({
   name: z.string().trim().min(1),
   url: z.url().trim().min(1),
+  type: serverTypeSchema,
 });
 
 export const serverUserSchema = z.object({
@@ -19,6 +27,7 @@ export type Server = {
   name: string;
   url: string;
   current: boolean;
+  type: ServerType;
 };
 
 export type ServerUser = {
@@ -29,8 +38,15 @@ export type ServerUser = {
 interface ServersStore {
   servers: Server[];
   users: ServerUser[];
-  addServer: (input: { name: string; url: string }) => Server;
-  editServer: (id: string, patch: { name?: string; url?: string }) => void;
+  addServer: (input: {
+    name: string;
+    url: string;
+    type?: ServerType;
+  }) => Server;
+  editServer: (
+    id: string,
+    patch: { name?: string; url?: string; type?: ServerType },
+  ) => void;
   removeServer: (id: string) => void;
   setCurrentServer: (id: string) => void;
   getServerById: (id: string) => Server | undefined;
@@ -49,11 +65,19 @@ const useServersBase = create<ServersStore>()(
     (set, get) => ({
       servers: [],
       users: [],
-      addServer: ({ name, url }) => {
+      addServer: ({ name, url, type }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
         const existing = get().servers.find((s) => s.url === trimmedUrl);
         if (existing) {
+          if (type && existing.type !== type) {
+            set((state) => ({
+              servers: state.servers.map((s) =>
+                s.id === existing.id ? { ...s, type } : s,
+              ),
+            }));
+            return { ...existing, type };
+          }
           return existing;
         }
         const hasCurrent = get().servers.some((s) => s.current);
@@ -62,6 +86,7 @@ const useServersBase = create<ServersStore>()(
           name: trimmedName,
           url: trimmedUrl,
           current: !hasCurrent,
+          type: type ?? "navidrome",
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -82,6 +107,7 @@ const useServersBase = create<ServersStore>()(
                     ? { name: patch.name.trim() }
                     : {}),
                   ...(patch.url !== undefined ? { url: patch.url.trim() } : {}),
+                  ...(patch.type !== undefined ? { type: patch.type } : {}),
                 }
               : s,
           ),
@@ -144,6 +170,18 @@ const useServersBase = create<ServersStore>()(
     {
       name: "servers",
       storage: createJSONStorage(() => zustandStorage),
+      version: 2,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<ServersStore> | undefined;
+        if (!state || version >= 2) return persistedState as ServersStore;
+        return {
+          ...state,
+          servers: (state.servers ?? []).map((s) => ({
+            ...s,
+            type: (s as Server).type ?? "navidrome",
+          })),
+        } as ServersStore;
+      },
     },
   ),
 );

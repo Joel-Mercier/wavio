@@ -19,7 +19,7 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useStarred2 } from "@/hooks/backend/useLists";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";

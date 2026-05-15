@@ -31,9 +31,10 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
-import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
-import { useAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useArtist } from "@/hooks/backend/useBrowsing";
+import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
+import { useAlbumList2 } from "@/hooks/backend/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -49,6 +50,7 @@ export default function HomeScreen() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const recentPlays = useRecentPlays((store) => store.recentPlays);
+  const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
   const {
     data: recentlyPlayedData,
@@ -551,6 +553,7 @@ export default function HomeScreen() {
             !randomError &&
             !randomData?.albumList2?.album?.length && <EmptyDisplay />}
         </Box>
+        {capabilities.internetRadio && (
         <Box onLayout={makeSectionOnLayout("internetRadioStations")}>
           <HStack className="px-6 mt-4 mb-4 items-center justify-between">
             <Heading size="xl" className="text-white">
@@ -599,6 +602,7 @@ export default function HomeScreen() {
             !internetRadioStationsData?.internetRadioStations
               ?.internetRadioStation?.length && <EmptyDisplay />}
         </Box>
+        )}
       </ScrollView>
     </Box>
   );

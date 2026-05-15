@@ -3,7 +3,7 @@ import {
   getLicense,
   getOpenSubsonicExtensions,
   ping,
-} from "@/services/openSubsonic/system";
+} from "@/services/backend/system";
 
 export const useGetLicense = () => {
   return useQuery({

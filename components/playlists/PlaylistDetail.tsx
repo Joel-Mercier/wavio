@@ -68,8 +68,8 @@ import {
   useDeletePlaylist,
   usePlaylist,
   useUpdatePlaylist,
-} from "@/hooks/openSubsonic/usePlaylists";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+} from "@/hooks/backend/usePlaylists";
+import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";

@@ -878,6 +878,9 @@ export default {
       login: {
         title: "Sign in",
         serverPlaceholder: "Select server",
+        serverTypeNavidrome: "Navidrome",
+        serverTypeOpenSubsonic: "OpenSubsonic",
+        serverTypeJellyfin: "Jellyfin",
         urlPlaceholder: "Enter server URL",
         usernamePlaceholder: "Enter username",
         passwordPlaceholder: "Enter user password",

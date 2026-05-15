@@ -16,6 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useAuth from "@/stores/auth";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 
@@ -25,8 +26,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
   const serverVersion = useAuth((s) => s.serverVersion);
+  const capabilities = useCapabilities();
   const showSmartPlaylist =
-    hasNavidromeNative && supportsSmartPlaylists(serverVersion);
+    capabilities.smartPlaylists &&
+    hasNavidromeNative &&
+    supportsSmartPlaylists(serverVersion);
 
   const dismiss = () => {
     if (ref && typeof ref !== "function") {
@@ -92,19 +96,23 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                 </HStack>
               </FadeOutScaleDown>
             )}
-            <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
-              <HStack className="items-center">
-                <Radio size={32} color={gray200} />
-                <VStack className="ml-4 flex-1">
-                  <Heading numberOfLines={1} className="text-white">
-                    {t("app.create.internetRadioStationTitle")}
-                  </Heading>
-                  <Text className="text-md text-gray-200 flex-1">
-                    {t("app.create.internetRadioStationDescription")}
-                  </Text>
-                </VStack>
-              </HStack>
-            </FadeOutScaleDown>
+            {capabilities.internetRadio && (
+              <FadeOutScaleDown
+                onPress={handleCreateInternetRadioStationPress}
+              >
+                <HStack className="items-center">
+                  <Radio size={32} color={gray200} />
+                  <VStack className="ml-4 flex-1">
+                    <Heading numberOfLines={1} className="text-white">
+                      {t("app.create.internetRadioStationTitle")}
+                    </Heading>
+                    <Text className="text-md text-gray-200 flex-1">
+                      {t("app.create.internetRadioStationDescription")}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
           </VStack>
         </Box>
       </BottomSheetView>

@@ -50,7 +50,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   useDeleteShare,
   useUpdateShare,
-} from "@/hooks/openSubsonic/useSharing";
+} from "@/hooks/backend/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";

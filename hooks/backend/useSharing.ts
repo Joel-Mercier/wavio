@@ -4,7 +4,7 @@ import {
   deleteShare,
   getShares,
   updateShare,
-} from "@/services/openSubsonic/sharing";
+} from "@/services/backend/sharing";
 
 export const useCreateShare = () => {
   return useMutation({

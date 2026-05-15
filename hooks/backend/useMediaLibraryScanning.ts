@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   getScanStatus,
   startScan,
-} from "@/services/openSubsonic/mediaLibraryScanning";
+} from "@/services/backend/mediaLibraryScanning";
 
 export const useGetScanStatus = () => {
   return useQuery({

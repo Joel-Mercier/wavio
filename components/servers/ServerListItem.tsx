@@ -13,6 +13,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ServerTypeIcon from "@/components/ServerTypeIcon";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -83,12 +84,20 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     [allUsers, server.id],
   );
   const form = useForm({
-    defaultValues: { name: server.name, url: server.url },
+    defaultValues: {
+      name: server.name,
+      url: server.url,
+      type: server.type,
+    },
     validators: {
       onChange: serverFormSchema,
     },
     onSubmit: async ({ value }) => {
-      editServer(server.id, { name: value.name, url: value.url });
+      editServer(server.id, {
+        name: value.name,
+        url: value.url,
+        type: value.type,
+      });
       form.reset();
       toast.show({
         placement: "top",
@@ -153,6 +162,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         )}
       >
         <HStack className="items-center justify-between">
+          <HStack className="items-center mr-3">
+            <ServerTypeIcon type={server.type} size={32} />
+          </HStack>
           <VStack className="flex-1 items-start">
             <Heading
               size="md"

@@ -24,7 +24,7 @@ import {
 import {
   usePlaylist,
   useUpdatePlaylist,
-} from "@/hooks/openSubsonic/usePlaylists";
+} from "@/hooks/backend/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { cn } from "@/utils/tailwind";

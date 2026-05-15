@@ -69,13 +69,13 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useAlbum, useArtist } from "@/hooks/openSubsonic/useBrowsing";
+import { useAlbum, useArtist } from "@/hooks/backend/useBrowsing";
 import {
   useSetRating,
   useStar,
   useUnstar,
-} from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+} from "@/hooks/backend/useMediaAnnotation";
+import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";

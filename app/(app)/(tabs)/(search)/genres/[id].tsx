@@ -24,7 +24,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
-import { useInfiniteAlbumList2 } from "@/hooks/openSubsonic/useLists";
+import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";

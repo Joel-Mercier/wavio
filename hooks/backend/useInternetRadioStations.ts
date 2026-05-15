@@ -4,7 +4,7 @@ import {
   deleteInternetRadioStation,
   getInternetRadioStations,
   updateInternetRadioStation,
-} from "@/services/openSubsonic/internetRadioStations";
+} from "@/services/backend/internetRadioStations";
 
 export const useCreateInternetRadioStation = () => {
   return useMutation({

@@ -62,8 +62,8 @@ import {
   useSetRating,
   useStar,
   useUnstar,
-} from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+} from "@/hooks/backend/useMediaAnnotation";
+import { useCreateShare } from "@/hooks/backend/useSharing";
 import { usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useIsOnline } from "@/hooks/useIsOnline";

@@ -40,7 +40,7 @@ import {
   useChangePassword,
   useGetUser,
   useUpdateUser,
-} from "@/hooks/openSubsonic/useUsers";
+} from "@/hooks/backend/useUsers";
 import useAuth from "@/stores/auth";
 import { cn } from "@/utils/tailwind";
 

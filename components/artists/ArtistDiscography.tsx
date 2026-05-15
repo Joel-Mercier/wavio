@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
-import { useArtist } from "@/hooks/openSubsonic/useBrowsing";
+import { useArtist } from "@/hooks/backend/useBrowsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
 import AlbumListItem from "../albums/AlbumListItem";

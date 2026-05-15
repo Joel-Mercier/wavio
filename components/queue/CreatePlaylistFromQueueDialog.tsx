@@ -19,7 +19,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { useCreatePlaylist } from "@/hooks/openSubsonic/usePlaylists";
+import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
 import { cn } from "@/utils/tailwind";
 
 interface CreatePlaylistFromQueueDialogProps {

@@ -21,7 +21,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   useIndexes,
   useMusicDirectory,
-} from "@/hooks/openSubsonic/useBrowsing";
+} from "@/hooks/backend/useBrowsing";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { childToTrack } from "@/utils/childToTrack";

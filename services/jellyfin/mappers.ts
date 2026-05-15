@@ -1,0 +1,221 @@
+import type { BaseItemDto } from "@/services/jellyfin/types";
+import type {
+  AlbumID3,
+  AlbumWithSongsID3,
+  ArtistID3,
+  ArtistWithAlbumsID3,
+  Child,
+  Genre,
+  MusicFolder,
+  Playlist,
+  PlaylistWithSongs,
+  ScanStatus,
+  StructuredLyrics,
+  User,
+} from "@/services/openSubsonic/types";
+
+const TICKS_PER_SECOND = 10_000_000;
+
+function ticksToSeconds(ticks?: number): number {
+  if (!ticks || !Number.isFinite(ticks)) return 0;
+  return Math.round(ticks / TICKS_PER_SECOND);
+}
+
+function parseDate(value?: string): Date | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function favoriteAsStarred(item: BaseItemDto): Date | undefined {
+  if (item.UserData?.IsFavorite) {
+    return parseDate(item.UserData?.LastPlayedDate) ?? new Date(0);
+  }
+  return undefined;
+}
+
+export function mapBaseItemToChild(item: BaseItemDto): Child {
+  return {
+    id: item.Id,
+    title: item.Name ?? "",
+    name: item.Name,
+    isDir: false,
+    type: "music",
+    album: item.Album,
+    albumId: item.AlbumId,
+    artist: item.AlbumArtist ?? item.Artists?.join(", "),
+    artistId: item.AlbumArtists?.[0]?.Id ?? item.ArtistItems?.[0]?.Id,
+    artists: item.ArtistItems?.map((a) => ({ id: a.Id, name: a.Name })),
+    duration: ticksToSeconds(item.RunTimeTicks),
+    track: item.IndexNumber,
+    discNumber: item.ParentIndexNumber,
+    year: item.ProductionYear,
+    suffix: item.Container?.split(",")[0]?.trim(),
+    bitRate: item.Bitrate ? Math.round(item.Bitrate / 1000) : undefined,
+    size: item.Size,
+    path: item.Path,
+    coverArt: item.AlbumId ?? item.Id,
+    parent: item.ParentId,
+    genre: item.Genres?.[0],
+    genres: item.GenreItems?.map((g) => ({ name: g.Name })),
+    playCount: item.UserData?.PlayCount,
+    starred: favoriteAsStarred(item),
+    userRating: item.UserData?.Rating,
+    created: parseDate(item.DateCreated),
+    played: parseDate(item.UserData?.LastPlayedDate),
+    bookmarkPosition: item.UserData?.PlaybackPositionTicks
+      ? ticksToSeconds(item.UserData.PlaybackPositionTicks)
+      : undefined,
+    musicBrainzId: item.ProviderIds?.MusicBrainzAlbum,
+  };
+}
+
+export function mapBaseItemToAlbum(item: BaseItemDto): AlbumID3 {
+  return {
+    id: item.Id,
+    name: item.Name ?? "",
+    artist: item.AlbumArtist ?? item.Artists?.join(", "),
+    artistId: item.AlbumArtists?.[0]?.Id ?? item.ArtistItems?.[0]?.Id,
+    artists: item.AlbumArtists?.map((a) => ({ id: a.Id, name: a.Name })),
+    coverArt: item.Id,
+    songCount: item.ChildCount ?? item.SongCount ?? 0,
+    duration: ticksToSeconds(item.RunTimeTicks),
+    created: parseDate(item.DateCreated) ?? new Date(0),
+    year: item.ProductionYear,
+    genres: item.GenreItems?.map((g) => ({
+      value: g.Name,
+      albumCount: 0,
+      songCount: 0,
+    })),
+    starred: favoriteAsStarred(item),
+    userRating: item.UserData?.Rating,
+    playCount: item.UserData?.PlayCount,
+    played: parseDate(item.UserData?.LastPlayedDate),
+    displayArtist: item.AlbumArtist,
+    musicBrainzId: item.ProviderIds?.MusicBrainzAlbum,
+  };
+}
+
+export function mapBaseItemToAlbumWithSongs(
+  item: BaseItemDto,
+  tracks: BaseItemDto[],
+): AlbumWithSongsID3 {
+  return {
+    ...mapBaseItemToAlbum(item),
+    song: tracks.map(mapBaseItemToChild),
+  };
+}
+
+export function mapBaseItemToArtist(item: BaseItemDto): ArtistID3 {
+  return {
+    id: item.Id,
+    name: item.Name ?? "",
+    albumCount: item.AlbumCount ?? item.ChildCount ?? 0,
+    coverArt: item.Id,
+    starred: favoriteAsStarred(item),
+    userRating: item.UserData?.Rating,
+    musicBrainzId: item.ProviderIds?.MusicBrainzArtist,
+  };
+}
+
+export function mapBaseItemToArtistWithAlbums(
+  item: BaseItemDto,
+  albums: BaseItemDto[],
+): ArtistWithAlbumsID3 {
+  return {
+    ...mapBaseItemToArtist(item),
+    album: albums.map(mapBaseItemToAlbum),
+  };
+}
+
+export function mapBaseItemToPlaylist(item: BaseItemDto): Playlist {
+  return {
+    id: item.Id,
+    name: item.Name ?? "",
+    songCount: item.ChildCount ?? 0,
+    duration: ticksToSeconds(item.RunTimeTicks),
+    created: parseDate(item.DateCreated) ?? new Date(0),
+    changed: parseDate(item.DateCreated) ?? new Date(0),
+    coverArt: item.Id,
+    public: false,
+  };
+}
+
+export function mapBaseItemToPlaylistWithSongs(
+  item: BaseItemDto,
+  tracks: BaseItemDto[],
+): PlaylistWithSongs {
+  return {
+    ...mapBaseItemToPlaylist(item),
+    entry: tracks.map(mapBaseItemToChild),
+  };
+}
+
+export function mapMusicFolder(item: BaseItemDto, index: number): MusicFolder {
+  // Subsonic MusicFolder.id is numeric; we can't preserve the GUID without
+  // changing the type. Index works for selection UI; callers needing the
+  // GUID can read it from the folder name mapping.
+  return { id: index, name: item.Name };
+}
+
+export function mapJellyfinGenre(item: BaseItemDto): Genre {
+  return {
+    value: item.Name ?? "",
+    albumCount: item.AlbumCount ?? 0,
+    songCount: item.SongCount ?? 0,
+  };
+}
+
+export function mapJellyfinUser(item: {
+  Id: string;
+  Name: string;
+  Policy?: {
+    IsAdministrator?: boolean;
+    EnableAudioPlaybackTranscoding?: boolean;
+  };
+}): User {
+  return {
+    username: item.Name,
+    adminRole: !!item.Policy?.IsAdministrator,
+    commentRole: false,
+    coverArtRole: false,
+    downloadRole: true,
+    jukeboxRole: false,
+    playlistRole: true,
+    podcastRole: false,
+    scrobblingEnabled: true,
+    settingsRole: !!item.Policy?.IsAdministrator,
+    shareRole: false,
+    streamRole: true,
+    uploadRole: false,
+    videoConversionRole: false,
+  };
+}
+
+export function mapScanStatus(refreshInProgress: boolean): ScanStatus {
+  return { scanning: refreshInProgress };
+}
+
+export type JellyfinLyricsResponse = {
+  Lyrics?: { Start?: number; Text: string }[];
+  Metadata?: { Lyricist?: string; Title?: string; IsSynced?: boolean };
+};
+
+export function mapJellyfinLyrics(
+  payload: JellyfinLyricsResponse,
+): StructuredLyrics | null {
+  if (!payload?.Lyrics || payload.Lyrics.length === 0) return null;
+  const synced = payload.Lyrics.some((l) => typeof l.Start === "number");
+  return {
+    lang: "und",
+    synced,
+    line: payload.Lyrics.map((l) => ({
+      value: l.Text,
+      start:
+        typeof l.Start === "number"
+          ? ticksToSeconds(l.Start) * 1000
+          : undefined,
+    })),
+    displayTitle: payload.Metadata?.Title,
+  };
+}

@@ -16,7 +16,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { useGenres } from "@/hooks/openSubsonic/useBrowsing";
+import { useGenres } from "@/hooks/backend/useBrowsing";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";

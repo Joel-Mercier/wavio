@@ -11,6 +11,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import UrlInputField from "@/components/forms/UrlInputField";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { FormControl } from "@/components/ui/form-control";
@@ -25,7 +26,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useCreateInternetRadioStation } from "@/hooks/openSubsonic/useInternetRadioStations";
+import { useCreateInternetRadioStation } from "@/hooks/backend/useInternetRadioStations";
 
 const newInternetRadioStationSchema = z.object({
   name: z.string().trim().min(1),
@@ -155,18 +156,16 @@ export default function NewInternetRadioStationScreen() {
                 className="mb-6"
               >
                 <Input className="border-0 bg-primary-400 px-6 py-4">
-                  <InputField
+                  <UrlInputField
                     value={field.state.value}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
                     className="text-3xl text-white text-center font-bold"
+                    placeholderTextColor={gray400}
                     placeholder={t(
                       "app.internetRadioStations.streamUrlPlaceholder",
                     )}
-                    placeholderTextColor={gray400}
-                    textContentType="URL"
-                    autoCapitalize="none"
                   />
                 </Input>
                 <FieldError field={field} />
@@ -184,18 +183,16 @@ export default function NewInternetRadioStationScreen() {
                 className="mb-6"
               >
                 <Input className="border-0 bg-primary-400 px-6 py-4">
-                  <InputField
-                    value={field.state.value}
+                  <UrlInputField
+                    value={field.state.value ?? ""}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
                     className="text-3xl text-white text-center font-bold"
+                    placeholderTextColor={gray400}
                     placeholder={t(
                       "app.internetRadioStations.homePageUrlPlaceholder",
                     )}
-                    placeholderTextColor={gray400}
-                    textContentType="URL"
-                    autoCapitalize="none"
                   />
                 </Input>
                 <FieldError field={field} />

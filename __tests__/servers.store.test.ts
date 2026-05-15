@@ -251,15 +251,25 @@ describe("servers store actions", () => {
 describe("server schemas", () => {
   it("serverFormSchema accepts valid input and rejects bad url", () => {
     expect(
-      serverFormSchema.safeParse({ name: "A", url: "https://a.example.com" })
-        .success,
+      serverFormSchema.safeParse({
+        name: "A",
+        url: "https://a.example.com",
+        type: "navidrome",
+      }).success,
     ).toBe(true);
     expect(
-      serverFormSchema.safeParse({ name: "A", url: "not-a-url" }).success,
+      serverFormSchema.safeParse({
+        name: "A",
+        url: "not-a-url",
+        type: "navidrome",
+      }).success,
     ).toBe(false);
     expect(
-      serverFormSchema.safeParse({ name: "   ", url: "https://a.example.com" })
-        .success,
+      serverFormSchema.safeParse({
+        name: "   ",
+        url: "https://a.example.com",
+        type: "navidrome",
+      }).success,
     ).toBe(false);
   });
 

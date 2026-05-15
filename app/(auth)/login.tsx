@@ -16,6 +16,8 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import ServerTypeIcon from "@/components/ServerTypeIcon";
+import UrlInputField from "@/components/forms/UrlInputField";
 import {
   Avatar,
   AvatarFallbackText,
@@ -49,10 +51,15 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import useAuth, { loginSchema } from "@/stores/auth";
-import useServers, { type Server, type ServerUser } from "@/stores/servers";
+import useServers, {
+  type Server,
+  type ServerType,
+  type ServerUser,
+} from "@/stores/servers";
 
 function ServerSelectRow({
   server,
@@ -70,10 +77,13 @@ function ServerSelectRow({
         handleClose?.();
       }}
     >
-      <VStack className="bg-primary-600 p-4 w-full rounded-md border border-primary-600">
-        <HStack className="items-center justify-between">
+      <VStack className="bg-primary-600 px-4 py-2 w-full rounded-md border border-primary-600">
+        <HStack className="items-start justify-between">
+          <HStack className="mr-3">
+            <ServerTypeIcon type={server.type} size={28} />
+          </HStack>
           <VStack className="flex-1">
-            <Heading size="md" className="text-white mb-2" numberOfLines={1}>
+            <Heading size="md" className="text-white" numberOfLines={1}>
               {server.name}
             </Heading>
             <Text className="text-primary-100 text-sm mb-2" numberOfLines={1}>
@@ -133,67 +143,106 @@ export default function LoginScreen() {
       username: params.username ?? "",
       password: "",
       url: preselectedServer?.url ?? "https://",
+      type: (preselectedServer?.type ?? "navidrome") as ServerType,
     },
     validators: {
       onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
       try {
-        const rsp = await axios
-          .create({
-            baseURL: value.url.trim(),
-            headers: { "Content-Type": "application/json" },
-          })
-          .get("/rest/ping", {
-            params: {
-              u: value.username.trim(),
-              p: value.password.trim(),
-              v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
-              c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
-              f: "json",
+        const trimmedUrl = value.url.trim();
+        const trimmedUsername = value.username.trim();
+        const trimmedPassword = value.password.trim();
+        const serverType: ServerType = value.type;
+
+        if (serverType === "jellyfin") {
+          const payload = await jellyfinAuthenticate(
+            trimmedUrl,
+            trimmedUsername,
+            trimmedPassword,
+          );
+          const existing = servers.find((s) => s.url === trimmedUrl);
+          const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
+          const server = addServer({
+            name: existing?.name ?? fallbackName,
+            url: trimmedUrl,
+            type: "jellyfin",
+          });
+          addOrUpdateUser({
+            serverId: server.id,
+            username: trimmedUsername,
+          });
+          setCurrentServer(server.id);
+          login(trimmedUrl, trimmedUsername, trimmedPassword, {
+            serverType: "jellyfin",
+            jellyfin: {
+              accessToken: payload.AccessToken,
+              userId: payload.User.Id,
+              isAdmin: !!payload.User.Policy?.IsAdministrator,
             },
           });
-        if (rsp.data["subsonic-response"]?.status !== "ok") {
-          throw new Error(
-            openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
-          );
-        }
-
-        const trimmedUrl = value.url.trim();
-        const existing = servers.find((s) => s.url === trimmedUrl);
-        const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
-        const server = addServer({
-          name: existing?.name ?? fallbackName,
-          url: trimmedUrl,
-        });
-        addOrUpdateUser({
-          serverId: server.id,
-          username: value.username.trim(),
-        });
-        setCurrentServer(server.id);
-
-        let navidromeSession = null;
-        try {
-          const payload = await nativeLogin(
-            trimmedUrl,
-            value.username.trim(),
-            value.password.trim(),
-          );
-          if (payload?.token && payload?.id) {
-            navidromeSession = {
-              token: payload.token,
-              userId: payload.id,
-              isAdmin: !!payload.isAdmin,
-            };
+        } else {
+          const rsp = await axios
+            .create({
+              baseURL: trimmedUrl,
+              headers: { "Content-Type": "application/json" },
+            })
+            .get("/rest/ping", {
+              params: {
+                u: trimmedUsername,
+                p: trimmedPassword,
+                v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
+                c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
+                f: "json",
+              },
+            });
+          if (rsp.data["subsonic-response"]?.status !== "ok") {
+            throw new Error(
+              openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
+            );
           }
-        } catch (err) {
-          console.warn(
-            "[auth] Navidrome native /auth/login unavailable, falling back to Subsonic-only mode",
-            err,
-          );
-        }
 
-        login(value.url, value.username, value.password, navidromeSession);
+          const existing = servers.find((s) => s.url === trimmedUrl);
+          const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
+          const server = addServer({
+            name: existing?.name ?? fallbackName,
+            url: trimmedUrl,
+            type: serverType,
+          });
+          addOrUpdateUser({
+            serverId: server.id,
+            username: trimmedUsername,
+          });
+          setCurrentServer(server.id);
+
+          let navidromeSession = null;
+          if (serverType === "navidrome") {
+            try {
+              const payload = await nativeLogin(
+                trimmedUrl,
+                trimmedUsername,
+                trimmedPassword,
+              );
+              if (payload?.token && payload?.id) {
+                navidromeSession = {
+                  token: payload.token,
+                  userId: payload.id,
+                  isAdmin: !!payload.isAdmin,
+                };
+              }
+            } catch (err) {
+              console.warn(
+                "[auth] Navidrome native /auth/login unavailable, falling back to Subsonic-only mode",
+                err,
+              );
+            }
+          }
+
+          login(trimmedUrl, trimmedUsername, trimmedPassword, {
+            serverType,
+            navidrome: navidromeSession,
+          });
+        }
         toast.show({
           placement: "top",
           duration: 3000,
@@ -240,6 +289,7 @@ export default function LoginScreen() {
     form.setFieldValue("url", server.url);
     form.setFieldValue("username", "");
     form.setFieldValue("password", "");
+    form.setFieldValue("type", server.type);
     setTimeout(() => usernameRef.current?.focus(), 250);
   };
 
@@ -247,7 +297,14 @@ export default function LoginScreen() {
     form.setFieldValue("url", "https://demo.navidrome.org");
     form.setFieldValue("username", "demo");
     form.setFieldValue("password", "demo");
+    form.setFieldValue("type", "navidrome");
   };
+
+  const serverTypeOptions: { value: ServerType; label: string }[] = [
+    { value: "navidrome", label: t("auth.login.serverTypeNavidrome") },
+    { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
+    { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
+  ];
 
   const triggerLabel =
     preselectedServer?.name ?? t("auth.login.serverPlaceholder");
@@ -309,53 +366,59 @@ export default function LoginScreen() {
               </Text>
             </Box>
           )}
+          <form.Field name="type">
+            {(field) => (
+              <HStack className="mb-2 gap-2">
+                {serverTypeOptions.map((opt) => {
+                  const selected = field.state.value === opt.value;
+                  return (
+                    <FadeOutScaleDown
+                      key={opt.value}
+                      onPress={() => field.handleChange(opt.value)}
+                      className={`flex-1 rounded-md border ${
+                        selected
+                          ? "border-emerald-500 bg-emerald-500"
+                          : "border-primary-600 bg-primary-600"
+                      }`}
+                    >
+                      <VStack className="items-center justify-center py-3 px-3 gap-y-2">
+                        <ServerTypeIcon type={opt.value} size={32} />
+                        <Text
+                          className={`text-sm text-center ${
+                            selected
+                              ? "text-primary-800 font-bold"
+                              : "text-white"
+                          }`}
+                        >
+                          {opt.label}
+                        </Text>
+                      </VStack>
+                    </FadeOutScaleDown>
+                  );
+                })}
+              </HStack>
+            )}
+          </form.Field>
           <form.Field name="url">
-            {(field) => {
-              const protocol = field.state.value.startsWith("http://")
-                ? "http://"
-                : "https://";
-              const host = field.state.value.replace(/^https?:\/\//, "");
-              const toggleProtocol = () => {
-                const next = protocol === "https://" ? "http://" : "https://";
-                field.handleChange(`${next}${host}`);
-              };
-              const handleHostChange = (text: string) => {
-                field.handleChange(
-                  `${protocol}${text.replace(/^https?:\/\//, "")}`,
-                );
-              };
-              return (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="mb-2 mt-0"
-                >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputSlot>
-                      <Pressable
-                        onPress={toggleProtocol}
-                        className="pr-2 justify-center"
-                      >
-                        <Text className="text-white text-md">{protocol}</Text>
-                      </Pressable>
-                    </InputSlot>
-                    <InputField
-                      value={host}
-                      onChangeText={handleHostChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t("auth.login.urlPlaceholder")}
-                      textContentType="URL"
-                      autoCapitalize="none"
-                      keyboardType="url"
-                    />
-                  </Input>
-                  <FieldError field={field} />
-                </FormControl>
-              );
-            }}
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="mb-2 mt-0"
+              >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <UrlInputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    placeholder={t("auth.login.urlPlaceholder")}
+                  />
+                </Input>
+                <FieldError field={field} />
+              </FormControl>
+            )}
           </form.Field>
           <form.Field name="username">
             {(field) => (

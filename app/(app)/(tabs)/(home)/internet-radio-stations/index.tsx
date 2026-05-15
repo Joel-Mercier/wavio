@@ -13,7 +13,7 @@ import InternetRadioStationListItemSkeleton from "@/components/internetRadioStat
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { useGetInternetRadioStations } from "@/hooks/openSubsonic/useInternetRadioStations";
+import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
 

@@ -28,7 +28,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useSimilarSongs2 } from "@/hooks/openSubsonic/useBrowsing";
+import { useSimilarSongs2 } from "@/hooks/backend/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";

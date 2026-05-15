@@ -13,6 +13,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import UrlInputField from "@/components/forms/UrlInputField";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -36,7 +37,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   useDeleteInternetRadioStation,
   useUpdateInternetRadioStation,
-} from "@/hooks/openSubsonic/useInternetRadioStations";
+} from "@/hooks/backend/useInternetRadioStations";
 import { cn } from "@/utils/tailwind";
 
 const updateInternetRadioStationSchema = z.object({
@@ -302,7 +303,7 @@ export default function InternetRadioStationActions({
                   className="my-4"
                 >
                   <Input className="bg-primary-600 border-0 rounded-full">
-                    <InputField
+                    <UrlInputField
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={() => handleFieldBlur(field)}
@@ -313,8 +314,6 @@ export default function InternetRadioStationActions({
                       placeholder={t(
                         "app.internetRadioStations.streamUrlPlaceholder",
                       )}
-                      textContentType="URL"
-                      autoCapitalize="none"
                     />
                   </Input>
                   <FieldError field={field} />
@@ -329,8 +328,8 @@ export default function InternetRadioStationActions({
                   className="my-4"
                 >
                   <Input className="bg-primary-600 border-0 rounded-full">
-                    <InputField
-                      value={field.state.value}
+                    <UrlInputField
+                      value={field.state.value ?? ""}
                       onChangeText={field.handleChange}
                       onBlur={() => handleFieldBlur(field)}
                       className={cn(
@@ -340,8 +339,6 @@ export default function InternetRadioStationActions({
                       placeholder={t(
                         "app.internetRadioStations.homePageUrlPlaceholder",
                       )}
-                      textContentType="URL"
-                      autoCapitalize="none"
                     />
                   </Input>
                   <FieldError field={field} />

@@ -69,10 +69,11 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useStar, useUnstar } from "@/hooks/openSubsonic/useMediaAnnotation";
-import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
+import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
+import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import {
   getCurrentTime,
@@ -134,6 +135,7 @@ export default function PlayerScreen() {
     ],
   ) as string[];
   const { t } = useTranslation();
+  const capabilities = useCapabilities();
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -977,14 +979,16 @@ export default function PlayerScreen() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleSharePress}>
-                    <HStack className="items-center">
-                      <Share2 size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.share")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
+                  {capabilities.sharing && (
+                    <FadeOutScaleDown onPress={handleSharePress}>
+                      <HStack className="items-center">
+                        <Share2 size={24} color={gray200} />
+                        <Text className="ml-4 text-lg text-gray-200">
+                          {t("app.tracks.share")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                  )}
                   <FadeOutScaleDown onPress={handleDownloadPress}>
                     <HStack className="items-center">
                       <Download size={24} color={gray200} />

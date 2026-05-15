@@ -23,10 +23,10 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
-import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
+import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import useDebounce from "@/hooks/useDebounce";
-import { useStarred2 } from "@/hooks/openSubsonic/useLists";
-import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
+import { useStarred2 } from "@/hooks/backend/useLists";
+import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import type {
   AlbumID3,
   ArtistID3,
