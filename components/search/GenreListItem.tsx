@@ -18,7 +18,10 @@ export default function GenreListItem({ genre }: GenreListItemProps) {
   return (
     <FadeOutScaleDown href={`/genres/${genre.value}`}>
       <VStack className="bg-primary-600 p-4 w-full rounded-md">
-        <Heading size="md" className={showCounts ? "text-white mb-8" : "text-white"}>
+        <Heading
+          size="md"
+          className={showCounts ? "text-white mb-8" : "text-white"}
+        >
           {genre.value}
         </Heading>
         {showCounts && (

@@ -4,7 +4,10 @@ import {
   mapBaseItemToArtist,
   mapBaseItemToChild,
 } from "@/services/jellyfin/mappers";
-import type { JellyfinItemsResult } from "@/services/jellyfin/types";
+import type {
+  BaseItemDto,
+  JellyfinItemsResult,
+} from "@/services/jellyfin/types";
 import { fakeEnvelope } from "@/services/jellyfin/unsupported";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type {
@@ -59,9 +62,19 @@ function paramsFor(
     case "highest":
       return { ...base, SortBy: "CommunityRating", SortOrder: "Descending" };
     case "frequent":
-      return { ...base, SortBy: "PlayCount", SortOrder: "Descending" };
+      return {
+        ...base,
+        Filters: "IsPlayed",
+        SortBy: "PlayCount",
+        SortOrder: "Descending",
+      };
     case "recent":
-      return { ...base, SortBy: "DatePlayed", SortOrder: "Descending" };
+      return {
+        ...base,
+        Filters: "IsPlayed",
+        SortBy: "DatePlayed",
+        SortOrder: "Descending",
+      };
     case "alphabeticalByName":
       return { ...base, SortBy: "SortName", SortOrder: "Ascending" };
     case "alphabeticalByArtist":
@@ -99,11 +112,9 @@ export const getAlbumList = async (
   type: AlbumListType,
   opts: Parameters<typeof paramsFor>[1],
 ) => {
-  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
-    params: paramsFor(type, opts),
-  });
+  const items = await fetchAlbums(type, opts);
   const list: AlbumList = {
-    album: (rsp.data?.Items ?? []).map((i) => ({
+    album: items.map((i) => ({
       ...mapBaseItemToChild(i),
       id: i.Id,
       title: i.Name ?? "",
@@ -113,15 +124,41 @@ export const getAlbumList = async (
   return fakeEnvelope({ albumList: list });
 };
 
+async function fetchAlbums(
+  type: AlbumListType,
+  opts: Parameters<typeof paramsFor>[1],
+): Promise<BaseItemDto[]> {
+  // Jellyfin's home UI uses /Users/{UserId}/Items/Latest for "Latest Music",
+  // not /Items?SortBy=DateCreated. The Latest endpoint groups by album and
+  // is what users see on the Jellyfin home page.
+  if (type === "newest") {
+    const rsp = await jellyfinApiInstance.get<BaseItemDto[]>(
+      `/Users/${userId()}/Items/Latest`,
+      {
+        params: {
+          IncludeItemTypes: "MusicAlbum",
+          Limit: opts.size ?? 20,
+          Fields: FIELDS,
+          ParentId: opts.musicFolderId,
+          GroupItems: true,
+        },
+      },
+    );
+    return rsp.data ?? [];
+  }
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: paramsFor(type, opts),
+  });
+  return rsp.data?.Items ?? [];
+}
+
 export const getAlbumList2 = async (
   type: AlbumListType,
   opts: Parameters<typeof paramsFor>[1],
 ) => {
-  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
-    params: paramsFor(type, opts),
-  });
+  const items = await fetchAlbums(type, opts);
   const list: AlbumList2 = {
-    album: (rsp.data?.Items ?? []).map(mapBaseItemToAlbum),
+    album: items.map(mapBaseItemToAlbum),
   };
   return fakeEnvelope({ albumList2: list });
 };

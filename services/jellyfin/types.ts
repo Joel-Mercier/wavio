@@ -17,8 +17,6 @@ export type BaseItemDto = {
   ParentIndexNumber?: number;
   ProductionYear?: number;
   Container?: string;
-  Bitrate?: number;
-  Size?: number;
   Path?: string;
   CommunityRating?: number;
   CriticRating?: number;
@@ -45,6 +43,25 @@ export type BaseItemDto = {
     Rating?: number;
   };
   ProviderIds?: { MusicBrainzAlbum?: string; MusicBrainzArtist?: string };
+  MediaSources?: {
+    Bitrate?: number;
+    Size?: number;
+    Container?: string;
+    Path?: string;
+    MediaStreams?: {
+      Type?: string;
+      BitRate?: number;
+      Channels?: number;
+      SampleRate?: number;
+      Codec?: string;
+    }[];
+  }[];
+};
+
+export type JellyfinPlaylistDto = {
+  OpenAccess?: boolean;
+  Shares?: { UserId: string; CanEdit: boolean }[];
+  ItemIds?: string[];
 };
 
 export type JellyfinItemsResult = {

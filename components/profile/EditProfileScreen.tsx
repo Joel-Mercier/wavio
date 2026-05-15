@@ -33,14 +33,14 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
-  useGetUser as useGetNavidromeUser,
-  useUpdateUser as useUpdateNavidromeUser,
-} from "@/hooks/navidrome/useUsers";
-import {
   useChangePassword,
   useGetUser,
   useUpdateUser,
 } from "@/hooks/backend/useUsers";
+import {
+  useGetUser as useGetNavidromeUser,
+  useUpdateUser as useUpdateNavidromeUser,
+} from "@/hooks/navidrome/useUsers";
 import useAuth from "@/stores/auth";
 import { cn } from "@/utils/tailwind";
 
@@ -139,6 +139,8 @@ export default function EditProfileScreen() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const currentUsername = useAuth((store) => store.username);
   const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
+  const serverType = useAuth((store) => store.serverType);
+  const isJellyfin = serverType === "jellyfin";
   const navidromeUserId = useAuth((store) => store.userId);
   const setStoredPassword = useAuth((store) => store.setPassword);
   const { data: subsonicData } = useGetUser(
@@ -201,7 +203,18 @@ export default function EditProfileScreen() {
     },
     onSubmit: async ({ value }) => {
       try {
-        if (hasNavidromeNative) {
+        if (isJellyfin) {
+          if (value.password && value.password.length > 0) {
+            await doChangePassword.mutateAsync({
+              username: currentUsername,
+              password: value.password,
+              currentPassword: value.currentPassword || undefined,
+            });
+            if (currentUsername === username) {
+              setStoredPassword(value.password);
+            }
+          }
+        } else if (hasNavidromeNative) {
           if (!navidromeUserId || !navidromeUser) {
             throw new Error("Missing Navidrome user id");
           }
@@ -350,35 +363,37 @@ export default function EditProfileScreen() {
           </Text>
           <Text className="text-white font-bold mb-3">{username}</Text>
         </VStack>
-        <form.Field name="email">
-          {(field) => (
-            <FormControl
-              isInvalid={showFieldError(field)}
-              size="md"
-              className="mb-4"
-            >
-              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                <InputField
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white"
-                  placeholder={t("app.editProfile.emailPlaceholder")}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </Input>
-              <FieldError field={field} />
-            </FormControl>
-          )}
-        </form.Field>
+        {!isJellyfin && (
+          <form.Field name="email">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                className="mb-4"
+              >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <InputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
+                    placeholder={t("app.editProfile.emailPlaceholder")}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </Input>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </form.Field>
+        )}
 
         <Divider className="my-4 bg-primary-600" />
 
         <Heading size="md" className="text-white mb-3">
           {t("app.editProfile.passwordSection")}
         </Heading>
-        {hasNavidromeNative && (
+        {(hasNavidromeNative || isJellyfin) && (
           <form.Field name="currentPassword">
             {(field) => (
               <FormControl
@@ -504,7 +519,7 @@ export default function EditProfileScreen() {
           )}
         </form.Field>
 
-        {!hasNavidromeNative && (
+        {!hasNavidromeNative && !isJellyfin && (
           <>
             <Divider className="my-4 bg-primary-600" />
 
@@ -548,7 +563,7 @@ export default function EditProfileScreen() {
           </>
         )}
 
-        {!hasNavidromeNative && user?.adminRole && (
+        {!hasNavidromeNative && !isJellyfin && user?.adminRole && (
           <>
             <Divider className="my-4 bg-primary-600" />
 

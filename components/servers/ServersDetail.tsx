@@ -10,11 +10,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import ServerTypeIcon from "@/components/ServerTypeIcon";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import UrlInputField from "@/components/forms/UrlInputField";
+import ServerTypeIcon from "@/components/ServerTypeIcon";
 import ServerListItem from "@/components/servers/ServerListItem";
 import {
   AlertDialog,
@@ -29,21 +30,20 @@ import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
-import UrlInputField from "@/components/forms/UrlInputField";
 import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
 import {
   Toast,
   ToastDescription,
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
+import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
+import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import useAuth from "@/stores/auth";
 import useServers, {
-  serverFormSchema,
   type ServerType,
+  serverFormSchema,
 } from "@/stores/servers";
 
 export default function ServersDetail() {

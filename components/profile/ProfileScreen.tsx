@@ -25,13 +25,13 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import { useGetUser } from "@/hooks/backend/useUsers";
 import { useNavidromePlaylistsByOwner } from "@/hooks/navidrome/usePlaylists";
 import {
   useGetUser as useGetNavidromeUser,
   useUsers as useNavidromeUsers,
 } from "@/hooks/navidrome/useUsers";
-import { usePlaylists } from "@/hooks/backend/usePlaylists";
-import { useGetUser } from "@/hooks/backend/useUsers";
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
@@ -82,6 +82,8 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
+  const serverType = useAuth((s) => s.serverType);
+  const isJellyfin = serverType === "jellyfin";
   const isAdmin = useAuth((s) => s.isAdmin);
   const authUsername = useAuth((s) => s.username);
   const authUserId = useAuth((s) => s.userId);
@@ -208,7 +210,7 @@ export default function ProfileScreen() {
                       {displayName}
                     </Heading>
                   </HStack>
-                  {useNavidrome && isOwnProfile && (
+                  {(useNavidrome || isJellyfin) && isOwnProfile && (
                     <HStack className="mt-4">
                       <FadeOutScaleDown
                         onPress={() =>

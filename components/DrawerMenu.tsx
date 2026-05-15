@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useAuth from "@/stores/auth";
 import useServers, { type ServerUser } from "@/stores/servers";
 
@@ -85,6 +86,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const logout = useAuth((store) => store.logout);
   const username = useAuth((store) => store.username);
   const url = useAuth((store) => store.url);
+  const capabilities = useCapabilities();
   const servers = useServers((store) => store.servers);
   const allUsers = useServers((store) => store.users);
   const currentServer = servers.find((s) => s.url === url);
@@ -249,15 +251,17 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                   {t("app.shared.sidebar.servers")}
                 </Heading>
               </Pressable>
-              <Pressable
-                className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
-                onPress={handleSharesPress}
-              >
-                <Share2 size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.shares")}
-                </Heading>
-              </Pressable>
+              {capabilities.sharing && (
+                <Pressable
+                  className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
+                  onPress={handleSharesPress}
+                >
+                  <Share2 size={24} color={white} />
+                  <Heading size="lg" className="text-white font-normal">
+                    {t("app.shared.sidebar.shares")}
+                  </Heading>
+                </Pressable>
+              )}
               <Pressable
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"
                 onPress={handleSettingsPress}

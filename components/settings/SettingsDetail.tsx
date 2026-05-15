@@ -55,6 +55,7 @@ import {
 } from "@/hooks/backend/useMediaLibraryScanning";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import {
   isEqualizerAvailable,
@@ -122,6 +123,7 @@ export default function SettingsDetail() {
   const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
   const toast = useToast();
+  const capabilities = useCapabilities();
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
   const showAddTab = useApp((store) => store.showAddTab);
@@ -777,31 +779,35 @@ export default function SettingsDetail() {
                 </Badge>
               </HStack>
             </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={handlePresentReplayGainModalPress}>
-              <HStack className="items-center gap-x-4 py-4 justify-between">
-                <VStack className="gap-y-2 w-1/2">
-                  <Heading className="text-white font-normal" size="md">
-                    {t("app.settings.streamingSettings.replayGainLabel")}
-                  </Heading>
-                  <Text className="text-primary-100 text-sm">
-                    {t("app.settings.streamingSettings.replayGainDescription")}
-                  </Text>
-                </VStack>
-                <Badge
-                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
-                  size="lg"
-                  variant="solid"
-                  action="success"
-                >
-                  <BadgeText className="normal-case text-center text-emerald-700">
-                    {t(
-                      `app.settings.streamingSettings.replayGainModes.${replayGainMode}`,
-                    )}
-                  </BadgeText>
-                </Badge>
-              </HStack>
-            </FadeOutScaleDown>
-            {replayGainMode !== "off" && (
+            {capabilities.replayGain && (
+              <FadeOutScaleDown onPress={handlePresentReplayGainModalPress}>
+                <HStack className="items-center gap-x-4 py-4 justify-between">
+                  <VStack className="gap-y-2 w-1/2">
+                    <Heading className="text-white font-normal" size="md">
+                      {t("app.settings.streamingSettings.replayGainLabel")}
+                    </Heading>
+                    <Text className="text-primary-100 text-sm">
+                      {t(
+                        "app.settings.streamingSettings.replayGainDescription",
+                      )}
+                    </Text>
+                  </VStack>
+                  <Badge
+                    className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                    size="lg"
+                    variant="solid"
+                    action="success"
+                  >
+                    <BadgeText className="normal-case text-center text-emerald-700">
+                      {t(
+                        `app.settings.streamingSettings.replayGainModes.${replayGainMode}`,
+                      )}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
+            {capabilities.replayGain && replayGainMode !== "off" && (
               <HStack className="items-center gap-x-4 py-4 justify-between">
                 <VStack className="gap-y-2 w-1/2">
                   <Heading className="text-white font-normal" size="md">

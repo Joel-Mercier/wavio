@@ -35,6 +35,9 @@ function favoriteAsStarred(item: BaseItemDto): Date | undefined {
 }
 
 export function mapBaseItemToChild(item: BaseItemDto): Child {
+  const source = item.MediaSources?.[0];
+  const audioStream = source?.MediaStreams?.find((s) => s.Type === "Audio");
+  const bitRateBps = source?.Bitrate ?? audioStream?.BitRate;
   return {
     id: item.Id,
     title: item.Name ?? "",
@@ -50,10 +53,11 @@ export function mapBaseItemToChild(item: BaseItemDto): Child {
     track: item.IndexNumber,
     discNumber: item.ParentIndexNumber,
     year: item.ProductionYear,
-    suffix: item.Container?.split(",")[0]?.trim(),
-    bitRate: item.Bitrate ? Math.round(item.Bitrate / 1000) : undefined,
-    size: item.Size,
-    path: item.Path,
+    suffix: (source?.Container ?? item.Container)?.split(",")[0]?.trim(),
+    bitRate: bitRateBps ? Math.round(bitRateBps / 1000) : undefined,
+    channelCount: audioStream?.Channels,
+    size: source?.Size,
+    path: source?.Path ?? item.Path,
     coverArt: item.AlbumId ?? item.Id,
     parent: item.ParentId,
     genre: item.Genres?.[0],
@@ -128,7 +132,10 @@ export function mapBaseItemToArtistWithAlbums(
   };
 }
 
-export function mapBaseItemToPlaylist(item: BaseItemDto): Playlist {
+export function mapBaseItemToPlaylist(
+  item: BaseItemDto,
+  extra?: { openAccess?: boolean },
+): Playlist {
   return {
     id: item.Id,
     name: item.Name ?? "",
@@ -137,16 +144,17 @@ export function mapBaseItemToPlaylist(item: BaseItemDto): Playlist {
     created: parseDate(item.DateCreated) ?? new Date(0),
     changed: parseDate(item.DateCreated) ?? new Date(0),
     coverArt: item.Id,
-    public: false,
+    public: extra?.openAccess ?? false,
   };
 }
 
 export function mapBaseItemToPlaylistWithSongs(
   item: BaseItemDto,
   tracks: BaseItemDto[],
+  extra?: { openAccess?: boolean },
 ): PlaylistWithSongs {
   return {
-    ...mapBaseItemToPlaylist(item),
+    ...mapBaseItemToPlaylist(item, extra),
     entry: tracks.map(mapBaseItemToChild),
   };
 }

@@ -44,7 +44,11 @@ export const useUpdateUser = () => {
 
 export const useChangePassword = () => {
   return useMutation({
-    mutationFn: (params: { username: string; password: string }) => {
+    mutationFn: (params: {
+      username: string;
+      password: string;
+      currentPassword?: string;
+    }) => {
       return changePassword(params);
     },
   });

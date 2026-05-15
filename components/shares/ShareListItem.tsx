@@ -7,8 +7,8 @@ import { useForm } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
@@ -47,10 +47,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import {
-  useDeleteShare,
-  useUpdateShare,
-} from "@/hooks/backend/useSharing";
+import { useDeleteShare, useUpdateShare } from "@/hooks/backend/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";

@@ -91,12 +91,14 @@ export const updateUser = async (params: UpdateUserParams) => {
 export const changePassword = async (params: {
   username: string;
   password: string;
+  currentPassword?: string;
 }) => {
   try {
+    const { currentPassword: _currentPassword, ...subsonicParams } = params;
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>
     >("/rest/changePassword", {
-      params,
+      params: subsonicParams,
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error;

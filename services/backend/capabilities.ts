@@ -9,6 +9,8 @@ export type BackendCapabilities = {
   lyricsSynced: boolean;
   adminUsers: boolean;
   libraryScan: boolean;
+  playlistDescription: boolean;
+  replayGain: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -20,6 +22,8 @@ const SUBSONIC: BackendCapabilities = {
   lyricsSynced: true,
   adminUsers: true,
   libraryScan: true,
+  playlistDescription: true,
+  replayGain: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -32,10 +36,16 @@ const JELLYFIN: BackendCapabilities = {
   internetRadio: false,
   smartPlaylists: false,
   bookmarks: false,
-  setRating: true,
+  // Jellyfin only exposes thumbs-up/down via Likes; there's no 1-5 numeric
+  // rating analogous to Subsonic's userRating.
+  setRating: false,
   lyricsSynced: true,
   adminUsers: true,
   libraryScan: true,
+  playlistDescription: false,
+  // Jellyfin's BaseItemDto does not expose ReplayGain tags, so client-side
+  // gain adjustment has no data to act on.
+  replayGain: false,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

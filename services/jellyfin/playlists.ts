@@ -6,6 +6,7 @@ import {
 import type {
   BaseItemDto,
   JellyfinItemsResult,
+  JellyfinPlaylistDto,
 } from "@/services/jellyfin/types";
 import { fakeEnvelope } from "@/services/jellyfin/unsupported";
 import type {
@@ -38,7 +39,7 @@ export const getPlaylists = async (_opts: { username?: string }) => {
 };
 
 export const getPlaylist = async (id: string) => {
-  const [meta, items] = await Promise.all([
+  const [meta, items, playlistMeta] = await Promise.all([
     jellyfinApiInstance.get<BaseItemDto>(`/Users/${userId()}/Items/${id}`, {
       params: { Fields: FIELDS },
     }),
@@ -49,10 +50,15 @@ export const getPlaylist = async (id: string) => {
           "DateCreated,Genres,GenreItems,UserData,ProductionYear,MediaSources,ProviderIds",
       },
     }),
+    // OpenAccess / Shares only come from the dedicated playlist endpoint.
+    jellyfinApiInstance
+      .get<JellyfinPlaylistDto>(`/Playlists/${id}`)
+      .catch(() => null),
   ]);
   const playlist: PlaylistWithSongs = mapBaseItemToPlaylistWithSongs(
     meta.data,
     items.data?.Items ?? [],
+    { openAccess: playlistMeta?.data?.OpenAccess },
   );
   return fakeEnvelope({ playlist });
 };
@@ -85,6 +91,7 @@ export const updatePlaylist = async (
   id: string,
   {
     name,
+    isPublic,
     songIdToAdd,
     songIndexToRemove,
   }: {
@@ -95,14 +102,13 @@ export const updatePlaylist = async (
     songIndexToRemove?: string[];
   },
 ) => {
-  if (name) {
-    // Jellyfin requires a full item PUT to rename; fetch then patch
-    const existing = await jellyfinApiInstance.get<BaseItemDto>(
-      `/Users/${userId()}/Items/${id}`,
-    );
-    await jellyfinApiInstance.post(`/Items/${id}`, {
-      ...existing.data,
-      Name: name,
+  // Jellyfin has no playlist description field; `comment` is intentionally
+  // dropped. Use the dedicated UpdatePlaylist endpoint for Name/IsPublic so
+  // both apply in a single request without clobbering Users.
+  if (name !== undefined || isPublic !== undefined) {
+    await jellyfinApiInstance.post(`/Playlists/${id}`, {
+      ...(name !== undefined ? { Name: name } : {}),
+      ...(isPublic !== undefined ? { IsPublic: isPublic } : {}),
     });
   }
   if (songIdToAdd?.length) {

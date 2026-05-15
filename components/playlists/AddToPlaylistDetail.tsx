@@ -19,10 +19,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import {
-  usePlaylists,
-  useUpdatePlaylist,
-} from "@/hooks/backend/usePlaylists";
+import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 
 export default function AddToPlaylistDetail() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];

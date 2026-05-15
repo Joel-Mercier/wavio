@@ -11,8 +11,9 @@ import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
@@ -22,7 +23,6 @@ import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
-import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Repeat from "lucide-react-native/dist/esm/icons/repeat.mjs";
 import Repeat1 from "lucide-react-native/dist/esm/icons/repeat-1.mjs";
@@ -447,10 +447,15 @@ export default function PlayerScreen() {
   };
 
   const handleFavoritePress = () => {
+    if (!playingTrack?.id) return;
+    const trackId = playingTrack.id;
     doFavorite.mutate(
-      { id: playingTrack?.id },
+      { id: trackId },
       {
         onSuccess: () => {
+          useQueue.getState().updateTrack(trackId, {
+            starred: new Date().toISOString(),
+          });
           toast.show({
             placement: "top",
             duration: 3000,
@@ -483,10 +488,13 @@ export default function PlayerScreen() {
   };
 
   const handleUnfavoritePress = () => {
+    if (!playingTrack?.id) return;
+    const trackId = playingTrack.id;
     doUnfavorite.mutate(
-      { id: playingTrack?.id },
+      { id: trackId },
       {
         onSuccess: () => {
+          useQueue.getState().updateTrack(trackId, { starred: undefined });
           toast.show({
             placement: "top",
             duration: 3000,

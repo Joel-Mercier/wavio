@@ -63,13 +63,13 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import {
   useDeletePlaylist,
   usePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";

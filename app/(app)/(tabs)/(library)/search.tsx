@@ -24,9 +24,9 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
-import useDebounce from "@/hooks/useDebounce";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import useDebounce from "@/hooks/useDebounce";
 import type {
   AlbumID3,
   ArtistID3,

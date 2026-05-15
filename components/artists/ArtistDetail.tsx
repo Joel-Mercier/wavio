@@ -80,8 +80,9 @@ import {
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
-import { getAlbum } from "@/services/openSubsonic/browsing";
+import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
@@ -165,6 +166,7 @@ export default function ArtistDetail() {
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
+  const capabilities = useCapabilities();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
@@ -864,23 +866,25 @@ export default function ArtistDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={handleRatingPress}>
-                <HStack className="items-center justify-between">
-                  <HStack className="items-center">
-                    <Star size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.artists.rate")}
-                    </Text>
-                  </HStack>
-                  <HStack className="items-center">
-                    {data?.artist?.userRating && (
-                      <Text className="ml-4 text-lg text-emerald-500">
-                        {data?.artist?.userRating}/5
+              {capabilities.setRating && (
+                <FadeOutScaleDown onPress={handleRatingPress}>
+                  <HStack className="items-center justify-between">
+                    <HStack className="items-center">
+                      <Star size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.artists.rate")}
                       </Text>
-                    )}
+                    </HStack>
+                    <HStack className="items-center">
+                      {data?.artist?.userRating && (
+                        <Text className="ml-4 text-lg text-emerald-500">
+                          {data?.artist?.userRating}/5
+                        </Text>
+                      )}
+                    </HStack>
                   </HStack>
-                </HStack>
-              </FadeOutScaleDown>
+                </FadeOutScaleDown>
+              )}
               {data?.artist?.musicBrainzId && (
                 <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                   <HStack className="items-center">

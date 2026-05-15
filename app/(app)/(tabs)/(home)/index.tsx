@@ -31,10 +31,10 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import { useArtist } from "@/hooks/backend/useBrowsing";
 import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -235,8 +235,12 @@ export default function HomeScreen() {
           <VStack className="gap-y-4">{recentPlaysRows}</VStack>
         </Box>
         <Box className="px-6 mt-4 mb-4">
-          <HStack className="items-center justify-between">
-            <Heading size="xl" className="text-white">
+          <HStack className="items-center justify-between gap-x-4">
+            <Heading
+              numberOfLines={2}
+              className="text-white truncate flex-1"
+              size="xl"
+            >
               {t("app.home.recentlyPlayed")}
             </Heading>
             {!!recentlyPlayedData?.albumList2?.album?.length && (
@@ -286,8 +290,12 @@ export default function HomeScreen() {
           !recentlyPlayedError &&
           !recentlyPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box className="px-6 mt-4 mb-4">
-          <HStack className="items-center justify-between">
-            <Heading size="xl" className="text-white">
+          <HStack className="items-center justify-between gap-x-4">
+            <Heading
+              numberOfLines={2}
+              className="text-white truncate flex-1"
+              size="xl"
+            >
               {t("app.home.recentlyAdded")}
             </Heading>
             {!!recentData?.albumList2?.album?.length && (
@@ -338,8 +346,12 @@ export default function HomeScreen() {
           !recentData?.albumList2?.album?.length && <EmptyDisplay />}
         <Box onLayout={makeSectionOnLayout("mostPlayed")}>
           <Box className="px-6 mt-4 mb-4">
-            <HStack className="items-center justify-between">
-              <Heading size="xl" className="text-white">
+            <HStack className="items-center justify-between gap-x-4">
+              <Heading
+                numberOfLines={2}
+                className="text-white truncate flex-1"
+                size="xl"
+              >
                 {t("app.home.mostPlayed")}
               </Heading>
               {!!mostPlayedData?.albumList2?.album?.length && (
@@ -393,8 +405,12 @@ export default function HomeScreen() {
         {moreFromArtistId && (
           <Box onLayout={makeSectionOnLayout("moreFromArtist")}>
             <Box className="px-6 mt-4 mb-4">
-              <HStack className="items-center justify-between">
-                <Heading size="xl" className="text-white">
+              <HStack className="items-center justify-between gap-x-4">
+                <Heading
+                  numberOfLines={2}
+                  className="text-white truncate flex-1"
+                  size="xl"
+                >
                   {t("app.albums.moreFromArtist", {
                     artist: moreFromArtistData?.artist?.name ?? "",
                   })}
@@ -445,64 +461,74 @@ export default function HomeScreen() {
             )}
           </Box>
         )}
-        <Box onLayout={makeSectionOnLayout("highestRated")}>
-          <Box className="px-6 mt-4 mb-4">
-            <HStack className="items-center justify-between">
-              <Heading size="xl" className="text-white">
-                {t("app.home.topRated")}
-              </Heading>
-              {!!highestRatedData?.albumList2?.album?.length && (
-                <FadeOutScaleDown
-                  href={{
-                    pathname: "/(app)/(tabs)/(home)/highest-rated",
-                    params: { type: "highest" },
-                  }}
+        {capabilities.setRating && (
+          <Box onLayout={makeSectionOnLayout("highestRated")}>
+            <Box className="px-6 mt-4 mb-4">
+              <HStack className="items-center justify-between gap-x-4">
+                <Heading
+                  numberOfLines={2}
+                  className="text-white truncate flex-1"
+                  size="xl"
                 >
-                  <Text className="text-primary-100">
-                    {t("app.shared.seeAll")}
-                  </Text>
-                </FadeOutScaleDown>
-              )}
-            </HStack>
+                  {t("app.home.topRated")}
+                </Heading>
+                {!!highestRatedData?.albumList2?.album?.length && (
+                  <FadeOutScaleDown
+                    href={{
+                      pathname: "/(app)/(tabs)/(home)/highest-rated",
+                      params: { type: "highest" },
+                    }}
+                  >
+                    <Text className="text-primary-100">
+                      {t("app.shared.seeAll")}
+                    </Text>
+                  </FadeOutScaleDown>
+                )}
+              </HStack>
+            </Box>
+            {highestRatedError ? (
+              <ErrorDisplay error={highestRatedError} />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="pl-6 mb-6"
+              >
+                {!lazyEnabled.highestRated || isLoadingHighestRated
+                  ? loadingData(4).map((_, index) => (
+                      <AlbumListItemSkeleton
+                        key={`highest-rated-${
+                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                          index
+                        }`}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ))
+                  : highestRatedData?.albumList2?.album?.map((album, index) => (
+                      <AlbumListItem
+                        key={album.id}
+                        album={album}
+                        index={index}
+                        layout="horizontal"
+                      />
+                    ))}
+              </ScrollView>
+            )}
+            {lazyEnabled.highestRated &&
+              !isLoadingHighestRated &&
+              !highestRatedError &&
+              !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
           </Box>
-          {highestRatedError ? (
-            <ErrorDisplay error={highestRatedError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="pl-6 mb-6"
-            >
-              {!lazyEnabled.highestRated || isLoadingHighestRated
-                ? loadingData(4).map((_, index) => (
-                    <AlbumListItemSkeleton
-                      key={`highest-rated-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                        index
-                      }`}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))
-                : highestRatedData?.albumList2?.album?.map((album, index) => (
-                    <AlbumListItem
-                      key={album.id}
-                      album={album}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))}
-            </ScrollView>
-          )}
-          {lazyEnabled.highestRated &&
-            !isLoadingHighestRated &&
-            !highestRatedError &&
-            !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
-        </Box>
+        )}
         <Box onLayout={makeSectionOnLayout("random")}>
           <Box className="px-6 mt-4 mb-4">
-            <HStack className="items-center justify-between">
-              <Heading size="xl" className="text-white">
+            <HStack className="items-center justify-between gap-x-4">
+              <Heading
+                numberOfLines={2}
+                className="text-white truncate flex-1"
+                size="xl"
+              >
                 {t("app.home.random")}
               </Heading>
               {!!randomData?.albumList2?.album?.length && (
@@ -554,54 +580,58 @@ export default function HomeScreen() {
             !randomData?.albumList2?.album?.length && <EmptyDisplay />}
         </Box>
         {capabilities.internetRadio && (
-        <Box onLayout={makeSectionOnLayout("internetRadioStations")}>
-          <HStack className="px-6 mt-4 mb-4 items-center justify-between">
-            <Heading size="xl" className="text-white">
-              {t("app.home.internetRadioStations")}
-            </Heading>
-            {!!internetRadioStationsData?.internetRadioStations
-              ?.internetRadioStation?.length && (
-              <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
-                <Text className="text-primary-100">
-                  {t("app.shared.seeAll")}
-                </Text>
-              </FadeOutScaleDown>
-            )}
-          </HStack>
-          {internetRadioStationsError ? (
-            <ErrorDisplay error={internetRadioStationsError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="pl-6 mb-6"
-            >
-              {!lazyEnabled.internetRadioStations ||
-              isLoadingInternetRadioStations
-                ? loadingData(4).map((_, index) => (
-                    <InternetRadioStationListItemSkeleton
-                      key={`internet-radio-stations-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                        index
-                      }`}
-                    />
-                  ))
-                : internetRadioStationsData?.internetRadioStations?.internetRadioStation
-                    ?.slice(0, 12)
-                    .map((radioStation) => (
-                      <InternetRadioStationListItem
-                        key={radioStation.id}
-                        internetRadioStation={radioStation}
+          <Box onLayout={makeSectionOnLayout("internetRadioStations")}>
+            <HStack className="px-6 mt-4 mb-4 items-center justify-between gap-x-4">
+              <Heading
+                numberOfLines={2}
+                className="text-white truncate flex-1"
+                size="xl"
+              >
+                {t("app.home.internetRadioStations")}
+              </Heading>
+              {!!internetRadioStationsData?.internetRadioStations
+                ?.internetRadioStation?.length && (
+                <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
+                  <Text className="text-primary-100">
+                    {t("app.shared.seeAll")}
+                  </Text>
+                </FadeOutScaleDown>
+              )}
+            </HStack>
+            {internetRadioStationsError ? (
+              <ErrorDisplay error={internetRadioStationsError} />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="pl-6 mb-6"
+              >
+                {!lazyEnabled.internetRadioStations ||
+                isLoadingInternetRadioStations
+                  ? loadingData(4).map((_, index) => (
+                      <InternetRadioStationListItemSkeleton
+                        key={`internet-radio-stations-${
+                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
+                          index
+                        }`}
                       />
-                    ))}
-            </ScrollView>
-          )}
-          {lazyEnabled.internetRadioStations &&
-            !isLoadingInternetRadioStations &&
-            !internetRadioStationsError &&
-            !internetRadioStationsData?.internetRadioStations
-              ?.internetRadioStation?.length && <EmptyDisplay />}
-        </Box>
+                    ))
+                  : internetRadioStationsData?.internetRadioStations?.internetRadioStation
+                      ?.slice(0, 12)
+                      .map((radioStation) => (
+                        <InternetRadioStationListItem
+                          key={radioStation.id}
+                          internetRadioStation={radioStation}
+                        />
+                      ))}
+              </ScrollView>
+            )}
+            {lazyEnabled.internetRadioStations &&
+              !isLoadingInternetRadioStations &&
+              !internetRadioStationsError &&
+              !internetRadioStationsData?.internetRadioStations
+                ?.internetRadioStation?.length && <EmptyDisplay />}
+          </Box>
         )}
       </ScrollView>
     </Box>

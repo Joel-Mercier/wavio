@@ -91,10 +91,8 @@ export const useAuthBase = create<AuthStore>()(
           isAuthenticated: true,
           serverType,
           token: navidrome?.token ?? null,
-          userId:
-            jellyfin?.userId ?? navidrome?.userId ?? null,
-          isAdmin:
-            jellyfin?.isAdmin ?? navidrome?.isAdmin ?? false,
+          userId: jellyfin?.userId ?? navidrome?.userId ?? null,
+          isAdmin: jellyfin?.isAdmin ?? navidrome?.isAdmin ?? false,
           hasNavidromeNative: !!navidrome,
           jellyfinAccessToken: jellyfin?.accessToken ?? null,
           jellyfinUserId: jellyfin?.userId ?? null,

@@ -49,13 +49,16 @@ export const updateUser = async (_params: UpdateUserParams) => {
 export const changePassword = async (params: {
   username: string;
   password: string;
+  currentPassword?: string;
 }) => {
-  // Find user by name then call /Users/{Id}/Password
+  // Find user by name then call /Users/{Id}/Password. Jellyfin requires
+  // CurrentPw when the user is changing their own password.
   const rsp = await jellyfinApiInstance.get<JellyfinUser[]>("/Users");
   const match = (rsp.data ?? []).find((u) => u.Name === params.username);
   if (match) {
     await jellyfinApiInstance.post(`/Users/${match.Id}/Password`, {
       NewPw: params.password,
+      ...(params.currentPassword ? { CurrentPw: params.currentPassword } : {}),
     });
   }
   return fakeEnvelope({});

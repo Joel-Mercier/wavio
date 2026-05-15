@@ -30,10 +30,8 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import {
-  usePlaylist,
-  useUpdatePlaylist,
-} from "@/hooks/backend/usePlaylists";
+import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
@@ -59,6 +57,7 @@ export default function EditPlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
   const doUpdatePlaylist = useUpdatePlaylist();
+  const capabilities = useCapabilities();
   const form = useForm({
     defaultValues: {
       name: data?.playlist.name ?? "",
@@ -186,30 +185,32 @@ export default function EditPlaylistScreen() {
             </FormControl>
           )}
         </form.Field>
-        <form.Field name="comment">
-          {(field) => (
-            <FormControl
-              isInvalid={showFieldError(field)}
-              size="md"
-              isDisabled={false}
-              isReadOnly={false}
-              isRequired={false}
-              className="mb-4 mt-0"
-            >
-              <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                <TextareaInput
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={() => handleFieldBlur(field)}
-                  className="text-md font-normal text-white"
-                  placeholder={t("app.editPlaylist.descriptionPlaceholder")}
-                  placeholderTextColor={gray400}
-                />
-              </Textarea>
-              <FieldError field={field} />
-            </FormControl>
-          )}
-        </form.Field>
+        {capabilities.playlistDescription && (
+          <form.Field name="comment">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="mb-4 mt-0"
+              >
+                <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <TextareaInput
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md font-normal text-white"
+                    placeholder={t("app.editPlaylist.descriptionPlaceholder")}
+                    placeholderTextColor={gray400}
+                  />
+                </Textarea>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </form.Field>
+        )}
         <form.Field name="isPublic">
           {(field) => (
             <HStack className="items-center justify-between">

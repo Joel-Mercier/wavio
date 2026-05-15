@@ -1,11 +1,7 @@
 import i18n from "@/config/i18n";
-import {
-  getAlbum,
-  getArtist,
-  getTopSongs,
-} from "@/services/openSubsonic/browsing";
-import { getAlbumList2, getStarred2 } from "@/services/openSubsonic/lists";
-import { getPlaylist, getPlaylists } from "@/services/openSubsonic/playlists";
+import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
+import { getAlbumList2, getStarred2 } from "@/services/backend/lists";
+import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import type {
   AlbumID3,
   AlbumWithSongsID3,

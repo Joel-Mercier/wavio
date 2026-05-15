@@ -822,23 +822,25 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleRatingPress}>
-                  <HStack className="items-center justify-between">
-                    <HStack className="items-center">
-                      <Star size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.rate")}
-                      </Text>
-                    </HStack>
-                    <HStack className="items-center">
-                      {track?.userRating && (
-                        <Text className="ml-4 text-lg text-emerald-500">
-                          {track?.userRating}/5
+                {capabilities.setRating && (
+                  <FadeOutScaleDown onPress={handleRatingPress}>
+                    <HStack className="items-center justify-between">
+                      <HStack className="items-center">
+                        <Star size={24} color={gray200} />
+                        <Text className="ml-4 text-lg text-gray-200">
+                          {t("app.tracks.rate")}
                         </Text>
-                      )}
+                      </HStack>
+                      <HStack className="items-center">
+                        {track?.userRating && (
+                          <Text className="ml-4 text-lg text-emerald-500">
+                            {track?.userRating}/5
+                          </Text>
+                        )}
+                      </HStack>
                     </HStack>
-                  </HStack>
-                </FadeOutScaleDown>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleSimilarSongsPress}>
                   <HStack className="items-center">
                     <Sparkles size={24} color={gray200} />

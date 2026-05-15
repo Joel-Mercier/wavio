@@ -16,8 +16,8 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
-import ServerTypeIcon from "@/components/ServerTypeIcon";
 import UrlInputField from "@/components/forms/UrlInputField";
+import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
   Avatar,
   AvatarFallbackText,

@@ -97,9 +97,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
               </FadeOutScaleDown>
             )}
             {capabilities.internetRadio && (
-              <FadeOutScaleDown
-                onPress={handleCreateInternetRadioStationPress}
-              >
+              <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
                 <HStack className="items-center">
                   <Radio size={32} color={gray200} />
                   <VStack className="ml-4 flex-1">

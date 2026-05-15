@@ -5,7 +5,7 @@ import {
   createAudioPlayer,
   setAudioModeAsync,
 } from "expo-audio";
-import { scrobble } from "@/services/openSubsonic/mediaAnnotation";
+import { scrobble } from "@/services/backend/mediaAnnotation";
 import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,

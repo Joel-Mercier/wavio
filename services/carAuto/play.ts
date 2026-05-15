@@ -1,9 +1,5 @@
-import {
-  getAlbum,
-  getArtist,
-  getTopSongs,
-} from "@/services/openSubsonic/browsing";
-import { getPlaylist } from "@/services/openSubsonic/playlists";
+import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
+import { getPlaylist } from "@/services/backend/playlists";
 import { playTracks } from "@/services/player";
 import type { QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";

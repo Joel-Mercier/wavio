@@ -21,10 +21,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import {
-  usePlaylist,
-  useUpdatePlaylist,
-} from "@/hooks/backend/usePlaylists";
+import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { cn } from "@/utils/tailwind";
