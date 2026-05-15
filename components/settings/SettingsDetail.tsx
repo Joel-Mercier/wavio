@@ -6,10 +6,12 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { parseISO } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Check, ChevronDownIcon } from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

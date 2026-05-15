@@ -1,5 +1,9 @@
 import { type Href, router } from "expo-router";
-import { AudioLines, Clock, Disc3, ListMusic, User } from "lucide-react-native";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

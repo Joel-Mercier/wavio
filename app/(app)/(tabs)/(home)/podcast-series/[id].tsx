@@ -2,7 +2,8 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Podcast } from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

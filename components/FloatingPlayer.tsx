@@ -1,6 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
-import { AudioLines, Heart, Pause, Play } from "lucide-react-native";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {

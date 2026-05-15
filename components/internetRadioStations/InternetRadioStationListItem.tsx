@@ -1,4 +1,4 @@
-import { Radio } from "lucide-react-native";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

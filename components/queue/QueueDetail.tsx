@@ -6,14 +6,12 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  Check,
-  ListOrdered,
-  ListPlus,
-  Timer,
-  Trash2,
-} from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
+import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
+import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

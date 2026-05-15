@@ -1,4 +1,5 @@
-import { Check, ListMusic } from "lucide-react-native";
+import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";

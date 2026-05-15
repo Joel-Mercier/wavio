@@ -6,14 +6,12 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  EllipsisVertical,
-  Pause,
-  Play,
-  Radio,
-  SquareArrowOutUpRight,
-} from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
+import SquareArrowOutUpRight from "lucide-react-native/dist/esm/icons/square-arrow-out-up-right.mjs";
 import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";

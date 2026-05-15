@@ -35,6 +35,7 @@ const Image = React.forwardRef<
 >(function Image({ size = "md", className, ...props }, ref) {
   return (
     <UIImage
+      cachePolicy="memory-disk"
       {...props}
       className={imageStyle({ size, class: className })}
       ref={ref}

@@ -3,8 +3,9 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
-import { ArrowLeft, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -23,6 +24,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Spinner } from "@/components/ui/spinner";
 import { useMusicFolders } from "@/hooks/openSubsonic/useBrowsing";
+import useDebounce from "@/hooks/useDebounce";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
 import { usePlaylists } from "@/hooks/openSubsonic/usePlaylists";
 import type {
@@ -49,8 +51,14 @@ export default function LibrarySearchScreen() {
     },
   });
   const query = useStore(form.store, (state) => state.values.query);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounce = useDebounce(150);
   const musicFolderId = useCurrentMusicFolderId();
   const [filter, setFilter] = useState<SearchFilter>(null);
+
+  useEffect(() => {
+    debounce(() => setDebouncedQuery(query));
+  }, [query, debounce]);
 
   const {
     data: starredData,
@@ -76,28 +84,28 @@ export default function LibrarySearchScreen() {
     setFilter(type === filter ? null : type);
   };
 
-  const data = useMemo(() => {
+  const fuse = useMemo(() => {
     if (!starredData?.starred2 || !playlistsData?.playlists) {
-      return [];
+      return null;
     }
-    let data = [];
+    const items: Array<unknown> = [];
     if ((!filter || filter === "artists") && starredData.starred2.artist) {
-      data.push(starredData.starred2.artist);
+      items.push(starredData.starred2.artist);
     }
     if ((!filter || filter === "albums") && starredData.starred2.album) {
-      data.push(starredData.starred2.album);
+      items.push(starredData.starred2.album);
     }
     if (
       (!filter || filter === "playlists") &&
       playlistsData.playlists.playlist
     ) {
-      data.push(playlistsData.playlists.playlist);
+      items.push(playlistsData.playlists.playlist);
     }
     if (
       (!filter || filter === "folders") &&
       musicFoldersData?.musicFolders?.musicFolder
     ) {
-      data.push(
+      items.push(
         musicFoldersData.musicFolders.musicFolder.map((f) => ({
           id: String(f.id),
           name: f.name ?? `Library ${f.id}`,
@@ -106,25 +114,24 @@ export default function LibrarySearchScreen() {
       );
     }
 
-    data = data.flat();
-    const options = {
-      includeScore: true,
-      ignoreDiacritics: true,
-      keys: ["name"],
-    };
-
-    const fuse = new Fuse<
+    return new Fuse<
       AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
     >(
-      data as Array<
+      items.flat() as Array<
         AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
       >,
-      options,
+      {
+        includeScore: true,
+        ignoreDiacritics: true,
+        keys: ["name"],
+      },
     );
+  }, [starredData, playlistsData, musicFoldersData, filter]);
 
-    const result = fuse.search(query);
-    return result;
-  }, [starredData, playlistsData, musicFoldersData, query, filter]);
+  const data = useMemo(() => {
+    if (!fuse || !debouncedQuery) return [];
+    return fuse.search(debouncedQuery);
+  }, [fuse, debouncedQuery]);
 
   return (
     <Box className="h-full flex-1">

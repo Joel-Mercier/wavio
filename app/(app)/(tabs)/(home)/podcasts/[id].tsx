@@ -4,22 +4,21 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { fromUnixTime, secondsToMinutes } from "date-fns";
+import { fromUnixTime } from "date-fns/fromUnixTime";
+import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  ChevronRight,
-  CircleMinus,
-  CirclePlus,
-  EllipsisVertical,
-  ListMusic,
-  Play,
-  Podcast,
-  Share2,
-  Shuffle,
-  User,
-} from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
+import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

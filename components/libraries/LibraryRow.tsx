@@ -1,4 +1,5 @@
-import { Check, Library } from "lucide-react-native";
+import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import Library from "lucide-react-native/dist/esm/icons/library.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

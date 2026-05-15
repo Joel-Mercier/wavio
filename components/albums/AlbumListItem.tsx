@@ -1,4 +1,4 @@
-import { Disc3 } from "lucide-react-native";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

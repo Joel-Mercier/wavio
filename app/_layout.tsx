@@ -23,7 +23,12 @@ import {
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
 import * as NavigationBar from "expo-navigation-bar";
-import { AppState, type AppStateStatus, Platform } from "react-native";
+import {
+  AppState,
+  type AppStateStatus,
+  InteractionManager,
+  Platform,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -44,17 +49,6 @@ import useApp from "@/stores/app";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
-
-configureReanimatedLogger({
-  level: ReanimatedLogLevel.warn,
-  strict: false, // Reanimated runs in strict mode by default
-});
-
-onlineManager.setEventListener((setOnline) => {
-  return NetInfo.addEventListener((state) => {
-    setOnline(!!state.isConnected);
-  });
-});
 
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
@@ -81,44 +75,46 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    configurePlayback();
-    initWidget(queryClient);
+    configureReanimatedLogger({
+      level: ReanimatedLogLevel.warn,
+      strict: false, // Reanimated runs in strict mode by default
+    });
+    onlineManager.setEventListener((setOnline) =>
+      NetInfo.addEventListener((state) => {
+        setOnline(!!state.isConnected);
+      }),
+    );
     if (Platform.OS === "android") {
       NavigationBar.setStyle("dark");
     }
+    const task = InteractionManager.runAfterInteractions(() => {
+      configurePlayback();
+      initWidget(queryClient);
+    });
+    const subscription = AppState.addEventListener("change", onAppStateChange);
+    return () => {
+      task.cancel();
+      subscription.remove();
+    };
   }, []);
 
   useEffect(() => {
     if (locale) {
       i18n.changeLanguage(locale);
       z.config(z.locales[locale]());
-    } else {
-      const userLocales = getLocales();
-      if (
-        userLocales.some(
-          (userLocale) =>
-            userLocale.languageCode &&
-            (SupportedLanguages as string[]).includes(userLocale.languageCode),
-        )
-      ) {
-        const firstMatchingLocale = userLocales.filter(
-          (userLocale) =>
-            userLocale.languageCode &&
-            (SupportedLanguages as string[]).includes(userLocale.languageCode),
-        )[0].languageCode as TSupportedLanguages;
-        setLocale(firstMatchingLocale);
-        i18n.changeLanguage(firstMatchingLocale);
-        z.config(z.locales[firstMatchingLocale]());
-      } else {
-        setLocale("en");
-        i18n.changeLanguage("en");
-        z.config(z.locales.en());
-      }
+      return;
     }
-    const subscription = AppState.addEventListener("change", onAppStateChange);
-
-    return () => subscription.remove();
-  }, []);
+    const userLocales = getLocales();
+    const matching = userLocales.find(
+      (userLocale) =>
+        userLocale.languageCode &&
+        (SupportedLanguages as string[]).includes(userLocale.languageCode),
+    );
+    const next = (matching?.languageCode ?? "en") as TSupportedLanguages;
+    setLocale(next);
+    i18n.changeLanguage(next);
+    z.config(z.locales[next]());
+  }, [locale, setLocale]);
 
   if (!loaded) {
     return null;

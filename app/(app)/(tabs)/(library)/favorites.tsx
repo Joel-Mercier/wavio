@@ -7,16 +7,14 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import {
-  ArrowDown,
-  ArrowDownUp,
-  ArrowLeft,
-  ArrowUp,
-  Pause,
-  Play,
-  Search,
-  Shuffle,
-} from "lucide-react-native";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

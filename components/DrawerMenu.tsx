@@ -1,16 +1,14 @@
 import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import {
-  ArrowLeftRight,
-  History,
-  Library,
-  ListMusic,
-  LogOut,
-  Server,
-  Settings,
-  Share2,
-} from "lucide-react-native";
+import ArrowLeftRight from "lucide-react-native/dist/esm/icons/arrow-left-right.mjs";
+import History from "lucide-react-native/dist/esm/icons/history.mjs";
+import Library from "lucide-react-native/dist/esm/icons/library.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import LogOut from "lucide-react-native/dist/esm/icons/log-out.mjs";
+import Server from "lucide-react-native/dist/esm/icons/server.mjs";
+import Settings from "lucide-react-native/dist/esm/icons/settings.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

@@ -6,27 +6,25 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
-import { parse } from "date-fns";
+import { parse } from "date-fns/parse";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  ClipboardCheck,
-  ClipboardIcon,
-  Disc3,
-  EllipsisVertical,
-  Heart,
-  ListPlus,
-  Pause,
-  Play,
-  PlusCircle,
-  Share2,
-  Shuffle,
-  Star,
-  User,
-  X,
-} from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import Star from "lucide-react-native/dist/esm/icons/star.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";

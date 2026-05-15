@@ -3,16 +3,15 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { fromUnixTime, secondsToMinutes } from "date-fns";
+import { fromUnixTime } from "date-fns/fromUnixTime";
+import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { useRouter } from "expo-router";
-import {
-  CircleMinus,
-  CirclePlus,
-  EllipsisVertical,
-  Play,
-  Podcast,
-  Share2,
-} from "lucide-react-native";
+import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
+import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";

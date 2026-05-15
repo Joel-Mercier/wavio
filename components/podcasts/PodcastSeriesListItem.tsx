@@ -1,4 +1,4 @@
-import { Podcast } from "lucide-react-native";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

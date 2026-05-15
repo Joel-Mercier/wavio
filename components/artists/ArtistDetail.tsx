@@ -8,18 +8,16 @@ import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  ChevronRight,
-  EllipsisVertical,
-  Heart,
-  Pause,
-  Play,
-  Shuffle,
-  Star,
-  User,
-  X,
-} from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import Star from "lucide-react-native/dist/esm/icons/star.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView } from "react-native";

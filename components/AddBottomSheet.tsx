@@ -4,7 +4,9 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { ListMusic, Radio, Wand2 } from "lucide-react-native";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
+import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

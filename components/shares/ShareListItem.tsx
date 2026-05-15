@@ -6,15 +6,13 @@ import {
 import { useForm } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
-import {
-  AudioLines,
-  ClipboardCheck,
-  Clipboard as ClipboardIcon,
-  Disc3,
-  EllipsisVertical,
-  Pencil,
-  Trash,
-} from "lucide-react-native";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";

@@ -5,31 +5,29 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
-import { secondsToMinutes } from "date-fns";
+import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import * as Clipboard from "expo-clipboard";
 import { Directory, File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
-import {
-  ArrowDown,
-  AudioLines,
-  Check,
-  CircleX,
-  ClipboardCheck,
-  ClipboardIcon,
-  Disc3,
-  Download,
-  EllipsisVertical,
-  Heart,
-  Info,
-  ListPlus,
-  PlusCircle,
-  Share2,
-  Sparkles,
-  Star,
-  User,
-  X,
-} from "lucide-react-native";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import Info from "lucide-react-native/dist/esm/icons/info.mjs";
+import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import Star from "lucide-react-native/dist/esm/icons/star.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";

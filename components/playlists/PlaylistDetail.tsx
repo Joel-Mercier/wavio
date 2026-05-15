@@ -9,27 +9,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowDown,
-  ArrowDownUp,
-  ArrowLeft,
-  ArrowUp,
-  ClipboardCheck,
-  ClipboardIcon,
-  Clock,
-  EllipsisVertical,
-  ListMusic,
-  ListOrdered,
-  ListPlus,
-  Pause,
-  Pencil,
-  Play,
-  Search,
-  Share2,
-  Shuffle,
-  Wand2,
-  X,
-} from "lucide-react-native";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
+import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

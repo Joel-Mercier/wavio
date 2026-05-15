@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { Info, Pencil, Trash } from "lucide-react-native";
+import Info from "lucide-react-native/dist/esm/icons/info.mjs";
+import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";

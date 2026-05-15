@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react-native";
+import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RuleRow from "@/components/smartPlaylist/RuleRow";

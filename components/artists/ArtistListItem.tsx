@@ -1,4 +1,4 @@
-import { User } from "lucide-react-native";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

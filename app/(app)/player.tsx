@@ -9,32 +9,30 @@ import { Directory, File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
-import {
-  AudioLines,
-  ChevronDown,
-  ClipboardCheck,
-  ClipboardIcon,
-  Disc3,
-  Download,
-  EllipsisVertical,
-  Heart,
-  ListMusic,
-  ListPlus,
-  Mic2,
-  Pause,
-  Play,
-  PlusCircle,
-  Radio as RadioIcon,
-  Repeat,
-  Repeat1,
-  Share2,
-  Shuffle,
-  SkipBack,
-  SkipForward,
-  Sparkles,
-  Timer,
-  User,
-} from "lucide-react-native";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
+import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
+import Repeat from "lucide-react-native/dist/esm/icons/repeat.mjs";
+import Repeat1 from "lucide-react-native/dist/esm/icons/repeat-1.mjs";
+import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
+import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
+import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";

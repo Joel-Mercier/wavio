@@ -1,7 +1,9 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { EyeIcon, EyeOffIcon, X } from "lucide-react-native";
+import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
+import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";

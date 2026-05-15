@@ -1,7 +1,10 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
-import { Home, Library, Plus, Search } from "lucide-react-native";
+import Home from "lucide-react-native/dist/esm/icons/house.mjs";
+import Library from "lucide-react-native/dist/esm/icons/library.mjs";
+import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import type React from "react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";

@@ -140,6 +140,21 @@ export default function HomeScreen() {
     { type: "random", size: 12, musicFolderId },
     { enabled: lazyEnabled.random },
   );
+  const recentPlaysRows = useMemo(() => {
+    const rows: ReactElement[] = [];
+    for (let i = 0; i < recentPlays.length; i += 2) {
+      const a = recentPlays[i];
+      const b = recentPlays[i + 1];
+      rows.push(
+        <HStack key={`row-${a.id}`} className="gap-x-4">
+          <HomeShortcut key={a.id} recentPlay={a} />
+          {b && <HomeShortcut key={b.id} recentPlay={b} />}
+        </HStack>,
+      );
+    }
+    return rows;
+  }, [recentPlays]);
+
   const moreFromArtistId = useMemo(() => {
     const pickRandom = (albums?: AlbumID3[]) => {
       const candidates = (albums ?? []).filter((album) => !!album.artistId);
@@ -212,27 +227,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         onLayout={handleScrollViewLayout}
-        scrollEventThrottle={64}
+        scrollEventThrottle={16}
       >
         <Box className="px-6 mb-4">
-          <VStack className="gap-y-4">
-            {recentPlays.reduce((rows: ReactElement[], play, index) => {
-              if (index % 2 === 0) {
-                rows.push(
-                  <HStack key={`row-${play.id}`} className="gap-x-4">
-                    <HomeShortcut key={play.id} recentPlay={play} />
-                    {recentPlays[index + 1] && (
-                      <HomeShortcut
-                        key={recentPlays[index + 1].id}
-                        recentPlay={recentPlays[index + 1]}
-                      />
-                    )}
-                  </HStack>,
-                );
-              }
-              return rows;
-            }, [])}
-          </VStack>
+          <VStack className="gap-y-4">{recentPlaysRows}</VStack>
         </Box>
         <Box className="px-6 mt-4 mb-4">
           <HStack className="items-center justify-between">

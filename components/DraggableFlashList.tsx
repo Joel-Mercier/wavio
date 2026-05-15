@@ -43,13 +43,11 @@ type ItemWrapperProps = PropsWithChildren<{
   insertIndex: SharedValue<number>;
   hiddenSlot: SharedValue<number>;
   itemHeight: number;
-  isActive: boolean;
   style?: ViewStyle;
 }>;
 
 const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
-  const { isActive, itemHeight, insertIndex, activeIndex, hiddenSlot, index } =
-    props;
+  const { itemHeight, insertIndex, activeIndex, hiddenSlot, index } = props;
 
   const position = useSharedValue(0);
 
@@ -70,7 +68,7 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
   );
 
   const animatedStyle = useAnimatedStyle(() => {
-    if (isActive && hiddenSlot.value === index) {
+    if (hiddenSlot.value === index) {
       return {
         opacity: 0,
         transform: [{ translateY: 0 }],
@@ -80,7 +78,7 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
       opacity: 1,
       transform: [{ translateY: position.value }],
     };
-  }, [index, isActive]);
+  }, [index]);
 
   return (
     <AnimatedCellContainer ref={ref} {...props} style={props.style}>
@@ -374,11 +372,11 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
       return props.renderItem(
         item,
         index,
-        isDragging && activeIndex.value === index,
+        isDragging && activeIndexState === index,
         () => beginDrag(index),
       );
     },
-    [props, isDragging, activeIndex, beginDrag],
+    [props, isDragging, activeIndexState, beginDrag],
   );
 
   const draggingAnimatedStyle = useAnimatedStyle(() => {
@@ -411,7 +409,6 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
               insertIndex={insertIndex}
               hiddenSlot={hiddenSlot}
               itemHeight={itemHeight}
-              isActive={isDragging}
             />
           )}
           scrollEnabled={(props.scrollEnabled ?? true) && !isDragging}

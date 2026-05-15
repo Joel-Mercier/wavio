@@ -1,14 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
-import {
-  ArrowDown,
-  Disc3,
-  Folder,
-  Heart,
-  ListMusic,
-  Podcast,
-  User,
-} from "lucide-react-native";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

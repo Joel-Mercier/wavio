@@ -1,6 +1,10 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
-import { Disc3, Heart, ListMusic, Radio, User } from "lucide-react-native";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
+import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useMemo, useState } from "react";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

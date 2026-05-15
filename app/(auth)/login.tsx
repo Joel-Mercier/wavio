@@ -1,9 +1,10 @@
 import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import { useForm } from "@tanstack/react-form";
 import axios from "axios";
-import { formatISO } from "date-fns";
+import { formatISO } from "date-fns/formatISO";
 import { useLocalSearchParams } from "expo-router";
-import { EyeIcon, EyeOffIcon } from "lucide-react-native";
+import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
+import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";

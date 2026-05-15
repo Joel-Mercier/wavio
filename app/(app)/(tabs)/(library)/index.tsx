@@ -6,18 +6,16 @@ import {
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import {
-  ArrowDown,
-  ArrowDownUp,
-  ArrowUp,
-  LayoutGrid,
-  List,
-  ListMusic,
-  Plus,
-  Radio,
-  Search,
-  Wand2,
-} from "lucide-react-native";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
+import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
+import List from "lucide-react-native/dist/esm/icons/list.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

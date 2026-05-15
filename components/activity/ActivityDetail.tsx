@@ -1,7 +1,12 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { isThisWeek, isToday, isYesterday } from "date-fns";
+import { isThisWeek } from "date-fns/isThisWeek";
+import { isToday } from "date-fns/isToday";
+import { isYesterday } from "date-fns/isYesterday";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Disc3, ListMusic, Mic2 } from "lucide-react-native";
+import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { SectionList } from "react-native";

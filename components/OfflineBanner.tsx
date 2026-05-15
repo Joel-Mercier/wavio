@@ -1,5 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
-import { Wifi, WifiOff } from "lucide-react-native";
+import Wifi from "lucide-react-native/dist/esm/icons/wifi.mjs";
+import WifiOff from "lucide-react-native/dist/esm/icons/wifi-off.mjs";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";

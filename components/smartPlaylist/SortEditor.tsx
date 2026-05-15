@@ -1,4 +1,5 @@
-import { Plus, X } from "lucide-react-native";
+import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
