@@ -78,6 +78,7 @@ import {
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -118,6 +119,7 @@ export default function AlbumDetail() {
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const doSetRating = useSetRating();
+  const capabilities = useCapabilities();
   const toast = useToast();
   const { data, isLoading, error } = useAlbum(id);
   const {
@@ -974,14 +976,16 @@ export default function AlbumDetail() {
                   </HStack>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handleSharePress}>
-                <HStack className="items-center">
-                  <Share2 size={24} color={gray200} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.albums.share")}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
+              {capabilities.sharing && (
+                <FadeOutScaleDown onPress={handleSharePress}>
+                  <HStack className="items-center">
+                    <Share2 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.albums.share")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               {data?.album?.musicBrainzId && (
                 <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                   <HStack className="items-center">

@@ -66,6 +66,7 @@ import {
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import { usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
@@ -144,6 +145,7 @@ export default function TrackListItem({
   } = useOfflineDownloads();
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded(track.id);
+  const capabilities = useCapabilities();
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -845,14 +847,16 @@ export default function TrackListItem({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSharePress}>
-                  <HStack className="items-center">
-                    <Share2 size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.share")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {capabilities.sharing && (
+                  <FadeOutScaleDown onPress={handleSharePress}>
+                    <HStack className="items-center">
+                      <Share2 size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.share")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleInfoPress}>
                   <HStack className="items-center">
                     <Info size={24} color={gray200} />

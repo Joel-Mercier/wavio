@@ -13,11 +13,11 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import ServerTypeIcon from "@/components/ServerTypeIcon";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -166,11 +166,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             <ServerTypeIcon type={server.type} size={32} />
           </HStack>
           <VStack className="flex-1 items-start">
-            <Heading
-              size="md"
-              className="text-white mb-3 flex-1"
-              numberOfLines={1}
-            >
+            <Heading size="md" className="text-white flex-1" numberOfLines={1}>
               {server.name}
             </Heading>
             <Text className="text-primary-100 text-sm mb-3" numberOfLines={1}>

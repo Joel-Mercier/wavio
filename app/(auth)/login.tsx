@@ -504,11 +504,20 @@ export default function LoginScreen() {
               {t("auth.login.login")}
             </Text>
           </FadeOutScaleDown>
-          <FadeOutScaleDown onPress={handleDemoModePress} className="mt-12">
-            <Text className="text-primary-100 text-center text-sm">
-              {t("auth.login.demo")}
-            </Text>
-          </FadeOutScaleDown>
+          <form.Subscribe selector={(state) => state.values.type}>
+            {(type) =>
+              type === "navidrome" ? (
+                <FadeOutScaleDown
+                  onPress={handleDemoModePress}
+                  className="mt-12"
+                >
+                  <Text className="text-primary-100 text-center text-sm">
+                    {t("auth.login.demo")}
+                  </Text>
+                </FadeOutScaleDown>
+              ) : null
+            }
+          </form.Subscribe>
         </Box>
       </KeyboardAvoidingView>
     </Box>

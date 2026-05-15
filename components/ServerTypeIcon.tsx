@@ -16,7 +16,7 @@ export default function ServerTypeIcon({
     case "jellyfin":
       return <Jellyfin width={size} height={size} />;
     case "opensubsonic":
-      return <OpenSubsonic width={size} height={size} />;
+      return <OpenSubsonic width={size} height={size} fill="white" />;
     default:
       return <Navidrome width={size} height={size} />;
   }

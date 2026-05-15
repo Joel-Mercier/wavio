@@ -72,6 +72,7 @@ import {
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -131,6 +132,7 @@ export default function PlaylistDetail() {
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
+  const capabilities = useCapabilities();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
@@ -803,14 +805,16 @@ export default function PlaylistDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handleSharePress}>
-                <HStack className="items-center">
-                  <Share2 size={24} color={gray200} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.playlists.share")}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
+              {capabilities.sharing && (
+                <FadeOutScaleDown onPress={handleSharePress}>
+                  <HStack className="items-center">
+                    <Share2 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.playlists.share")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown
                 onPress={() => {
                   bottomSheetModalRef.current?.dismiss();
