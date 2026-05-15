@@ -421,6 +421,7 @@ const appUnsub = useAppBase.subscribe((state, prev) => {
 });
 
 let lastTrackId: string | null = null;
+let hasHydrated = false;
 const queueUnsub = useQueue.subscribe((state) => {
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
@@ -429,6 +430,15 @@ const queueUnsub = useQueue.subscribe((state) => {
     lastTrackId = id;
     if (expectedNextTrackId && expectedNextTrackId === id) {
       expectedNextTrackId = null;
+      return;
+    }
+    if (!hasHydrated) {
+      // Persist rehydration emits a state change before onFinishHydration
+      // fires; load the restored track silently so reopening the app does
+      // not auto-resume playback.
+      if (transition.kind !== "idle") abortTransition();
+      resetScrobbleState();
+      loadTrack(activeSlot, current, false);
       return;
     }
     if (transition.kind !== "idle") abortTransition();
@@ -478,9 +488,10 @@ if (
 function hydratePlayerFromQueue() {
   const current = useQueue.getState().getCurrent();
   lastTrackId = current?.id ?? null;
-  if (current) {
+  if (current && loadedTrackIds[activeSlot] !== current.id) {
     loadTrack(activeSlot, current, false);
   }
+  hasHydrated = true;
 }
 
 if (useQueue.persist.hasHydrated()) {
