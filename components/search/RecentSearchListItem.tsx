@@ -66,7 +66,7 @@ export default function RecentSearchListItem({
     <Link href={url} asChild>
       <FadeOutScaleDown>
         <HStack className="items-center justify-between mb-4">
-          <HStack className="items-center">
+          <HStack className="items-center flex-1">
             {recentSearch.coverArt ? (
               <Image
                 source={{ uri: artworkUrl(recentSearch.coverArt) }}
@@ -87,7 +87,7 @@ export default function RecentSearchListItem({
                 <RecentSearchListItemIcon type={recentSearch.type} />
               </Box>
             )}
-            <VStack className="ml-4">
+            <VStack className="mx-4 flex-1">
               <Heading className="text-white font-normal" numberOfLines={1}>
                 {recentSearch.title}
               </Heading>

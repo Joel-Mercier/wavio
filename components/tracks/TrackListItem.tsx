@@ -13,16 +13,16 @@ import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
@@ -66,6 +66,7 @@ import {
 import { useCreateShare } from "@/hooks/openSubsonic/useSharing";
 import { usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
@@ -141,6 +142,8 @@ export default function TrackListItem({
     removeDownloadedTrack,
     getDownloadProgress,
   } = useOfflineDownloads();
+  const isOnline = useIsOnline();
+  const isUnavailableOffline = !isOnline && !isTrackDownloaded(track.id);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -564,12 +567,16 @@ export default function TrackListItem({
   };
 
   return (
-    <Pressable onPress={handleTrackPress}>
+    <Pressable
+      onPress={isUnavailableOffline ? undefined : handleTrackPress}
+      disabled={isUnavailableOffline}
+    >
       <HStack
         className={cn(
           "items-center justify-between mb-4",
           {
             "mt-6": index === 0,
+            "opacity-40": isUnavailableOffline,
           },
           className,
         )}

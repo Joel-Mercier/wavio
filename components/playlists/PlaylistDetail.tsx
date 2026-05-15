@@ -13,8 +13,8 @@ import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -573,7 +573,7 @@ export default function PlaylistDetail() {
             </HStack>
             <VStack>
               <VStack className="mt-5">
-                <Heading numberOfLines={1} className="text-white" size="2xl">
+                <Heading numberOfLines={2} className="text-white" size="2xl">
                   {playlistData?.playlist.name}
                 </Heading>
                 {playlistData?.playlist.comment && (
@@ -673,7 +673,7 @@ export default function PlaylistDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
-              {`${t("app.shared.songCount", { count: playlistData?.playlist.songCount })} `}{" "}
+              {`${t("app.shared.songCount", { count: playlistData?.playlist.songCount ?? 0 })} `}{" "}
               ⦁ {Math.round((playlistData?.playlist.duration || 0) / 60)} min
             </Text>
           </VStack>

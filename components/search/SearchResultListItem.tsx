@@ -115,7 +115,7 @@ export default function SearchResultListItem({
               <SearchResultListItemIcon type={type.id} />
             </Box>
           )}
-          <VStack className="ml-4">
+          <VStack className="ml-4 flex-1">
             <Heading className="text-white font-normal" numberOfLines={1}>
               {searchResult.title || searchResult.name}
             </Heading>

@@ -65,32 +65,33 @@ openSubsonicApiInstance.interceptors.response.use(
         useAuthBase.getState().setServerVersion(version);
       }
     }
+    // Only log out on genuine credential failures (Subsonic error code 40 =
+    // "Wrong username or password"). Network errors are transient and must not
+    // wipe the session — offline mode depends on the user staying signed in.
+    if (envelope?.status === "failed" && envelope?.error?.code === 40) {
+      useAuthBase.getState().logout();
+    }
     return response;
   },
   (error) => {
     console.error(error);
-    if (axios.isAxiosError(error)) {
-      if (error.code === "ERR_NETWORK") {
-        useAuthBase.getState().logout();
-      }
-    }
     return Promise.reject(error);
   },
 );
 
-export const openSubsonicErrorCodes: Record<number, string> = {
-  10: i18n.t("openSubsonic.errorCodes.10"),
-  20: i18n.t("openSubsonic.errorCodes.20"),
-  30: i18n.t("openSubsonic.errorCodes.30"),
-  40: i18n.t("openSubsonic.errorCodes.40"),
-  41: i18n.t("openSubsonic.errorCodes.41"),
-  42: i18n.t("openSubsonic.errorCodes.42"),
-  43: i18n.t("openSubsonic.errorCodes.43"),
-  44: i18n.t("openSubsonic.errorCodes.44"),
-  50: i18n.t("openSubsonic.errorCodes.50"),
-  60: i18n.t("openSubsonic.errorCodes.60"),
-  70: i18n.t("openSubsonic.errorCodes.70"),
-};
+const KNOWN_ERROR_CODES = [10, 20, 30, 40, 41, 42, 43, 44, 50, 60, 70] as const;
+const knownErrorCodeSet: ReadonlySet<number> = new Set(KNOWN_ERROR_CODES);
+
+// Proxy so translations resolve against the *current* locale at lookup time
+// rather than at module-init time (when i18n may not be ready yet, and which
+// wouldn't pick up runtime locale changes).
+export const openSubsonicErrorCodes = new Proxy({} as Record<number, string>, {
+  get(_target, prop) {
+    const code = Number(prop);
+    if (!knownErrorCodeSet.has(code)) return undefined;
+    return i18n.t(`openSubsonic.errorCodes.${code}`);
+  },
+});
 
 export type ApiType = typeof openSubsonicApiInstance;
 

@@ -1,17 +1,20 @@
 import { useCallback, useEffect } from "react";
 import { useStarred2 } from "@/hooks/openSubsonic/useLists";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 
 export const useOfflineDownloads = () => {
   const offlineStore = useOffline();
+  const isOnline = useIsOnline();
   const { data: starredTracksData } = useStarred2({});
 
   // Auto-download starred tracks when offline mode is enabled
   useEffect(() => {
     const downloadStarredTracks = async () => {
       if (
+        isOnline &&
         offlineStore.offlineModeEnabled &&
         starredTracksData?.starred2?.song &&
         starredTracksData.starred2.song.length > 0
@@ -40,7 +43,11 @@ export const useOfflineDownloads = () => {
     };
 
     downloadStarredTracks();
-  }, [offlineStore.offlineModeEnabled, starredTracksData?.starred2?.song]);
+  }, [
+    isOnline,
+    offlineStore.offlineModeEnabled,
+    starredTracksData?.starred2?.song,
+  ]);
 
   const downloadTrack = useCallback(async (track: Child) => {
     try {

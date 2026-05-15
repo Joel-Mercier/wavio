@@ -201,7 +201,9 @@ export default function LibraryListItem({
             )}
           </Box>
         )}
-        <VStack className={cn("ml-4", { "ml-0 mt-2": layout === "grid" })}>
+        <VStack
+          className={cn("ml-4 flex-1", { "ml-0 mt-2": layout === "grid" })}
+        >
           <Heading
             numberOfLines={layout === "grid" ? 2 : 1}
             className="text-white text-md font-normal capitalize"

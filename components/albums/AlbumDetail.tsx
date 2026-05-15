@@ -11,15 +11,15 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
+import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
-import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
@@ -648,7 +648,7 @@ export default function AlbumDetail() {
             </HStack>
             <VStack>
               <HStack className="mt-5 items-center justify-between">
-                <Heading numberOfLines={1} className="text-white" size="2xl">
+                <Heading numberOfLines={2} className="text-white" size="2xl">
                   {data?.album?.name}
                 </Heading>
               </HStack>
@@ -759,7 +759,7 @@ export default function AlbumDetail() {
         ListFooterComponent={() => (
           <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
-              {`${t("app.shared.songCount", { count: data?.album?.songCount })} `}{" "}
+              {`${t("app.shared.songCount", { count: data?.album?.songCount ?? 0 })} `}{" "}
               ⦁ {Math.round((data?.album?.duration || 0) / 60)} min
             </Text>
             {data?.album?.recordLabels?.map((recordLabel) => (

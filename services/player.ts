@@ -1,3 +1,4 @@
+import { onlineManager } from "@tanstack/react-query";
 import {
   type AudioPlayer,
   type AudioStatus,
@@ -10,8 +11,10 @@ import {
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
+import useOffline from "@/stores/offline";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
+import { streamUrl } from "@/utils/streaming";
 
 type Slot = 0 | 1;
 
@@ -89,6 +92,45 @@ function inactiveSlot(): Slot {
   return (1 - activeSlot) as Slot;
 }
 
+// Resolve the freshest source for a track. Queue entries can become stale —
+// a track enqueued before it was downloaded still holds its streamUrl, and
+// vice versa. Always re-check the offline registry at load time.
+function resolveTrackUrl(track: QueueTrack): {
+  url: string;
+  isOffline: boolean;
+} {
+  const downloaded = useOffline.getState().getDownloadedTrack(track.id);
+  if (downloaded) return { url: downloaded.path, isOffline: true };
+  return { url: streamUrl(track.id), isOffline: false };
+}
+
+function isPlayableNow(track: QueueTrack): boolean {
+  if (onlineManager.isOnline()) return true;
+  return useOffline.getState().isTrackDownloaded(track.id);
+}
+
+// Walk forward from a starting queue index to find the next track that is
+// playable right now (always true online; offline this means downloaded).
+// Respects repeat-all wrap. Returns null when nothing in the queue can play.
+function findNextPlayableIndex(startIndex: number): number | null {
+  const s = useQueue.getState();
+  if (s.queue.length === 0) return null;
+  const len = s.queue.length;
+  const wrap = s.repeatMode === "all";
+  let i = startIndex;
+  let scanned = 0;
+  while (scanned < len) {
+    if (i < 0 || i >= len) {
+      if (!wrap) return null;
+      i = (i + len) % len;
+    }
+    if (isPlayableNow(s.queue[i])) return i;
+    i += 1;
+    scanned += 1;
+  }
+  return null;
+}
+
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   p.setActiveForLockScreen(
     true,
@@ -151,6 +193,15 @@ type Transition =
     };
 
 let transition: Transition = { kind: "idle" };
+// Module-scoped handle so the ramp timer can always be cleared even if
+// `transition` is overwritten through an unexpected code path.
+let activeRampTimer: ReturnType<typeof setInterval> | null = null;
+function clearRampTimer() {
+  if (activeRampTimer != null) {
+    clearInterval(activeRampTimer);
+    activeRampTimer = null;
+  }
+}
 // When set, the queue subscription should skip the next change because the
 // transition machinery has already promoted the new track on the active
 // player.
@@ -165,7 +216,8 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
     return;
   }
   isLoading = true;
-  p.replace({ uri: track.url });
+  const { url } = resolveTrackUrl(track);
+  p.replace({ uri: url });
   p.volume = getReplayGainFactor(track);
   if (slot === activeSlot) applyLockScreen(p, track);
   if (autoplay) {
@@ -179,13 +231,28 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
 
 function loadAndPlay(track: QueueTrack | null) {
   resetScrobbleState();
+  if (track && !isPlayableNow(track)) {
+    // Offline and this track isn't downloaded — hop forward to one that is.
+    // Setting currentIndex re-fires the queue subscription which lands us
+    // back here with the playable track.
+    const q = useQueue.getState();
+    const start = q.currentIndex != null ? q.currentIndex + 1 : 0;
+    const nextIdx = findNextPlayableIndex(start);
+    if (nextIdx != null) {
+      q.setCurrentIndex(nextIdx);
+      return;
+    }
+    // Nothing playable in the queue right now.
+    players[activeSlot].pause();
+    clearLockScreen(players[activeSlot]);
+    loadedTrackIds[activeSlot] = null;
+    return;
+  }
   loadTrack(activeSlot, track, true);
 }
 
 function abortTransition() {
-  if (transition.kind === "crossfading") {
-    clearInterval(transition.rampTimer);
-  }
+  clearRampTimer();
   // The inactive slot is the one carrying the pending track during any
   // transition. Silence it and reset.
   const inactive = players[inactiveSlot()];
@@ -203,6 +270,7 @@ function abortTransition() {
 function preloadNext() {
   const next = peekNextTrack();
   if (!next) return;
+  if (!isPlayableNow(next)) return;
   const cur = useQueue.getState().getCurrent();
   // Repeat-one would attempt to load the same source on the inactive player;
   // a single-player restart on didJustFinish handles this case fine.
@@ -213,7 +281,8 @@ function preloadNext() {
     return;
   }
   const p = players[slot];
-  p.replace({ uri: next.url });
+  const { url } = resolveTrackUrl(next);
+  p.replace({ uri: url });
   p.volume = 0;
   loadedTrackIds[slot] = next.id;
   transition = { kind: "preloaded", trackId: next.id };
@@ -222,6 +291,7 @@ function preloadNext() {
 function startCrossfade(durationSeconds: number) {
   const next = peekNextTrack();
   if (!next) return;
+  if (!isPlayableNow(next)) return;
   const cur = useQueue.getState().getCurrent();
   if (cur && next.id === cur.id) return;
   const inSlot = inactiveSlot();
@@ -229,7 +299,8 @@ function startCrossfade(durationSeconds: number) {
   const incoming = players[inSlot];
   const outgoing = players[outSlot];
   if (loadedTrackIds[inSlot] !== next.id) {
-    incoming.replace({ uri: next.url });
+    const { url } = resolveTrackUrl(next);
+    incoming.replace({ uri: url });
     loadedTrackIds[inSlot] = next.id;
   }
   const inFactor = getReplayGainFactor(next);
@@ -250,20 +321,34 @@ function startCrossfade(durationSeconds: number) {
   expectedNextTrackId = next.id;
 
   const startedAt = Date.now();
-  const durationMs = durationSeconds * 1000;
+  const durationMs =
+    Number.isFinite(durationSeconds) && durationSeconds > 0
+      ? durationSeconds * 1000
+      : 0;
   const stepMs = 50;
+  // Hard ceiling so a clock jump or zero duration can't keep the timer alive
+  // past the intended fade window.
+  const maxTicks = Math.ceil(durationMs / stepMs) + 20;
+  let ticks = 0;
 
+  // Defensive: if a prior timer is somehow still live, drop it before we
+  // install a new one.
+  clearRampTimer();
   const rampTimer = setInterval(() => {
-    if (transition.kind !== "crossfading") {
-      clearInterval(rampTimer);
+    ticks += 1;
+    if (transition.kind !== "crossfading" || ticks > maxTicks) {
+      clearRampTimer();
+      if (transition.kind === "crossfading") finishCrossfade();
       return;
     }
     const elapsed = Date.now() - startedAt;
-    const t = Math.min(1, elapsed / durationMs);
+    const t =
+      durationMs > 0 ? Math.min(1, Math.max(0, elapsed / durationMs)) : 1;
     outgoing.volume = transition.outFactor * (1 - t);
     incoming.volume = transition.inFactor * t;
     if (t >= 1) finishCrossfade();
   }, stepMs);
+  activeRampTimer = rampTimer;
 
   transition = {
     kind: "crossfading",
@@ -280,7 +365,7 @@ function startCrossfade(durationSeconds: number) {
 
 function finishCrossfade() {
   if (transition.kind !== "crossfading") return;
-  clearInterval(transition.rampTimer);
+  clearRampTimer();
   const { outSlot, inFactor } = transition;
   try {
     players[outSlot].pause();
@@ -474,11 +559,9 @@ if (
     try {
       appUnsub();
     } catch {}
-    if (transition.kind === "crossfading") {
-      try {
-        clearInterval(transition.rampTimer);
-      } catch {}
-    }
+    try {
+      clearRampTimer();
+    } catch {}
     for (const sub of statusListeners) {
       try {
         sub?.remove?.();
