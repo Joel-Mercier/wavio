@@ -49,3 +49,5 @@ yarn-error.*
 app-example
 
 .fallow
+
+.env.local

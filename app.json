@@ -89,7 +89,15 @@
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
       "./plugins/withCarPlay",
-      "./plugins/withWidgets"
+      "./plugins/withWidgets",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "wavio",
+          "organization": "joel-mercier"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,13 +1,10 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import * as Sentry from "@sentry/react-native";
 import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  buildHomeFeed,
-  type HomeSectionDescriptor,
-} from "@/app/(app)/(tabs)/(home)/homeFeed";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
@@ -20,11 +17,13 @@ import {
 } from "@/components/home/sections/SongCarouselSection";
 import StarredSection from "@/components/home/sections/StarredSection";
 import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
 
 const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 1 };
 

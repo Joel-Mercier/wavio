@@ -9,7 +9,8 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",
-        "EXPO_PUBLIC_NAVIDROME_CLIENT": "wavio"
+        "EXPO_PUBLIC_NAVIDROME_CLIENT": "wavio",
+        "EXPO_PUBLIC_ENV": "development"
       }
     },
     "preview": {
@@ -19,11 +20,17 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",
-        "EXPO_PUBLIC_NAVIDROME_CLIENT": "wavio"
+        "EXPO_PUBLIC_NAVIDROME_CLIENT": "wavio",
+        "EXPO_PUBLIC_ENV": "preview"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION": "1.16.1",
+        "EXPO_PUBLIC_NAVIDROME_CLIENT": "wavio",
+        "EXPO_PUBLIC_ENV": "production"
+      }
     }
   },
   "submit": {

@@ -15,6 +15,7 @@ import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import NetInfo from "@react-native-community/netinfo";
+import * as Sentry from "@sentry/react-native";
 import {
   focusManager,
   onlineManager,
@@ -40,6 +41,23 @@ import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 
+Sentry.init({
+  dsn: "https://fdd67c7590ff4b680308d9dae6640460@o4511401546285056.ingest.de.sentry.io/4511401549758544",
+
+  enabled: !__DEV__ && process.env.EXPO_PUBLIC_ENV === "production",
+  environment: process.env.EXPO_PUBLIC_ENV ?? "development",
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: false,
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -62,7 +80,7 @@ function onAppStateChange(status: AppStateStatus) {
   }
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
   const [loaded] = useFonts({
@@ -159,4 +177,4 @@ export default function RootLayout() {
       </KeyboardProvider>
     </QueryClientProvider>
   );
-}
+});

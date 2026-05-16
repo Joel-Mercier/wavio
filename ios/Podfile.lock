@@ -2441,6 +2441,30 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNSentry (8.11.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Sentry (= 9.13.0)
+    - Yoga
   - RNShare (12.3.1):
     - hermes-engine
     - RCTRequired
@@ -2590,6 +2614,9 @@ PODS:
   - SDWebImageWebPCoder (0.14.6):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
+  - Sentry (9.13.0):
+    - Sentry/Core (= 9.13.0)
+  - Sentry/Core (9.13.0)
   - SwiftDraw (0.27.0):
     - SwiftDrawDOM (~> 0.27.0)
   - SwiftDrawDOM (0.27.0)
@@ -2715,6 +2742,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNShare (from `../node_modules/react-native-share`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
@@ -2732,6 +2760,7 @@ SPEC REPOS:
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
     - SDWebImageWebPCoder
+    - Sentry
     - SwiftDraw
     - SwiftDrawDOM
     - SwiftUIIntrospect
@@ -2972,6 +3001,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSentry:
+    :path: "../node_modules/@sentry/react-native"
   RNShare:
     :path: "../node_modules/react-native-share"
   RNSVG:
@@ -3105,6 +3136,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 29f5e3f8f565a787f8fe5e80140e93b26baa0702
   RNReanimated: b18b6df8643fd7a36791c908ba4900dad5ae2600
   RNScreens: 93c1f181fdc3c6b0124cd1439922b1c2a1d816fc
+  RNSentry: 370cf5729bd39929614147f2eaeb4c5a9c0702cc
   RNShare: bedb237f4fc22851d14d4d30dee152950b289274
   RNSVG: 165bfb4757bae605c7e19b5c749e8597047ac6c5
   RNWorklets: 8aae0363b180f9478a6269a1ea3522bdff6fac26
@@ -3112,6 +3144,7 @@ SPEC CHECKSUMS:
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
+  Sentry: 5c3f67235d4c16fcfab43158a8c1502a18fece9a
   SwiftDraw: c3fb77c08081f1255f33bcc0fd3c2e00fbc9bd46
   SwiftDrawDOM: 8e7d9812af1ef6e06230e72769e97838e6c7c765
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
