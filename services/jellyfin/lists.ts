@@ -60,7 +60,11 @@ function paramsFor(
     case "newest":
       return { ...base, SortBy: "DateCreated", SortOrder: "Descending" };
     case "highest":
-      return { ...base, SortBy: "CommunityRating,SortName", SortOrder: "Descending" };
+      return {
+        ...base,
+        SortBy: "CommunityRating,SortName",
+        SortOrder: "Descending",
+      };
     case "frequent":
       return {
         ...base,
@@ -93,9 +97,9 @@ function paramsFor(
         Years:
           fromYear != null && toYear != null
             ? Array.from(
-              { length: Math.abs(toYear - fromYear) + 1 },
-              (_, i) => Math.min(fromYear, toYear) + i,
-            ).join(",")
+                { length: Math.abs(toYear - fromYear) + 1 },
+                (_, i) => Math.min(fromYear, toYear) + i,
+              ).join(",")
             : undefined,
         SortBy: "ProductionYear,SortName",
       };
@@ -200,9 +204,9 @@ export const getRandomSongs = async ({
       Years:
         fromYear != null && toYear != null
           ? Array.from(
-            { length: Math.abs(toYear - fromYear) + 1 },
-            (_, i) => Math.min(fromYear, toYear) + i,
-          ).join(",")
+              { length: Math.abs(toYear - fromYear) + 1 },
+              (_, i) => Math.min(fromYear, toYear) + i,
+            ).join(",")
           : undefined,
     },
   });

@@ -2,7 +2,9 @@ import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
 } from "@/services/openSubsonic/index";
+import { search3 } from "@/services/openSubsonic/searching";
 import type {
+  AlbumID3,
   AlbumInfo,
   AlbumWithSongsID3,
   ArtistInfo,
@@ -423,4 +425,50 @@ export const getVideos = async () => {
     }
     throw error;
   }
+};
+
+export const getArtistAppearances = async (
+  id: string,
+  { name, musicFolderId }: { name?: string; musicFolderId?: string } = {},
+) => {
+  const album: AlbumID3[] = [];
+  if (!name) {
+    return { artistAppearances: { album }, status: "ok" as const };
+  }
+  const [searchRsp, artistRsp] = await Promise.all([
+    search3(name, {
+      artistCount: 0,
+      albumCount: 0,
+      songCount: 500,
+      musicFolderId,
+    }),
+    openSubsonicApiInstance.get<
+      OpenSubsonicResponse<{ artist: ArtistWithAlbumsID3 }>
+    >("/rest/getArtist", { params: { id } }),
+  ]);
+  const ownAlbumIds = new Set<string>();
+  if (artistRsp.data["subsonic-response"]?.status === "ok") {
+    for (const a of artistRsp.data["subsonic-response"].artist.album ?? []) {
+      ownAlbumIds.add(a.id);
+    }
+  }
+  const seen = new Set<string>();
+  for (const song of searchRsp.searchResult3?.song ?? []) {
+    if (!song.albumId || song.artistId === id) continue;
+    if (ownAlbumIds.has(song.albumId) || seen.has(song.albumId)) continue;
+    if (!song.artists?.some((a) => a.id === id)) continue;
+    seen.add(song.albumId);
+    album.push({
+      id: song.albumId,
+      name: song.album ?? "",
+      artist: song.artist,
+      artistId: song.artistId,
+      coverArt: song.coverArt,
+      year: song.year,
+      created: song.created ?? new Date(),
+      duration: 0,
+      songCount: 0,
+    });
+  }
+  return { artistAppearances: { album }, status: "ok" as const };
 };

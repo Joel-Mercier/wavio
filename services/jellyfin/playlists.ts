@@ -33,7 +33,9 @@ export const getPlaylists = async (_opts: { username?: string }) => {
     },
   });
   const playlists: Playlists = {
-    playlist: (rsp.data?.Items ?? []).map((item) => mapBaseItemToPlaylist(item)),
+    playlist: (rsp.data?.Items ?? []).map((item) =>
+      mapBaseItemToPlaylist(item),
+    ),
   };
   return fakeEnvelope({ playlists });
 };

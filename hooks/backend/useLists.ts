@@ -89,33 +89,41 @@ export const usePlayNow = () => {
   });
 };
 
-export const useRandomSongs = (params: {
-  size?: number;
-  fromYear?: number;
-  toYear?: number;
-  genre?: string;
-  musicFolderId?: string;
-}) => {
+export const useRandomSongs = (
+  params: {
+    size?: number;
+    fromYear?: number;
+    toYear?: number;
+    genre?: string;
+    musicFolderId?: string;
+  },
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["randomSongs", params],
     queryFn: () => {
       return getRandomSongs(params);
     },
+    enabled: options?.enabled,
   });
 };
 
-export const useSongsByGenre = (params: {
-  genre: string;
-  count?: number;
-  offset?: number;
-  musicFolderId?: string;
-}) => {
+export const useSongsByGenre = (
+  params: {
+    genre: string;
+    count?: number;
+    offset?: number;
+    musicFolderId?: string;
+  },
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["songsByGenre", params],
     queryFn: () => {
       const { genre, ...rest } = params;
       return getSongsByGenre(genre, rest);
     },
+    enabled: options?.enabled,
   });
 };
 
@@ -128,11 +136,15 @@ export const useStarred = (params: { musicFolderId?: string }) => {
   });
 };
 
-export const useStarred2 = (params: { musicFolderId?: string }) => {
+export const useStarred2 = (
+  params: { musicFolderId?: string },
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["starred2", params],
     queryFn: () => {
       return getStarred2(params);
     },
+    enabled: options?.enabled,
   });
 };

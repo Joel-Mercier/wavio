@@ -13,6 +13,12 @@ export default {
         mostPlayed: "Most played",
         topRated: "Top rated",
         random: "Random",
+        randomSongs: "Random songs",
+        starred: "Your favorites",
+        songsByGenre: "{{genre}} songs",
+        albumsByGenre: "{{genre}} albums",
+        albumsByDecade: "Albums from the {{decade}}s",
+        moreFromArtist: "More from {{artist}}",
         internetRadioStations: "Internet radio stations",
         tabs: {
           music: "Music",

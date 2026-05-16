@@ -68,6 +68,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import {
   useArtist,
+  useArtistAppearances,
   useArtistInfo2,
   useTopSongs,
 } from "@/hooks/backend/useBrowsing";
@@ -77,7 +78,6 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
-import { useSearch3 } from "@/hooks/backend/useSearching";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -128,35 +128,12 @@ export default function ArtistDetail() {
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const musicFolderId = useCurrentMusicFolderId();
-  const { data: searchData } = useSearch3(data?.artist?.name ?? "", {
-    artistCount: 0,
-    albumCount: 0,
-    songCount: 500,
+  const { data: appearancesData } = useArtistAppearances(id, {
+    name: data?.artist?.name,
     musicFolderId,
   });
-  const ownAlbumIds = new Set(
-    (data?.artist?.album ?? []).map((album) => album.id),
-  );
-  const appearsOnAlbums: AlbumID3[] = [];
-  const seenAlbumIds = new Set<string>();
-  for (const song of searchData?.searchResult3?.song ?? []) {
-    if (!song.albumId || song.artistId === id) continue;
-    if (ownAlbumIds.has(song.albumId) || seenAlbumIds.has(song.albumId))
-      continue;
-    if (!song.artists?.some((a) => a.id === id)) continue;
-    seenAlbumIds.add(song.albumId);
-    appearsOnAlbums.push({
-      id: song.albumId,
-      name: song.album ?? "",
-      artist: song.artist,
-      artistId: song.artistId,
-      coverArt: song.coverArt,
-      year: song.year,
-      created: song.created ?? new Date(),
-      duration: 0,
-      songCount: 0,
-    });
-  }
+  const appearsOnAlbums: AlbumID3[] =
+    appearancesData?.artistAppearances?.album ?? [];
   const { data: starredData } = useStarred2({ musicFolderId });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];

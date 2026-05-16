@@ -13,6 +13,12 @@ export default {
         mostPlayed: "Les plus joués",
         topRated: "Les mieux notés",
         random: "Au hasard",
+        randomSongs: "Morceaux aléatoires",
+        starred: "Vos favoris",
+        songsByGenre: "Morceaux {{genre}}",
+        albumsByGenre: "Albums {{genre}}",
+        albumsByDecade: "Albums des années {{decade}}",
+        moreFromArtist: "Plus de {{artist}}",
         internetRadioStations: "Stations de radio en ligne",
         tabs: {
           music: "Musique",

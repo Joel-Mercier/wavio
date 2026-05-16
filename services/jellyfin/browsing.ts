@@ -1,5 +1,6 @@
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
+  mapBaseItemToAlbum,
   mapBaseItemToAlbumWithSongs,
   mapBaseItemToArtist,
   mapBaseItemToArtistWithAlbums,
@@ -13,6 +14,7 @@ import type {
 } from "@/services/jellyfin/types";
 import { fakeEnvelope } from "@/services/jellyfin/unsupported";
 import type {
+  AlbumID3,
   AlbumInfo,
   AlbumWithSongsID3,
   ArtistInfo,
@@ -107,6 +109,21 @@ export const getArtist = async (id: string) => {
     albums.Items ?? [],
   );
   return fakeEnvelope({ artist });
+};
+
+export const getArtistAppearances = async (
+  id: string,
+  _opts: { name?: string; musicFolderId?: string } = {},
+) => {
+  const rsp = await fetchItems({
+    IncludeItemTypes: "MusicAlbum",
+    ContributingArtistIds: id,
+    ExcludeItemIds: id,
+    SortBy: "PremiereDate,ProductionYear,SortName",
+    SortOrder: "Descending",
+  });
+  const album: AlbumID3[] = (rsp.Items ?? []).map(mapBaseItemToAlbum);
+  return fakeEnvelope({ artistAppearances: { album } });
 };
 
 export const getArtistInfo = async (id: string) => {

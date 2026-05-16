@@ -7,6 +7,10 @@ export const getAlbum = dispatch(S.getAlbum, J.getAlbum);
 export const getAlbumInfo = dispatch(S.getAlbumInfo, J.getAlbumInfo);
 export const getAlbumInfo2 = dispatch(S.getAlbumInfo2, J.getAlbumInfo2);
 export const getArtist = dispatch(S.getArtist, J.getArtist);
+export const getArtistAppearances = dispatch(
+  S.getArtistAppearances,
+  J.getArtistAppearances,
+);
 export const getArtistInfo = dispatch(S.getArtistInfo, J.getArtistInfo);
 export const getArtistInfo2 = dispatch(S.getArtistInfo2, J.getArtistInfo2);
 export const getArtists = dispatch(S.getArtists, J.getArtists);

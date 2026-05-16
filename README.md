@@ -6,7 +6,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 ## Features
 
-- Supports Navidrome, OpenSubsonic and Jellyfin (beta) servers
+- Supports Navidrome, OpenSubsonic and Jellyfin servers
 - Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random and internet radio stations sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums

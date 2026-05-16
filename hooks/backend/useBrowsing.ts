@@ -4,6 +4,7 @@ import {
   getAlbumInfo,
   getAlbumInfo2,
   getArtist,
+  getArtistAppearances,
   getArtistInfo,
   getArtistInfo2,
   getArtists,
@@ -60,16 +61,29 @@ export const useAlbumInfo2 = (id: string) => {
   return query;
 };
 
-export const useArtist = (id: string) => {
+export const useArtist = (id: string, options?: { enabled?: boolean }) => {
   const query = useQuery({
     queryKey: ["artist", id],
     queryFn: () => {
       return getArtist(id);
     },
-    enabled: !!id,
+    enabled: !!id && options?.enabled !== false,
   });
 
   return query;
+};
+
+export const useArtistAppearances = (
+  id: string,
+  params: { name?: string; musicFolderId?: string },
+) => {
+  return useQuery({
+    queryKey: ["artistAppearances", id, params],
+    queryFn: () => {
+      return getArtistAppearances(id, params);
+    },
+    enabled: !!id && !!params.name,
+  });
 };
 
 export const useArtistInfo = (id: string) => {
@@ -122,12 +136,13 @@ export const useIndexes = (params: {
   return query;
 };
 
-export const useGenres = () => {
+export const useGenres = (options?: { enabled?: boolean }) => {
   const query = useQuery({
     queryKey: ["genres"],
     queryFn: () => {
       return getGenres();
     },
+    enabled: options?.enabled,
   });
 
   return query;

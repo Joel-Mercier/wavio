@@ -1,46 +1,38 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import {
-  type ReactElement,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from "react-native";
+import { RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AlbumListItem from "@/components/albums/AlbumListItem";
-import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
-import EmptyDisplay from "@/components/EmptyDisplay";
-import ErrorDisplay from "@/components/ErrorDisplay";
+import {
+  buildHomeFeed,
+  type HomeSectionDescriptor,
+} from "@/app/(app)/(tabs)/(home)/homeFeed";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import HomeShortcut from "@/components/home/HomeShortcut";
-import InternetRadioStationListItem from "@/components/internetRadioStations/InternetRadioStationListItem";
-import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
+import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
+import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
+import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
+import RecentPlaysSection from "@/components/home/sections/RecentPlaysSection";
+import {
+  RandomSongsSection,
+  SongsByGenreSection,
+} from "@/components/home/sections/SongCarouselSection";
+import StarredSection from "@/components/home/sections/StarredSection";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { ScrollView } from "@/components/ui/scroll-view";
-import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
-import { useArtist } from "@/hooks/backend/useBrowsing";
-import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
+import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import useRecentPlays from "@/stores/recentPlays";
-import { loadingData } from "@/utils/loadingData";
+
+const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 1 };
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -49,146 +41,157 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
-  const recentPlays = useRecentPlays((store) => store.recentPlays);
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
-  const {
-    data: recentlyPlayedData,
-    isLoading: isLoadingRecentlyPlayed,
-    error: recentlyPlayedError,
-  } = useAlbumList2({ type: "recent", size: 12, musicFolderId });
-  const {
-    data: recentData,
-    isLoading: isLoadingRecent,
-    error: recentError,
-  } = useAlbumList2({ type: "newest", size: 12, musicFolderId });
-  const [lazyEnabled, setLazyEnabled] = useState({
-    mostPlayed: false,
-    moreFromArtist: false,
-    highestRated: false,
-    random: false,
-    internetRadioStations: false,
+  const [sessionSeed, setSessionSeed] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Eager seed data — drives the dynamic picks (featured artists / decades).
+  const { data: recentlyPlayedData } = useAlbumList2({
+    type: "recent",
+    size: 12,
+    musicFolderId,
   });
-  const sectionYRef = useRef<Partial<Record<keyof typeof lazyEnabled, number>>>(
-    {},
-  );
-  const viewportHRef = useRef(0);
-  const scrollYRef = useRef(0);
+  const { data: newestData } = useAlbumList2({
+    type: "newest",
+    size: 12,
+    musicFolderId,
+  });
+  const { data: frequentData } = useAlbumList2({
+    type: "frequent",
+    size: 12,
+    musicFolderId,
+  });
+  const { data: genresData } = useGenres();
 
-  const evaluateTriggers = useCallback(() => {
-    const vh = viewportHRef.current;
-    if (!vh) return;
-    const threshold = scrollYRef.current + vh + vh; // generous: one full viewport of prefetch
-    setLazyEnabled((prev) => {
-      let next = prev;
-      for (const key of Object.keys(prev) as (keyof typeof prev)[]) {
-        if (prev[key]) continue;
-        const y = sectionYRef.current[key];
-        if (y !== undefined && y <= threshold) {
-          if (next === prev) next = { ...prev };
-          next[key] = true;
-        }
-      }
-      return next;
-    });
-  }, []);
-
-  const handleScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollYRef.current = e.nativeEvent.contentOffset.y;
-      viewportHRef.current = e.nativeEvent.layoutMeasurement.height;
-      evaluateTriggers();
-    },
-    [evaluateTriggers],
-  );
-
-  const handleScrollViewLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      viewportHRef.current = e.nativeEvent.layout.height;
-      evaluateTriggers();
-    },
-    [evaluateTriggers],
-  );
-
-  const makeSectionOnLayout = useCallback(
-    (key: keyof typeof lazyEnabled) => (e: LayoutChangeEvent) => {
-      sectionYRef.current[key] = e.nativeEvent.layout.y;
-      evaluateTriggers();
-    },
-    [evaluateTriggers],
-  );
-
-  const {
-    data: mostPlayedData,
-    isLoading: isLoadingMostPlayed,
-    error: mostPlayedError,
-  } = useAlbumList2(
-    { type: "frequent", size: 12, musicFolderId },
-    { enabled: lazyEnabled.mostPlayed },
-  );
-  const {
-    data: highestRatedData,
-    isLoading: isLoadingHighestRated,
-    error: highestRatedError,
-  } = useAlbumList2(
-    { type: "highest", size: 12, musicFolderId },
-    { enabled: lazyEnabled.highestRated },
-  );
-  const {
-    data: randomData,
-    isLoading: isLoadingRandom,
-    error: randomError,
-  } = useAlbumList2(
-    { type: "random", size: 12, musicFolderId },
-    { enabled: lazyEnabled.random },
-  );
-  const recentPlaysRows = useMemo(() => {
-    const rows: ReactElement[] = [];
-    for (let i = 0; i < recentPlays.length; i += 2) {
-      const a = recentPlays[i];
-      const b = recentPlays[i + 1];
-      rows.push(
-        <HStack key={`row-${a.id}`} className="gap-x-4">
-          <HomeShortcut key={a.id} recentPlay={a} />
-          {b && <HomeShortcut key={b.id} recentPlay={b} />}
-        </HStack>,
-      );
+  const seedAlbums = useMemo<AlbumID3[]>(() => {
+    const out: AlbumID3[] = [];
+    const seen = new Set<string>();
+    for (const a of [
+      ...(recentlyPlayedData?.albumList2?.album ?? []),
+      ...(frequentData?.albumList2?.album ?? []),
+      ...(newestData?.albumList2?.album ?? []),
+    ]) {
+      if (seen.has(a.id)) continue;
+      seen.add(a.id);
+      out.push(a);
     }
-    return rows;
-  }, [recentPlays]);
-
-  const moreFromArtistId = useMemo(() => {
-    const pickRandom = (albums?: AlbumID3[]) => {
-      const candidates = (albums ?? []).filter((album) => !!album.artistId);
-      if (!candidates.length) return undefined;
-      return candidates[Math.floor(Math.random() * candidates.length)].artistId;
-    };
-    return (
-      pickRandom(recentlyPlayedData?.albumList2?.album) ??
-      pickRandom(mostPlayedData?.albumList2?.album) ??
-      pickRandom(recentData?.albumList2?.album)
-    );
+    return out;
   }, [
     recentlyPlayedData?.albumList2?.album,
-    mostPlayedData?.albumList2?.album,
-    recentData?.albumList2?.album,
+    frequentData?.albumList2?.album,
+    newestData?.albumList2?.album,
   ]);
-  const {
-    data: moreFromArtistData,
-    isLoading: isLoadingMoreFromArtist,
-    error: moreFromArtistError,
-  } = useArtist(
-    lazyEnabled.moreFromArtist && moreFromArtistId ? moreFromArtistId : "",
+
+  const sections = useMemo(
+    () =>
+      buildHomeFeed({
+        seedAlbums,
+        genres: genresData?.genres?.genre ?? [],
+        capabilities,
+        sessionSeed,
+      }),
+    [seedAlbums, genresData?.genres?.genre, capabilities, sessionSeed],
   );
-  const {
-    data: internetRadioStationsData,
-    isLoading: isLoadingInternetRadioStations,
-    error: internetRadioStationsError,
-  } = useGetInternetRadioStations({
-    enabled: lazyEnabled.internetRadioStations,
-  });
+
+  const [lastSeenIndex, setLastSeenIndex] = useState(2);
+  const lastSeenIndexRef = useRef(2);
+
+  const handleViewableItemsChanged = useCallback(
+    ({
+      viewableItems,
+    }: {
+      viewableItems: ViewToken<HomeSectionDescriptor>[];
+    }) => {
+      let maxIndex = lastSeenIndexRef.current;
+      for (const v of viewableItems) {
+        if (typeof v.index === "number" && v.index > maxIndex) {
+          maxIndex = v.index;
+        }
+      }
+      if (maxIndex !== lastSeenIndexRef.current) {
+        lastSeenIndexRef.current = maxIndex;
+        setLastSeenIndex(maxIndex);
+      }
+    },
+    [],
+  );
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setSessionSeed(Date.now());
+    lastSeenIndexRef.current = 2;
+    setLastSeenIndex(2);
+    // FlashList doesn't itself fetch — we just reseed and let queries refresh
+    // on next mount. Drop the spinner shortly.
+    setTimeout(() => setRefreshing(false), 400);
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: HomeSectionDescriptor; index: number }) => {
+      // Enable a section once the viewer is within one slot of it.
+      const enabled = index <= lastSeenIndex + 1;
+      switch (item.kind) {
+        case "recentPlays":
+          return <RecentPlaysSection />;
+        case "albumList":
+          return (
+            <AlbumCarouselSection
+              title={t(item.titleKey)}
+              type={item.albumType}
+              enabled={enabled}
+              seeAllHref={item.seeAllHref}
+            />
+          );
+        case "albumsByGenre":
+          return (
+            <AlbumCarouselSection
+              title={t("app.home.albumsByGenre", { genre: item.genre })}
+              type="byGenre"
+              genre={item.genre}
+              enabled={enabled}
+            />
+          );
+        case "albumsByDecade":
+          return (
+            <AlbumCarouselSection
+              title={t("app.home.albumsByDecade", { decade: item.decade })}
+              type="byYear"
+              fromYear={item.fromYear}
+              toYear={item.toYear}
+              enabled={enabled}
+            />
+          );
+        case "moreFromArtist":
+          return (
+            <ArtistAlbumsSection artistId={item.artistId} enabled={enabled} />
+          );
+        case "songsByGenre":
+          return (
+            <SongsByGenreSection
+              title={t("app.home.songsByGenre", { genre: item.genre })}
+              genre={item.genre}
+              enabled={enabled}
+            />
+          );
+        case "randomSongs":
+          return (
+            <RandomSongsSection
+              title={t("app.home.randomSongs")}
+              enabled={enabled}
+            />
+          );
+        case "starred":
+          return <StarredSection enabled={enabled} />;
+        case "internetRadio":
+          return <InternetRadioSection enabled={enabled} />;
+      }
+    },
+    [t, lastSeenIndex],
+  );
+
   return (
-    <Box>
+    <Box className="flex-1">
       <HStack
         className="px-6 gap-x-4 my-6 items-center"
         style={{ paddingTop: insets.top }}
@@ -221,419 +224,26 @@ export default function HomeScreen() {
           </FadeOutScaleDown>
         </HStack>
       </HStack>
-      <ScrollView
+      <FlashList
+        data={sections}
+        keyExtractor={(item) => item.id}
+        getItemType={(item) => item.kind}
+        renderItem={renderItem}
+        onViewableItemsChanged={handleViewableItemsChanged}
+        viewabilityConfig={VIEWABILITY_CONFIG}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom:
             tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2 + 16,
         }}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        onLayout={handleScrollViewLayout}
-        scrollEventThrottle={16}
-      >
-        <Box className="px-6 mb-4">
-          <VStack className="gap-y-4">{recentPlaysRows}</VStack>
-        </Box>
-        <Box className="px-6 mt-4 mb-4">
-          <HStack className="items-center justify-between gap-x-4">
-            <Heading
-              numberOfLines={2}
-              className="text-white truncate flex-1"
-              size="xl"
-            >
-              {t("app.home.recentlyPlayed")}
-            </Heading>
-            {!!recentlyPlayedData?.albumList2?.album?.length && (
-              <FadeOutScaleDown
-                href={{
-                  pathname: "/(app)/(tabs)/(home)/recently-played",
-                  params: { type: "recent" },
-                }}
-              >
-                <Text className="text-primary-100">
-                  {t("app.shared.seeAll")}
-                </Text>
-              </FadeOutScaleDown>
-            )}
-          </HStack>
-        </Box>
-        {recentlyPlayedError ? (
-          <ErrorDisplay error={recentlyPlayedError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="mb-6 pl-6"
-          >
-            {isLoadingRecentlyPlayed
-              ? loadingData(4).map((_, index) => (
-                  <AlbumListItemSkeleton
-                    key={`recently-played-${
-                      // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                      index
-                    }`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              : recentlyPlayedData?.albumList2?.album?.map((album, index) => (
-                  <AlbumListItem
-                    key={album.id}
-                    album={album}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))}
-          </ScrollView>
-        )}
-        {!isLoadingRecentlyPlayed &&
-          !recentlyPlayedError &&
-          !recentlyPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
-        <Box className="px-6 mt-4 mb-4">
-          <HStack className="items-center justify-between gap-x-4">
-            <Heading
-              numberOfLines={2}
-              className="text-white truncate flex-1"
-              size="xl"
-            >
-              {t("app.home.recentlyAdded")}
-            </Heading>
-            {!!recentData?.albumList2?.album?.length && (
-              <FadeOutScaleDown
-                href={{
-                  pathname: "/(app)/(tabs)/(home)/recently-added",
-                  params: { type: "newest" },
-                }}
-              >
-                <Text className="text-primary-100">
-                  {t("app.shared.seeAll")}
-                </Text>
-              </FadeOutScaleDown>
-            )}
-          </HStack>
-        </Box>
-        {recentError ? (
-          <ErrorDisplay error={recentError} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="pl-6 mb-6"
-          >
-            {isLoadingRecent
-              ? loadingData(4).map((_, index) => (
-                  <AlbumListItemSkeleton
-                    key={`recently-added-${
-                      // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                      index
-                    }`}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))
-              : recentData?.albumList2?.album?.map((album, index) => (
-                  <AlbumListItem
-                    key={album.id}
-                    album={album}
-                    index={index}
-                    layout="horizontal"
-                  />
-                ))}
-          </ScrollView>
-        )}
-        {!isLoadingRecent &&
-          !recentError &&
-          !recentData?.albumList2?.album?.length && <EmptyDisplay />}
-        <Box onLayout={makeSectionOnLayout("mostPlayed")}>
-          <Box className="px-6 mt-4 mb-4">
-            <HStack className="items-center justify-between gap-x-4">
-              <Heading
-                numberOfLines={2}
-                className="text-white truncate flex-1"
-                size="xl"
-              >
-                {t("app.home.mostPlayed")}
-              </Heading>
-              {!!mostPlayedData?.albumList2?.album?.length && (
-                <FadeOutScaleDown
-                  href={{
-                    pathname: "/(app)/(tabs)/(home)/most-played",
-                    params: { type: "frequent" },
-                  }}
-                >
-                  <Text className="text-primary-100">
-                    {t("app.shared.seeAll")}
-                  </Text>
-                </FadeOutScaleDown>
-              )}
-            </HStack>
-          </Box>
-          {mostPlayedError ? (
-            <ErrorDisplay error={mostPlayedError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="pl-6 mb-6"
-            >
-              {!lazyEnabled.mostPlayed || isLoadingMostPlayed
-                ? loadingData(4).map((_, index) => (
-                    <AlbumListItemSkeleton
-                      key={`most-played-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                        index
-                      }`}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))
-                : mostPlayedData?.albumList2?.album?.map((album, index) => (
-                    <AlbumListItem
-                      key={album.id}
-                      album={album}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))}
-            </ScrollView>
-          )}
-          {lazyEnabled.mostPlayed &&
-            !isLoadingMostPlayed &&
-            !mostPlayedError &&
-            !mostPlayedData?.albumList2?.album?.length && <EmptyDisplay />}
-        </Box>
-        {moreFromArtistId && (
-          <Box onLayout={makeSectionOnLayout("moreFromArtist")}>
-            <Box className="px-6 mt-4 mb-4">
-              <HStack className="items-center justify-between gap-x-4">
-                <Heading
-                  numberOfLines={2}
-                  className="text-white truncate flex-1"
-                  size="xl"
-                >
-                  {t("app.albums.moreFromArtist", {
-                    artist: moreFromArtistData?.artist?.name ?? "",
-                  })}
-                </Heading>
-
-                {!!moreFromArtistData?.artist?.album?.length && (
-                  <FadeOutScaleDown
-                    href={{
-                      pathname: "/artists/[id]",
-                      params: { id: moreFromArtistData?.artist?.id },
-                    }}
-                  >
-                    <Text className="text-primary-100">
-                      {t("app.shared.seeAll")}
-                    </Text>
-                  </FadeOutScaleDown>
-                )}
-              </HStack>
-            </Box>
-            {moreFromArtistError ? (
-              <ErrorDisplay error={moreFromArtistError} />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="pl-6 mb-6"
-              >
-                {!lazyEnabled.moreFromArtist || isLoadingMoreFromArtist
-                  ? loadingData(4).map((_, index) => (
-                      <AlbumListItemSkeleton
-                        key={`more-from-artist-${
-                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                          index
-                        }`}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ))
-                  : moreFromArtistData?.artist?.album?.map((album, index) => (
-                      <AlbumListItem
-                        key={album.id}
-                        album={album}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ))}
-              </ScrollView>
-            )}
-          </Box>
-        )}
-        {capabilities.setRating && (
-          <Box onLayout={makeSectionOnLayout("highestRated")}>
-            <Box className="px-6 mt-4 mb-4">
-              <HStack className="items-center justify-between gap-x-4">
-                <Heading
-                  numberOfLines={2}
-                  className="text-white truncate flex-1"
-                  size="xl"
-                >
-                  {t("app.home.topRated")}
-                </Heading>
-                {!!highestRatedData?.albumList2?.album?.length && (
-                  <FadeOutScaleDown
-                    href={{
-                      pathname: "/(app)/(tabs)/(home)/highest-rated",
-                      params: { type: "highest" },
-                    }}
-                  >
-                    <Text className="text-primary-100">
-                      {t("app.shared.seeAll")}
-                    </Text>
-                  </FadeOutScaleDown>
-                )}
-              </HStack>
-            </Box>
-            {highestRatedError ? (
-              <ErrorDisplay error={highestRatedError} />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="pl-6 mb-6"
-              >
-                {!lazyEnabled.highestRated || isLoadingHighestRated
-                  ? loadingData(4).map((_, index) => (
-                      <AlbumListItemSkeleton
-                        key={`highest-rated-${
-                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                          index
-                        }`}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ))
-                  : highestRatedData?.albumList2?.album?.map((album, index) => (
-                      <AlbumListItem
-                        key={album.id}
-                        album={album}
-                        index={index}
-                        layout="horizontal"
-                      />
-                    ))}
-              </ScrollView>
-            )}
-            {lazyEnabled.highestRated &&
-              !isLoadingHighestRated &&
-              !highestRatedError &&
-              !highestRatedData?.albumList2?.album?.length && <EmptyDisplay />}
-          </Box>
-        )}
-        <Box onLayout={makeSectionOnLayout("random")}>
-          <Box className="px-6 mt-4 mb-4">
-            <HStack className="items-center justify-between gap-x-4">
-              <Heading
-                numberOfLines={2}
-                className="text-white truncate flex-1"
-                size="xl"
-              >
-                {t("app.home.random")}
-              </Heading>
-              {!!randomData?.albumList2?.album?.length && (
-                <FadeOutScaleDown
-                  href={{
-                    pathname: "/(app)/(tabs)/(home)/random",
-                    params: { type: "random" },
-                  }}
-                >
-                  <Text className="text-primary-100">
-                    {t("app.shared.seeAll")}
-                  </Text>
-                </FadeOutScaleDown>
-              )}
-            </HStack>
-          </Box>
-          {randomError ? (
-            <ErrorDisplay error={randomError} />
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="pl-6 mb-6"
-            >
-              {!lazyEnabled.random || isLoadingRandom
-                ? loadingData(4).map((_, index) => (
-                    <AlbumListItemSkeleton
-                      key={`random-${
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                        index
-                      }`}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))
-                : randomData?.albumList2?.album?.map((album, index) => (
-                    <AlbumListItem
-                      key={album.id}
-                      album={album}
-                      index={index}
-                      layout="horizontal"
-                    />
-                  ))}
-            </ScrollView>
-          )}
-          {lazyEnabled.random &&
-            !isLoadingRandom &&
-            !randomError &&
-            !randomData?.albumList2?.album?.length && <EmptyDisplay />}
-        </Box>
-        {capabilities.internetRadio && (
-          <Box onLayout={makeSectionOnLayout("internetRadioStations")}>
-            <HStack className="px-6 mt-4 mb-4 items-center justify-between gap-x-4">
-              <Heading
-                numberOfLines={2}
-                className="text-white truncate flex-1"
-                size="xl"
-              >
-                {t("app.home.internetRadioStations")}
-              </Heading>
-              {!!internetRadioStationsData?.internetRadioStations
-                ?.internetRadioStation?.length && (
-                <FadeOutScaleDown href="/(app)/(tabs)/(home)/internet-radio-stations">
-                  <Text className="text-primary-100">
-                    {t("app.shared.seeAll")}
-                  </Text>
-                </FadeOutScaleDown>
-              )}
-            </HStack>
-            {internetRadioStationsError ? (
-              <ErrorDisplay error={internetRadioStationsError} />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="pl-6 mb-6"
-              >
-                {!lazyEnabled.internetRadioStations ||
-                isLoadingInternetRadioStations
-                  ? loadingData(4).map((_, index) => (
-                      <InternetRadioStationListItemSkeleton
-                        key={`internet-radio-stations-${
-                          // biome-ignore lint/suspicious/noArrayIndexKey: <>
-                          index
-                        }`}
-                      />
-                    ))
-                  : internetRadioStationsData?.internetRadioStations?.internetRadioStation
-                      ?.slice(0, 12)
-                      .map((radioStation) => (
-                        <InternetRadioStationListItem
-                          key={radioStation.id}
-                          internetRadioStation={radioStation}
-                        />
-                      ))}
-              </ScrollView>
-            )}
-            {lazyEnabled.internetRadioStations &&
-              !isLoadingInternetRadioStations &&
-              !internetRadioStationsError &&
-              !internetRadioStationsData?.internetRadioStations
-                ?.internetRadioStation?.length && <EmptyDisplay />}
-          </Box>
-        )}
-      </ScrollView>
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#fff"
+          />
+        }
+      />
     </Box>
   );
 }
