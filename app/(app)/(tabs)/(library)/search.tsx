@@ -17,12 +17,12 @@ import LibraryListItem, {
   type Favorites,
   type LibraryFolder,
 } from "@/components/library/LibraryListItem";
+import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { Spinner } from "@/components/ui/spinner";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
@@ -33,6 +33,7 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
 type SearchFilter = "albums" | "artists" | "playlists" | "folders" | null;
@@ -214,37 +215,64 @@ export default function LibrarySearchScreen() {
           </Badge>
         </FadeOutScaleDown>
       </ScrollView>
-      {(isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders) && (
-        <Spinner size="large" />
-      )}
       {(playlistsError || starredError || musicFoldersError) && (
         <ErrorDisplay
           error={(playlistsError || starredError || musicFoldersError) as Error}
         />
       )}
-      <FlashList
-        data={data}
-        keyExtractor={(item) => item.item.id}
-        renderItem={({
-          item,
-          index,
-        }: {
-          item: FuseResult<
-            AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
-          >;
-          index: number;
-        }) => (
-          <Box className="px-6">
-            <LibraryListItem item={item.item} layout="list" index={index} />
-          </Box>
-        )}
-        ListEmptyComponent={<EmptyDisplay />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-      />
+      {!(playlistsError || starredError || musicFoldersError) && (
+        <FlashList
+          data={
+            isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders
+              ? (loadingData(12) as Array<
+                  FuseResult<
+                    AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+                  >
+                >)
+              : data
+          }
+          keyExtractor={(item, index) =>
+            isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders
+              ? `skeleton-${index}`
+              : item.item.id
+          }
+          renderItem={({
+            item,
+            index,
+          }: {
+            item: FuseResult<
+              AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+            >;
+            index: number;
+          }) =>
+            isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders ? (
+              <Box className="px-6">
+                <LibraryListItemSkeleton layout="list" index={index} />
+              </Box>
+            ) : (
+              <Box className="px-6">
+                <LibraryListItem item={item.item} layout="list" index={index} />
+              </Box>
+            )
+          }
+          ListEmptyComponent={() => {
+            if (
+              isLoadingPlaylists ||
+              isLoadingStarred ||
+              isLoadingMusicFolders
+            ) {
+              return null;
+            }
+            if (!debouncedQuery) return null;
+            return <EmptyDisplay />;
+          }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+        />
+      )}
     </Box>
   );
 }

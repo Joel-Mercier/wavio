@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import FieldError, {
@@ -20,6 +21,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Input, InputField } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
@@ -142,51 +144,34 @@ export default function EditPlaylistScreen() {
           </Box>
         </HStack>
       </Box>
-      <VStack
-        className="px-6 mt-6"
-        style={{
-          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-      >
-        <HStack className="items-center justify-center mb-6">
-          {data?.playlist?.coverArt ? (
-            <Image
-              source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
-              className="w-[50%] aspect-square rounded-md"
-              alt="Playlist cover"
-            />
-          ) : (
-            <Box className="w-[50%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-              <ListMusic size={48} color={white} />
-            </Box>
-          )}
-        </HStack>
-        <form.Field name="name">
-          {(field) => (
-            <FormControl
-              isInvalid={showFieldError(field)}
-              size="md"
-              isDisabled={false}
-              isReadOnly={false}
-              isRequired={false}
-              className="mb-4 mt-0"
-            >
-              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                <InputField
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={() => handleFieldBlur(field)}
-                  className="text-md text-white"
-                  placeholder={t("app.editPlaylist.namePlaceholder")}
-                  placeholderTextColor={gray400}
-                />
-              </Input>
-              <FieldError field={field} />
-            </FormControl>
-          )}
-        </form.Field>
-        {capabilities.playlistDescription && (
-          <form.Field name="comment">
+      {error && <ErrorDisplay error={error as Error} />}
+      {!error && isLoading && !data && (
+        <Box className="flex-1 items-center justify-center">
+          <Spinner />
+        </Box>
+      )}
+      {!error && (!isLoading || data) && (
+        <VStack
+          className="px-6 mt-6"
+          style={{
+            paddingBottom:
+              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+        >
+          <HStack className="items-center justify-center mb-6">
+            {data?.playlist?.coverArt ? (
+              <Image
+                source={{ uri: artworkUrl(data?.playlist?.coverArt) }}
+                className="w-[50%] aspect-square rounded-md"
+                alt="Playlist cover"
+              />
+            ) : (
+              <Box className="w-[50%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+                <ListMusic size={48} color={white} />
+              </Box>
+            )}
+          </HStack>
+          <form.Field name="name">
             {(field) => (
               <FormControl
                 isInvalid={showFieldError(field)}
@@ -196,45 +181,71 @@ export default function EditPlaylistScreen() {
                 isRequired={false}
                 className="mb-4 mt-0"
               >
-                <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                  <TextareaInput
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <InputField
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={() => handleFieldBlur(field)}
-                    className="text-md font-normal text-white"
-                    placeholder={t("app.editPlaylist.descriptionPlaceholder")}
+                    className="text-md text-white"
+                    placeholder={t("app.editPlaylist.namePlaceholder")}
                     placeholderTextColor={gray400}
                   />
-                </Textarea>
+                </Input>
                 <FieldError field={field} />
               </FormControl>
             )}
           </form.Field>
-        )}
-        <form.Field name="isPublic">
-          {(field) => (
-            <HStack className="items-center justify-between">
-              <VStack className="shrink pr-4">
-                <Text className="text-white font-bold">
-                  {t("app.editPlaylist.publicLabel")}
-                </Text>
-                <Text className="text-primary-100 text-sm">
-                  {t("app.editPlaylist.publicDescription")}
-                </Text>
-              </VStack>
-              <Switch
-                value={field.state.value}
-                onValueChange={field.handleChange}
-                trackColor={{
-                  false: gray600,
-                  true: emerald500,
-                }}
-                thumbColor={white}
-              />
-            </HStack>
+          {capabilities.playlistDescription && (
+            <form.Field name="comment">
+              {(field) => (
+                <FormControl
+                  isInvalid={showFieldError(field)}
+                  size="md"
+                  isDisabled={false}
+                  isReadOnly={false}
+                  isRequired={false}
+                  className="mb-4 mt-0"
+                >
+                  <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                    <TextareaInput
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={() => handleFieldBlur(field)}
+                      className="text-md font-normal text-white"
+                      placeholder={t("app.editPlaylist.descriptionPlaceholder")}
+                      placeholderTextColor={gray400}
+                    />
+                  </Textarea>
+                  <FieldError field={field} />
+                </FormControl>
+              )}
+            </form.Field>
           )}
-        </form.Field>
-      </VStack>
+          <form.Field name="isPublic">
+            {(field) => (
+              <HStack className="items-center justify-between">
+                <VStack className="shrink pr-4">
+                  <Text className="text-white font-bold">
+                    {t("app.editPlaylist.publicLabel")}
+                  </Text>
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.editPlaylist.publicDescription")}
+                  </Text>
+                </VStack>
+                <Switch
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                  trackColor={{
+                    false: gray600,
+                    true: emerald500,
+                  }}
+                  thumbColor={white}
+                />
+              </HStack>
+            )}
+          </form.Field>
+        </VStack>
+      )}
     </Box>
   );
 }

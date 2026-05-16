@@ -8,9 +8,11 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import DraggableFlashList from "@/components/DraggableFlashList";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PlaylistEditSongListItem from "@/components/playlists/PlaylistEditSongListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -24,6 +26,7 @@ import {
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
+import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
@@ -252,18 +255,28 @@ export default function ReorderPlaylistScreen() {
           </Box>
         </HStack>
       </Box>
-      <DraggableFlashList
-        data={order.length > 0 ? order : data || []}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        itemHeight={70}
-        onSort={handleListSort}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-      />
+      {error && <ErrorDisplay error={error as Error} />}
+      {!error && isLoading && !playlistData && (
+        <Box className="px-6">
+          {loadingData(8).map((_, index) => (
+            <TrackListItemSkeleton key={`skeleton-${index}`} index={index} />
+          ))}
+        </Box>
+      )}
+      {!error && (!isLoading || playlistData) && (
+        <DraggableFlashList
+          data={order.length > 0 ? order : data || []}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          itemHeight={70}
+          onSort={handleListSort}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+        />
+      )}
     </Box>
   );
 }

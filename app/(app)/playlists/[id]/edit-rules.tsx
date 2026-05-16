@@ -8,6 +8,7 @@ import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
   handleFieldBlur,
@@ -61,7 +62,7 @@ export default function EditSmartPlaylistScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const serverVersion = useAuth((s) => s.serverVersion);
-  const { data, isLoading } = useSmartPlaylist(id);
+  const { data, isLoading, error } = useSmartPlaylist(id);
   const doUpdate = useUpdateSmartPlaylist();
 
   const [combinator, setCombinator] = useState<"all" | "any">("all");
@@ -184,7 +185,9 @@ export default function EditSmartPlaylistScreen() {
           <Box className="w-10" />
         </HStack>
       </Box>
-      {isLoading && !hydrated ? (
+      {error ? (
+        <ErrorDisplay error={error as Error} />
+      ) : isLoading && !hydrated ? (
         <Box className="flex-1 items-center justify-center">
           <Spinner />
         </Box>

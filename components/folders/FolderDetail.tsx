@@ -13,6 +13,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import TrackListItem from "@/components/tracks/TrackListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -22,6 +23,7 @@ import { useIndexes, useMusicDirectory } from "@/hooks/backend/useBrowsing";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { childToTrack } from "@/utils/childToTrack";
+import { loadingData } from "@/utils/loadingData";
 
 type Entry =
   | { kind: "dir"; id: string; name: string }
@@ -121,11 +123,18 @@ export default function FolderDetail() {
       {error && <ErrorDisplay error={error} />}
       {!error && (
         <FlashList
-          data={entries}
-          keyExtractor={(item) =>
-            item.kind === "dir" ? `d:${item.id}` : `t:${item.child.id}`
+          data={isLoading ? (loadingData(12) as unknown as Entry[]) : entries}
+          keyExtractor={(item, index) =>
+            isLoading
+              ? `skeleton-${index}`
+              : item.kind === "dir"
+                ? `d:${item.id}`
+                : `t:${item.child.id}`
           }
           renderItem={({ item, index }) => {
+            if (isLoading) {
+              return <TrackListItemSkeleton index={index} className="px-6" />;
+            }
             if (item.kind === "dir") {
               return (
                 <FadeOutScaleDown

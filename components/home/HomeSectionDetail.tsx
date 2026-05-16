@@ -14,6 +14,7 @@ import { loadingData } from "@/utils/loadingData";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import EmptyDisplay from "../EmptyDisplay";
+import ErrorDisplay from "../ErrorDisplay";
 import FadeOutScaleDown from "../FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import { Heading } from "../ui/heading";
@@ -56,31 +57,34 @@ export default function HomeSectionDetail() {
         </Heading>
         <Box className="w-6" />
       </HStack>
-      <FlashList
-        data={isLoading ? loadingData(12) : albums}
-        renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
-          isLoading ? (
-            <AlbumListItemSkeleton index={index} />
-          ) : (
-            <Box className="bg-black">
-              <AlbumListItem album={item} index={index} />
-            </Box>
-          )
-        }
-        ListEmptyComponent={() => <EmptyDisplay />}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-        showsVerticalScrollIndicator={false}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
+      {error && <ErrorDisplay error={error} />}
+      {!error && (
+        <FlashList
+          data={isLoading ? loadingData(12) : albums}
+          renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
+            isLoading ? (
+              <AlbumListItemSkeleton index={index} />
+            ) : (
+              <Box className="bg-black">
+                <AlbumListItem album={item} index={index} />
+              </Box>
+            )
           }
-        }}
-        onEndReachedThreshold={0.5}
-      />
+          ListEmptyComponent={() => <EmptyDisplay />}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+          showsVerticalScrollIndicator={false}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+        />
+      )}
     </Box>
   );
 }

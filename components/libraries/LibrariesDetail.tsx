@@ -10,6 +10,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryRow from "@/components/libraries/LibraryRow";
+import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -21,6 +22,7 @@ import {
   useCurrentMusicFolderId,
   useMusicFoldersBase,
 } from "@/stores/musicFolders";
+import { loadingData } from "@/utils/loadingData";
 
 const FOLDER_QUERY_PREFIXES = [
   "albumList2",
@@ -71,9 +73,11 @@ export default function LibrariesDetail() {
       {error && <ErrorDisplay error={error} />}
       {!error && (
         <FlashList
-          data={folders}
+          data={
+            isLoading ? (loadingData(6) as unknown as MusicFolder[]) : folders
+          }
           ListHeaderComponent={
-            isJellyfin ? null : (
+            isLoading || isJellyfin ? null : (
               <LibraryRow
                 label={t("app.libraries.allLibraries")}
                 isSelected={currentFolderId === undefined}
@@ -87,15 +91,21 @@ export default function LibrariesDetail() {
           }: {
             item: MusicFolder;
             index: number;
-          }) => (
-            <LibraryRow
-              label={item.name ?? `Library ${item.id}`}
-              isDefault={index === 0}
-              isSelected={currentFolderId === String(item.id)}
-              onPress={() => select(String(item.id))}
-            />
-          )}
-          keyExtractor={(item) => String(item.id)}
+          }) =>
+            isLoading ? (
+              <LibraryListItemSkeleton layout="list" index={index} />
+            ) : (
+              <LibraryRow
+                label={item.name ?? `Library ${item.id}`}
+                isDefault={index === 0}
+                isSelected={currentFolderId === String(item.id)}
+                onPress={() => select(String(item.id))}
+              />
+            )
+          }
+          keyExtractor={(item, index) =>
+            isLoading ? `skeleton-${index}` : String(item.id)
+          }
           contentContainerStyle={{
             paddingBottom:
               insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

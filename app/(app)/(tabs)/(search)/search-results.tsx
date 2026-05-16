@@ -9,9 +9,11 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
+import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
@@ -20,6 +22,7 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
 export default function SearchResultsScreen() {
@@ -148,28 +151,42 @@ export default function SearchResultsScreen() {
           </Badge>
         </FadeOutScaleDown>
       </ScrollView>
-      <FlashList
-        data={searchData}
-        keyExtractor={(item) => item.id}
-        renderItem={({
-          item,
-        }: {
-          item: AlbumID3 | Child | ArtistID3;
-          index: number;
-        }) => (
-          <Box className="px-6">
-            <SearchResultListItem
-              searchResult={item as AlbumID3 & Child & ArtistID3}
-            />
-          </Box>
-        )}
-        ListEmptyComponent={<EmptyDisplay />}
-        contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-        }}
-        showsVerticalScrollIndicator={false}
-      />
+      {error && <ErrorDisplay error={error} />}
+      {!error && (
+        <FlashList
+          data={
+            (isLoading ? loadingData(12) : searchData) as Array<
+              AlbumID3 | Child | ArtistID3
+            >
+          }
+          keyExtractor={(item, index) =>
+            isLoading ? `skeleton-${index}` : item.id
+          }
+          renderItem={({
+            item,
+            index,
+          }: {
+            item: AlbumID3 | Child | ArtistID3;
+            index: number;
+          }) =>
+            isLoading ? (
+              <TrackListItemSkeleton index={index} className="px-6" />
+            ) : (
+              <Box className="px-6">
+                <SearchResultListItem
+                  searchResult={item as AlbumID3 & Child & ArtistID3}
+                />
+              </Box>
+            )
+          }
+          ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
+          contentContainerStyle={{
+            paddingBottom:
+              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </Box>
   );
 }

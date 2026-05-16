@@ -39,6 +39,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -523,21 +524,7 @@ export default function PlaylistDetail() {
             />
           )
         }
-        ListEmptyComponent={() => (
-          <VStack className="items-center justify-center my-6">
-            <Text className="text-white text-md">
-              {t("app.playlists.empty")}
-            </Text>
-            <FadeOutScaleDown
-              onPress={() => router.navigate("/(app)/(tabs)/(search)")}
-              className="bg-white rounded-full px-6 py-3 mt-4"
-            >
-              <Text className="text-primary-800 font-bold">
-                {t("app.playlists.emptyAction")}
-              </Text>
-            </FadeOutScaleDown>
-          </VStack>
-        )}
+        ListEmptyComponent={() => (!playlistData ? null : <EmptyDisplay />)}
         ListHeaderComponent={() => (
           <LinearGradient
             colors={[
