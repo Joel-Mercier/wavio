@@ -24,6 +24,7 @@ export default {
           music: "Music",
           podcasts: "Podcasts",
           favoritePodcasts: "Subscribed",
+          internetRadioStations: "Internet radio stations",
         },
         sections: {
           recent: "Recently played",

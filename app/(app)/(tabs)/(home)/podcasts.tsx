@@ -1,15 +1,13 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useRouter } from "expo-router";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoritePodcastListItem from "@/components/podcasts/FavoritePodcastListItem";
 import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
-import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
-import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
@@ -22,16 +20,11 @@ import {
   useTopChartsByGenres,
 } from "@/hooks/taddyPodcasts/usePodcasts";
 import type { Genre } from "@/services/taddyPodcasts/types";
-import useApp from "@/stores/app";
-import useAuth from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
-  const setShowDrawer = useApp((store) => store.setShowDrawer);
-  const username = useAuth((store) => store.username);
   const favorites = usePodcasts((store) => store.favoritePodcasts);
   const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -69,53 +62,7 @@ export default function PodcastsScreen() {
 
   return (
     <Box>
-      <HStack
-        className="px-6 gap-x-4 my-6 items-center"
-        style={{ paddingTop: insets.top }}
-      >
-        <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-          <Avatar className="border-emerald-500 border-2 w-10 h-10">
-            <AvatarFallbackText className="font-body ">
-              {username}
-            </AvatarFallbackText>
-          </Avatar>
-        </FadeOutScaleDown>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <HStack className="items-center">
-            <FadeOutScaleDown
-              onPress={() => router.navigate("/(app)/(tabs)/(home)")}
-            >
-              <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
-                <BadgeText className="normal-case text-md text-white">
-                  {t("app.home.tabs.music")}
-                </BadgeText>
-              </Badge>
-            </FadeOutScaleDown>
-            <Badge className="p-0 bg-transparent">
-              <FadeOutScaleDown
-                onPress={() => router.navigate("/(app)/(tabs)/(home)/podcasts")}
-              >
-                <Badge className="rounded-full rounded-r-none bg-emerald-500 text-primary-800 px-4 pr-4 py-1">
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.home.tabs.podcasts")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  router.navigate("/(app)/(tabs)/(home)/favorite-podcasts")
-                }
-              >
-                <Badge className="rounded-full rounded-l-none bg-gray-800 px-4 py-1 mr-2">
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.home.tabs.favoritePodcasts")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-            </Badge>
-          </HStack>
-        </ScrollView>
-      </HStack>
+      <HomeTabsNav active="podcasts" />
       {taddyPodcastApiKey && taddyPodcastUserId ? (
         <ScrollView
           contentContainerStyle={{

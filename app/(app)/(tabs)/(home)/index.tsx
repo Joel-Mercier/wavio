@@ -1,6 +1,5 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { FlashList, type ViewToken } from "@shopify/flash-list";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RefreshControl } from "react-native";
@@ -9,8 +8,8 @@ import {
   buildHomeFeed,
   type HomeSectionDescriptor,
 } from "@/app/(app)/(tabs)/(home)/homeFeed";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
@@ -20,27 +19,19 @@ import {
   SongsByGenreSection,
 } from "@/components/home/sections/SongCarouselSection";
 import StarredSection from "@/components/home/sections/StarredSection";
-import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
-import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
-import { HStack } from "@/components/ui/hstack";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
-import useApp from "@/stores/app";
-import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 
 const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 1 };
 
 export default function HomeScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
-  const setShowDrawer = useApp((store) => store.setShowDrawer);
-  const username = useAuth((store) => store.username);
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
   const [sessionSeed, setSessionSeed] = useState(() => Date.now());
@@ -192,38 +183,7 @@ export default function HomeScreen() {
 
   return (
     <Box className="flex-1">
-      <HStack
-        className="px-6 gap-x-4 my-6 items-center"
-        style={{ paddingTop: insets.top }}
-      >
-        <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
-          <Avatar className="border-emerald-500 border-2 w-10 h-10">
-            <AvatarFallbackText className="font-body ">
-              {username}
-            </AvatarFallbackText>
-          </Avatar>
-        </FadeOutScaleDown>
-        <HStack className="items-center">
-          <FadeOutScaleDown
-            onPress={() => router.navigate("/(app)/(tabs)/(home)")}
-          >
-            <Badge className="rounded-full bg-emerald-500 text-primary-800 px-4 py-1 mr-2">
-              <BadgeText className="normal-case text-md text-white">
-                {t("app.home.tabs.music")}
-              </BadgeText>
-            </Badge>
-          </FadeOutScaleDown>
-          <FadeOutScaleDown
-            onPress={() => router.navigate("/(app)/(tabs)/(home)/podcasts")}
-          >
-            <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
-              <BadgeText className="normal-case text-md text-white">
-                {t("app.home.tabs.podcasts")}
-              </BadgeText>
-            </Badge>
-          </FadeOutScaleDown>
-        </HStack>
-      </HStack>
+      <HomeTabsNav active="music" />
       <FlashList
         data={sections}
         keyExtractor={(item) => item.id}
@@ -233,8 +193,7 @@ export default function HomeScreen() {
         viewabilityConfig={VIEWABILITY_CONFIG}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom:
-            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2 + 16,
+          paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom,
         }}
         refreshControl={
           <RefreshControl
