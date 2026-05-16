@@ -18,6 +18,7 @@ import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
@@ -269,6 +270,26 @@ export default function AlbumDetail() {
         },
       },
     );
+  };
+
+  const handlePlayNextPress = () => {
+    const songs = data?.album?.song;
+    if (!songs || songs.length === 0) return;
+    const tracks = songs.map(childToTrack);
+    useQueue.getState().enqueueNext(tracks);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToPlayNextMessage", { count: tracks.length })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleAddToQueuePress = () => {
@@ -948,6 +969,14 @@ export default function AlbumDetail() {
                   <User size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.goToArtist")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handlePlayNextPress}>
+                <HStack className="items-center">
+                  <ListStart size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.playNext")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

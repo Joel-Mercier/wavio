@@ -20,6 +20,7 @@ import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertic
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
@@ -402,6 +403,42 @@ export default function PlayerScreen() {
     router.navigate({
       pathname: "/tracks/[id]/similar",
       params: { id: playingTrack.id, title: playingTrack.title ?? "" },
+    });
+  };
+
+  const handlePlayNextPress = () => {
+    if (!playingTrack) return;
+    useQueue.getState().enqueueNext(playingTrack);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleAddToQueuePress = () => {
+    if (!playingTrack) return;
+    useQueue.getState().enqueueEnd(playingTrack);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToQueueMessage", { count: 1 })}
+          </ToastDescription>
+        </Toast>
+      ),
     });
   };
 
@@ -961,11 +998,19 @@ export default function PlayerScreen() {
                       </HStack>
                     </FadeOutScaleDown>
                   )}
-                  <FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePlayNextPress}>
+                    <HStack className="items-center">
+                      <ListStart size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.playNext")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleAddToQueuePress}>
                     <HStack className="items-center">
                       <ListPlus size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.addToQueue")}
+                        {t("app.player.addToQueue")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>

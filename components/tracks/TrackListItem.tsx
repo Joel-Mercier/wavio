@@ -23,6 +23,7 @@ import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertic
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
@@ -250,6 +251,23 @@ export default function TrackListItem({
         },
       },
     );
+  };
+
+  const handlePlayNextPress = () => {
+    useQueue.getState().enqueueNext(childToTrack(track));
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleAddToQueuePress = () => {
@@ -814,6 +832,14 @@ export default function TrackListItem({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                <FadeOutScaleDown onPress={handlePlayNextPress}>
+                  <HStack className="items-center">
+                    <ListStart size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.playNext")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleAddToQueuePress}>
                   <HStack className="items-center">
                     <ListPlus size={24} color={gray200} />

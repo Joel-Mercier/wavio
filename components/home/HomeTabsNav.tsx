@@ -47,7 +47,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
 
   return (
     <HStack
-      className="px-6 gap-x-4 my-6 items-center"
+      className="pl-6 gap-x-4 my-6 items-center"
       style={{ paddingTop: insets.top }}
     >
       <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
@@ -65,6 +65,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
           contentOffset={{ x: persistedScrollX, y: 0 }}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          contentContainerStyle={{ paddingRight: 24 }}
         >
           <HStack className="items-center ml-4">
             <FadeOutScaleDown

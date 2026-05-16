@@ -20,6 +20,7 @@ import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertic
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
+import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
@@ -184,6 +185,26 @@ export default function PlaylistDetail() {
   const handleEditRulesPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/edit-rules`);
+  };
+
+  const handlePlayNextPress = () => {
+    const entries = playlistData?.playlist?.entry;
+    if (!entries || entries.length === 0) return;
+    const tracks = entries.map(childToTrack);
+    useQueue.getState().enqueueNext(tracks);
+    bottomSheetModalRef.current?.dismiss();
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.shared.addedToPlayNextMessage", { count: tracks.length })}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleAddToQueuePress = () => {
@@ -776,6 +797,14 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              <FadeOutScaleDown onPress={handlePlayNextPress}>
+                <HStack className="items-center">
+                  <ListStart size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.playlists.playNext")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
               <FadeOutScaleDown onPress={handleAddToQueuePress}>
                 <HStack className="items-center">
                   <ListPlus size={24} color={gray200} />

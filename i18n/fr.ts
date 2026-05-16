@@ -78,7 +78,8 @@ export default {
       },
       albums: {
         addToPlaylist: "Ajouter à la playlist",
-        addToQueue: "Ajouter à la file d'attente",
+        playNext: "Ajouter à la file d'attente",
+        addToQueue: "Ajouter à la fin de la file d'attente",
         goToArtist: "Aller à l'artiste",
         rate: "Noter",
         share: "Partager",
@@ -133,7 +134,8 @@ export default {
         editRules: "Modifier les règles de la playlist",
         delete: "Supprimer cette playlist",
         share: "Partager",
-        addToQueue: "Ajouter à la file d'attente",
+        playNext: "Ajouter à la file d'attente",
+        addToQueue: "Ajouter à la fin de la file d'attente",
         deletePlaylistConfirmTitle:
           "Êtes-vous sûr de vouloir supprimer cette playlist ?",
         deletePlaylistConfirmDescription:
@@ -705,7 +707,8 @@ export default {
         addToPlaylist: "Ajouter à la playlist",
         addToAnotherPlaylist: "Ajouter à une autre playlist",
         removeFromPlaylist: "Retirer de la playlist",
-        addToQueue: "Ajouter à la file d'attente",
+        playNext: "Ajouter à la file d'attente",
+        addToQueue: "Ajouter à la fin de la file d'attente",
         goToArtist: "Aller à l'artiste",
         goToArtist_one: "Aller à l'artiste",
         goToArtist_other: "Aller aux artistes",
@@ -773,7 +776,8 @@ export default {
       player: {
         title: "En cours de lecture",
         addToPlaylist: "Ajouter à la playlist",
-        addToQueue: "Ajouter à la file d'attente",
+        playNext: "Ajouter à la file d'attente",
+        addToQueue: "Ajouter à la fin de la file d'attente",
         goToArtist: "Aller à l'artiste",
         goToAlbum: "Aller à l'album",
         rate: "Noter",
@@ -877,8 +881,11 @@ export default {
         songCount_other: "{{count}} titres",
         toastSuccessTitle: "Succès",
         toastErrorTitle: "Erreur",
-        addedToQueueMessage_one: "1 titre ajouté à la file d'attente",
+        addedToQueueMessage_one: "1 titre ajouté à la fin de la file d'attente",
         addedToQueueMessage_other:
+          "{{count}} titres ajoutés à la fin de la file d'attente",
+        addedToPlayNextMessage_one: "1 titre ajouté à la file d'attente",
+        addedToPlayNextMessage_other:
           "{{count}} titres ajoutés à la file d'attente",
         rateSuccessMessage: "Notation réussie",
         rateErrorMessage: "Une erreur s'est produite lors de la notation",

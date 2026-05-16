@@ -1,5 +1,4 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import * as Sentry from "@sentry/react-native";
 import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +16,6 @@ import {
 } from "@/components/home/sections/SongCarouselSection";
 import StarredSection from "@/components/home/sections/StarredSection";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";

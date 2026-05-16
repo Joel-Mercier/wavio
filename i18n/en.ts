@@ -78,6 +78,7 @@ export default {
       },
       albums: {
         addToPlaylist: "Add to playlist",
+        playNext: "Play next",
         addToQueue: "Add to queue",
         goToArtist: "Go to artist",
         rate: "Rate",
@@ -132,6 +133,7 @@ export default {
         editRules: "Edit smart playlist rules",
         delete: "Delete this playlist",
         share: "Share",
+        playNext: "Play next",
         addToQueue: "Add to queue",
         deletePlaylistConfirmTitle:
           "Are you sure you want to delete this playlist?",
@@ -682,6 +684,7 @@ export default {
         addToPlaylist: "Add to playlist",
         addToAnotherPlaylist: "Add to another playlist",
         removeFromPlaylist: "Remove from playlist",
+        playNext: "Play next",
         addToQueue: "Add to queue",
         goToArtist: "Go to artist",
         goToArtist_one: "Go to artist",
@@ -748,6 +751,7 @@ export default {
       player: {
         title: "Playing now",
         addToPlaylist: "Add to playlist",
+        playNext: "Play next",
         addToQueue: "Add to queue",
         goToArtist: "Go to artist",
         goToAlbum: "Go to album",
@@ -850,6 +854,8 @@ export default {
         toastErrorTitle: "Error",
         addedToQueueMessage_one: "Added 1 song to the queue",
         addedToQueueMessage_other: "Added {{count}} songs to the queue",
+        addedToPlayNextMessage_one: "Added 1 song to play next",
+        addedToPlayNextMessage_other: "Added {{count}} songs to play next",
         rateSuccessMessage: "Rating successfully set",
         rateErrorMessage: "An error occurred while setting the rating",
         shareUrlCopiedMessage: "Share url copied to clipboard",
