@@ -2,6 +2,7 @@ import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import { getAuthScope } from "@/config/storage";
+import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
 import useActivity from "@/stores/activity";
 import useAuth, { useAuthBase } from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
@@ -15,6 +16,7 @@ let lastHydratedScope: string | null = null;
 
 export default function AppLayout() {
   const isAuthenticated = useAuth((store) => store.isAuthenticated);
+  useJellyfinDefaultLibrary();
 
   useEffect(() => {
     if (!isAuthenticated) return;

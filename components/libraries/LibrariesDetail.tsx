@@ -15,6 +15,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
 import type { MusicFolder } from "@/services/openSubsonic/types";
+import { useAuthBase } from "@/stores/auth";
 import {
   useCurrentAuthScope,
   useCurrentMusicFolderId,
@@ -44,6 +45,7 @@ export default function LibrariesDetail() {
   const scope = useCurrentAuthScope();
   const currentFolderId = useCurrentMusicFolderId();
   const setCurrentFolder = useMusicFoldersBase((s) => s.setCurrentFolder);
+  const isJellyfin = useAuthBase((s) => s.serverType === "jellyfin");
 
   const folders = data?.musicFolders?.musicFolder ?? [];
 
@@ -71,11 +73,13 @@ export default function LibrariesDetail() {
         <FlashList
           data={folders}
           ListHeaderComponent={
-            <LibraryRow
-              label={t("app.libraries.allLibraries")}
-              isSelected={currentFolderId === undefined}
-              onPress={() => select(undefined)}
-            />
+            isJellyfin ? null : (
+              <LibraryRow
+                label={t("app.libraries.allLibraries")}
+                isSelected={currentFolderId === undefined}
+                onPress={() => select(undefined)}
+              />
+            )
           }
           renderItem={({
             item,

@@ -159,11 +159,8 @@ export function mapBaseItemToPlaylistWithSongs(
   };
 }
 
-export function mapMusicFolder(item: BaseItemDto, index: number): MusicFolder {
-  // Subsonic MusicFolder.id is numeric; we can't preserve the GUID without
-  // changing the type. Index works for selection UI; callers needing the
-  // GUID can read it from the folder name mapping.
-  return { id: index, name: item.Name };
+export function mapMusicFolder(item: BaseItemDto, _index: number): MusicFolder {
+  return { id: item.Id, name: item.Name };
 }
 
 export function mapJellyfinGenre(item: BaseItemDto): Genre {

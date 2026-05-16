@@ -1,6 +1,5 @@
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
-  mapBaseItemToAlbum,
   mapBaseItemToAlbumWithSongs,
   mapBaseItemToArtist,
   mapBaseItemToArtistWithAlbums,

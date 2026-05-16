@@ -260,7 +260,7 @@ export interface Lyrics {
 export type MediaType = "music" | "podcast" | "audiobook" | "video";
 
 export interface MusicFolder {
-  id: number;
+  id: number | string;
   name?: string;
 }
 

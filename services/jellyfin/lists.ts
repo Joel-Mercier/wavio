@@ -60,18 +60,16 @@ function paramsFor(
     case "newest":
       return { ...base, SortBy: "DateCreated", SortOrder: "Descending" };
     case "highest":
-      return { ...base, SortBy: "CommunityRating", SortOrder: "Descending" };
+      return { ...base, SortBy: "CommunityRating,SortName", SortOrder: "Descending" };
     case "frequent":
       return {
         ...base,
-        Filters: "IsPlayed",
         SortBy: "PlayCount",
         SortOrder: "Descending",
       };
     case "recent":
       return {
         ...base,
-        Filters: "IsPlayed",
         SortBy: "DatePlayed",
         SortOrder: "Descending",
       };
@@ -95,9 +93,9 @@ function paramsFor(
         Years:
           fromYear != null && toYear != null
             ? Array.from(
-                { length: Math.abs(toYear - fromYear) + 1 },
-                (_, i) => Math.min(fromYear, toYear) + i,
-              ).join(",")
+              { length: Math.abs(toYear - fromYear) + 1 },
+              (_, i) => Math.min(fromYear, toYear) + i,
+            ).join(",")
             : undefined,
         SortBy: "ProductionYear,SortName",
       };
@@ -128,23 +126,29 @@ async function fetchAlbums(
   type: AlbumListType,
   opts: Parameters<typeof paramsFor>[1],
 ): Promise<BaseItemDto[]> {
-  // Jellyfin's home UI uses /Users/{UserId}/Items/Latest for "Latest Music",
-  // not /Items?SortBy=DateCreated. The Latest endpoint groups by album and
-  // is what users see on the Jellyfin home page.
-  if (type === "newest") {
+  // Jellyfin's home UI uses /Users/{UserId}/Items/Latest for "Latest Music".
+  // The Latest endpoint groups Audio items by album, but Limit counts tracks
+  // (pre-grouping) and StartIndex is unsupported — so we use it only for the
+  // first page, then fall back to /Items?SortBy=DateCreated for pagination.
+  if (type === "newest" && !opts.offset) {
+    const size = opts.size ?? 20;
     const rsp = await jellyfinApiInstance.get<BaseItemDto[]>(
       `/Users/${userId()}/Items/Latest`,
       {
         params: {
-          IncludeItemTypes: "MusicAlbum",
-          Limit: opts.size ?? 20,
+          IncludeItemTypes: "Audio",
+          // Limit counts tracks before album grouping; multiply so we get
+          // approximately `size` albums back.
+          Limit: size * 4,
           Fields: FIELDS,
           ParentId: opts.musicFolderId,
-          GroupItems: true,
+          ImageTypeLimit: 1,
+          EnableImageTypes: "Primary,Backdrop,Banner,Thumb",
+          EnableTotalRecordCount: false,
         },
       },
     );
-    return rsp.data ?? [];
+    return (rsp.data ?? []).slice(0, size);
   }
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: paramsFor(type, opts),
@@ -196,9 +200,9 @@ export const getRandomSongs = async ({
       Years:
         fromYear != null && toYear != null
           ? Array.from(
-              { length: Math.abs(toYear - fromYear) + 1 },
-              (_, i) => Math.min(fromYear, toYear) + i,
-            ).join(",")
+            { length: Math.abs(toYear - fromYear) + 1 },
+            (_, i) => Math.min(fromYear, toYear) + i,
+          ).join(",")
           : undefined,
     },
   });
