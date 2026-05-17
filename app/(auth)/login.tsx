@@ -368,7 +368,7 @@ export default function LoginScreen() {
           )}
           <form.Field name="type">
             {(field) => (
-              <HStack className="mb-2 gap-2">
+              <HStack className="mb-4 gap-2">
                 {serverTypeOptions.map((opt) => {
                   const selected = field.state.value === opt.value;
                   return (

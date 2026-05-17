@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createScopedStorage, getAuthScope } from "@/config/storage";
+import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
 import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
@@ -84,11 +84,12 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
     },
     {
       name: "recentPlays",
-      storage: createJSONStorage(() => {
-        const { url, username } = useAuthBase.getState();
-        const scope = getAuthScope(url, username);
-        return createScopedStorage(scope);
-      }),
+      storage: createJSONStorage(() =>
+        createDynamicScopedStorage(() => {
+          const { url, username } = useAuthBase.getState();
+          return getAuthScope(url, username);
+        }),
+      ),
       onRehydrateStorage: () => {
         return () => {
           if (!ensuredRecentPlayOnHydration) return;

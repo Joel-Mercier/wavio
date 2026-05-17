@@ -45,6 +45,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Child } from "@/services/openSubsonic/types";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
@@ -180,9 +181,9 @@ export default function QueueDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6 flex-1">
+      <Box className="mt-6 pb-6 flex-1">
         <HStack
-          className="items-center mb-4"
+          className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}
         >
           <FadeOutScaleDown onPress={() => router.back()}>
@@ -197,83 +198,110 @@ export default function QueueDetail() {
           </Heading>
           <Box className="w-6" />
         </HStack>
-        <HStack className="items-center justify-end gap-x-6 mb-4">
-          <FadeOutScaleDown onPress={handleSleepTimerPress}>
-            <Timer
-              size={22}
-              color={sleepActive ? emerald500 : iconActiveColor}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="grow-0"
+          contentContainerStyle={{ paddingHorizontal: 24 }}
+        >
+          <HStack className="items-center justify-end gap-x-6 mb-4">
+            <FadeOutScaleDown onPress={handleSleepTimerPress}>
+              <HStack className="items-center gap-x-2">
+                <Timer
+                  size={16}
+                  color={sleepActive ? emerald500 : iconActiveColor}
+                />
+                <Text className="text-white font-bold">Set timer</Text>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={isEmpty ? undefined : handleCreatePlaylistPress}
+            >
+              <HStack className="items-center gap-x-2">
+                <ListPlus
+                  size={16}
+                  color={isEmpty ? iconDisabledColor : iconActiveColor}
+                />
+                <Text className="text-white font-bold">Create playlist</Text>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
+              <HStack className="items-center gap-x-2">
+                <Trash2
+                  size={16}
+                  color={isEmpty ? iconDisabledColor : iconActiveColor}
+                />
+                <Text className="text-white font-bold">Clear queue</Text>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={
+                isEmpty
+                  ? undefined
+                  : editMode
+                    ? handleExitEdit
+                    : handleEnterEdit
+              }
+            >
+              <HStack className="items-center gap-x-2">
+                {editMode ? (
+                  <Check size={16} color={emerald500} />
+                ) : (
+                  <ListOrdered
+                    size={16}
+                    color={isEmpty ? iconDisabledColor : iconActiveColor}
+                  />
+                )}
+                <Text className="text-white font-bold">
+                  {editMode ? "Done" : "Order"}
+                </Text>
+              </HStack>
+            </FadeOutScaleDown>
+          </HStack>
+        </ScrollView>
+        <Box className="px-6 flex-1">
+          {isEmpty ? (
+            <VStack className="flex-1 items-center justify-center">
+              <Text className="text-primary-100 text-center">
+                {t("app.queue.empty")}
+              </Text>
+            </VStack>
+          ) : editMode ? (
+            <DraggableFlashList
+              data={localOrder}
+              keyExtractor={(item, index) => `${item.id}:${index}`}
+              itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
+              onSort={handleListSort}
+              contentContainerStyle={{
+                paddingBottom:
+                  insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              }}
+              showsVerticalScrollIndicator={false}
+              renderItem={(item, _index, isActive, beginDrag) => (
+                <QueueEditTrackItem
+                  item={item}
+                  beginDrag={beginDrag}
+                  isActive={isActive}
+                  isPlaying={item.id === playingTrackId}
+                  onRemovePress={() => handleRemoveFromQueue(item.id)}
+                />
+              )}
             />
-          </FadeOutScaleDown>
-          <FadeOutScaleDown
-            onPress={isEmpty ? undefined : handleCreatePlaylistPress}
-          >
-            <ListPlus
-              size={22}
-              color={isEmpty ? iconDisabledColor : iconActiveColor}
+          ) : (
+            <FlashList
+              data={tracks}
+              keyExtractor={(item, index) => `${item.id}:${index}`}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingBottom:
+                  insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              }}
+              renderItem={({ item, index }) => (
+                <TrackListItem track={item} index={index} trackList={tracks} />
+              )}
             />
-          </FadeOutScaleDown>
-          <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
-            <Trash2
-              size={22}
-              color={isEmpty ? iconDisabledColor : iconActiveColor}
-            />
-          </FadeOutScaleDown>
-          <FadeOutScaleDown
-            onPress={
-              isEmpty ? undefined : editMode ? handleExitEdit : handleEnterEdit
-            }
-          >
-            {editMode ? (
-              <Check size={22} color={emerald500} />
-            ) : (
-              <ListOrdered
-                size={22}
-                color={isEmpty ? iconDisabledColor : iconActiveColor}
-              />
-            )}
-          </FadeOutScaleDown>
-        </HStack>
-        {isEmpty ? (
-          <VStack className="flex-1 items-center justify-center">
-            <Text className="text-primary-100 text-center">
-              {t("app.queue.empty")}
-            </Text>
-          </VStack>
-        ) : editMode ? (
-          <DraggableFlashList
-            data={localOrder}
-            keyExtractor={(item, index) => `${item.id}:${index}`}
-            itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
-            onSort={handleListSort}
-            contentContainerStyle={{
-              paddingBottom:
-                insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-            }}
-            showsVerticalScrollIndicator={false}
-            renderItem={(item, _index, isActive, beginDrag) => (
-              <QueueEditTrackItem
-                item={item}
-                beginDrag={beginDrag}
-                isActive={isActive}
-                isPlaying={item.id === playingTrackId}
-                onRemovePress={() => handleRemoveFromQueue(item.id)}
-              />
-            )}
-          />
-        ) : (
-          <FlashList
-            data={tracks}
-            keyExtractor={(item, index) => `${item.id}:${index}`}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingBottom:
-                insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
-            }}
-            renderItem={({ item, index }) => (
-              <TrackListItem track={item} index={index} trackList={tracks} />
-            )}
-          />
-        )}
+          )}
+        </Box>
       </Box>
       <AlertDialog
         isOpen={showClearConfirm}

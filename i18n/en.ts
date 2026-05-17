@@ -497,6 +497,10 @@ export default {
             "Are you sure you want to delete all downloaded tracks?",
           clearDownloadsConfirmDescription:
             "Deleting these is irreversible. Please confirm if you want to proceed.",
+          manageDownloadsLabel: "Manage downloads",
+          manageDownloadsDescription:
+            "View downloaded tracks and free up space",
+          manageDownloadsAction: "Manage",
         },
         musicLibrarySettings: {
           title: "Music library settings",
@@ -659,6 +663,14 @@ export default {
           artist: "Artist",
           playlist: "Playlist",
         },
+      },
+      offlineDownloads: {
+        title: "Offline downloads",
+        empty: "No tracks downloaded yet.",
+        totalTracks_one: "{{count}} track",
+        totalTracks_other: "{{count}} tracks",
+        totalSize: "Total size: {{size}}",
+        clearAll: "Clear all",
       },
       queue: {
         title: "Queue",

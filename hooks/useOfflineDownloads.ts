@@ -100,6 +100,8 @@ export const useOfflineDownloads = () => {
     return offlineDownloadService.isTrackDownloading(trackId);
   }, []);
 
+  const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
+
   return {
     // Settings
     offlineModeEnabled: offlineStore.offlineModeEnabled,
@@ -112,6 +114,7 @@ export const useOfflineDownloads = () => {
     getDownloadedTrack: offlineStore.getDownloadedTrack,
     getTotalDownloadSize: offlineStore.getTotalDownloadSize,
     getDownloadedTracksCount: offlineStore.getDownloadedTracksCount,
+    totalTracksToDownload,
 
     // Download progress
     downloadProgress: offlineStore.downloadProgress,

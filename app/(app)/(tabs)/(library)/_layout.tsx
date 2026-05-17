@@ -19,6 +19,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="playlists/[id]/reorder" />
       <Stack.Screen name="tracks/[id]/similar" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
       <Stack.Screen name="libraries" />

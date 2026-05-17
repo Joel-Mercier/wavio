@@ -79,6 +79,21 @@ export class OfflineDownloadService {
   resume(): void {
     const offlineStore = useOffline.getState();
 
+    for (const track of offlineStore.getDownloadedTracksList()) {
+      if (track.size > 0) continue;
+      try {
+        const file = new File(track.path);
+        if (file.exists && file.size > 0) {
+          offlineStore.addDownloadedTrack({ ...track, size: file.size });
+        }
+      } catch (error) {
+        console.error(
+          `Download Manager: Error backfilling size for ${track.id}:`,
+          error,
+        );
+      }
+    }
+
     // Any progress entry stuck in "downloading" or "pending" from a killed
     // session is stale: nothing is actually downloading it. Mark as failed
     // unless the track is still in the queue (in which case we'll resume it).
@@ -175,7 +190,7 @@ export class OfflineDownloadService {
       duration: track.duration || 0,
       coverArt: track.coverArt,
       path: downloadResult.uri,
-      size: track.size || 0,
+      size: downloadResult.size || track.size || 0,
       downloadedAt: new Date().toISOString(),
     };
 

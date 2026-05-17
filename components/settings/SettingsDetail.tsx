@@ -106,8 +106,6 @@ export default function SettingsDetail() {
   const [showActivityAlertDialog, setShowActivityAlertDialog] = useState(false);
   const [showDeletePodcastsAlertDialog, setShowDeletePodcastsAlertDialog] =
     useState(false);
-  const [showClearDownloadsAlertDialog, setShowClearDownloadsAlertDialog] =
-    useState(false);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
     bottomSheetLanguageModalRef,
@@ -168,8 +166,8 @@ export default function SettingsDetail() {
     setOfflineModeEnabled,
     getDownloadedTracksCount,
     getTotalDownloadSize,
-    clearAllDownloads,
     downloadedTracksList,
+    totalTracksToDownload,
   } = useOfflineDownloads();
   const podcastConfigForm = useForm({
     defaultValues: {
@@ -362,42 +360,6 @@ export default function SettingsDetail() {
     });
   };
 
-  const handleCloseClearDownloadsAlertDialog = () => {
-    setShowClearDownloadsAlertDialog(false);
-  };
-
-  const handleClearOfflineDownloadsPress = async () => {
-    setShowClearDownloadsAlertDialog(false);
-    try {
-      await clearAllDownloads();
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="success">
-            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.settings.offlineSettings.clearDownloadsSuccessMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    } catch (error) {
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.settings.offlineSettings.clearDownloadsErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
   const handleConfigurePodcastsPress = () => {
     setShowPodcastsAlertDialog(true);
   };
@@ -502,7 +464,10 @@ export default function SettingsDetail() {
                   <Text className="text-emerald-400 text-sm">
                     {t("app.settings.offlineSettings.downloadedTracksCount", {
                       count: getDownloadedTracksCount(),
-                      total: downloadedTracksList.length,
+                      total: Math.max(
+                        totalTracksToDownload,
+                        downloadedTracksList.length,
+                      ),
                       size: niceBytes(getTotalDownloadSize()),
                     })}
                   </Text>
@@ -520,27 +485,27 @@ export default function SettingsDetail() {
                 onToggle={(value) => setOfflineModeEnabled(value)}
               />
             </HStack>
-            {offlineModeEnabled && (
+            {offlineModeEnabled && downloadedTracksList.length > 0 && (
               <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
                 <VStack className="gap-y-2 w-1/2">
                   <Heading className="text-white font-normal" size="md">
-                    {t("app.settings.offlineSettings.clearDownloadsLabel")}
+                    {t("app.settings.offlineSettings.manageDownloadsLabel")}
                   </Heading>
                   <Text className="text-primary-100 text-sm">
                     {t(
-                      "app.settings.offlineSettings.clearDownloadsDescription",
+                      "app.settings.offlineSettings.manageDownloadsDescription",
                     )}
                   </Text>
                 </VStack>
                 <FadeOutScaleDown
-                  onPress={() => setShowClearDownloadsAlertDialog(true)}
-                  className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+                  onPress={() => router.navigate("/offline-downloads")}
+                  className="flex-1 items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
                 >
                   <Text
                     numberOfLines={1}
                     className="text-primary-800 font-bold text-lg"
                   >
-                    {t("app.shared.delete")}
+                    {t("app.settings.offlineSettings.manageDownloadsAction")}
                   </Text>
                 </FadeOutScaleDown>
               </HStack>
@@ -1108,45 +1073,6 @@ export default function SettingsDetail() {
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={handleDeleteRecentSearchesPress}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-            >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.delete")}
-              </Text>
-            </FadeOutScaleDown>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog
-        isOpen={showClearDownloadsAlertDialog}
-        onClose={handleCloseClearDownloadsAlertDialog}
-        size="md"
-      >
-        <AlertDialogBackdrop />
-        <AlertDialogContent className="bg-primary-800 border-primary-400">
-          <AlertDialogHeader>
-            <Heading className="text-white font-bold" size="md">
-              {t("app.settings.offlineSettings.clearDownloadsConfirmTitle")}
-            </Heading>
-          </AlertDialogHeader>
-          <AlertDialogBody className="mt-3 mb-4">
-            <Text className="text-primary-50" size="sm">
-              {t(
-                "app.settings.offlineSettings.clearDownloadsConfirmDescription",
-              )}
-            </Text>
-          </AlertDialogBody>
-          <AlertDialogFooter className="items-center justify-center">
-            <FadeOutScaleDown
-              onPress={handleCloseClearDownloadsAlertDialog}
-              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-            >
-              <Text className="text-white font-bold text-lg">
-                {t("app.shared.cancel")}
-              </Text>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={handleClearOfflineDownloadsPress}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
               <Text className="text-primary-800 font-bold text-lg">

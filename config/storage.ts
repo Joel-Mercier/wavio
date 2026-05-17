@@ -31,6 +31,26 @@ export const createScopedStorage = (scope: string): StateStorage => ({
   },
 });
 
+// Resolves the scope on every call so persisted stores follow the active
+// server. createJSONStorage caches its storage instance, so a one-shot
+// `createScopedStorage(scope)` snapshots whichever scope was active at
+// middleware init — switching servers would then keep reading/writing the
+// previous server's bucket.
+export const createDynamicScopedStorage = (
+  getScope: () => string,
+): StateStorage => ({
+  setItem: (name, value) => {
+    return storage.set(`${getScope()}:${name}`, value);
+  },
+  getItem: (name) => {
+    const value = storage.getString(`${getScope()}:${name}`);
+    return value ?? null;
+  },
+  removeItem: (name) => {
+    return storage.remove(`${getScope()}:${name}`);
+  },
+});
+
 export const getAuthScope = (url: string, username: string) => {
   const safeUrl = url.replace(/[^a-zA-Z0-9]/g, "_");
   const safeUsername = username.replace(/[^a-zA-Z0-9]/g, "_");

@@ -516,6 +516,10 @@ export default {
             "Êtes-vous sûr de vouloir supprimer tous les titres téléchargés ?",
           clearDownloadsConfirmDescription:
             "Cette suppression est irréversible. Veuillez confirmer si vous souhaitez continuer.",
+          manageDownloadsLabel: "Gérer les téléchargements",
+          manageDownloadsDescription:
+            "Voir les titres téléchargés et libérer de l'espace",
+          manageDownloadsAction: "Gérer",
         },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
@@ -682,6 +686,14 @@ export default {
           artist: "Artiste",
           playlist: "Playlist",
         },
+      },
+      offlineDownloads: {
+        title: "Téléchargements hors ligne",
+        empty: "Aucun titre téléchargé pour le moment.",
+        totalTracks_one: "{{count}} titre",
+        totalTracks_other: "{{count}} titres",
+        totalSize: "Taille totale : {{size}}",
+        clearAll: "Tout effacer",
       },
       queue: {
         title: "File d'attente",

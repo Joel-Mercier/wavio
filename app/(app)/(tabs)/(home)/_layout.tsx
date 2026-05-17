@@ -16,6 +16,7 @@ export default function HomeLayout() {
       <Stack.Screen name="internet-radio-stations/index" />
       <Stack.Screen name="internet-radio-stations/[id]" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
       <Stack.Screen name="libraries" />
