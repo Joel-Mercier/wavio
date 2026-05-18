@@ -44,6 +44,7 @@ export default function TabLayout() {
             borderTopWidth: 0,
             elevation: 0,
             shadowOpacity: 0,
+            // backgroundColor: "transparent",
           },
           tabBarButton: (props) => (
             <Pressable
@@ -55,12 +56,13 @@ export default function TabLayout() {
             <LinearGradient
               colors={[
                 "rgba(0,0,0, 0)",
-                "rgba(0,0,0, 0.3)",
-                "rgba(0,0,0, 0.9)",
-                "rgb(0,0,0)",
+                "rgba(0,0,0, 0.4)",
+                "rgba(0,0,0, 0.6)",
+                "rgba(0,0,0, 0.85)",
+                "rgb(0,0,0, 0.9)",
               ]}
               style={{ height: "100%" }}
-              locations={[0, 0.1, 0.5, 1]}
+              locations={[0, 0.1, 0.2, 0.5, 1]}
             />
           ),
           tabBarActiveTintColor: emerald,
