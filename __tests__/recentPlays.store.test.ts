@@ -13,6 +13,7 @@ jest.mock("@/config/storage", () => {
     },
     zustandStorage: make(),
     createScopedStorage: () => make(),
+    createDynamicScopedStorage: () => make(),
     getAuthScope: () => "scope",
   };
 });
