@@ -45,6 +45,8 @@ const reset = () =>
       favoritesSort: "addedAtAsc",
       libraryFilter: null,
       maxBitRate: null,
+      cellularMaxBitRate: null,
+      downloadsWifiOnly: false,
       replayGainMode: "off",
       replayGainPreampDb: 0,
       crossfadeSeconds: 0,
@@ -107,6 +109,22 @@ describe("app store", () => {
     expect(useAppBase.getState().maxBitRate).toBe(192);
     useAppBase.getState().setMaxBitRate(null);
     expect(useAppBase.getState().maxBitRate).toBeNull();
+  });
+
+  it("setCellularMaxBitRate accepts numbers and null", () => {
+    expect(useAppBase.getState().cellularMaxBitRate).toBeNull();
+    useAppBase.getState().setCellularMaxBitRate(96);
+    expect(useAppBase.getState().cellularMaxBitRate).toBe(96);
+    useAppBase.getState().setCellularMaxBitRate(null);
+    expect(useAppBase.getState().cellularMaxBitRate).toBeNull();
+  });
+
+  it("setDownloadsWifiOnly toggles the flag", () => {
+    expect(useAppBase.getState().downloadsWifiOnly).toBe(false);
+    useAppBase.getState().setDownloadsWifiOnly(true);
+    expect(useAppBase.getState().downloadsWifiOnly).toBe(true);
+    useAppBase.getState().setDownloadsWifiOnly(false);
+    expect(useAppBase.getState().downloadsWifiOnly).toBe(false);
   });
 
   it("setReplayGainMode and setReplayGainPreampDb update independently", () => {

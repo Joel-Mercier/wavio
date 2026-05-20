@@ -501,6 +501,9 @@ export default {
           manageDownloadsDescription:
             "View downloaded tracks and free up space",
           manageDownloadsAction: "Manage",
+          downloadsWifiOnlyLabel: "Download on Wi-Fi only",
+          downloadsWifiOnlyDescription:
+            "Pause the download queue when on cellular. Resumes automatically when Wi-Fi returns.",
         },
         musicLibrarySettings: {
           title: "Music library settings",
@@ -551,6 +554,9 @@ export default {
             "Limit the maximum bitrate used when streaming. Lower values save bandwidth, higher values improve quality.",
           audioQualityOriginal: "Original (no limit)",
           audioQualityKbps: "{{bitrate}} kbps",
+          cellularAudioQualityLabel: "Audio quality (cellular)",
+          cellularAudioQualityDescription:
+            "Cap the bitrate when on cellular to save data. The lower of this and the Wi-Fi cap is used.",
           replayGainLabel: "Volume normalization",
           replayGainDescription:
             "Use ReplayGain tags to even out loudness across tracks.",

@@ -1,4 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
+import { getConnectionType, subscribeConnectionType } from "@/services/network";
+import { useAppBase } from "@/stores/app";
 import useOffline, {
   type DownloadProgress,
   type OfflineTrack,
@@ -18,6 +20,9 @@ export class OfflineDownloadService {
   private constructor() {
     // Drain any persisted queue from a previous session and reconcile stale state.
     queueMicrotask(() => this.resume());
+    subscribeConnectionType((type) => {
+      if (type === "wifi") this.processQueue();
+    });
   }
 
   static getInstance(): OfflineDownloadService {
@@ -119,6 +124,22 @@ export class OfflineDownloadService {
 
   private processQueue(): void {
     const offlineStore = useOffline.getState();
+    const { downloadsWifiOnly } = useAppBase.getState();
+
+    if (downloadsWifiOnly && getConnectionType() !== "wifi") {
+      for (const track of offlineStore.downloadQueue) {
+        if (this.activeIds.has(track.id)) continue;
+        const progress = offlineStore.downloadProgress[track.id];
+        if (progress?.status !== "paused") {
+          offlineStore.setDownloadProgress(track.id, {
+            trackId: track.id,
+            status: "paused",
+            progress: progress?.progress ?? 0,
+          });
+        }
+      }
+      return;
+    }
 
     while (this.activeIds.size < MAX_CONCURRENT_DOWNLOADS) {
       const next = offlineStore.downloadQueue.find(

@@ -113,6 +113,10 @@ export default function SettingsDetail() {
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleBitRateSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetBitRateModalRef);
+  const bottomSheetCellularBitRateModalRef = useRef<BottomSheetModal>(null);
+  const {
+    handleSheetPositionChange: handleCellularBitRateSheetPositionChange,
+  } = useBottomSheetBackHandler(bottomSheetCellularBitRateModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
@@ -128,6 +132,10 @@ export default function SettingsDetail() {
   const setShowAddTab = useApp((store) => store.setShowAddTab);
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
+  const cellularMaxBitRate = useApp((store) => store.cellularMaxBitRate);
+  const setCellularMaxBitRate = useApp((store) => store.setCellularMaxBitRate);
+  const downloadsWifiOnly = useApp((store) => store.downloadsWifiOnly);
+  const setDownloadsWifiOnly = useApp((store) => store.setDownloadsWifiOnly);
   const replayGainMode = useApp((store) => store.replayGainMode);
   const setReplayGainMode = useApp((store) => store.setReplayGainMode);
   const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
@@ -205,6 +213,10 @@ export default function SettingsDetail() {
 
   const handlePresentBitRateModalPress = () => {
     bottomSheetBitRateModalRef.current?.present();
+  };
+
+  const handlePresentCellularBitRateModalPress = () => {
+    bottomSheetCellularBitRateModalRef.current?.present();
   };
 
   const handlePresentReplayGainModalPress = () => {
@@ -485,6 +497,29 @@ export default function SettingsDetail() {
                 onToggle={(value) => setOfflineModeEnabled(value)}
               />
             </HStack>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.offlineSettings.downloadsWifiOnlyLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t(
+                    "app.settings.offlineSettings.downloadsWifiOnlyDescription",
+                  )}
+                </Text>
+              </VStack>
+              <Switch
+                size="md"
+                trackColor={{
+                  false: gray500,
+                  true: emerald500,
+                }}
+                thumbColor={white}
+                ios_backgroundColor={white}
+                value={downloadsWifiOnly}
+                onToggle={(value) => setDownloadsWifiOnly(value)}
+              />
+            </HStack>
             {offlineModeEnabled && downloadedTracksList.length > 0 && (
               <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
                 <VStack className="gap-y-2 w-1/2">
@@ -744,6 +779,32 @@ export default function SettingsDetail() {
                 </Badge>
               </HStack>
             </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={handlePresentCellularBitRateModalPress}>
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-1/2">
+                  <Heading className="text-white font-normal" size="md">
+                    {t(
+                      "app.settings.streamingSettings.cellularAudioQualityLabel",
+                    )}
+                  </Heading>
+                  <Text className="text-primary-100 text-sm">
+                    {t(
+                      "app.settings.streamingSettings.cellularAudioQualityDescription",
+                    )}
+                  </Text>
+                </VStack>
+                <Badge
+                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                  size="lg"
+                  variant="solid"
+                  action="success"
+                >
+                  <BadgeText className="normal-case text-center text-emerald-700">
+                    {formatBitRate(cellularMaxBitRate)}
+                  </BadgeText>
+                </Badge>
+              </HStack>
+            </FadeOutScaleDown>
             {capabilities.replayGain && (
               <FadeOutScaleDown onPress={handlePresentReplayGainModalPress}>
                 <HStack className="items-center gap-x-4 py-4 justify-between">
@@ -955,6 +1016,46 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {maxBitRate === option && (
+                      <Check size={24} color={emerald500} />
+                    )}
+                  </HStack>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetCellularBitRateModalRef}
+        onChange={handleCellularBitRateSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="mt-6 gap-y-8">
+              {bitRateOptions.map((option) => (
+                <FadeOutScaleDown
+                  key={option ?? "original"}
+                  onPress={() => setCellularMaxBitRate(option)}
+                >
+                  <HStack className="items-center justify-between">
+                    <VStack className="ml-4">
+                      <Text className="text-lg text-gray-200">
+                        {formatBitRate(option)}
+                      </Text>
+                    </VStack>
+                    {cellularMaxBitRate === option && (
                       <Check size={24} color={emerald500} />
                     )}
                   </HStack>

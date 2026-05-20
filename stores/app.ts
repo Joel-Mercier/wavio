@@ -54,6 +54,10 @@ interface AppStore {
   ) => void;
   maxBitRate: number | null;
   setMaxBitRate: (maxBitRate: number | null) => void;
+  cellularMaxBitRate: number | null;
+  setCellularMaxBitRate: (cellularMaxBitRate: number | null) => void;
+  downloadsWifiOnly: boolean;
+  setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
   replayGainMode: "off" | "track" | "album";
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
@@ -116,6 +120,14 @@ export const useAppBase = create<AppStore>()(
       maxBitRate: null,
       setMaxBitRate: (maxBitRate: number | null) => {
         set({ maxBitRate });
+      },
+      cellularMaxBitRate: null,
+      setCellularMaxBitRate: (cellularMaxBitRate: number | null) => {
+        set({ cellularMaxBitRate });
+      },
+      downloadsWifiOnly: false,
+      setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {
+        set({ downloadsWifiOnly });
       },
       replayGainMode: "off",
       setReplayGainMode: (replayGainMode: "off" | "track" | "album") => {

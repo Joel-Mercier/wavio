@@ -520,6 +520,9 @@ export default {
           manageDownloadsDescription:
             "Voir les titres téléchargés et libérer de l'espace",
           manageDownloadsAction: "Gérer",
+          downloadsWifiOnlyLabel: "Télécharger en Wi-Fi uniquement",
+          downloadsWifiOnlyDescription:
+            "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
         },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
@@ -572,6 +575,9 @@ export default {
             "Limite le débit maximum utilisé pour le streaming. Une valeur plus basse économise la bande passante, une valeur plus haute améliore la qualité.",
           audioQualityOriginal: "Original (sans limite)",
           audioQualityKbps: "{{bitrate}} kbps",
+          cellularAudioQualityLabel: "Qualité audio (données mobiles)",
+          cellularAudioQualityDescription:
+            "Limite le débit en données mobiles pour économiser. La valeur la plus basse entre celle-ci et celle du Wi-Fi est utilisée.",
           replayGainLabel: "Normalisation du volume",
           replayGainDescription:
             "Utilise les tags ReplayGain pour égaliser le volume entre les morceaux",

@@ -3,6 +3,7 @@ import {
   hlsStreamUrl as jellyfinHlsStreamUrl,
   streamUrl as jellyfinStreamUrl,
 } from "@/services/jellyfin/streaming";
+import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
@@ -17,16 +18,18 @@ function isJellyfin(): boolean {
 export const hlsStreamUrl = (id: string) => {
   if (isJellyfin()) return jellyfinHlsStreamUrl(id);
   const { url, username, password } = useAuthBase.getState();
-  const { maxBitRate } = useAppBase.getState();
-  const bitRateParam = maxBitRate ? `&maxBitRate=${maxBitRate}` : "";
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
+  const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
   return `${url}/rest/hls.m3u8?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
 };
 
 export const streamUrl = (id: string) => {
   if (isJellyfin()) return jellyfinStreamUrl(id);
   const { url, username, password } = useAuthBase.getState();
-  const { maxBitRate } = useAppBase.getState();
-  const bitRateParam = maxBitRate ? `&maxBitRate=${maxBitRate}` : "";
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
+  const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
   return `${url}/rest/stream?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
 };
 

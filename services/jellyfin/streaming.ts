@@ -1,4 +1,5 @@
 import { getDeviceId } from "@/services/jellyfin/deviceId";
+import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
@@ -16,9 +17,10 @@ function authParam(): string {
 }
 
 export function streamUrl(id: string): string {
-  const { maxBitRate } = useAppBase.getState();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const userId = useAuthBase.getState().jellyfinUserId ?? "";
-  const bitrate = maxBitRate ? `&MaxStreamingBitrate=${maxBitRate * 1000}` : "";
+  const bitrate = effective ? `&MaxStreamingBitrate=${effective * 1000}` : "";
   // /Audio/{id}/universal handles direct play / transcode negotiation.
   return `${baseUrl()}/Audio/${id}/universal?UserId=${encodeURIComponent(
     userId,
@@ -26,8 +28,9 @@ export function streamUrl(id: string): string {
 }
 
 export function hlsStreamUrl(id: string): string {
-  const { maxBitRate } = useAppBase.getState();
-  const bitrate = maxBitRate ? `&MaxStreamingBitrate=${maxBitRate * 1000}` : "";
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
+  const bitrate = effective ? `&MaxStreamingBitrate=${effective * 1000}` : "";
   return `${baseUrl()}/Audio/${id}/main.m3u8?${authParam()}${bitrate}`;
 }
 

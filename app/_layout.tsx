@@ -37,6 +37,7 @@ import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
+import { initConnectionType } from "@/services/network";
 import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
@@ -105,6 +106,7 @@ export default Sentry.wrap(function RootLayout() {
         setOnline(!!state.isConnected);
       }),
     );
+    const unsubscribeConnectionType = initConnectionType();
     if (Platform.OS === "android") {
       NavigationBar.setStyle("dark");
     }
@@ -126,6 +128,7 @@ export default Sentry.wrap(function RootLayout() {
         clearTimeout(idle);
       }
       subscription.remove();
+      unsubscribeConnectionType();
     };
   }, []);
 
