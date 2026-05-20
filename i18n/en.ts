@@ -46,6 +46,8 @@ export default {
         searchPlaceholder: "Search your library",
         recentSort: "Recent",
         alphabeticalSort: "Alphabetical",
+        artistSort: "Artist",
+        albumSort: "Album",
         search: {
           inputPlaceholder: "Search your library",
         },
@@ -535,6 +537,9 @@ export default {
           gaplessLabel: "Gapless playback",
           gaplessDescription:
             "Eliminate silence between consecutive tracks by preloading the next one.",
+          endlessPlaybackLabel: "Endless playback",
+          endlessPlaybackDescription:
+            "When the queue ends, automatically add similar tracks to keep the music playing.",
           crossfadeLabel: "Crossfade",
           crossfadeDescription:
             "Overlap the end of one track with the start of the next.",

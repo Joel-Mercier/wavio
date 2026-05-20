@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { scrobble } from "@/services/backend/mediaAnnotation";
+import { fetchEndlessExtension } from "@/services/endlessRadio";
 import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
@@ -27,6 +28,7 @@ const loadedTrackIds: (string | null)[] = [null, null];
 
 let isLoading = false;
 let playbackInitialized = false;
+let endlessFetchInFlight = false;
 
 const slotListeners = new Set<() => void>();
 function notifySlotChange() {
@@ -455,7 +457,9 @@ function makeStatusListener(slot: Slot) {
         transition = { kind: "idle" };
       }
       // End of queue with no repeat/shuffle: keep the current track loaded so
-      // the player UI keeps its title/artist/cover, just stop playback.
+      // the player UI keeps its title/artist/cover, just stop playback. If
+      // endless playback is enabled, fetch similar tracks and append them so
+      // playback continues without disturbing the original queue.
       const qstate = useQueue.getState();
       if (
         qstate.repeatMode === "off" &&
@@ -463,10 +467,40 @@ function makeStatusListener(slot: Slot) {
         qstate.currentIndex != null &&
         qstate.currentIndex >= qstate.queue.length - 1
       ) {
+        const endless = useAppBase.getState().endlessPlaybackEnabled;
+        const seed = qstate.getCurrent();
+        if (!endless || !seed || endlessFetchInFlight) {
+          try {
+            players[activeSlot].pause();
+            players[activeSlot].seekTo(0);
+          } catch {}
+          return;
+        }
+        endlessFetchInFlight = true;
         try {
           players[activeSlot].pause();
-          players[activeSlot].seekTo(0);
         } catch {}
+        fetchEndlessExtension(seed)
+          .then((tracks) => {
+            if (tracks.length === 0) {
+              try {
+                players[activeSlot].seekTo(0);
+              } catch {}
+              return;
+            }
+            useQueue.getState().enqueueEnd(tracks);
+            useQueue.getState().next();
+            const c = useQueue.getState().getCurrent();
+            if (c) loadAndPlay(c);
+          })
+          .catch(() => {
+            try {
+              players[activeSlot].seekTo(0);
+            } catch {}
+          })
+          .finally(() => {
+            endlessFetchInFlight = false;
+          });
         return;
       }
       // Default path: advance queue and load on active.

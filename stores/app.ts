@@ -44,13 +44,21 @@ interface AppStore {
     | "addedAtAsc"
     | "addedAtDesc"
     | "alphabeticalAsc"
-    | "alphabeticalDesc";
+    | "alphabeticalDesc"
+    | "artistAsc"
+    | "artistDesc"
+    | "albumAsc"
+    | "albumDesc";
   setFavoritesSort: (
     favoritesSort:
       | "addedAtAsc"
       | "addedAtDesc"
       | "alphabeticalAsc"
-      | "alphabeticalDesc",
+      | "alphabeticalDesc"
+      | "artistAsc"
+      | "artistDesc"
+      | "albumAsc"
+      | "albumDesc",
   ) => void;
   maxBitRate: number | null;
   setMaxBitRate: (maxBitRate: number | null) => void;
@@ -66,6 +74,8 @@ interface AppStore {
   setCrossfadeSeconds: (seconds: number) => void;
   gaplessEnabled: boolean;
   setGaplessEnabled: (enabled: boolean) => void;
+  endlessPlaybackEnabled: boolean;
+  setEndlessPlaybackEnabled: (enabled: boolean) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -113,7 +123,11 @@ export const useAppBase = create<AppStore>()(
           | "addedAtAsc"
           | "addedAtDesc"
           | "alphabeticalAsc"
-          | "alphabeticalDesc",
+          | "alphabeticalDesc"
+          | "artistAsc"
+          | "artistDesc"
+          | "albumAsc"
+          | "albumDesc",
       ) => {
         set({ favoritesSort });
       },
@@ -144,6 +158,10 @@ export const useAppBase = create<AppStore>()(
       gaplessEnabled: true,
       setGaplessEnabled: (gaplessEnabled: boolean) => {
         set({ gaplessEnabled });
+      },
+      endlessPlaybackEnabled: false,
+      setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
+        set({ endlessPlaybackEnabled });
       },
     }),
     {

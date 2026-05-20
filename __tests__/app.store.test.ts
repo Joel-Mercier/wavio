@@ -51,6 +51,7 @@ const reset = () =>
       replayGainPreampDb: 0,
       crossfadeSeconds: 0,
       gaplessEnabled: true,
+      endlessPlaybackEnabled: false,
     },
     false,
   );
@@ -148,6 +149,14 @@ describe("app store", () => {
     expect(useAppBase.getState().gaplessEnabled).toBe(false);
     useAppBase.getState().setGaplessEnabled(true);
     expect(useAppBase.getState().gaplessEnabled).toBe(true);
+  });
+
+  it("setEndlessPlaybackEnabled toggles the flag", () => {
+    expect(useAppBase.getState().endlessPlaybackEnabled).toBe(false);
+    useAppBase.getState().setEndlessPlaybackEnabled(true);
+    expect(useAppBase.getState().endlessPlaybackEnabled).toBe(true);
+    useAppBase.getState().setEndlessPlaybackEnabled(false);
+    expect(useAppBase.getState().endlessPlaybackEnabled).toBe(false);
   });
 
   it("partialize excludes showDrawer from persisted state", async () => {

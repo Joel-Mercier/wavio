@@ -46,6 +46,8 @@ export default {
         searchPlaceholder: "Rechercher dans votre bibliothèque",
         recentSort: "Récent",
         alphabeticalSort: "Alphabétique",
+        artistSort: "Artiste",
+        albumSort: "Album",
         search: {
           inputPlaceholder: "Rechercher",
         },
@@ -556,6 +558,9 @@ export default {
           gaplessLabel: "Lecture sans coupure",
           gaplessDescription:
             "Élimine le silence entre les morceaux en préchargeant le suivant",
+          endlessPlaybackLabel: "Lecture sans fin",
+          endlessPlaybackDescription:
+            "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
           crossfadeLabel: "Fondu enchaîné",
           crossfadeDescription:
             "Superpose la fin d'un morceau avec le début du suivant",

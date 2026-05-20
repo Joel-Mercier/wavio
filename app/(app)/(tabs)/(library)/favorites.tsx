@@ -105,14 +105,22 @@ export default function FavoritesScreen() {
   }, []);
 
   const handleSortPress = (
-    type: "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc",
+    type:
+      | "addedAtAsc"
+      | "addedAtDesc"
+      | "alphabeticalAsc"
+      | "alphabeticalDesc"
+      | "artistAsc"
+      | "artistDesc"
+      | "albumAsc"
+      | "albumDesc",
   ) => {
     bottomSheetSortModalRef.current?.dismiss();
     setFavoritesSort(type);
   };
 
   const data = useMemo(() => {
-    if (!starredData || !starredData?.starred2 || !starredData?.starred2.song) {
+    if (!starredData?.starred2?.song) {
       return null;
     }
     const newData = [...starredData.starred2.song];
@@ -131,6 +139,40 @@ export default function FavoritesScreen() {
     if (sort === "alphabeticalDesc") {
       return newData.sort((a, b) => {
         return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
+      });
+    }
+    const byTitle = (a: Child, b: Child) =>
+      (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
+    if (sort === "artistAsc") {
+      return newData.sort((a, b) => {
+        const artistCmp = (a.artist || "").localeCompare(b.artist || "");
+        if (artistCmp !== 0) return artistCmp;
+        const albumCmp = (a.album || "").localeCompare(b.album || "");
+        if (albumCmp !== 0) return albumCmp;
+        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
+      });
+    }
+    if (sort === "artistDesc") {
+      return newData.sort((a, b) => {
+        const artistCmp = (b.artist || "").localeCompare(a.artist || "");
+        if (artistCmp !== 0) return artistCmp;
+        const albumCmp = (a.album || "").localeCompare(b.album || "");
+        if (albumCmp !== 0) return albumCmp;
+        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
+      });
+    }
+    if (sort === "albumAsc") {
+      return newData.sort((a, b) => {
+        const albumCmp = (a.album || "").localeCompare(b.album || "");
+        if (albumCmp !== 0) return albumCmp;
+        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
+      });
+    }
+    if (sort === "albumDesc") {
+      return newData.sort((a, b) => {
+        const albumCmp = (b.album || "").localeCompare(a.album || "");
+        if (albumCmp !== 0) return albumCmp;
+        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
       });
     }
   }, [starredData, sort]);
@@ -246,7 +288,11 @@ export default function FavoritesScreen() {
                     <Text className="text-white font-bold">
                       {sort.startsWith("addedAt")
                         ? t("app.library.recentSort")
-                        : t("app.library.alphabeticalSort")}
+                        : sort.startsWith("artist")
+                          ? t("app.library.artistSort")
+                          : sort.startsWith("album")
+                            ? t("app.library.albumSort")
+                            : t("app.library.alphabeticalSort")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -347,6 +393,48 @@ export default function FavoritesScreen() {
                     <ArrowUp size={24} color={emerald500} />
                   )}
                   {sort === "alphabeticalDesc" && (
+                    <ArrowDown size={24} color={emerald500} />
+                  )}
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "artistAsc" ? "artistDesc" : "artistAsc",
+                  )
+                }
+              >
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.artistSort")}
+                    </Text>
+                  </VStack>
+                  {sort === "artistAsc" && (
+                    <ArrowUp size={24} color={emerald500} />
+                  )}
+                  {sort === "artistDesc" && (
+                    <ArrowDown size={24} color={emerald500} />
+                  )}
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() =>
+                  handleSortPress(
+                    sort === "albumAsc" ? "albumDesc" : "albumAsc",
+                  )
+                }
+              >
+                <HStack className="items-center justify-between">
+                  <VStack className="ml-4">
+                    <Text className="text-lg text-gray-200">
+                      {t("app.library.albumSort")}
+                    </Text>
+                  </VStack>
+                  {sort === "albumAsc" && (
+                    <ArrowUp size={24} color={emerald500} />
+                  )}
+                  {sort === "albumDesc" && (
                     <ArrowDown size={24} color={emerald500} />
                   )}
                 </HStack>

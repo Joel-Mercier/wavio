@@ -144,6 +144,12 @@ export default function SettingsDetail() {
   const setCrossfadeSeconds = useApp((store) => store.setCrossfadeSeconds);
   const gaplessEnabled = useApp((store) => store.gaplessEnabled);
   const setGaplessEnabled = useApp((store) => store.setGaplessEnabled);
+  const endlessPlaybackEnabled = useApp(
+    (store) => store.endlessPlaybackEnabled,
+  );
+  const setEndlessPlaybackEnabled = useApp(
+    (store) => store.setEndlessPlaybackEnabled,
+  );
   const setTaddyPodcastsConfig = usePodcasts(
     (store) => store.setTaddyPodcastsConfig,
   );
@@ -698,6 +704,29 @@ export default function SettingsDetail() {
                 ios_backgroundColor={white}
                 value={gaplessEnabled}
                 onToggle={(value) => setGaplessEnabled(value)}
+              />
+            </HStack>
+            <HStack className="items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-3/5">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.playbackSettings.endlessPlaybackLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t(
+                    "app.settings.playbackSettings.endlessPlaybackDescription",
+                  )}
+                </Text>
+              </VStack>
+              <Switch
+                size="md"
+                trackColor={{
+                  false: gray500,
+                  true: emerald500,
+                }}
+                thumbColor={white}
+                ios_backgroundColor={white}
+                value={endlessPlaybackEnabled}
+                onToggle={(value) => setEndlessPlaybackEnabled(value)}
               />
             </HStack>
             <HStack className="items-center gap-x-4 py-4 justify-between">
