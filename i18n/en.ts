@@ -677,6 +677,9 @@ export default {
         empty: "The queue is empty.",
         edit: "Edit",
         done: "Done",
+        order: "Order",
+        setTimer: "Set timer",
+        createPlaylistAction: "Create playlist",
         clear: "Clear queue",
         clearConfirmTitle: "Clear queue?",
         clearConfirmMessage:

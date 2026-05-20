@@ -700,6 +700,9 @@ export default {
         empty: "La file d'attente est vide",
         edit: "Modifier",
         done: "Terminer",
+        order: "Trier",
+        setTimer: "Définir un minuteur",
+        createPlaylistAction: "Créer une playlist",
         clear: "Vider la file",
         clearConfirmTitle: "Vider la file ?",
         clearConfirmMessage:

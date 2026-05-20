@@ -211,7 +211,9 @@ export default function QueueDetail() {
                   size={16}
                   color={sleepActive ? emerald500 : iconActiveColor}
                 />
-                <Text className="text-white font-bold">Set timer</Text>
+                <Text className="text-white font-bold">
+                  {t("app.queue.setTimer")}
+                </Text>
               </HStack>
             </FadeOutScaleDown>
             <FadeOutScaleDown
@@ -222,7 +224,9 @@ export default function QueueDetail() {
                   size={16}
                   color={isEmpty ? iconDisabledColor : iconActiveColor}
                 />
-                <Text className="text-white font-bold">Create playlist</Text>
+                <Text className="text-white font-bold">
+                  {t("app.queue.createPlaylistAction")}
+                </Text>
               </HStack>
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
@@ -231,7 +235,9 @@ export default function QueueDetail() {
                   size={16}
                   color={isEmpty ? iconDisabledColor : iconActiveColor}
                 />
-                <Text className="text-white font-bold">Clear queue</Text>
+                <Text className="text-white font-bold">
+                  {t("app.queue.clear")}
+                </Text>
               </HStack>
             </FadeOutScaleDown>
             <FadeOutScaleDown
@@ -253,7 +259,7 @@ export default function QueueDetail() {
                   />
                 )}
                 <Text className="text-white font-bold">
-                  {editMode ? "Done" : "Order"}
+                  {editMode ? t("app.queue.done") : t("app.queue.order")}
                 </Text>
               </HStack>
             </FadeOutScaleDown>
