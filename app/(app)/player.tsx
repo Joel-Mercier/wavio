@@ -207,7 +207,7 @@ export default function PlayerScreen() {
       : null;
   const [coverWidth, setCoverWidth] = useState(0);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
-  const { lyrics } = useSyncedLyrics(playingTrack?.id);
+  const { lyrics } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
   const coverTranslateX = useSharedValue(0);
 
@@ -782,8 +782,8 @@ export default function PlayerScreen() {
             </Box>
             {hasSyncedLyrics && <CurrentLyricLine lyrics={lyrics} />}
             <VStack className="px-6">
-              <HStack className="items-center justify-between">
-                <VStack className="my-6">
+              <HStack className="items-center justify-between gap-x-4">
+                <VStack className="my-6 flex-1">
                   <FadeOut
                     onPress={() => {
                       if (!playingTrack?.albumId) return;
@@ -1014,16 +1014,14 @@ export default function PlayerScreen() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  {hasSyncedLyrics && (
-                    <FadeOutScaleDown onPress={handleShowLyricsPress}>
-                      <HStack className="items-center">
-                        <Mic2 size={24} color={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.player.lyrics")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
+                  <FadeOutScaleDown onPress={handleShowLyricsPress}>
+                    <HStack className="items-center">
+                      <Mic2 size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.lyrics")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handleSimilarSongsPress}>
                     <HStack className="items-center">
                       <Sparkles size={24} color={gray200} />

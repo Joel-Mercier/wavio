@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useGetLyricsBySongId } from "@/hooks/backend/useMediaRetrieval";
+import { useLrclibLyrics } from "@/hooks/lrclib/useLrclibLyrics";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
+import type { QueueTrack } from "@/stores/queue";
 
 function pickSyncedLyrics(
   list: StructuredLyrics[] | undefined,
@@ -9,13 +11,29 @@ function pickSyncedLyrics(
   return list.find((l) => l.synced) ?? list[0] ?? null;
 }
 
-export function useSyncedLyrics(trackId: string | undefined) {
-  const { data, isLoading } = useGetLyricsBySongId(
+export function useSyncedLyrics(track: QueueTrack | undefined | null) {
+  const trackId = track?.id;
+  const isRadio = !!track?.isRadio;
+  const backend = useGetLyricsBySongId(
     trackId ?? "",
     { enhanced: true },
-    !!trackId,
+    !!trackId && !isRadio,
   );
-  const list = data?.lyricsList?.structuredLyrics;
-  const lyrics = useMemo(() => pickSyncedLyrics(list), [list]);
+  const backendLyrics = useMemo(
+    () => pickSyncedLyrics(backend.data?.lyricsList?.structuredLyrics),
+    [backend.data],
+  );
+
+  const backendSettled = !!trackId && !isRadio && !backend.isLoading;
+  const lrclib = useLrclibLyrics({
+    trackName: track?.title,
+    artistName: track?.artist,
+    albumName: track?.album,
+    duration: track?.duration,
+    enabled: backendSettled && !backendLyrics,
+  });
+
+  const lyrics = backendLyrics ?? lrclib.lyrics;
+  const isLoading = backend.isLoading || lrclib.isLoading;
   return { lyrics, isLoading };
 }
