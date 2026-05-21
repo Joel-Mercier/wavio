@@ -5,6 +5,7 @@ import {
   createAudioPlayer,
   setAudioModeAsync,
 } from "expo-audio";
+import { Platform } from "react-native";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import {
@@ -182,6 +183,10 @@ function peekNextTrack(): QueueTrack | null {
 type Transition =
   | { kind: "idle" }
   | { kind: "preloaded"; trackId: string }
+  // Android-only. The next source has been queued on the active player's
+  // ExoPlayer timeline via prepareNext(); ExoPlayer will auto-advance into it
+  // gaplessly when the current source ends.
+  | { kind: "queued"; trackId: string }
   | {
       kind: "crossfading";
       nextTrackId: string;
@@ -255,6 +260,18 @@ function loadAndPlay(track: QueueTrack | null) {
 
 function abortTransition() {
   clearRampTimer();
+  if (transition.kind === "queued") {
+    // Android: clear the queued item from the active player's ExoPlayer
+    // timeline. The inactive slot was never used in this path.
+    if (Platform.OS === "android") {
+      try {
+        players[activeSlot].clearPreparedNext();
+      } catch {}
+    }
+    transition = { kind: "idle" };
+    expectedNextTrackId = null;
+    return;
+  }
   // The inactive slot is the one carrying the pending track during any
   // transition. Silence it and reset.
   const inactive = players[inactiveSlot()];
@@ -277,6 +294,17 @@ function preloadNext() {
   // Repeat-one would attempt to load the same source on the inactive player;
   // a single-player restart on didJustFinish handles this case fine.
   if (cur && next.id === cur.id) return;
+  if (Platform.OS === "android") {
+    // True gapless: queue the next source on the active player's ExoPlayer
+    // timeline. ExoPlayer pre-buffers and transitions seamlessly, firing
+    // `nextTrackStarted` when the boundary is crossed.
+    const { url } = resolveTrackUrl(next);
+    players[activeSlot].prepareNext({ uri: url });
+    transition = { kind: "queued", trackId: next.id };
+    return;
+  }
+  // iOS fallback: preload on the inactive slot. The status listener will
+  // start a short crossfade at the boundary to mask the AVPlayer swap gap.
   const slot = inactiveSlot();
   if (loadedTrackIds[slot] === next.id) {
     transition = { kind: "preloaded", trackId: next.id };
@@ -383,6 +411,29 @@ function finishCrossfade() {
 const remoteListeners: ReturnType<AudioPlayer["addListener"]>[] = [];
 const statusListeners: ReturnType<AudioPlayer["addListener"]>[] = [];
 
+// Android-only. Fires when ExoPlayer auto-advances from the current item to
+// the item queued via prepareNext(). The new track is already audible on the
+// same player; we only need to sync queue/scrobble/lockscreen state.
+function handleNextTrackStarted() {
+  if (transition.kind !== "queued") return;
+  const next = peekNextTrack();
+  if (!next) {
+    transition = { kind: "idle" };
+    return;
+  }
+  resetScrobbleState();
+  reportNowPlaying(next);
+  players[activeSlot].volume = getReplayGainFactor(next);
+  applyLockScreen(players[activeSlot], next);
+  loadedTrackIds[activeSlot] = next.id;
+  // The queue subscription will see the new currentIndex from useQueue.next()
+  // below — tell it to ignore that change since the player is already playing
+  // the new track.
+  expectedNextTrackId = next.id;
+  transition = { kind: "idle" };
+  useQueue.getState().next();
+}
+
 function makeStatusListener(slot: Slot) {
   return (status: AudioStatus) => {
     if (slot !== activeSlot) return;
@@ -405,13 +456,17 @@ function makeStatusListener(slot: Slot) {
         remaining <= crossfadeSeconds
       ) {
         startCrossfade(crossfadeSeconds);
-      } else if (
-        gaplessEnabled &&
-        transition.kind === "idle" &&
-        remaining > 0 &&
-        remaining <= 5
-      ) {
-        preloadNext();
+      } else if (gaplessEnabled && remaining > 0 && remaining <= 15) {
+        if (transition.kind === "idle") {
+          preloadNext();
+        } else if (
+          Platform.OS !== "android" &&
+          remaining <= 0.6 &&
+          transition.kind === "preloaded"
+        ) {
+          // iOS only — Android handles the boundary natively via ExoPlayer.
+          startCrossfade(0.5);
+        }
       }
     }
 
@@ -532,6 +587,14 @@ for (const slot of [0, 1] as const) {
       skipNext();
     }),
   );
+  if (Platform.OS === "android") {
+    remoteListeners.push(
+      p.addListener("nextTrackStarted", () => {
+        if (slot !== activeSlot) return;
+        handleNextTrackStarted();
+      }),
+    );
+  }
   statusListeners.push(
     p.addListener("playbackStatusUpdate", makeStatusListener(slot)),
   );

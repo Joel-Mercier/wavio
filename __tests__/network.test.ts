@@ -29,7 +29,10 @@ const setCurrentType = async (
   // Drain the fetch promise
   await Promise.resolve();
   await Promise.resolve();
-  return { listener, unsubscribe };
+  return {
+    listener: listener as ((state: { type: string }) => void) | null,
+    unsubscribe,
+  };
 };
 
 beforeEach(() => {
