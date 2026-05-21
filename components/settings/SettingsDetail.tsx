@@ -14,6 +14,7 @@ import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -386,6 +387,25 @@ export default function SettingsDetail() {
     setShowPodcastsAlertDialog(false);
   };
 
+  const handleDeletePodcastsConfigPress = () => {
+    clearTaddyPodcastsConfig();
+    setShowDeletePodcastsAlertDialog(false);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t(
+              "app.settings.podcastSettings.removePodcastConfigSuccessMessage",
+            )}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
   return (
     <Box className="h-full">
       <Box className="px-6 mt-6 pb-6">
@@ -577,7 +597,7 @@ export default function SettingsDetail() {
                 </FadeOutScaleDown>
                 {taddyPodcastApiKey && taddyPodcastUserId && (
                   <FadeOutScaleDown
-                    onPress={() => clearTaddyPodcastsConfig()}
+                    onPress={() => setShowDeletePodcastsAlertDialog(true)}
                     className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
                   >
                     <Text
@@ -590,6 +610,22 @@ export default function SettingsDetail() {
                 )}
               </VStack>
             </HStack>
+            <VStack className="gap-y-2 py-4">
+              <Heading className="text-white font-normal" size="md">
+                {t("app.settings.podcastSettings.getApiKeyLabel")}
+              </Heading>
+              <Text className="text-primary-100 text-sm">
+                {t("app.settings.podcastSettings.getApiKeyDescription")}
+              </Text>
+              <Text
+                className="text-emerald-400 text-sm underline"
+                onPress={() =>
+                  Linking.openURL("https://taddy.org/developers/podcast-api")
+                }
+              >
+                {t("app.settings.podcastSettings.getApiKeyAction")}
+              </Text>
+            </VStack>
             <HStack className="items-center gap-x-4 py-4 justify-between">
               <VStack className="gap-y-2 w-3/5">
                 <Heading className="text-white font-normal" size="md">
@@ -1454,6 +1490,47 @@ export default function SettingsDetail() {
             >
               <Text className="text-primary-800 font-bold text-lg">
                 {t("app.shared.save")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={showDeletePodcastsAlertDialog}
+        onClose={handleCloseDeletePodcastsAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t(
+                "app.settings.podcastSettings.removePodcastConfigConfirmLabel",
+              )}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t(
+                "app.settings.podcastSettings.removePodcastConfigConfirmDescription",
+              )}
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseDeletePodcastsAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handleDeletePodcastsConfigPress}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.delete")}
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>

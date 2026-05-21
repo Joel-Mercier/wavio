@@ -513,3 +513,128 @@ export const useSearchPodcasts = ({
     enabled: !!searchTerm,
   });
 };
+
+export const useInfiniteSearchPodcasts = ({
+  searchTerm,
+  limitPerPage = 25,
+  filterForTypes,
+  filterForCountries,
+  filterForLanguages,
+  filterForGenres,
+  filterForSeriesUuids,
+  filterForNotInSeriesUuids,
+  filterForPodcastContentType,
+  filterForPublishedAfter,
+  filterForPublishedBefore,
+  filterForLastUpdatedAfter,
+  filterForLastUpdatedBefore,
+  filterForTotalEpisodesLessThan,
+  filterForTotalEpisodesGreaterThan,
+  filterForDurationLessThan,
+  filterForDurationGreaterThan,
+  filterForHasTranscript,
+  sortBy,
+  matchBy,
+  isSafeMode,
+}: {
+  searchTerm: string;
+  limitPerPage?: number;
+  filterForTypes?: (keyof typeof SearchContentType)[];
+  filterForCountries?: (keyof typeof Country)[];
+  filterForLanguages?: (keyof typeof Language)[];
+  filterForGenres?: (keyof typeof Genre)[];
+  filterForSeriesUuids?: string[];
+  filterForNotInSeriesUuids?: string[];
+  filterForPodcastContentType?: (keyof typeof PodcastContentType)[];
+  filterForPublishedAfter?: number;
+  filterForPublishedBefore?: number;
+  filterForLastUpdatedAfter?: number;
+  filterForLastUpdatedBefore?: number;
+  filterForTotalEpisodesLessThan?: number;
+  filterForTotalEpisodesGreaterThan?: number;
+  filterForDurationLessThan?: number;
+  filterForDurationGreaterThan?: number;
+  filterForHasTranscript?: boolean;
+  sortBy?: keyof typeof SearchSortOrder;
+  matchBy?: keyof typeof SearchMatchType;
+  isSafeMode?: boolean;
+}) => {
+  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  return useInfiniteQuery({
+    queryKey: [
+      "taddyPodcasts:search:infinite",
+      searchTerm,
+      limitPerPage,
+      filterForTypes,
+      filterForCountries,
+      filterForLanguages,
+      filterForGenres,
+      filterForSeriesUuids,
+      filterForNotInSeriesUuids,
+      filterForPodcastContentType,
+      filterForPublishedAfter,
+      filterForPublishedBefore,
+      filterForLastUpdatedAfter,
+      filterForLastUpdatedBefore,
+      filterForTotalEpisodesLessThan,
+      filterForTotalEpisodesGreaterThan,
+      filterForDurationLessThan,
+      filterForDurationGreaterThan,
+      filterForHasTranscript,
+      sortBy,
+      matchBy,
+      isSafeMode,
+    ],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await search({
+        searchTerm,
+        page: pageParam,
+        limitPerPage,
+        filterForTypes,
+        filterForCountries,
+        filterForLanguages,
+        filterForGenres,
+        filterForSeriesUuids,
+        filterForNotInSeriesUuids,
+        filterForPodcastContentType,
+        filterForPublishedAfter,
+        filterForPublishedBefore,
+        filterForLastUpdatedAfter,
+        filterForLastUpdatedBefore,
+        filterForTotalEpisodesLessThan,
+        filterForTotalEpisodesGreaterThan,
+        filterForDurationLessThan,
+        filterForDurationGreaterThan,
+        filterForHasTranscript,
+        sortBy,
+        matchBy,
+        isSafeMode,
+      });
+      if (response.data?.search) {
+        const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
+        if (response.data.search.podcastSeries?.length) {
+          for (const podcastSeries of response.data.search.podcastSeries) {
+            podcastSeries.isFavorite = favoriteUuids.has(podcastSeries.uuid);
+          }
+        }
+        if (response.data.search.podcastEpisodes?.length) {
+          for (const podcastEpisode of response.data.search.podcastEpisodes) {
+            podcastEpisode.podcastSeries.isFavorite = favoriteUuids.has(
+              podcastEpisode.podcastSeries.uuid,
+            );
+          }
+        }
+      }
+      return response;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const series = lastPage.data?.search?.podcastSeries ?? [];
+      if (series.length < limitPerPage) {
+        return undefined;
+      }
+      return allPages.length + 1;
+    },
+    enabled: !!searchTerm,
+  });
+};

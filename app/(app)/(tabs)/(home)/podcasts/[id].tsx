@@ -7,7 +7,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { fromUnixTime } from "date-fns/fromUnixTime";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
@@ -17,7 +17,6 @@ import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -306,7 +305,7 @@ export default function PodcastScreen() {
               </HStack>
             </HStack>
             {podcast.description && (
-              <RichText className="text-md text-primary-100 mt-4">
+              <RichText className="text-md text-white mt-4">
                 {podcast.description}
               </RichText>
             )}

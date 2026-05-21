@@ -190,7 +190,42 @@ export default {
         configureTaddyPodcasts: "Configurer dans les paramètres",
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
         search: {
-          inputPlaceholder: "Rechercher des podcasts",
+          inputPlaceholder: "Rechercher",
+          filters: "Filtres",
+          apply: "Appliquer",
+          reset: "Réinitialiser",
+          sortByLabel: "Trier par",
+          sortByPlaceholder: "Par défaut",
+          matchByLabel: "Correspondance",
+          matchByPlaceholder: "Par défaut",
+          contentTypeLabel: "Type de contenu",
+          contentTypePlaceholder: "Tous",
+          languagesLabel: "Langues",
+          languagesPlaceholder: "Toutes les langues",
+          countriesLabel: "Pays",
+          countriesPlaceholder: "Tous les pays",
+          genresLabel: "Genres",
+          genresPlaceholder: "Tous les genres",
+          durationLabel: "Durée (minutes)",
+          durationMinPlaceholder: "Min",
+          durationMaxPlaceholder: "Max",
+          hasTranscriptLabel: "Avec transcription uniquement",
+          safeModeLabel: "Mode sans risque",
+          selectedCount_one: "{{count}} sélectionné",
+          selectedCount_other: "{{count}} sélectionnés",
+          sortOrders: {
+            EXACTNESS: "Exactitude",
+            POPULARITY: "Popularité",
+          },
+          matchTypes: {
+            EXACT_PHRASE: "Phrase exacte",
+            MOST_TERMS: "La plupart des termes",
+            ALL_TERMS: "Tous les termes",
+          },
+          contentTypes: {
+            AUDIO: "Audio",
+            VIDEO: "Vidéo",
+          },
         },
         genres: {
           PODCASTSERIES_ARTS: "Arts",
@@ -651,6 +686,12 @@ export default {
             "Supprimer la configuration des podcasts",
           removePodcastConfigConfirmDescription:
             "Supprimer la configuration de vos podcasts vous fera perdrez l'accès à vos podcasts. Êtes-vous sûr de vouloir continuer ?",
+          removePodcastConfigSuccessMessage:
+            "Configuration des podcasts supprimée",
+          getApiKeyLabel: "Obtenir une clé API Taddy",
+          getApiKeyDescription:
+            "Créez un compte sur taddy.org pour obtenir l'ID utilisateur et la clé API nécessaires.",
+          getApiKeyAction: "taddy.org/developers/podcast-api",
         },
       },
       internetRadioStations: {

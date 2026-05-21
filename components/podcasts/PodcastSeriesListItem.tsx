@@ -71,7 +71,7 @@ export default function PodcastSeriesListItem({
           <Heading
             size={layout === "horizontal" ? "sm" : "lg"}
             className="text-white"
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {podcast.name}
           </Heading>
