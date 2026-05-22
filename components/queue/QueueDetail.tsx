@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -50,7 +50,7 @@ import { ScrollView } from "../ui/scroll-view";
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
 const queueTrackToChild = (track: QueueTrack): Child =>
-  ({
+  (({
     id: track.id,
     title: track.title,
     artist: track.artist,
@@ -62,8 +62,8 @@ const queueTrackToChild = (track: QueueTrack): Child =>
     starred: track.starred,
     musicBrainzId: track.musicBrainzId,
     genre: track.genre,
-    contentType: track.contentType,
-  }) as Child;
+    contentType: track.contentType
+  }) as Child);
 
 export default function QueueDetail() {
   const [white, gray500, emerald500, gray200] = Uniwind.getCSSVariable([

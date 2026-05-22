@@ -7,8 +7,8 @@
     "icon": "./assets/images/splash-icon-dark.png",
     "scheme": "wavio",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#000000",
     "ios": {
-      "supportsTablet": true,
       "bundleIdentifier": "com.jmercier.wavio",
       "infoPlist": {
         "UIBackgroundModes": ["audio"]
@@ -25,9 +25,6 @@
         "backgroundColor": "#000000"
       },
       "package": "com.jmercier.wavio"
-    },
-    "androidNavigationBar": {
-      "enforceContrast": false
     },
     "web": {
       "bundler": "metro",
@@ -83,7 +80,8 @@
       [
         "expo-navigation-bar",
         {
-          "buttonStyle": "light"
+          "buttonStyle": "light",
+          "enforceContast": false
         }
       ],
       "react-native-google-cast",
@@ -97,7 +95,15 @@
           "project": "wavio",
           "organization": "joel-mercier"
         }
-      ]
+      ],
+      "@sentry/react-native",
+      [
+        "expo-status-bar",
+        {
+          "style": "light"
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

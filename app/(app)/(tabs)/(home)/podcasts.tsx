@@ -1,4 +1,4 @@
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";

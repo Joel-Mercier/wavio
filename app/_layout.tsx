@@ -1,4 +1,4 @@
-import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import { DarkTheme, ThemeProvider } from "expo-router/react-navigation";
 import "@/global.css";
 import {
   Inter_300Light,
@@ -8,6 +8,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
@@ -160,6 +161,7 @@ export default Sentry.wrap(function RootLayout() {
         <GluestackUIProvider mode="dark">
           <ThemeProvider value={DarkTheme}>
             <GestureHandlerRootView style={{ flex: 1 }}>
+              <StatusBar style="light" />
               <BottomSheetModalProvider>
                 <Stack
                   screenOptions={{

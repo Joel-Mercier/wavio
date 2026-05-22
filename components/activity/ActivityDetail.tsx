@@ -1,4 +1,4 @@
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { isThisWeek } from "date-fns/isThisWeek";
 import { isToday } from "date-fns/isToday";
 import { isYesterday } from "date-fns/isYesterday";

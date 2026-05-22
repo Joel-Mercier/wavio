@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useRoute } from "@react-navigation/native";
+import { useRoute } from "expo-router/react-navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import * as Clipboard from "expo-clipboard";

@@ -1,4 +1,4 @@
-import { useRoute } from "@react-navigation/native";
+import { useRoute } from "expo-router/react-navigation";
 import { Link } from "expo-router";
 import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
