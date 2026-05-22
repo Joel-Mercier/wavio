@@ -16,7 +16,7 @@ import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import NetInfo from "@react-native-community/netinfo";
-import * as Sentry from "@sentry/react-native";
+import { init as sentryInit, wrap as sentryWrap } from "@sentry/react-native";
 import {
   focusManager,
   onlineManager,
@@ -33,8 +33,8 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import * as z from "zod";
 import i18n, {
+  applyZodLocale,
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
@@ -43,7 +43,7 @@ import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 
-Sentry.init({
+sentryInit({
   dsn: "https://fdd67c7590ff4b680308d9dae6640460@o4511401546285056.ingest.de.sentry.io/4511401549758544",
 
   enabled: !__DEV__ && process.env.EXPO_PUBLIC_ENV === "production",
@@ -82,7 +82,7 @@ function onAppStateChange(status: AppStateStatus) {
   }
 }
 
-export default Sentry.wrap(function RootLayout() {
+export default sentryWrap(function RootLayout() {
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
   const [loaded] = useFonts({
@@ -136,7 +136,7 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     if (locale) {
       i18n.changeLanguage(locale);
-      z.config(z.locales[locale]());
+      applyZodLocale(locale);
       return;
     }
     const userLocales = getLocales();
@@ -148,7 +148,7 @@ export default Sentry.wrap(function RootLayout() {
     const next = (matching?.languageCode ?? "en") as TSupportedLanguages;
     setLocale(next);
     i18n.changeLanguage(next);
-    z.config(z.locales[next]());
+    applyZodLocale(next);
   }, [locale, setLocale]);
 
   if (!loaded) {

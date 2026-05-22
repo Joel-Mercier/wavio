@@ -1,0 +1,24 @@
+diff --git a/v4/classic/external.js b/v4/classic/external.js
+index 9567900bbb57099481c0ea5864fbf697d62021a5..dacc0bfdf5b7a98aad81e7408f08c82b1a25f846 100644
+--- a/v4/classic/external.js
++++ b/v4/classic/external.js
+@@ -11,7 +11,6 @@ config(en());
+ export { globalRegistry, registry, config, $output, $input, $brand, clone, regexes, treeifyError, prettifyError, formatError, flattenError, TimePrecision, util, NEVER, } from "../core/index.js";
+ export { toJSONSchema } from "../core/json-schema-processors.js";
+ export { fromJSONSchema } from "./from-json-schema.js";
+-export * as locales from "../locales/index.js";
+ // iso
+ // must be exported from top-level
+ // https://github.com/colinhacks/zod/issues/4491
+diff --git a/v4/core/index.js b/v4/core/index.js
+index d334515bf004600f2e55ff85e3730f1b2f2ff703..a847f37f6dfe003cd40fa653eecbd3d8cffcffeb 100644
+--- a/v4/core/index.js
++++ b/v4/core/index.js
+@@ -6,7 +6,6 @@ export * from "./checks.js";
+ export * from "./versions.js";
+ export * as util from "./util.js";
+ export * as regexes from "./regexes.js";
+-export * as locales from "../locales/index.js";
+ export * from "./registries.js";
+ export * from "./doc.js";
+ export * from "./api.js";

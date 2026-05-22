@@ -1,7 +1,10 @@
 const { withUniwindConfig } = require("uniwind/metro");
 const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
-const config = getSentryExpoConfig(__dirname);
+const config = getSentryExpoConfig(__dirname, {
+  includeWebReplay: false,
+  includeWebFeedback: false,
+});
 const { transformer, resolver } = config;
 
 config.transformer = {
