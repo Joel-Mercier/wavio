@@ -4,6 +4,8 @@ import {
   getActiveSlot,
   subscribeActiveSlot,
 } from "@/services/player";
+import useJukebox from "@/stores/jukebox";
+import useQueue from "@/stores/queue";
 
 export type PlaybackSnapshot = {
   playing: boolean;
@@ -11,11 +13,32 @@ export type PlaybackSnapshot = {
   duration: number;
 };
 
-let snapshot: PlaybackSnapshot = {
-  playing: getActivePlayer().playing,
-  currentTime: getActivePlayer().currentTime ?? 0,
-  duration: getActivePlayer().duration ?? 0,
-};
+function readLocalSnapshot(): PlaybackSnapshot {
+  const p = getActivePlayer();
+  return {
+    playing: p.playing,
+    currentTime: p.currentTime ?? 0,
+    duration: p.duration ?? 0,
+  };
+}
+
+function readJukeboxSnapshot(): PlaybackSnapshot {
+  const status = useJukebox.getState().status;
+  const current = useQueue.getState().getCurrent();
+  return {
+    playing: status?.playing ?? false,
+    currentTime: status?.position ?? 0,
+    duration: current?.duration ?? 0,
+  };
+}
+
+function readSnapshot(): PlaybackSnapshot {
+  return useJukebox.getState().active
+    ? readJukeboxSnapshot()
+    : readLocalSnapshot();
+}
+
+let snapshot: PlaybackSnapshot = readSnapshot();
 
 const listeners = new Set<() => void>();
 
@@ -38,6 +61,7 @@ function attachToActive() {
   const active = getActivePlayer();
   return active.addListener("playbackStatusUpdate", (status: AudioStatus) => {
     if (getActivePlayer() !== active) return;
+    if (useJukebox.getState().active) return;
     pushSnapshot({
       playing: status.playing,
       currentTime: status.currentTime ?? 0,
@@ -56,12 +80,18 @@ subscribeActiveSlot(() => {
     activeSub?.remove?.();
   } catch {}
   activeSub = attachToActive();
-  const active = getActivePlayer();
-  pushSnapshot({
-    playing: active.playing,
-    currentTime: active.currentTime ?? 0,
-    duration: active.duration ?? 0,
-  });
+  pushSnapshot(readSnapshot());
+});
+
+// Jukebox status changes (poll-driven) and queue track changes both shift the
+// snapshot when jukebox is the active source.
+useJukebox.subscribe(() => {
+  pushSnapshot(readSnapshot());
+});
+
+useQueue.subscribe(() => {
+  if (!useJukebox.getState().active) return;
+  pushSnapshot(readSnapshot());
 });
 
 export function subscribePlaybackStatus(cb: () => void) {

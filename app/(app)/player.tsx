@@ -32,6 +32,7 @@ import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -62,6 +63,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
+import {
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+} from "@/components/ui/slider";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -77,6 +84,11 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import {
+  activate as activateJukebox,
+  deactivate as deactivateJukebox,
+  jukeboxSetGain,
+} from "@/services/jukebox";
+import {
   getCurrentTime,
   isPlaying as isLocalPlaying,
   pause as pauseLocal,
@@ -87,6 +99,7 @@ import {
   togglePlayPause,
 } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
+import useJukebox from "@/stores/jukebox";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
 
@@ -146,6 +159,7 @@ export default function PlayerScreen() {
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const jukeboxSheetRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { handleSheetPositionChange: handleSleepSheetPositionChange } =
@@ -154,6 +168,11 @@ export default function PlayerScreen() {
     useBottomSheetBackHandler(bottomSheetArtistsModalRef);
   const { handleSheetPositionChange: handleShareSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetShareModalRef);
+  const { handleSheetPositionChange: handleJukeboxSheetPositionChange } =
+    useBottomSheetBackHandler(jukeboxSheetRef);
+  const jukeboxActive = useJukebox((s) => s.active);
+  const jukeboxGain = useJukebox((s) => s.gain);
+  const jukeboxStatus = useJukebox((s) => s.status);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -445,6 +464,48 @@ export default function PlayerScreen() {
   const handleSleepTimerPress = () => {
     bottomSheetModalRef.current?.dismiss();
     sleepTimerSheetRef.current?.present();
+  };
+
+  const handleJukeboxPress = () => {
+    jukeboxSheetRef.current?.present();
+  };
+
+  const handleJukeboxToggle = async () => {
+    if (jukeboxActive) {
+      try {
+        const { position } = await deactivateJukebox();
+        if (position > 0) seekLocal(position);
+      } catch (e) {
+        console.error(e);
+      }
+      jukeboxSheetRef.current?.dismiss();
+      return;
+    }
+    const position = getCurrentTime();
+    const wasPlaying = isLocalPlaying();
+    pauseLocal();
+    try {
+      await activateJukebox({ position, autoplay: wasPlaying });
+    } catch (error) {
+      console.error(error);
+      if (wasPlaying) playLocal();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.player.jukeboxErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleJukeboxGainChange = (value: number) => {
+    jukeboxSetGain(value / 100).catch(() => {});
   };
 
   const handleSleepPresetPress = (minutes: number) => {
@@ -886,6 +947,19 @@ export default function PlayerScreen() {
                 <CastButton
                   style={{ width: 24, height: 24, tintColor: "white" }}
                 />
+                {capabilities.jukebox && !isRadio && !castSession && (
+                  <FadeOut onPress={handleJukeboxPress}>
+                    <Speaker
+                      size={24}
+                      color={jukeboxActive ? emerald500 : "white"}
+                    />
+                    {jukeboxActive && (
+                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                        <Box className="bg-emerald-500 rounded-full size-1" />
+                      </Box>
+                    )}
+                  </FadeOut>
+                )}
                 <FadeOut onPress={() => router.navigate("/queue")}>
                   <ListMusic size={24} color="white" />
                 </FadeOut>
@@ -1228,6 +1302,90 @@ export default function PlayerScreen() {
                   </Text>
                 </FadeOutScaleDown>
               </HStack>
+            </Box>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={jukeboxSheetRef}
+          onChange={handleJukeboxSheetPositionChange}
+          backgroundStyle={{
+            backgroundColor: "rgb(41, 41, 41)",
+          }}
+          handleIndicatorStyle={{
+            backgroundColor: "#b3b3b3",
+          }}
+          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+        >
+          <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+            <Box className="p-6 w-full mb-12">
+              <HStack className="items-center mb-6">
+                <Speaker
+                  size={24}
+                  color={jukeboxActive ? emerald500 : gray200}
+                />
+                <Heading
+                  className="ml-4 text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {t("app.player.jukebox")}
+                </Heading>
+              </HStack>
+              <VStack className="gap-y-6">
+                <FadeOutScaleDown onPress={handleJukeboxToggle}>
+                  <Text
+                    className="text-lg"
+                    style={{
+                      color: jukeboxActive ? emerald500 : gray200,
+                    }}
+                  >
+                    {jukeboxActive
+                      ? t("app.player.jukeboxOn")
+                      : t("app.player.jukeboxOff")}
+                  </Text>
+                </FadeOutScaleDown>
+                {jukeboxActive && (
+                  <VStack className="gap-y-2">
+                    <Text className="text-sm text-primary-100">
+                      {t("app.player.jukeboxGain")}
+                    </Text>
+                    <Slider
+                      defaultValue={Math.round(jukeboxGain * 100)}
+                      value={Math.round(jukeboxGain * 100)}
+                      step={1}
+                      minValue={0}
+                      maxValue={100}
+                      size="md"
+                      orientation="horizontal"
+                      isDisabled={false}
+                      isReversed={false}
+                      onChange={handleJukeboxGainChange}
+                    >
+                      <SliderTrack
+                        className="bg-primary-400"
+                        hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
+                      >
+                        <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+                      </SliderTrack>
+                      <SliderThumb
+                        className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                      />
+                    </Slider>
+                    {jukeboxStatus && (
+                      <Text className="text-sm text-primary-100 mt-2">
+                        {t("app.player.jukeboxStatus", {
+                          state: jukeboxStatus.playing
+                            ? t("app.player.jukeboxStatePlaying")
+                            : t("app.player.jukeboxStatePaused"),
+                          index: (jukeboxStatus.currentIndex ?? 0) + 1,
+                          total: queueLength,
+                        })}
+                      </Text>
+                    )}
+                  </VStack>
+                )}
+              </VStack>
             </Box>
           </BottomSheetView>
         </BottomSheetModal>

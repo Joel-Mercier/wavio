@@ -11,6 +11,7 @@ export type BackendCapabilities = {
   libraryScan: boolean;
   playlistDescription: boolean;
   replayGain: boolean;
+  jukebox: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -24,6 +25,7 @@ const SUBSONIC: BackendCapabilities = {
   libraryScan: true,
   playlistDescription: true,
   replayGain: true,
+  jukebox: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -46,6 +48,7 @@ const JELLYFIN: BackendCapabilities = {
   // Jellyfin's BaseItemDto does not expose ReplayGain tags, so client-side
   // gain adjustment has no data to act on.
   replayGain: false,
+  jukebox: false,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

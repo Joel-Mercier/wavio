@@ -657,6 +657,28 @@ export default {
             "Supprimer cet historique est irréversible. Êtes-vous sûr de vouloir continuer ?",
           activitySuccessMessage: "Historique d'activité supprimé",
         },
+        backupSettings: {
+          title: "Sauvegarde et restauration",
+          exportLabel: "Exporter une sauvegarde",
+          exportDescription:
+            "Enregistrez vos serveurs, préférences et données de bibliothèque dans un fichier unique que vous pouvez partager ou transférer sur un autre appareil.",
+          exportAction: "Exporter",
+          exportSuccessMessage: "Sauvegarde exportée",
+          exportErrorMessage: "Impossible d'exporter la sauvegarde",
+          restoreLabel: "Restaurer une sauvegarde",
+          restoreDescription:
+            "Remplacez tous vos serveurs, préférences et données de bibliothèque par le contenu d'un fichier de sauvegarde. Les fichiers audio téléchargés ne sont pas restaurés.",
+          restoreAction: "Restaurer",
+          restoreConfirmTitle: "Remplacer toutes les données ?",
+          restoreConfirmDescription:
+            "La restauration supprimera vos serveurs, préférences et données de bibliothèque actuels et les remplacera par la sauvegarde. Cette action est irréversible.",
+          restoreInvalidFileMessage:
+            "Le fichier sélectionné n'est pas une sauvegarde Wavio valide",
+          restoreErrorMessage: "Impossible de restaurer la sauvegarde",
+          restartRequiredTitle: "Redémarrage requis",
+          restartRequiredDescription:
+            "Sauvegarde restaurée. Veuillez fermer complètement Wavio puis le rouvrir pour charger les données restaurées.",
+        },
         podcastSettings: {
           title: "Paramètres des podcasts",
           configurePodcastsLabel: "Configurer les podcasts",
@@ -858,6 +880,15 @@ export default {
         sleepTimerEndOfTrack: "Fin du titre",
         sleepTimerMinutes: "{{count}} minutes",
         sleepTimerActive: "Minuteur · {{label}}",
+        jukebox: "Jukebox",
+        jukeboxOn: "Activé",
+        jukeboxOff: "Désactivé",
+        jukeboxGain: "Volume",
+        jukeboxStatus: "{{state}} · {{index}}/{{total}}",
+        jukeboxStatePlaying: "Lecture",
+        jukeboxStatePaused: "En pause",
+        jukeboxErrorMessage:
+          "Impossible de se connecter au jukebox du serveur. Vérifiez vos permissions.",
       },
       shares: {
         title: "Partages",

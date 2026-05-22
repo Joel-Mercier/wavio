@@ -636,6 +636,28 @@ export default {
             "Deleting this is irreversible. Please confirm if you want to proceed.",
           activitySuccessMessage: "Activity history successfully deleted",
         },
+        backupSettings: {
+          title: "Backup & restore",
+          exportLabel: "Export backup",
+          exportDescription:
+            "Save your servers, preferences and library data as a single file you can share or move to another device.",
+          exportAction: "Export",
+          exportSuccessMessage: "Backup exported",
+          exportErrorMessage: "Could not export the backup",
+          restoreLabel: "Restore backup",
+          restoreDescription:
+            "Replace all servers, preferences and library data with the contents of a backup file. Downloaded audio files are not restored.",
+          restoreAction: "Restore",
+          restoreConfirmTitle: "Replace all data?",
+          restoreConfirmDescription:
+            "Restoring will erase your current servers, preferences and library data and replace them with the backup. This cannot be undone.",
+          restoreInvalidFileMessage:
+            "The selected file is not a valid Wavio backup",
+          restoreErrorMessage: "Could not restore the backup",
+          restartRequiredTitle: "Restart required",
+          restartRequiredDescription:
+            "Backup restored. Please force-close Wavio and reopen it to load the restored data.",
+        },
         podcastSettings: {
           title: "Podcast settings",
           configurePodcastsLabel: "Configure podcasts",
@@ -831,6 +853,15 @@ export default {
         sleepTimerEndOfTrack: "End of track",
         sleepTimerMinutes: "{{count}} minutes",
         sleepTimerActive: "Sleep timer · {{label}}",
+        jukebox: "Jukebox",
+        jukeboxOn: "On",
+        jukeboxOff: "Off",
+        jukeboxGain: "Volume",
+        jukeboxStatus: "{{state}} · {{index}}/{{total}}",
+        jukeboxStatePlaying: "Playing",
+        jukeboxStatePaused: "Paused",
+        jukeboxErrorMessage:
+          "Could not connect to the server's jukebox. Check your permissions.",
       },
       shares: {
         title: "Shares",

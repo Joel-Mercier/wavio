@@ -59,6 +59,11 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import {
+  exportBackup,
+  pickBackupFile,
+  restoreBackup,
+} from "@/services/backup";
+import {
   isEqualizerAvailable,
   openSystemEqualizer,
 } from "@/services/equalizer";
@@ -106,6 +111,10 @@ export default function SettingsDetail() {
   const [showPodcastsAlertDialog, setShowPodcastsAlertDialog] = useState(false);
   const [showActivityAlertDialog, setShowActivityAlertDialog] = useState(false);
   const [showDeletePodcastsAlertDialog, setShowDeletePodcastsAlertDialog] =
+    useState(false);
+  const [showRestoreConfirmAlertDialog, setShowRestoreConfirmAlertDialog] =
+    useState(false);
+  const [showRestartRequiredAlertDialog, setShowRestartRequiredAlertDialog] =
     useState(false);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
@@ -404,6 +413,71 @@ export default function SettingsDetail() {
         </Toast>
       ),
     });
+  };
+
+  const handleExportBackupPress = async () => {
+    try {
+      await exportBackup();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.settings.backupSettings.exportSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error(error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.settings.backupSettings.exportErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleCloseRestoreConfirmAlertDialog = () => {
+    setShowRestoreConfirmAlertDialog(false);
+  };
+
+  const handleConfirmRestoreBackupPress = async () => {
+    setShowRestoreConfirmAlertDialog(false);
+    try {
+      const backup = await pickBackupFile();
+      if (!backup) return;
+      restoreBackup(backup);
+      setShowRestartRequiredAlertDialog(true);
+    } catch (error) {
+      console.error(error);
+      const isValidationError = error instanceof z.ZodError;
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t(
+                isValidationError
+                  ? "app.settings.backupSettings.restoreInvalidFileMessage"
+                  : "app.settings.backupSettings.restoreErrorMessage",
+              )}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
   };
 
   return (
@@ -1005,6 +1079,52 @@ export default function SettingsDetail() {
                 </Text>
               </FadeOutScaleDown>
             </HStack>
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.backupSettings.title")}
+            </Heading>
+            <HStack className="flex-1 items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.backupSettings.exportLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.backupSettings.exportDescription")}
+                </Text>
+              </VStack>
+              <FadeOutScaleDown
+                onPress={handleExportBackupPress}
+                className="flex-1 items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+              >
+                <Text
+                  numberOfLines={1}
+                  className="text-primary-800 font-bold text-lg"
+                >
+                  {t("app.settings.backupSettings.exportAction")}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
+            <HStack className="flex-1 items-center gap-x-4 py-4 justify-between">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.backupSettings.restoreLabel")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.backupSettings.restoreDescription")}
+                </Text>
+              </VStack>
+              <FadeOutScaleDown
+                onPress={() => setShowRestoreConfirmAlertDialog(true)}
+                className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+              >
+                <Text
+                  numberOfLines={1}
+                  className="text-primary-800 font-bold text-lg"
+                >
+                  {t("app.settings.backupSettings.restoreAction")}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
           </VStack>
         </ScrollView>
       </Box>
@@ -1531,6 +1651,72 @@ export default function SettingsDetail() {
             >
               <Text className="text-primary-800 font-bold text-lg">
                 {t("app.shared.delete")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={showRestoreConfirmAlertDialog}
+        onClose={handleCloseRestoreConfirmAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.settings.backupSettings.restoreConfirmTitle")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t("app.settings.backupSettings.restoreConfirmDescription")}
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseRestoreConfirmAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handleConfirmRestoreBackupPress}
+              className="items-center justify-center py-3 px-8 border border-red-500 bg-red-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.settings.backupSettings.restoreAction")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={showRestartRequiredAlertDialog}
+        onClose={() => setShowRestartRequiredAlertDialog(false)}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.settings.backupSettings.restartRequiredTitle")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t("app.settings.backupSettings.restartRequiredDescription")}
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={() => setShowRestartRequiredAlertDialog(false)}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.close")}
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
