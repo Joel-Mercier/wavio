@@ -19,20 +19,23 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
-- Podcasts screen with podcast series and episodes (provided by Taddy API, 500 monthly free requests)
+- Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Internet radio stations, listen to radio streams
-- Offline downloads of favorited songs
+- Offline downloads of favorited songs, downloads management screen
 - Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen with now playing users
 - Share screen with shareable links
 - Servers screen with multiple servers support
-- Settings screen with server scanning, offline downloads, playback, content and display settings
+- Settings screen with server scanning, offline downloads, playback, content, display and backup settings
 - Gapless playback, crossfade, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
+- Synced lyrics support and retrieval through lrclib.net
 - Android homescreen widgets
 - Android Auto support
 - Navidrome smart playlists beta support
+- Navidrome/Opensubsonic jukebox mode support
+- Backup and restore
 - French and English translations
 
 ## Development
