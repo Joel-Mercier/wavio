@@ -15,23 +15,20 @@ jest.mock("@/config/storage", () => {
 });
 
 const mockChangeLanguage = jest.fn();
+const mockApplyZodLocale = jest.fn();
+const mockZodConfig = jest.fn();
+const frLocale = { fr: true };
 jest.mock("@/config/i18n", () => ({
   __esModule: true,
   default: {
     changeLanguage: (lng: string) => mockChangeLanguage(lng),
   },
+  applyZodLocale: (lng: "en" | "fr") => {
+    mockApplyZodLocale(lng);
+    if (lng === "fr") mockZodConfig(frLocale);
+    else mockZodConfig({});
+  },
 }));
-
-const mockZodConfig = jest.fn();
-const frLocale = { fr: true };
-jest.mock("zod", () => {
-  const actual = jest.requireActual("zod");
-  return {
-    ...actual,
-    config: (...args: unknown[]) => mockZodConfig(...args),
-    locales: { en: () => ({}), fr: () => frLocale },
-  };
-});
 
 import { useAppBase } from "@/stores/app";
 
@@ -59,6 +56,7 @@ const reset = () =>
 beforeEach(() => {
   reset();
   mockChangeLanguage.mockClear();
+  mockApplyZodLocale.mockClear();
   mockZodConfig.mockClear();
 });
 
