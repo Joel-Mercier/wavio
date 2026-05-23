@@ -155,7 +155,7 @@ export function buildHomeFeed({
     rand,
   );
 
-  if (songGenres[0]) {
+  if (capabilities.songLists && songGenres[0]) {
     sections.push({
       id: `songsByGenre:${songGenres[0].value}`,
       kind: "songsByGenre",
@@ -193,7 +193,9 @@ export function buildHomeFeed({
     });
   }
 
-  sections.push({ id: "randomSongs", kind: "randomSongs" });
+  if (capabilities.songLists) {
+    sections.push({ id: "randomSongs", kind: "randomSongs" });
+  }
 
   if (featuredArtists[2]) {
     sections.push({
@@ -203,7 +205,11 @@ export function buildHomeFeed({
     });
   }
 
-  if (songGenres[1] && songGenres[1].value !== songGenres[0]?.value) {
+  if (
+    capabilities.songLists &&
+    songGenres[1] &&
+    songGenres[1].value !== songGenres[0]?.value
+  ) {
     sections.push({
       id: `songsByGenre:${songGenres[1].value}`,
       kind: "songsByGenre",

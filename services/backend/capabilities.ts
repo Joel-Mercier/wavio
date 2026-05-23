@@ -12,6 +12,7 @@ export type BackendCapabilities = {
   playlistDescription: boolean;
   replayGain: boolean;
   jukebox: boolean;
+  songLists: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -26,6 +27,7 @@ const SUBSONIC: BackendCapabilities = {
   playlistDescription: true,
   replayGain: true,
   jukebox: true,
+  songLists: false,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -49,6 +51,7 @@ const JELLYFIN: BackendCapabilities = {
   // gain adjustment has no data to act on.
   replayGain: false,
   jukebox: false,
+  songLists: true,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {
