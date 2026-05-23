@@ -3,7 +3,7 @@ import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
 import { getColors } from "react-native-image-colors";
 import {
   getPlaybackSnapshot,
-  subscribePlaybackStatus,
+  subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
@@ -148,7 +148,7 @@ export function initWidget(queryClient: QueryClient) {
     void pushNowPlaying();
   });
 
-  subscribePlaybackStatus(() => {
+  subscribePlaybackState(() => {
     const playing = getPlaybackSnapshot().playing;
     if (playing === lastIsPlaying) return;
     lastIsPlaying = playing;

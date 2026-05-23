@@ -1,7 +1,7 @@
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import type { FuseResult } from "fuse.js";
 import Fuse from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -20,6 +20,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useStarred2 } from "@/hooks/backend/useLists";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -91,6 +92,9 @@ export default function FavoritesSearch() {
     return result;
   }, [starredData, query, sort]);
 
+  const trackList = useMemo(() => data?.map((r) => r.item), [data]);
+  const handleTrackPress = useTrackListPress(trackList);
+
   return (
     <Box className="h-full">
       <Box className="bg-primary-600 px-6 py-6">
@@ -139,7 +143,7 @@ export default function FavoritesSearch() {
               <TrackListItem
                 track={item.item}
                 index={index}
-                trackList={data?.map((r) => r.item)}
+                onPress={handleTrackPress}
               />
             )}
           </Box>

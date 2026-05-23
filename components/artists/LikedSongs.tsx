@@ -3,10 +3,10 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
@@ -16,7 +16,7 @@ import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Animated, {
@@ -68,6 +68,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -136,9 +137,11 @@ export default function LikedSongs() {
 
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
-  const isPlayingFromList = !!(
-    playingTrack && likedSongs.some((track) => track.id === playingTrack.id)
+  const trackIdSet = useMemo(
+    () => new Set(likedSongs.map((t) => t.id)),
+    [likedSongs],
   );
+  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
 
   const handleTrackPressCallback = () => {
     if (data?.artist) {
@@ -166,6 +169,8 @@ export default function LikedSongs() {
     playTracks(likedSongs.map(childToTrack), 0);
     handleTrackPressCallback();
   };
+
+  const handleTrackPress = useTrackListPress(likedSongs);
 
   const handleFavoritePress = () => {
     queryClient.setQueryData(["artist", id], {
@@ -458,7 +463,7 @@ export default function LikedSongs() {
                   key={song.id}
                   track={song}
                   index={index}
-                  trackList={likedSongs}
+                  onPress={handleTrackPress}
                   onPlayCallback={handleTrackPressCallback}
                 />
               ))}

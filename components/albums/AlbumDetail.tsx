@@ -3,13 +3,13 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { parse } from "date-fns/parse";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
@@ -26,7 +26,13 @@ import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Animated, {
@@ -81,6 +87,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
@@ -402,9 +409,12 @@ export default function AlbumDetail() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
-  const isPlayingFromList = !!(
-    playingTrack && albumTracks?.some((track) => track.id === playingTrack.id)
+  const handleTrackPress = useTrackListPress(albumTracks);
+  const trackIdSet = useMemo(
+    () => new Set(albumTracks?.map((t) => t.id)),
+    [albumTracks],
   );
+  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
@@ -624,7 +634,7 @@ export default function AlbumDetail() {
             <TrackListItem
               track={item}
               index={index}
-              trackList={data?.album?.song}
+              onPress={handleTrackPress}
               className="px-6"
               onPlayCallback={handleTrackPressCallback}
               showCoverArt={false}

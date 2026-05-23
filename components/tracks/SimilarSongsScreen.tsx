@@ -1,11 +1,12 @@
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -30,6 +31,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSimilarSongs2 } from "@/hooks/backend/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useQueue from "@/stores/queue";
@@ -63,11 +65,11 @@ export default function SimilarSongsScreen() {
   const { data, isLoading, error } = useSimilarSongs2(id, { count: 50 });
   const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
   const songs = data?.similarSongs2.song;
+  const handleTrackPress = useTrackListPress(songs);
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
-  const isPlayingFromList = !!(
-    playingTrack && songs?.some((track) => track.id === playingTrack.id)
-  );
+  const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
+  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -123,7 +125,7 @@ export default function SimilarSongsScreen() {
             <TrackListItem
               track={item}
               index={index}
-              trackList={songs}
+              onPress={handleTrackPress}
               showCoverArt
               className="px-6"
             />

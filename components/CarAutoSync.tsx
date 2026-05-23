@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import i18n from "@/config/i18n";
 import {
   getPlaybackSnapshot,
-  subscribePlaybackStatus,
+  subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import {
   CarAutoBridge,
@@ -142,7 +142,7 @@ export default function CarAutoSync() {
       }
     });
 
-    const unsubPlayback = subscribePlaybackStatus(pushPlaybackState);
+    const unsubPlayback = subscribePlaybackState(pushPlaybackState);
 
     // Throttled position pulse so AA's timeline keeps advancing even though
     // we don't drive a real Player.

@@ -3,11 +3,11 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
@@ -82,6 +82,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -290,6 +291,7 @@ export default function ArtistDetail() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isPlayingFromArtist = playingTrack?.artistId === id;
+  const handleTopSongPress = useTrackListPress(topSongsData?.topSongs.song);
   const handlePlayPress = async () => {
     if (isPlayingFromArtist) {
       togglePlayPause();
@@ -624,7 +626,7 @@ export default function ArtistDetail() {
                           showIndex
                           track={song}
                           index={index}
-                          trackList={topSongsData?.topSongs.song}
+                          onPress={handleTopSongPress}
                           onPlayCallback={handleTrackPressCallback}
                         />
                       ))}

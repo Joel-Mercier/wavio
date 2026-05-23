@@ -551,9 +551,6 @@ export default function PlayerScreen() {
       { id: trackId },
       {
         onSuccess: () => {
-          useQueue.getState().updateTrack(trackId, {
-            starred: new Date().toISOString(),
-          });
           toast.show({
             placement: "top",
             duration: 3000,
@@ -592,7 +589,6 @@ export default function PlayerScreen() {
       { id: trackId },
       {
         onSuccess: () => {
-          useQueue.getState().updateTrack(trackId, { starred: undefined });
           toast.show({
             placement: "top",
             duration: 3000,

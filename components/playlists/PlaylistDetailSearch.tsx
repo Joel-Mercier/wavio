@@ -1,7 +1,7 @@
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Fuse, { type FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -19,6 +19,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { usePlaylist } from "@/hooks/backend/usePlaylists";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
@@ -108,6 +109,9 @@ export default function PlaylistDetailSearch() {
     return result;
   }, [playlistData, sort, query, id, getPlaylistTrackPositions]);
 
+  const trackList = useMemo(() => data?.map((r) => r.item), [data]);
+  const handleTrackPress = useTrackListPress(trackList);
+
   return (
     <Box className="h-full">
       <Box className="bg-primary-600 px-6 py-6">
@@ -156,7 +160,7 @@ export default function PlaylistDetailSearch() {
               <TrackListItem
                 track={item.item}
                 index={index}
-                trackList={data?.map((r) => r.item)}
+                onPress={handleTrackPress}
               />
             )}
           </Box>

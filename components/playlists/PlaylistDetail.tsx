@@ -3,12 +3,12 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -76,6 +76,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
@@ -94,6 +95,10 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
+
+const SKELETON_DATA = loadingData(16);
+const EMPTY_DATA: Child[] = [];
+const keyExtractor = (item: Child, index: number) => item.id ?? String(index);
 
 export default function PlaylistDetail() {
   const [white, emerald500, gray200, red500] = Uniwind.getCSSVariable([
@@ -350,7 +355,7 @@ export default function PlaylistDetail() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
 
-  const handleTrackPressCallback = () => {
+  const handleTrackPressCallback = useCallback(() => {
     if (playlistData?.playlist) {
       addRecentPlay({
         id,
@@ -365,7 +370,7 @@ export default function PlaylistDetail() {
         coverArt: playlistData.playlist.coverArt,
       });
     }
-  };
+  }, [playlistData?.playlist, id, addRecentPlay, recordActivity]);
 
   useEffect(() => {
     if (clipoardCopyDone) {
@@ -466,8 +471,31 @@ export default function PlaylistDetail() {
     }
   }, [playlistData, sort, id, getPlaylistTrackPositions]);
 
-  const isPlayingFromList = !!(
-    playingTrack && data?.some((track) => track.id === playingTrack.id)
+  const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
+  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+
+  const isLoadingRows = !playlistData;
+  const handleTrackPress = useTrackListPress(data);
+  const renderRow = useCallback(
+    ({ item, index }: { item: Child; index: number }) =>
+      isLoadingRows ? (
+        <TrackListItemSkeleton index={index} className="px-6" />
+      ) : (
+        <TrackListItem
+          track={item}
+          index={index}
+          onPress={handleTrackPress}
+          handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
+          onPlayCallback={handleTrackPressCallback}
+          className="px-6"
+        />
+      ),
+    [
+      isLoadingRows,
+      handleTrackPress,
+      handleDeleteFromPlaylistPress,
+      handleTrackPressCallback,
+    ],
   );
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -529,22 +557,9 @@ export default function PlaylistDetail() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={!playlistData ? loadingData(16) : data || []}
-        keyExtractor={(item: Child) => item.id}
-        renderItem={({ item, index }: { item: Child; index: number }) =>
-          !playlistData ? (
-            <TrackListItemSkeleton index={index} className="px-6" />
-          ) : (
-            <TrackListItem
-              track={item}
-              index={index}
-              trackList={data ?? undefined}
-              handleRemoveFromPlaylist={handleDeleteFromPlaylistPress}
-              onPlayCallback={handleTrackPressCallback}
-              className="px-6"
-            />
-          )
-        }
+        data={!playlistData ? SKELETON_DATA : data || EMPTY_DATA}
+        keyExtractor={keyExtractor}
+        renderItem={renderRow}
         ListEmptyComponent={() => (!playlistData ? null : <EmptyDisplay />)}
         ListHeaderComponent={() => (
           <LinearGradient

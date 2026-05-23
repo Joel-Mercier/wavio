@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from "react";
 import {
   getPlaybackSnapshot,
-  subscribePlaybackStatus,
+  subscribePlaybackProgress,
 } from "@/hooks/player/playbackSnapshot";
 
 export function usePlaybackProgress() {
-  return useSyncExternalStore(subscribePlaybackStatus, getPlaybackSnapshot);
+  return useSyncExternalStore(subscribePlaybackProgress, getPlaybackSnapshot);
 }

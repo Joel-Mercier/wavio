@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
+import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -163,17 +164,19 @@ export default sentryWrap(function RootLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
               <StatusBar style="light" />
               <BottomSheetModalProvider>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                  }}
-                >
-                  <Stack.Screen name="(app)" />
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <OfflineBanner />
-                <CarAutoSync />
+                <TrackActionsProvider>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                    }}
+                  >
+                    <Stack.Screen name="(app)" />
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <OfflineBanner />
+                  <CarAutoSync />
+                </TrackActionsProvider>
               </BottomSheetModalProvider>
             </GestureHandlerRootView>
           </ThemeProvider>

@@ -58,7 +58,6 @@ export default function FloatingPlayer() {
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
   const shuffle = useQueue((s) => s.shuffle);
-  const updateTrack = useQueue((s) => s.updateTrack);
   const queryClient = useQueryClient();
 
   const isRadio = !!playingTrack?.isRadio;
@@ -91,7 +90,6 @@ export default function FloatingPlayer() {
       { id: trackId },
       {
         onSuccess: () => {
-          updateTrack(trackId, { starred: starredAt });
           const starredTrack = { ...playingTrack, starred: starredAt };
           queryClient.setQueriesData<{
             // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
@@ -157,7 +155,6 @@ export default function FloatingPlayer() {
       { id: trackId },
       {
         onSuccess: () => {
-          updateTrack(trackId, { starred: undefined });
           queryClient.setQueriesData<{
             // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
             "subsonic-response"?: any;

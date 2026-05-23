@@ -5,6 +5,7 @@ import {
   star,
   unstar,
 } from "@/services/backend/mediaAnnotation";
+import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
 // Star/unstar changes the `starred` field on any cached Child/AlbumID3/ArtistID3,
@@ -65,7 +66,12 @@ export const useStar = () => {
     }) => {
       return star(params);
     },
-    onSuccess: () => {
+    onSuccess: (_data, params) => {
+      if (params.id && !params.albumId && !params.artistId) {
+        useQueue
+          .getState()
+          .updateTrack(params.id, { starred: new Date().toISOString() });
+      }
       invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
     },
   });
@@ -83,7 +89,10 @@ export const useUnstar = () => {
     }) => {
       return unstar(params);
     },
-    onSuccess: () => {
+    onSuccess: (_data, params) => {
+      if (params.id && !params.albumId && !params.artistId) {
+        useQueue.getState().updateTrack(params.id, { starred: undefined });
+      }
       invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
     },
   });

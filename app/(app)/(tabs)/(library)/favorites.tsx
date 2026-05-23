@@ -3,10 +3,10 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -42,6 +42,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
@@ -54,6 +55,9 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+
+const SKELETON_DATA = loadingData(16);
+const EMPTY_DATA: Child[] = [];
 
 export default function FavoritesScreen() {
   const [blue500, white, black, emerald500] = Uniwind.getCSSVariable([
@@ -93,9 +97,9 @@ export default function FavoritesScreen() {
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
-  const handleTrackPressCallback = () => {
+  const handleTrackPressCallback = useCallback(() => {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
-  };
+  }, [addRecentPlay]);
 
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
@@ -177,9 +181,8 @@ export default function FavoritesScreen() {
     }
   }, [starredData, sort]);
 
-  const isPlayingFromList = !!(
-    playingTrack && data?.some((track) => track.id === playingTrack.id)
-  );
+  const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
+  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
@@ -189,6 +192,28 @@ export default function FavoritesScreen() {
     playTracks(data.map(childToTrack), 0);
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
+
+  const keyExtractor = useCallback(
+    (item: Child, index: number) => item.id ?? String(index),
+    [],
+  );
+  const isLoadingRows = !starredData;
+  const handleTrackPress = useTrackListPress(data);
+  const renderRow = useCallback(
+    ({ item, index }: { item: Child; index: number }) =>
+      isLoadingRows ? (
+        <TrackListItemSkeleton index={index} className="px-6" />
+      ) : (
+        <TrackListItem
+          track={item}
+          index={index}
+          onPress={handleTrackPress}
+          className="px-6"
+          onPlayCallback={handleTrackPressCallback}
+        />
+      ),
+    [isLoadingRows, handleTrackPress, handleTrackPressCallback],
+  );
 
   return (
     <Box className="h-full">
@@ -219,20 +244,9 @@ export default function FavoritesScreen() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={!starredData ? loadingData(16) : data || []}
-        renderItem={({ item, index }: { item: Child; index: number }) =>
-          !starredData ? (
-            <TrackListItemSkeleton index={index} className="px-6" />
-          ) : (
-            <TrackListItem
-              track={item}
-              index={index}
-              trackList={data ?? undefined}
-              className="px-6"
-              onPlayCallback={handleTrackPressCallback}
-            />
-          )
-        }
+        data={!starredData ? SKELETON_DATA : data || EMPTY_DATA}
+        keyExtractor={keyExtractor}
+        renderItem={renderRow}
         ListHeaderComponent={() => (
           <>
             <LinearGradient

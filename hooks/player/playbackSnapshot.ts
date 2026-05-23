@@ -40,18 +40,23 @@ function readSnapshot(): PlaybackSnapshot {
 
 let snapshot: PlaybackSnapshot = readSnapshot();
 
-const listeners = new Set<() => void>();
+// Two channels so high-frequency time ticks don't wake listeners that only
+// care about play/pause transitions. `state` fires only when playing or
+// duration change; `progress` fires on every snapshot change (including the
+// 4 Hz currentTime updates).
+const stateListeners = new Set<() => void>();
+const progressListeners = new Set<() => void>();
 
 function pushSnapshot(next: PlaybackSnapshot) {
-  if (
-    next.playing === snapshot.playing &&
-    next.currentTime === snapshot.currentTime &&
-    next.duration === snapshot.duration
-  ) {
-    return;
-  }
+  const playingChanged = next.playing !== snapshot.playing;
+  const durationChanged = next.duration !== snapshot.duration;
+  const timeChanged = next.currentTime !== snapshot.currentTime;
+  if (!playingChanged && !durationChanged && !timeChanged) return;
   snapshot = next;
-  for (const l of listeners) l();
+  if (playingChanged || durationChanged) {
+    for (const l of stateListeners) l();
+  }
+  for (const l of progressListeners) l();
 }
 
 // We can't enumerate the player array from outside player.ts; rely on the
@@ -94,10 +99,17 @@ useQueue.subscribe(() => {
   pushSnapshot(readSnapshot());
 });
 
-export function subscribePlaybackStatus(cb: () => void) {
-  listeners.add(cb);
+export function subscribePlaybackState(cb: () => void) {
+  stateListeners.add(cb);
   return () => {
-    listeners.delete(cb);
+    stateListeners.delete(cb);
+  };
+}
+
+export function subscribePlaybackProgress(cb: () => void) {
+  progressListeners.add(cb);
+  return () => {
+    progressListeners.delete(cb);
   };
 }
 

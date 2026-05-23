@@ -3,9 +3,9 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useQueue, { type QueueTrack } from "@/stores/queue";
@@ -50,7 +51,7 @@ import { ScrollView } from "../ui/scroll-view";
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
 const queueTrackToChild = (track: QueueTrack): Child =>
-  (({
+  ({
     id: track.id,
     title: track.title,
     artist: track.artist,
@@ -62,8 +63,8 @@ const queueTrackToChild = (track: QueueTrack): Child =>
     starred: track.starred,
     musicBrainzId: track.musicBrainzId,
     genre: track.genre,
-    contentType: track.contentType
-  }) as Child);
+    contentType: track.contentType,
+  }) as Child;
 
 export default function QueueDetail() {
   const [white, gray500, emerald500, gray200] = Uniwind.getCSSVariable([
@@ -98,6 +99,7 @@ export default function QueueDetail() {
   const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
 
   const tracks = useMemo(() => queue.map(queueTrackToChild), [queue]);
+  const handleTrackPress = useTrackListPress(tracks);
   const playingTrackId =
     currentIndex != null ? queue[currentIndex]?.id : undefined;
 
@@ -303,7 +305,11 @@ export default function QueueDetail() {
                   insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
               }}
               renderItem={({ item, index }) => (
-                <TrackListItem track={item} index={index} trackList={tracks} />
+                <TrackListItem
+                  track={item}
+                  index={index}
+                  onPress={handleTrackPress}
+                />
               )}
             />
           )}
