@@ -31,10 +31,22 @@ import { streamUrl } from "@/utils/streaming";
 
 type Slot = 0 | 1;
 
+// Slot 0 is the primary playback engine and is always live. Slot 1 is only
+// used for iOS preload/crossfade and the user-configurable crossfade path; it
+// is created on first access to avoid the cost of a second ExoPlayer/AVPlayer
+// instance for users who never trigger those paths (notably Android + gapless,
+// which transitions on slot 0 via ExoPlayer's prepareNext).
 const players: AudioPlayer[] = [
   createAudioPlayer(null, { updateInterval: 250 }),
-  createAudioPlayer(null, { updateInterval: 250 }),
 ];
+function getPlayer(slot: Slot): AudioPlayer {
+  const existing = players[slot];
+  if (existing) return existing;
+  const p = createAudioPlayer(null, { updateInterval: 250 });
+  players[slot] = p;
+  wireSlotListeners(slot, p);
+  return p;
+}
 let activeSlot: Slot = 0;
 const loadedTrackIds: (string | null)[] = [null, null];
 
@@ -321,7 +333,7 @@ function preloadNext() {
     transition = { kind: "preloaded", trackId: next.id };
     return;
   }
-  const p = players[slot];
+  const p = getPlayer(slot);
   const { url } = resolveTrackUrl(next);
   p.replace({ uri: url });
   p.volume = 0;
@@ -337,7 +349,7 @@ function startCrossfade(durationSeconds: number) {
   if (cur && next.id === cur.id) return;
   const inSlot = inactiveSlot();
   const outSlot = activeSlot;
-  const incoming = players[inSlot];
+  const incoming = getPlayer(inSlot);
   const outgoing = players[outSlot];
   if (loadedTrackIds[inSlot] !== next.id) {
     const { url } = resolveTrackUrl(next);
@@ -584,8 +596,7 @@ function makeStatusListener(slot: Slot) {
   };
 }
 
-for (const slot of [0, 1] as const) {
-  const p = players[slot];
+function wireSlotListeners(slot: Slot, p: AudioPlayer) {
   remoteListeners.push(
     p.addListener("remotePrevious", () => {
       if (slot !== activeSlot) return;
@@ -610,6 +621,8 @@ for (const slot of [0, 1] as const) {
     p.addListener("playbackStatusUpdate", makeStatusListener(slot)),
   );
 }
+
+wireSlotListeners(0, players[0]);
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
   if (
@@ -688,6 +701,7 @@ if (
       } catch { }
     }
     for (const p of players) {
+      if (!p) continue;
       try {
         p.pause();
       } catch { }

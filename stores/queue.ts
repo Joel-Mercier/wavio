@@ -81,18 +81,22 @@ const useQueueBase = create<QueueStore>()(
       _buildShuffleOrder: (
         state: Pick<QueueStore, "queue" | "currentIndex" | "contextIds">,
       ) => {
+        const hasContext = !!(state.contextIds && state.contextIds.length > 0);
         const idsInQueue = state.queue.map((t) => t.id);
+        const queueIdSet = hasContext ? new Set(idsInQueue) : null;
         const sourceIds =
-          state.contextIds && state.contextIds.length > 0
-            ? state.contextIds.filter((id: string) => idsInQueue.includes(id))
-            : idsInQueue.slice();
+          hasContext && queueIdSet
+            ? (state.contextIds as string[]).filter((id) => queueIdSet.has(id))
+            : idsInQueue;
         const currentId =
           state.currentIndex != null
             ? state.queue[state.currentIndex]?.id
             : undefined;
         // Shuffle everything except the current id, then pin current at index 0
         // so the full remaining order sits ahead of the cursor.
-        const rest = sourceIds.filter((id) => id !== currentId);
+        const rest = currentId
+          ? sourceIds.filter((id) => id !== currentId)
+          : sourceIds.slice();
         for (let i = rest.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [rest[i], rest[j]] = [rest[j], rest[i]];
@@ -548,18 +552,20 @@ const useQueueBase = create<QueueStore>()(
             state.shuffleOrderIds &&
             state.shuffleOrderIds.length > 0
           ) {
-            let order = state.shuffleOrderIds.slice();
+            // Build id->index once; reused for every lookup in this branch
+            // to avoid O(N) findIndex on large queues.
+            const queueIdToIndex = new Map<string, number>();
+            for (let i = 0; i < state.queue.length; i++) {
+              queueIdToIndex.set(state.queue[i].id, i);
+            }
+            const currentIdAtIdx = state.queue[state.currentIndex]?.id;
+            let order = state.shuffleOrderIds;
             const cursor =
               state.shuffleCursor ??
-              (state.currentIndex != null
-                ? order.indexOf(state.queue[state.currentIndex].id)
-                : -1);
+              (currentIdAtIdx != null ? order.indexOf(currentIdAtIdx) : -1);
             // If removing played, drop current from order and queue before advancing
-            if (state.removePlayed) {
-              const currentId = state.queue[state.currentIndex]?.id;
-              if (currentId) {
-                order = order.filter((id) => id !== currentId);
-              }
+            if (state.removePlayed && currentIdAtIdx) {
+              order = order.filter((id) => id !== currentIdAtIdx);
             }
             if (order.length === 0) {
               return {
@@ -575,9 +581,7 @@ const useQueueBase = create<QueueStore>()(
               const nextCursor = safeCursor + 1;
               if (nextCursor < order.length) {
                 const targetId = order[nextCursor];
-                const targetIndex = state.queue.findIndex(
-                  (t) => t.id === targetId,
-                );
+                const targetIndex = queueIdToIndex.get(targetId) ?? -1;
                 return {
                   currentIndex:
                     targetIndex >= 0 ? targetIndex : state.currentIndex,
@@ -588,15 +592,15 @@ const useQueueBase = create<QueueStore>()(
               // End of shuffle order reached: regenerate a fresh random
               // order so shuffle loops indefinitely. Avoid immediately
               // replaying the current track when alternatives exist.
-              const idsInQueue = state.queue.map((t) => t.id);
-              const sourceIds =
+              const hasContext = !!(
                 state.contextIds && state.contextIds.length > 0
-                  ? state.contextIds.filter((id) => idsInQueue.includes(id))
-                  : idsInQueue.slice();
-              const currentId =
-                state.currentIndex != null
-                  ? state.queue[state.currentIndex]?.id
-                  : undefined;
+              );
+              const sourceIds = hasContext
+                ? (state.contextIds as string[]).filter((id) =>
+                    queueIdToIndex.has(id),
+                  )
+                : Array.from(queueIdToIndex.keys());
+              const currentId = currentIdAtIdx;
               const pool =
                 sourceIds.length > 1 && currentId
                   ? sourceIds.filter((id) => id !== currentId)
@@ -609,9 +613,7 @@ const useQueueBase = create<QueueStore>()(
                 return { currentIndex: null } as Partial<QueueStore>;
               }
               const targetId = pool[0];
-              const targetIndex = state.queue.findIndex(
-                (t) => t.id === targetId,
-              );
+              const targetIndex = queueIdToIndex.get(targetId) ?? -1;
               return {
                 currentIndex:
                   targetIndex >= 0 ? targetIndex : state.currentIndex,
@@ -624,7 +626,9 @@ const useQueueBase = create<QueueStore>()(
               const nextQueue = state.queue.slice();
               nextQueue.splice(state.currentIndex, 1);
               const nextId = order[0];
-              const nextIndex = nextQueue.findIndex((t) => t.id === nextId);
+              // Rebuild index map after splice (or compute relative to removed pos)
+              let nextIndex = queueIdToIndex.get(nextId) ?? -1;
+              if (nextIndex > state.currentIndex) nextIndex -= 1;
               return {
                 queue: nextQueue,
                 currentIndex:
@@ -646,14 +650,15 @@ const useQueueBase = create<QueueStore>()(
             const count = ids.length;
             const pos = currentId ? ids.indexOf(currentId) : -1;
 
+            const queueIdToIndex = new Map<string, number>();
+            for (let i = 0; i < state.queue.length; i++) {
+              queueIdToIndex.set(state.queue[i].id, i);
+            }
             // If current is not in context, snap to first valid id in context
             const startPos = pos >= 0 ? pos : 0;
             for (let offset = 1; offset <= count; offset++) {
               const nextPos = (startPos + offset) % count;
-              const targetId = ids[nextPos];
-              const targetIndex = state.queue.findIndex(
-                (t) => t.id === targetId,
-              );
+              const targetIndex = queueIdToIndex.get(ids[nextPos]) ?? -1;
               if (targetIndex >= 0) {
                 return { currentIndex: targetIndex };
               }
@@ -711,16 +716,12 @@ const useQueueBase = create<QueueStore>()(
             state.shuffleOrderIds &&
             state.shuffleOrderIds.length > 0
           ) {
-            const order = state.shuffleOrderIds.slice();
+            const order = state.shuffleOrderIds;
             const cursor =
               state.shuffleCursor ??
               (state.currentIndex != null
                 ? order.indexOf(state.queue[state.currentIndex].id)
                 : -1);
-            if (state.removePlayed) {
-              // With removePlayed, previous behaves like going to previous in order if exists; queue hasn't removed past items
-              // This is tricky; simplify: step back if possible, else wrap (repeat all) or null
-            }
             const prevCursor = cursor == null ? -1 : cursor - 1;
             if (prevCursor >= 0) {
               const targetId = order[prevCursor];
@@ -752,12 +753,13 @@ const useQueueBase = create<QueueStore>()(
             const count = ids.length;
             const pos = currentId ? ids.indexOf(currentId) : -1;
             const startPos = pos >= 0 ? pos : 0;
+            const queueIdToIndex = new Map<string, number>();
+            for (let i = 0; i < state.queue.length; i++) {
+              queueIdToIndex.set(state.queue[i].id, i);
+            }
             for (let offset = 1; offset <= count; offset++) {
               const prevPos = (startPos - offset + count) % count;
-              const targetId = ids[prevPos];
-              const targetIndex = state.queue.findIndex(
-                (t) => t.id === targetId,
-              );
+              const targetIndex = queueIdToIndex.get(ids[prevPos]) ?? -1;
               if (targetIndex >= 0) {
                 return { currentIndex: targetIndex };
               }
