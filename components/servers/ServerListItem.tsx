@@ -11,6 +11,7 @@ import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import UsersIcon from "lucide-react-native/dist/esm/icons/users.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
@@ -404,7 +405,8 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         size="md"
       >
         <AlertDialogBackdrop />
-        <AlertDialogContent className="bg-primary-800 border-primary-400">
+        <KeyboardAvoidingView behavior="padding">
+          <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
               {t("app.servers.editServer")}
@@ -480,7 +482,8 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialogContent>
+        </KeyboardAvoidingView>
       </AlertDialog>
     </FadeOutScaleDown>
   );

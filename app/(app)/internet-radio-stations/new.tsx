@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -12,7 +13,6 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import UrlInputField from "@/components/forms/UrlInputField";
-import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
@@ -105,13 +105,15 @@ export default function NewInternetRadioStationScreen() {
       className="h-full"
       style={{ height: "100%" }}
     >
-      <Box
-        className="h-full justify-center"
+      <KeyboardAvoidingView
+        behavior="padding"
         style={{
+          flex: 1,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
+          justifyContent: "center",
         }}
       >
         <VStack className="w-full px-6">
@@ -218,7 +220,7 @@ export default function NewInternetRadioStationScreen() {
             </FadeOutScaleDown>
           </HStack>
         </VStack>
-      </Box>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 }

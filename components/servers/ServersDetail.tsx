@@ -6,6 +6,7 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -159,7 +160,8 @@ export default function ServersDetail() {
           size="md"
         >
           <AlertDialogBackdrop />
-          <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <KeyboardAvoidingView behavior="padding">
+            <AlertDialogContent className="bg-primary-800 border-primary-400">
             <AlertDialogHeader>
               <Heading className="text-white font-bold" size="md">
                 {t("app.servers.addServer")}
@@ -284,7 +286,8 @@ export default function ServersDetail() {
                 </Text>
               </FadeOutScaleDown>
             </AlertDialogFooter>
-          </AlertDialogContent>
+            </AlertDialogContent>
+          </KeyboardAvoidingView>
         </AlertDialog>
       </Box>
     </Box>

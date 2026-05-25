@@ -15,6 +15,7 @@ import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -1412,7 +1413,8 @@ export default function SettingsDetail() {
         size="md"
       >
         <AlertDialogBackdrop />
-        <AlertDialogContent className="bg-primary-800 border-primary-400">
+        <KeyboardAvoidingView behavior="padding">
+          <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
               {t("app.settings.podcastSettings.podcastConfigFormTitle")}
@@ -1614,7 +1616,8 @@ export default function SettingsDetail() {
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialogContent>
+        </KeyboardAvoidingView>
       </AlertDialog>
       <AlertDialog
         isOpen={showDeletePodcastsAlertDialog}

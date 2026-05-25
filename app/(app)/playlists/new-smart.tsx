@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -159,7 +159,8 @@ export default function NewSmartPlaylistScreen() {
           <Box className="w-10" />
         </HStack>
       </Box>
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={60}
         contentContainerStyle={{
           paddingBottom: insets.bottom + 120,
           paddingHorizontal: 24,
@@ -239,7 +240,7 @@ export default function NewSmartPlaylistScreen() {
             serverVersion={serverVersion}
           />
         </VStack>
-      </ScrollView>
+      </KeyboardAwareScrollView>
       <LinearGradient
         colors={["transparent", "#000000"]}
         pointerEvents="box-none"

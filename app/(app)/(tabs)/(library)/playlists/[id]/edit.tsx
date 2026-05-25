@@ -5,6 +5,7 @@ import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useTranslation } from "react-i18next";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -151,12 +152,15 @@ export default function EditPlaylistScreen() {
         </Box>
       )}
       {!error && (!isLoading || data) && (
-        <VStack
-          className="px-6 mt-6"
-          style={{
+        <KeyboardAwareScrollView
+          bottomOffset={60}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: 24,
             paddingBottom:
               insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
           }}
+          showsVerticalScrollIndicator={false}
         >
           <HStack className="items-center justify-center mb-6">
             {data?.playlist?.coverArt ? (
@@ -244,7 +248,7 @@ export default function EditPlaylistScreen() {
               </HStack>
             )}
           </form.Field>
-        </VStack>
+        </KeyboardAwareScrollView>
       )}
     </Box>
   );

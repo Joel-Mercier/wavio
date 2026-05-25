@@ -16,6 +16,7 @@ import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -388,7 +389,8 @@ export default function ShareListItem({ share }: { share: Share }) {
         size="md"
       >
         <AlertDialogBackdrop />
-        <AlertDialogContent className="bg-primary-800 border-primary-400">
+        <KeyboardAvoidingView behavior="padding">
+          <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
               {t("app.shares.editShareModalTitle")}
@@ -471,7 +473,8 @@ export default function ShareListItem({ share }: { share: Share }) {
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialogContent>
+        </KeyboardAvoidingView>
       </AlertDialog>
     </FadeOutScaleDown>
   );

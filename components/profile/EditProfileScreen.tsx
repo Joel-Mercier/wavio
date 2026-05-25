@@ -6,7 +6,7 @@ import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -345,7 +345,8 @@ export default function EditProfileScreen() {
           </Box>
         </HStack>
       </Box>
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={60}
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: 8,
@@ -600,7 +601,7 @@ export default function EditProfileScreen() {
             </VStack>
           </>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Box>
   );
 }
