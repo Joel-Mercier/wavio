@@ -11,6 +11,7 @@ import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
+import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
 import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
@@ -24,6 +25,7 @@ import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import PodcastIcon from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Repeat from "lucide-react-native/dist/esm/icons/repeat.mjs";
 import Repeat1 from "lucide-react-native/dist/esm/icons/repeat-1.mjs";
@@ -39,6 +41,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Share from "react-native-share";
 import {
   CastButton,
   useCastSession,
@@ -100,7 +103,9 @@ import {
 } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useJukebox from "@/stores/jukebox";
+import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { formatRichTextPlain } from "@/utils/formatRichText";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
 
 const COVER_SWIPE_THRESHOLD = 80;
@@ -208,6 +213,17 @@ export default function PlayerScreen() {
   const currentIndex = useQueue((store) => store.currentIndex);
   const queueLength = queue.length;
   const isRadio = !!playingTrack?.isRadio;
+  const isPodcast = playingTrack?.source === "podcast";
+  const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
+  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
+  const removeFavoritePodcast = usePodcasts(
+    (store) => store.removeFavoritePodcast,
+  );
+  const isPodcastFavorite = usePodcasts((store) =>
+    podcastSeries
+      ? store.favoritePodcasts.some((fav) => fav.uuid === podcastSeries.uuid)
+      : false,
+  );
   const canSkipNext =
     !isRadio &&
     (shuffle ||
@@ -382,19 +398,19 @@ export default function PlayerScreen() {
     }
     const artistId = trackArtists[0]?.id ?? playingTrack?.artistId;
     if (artistId) {
-      router.navigate(`/artists/${artistId}`);
+      router.replace(`/artists/${artistId}`);
     }
   };
 
   const handleArtistPickPress = (artistId: string) => {
     bottomSheetArtistsModalRef.current?.dismiss();
-    router.navigate(`/artists/${artistId}`);
+    router.replace(`/artists/${artistId}`);
   };
 
   const handleGoToAlbumPress = () => {
     bottomSheetModalRef.current?.dismiss();
     if (!playingTrack?.albumId) return;
-    router.navigate(`/albums/${playingTrack.albumId}`);
+    router.replace(`/albums/${playingTrack.albumId}`);
   };
 
   const handleMusicBrainzPress = async () => {
@@ -419,7 +435,7 @@ export default function PlayerScreen() {
   const handleSimilarSongsPress = () => {
     if (!playingTrack) return;
     bottomSheetModalRef.current?.dismiss();
-    router.navigate({
+    router.replace({
       pathname: "/tracks/[id]/similar",
       params: { id: playingTrack.id, title: playingTrack.title ?? "" },
     });
@@ -523,10 +539,130 @@ export default function PlayerScreen() {
     sleepTimerSheetRef.current?.dismiss();
   };
 
+  const handleGoToPodcastSeriesPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!podcastSeries) return;
+    router.navigate({
+      pathname: "/podcast-series/[id]",
+      params: {
+        id: podcastSeries.uuid,
+        uuid: podcastSeries.uuid,
+        name: podcastSeries.name,
+        description: podcastSeries.description,
+        imageUrl: podcastSeries.imageUrl,
+        authorName: podcastSeries.authorName,
+        genres: podcastSeries.genres?.join(","),
+      },
+    });
+  };
+
+  const handleAddFavoritePodcastPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!podcastSeries) return;
+    addFavoritePodcast(podcastSeries);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.addToFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleRemoveFavoritePodcastPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!podcastSeries) return;
+    removeFavoritePodcast(podcastSeries.uuid);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.removeFromFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleSharePodcastEpisodePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!playingTrack) return;
+    try {
+      const plain = formatRichTextPlain(playingTrack.description);
+      const excerpt =
+        plain.length > 240 ? `${plain.slice(0, 240).trimEnd()}…` : plain;
+      const message = [playingTrack.title, excerpt]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const linkUrl =
+        playingTrack.websiteUrl ||
+        playingTrack.podcastSeries?.websiteUrl ||
+        undefined;
+
+      if (linkUrl) {
+        await Share.open({
+          title: playingTrack.title,
+          message,
+          url: linkUrl,
+          failOnCancel: false,
+        });
+        return;
+      }
+
+      let localImageUri: string | undefined;
+      if (playingTrack.artwork) {
+        try {
+          const ext = playingTrack.artwork.split("?")[0].split(".").pop();
+          const safeExt = ext && ext.length <= 5 ? ext : "jpg";
+          const fileName = `podcast-share-${playingTrack.id}.${safeExt}`;
+          const dest = new File(Paths.cache, fileName);
+          if (dest.exists) dest.delete();
+          const downloaded = await File.downloadFileAsync(
+            playingTrack.artwork,
+            dest,
+          );
+          localImageUri = downloaded.uri;
+        } catch (e) {
+          console.warn("Failed to download podcast cover for sharing", e);
+        }
+      }
+
+      await Share.open({
+        title: playingTrack.title,
+        message,
+        ...(localImageUri ? { url: localImageUri, type: "image/jpeg" } : {}),
+        failOnCancel: false,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.podcasts.shareErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
   const handleAddToPlaylistPress = () => {
     if (!playingTrack) return;
     bottomSheetModalRef.current?.dismiss();
-    router.navigate({
+    router.replace({
       pathname: "/playlists/add-to-playlist",
       params: { ids: [playingTrack.id] },
     });
@@ -844,7 +980,7 @@ export default function PlayerScreen() {
                   <FadeOut
                     onPress={() => {
                       if (!playingTrack?.albumId) return;
-                      router.navigate(`/albums/${playingTrack.albumId}`);
+                      router.replace(`/albums/${playingTrack.albumId}`);
                     }}
                   >
                     <Heading className="text-white" size="xl" numberOfLines={2}>
@@ -854,7 +990,7 @@ export default function PlayerScreen() {
                   <FadeOut
                     onPress={() => {
                       if (!playingTrack?.artistId) return;
-                      router.navigate(`/artists/${playingTrack.artistId}`);
+                      router.replace(`/artists/${playingTrack.artistId}`);
                     }}
                   >
                     <Text className="text-primary-100 text-lg">
@@ -862,7 +998,22 @@ export default function PlayerScreen() {
                     </Text>
                   </FadeOut>
                 </VStack>
-                {!isRadio && (
+                {!isRadio && isPodcast && podcastSeries && (
+                  <FadeOut
+                    onPress={
+                      isPodcastFavorite
+                        ? handleRemoveFavoritePodcastPress
+                        : handleAddFavoritePodcastPress
+                    }
+                  >
+                    <Heart
+                      size={24}
+                      color={isPodcastFavorite ? emerald500 : "white"}
+                      fill={isPodcastFavorite ? emerald500 : "transparent"}
+                    />
+                  </FadeOut>
+                )}
+                {!isRadio && !isPodcast && (
                   <FadeOut
                     onPress={
                       playingTrack?.starred
@@ -956,7 +1107,7 @@ export default function PlayerScreen() {
                     )}
                   </FadeOut>
                 )}
-                <FadeOut onPress={() => router.navigate("/queue")}>
+                <FadeOut onPress={() => router.replace("/queue")}>
                   <ListMusic size={24} color="white" />
                 </FadeOut>
               </HStack>
@@ -1008,12 +1159,20 @@ export default function PlayerScreen() {
                   >
                     {playingTrack?.title}
                   </Heading>
-                  {!isRadio && (
+                  {!isRadio && !isPodcast && (
                     <Text
                       numberOfLines={1}
                       className="text-md text-primary-100"
                     >
                       {playingTrack?.artist} ⦁ {playingTrack?.album}
+                    </Text>
+                  )}
+                  {isPodcast && (
+                    <Text
+                      numberOfLines={1}
+                      className="text-md text-primary-100"
+                    >
+                      {playingTrack?.artist}
                     </Text>
                   )}
                   {isRadio && (
@@ -1038,6 +1197,69 @@ export default function PlayerScreen() {
                     else router.replace("/");
                   }}
                 />
+              ) : isPodcast ? (
+                <VStack className="mt-6 gap-y-8">
+                  {podcastSeries && (
+                    <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
+                      <HStack className="items-center">
+                        <PodcastIcon size={24} color={gray200} />
+                        <Text className="ml-4 text-lg text-gray-200">
+                          {t("app.podcasts.goToPodcastSeries")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                  )}
+                  {podcastSeries &&
+                    (isPodcastFavorite ? (
+                      <FadeOutScaleDown
+                        onPress={handleRemoveFavoritePodcastPress}
+                      >
+                        <HStack className="items-center">
+                          <CircleMinus size={24} color={gray200} />
+                          <Text className="ml-4 text-lg text-gray-200">
+                            {t("app.podcasts.removeFromFavorites")}
+                          </Text>
+                        </HStack>
+                      </FadeOutScaleDown>
+                    ) : (
+                      <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
+                        <HStack className="items-center">
+                          <PlusCircle size={24} color={gray200} />
+                          <Text className="ml-4 text-lg text-gray-200">
+                            {t("app.podcasts.addToFavorites")}
+                          </Text>
+                        </HStack>
+                      </FadeOutScaleDown>
+                    ))}
+                  <FadeOutScaleDown onPress={handleSharePodcastEpisodePress}>
+                    <HStack className="items-center">
+                      <Share2 size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.share")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                    <HStack className="items-center">
+                      <Timer
+                        size={24}
+                        color={sleepActive ? emerald500 : gray200}
+                      />
+                      <Text
+                        className="ml-4 text-lg"
+                        style={{
+                          color: sleepActive ? emerald500 : gray200,
+                        }}
+                      >
+                        {sleepActive && sleepRemainingLabel
+                          ? t("app.player.sleepTimerActive", {
+                              label: sleepRemainingLabel,
+                            })
+                          : t("app.player.sleepTimer")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                </VStack>
               ) : (
                 <VStack className="mt-6 gap-y-8">
                   <FadeOutScaleDown onPress={handleAddToPlaylistPress}>

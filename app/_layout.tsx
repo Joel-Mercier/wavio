@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
+import { PodcastEpisodeActionsProvider } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
@@ -165,17 +166,19 @@ export default sentryWrap(function RootLayout() {
               <StatusBar style="light" />
               <BottomSheetModalProvider>
                 <TrackActionsProvider>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                    }}
-                  >
-                    <Stack.Screen name="(app)" />
-                    <Stack.Screen name="(auth)" />
-                    <Stack.Screen name="+not-found" />
-                  </Stack>
-                  <OfflineBanner />
-                  <CarAutoSync />
+                  <PodcastEpisodeActionsProvider>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                      }}
+                    >
+                      <Stack.Screen name="(app)" />
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="+not-found" />
+                    </Stack>
+                    <OfflineBanner />
+                    <CarAutoSync />
+                  </PodcastEpisodeActionsProvider>
                 </TrackActionsProvider>
               </BottomSheetModalProvider>
             </GestureHandlerRootView>

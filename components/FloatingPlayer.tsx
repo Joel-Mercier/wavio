@@ -31,6 +31,8 @@ import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import type { PodcastSeries } from "@/services/taddyPodcasts/types";
+import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
@@ -61,6 +63,19 @@ export default function FloatingPlayer() {
   const queryClient = useQueryClient();
 
   const isRadio = !!playingTrack?.isRadio;
+  const isPodcast = playingTrack?.source === "podcast";
+  const podcastSeries = (
+    isPodcast ? playingTrack?.podcastSeries : null
+  ) as PodcastSeries | null;
+  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
+  const removeFavoritePodcast = usePodcasts(
+    (store) => store.removeFavoritePodcast,
+  );
+  const isPodcastSeriesFavorite = usePodcasts((store) =>
+    podcastSeries
+      ? store.favoritePodcasts.some((fav) => fav.uuid === podcastSeries.uuid)
+      : false,
+  );
   const canSkipNext =
     !isRadio &&
     (shuffle ||
@@ -80,6 +95,40 @@ export default function FloatingPlayer() {
 
   const handlePlayPausePress = () => {
     togglePlayPause();
+  };
+
+  const handleAddPodcastFavoritePress = () => {
+    if (!podcastSeries) return;
+    addFavoritePodcast(podcastSeries);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.addToFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleRemovePodcastFavoritePress = () => {
+    if (!podcastSeries) return;
+    removeFavoritePodcast(podcastSeries.uuid);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.removeFromFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleFavoritePress = () => {
@@ -291,7 +340,22 @@ export default function FloatingPlayer() {
             </Animated.View>
           </HStack>
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-            {!playingTrack.isRadio && (
+            {!playingTrack.isRadio && isPodcast && podcastSeries && (
+              <FadeOut
+                hitSlop={12}
+                onPress={
+                  isPodcastSeriesFavorite
+                    ? handleRemovePodcastFavoritePress
+                    : handleAddPodcastFavoritePress
+                }
+              >
+                <Heart
+                  color={isPodcastSeriesFavorite ? emerald : white}
+                  fill={isPodcastSeriesFavorite ? emerald : "transparent"}
+                />
+              </FadeOut>
+            )}
+            {!playingTrack.isRadio && !isPodcast && (
               <FadeOut
                 hitSlop={12}
                 onPress={

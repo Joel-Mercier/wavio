@@ -5,6 +5,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { fromUnixTime } from "date-fns/fromUnixTime";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
+import { File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
@@ -46,14 +47,15 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";
+import { formatRichTextPlain } from "@/utils/formatRichText";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -78,8 +80,7 @@ export default function PodcastScreen() {
   );
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
-  const isCurrent =
-    !!podcast.uuid && playingTrack?.id === podcast.uuid;
+  const isCurrent = !!podcast.uuid && playingTrack?.id === podcast.uuid;
   const { data: seriesData } = useInfinitePodcastSeries({
     uuid: podcast.podcastSeries?.uuid,
   });
@@ -198,6 +199,9 @@ export default function PodcastScreen() {
       duration:
         typeof e.duration === "string" ? Number(e.duration) : e.duration,
       source: "podcast" as const,
+      description: e.description,
+      websiteUrl: (e as PodcastEpisode).websiteUrl,
+      podcastSeries: e.podcastSeries,
     });
     if (seriesEpisodes.length > 0) {
       const tracks = seriesEpisodes
@@ -219,17 +223,55 @@ export default function PodcastScreen() {
         artwork: podcast.imageUrl,
         duration: fallbackDuration,
         source: "podcast",
+        description: podcast.description,
+        websiteUrl: podcast.websiteUrl,
+        podcastSeries: podcast.podcastSeries,
       },
     ]);
   };
 
   const handleSharePress = async () => {
     try {
+      const plain = formatRichTextPlain(podcast.description);
+      const excerpt =
+        plain.length > 240 ? `${plain.slice(0, 240).trimEnd()}…` : plain;
+      const message = [podcast.name, excerpt].filter(Boolean).join("\n\n");
+
+      const linkUrl =
+        podcast.websiteUrl || podcast.podcastSeries?.websiteUrl || undefined;
+
+      if (linkUrl) {
+        await Share.open({
+          title: podcast.name,
+          message,
+          url: linkUrl,
+          failOnCancel: false,
+        });
+        return;
+      }
+
+      let localImageUri: string | undefined;
+      if (podcast.imageUrl) {
+        try {
+          const ext = podcast.imageUrl.split("?")[0].split(".").pop();
+          const safeExt = ext && ext.length <= 5 ? ext : "jpg";
+          const fileName = `podcast-share-${podcast.uuid || podcast.id}.${safeExt}`;
+          const dest = new File(Paths.cache, fileName);
+          if (dest.exists) dest.delete();
+          const downloaded = await File.downloadFileAsync(
+            podcast.imageUrl,
+            dest,
+          );
+          localImageUri = downloaded.uri;
+        } catch (e) {
+          console.warn("Failed to download podcast cover for sharing", e);
+        }
+      }
+
       await Share.open({
         title: podcast.name,
-        message: podcast.description,
-        url: podcast.imageUrl,
-        type: "image/jpeg",
+        message,
+        ...(localImageUri ? { url: localImageUri, type: "image/jpeg" } : {}),
         failOnCancel: false,
       });
     } catch (error) {

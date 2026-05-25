@@ -21,6 +21,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditTrackItem from "@/components/queue/QueueEditTrackItem";
+import QueuePodcastListItem from "@/components/queue/QueuePodcastListItem";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
+import { play as playLocal } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { ScrollView } from "../ui/scroll-view";
@@ -100,6 +102,10 @@ export default function QueueDetail() {
 
   const tracks = useMemo(() => queue.map(queueTrackToChild), [queue]);
   const handleTrackPress = useTrackListPress(tracks);
+  const handlePodcastPress = (index: number) => {
+    useQueue.getState().setCurrentIndex(index);
+    playLocal();
+  };
   const playingTrackId =
     currentIndex != null ? queue[currentIndex]?.id : undefined;
 
@@ -297,20 +303,28 @@ export default function QueueDetail() {
             />
           ) : (
             <FlashList
-              data={tracks}
+              data={queue}
               keyExtractor={(item, index) => `${item.id}:${index}`}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom:
                   insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
               }}
-              renderItem={({ item, index }) => (
-                <TrackListItem
-                  track={item}
-                  index={index}
-                  onPress={handleTrackPress}
-                />
-              )}
+              renderItem={({ item, index }) =>
+                item.source === "podcast" ? (
+                  <QueuePodcastListItem
+                    track={item}
+                    index={index}
+                    onPress={handlePodcastPress}
+                  />
+                ) : (
+                  <TrackListItem
+                    track={tracks[index]}
+                    index={index}
+                    onPress={handleTrackPress}
+                  />
+                )
+              }
             />
           )}
         </Box>
