@@ -177,6 +177,7 @@ export interface Child {
   name?: string;
   musicBrainzId?: string;
   sortName?: string;
+  explicitStatus?: "explicit" | "clean" | "";
 }
 
 export interface Directory {

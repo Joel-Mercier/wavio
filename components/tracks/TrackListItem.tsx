@@ -168,6 +168,13 @@ export default function TrackListItem({
                   <ArrowDown color={black} size={12} />
                 </Box>
               )}
+              {track.explicitStatus === "explicit" && (
+                <Box className="flex items-center justify-center rounded-sm bg-primary-100 px-1 py-0.5 mr-2">
+                  <Text className="text-black text-xs font-bold leading-none">
+                    E
+                  </Text>
+                </Box>
+              )}
               <Text numberOfLines={1} className="text-md text-primary-100">
                 {track.artist}
               </Text>

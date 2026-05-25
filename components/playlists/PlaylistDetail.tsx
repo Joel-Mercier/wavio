@@ -520,6 +520,12 @@ export default function PlaylistDetail() {
     }
   };
 
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
+  const handleShufflePress = () => {
+    setShuffle(!shuffle);
+  };
+
   return (
     <Box className="h-full">
       <AnimatedBox
@@ -659,8 +665,17 @@ export default function PlaylistDetail() {
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown>
-                    <Shuffle color={white} />
+                  <FadeOutScaleDown onPress={handleShufflePress}>
+                    {shuffle ? (
+                      <>
+                        <Shuffle color={emerald500} />
+                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                          <Box className="bg-emerald-500 rounded-full size-1" />
+                        </Box>
+                      </>
+                    ) : (
+                      <Shuffle color={white} />
+                    )}
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">

@@ -47,6 +47,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -193,6 +194,12 @@ export default function FavoritesScreen() {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
+  const handleShufflePress = () => {
+    setShuffle(!shuffle);
+  };
+
   const keyExtractor = useCallback(
     (item: Child, index: number) => item.id ?? String(index),
     [],
@@ -311,8 +318,17 @@ export default function FavoritesScreen() {
                   </HStack>
                 </FadeOutScaleDown>
                 <HStack className="items-center gap-x-4">
-                  <Pressable>
-                    <Shuffle color={white} />
+                  <Pressable onPress={handleShufflePress}>
+                    {shuffle ? (
+                      <>
+                        <Shuffle color={emerald500} />
+                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                          <Box className="bg-emerald-500 rounded-full size-1" />
+                        </Box>
+                      </>
+                    ) : (
+                      <Shuffle color={white} />
+                    )}
                   </Pressable>
                   <Pressable onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">

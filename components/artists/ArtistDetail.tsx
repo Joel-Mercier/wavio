@@ -88,6 +88,7 @@ import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -332,6 +333,12 @@ export default function ArtistDetail() {
     }
   };
 
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
+  const handleShufflePress = () => {
+    setShuffle(!shuffle);
+  };
+
   const handleTrackPressCallback = () => {
     if (data?.artist) {
       addRecentPlay({
@@ -526,8 +533,17 @@ export default function ArtistDetail() {
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown>
-                    <Shuffle color={white} />
+                  <FadeOutScaleDown onPress={handleShufflePress}>
+                    {shuffle ? (
+                      <>
+                        <Shuffle color={emerald500} />
+                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                          <Box className="bg-emerald-500 rounded-full size-1" />
+                        </Box>
+                      </>
+                    ) : (
+                      <Shuffle color={white} />
+                    )}
                   </FadeOutScaleDown>
                   <FadeOutScaleDown onPress={handlePlayPress}>
                     <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
