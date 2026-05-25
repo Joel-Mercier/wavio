@@ -178,6 +178,15 @@ export interface Child {
   musicBrainzId?: string;
   sortName?: string;
   explicitStatus?: "explicit" | "clean" | "";
+  displayAlbumArtist?: string;
+  displayComposer?: string;
+  contributors?: Contributor[];
+}
+
+export interface Contributor {
+  role: string;
+  subRole?: string;
+  artist: { id: string; name: string };
 }
 
 export interface Directory {

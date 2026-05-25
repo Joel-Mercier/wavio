@@ -24,6 +24,13 @@ export type BaseItemDto = {
   PremiereDate?: string;
   Genres?: string[];
   GenreItems?: { Id: string; Name: string }[];
+  People?: {
+    Id?: string;
+    Name?: string;
+    Role?: string;
+    Type?: string;
+  }[];
+  Composers?: { Id?: string; Name?: string }[];
   ChildCount?: number;
   AlbumCount?: number;
   SongCount?: number;

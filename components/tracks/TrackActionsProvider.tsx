@@ -24,6 +24,7 @@ import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -131,6 +132,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const [track, setTrack] = useState<Child | null>(null);
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -331,6 +333,18 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   };
 
   const handleCloseInfoModal = () => setShowInfoModal(false);
+
+  const handleCreditsPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowCreditsModal(true);
+  };
+
+  const handleCloseCreditsModal = () => setShowCreditsModal(false);
+
+  const hasCredits =
+    !!track?.displayAlbumArtist ||
+    !!track?.displayComposer ||
+    !!track?.contributors?.length;
 
   const handleDownloadPress = async () => {
     if (!track) return;
@@ -811,6 +825,16 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     )}
                   </>
                 )}
+                {hasCredits && (
+                  <FadeOutScaleDown onPress={handleCreditsPress}>
+                    <HStack className="items-center">
+                      <ListMusic size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.showCredits")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {track?.musicBrainzId && (
                   <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                     <HStack className="items-center">
@@ -1019,6 +1043,65 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     {track.replayGain?.trackPeak}
                   </Text>
                 </VStack>
+              </VStack>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={showCreditsModal}
+        onClose={handleCloseCreditsModal}
+        closeOnOverlayClick
+      >
+        <ModalBackdrop />
+        <ModalContent
+          className="bg-primary-800 border-primary-600 max-h-[80%]"
+          style={{ marginBottom: insets.bottom, marginTop: insets.top }}
+        >
+          <ModalHeader>
+            <Heading className="text-white">
+              {t("app.tracks.creditsModalTitle")}
+            </Heading>
+            <ModalCloseButton>
+              <Icon as={X} size="md" className="color-white" />
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody className="mb-0 pb-0" showsVerticalScrollIndicator={false}>
+            {track && (
+              <VStack className="gap-y-2">
+                {track.displayAlbumArtist && (
+                  <VStack className="border-b border-primary-600 py-2">
+                    <Text className="text-primary-100 text-sm">
+                      {t("app.tracks.creditsModal.albumArtist")}
+                    </Text>
+                    <Text className="text-white">
+                      {track.displayAlbumArtist}
+                    </Text>
+                  </VStack>
+                )}
+                {track.displayComposer && (
+                  <VStack className="border-b border-primary-600 py-2">
+                    <Text className="text-primary-100 text-sm">
+                      {t("app.tracks.creditsModal.composer")}
+                    </Text>
+                    <Text className="text-white">{track.displayComposer}</Text>
+                  </VStack>
+                )}
+                {track.contributors?.map((contributor, index) => (
+                  <VStack
+                    key={`${contributor.role}-${contributor.artist.id}-${index}`}
+                    className="border-b border-primary-600 py-2"
+                  >
+                    <Text className="text-primary-100 text-sm">
+                      {contributor.subRole
+                        ? `${contributor.role} · ${contributor.subRole}`
+                        : contributor.role}
+                    </Text>
+                    <Text className="text-white">
+                      {contributor.artist.name}
+                    </Text>
+                  </VStack>
+                ))}
               </VStack>
             )}
           </ModalBody>

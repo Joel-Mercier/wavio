@@ -783,10 +783,16 @@ export default {
         getInfo: "Get info",
         download: "Download",
         musicBrainz: "Open in MusicBrainz",
+        showCredits: "Show track credits",
         similarSongs: "Similar songs",
         similarSongsTitle: "Tracks similar to: {{title}}",
         trackInfoModalTitle: "Track info",
         rateModalTitle: "Rate track",
+        creditsModalTitle: "Track credits",
+        creditsModal: {
+          albumArtist: "Album artist",
+          composer: "Composer",
+        },
         favoriteSuccessMessage: "Track successfully added to favorites",
         favoriteErrorMessage:
           "An error occurred while adding track to favorites",

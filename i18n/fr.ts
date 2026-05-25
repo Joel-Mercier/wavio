@@ -807,10 +807,16 @@ export default {
         getInfo: "Obtenir des informations",
         download: "Télécharger",
         musicBrainz: "Ouvrir dans MusicBrainz",
+        showCredits: "Afficher les crédits du titre",
         similarSongs: "Titres similaires",
         similarSongsTitle: "Titres similaires à : {{title}}",
         trackInfoModalTitle: "Informations sur le titre",
         rateModalTitle: "Noter le titre",
+        creditsModalTitle: "Crédits du titre",
+        creditsModal: {
+          albumArtist: "Artiste de l'album",
+          composer: "Compositeur",
+        },
         favoriteSuccessMessage: "Titre ajouté aux favoris",
         favoriteErrorMessage:
           "Une erreur s'est produite lors de l'ajout du titre aux favoris",

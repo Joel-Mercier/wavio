@@ -5,6 +5,7 @@ import type {
   ArtistID3,
   ArtistWithAlbumsID3,
   Child,
+  Contributor,
   Genre,
   MusicFolder,
   Playlist,
@@ -71,7 +72,31 @@ export function mapBaseItemToChild(item: BaseItemDto): Child {
       ? ticksToSeconds(item.UserData.PlaybackPositionTicks)
       : undefined,
     musicBrainzId: item.ProviderIds?.MusicBrainzAlbum,
+    displayAlbumArtist: item.AlbumArtist,
+    displayComposer: mapComposers(item),
+    contributors: mapContributors(item),
   };
+}
+
+function mapComposers(item: BaseItemDto): string | undefined {
+  const fromComposers = item.Composers?.map((c) => c.Name).filter(
+    (n): n is string => !!n,
+  );
+  if (fromComposers?.length) return fromComposers.join(", ");
+  const fromPeople = item.People?.filter(
+    (p) => p.Type === "Composer" && p.Name,
+  ).map((p) => p.Name as string);
+  return fromPeople?.length ? fromPeople.join(", ") : undefined;
+}
+
+function mapContributors(item: BaseItemDto): Contributor[] | undefined {
+  if (!item.People?.length) return undefined;
+  const contributors = item.People.filter((p) => p.Name).map((p) => ({
+    role: (p.Type ?? p.Role ?? "").toLowerCase(),
+    subRole: p.Type && p.Role && p.Type !== p.Role ? p.Role : undefined,
+    artist: { id: p.Id ?? "", name: p.Name as string },
+  }));
+  return contributors.length ? contributors : undefined;
 }
 
 export function mapBaseItemToAlbum(item: BaseItemDto): AlbumID3 {
