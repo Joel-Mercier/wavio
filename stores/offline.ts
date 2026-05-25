@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { storage } from "@/config/storage";
+import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
 import type { Child } from "@/services/openSubsonic/types";
+import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type OfflineTrack = {
@@ -55,15 +56,24 @@ interface OfflineStore {
   getDownloadedTracksList: () => OfflineTrack[];
   getTotalDownloadSize: () => number;
   getDownloadedTracksCount: () => number;
+  __reset: () => void;
 }
+
+const initialOfflineState = {
+  offlineModeEnabled: false,
+  downloadedTracks: {} as Record<string, OfflineTrack>,
+  downloadProgress: {} as Record<string, DownloadProgress>,
+  downloadQueue: [] as Child[],
+};
 
 const useOfflineBase = create<OfflineStore>()(
   persist(
     (set, get) => ({
-      offlineModeEnabled: false,
-      downloadedTracks: {},
-      downloadProgress: {},
-      downloadQueue: [],
+      ...initialOfflineState,
+
+      __reset: () => {
+        set(() => ({ ...initialOfflineState }));
+      },
 
       setOfflineModeEnabled: (enabled) => {
         set({ offlineModeEnabled: enabled });
@@ -178,22 +188,13 @@ const useOfflineBase = create<OfflineStore>()(
     }),
     {
       name: "offlineStore",
-      version: 2,
-      storage: createJSONStorage(() => ({
-        getItem: (name: string) => storage.getString(name) ?? null,
-        setItem: (name: string, value: string) => storage.set(name, value),
-        removeItem: (name: string) => storage.remove(name),
-      })),
-      migrate: (persistedState, version) => {
-        const state = persistedState as Partial<OfflineStore> | undefined;
-        if (!state) return state;
-        if (version < 2) {
-          // v1 stored downloadQueue as string[] of track ids. v2 stores Child[].
-          // The ids alone are insufficient to resume (no title/suffix/size), so drop them.
-          state.downloadQueue = [];
-        }
-        return state;
-      },
+      storage: createJSONStorage(() =>
+        createDynamicScopedStorage(() => {
+          const { url, username } = useAuthBase.getState();
+          return getAuthScope(url, username);
+        }),
+      ),
+      skipHydration: true,
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,
         downloadedTracks: state.downloadedTracks,

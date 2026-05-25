@@ -1,7 +1,7 @@
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -62,13 +62,17 @@ export default function LibrariesDetail() {
 
   return (
     <Box className="px-6 mt-6 pb-6 h-full">
-      <HStack className="items-center mb-6" style={{ paddingTop: insets.top }}>
+      <HStack
+        className="items-center justify-between mb-6"
+        style={{ paddingTop: insets.top }}
+      >
         <FadeOutScaleDown onPress={() => router.back()}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
-        <Heading className="text-white ml-4" size="lg">
+        <Heading className="text-white text-center flex-1" size="lg">
           {t("app.libraries.title")}
         </Heading>
+        <Box className="w-6" />
       </HStack>
       {error && <ErrorDisplay error={error} />}
       {!error && (

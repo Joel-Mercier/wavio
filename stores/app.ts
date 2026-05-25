@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import i18n, {
-  applyZodLocale,
-  type TSupportedLanguages,
-} from "@/config/i18n";
+import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
 

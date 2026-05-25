@@ -1,10 +1,12 @@
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import { getAuthScope } from "@/config/storage";
 import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
 import useActivity from "@/stores/activity";
 import useAuth, { useAuthBase } from "@/stores/auth";
+import useOffline from "@/stores/offline";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -35,12 +37,14 @@ export default function AppLayout() {
       useRecentSearches.getState().__reset();
       useActivity.getState().__reset();
       useQueue.getState().__reset();
+      useOffline.getState().__reset();
     }
     useRecentPlays.persist.rehydrate();
     useRecentSearches.persist.rehydrate();
     usePlaylists.persist.rehydrate();
     useActivity.persist.rehydrate();
     useQueue.persist.rehydrate();
+    useOffline.persist.rehydrate();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
@@ -70,6 +74,7 @@ export default function AppLayout() {
         />
       </Stack>
       <FloatingPlayer />
+      <OfflineStarredAutoSync />
     </>
   );
 }

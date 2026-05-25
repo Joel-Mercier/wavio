@@ -2,19 +2,27 @@ jest.mock("@/config/storage", () => {
   const g = globalThis as unknown as { __offlineMockMem?: Map<string, string> };
   if (!g.__offlineMockMem) g.__offlineMockMem = new Map<string, string>();
   const mem = g.__offlineMockMem;
+  const make = () => ({
+    setItem: (k: string, v: string) => mem.set(k, v),
+    getItem: (k: string) => mem.get(k) ?? null,
+    removeItem: (k: string) => mem.delete(k),
+  });
   return {
     storage: {
       set: (k: string, v: string) => mem.set(k, v),
       getString: (k: string) => mem.get(k) ?? null,
       remove: (k: string) => mem.delete(k),
     },
-    zustandStorage: {
-      setItem: (k: string, v: string) => mem.set(k, v),
-      getItem: (k: string) => mem.get(k) ?? null,
-      removeItem: (k: string) => mem.delete(k),
-    },
+    zustandStorage: make(),
+    createScopedStorage: () => make(),
+    createDynamicScopedStorage: () => make(),
+    getAuthScope: () => "scope",
   };
 });
+
+jest.mock("@/stores/auth", () => ({
+  useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
+}));
 
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline, { type OfflineTrack } from "@/stores/offline";
@@ -208,48 +216,29 @@ describe("offline store - download queue", () => {
 });
 
 describe("offline store - persistence", () => {
-  const seedAndRehydrate = (storedValue: unknown) => {
-    mockMem.set("offlineStore", JSON.stringify(storedValue));
-    let hydrated: ReturnType<typeof get> | undefined;
-    jest.isolateModules(() => {
-      const mod = require("@/stores/offline");
-      hydrated = mod.default.getState();
-    });
-    if (!hydrated) throw new Error("rehydration failed");
-    return hydrated;
-  };
-
-  it("persists downloadProgress and downloadQueue across reloads", () => {
+  it("rehydrates downloadedTracks, downloadProgress and downloadQueue", async () => {
     const child = makeChild("a", { suffix: "flac" });
-    const state = seedAndRehydrate({
-      state: {
-        offlineModeEnabled: true,
-        downloadedTracks: { x: makeTrack("x") },
-        downloadQueue: [child],
-        downloadProgress: {
-          a: { trackId: "a", status: "failed", progress: 0, error: "boom" },
+    mockMem.set(
+      "offlineStore",
+      JSON.stringify({
+        state: {
+          offlineModeEnabled: true,
+          downloadedTracks: { x: makeTrack("x") },
+          downloadQueue: [child],
+          downloadProgress: {
+            a: { trackId: "a", status: "failed", progress: 0, error: "boom" },
+          },
         },
-      },
-      version: 2,
-    });
+        version: 0,
+      }),
+    );
+
+    await useOffline.persist.rehydrate();
+    const state = get();
 
     expect(state.offlineModeEnabled).toBe(true);
     expect(state.downloadedTracks.x?.id).toBe("x");
     expect(state.downloadQueue).toEqual([child]);
     expect(state.downloadProgress.a?.status).toBe("failed");
-  });
-
-  it("v1 → v2 migration drops the legacy string[] queue (ids alone can't be resumed)", () => {
-    const state = seedAndRehydrate({
-      state: {
-        offlineModeEnabled: true,
-        downloadedTracks: {},
-        downloadQueue: ["legacy-id-1", "legacy-id-2"],
-      },
-      version: 1,
-    });
-
-    expect(state.downloadQueue).toEqual([]);
-    expect(state.offlineModeEnabled).toBe(true);
   });
 });

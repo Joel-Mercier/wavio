@@ -1,6 +1,8 @@
 import { Directory, File, Paths } from "expo-file-system";
+import { getAuthScope } from "@/config/storage";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { useAppBase } from "@/stores/app";
+import { useAuthBase } from "@/stores/auth";
 import useOffline, {
   type DownloadProgress,
   type OfflineTrack,
@@ -188,7 +190,14 @@ export class OfflineDownloadService {
       progress: 0,
     });
 
-    const offlineDir = new Directory(Paths.document, "offline");
+    const { url: authUrl, username } = useAuthBase.getState();
+    if (!authUrl || !username) {
+      throw new Error("Cannot download without an active server");
+    }
+    const scope = getAuthScope(authUrl, username);
+    // Files live under per-scope subdirectories so the same track id on two
+    // different servers doesn't overwrite a single shared file.
+    const offlineDir = new Directory(Paths.document, "offline", scope);
     offlineDir.create({ idempotent: true, intermediates: true });
 
     const url = downloadUrl(track.id);
@@ -241,9 +250,14 @@ export class OfflineDownloadService {
     }
   }
 
+  // Clears downloads for the currently active server only. The offline store
+  // is scoped per (server, user), so this only touches the current scope's
+  // state — but we also need to wipe the per-scope file directory.
   clearAllDownloads(): void {
     const offlineStore = useOffline.getState();
     const tracks = offlineStore.getDownloadedTracksList();
+    const { url, username } = useAuthBase.getState();
+    const scope = url && username ? getAuthScope(url, username) : null;
 
     try {
       for (const track of tracks) {
@@ -260,9 +274,9 @@ export class OfflineDownloadService {
         }
       }
 
-      const offlineDir = new Directory(Paths.document, "offline");
-      if (offlineDir.exists) {
-        offlineDir.delete();
+      if (scope) {
+        const scopedDir = new Directory(Paths.document, "offline", scope);
+        if (scopedDir.exists) scopedDir.delete();
       }
 
       this.activeIds.clear();

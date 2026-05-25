@@ -3,12 +3,12 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { SupportedLanguages } from "@/config/i18n";
+import { useStarred2 } from "@/hooks/backend/useLists";
 import {
   useGetScanStatus,
   useStartScan,
@@ -57,12 +58,13 @@ import {
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import {
-  exportBackup,
-  pickBackupFile,
-  restoreBackup,
-} from "@/services/backup";
+  useDownloadedTracksCount,
+  useDownloadedTracksList,
+  useOfflineDownloads,
+  useTotalDownloadSize,
+} from "@/hooks/useOfflineDownloads";
+import { exportBackup, pickBackupFile, restoreBackup } from "@/services/backup";
 import {
   isEqualizerAvailable,
   openSystemEqualizer,
@@ -185,14 +187,12 @@ export default function SettingsDetail() {
     !!(taddyPodcastApiKey && taddyPodcastUserId),
   );
 
-  const {
-    offlineModeEnabled,
-    setOfflineModeEnabled,
-    getDownloadedTracksCount,
-    getTotalDownloadSize,
-    downloadedTracksList,
-    totalTracksToDownload,
-  } = useOfflineDownloads();
+  const { offlineModeEnabled, setOfflineModeEnabled } = useOfflineDownloads();
+  const downloadedTracksCount = useDownloadedTracksCount();
+  const totalDownloadSize = useTotalDownloadSize();
+  const downloadedTracksList = useDownloadedTracksList();
+  const { data: starredTracksData } = useStarred2({});
+  const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
   const podcastConfigForm = useForm({
     defaultValues: {
       apiKey: taddyPodcastApiKey,
@@ -482,17 +482,18 @@ export default function SettingsDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6">
+      <Box className="px-6 mt-6 pb-6 flex-1">
         <HStack
-          className="items-center mb-6"
+          className="items-center justify-between mb-6"
           style={{ paddingTop: insets.top }}
         >
           <FadeOutScaleDown onPress={() => router.back()}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
-          <Heading className="text-white ml-4" size="lg">
+          <Heading className="text-white text-center flex-1" size="lg">
             {t("app.settings.title")}
           </Heading>
+          <Box className="w-6" />
         </HStack>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -575,12 +576,12 @@ export default function SettingsDetail() {
                 {offlineModeEnabled && (
                   <Text className="text-emerald-400 text-sm">
                     {t("app.settings.offlineSettings.downloadedTracksCount", {
-                      count: getDownloadedTracksCount(),
+                      count: downloadedTracksCount,
                       total: Math.max(
                         totalTracksToDownload,
                         downloadedTracksList.length,
                       ),
-                      size: niceBytes(getTotalDownloadSize()),
+                      size: niceBytes(totalDownloadSize),
                     })}
                   </Text>
                 )}

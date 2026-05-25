@@ -1,6 +1,6 @@
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
 import { useState } from "react";
@@ -29,7 +29,11 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import {
+  useDownloadedTracksList,
+  useOfflineDownloads,
+  useTotalDownloadSize,
+} from "@/hooks/useOfflineDownloads";
 import { niceBytes } from "@/utils/fileSize";
 
 export default function OfflineDownloadsDetail() {
@@ -42,12 +46,9 @@ export default function OfflineDownloadsDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const {
-    downloadedTracksList,
-    getTotalDownloadSize,
-    removeDownloadedTrack,
-    clearAllDownloads,
-  } = useOfflineDownloads();
+  const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
+  const downloadedTracksList = useDownloadedTracksList();
+  const totalDownloadSize = useTotalDownloadSize();
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -147,7 +148,7 @@ export default function OfflineDownloadsDetail() {
             </Text>
             <Text className="text-primary-100 text-sm">
               {t("app.offlineDownloads.totalSize", {
-                size: niceBytes(getTotalDownloadSize()),
+                size: niceBytes(totalDownloadSize),
               })}
             </Text>
           </VStack>

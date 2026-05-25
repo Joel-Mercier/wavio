@@ -1,53 +1,33 @@
-import { useCallback, useEffect } from "react";
-import { useStarred2 } from "@/hooks/backend/useLists";
-import { useIsOnline } from "@/hooks/useIsOnline";
+import { useCallback } from "react";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
 import type { Child } from "@/services/openSubsonic/types";
+import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
 
+// Narrow selectors only. Subscribing to the entire store would re-render every
+// consumer on each `setDownloadProgress` tick, and this hook is called from
+// list items (TrackListItem / LibraryListItem) where that fans out to hundreds
+// of components during an active download.
+//
+// The progress / queue records are only subscribed where they're actually
+// rendered — see useDownloadProgress / useDownloadQueue below.
+//
+// The store itself is scoped per (server, user) via createDynamicScopedStorage,
+// so the data here naturally belongs to the active server.
 export const useOfflineDownloads = () => {
-  const offlineStore = useOffline();
-  const isOnline = useIsOnline();
-  const { data: starredTracksData } = useStarred2({});
+  const offlineModeEnabled = useOffline((s) => s.offlineModeEnabled);
+  const setOfflineModeEnabled = useOffline((s) => s.setOfflineModeEnabled);
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
 
-  // Auto-download starred tracks when offline mode is enabled
-  useEffect(() => {
-    const downloadStarredTracks = async () => {
-      if (
-        isOnline &&
-        offlineStore.offlineModeEnabled &&
-        starredTracksData?.starred2?.song &&
-        starredTracksData.starred2.song.length > 0
-      ) {
-        const starredTracks = starredTracksData.starred2.song;
-        const tracksToDownload = starredTracks.filter(
-          (track) => !offlineStore.isTrackDownloaded(track.id),
-        );
+  const isTrackDownloaded = useCallback(
+    (trackId: string) => trackId in downloadedTracks,
+    [downloadedTracks],
+  );
 
-        if (tracksToDownload.length > 0) {
-          console.log(
-            `Download Manager: Auto-downloading ${tracksToDownload.length} starred tracks`,
-          );
-          try {
-            await offlineDownloadService.downloadAllStarredTracks(
-              tracksToDownload,
-            );
-          } catch (error) {
-            console.error(
-              "Download Manager: Error auto-downloading starred tracks:",
-              error,
-            );
-          }
-        }
-      }
-    };
-
-    downloadStarredTracks();
-  }, [
-    isOnline,
-    offlineStore.offlineModeEnabled,
-    starredTracksData?.starred2?.song,
-  ]);
+  const getDownloadedTrack = useCallback(
+    (trackId: string): OfflineTrack | null => downloadedTracks[trackId] ?? null,
+    [downloadedTracks],
+  );
 
   const downloadTrack = useCallback(async (track: Child) => {
     try {
@@ -89,9 +69,12 @@ export const useOfflineDownloads = () => {
   }, []);
 
   const clearFailedDownloads = useCallback(() => {
-    offlineStore.clearFailedDownloads();
-  }, [offlineStore.clearFailedDownloads]);
+    useOffline.getState().clearFailedDownloads();
+  }, []);
 
+  // These read live state via the service (which reads from useOffline.getState).
+  // They are NOT reactive — callers that need to re-render on progress changes
+  // should use useDownloadProgress(trackId) instead.
   const getDownloadProgress = useCallback((trackId: string) => {
     return offlineDownloadService.getDownloadProgress(trackId);
   }, []);
@@ -100,29 +83,19 @@ export const useOfflineDownloads = () => {
     return offlineDownloadService.isTrackDownloading(trackId);
   }, []);
 
-  const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
-
   return {
     // Settings
-    offlineModeEnabled: offlineStore.offlineModeEnabled,
-    setOfflineModeEnabled: offlineStore.setOfflineModeEnabled,
+    offlineModeEnabled,
+    setOfflineModeEnabled,
 
     // Downloaded tracks
-    downloadedTracks: offlineStore.downloadedTracks,
-    downloadedTracksList: offlineStore.getDownloadedTracksList(),
-    isTrackDownloaded: offlineStore.isTrackDownloaded,
-    getDownloadedTrack: offlineStore.getDownloadedTrack,
-    getTotalDownloadSize: offlineStore.getTotalDownloadSize,
-    getDownloadedTracksCount: offlineStore.getDownloadedTracksCount,
-    totalTracksToDownload,
+    downloadedTracks,
+    isTrackDownloaded,
+    getDownloadedTrack,
 
-    // Download progress
-    downloadProgress: offlineStore.downloadProgress,
+    // Download progress (non-reactive helpers; subscribe via the hooks below)
     getDownloadProgress,
     isTrackDownloading,
-
-    // Download queue
-    downloadQueue: offlineStore.downloadQueue,
 
     // Actions
     downloadTrack,
@@ -132,3 +105,28 @@ export const useOfflineDownloads = () => {
     clearFailedDownloads,
   };
 };
+
+// Reactive view of the downloaded-tracks list for the active server. Subscribes
+// to downloadedTracks only (changes on add/remove/clear — not progress ticks).
+export const useDownloadedTracksList = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return Object.values(downloadedTracks);
+};
+
+export const useDownloadedTracksCount = () =>
+  useOffline((s) => Object.keys(s.downloadedTracks).length);
+
+export const useTotalDownloadSize = () =>
+  useOffline((s) =>
+    Object.values(s.downloadedTracks).reduce((sum, t) => sum + t.size, 0),
+  );
+
+// Reactive subscriptions for progress UIs. Scope progress access to a single
+// trackId so a row only re-renders when its own progress changes.
+export const useDownloadProgress = (trackId: string) =>
+  useOffline((s) => s.downloadProgress[trackId] ?? null);
+
+export const useAllDownloadProgress = () =>
+  useOffline((s) => s.downloadProgress);
+
+export const useDownloadQueue = () => useOffline((s) => s.downloadQueue);
