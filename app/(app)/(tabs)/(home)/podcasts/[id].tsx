@@ -14,11 +14,12 @@ import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -45,8 +46,11 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";
@@ -71,6 +75,20 @@ export default function PodcastScreen() {
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
+  );
+  const isPlaying = useIsPlaying();
+  const playingTrack = usePlayingTrack();
+  const isCurrent =
+    !!podcast.uuid && playingTrack?.id === podcast.uuid;
+  const { data: seriesData } = useInfinitePodcastSeries({
+    uuid: podcast.podcastSeries?.uuid,
+  });
+  const seriesEpisodes = useMemo<PodcastEpisode[]>(
+    () =>
+      seriesData?.pages.flatMap(
+        (page) => page.data?.getPodcastSeries?.episodes ?? [],
+      ) ?? [],
+    [seriesData],
   );
   const bottomTabBarHeight = useBottomTabBarHeight();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -160,6 +178,49 @@ export default function PodcastScreen() {
         </Toast>
       ),
     });
+  };
+
+  const handlePlayPress = () => {
+    if (isCurrent) {
+      togglePlayPause();
+      return;
+    }
+    const fallbackDuration =
+      typeof podcast.duration === "string"
+        ? Number(podcast.duration)
+        : podcast.duration;
+    const buildTrack = (e: PodcastEpisode | typeof podcast) => ({
+      id: e.uuid || (e as typeof podcast).id,
+      url: (e as PodcastEpisode).audioUrl,
+      title: e.name,
+      artist: e.podcastSeries?.name,
+      artwork: e.imageUrl,
+      duration:
+        typeof e.duration === "string" ? Number(e.duration) : e.duration,
+      source: "podcast" as const,
+    });
+    if (seriesEpisodes.length > 0) {
+      const tracks = seriesEpisodes
+        .filter((e) => !!e.audioUrl)
+        .map((e) => buildTrack(e));
+      const start = tracks.findIndex((t) => t.id === podcast.uuid);
+      if (tracks.length > 0) {
+        playTracks(tracks, start >= 0 ? start : 0);
+        return;
+      }
+    }
+    if (!podcast.audioUrl) return;
+    playTracks([
+      {
+        id: podcast.uuid || podcast.id,
+        url: podcast.audioUrl,
+        title: podcast.name,
+        artist: podcast.podcastSeries?.name,
+        artwork: podcast.imageUrl,
+        duration: fallbackDuration,
+        source: "podcast",
+      },
+    ]);
   };
 
   const handleSharePress = async () => {
@@ -297,9 +358,13 @@ export default function PodcastScreen() {
                 </FadeOutScaleDown>
               </HStack>
               <HStack className="items-center gap-x-4">
-                <FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handlePlayPress}>
                   <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                    <Play color={white} fill={white} />
+                    {isCurrent && isPlaying ? (
+                      <Pause color={white} fill={white} />
+                    ) : (
+                      <Play color={white} fill={white} />
+                    )}
                   </Box>
                 </FadeOutScaleDown>
               </HStack>

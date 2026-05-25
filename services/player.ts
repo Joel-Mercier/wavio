@@ -80,10 +80,15 @@ let nowPlayingScrobbledId: string | null = null;
 let submittedScrobbleId: string | null = null;
 let scrobbleStartedAt: number | null = null;
 
+function isScrobblable(track: QueueTrack): boolean {
+  return track.source !== "podcast";
+}
+
 function reportNowPlaying(track: QueueTrack) {
   if (nowPlayingScrobbledId === track.id) return;
   nowPlayingScrobbledId = track.id;
   scrobbleStartedAt = Date.now();
+  if (!isScrobblable(track)) return;
   scrobble(track.id, { submission: false }).catch(() => {});
 }
 
@@ -91,6 +96,7 @@ function maybeSubmitScrobble(status: AudioStatus) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (submittedScrobbleId === current.id) return;
+  if (!isScrobblable(current)) return;
   const position = status.currentTime ?? 0;
   const duration = status.duration ?? current.duration ?? 0;
   if (duration < 30) return;
@@ -127,6 +133,8 @@ function resolveTrackUrl(track: QueueTrack): {
 } {
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
   if (downloaded) return { url: downloaded.path, isOffline: true };
+  if (track.source === "podcast" && track.url)
+    return { url: track.url, isOffline: false };
   return { url: streamUrl(track.id), isOffline: false };
 }
 
@@ -495,7 +503,13 @@ function makeStatusListener(slot: Slot) {
 
     if (status.didJustFinish && !isLoading) {
       const previousId = useQueue.getState().getCurrent()?.id ?? null;
-      if (previousId && submittedScrobbleId !== previousId) {
+      const previous = useQueue.getState().getCurrent();
+      if (
+        previousId &&
+        submittedScrobbleId !== previousId &&
+        previous &&
+        isScrobblable(previous)
+      ) {
         submittedScrobbleId = previousId;
         scrobble(previousId, {
           submission: true,

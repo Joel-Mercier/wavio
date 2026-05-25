@@ -228,6 +228,7 @@ export default function PodcastSeriesScreen() {
             index={index}
             isFavorite={isFavorite}
             seriesName={podcastSeries.name}
+            episodes={episodes}
           />
         )
       }
