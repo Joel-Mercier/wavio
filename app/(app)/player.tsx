@@ -979,6 +979,27 @@ export default function PlayerScreen() {
                 <VStack className="my-6 flex-1">
                   <FadeOut
                     onPress={() => {
+                      if (isPodcast) {
+                        if (!playingTrack?.id) return;
+                        router.replace({
+                          pathname: "/podcasts/[id]",
+                          params: {
+                            id: playingTrack.id,
+                            uuid: playingTrack.id,
+                            name: playingTrack.title,
+                            description: playingTrack.description,
+                            imageUrl: playingTrack.artwork,
+                            datePublished: playingTrack.datePublished,
+                            duration: playingTrack.duration,
+                            audioUrl: playingTrack.url,
+                            websiteUrl: playingTrack.websiteUrl,
+                            podcastSeries: JSON.stringify(
+                              playingTrack.podcastSeries,
+                            ),
+                          },
+                        });
+                        return;
+                      }
                       if (!playingTrack?.albumId) return;
                       router.replace(`/albums/${playingTrack.albumId}`);
                     }}
@@ -989,6 +1010,22 @@ export default function PlayerScreen() {
                   </FadeOut>
                   <FadeOut
                     onPress={() => {
+                      if (isPodcast) {
+                        if (!podcastSeries?.uuid) return;
+                        router.replace({
+                          pathname: "/podcast-series/[id]",
+                          params: {
+                            id: podcastSeries.uuid,
+                            uuid: podcastSeries.uuid,
+                            name: podcastSeries.name,
+                            description: podcastSeries.description,
+                            imageUrl: podcastSeries.imageUrl,
+                            authorName: podcastSeries.authorName,
+                            genres: podcastSeries.genres?.join(","),
+                          },
+                        });
+                        return;
+                      }
                       if (!playingTrack?.artistId) return;
                       router.replace(`/artists/${playingTrack.artistId}`);
                     }}

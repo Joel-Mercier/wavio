@@ -361,7 +361,7 @@ export default function PodcastSeriesScreen() {
             <Box className="w-10" />
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1 ml-4"
               size="lg"
             >
               {podcastSeries.name}

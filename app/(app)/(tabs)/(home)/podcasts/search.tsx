@@ -18,6 +18,7 @@ import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
+import { KeyboardController } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -176,6 +177,7 @@ export default function PodcastsSearchScreen() {
   };
 
   const handlePresentFiltersPress = () => {
+    KeyboardController.dismiss();
     filtersSheetRef.current?.present();
   };
 

@@ -51,6 +51,7 @@ function episodeToTrack(episode: PodcastEpisode, fallbackSeriesName?: string) {
     source: "podcast" as const,
     description: episode.description,
     websiteUrl: episode.websiteUrl,
+    datePublished: episode.datePublished,
     podcastSeries: episode.podcastSeries,
   };
 }

@@ -201,6 +201,7 @@ export default function PodcastScreen() {
       source: "podcast" as const,
       description: e.description,
       websiteUrl: (e as PodcastEpisode).websiteUrl,
+      datePublished: e.datePublished,
       podcastSeries: e.podcastSeries,
     });
     if (seriesEpisodes.length > 0) {
@@ -225,6 +226,7 @@ export default function PodcastScreen() {
         source: "podcast",
         description: podcast.description,
         websiteUrl: podcast.websiteUrl,
+        datePublished: podcast.datePublished,
         podcastSeries: podcast.podcastSeries,
       },
     ]);
@@ -317,7 +319,7 @@ export default function PodcastScreen() {
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white text-center font-bold truncate flex-1"
+              className="text-white text-center font-bold truncate flex-1 ml-4"
               size="lg"
             >
               {podcast.name}
@@ -384,7 +386,11 @@ export default function PodcastScreen() {
               </FadeOutScaleDown>
               <Text className="flex-1 text-primary-100 mt-2">
                 {podcast.datePublished &&
-                  `${formatDistanceToNow(fromUnixTime(podcast.datePublished))} ago`}
+                  t("app.podcasts.publishedAt", {
+                    distance: formatDistanceToNow(
+                      fromUnixTime(podcast.datePublished),
+                    ),
+                  })}
                 {" ⦁ "}
                 {`${secondsToMinutes(podcast.duration || 0)} min`}
               </Text>
