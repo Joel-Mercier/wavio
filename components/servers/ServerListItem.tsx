@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
@@ -115,6 +115,8 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       setShowEditAlertDialog(false);
     },
   });
+
+  const isDirty = useStore(form.store, (state) => state.isDirty);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -473,7 +475,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={() => {
-                form.state.isDirty ? form.handleSubmit() : undefined;
+                isDirty ? form.handleSubmit() : undefined;
               }}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >

@@ -1,4 +1,4 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
@@ -123,6 +123,11 @@ export default function InternetRadioStationActions({
       );
     },
   });
+
+  const [isDirty, isSubmitting] = useStore(form.store, (state) => [
+    state.isDirty,
+    state.isSubmitting,
+  ]);
 
   const handleVisitHomePagePress = async () => {
     onActionStart?.();
@@ -360,9 +365,7 @@ export default function InternetRadioStationActions({
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={
-                form.state.isDirty || !form.state.isSubmitting
-                  ? form.handleSubmit
-                  : undefined
+                isDirty && !isSubmitting ? form.handleSubmit : undefined
               }
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 opacity-65"
             >

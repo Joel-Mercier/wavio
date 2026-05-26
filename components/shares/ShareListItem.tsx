@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
@@ -34,11 +34,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
 import { Card } from "@/components/ui/card";
+import {
+  DateTimePicker,
+  DateTimePickerIcon,
+  DateTimePickerInput,
+  DateTimePickerTrigger,
+} from "@/components/ui/date-time-picker";
 import { FormControl } from "@/components/ui/form-control";
+import { CalendarDaysIcon } from "@/components/ui/icon";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import {
@@ -56,7 +62,7 @@ import { cn } from "@/utils/tailwind";
 
 const updateShareSchema = z.object({
   description: z.string().trim().optional(),
-  expires: z.string().trim().optional(),
+  expires: z.number().optional(),
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
@@ -80,7 +86,9 @@ export default function ShareListItem({ share }: { share: Share }) {
   const form = useForm({
     defaultValues: {
       description: share.description,
-      expires: share.expires as unknown as string,
+      expires: share.expires
+        ? new Date(share.expires).getTime()
+        : undefined,
     } as z.input<typeof updateShareSchema>,
     validators: {
       onChange: updateShareSchema,
@@ -90,7 +98,7 @@ export default function ShareListItem({ share }: { share: Share }) {
         {
           id: share.id,
           description: value.description,
-          expires: value.expires as unknown as number | undefined,
+          expires: value.expires,
         },
         {
           onSuccess: () => {
@@ -127,6 +135,8 @@ export default function ShareListItem({ share }: { share: Share }) {
       );
     },
   });
+
+  const isDirty = useStore(form.store, (state) => state.isDirty);
 
   const handleCloseAlertDialog = () => setShowAlertDialog(false);
 
@@ -438,15 +448,29 @@ export default function ShareListItem({ share }: { share: Share }) {
                   isRequired={false}
                   className="my-4"
                 >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t("app.shares.expiresPlaceholder")}
-                    />
-                  </Input>
+                  <DateTimePicker
+                    mode="datetime"
+                    minimumDate={new Date()}
+                    value={
+                      field.state.value
+                        ? new Date(field.state.value)
+                        : undefined
+                    }
+                    onChange={(date) => {
+                      field.handleChange(date ? date.getTime() : undefined);
+                      handleFieldBlur(field);
+                    }}
+                    format="YYYY-MM-DD HH:mm"
+                    placeholder={t("app.shares.expiresPlaceholder")}
+                  >
+                    <DateTimePickerTrigger className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                      <DateTimePickerInput className="text-md text-white" />
+                      <DateTimePickerIcon
+                        as={CalendarDaysIcon}
+                        className="text-white mr-3"
+                      />
+                    </DateTimePickerTrigger>
+                  </DateTimePicker>
                   <FieldError field={field} />
                 </FormControl>
               )}
@@ -465,7 +489,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
-              onPress={form.state.isDirty ? form.handleSubmit : undefined}
+              onPress={isDirty ? form.handleSubmit : undefined}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
               <Text className="text-primary-800 font-bold text-lg">

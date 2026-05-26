@@ -11,7 +11,6 @@ import {
   useStyleContext,
   withStyleContext,
 } from "@gluestack-ui/utils/nativewind-utils";
-// @ts-expect-error: optional dependency, not installed
 import DateTimePickerNative from "@react-native-community/datetimepicker";
 import React, { useCallback, useMemo } from "react";
 import {

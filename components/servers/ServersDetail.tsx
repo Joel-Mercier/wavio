@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -117,6 +117,8 @@ export default function ServersDetail() {
       setShowAddServerModal(false);
     },
   });
+
+  const isDirty = useStore(form.store, (state) => state.isDirty);
 
   const handleAddServerPress = () => {
     setShowAddServerModal(true);
@@ -277,7 +279,7 @@ export default function ServersDetail() {
               </FadeOutScaleDown>
               <FadeOutScaleDown
                 onPress={() => {
-                  form.state.isDirty ? form.handleSubmit() : undefined;
+                  isDirty ? form.handleSubmit() : undefined;
                 }}
                 className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
               >

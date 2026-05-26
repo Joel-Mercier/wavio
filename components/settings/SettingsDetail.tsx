@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
@@ -223,6 +223,11 @@ export default function SettingsDetail() {
       });
     },
   });
+
+  const isPodcastConfigDirty = useStore(
+    podcastConfigForm.store,
+    (state) => state.isDirty,
+  );
 
   const handlePresentLanguageModalPress = () => {
     bottomSheetLanguageModalRef.current?.present();
@@ -1605,7 +1610,7 @@ export default function SettingsDetail() {
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={() => {
-                podcastConfigForm.state.isDirty
+                isPodcastConfigDirty
                   ? podcastConfigForm.handleSubmit()
                   : undefined;
               }}
