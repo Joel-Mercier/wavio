@@ -58,7 +58,7 @@ export const usePlayQueue = () => {
 export const useSavePlayQueue = () => {
   const query = useMutation({
     mutationFn: (params: {
-      id?: string;
+      ids?: string[];
       current?: string;
       position?: number;
     }) => {

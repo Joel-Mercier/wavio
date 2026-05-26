@@ -49,6 +49,7 @@ const reset = () =>
       crossfadeSeconds: 0,
       gaplessEnabled: true,
       endlessPlaybackEnabled: false,
+      queueSyncPriority: "off",
     },
     false,
   );
@@ -155,6 +156,30 @@ describe("app store", () => {
     expect(useAppBase.getState().endlessPlaybackEnabled).toBe(true);
     useAppBase.getState().setEndlessPlaybackEnabled(false);
     expect(useAppBase.getState().endlessPlaybackEnabled).toBe(false);
+  });
+
+  it("defaults queueSyncPriority to off", () => {
+    expect(useAppBase.getState().queueSyncPriority).toBe("off");
+  });
+
+  it("setQueueSyncPriority cycles through server, local and off", () => {
+    useAppBase.getState().setQueueSyncPriority("server");
+    expect(useAppBase.getState().queueSyncPriority).toBe("server");
+    useAppBase.getState().setQueueSyncPriority("local");
+    expect(useAppBase.getState().queueSyncPriority).toBe("local");
+    useAppBase.getState().setQueueSyncPriority("off");
+    expect(useAppBase.getState().queueSyncPriority).toBe("off");
+  });
+
+  it("persists queueSyncPriority", () => {
+    useAppBase.getState().setQueueSyncPriority("server");
+    const storage = (
+      jest.requireMock("@/config/storage") as {
+        zustandStorage: { getItem: (k: string) => string | null };
+      }
+    ).zustandStorage;
+    const persisted = JSON.parse(storage.getItem("app") as string);
+    expect(persisted.state.queueSyncPriority).toBe("server");
   });
 
   it("partialize excludes showDrawer from persisted state", async () => {

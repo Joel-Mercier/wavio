@@ -40,7 +40,7 @@ export const getPlayQueue = async () => {
 };
 
 export const savePlayQueue = async (_opts: {
-  id?: string;
+  ids?: string[];
   current?: string;
   position?: number;
 }) => fakeEnvelope({});

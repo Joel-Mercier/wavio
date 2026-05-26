@@ -75,6 +75,11 @@ interface AppStore {
   setGaplessEnabled: (enabled: boolean) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  // Cross-device play queue sync. "server": on launch restore the server's
+  // saved queue; "local": keep this device's queue but still upload it;
+  // "off": no sync at all. See services/playQueueSync.ts.
+  queueSyncPriority: "server" | "local" | "off";
+  setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -161,6 +166,10 @@ export const useAppBase = create<AppStore>()(
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
+      },
+      queueSyncPriority: "off",
+      setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {
+        set({ queueSyncPriority });
       },
     }),
     {

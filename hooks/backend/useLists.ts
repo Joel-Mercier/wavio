@@ -89,6 +89,19 @@ export const usePlayNow = () => {
   });
 };
 
+export const useNowPlaying = (options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: ["nowPlaying"],
+    queryFn: () => {
+      return getNowPlaying();
+    },
+    // What others are listening to changes constantly — keep it fresh.
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+    enabled: options?.enabled,
+  });
+};
+
 export const useRandomSongs = (
   params: {
     size?: number;

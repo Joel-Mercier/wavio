@@ -1,9 +1,16 @@
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import { getAuthScope } from "@/config/storage";
 import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
+import {
+  flushPlayQueue,
+  initPlayQueueSync,
+  stopPlayQueueSync,
+} from "@/services/playQueueSync";
+import { loadResumePositions } from "@/services/resumePositions";
 import useActivity from "@/stores/activity";
 import useAuth, { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
@@ -33,6 +40,7 @@ export default function AppLayout() {
     lastHydratedScope = scope;
     console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
+      stopPlayQueueSync();
       useRecentPlays.getState().__reset();
       useRecentSearches.getState().__reset();
       useActivity.getState().__reset();
@@ -45,6 +53,29 @@ export default function AppLayout() {
     useActivity.persist.rehydrate();
     useQueue.persist.rehydrate();
     useOffline.persist.rehydrate();
+
+    // Once the local queue is in place, start server play-queue sync (which may
+    // restore the server's queue when prioritised) and prime resume positions.
+    useQueue.persist.onFinishHydration(() => {
+      void initPlayQueueSync();
+      void loadResumePositions();
+    });
+  }, [isAuthenticated]);
+
+  // Persist the play queue to the server promptly when leaving the app.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const onChange = (status: AppStateStatus) => {
+      if (status === "background" || status === "inactive") flushPlayQueue();
+    };
+    const sub = AppState.addEventListener("change", onChange);
+    return () => sub.remove();
+  }, [isAuthenticated]);
+
+  // Tear down sync subscriptions on sign-out so a fresh login re-initialises.
+  useEffect(() => {
+    if (isAuthenticated) return;
+    stopPlayQueueSync();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {

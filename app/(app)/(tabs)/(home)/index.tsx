@@ -9,6 +9,7 @@ import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
+import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
 import RecentPlaysSection from "@/components/home/sections/RecentPlaysSection";
 import {
   RandomSongsSection,
@@ -122,6 +123,8 @@ export default function HomeScreen() {
       switch (item.kind) {
         case "recentPlays":
           return <RecentPlaysSection />;
+        case "nowPlaying":
+          return <NowPlayingSection enabled={enabled} />;
         case "albumList":
           return (
             <AlbumCarouselSection

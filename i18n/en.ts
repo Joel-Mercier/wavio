@@ -32,6 +32,7 @@ export default {
           highest: "Top rated",
           frequent: "Most played",
           random: "Random",
+          nowPlaying: "Listening now",
         },
       },
       search: {
@@ -586,6 +587,26 @@ export default {
           equalizerAction: "Open",
           equalizerErrorMessage:
             "No system equalizer is available on this device.",
+          queueSyncLabel: "Queue sync",
+          queueSyncDescription:
+            "Save your play queue on the server so you can pick it up on another device.",
+          queueSyncOptions: {
+            server: {
+              label: "Prioritize server",
+              description:
+                "On launch, restore the queue saved on the server. Your queue is also uploaded so other devices can pick it up.",
+            },
+            local: {
+              label: "Prioritize this device",
+              description:
+                "On launch, keep this device's queue. It's still uploaded so your other devices can restore it.",
+            },
+            off: {
+              label: "Off",
+              description:
+                "Don't sync. Your queue stays on this device only and is never sent to the server.",
+            },
+          },
         },
         streamingSettings: {
           title: "Streaming settings",

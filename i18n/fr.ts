@@ -32,6 +32,7 @@ export default {
           highest: "Les mieux notés",
           frequent: "Les plus joués",
           random: "Au hasard",
+          nowPlaying: "À l'écoute en ce moment",
         },
       },
       search: {
@@ -607,6 +608,26 @@ export default {
           equalizerAction: "Ouvrir",
           equalizerErrorMessage:
             "Aucun égaliseur système n'est disponible sur cet appareil",
+          queueSyncLabel: "Synchronisation de la file",
+          queueSyncDescription:
+            "Enregistre votre file de lecture sur le serveur pour la reprendre sur un autre appareil.",
+          queueSyncOptions: {
+            server: {
+              label: "Prioriser le serveur",
+              description:
+                "Au démarrage, restaure la file enregistrée sur le serveur. Votre file est aussi envoyée pour que vos autres appareils puissent la reprendre.",
+            },
+            local: {
+              label: "Prioriser cet appareil",
+              description:
+                "Au démarrage, conserve la file de cet appareil. Elle est tout de même envoyée pour que vos autres appareils puissent la restaurer.",
+            },
+            off: {
+              label: "Désactivée",
+              description:
+                "Aucune synchronisation. Votre file reste uniquement sur cet appareil et n'est jamais envoyée au serveur.",
+            },
+          },
         },
         streamingSettings: {
           title: "Paramètres de streaming",

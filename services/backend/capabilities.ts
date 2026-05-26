@@ -13,6 +13,11 @@ export type BackendCapabilities = {
   replayGain: boolean;
   jukebox: boolean;
   songLists: boolean;
+  // Server-side play queue persistence (Subsonic getPlayQueue/savePlayQueue)
+  // used to resume the same queue + position on another device.
+  playQueueSync: boolean;
+  // Subsonic getNowPlaying — what other users on the server are listening to.
+  nowPlaying: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -28,6 +33,8 @@ const SUBSONIC: BackendCapabilities = {
   replayGain: true,
   jukebox: true,
   songLists: false,
+  playQueueSync: true,
+  nowPlaying: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -52,6 +59,10 @@ const JELLYFIN: BackendCapabilities = {
   replayGain: false,
   jukebox: false,
   songLists: true,
+  // Jellyfin's getPlayQueue/getNowPlaying adapters are inert stubs, so these
+  // sync/social surfaces stay hidden until a real adapter exists.
+  playQueueSync: false,
+  nowPlaying: false,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

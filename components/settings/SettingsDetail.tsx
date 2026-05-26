@@ -133,6 +133,9 @@ export default function SettingsDetail() {
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
+  const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleQueueSyncSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetQueueSyncModalRef);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -163,6 +166,8 @@ export default function SettingsDetail() {
   const setEndlessPlaybackEnabled = useApp(
     (store) => store.setEndlessPlaybackEnabled,
   );
+  const queueSyncPriority = useApp((store) => store.queueSyncPriority);
+  const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const setTaddyPodcastsConfig = usePodcasts(
     (store) => store.setTaddyPodcastsConfig,
   );
@@ -245,10 +250,20 @@ export default function SettingsDetail() {
     bottomSheetReplayGainModalRef.current?.present();
   };
 
+  const handlePresentQueueSyncModalPress = () => {
+    bottomSheetQueueSyncModalRef.current?.present();
+  };
+
   const replayGainOptions: ("off" | "track" | "album")[] = [
     "off",
     "track",
     "album",
+  ];
+
+  const queueSyncOptions: ("server" | "local" | "off")[] = [
+    "server",
+    "local",
+    "off",
   ];
 
   const adjustPreamp = (delta: number) => {
@@ -897,6 +912,32 @@ export default function SettingsDetail() {
                 </FadeOutScaleDown>
               </HStack>
             )}
+            {capabilities.playQueueSync && (
+              <FadeOutScaleDown onPress={handlePresentQueueSyncModalPress}>
+                <HStack className="items-center gap-x-4 py-4 justify-between">
+                  <VStack className="gap-y-2 w-1/2">
+                    <Heading className="text-white font-normal" size="md">
+                      {t("app.settings.playbackSettings.queueSyncLabel")}
+                    </Heading>
+                    <Text className="text-primary-100 text-sm">
+                      {t("app.settings.playbackSettings.queueSyncDescription")}
+                    </Text>
+                  </VStack>
+                  <Badge
+                    className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                    size="lg"
+                    variant="solid"
+                    action="success"
+                  >
+                    <BadgeText className="normal-case text-center text-emerald-700">
+                      {t(
+                        `app.settings.playbackSettings.queueSyncOptions.${queueSyncPriority}.label`,
+                      )}
+                    </BadgeText>
+                  </Badge>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.streamingSettings.title")}
@@ -1290,6 +1331,64 @@ export default function SettingsDetail() {
                       </Text>
                     </VStack>
                     {replayGainMode === option && (
+                      <Check size={24} color={emerald500} />
+                    )}
+                  </HStack>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetQueueSyncModalRef}
+        onChange={handleQueueSyncSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="gap-y-2">
+              <Heading className="text-white font-bold" size="md">
+                {t("app.settings.playbackSettings.queueSyncLabel")}
+              </Heading>
+              <Text className="text-primary-100 text-sm">
+                {t("app.settings.playbackSettings.queueSyncDescription")}
+              </Text>
+            </VStack>
+            <VStack className="mt-6 gap-y-8">
+              {queueSyncOptions.map((option) => (
+                <FadeOutScaleDown
+                  key={option}
+                  onPress={() => {
+                    setQueueSyncPriority(option);
+                    bottomSheetQueueSyncModalRef.current?.dismiss();
+                  }}
+                >
+                  <HStack className="items-center justify-between gap-x-4">
+                    <VStack className="ml-4 flex-1 gap-y-1">
+                      <Text className="text-lg text-gray-200">
+                        {t(
+                          `app.settings.playbackSettings.queueSyncOptions.${option}.label`,
+                        )}
+                      </Text>
+                      <Text className="text-primary-100 text-sm">
+                        {t(
+                          `app.settings.playbackSettings.queueSyncOptions.${option}.description`,
+                        )}
+                      </Text>
+                    </VStack>
+                    {queueSyncPriority === option && (
                       <Check size={24} color={emerald500} />
                     )}
                   </HStack>

@@ -19,6 +19,12 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
+  clearResumePosition,
+  getResumePosition,
+  loadResumePositions,
+  recordResumePosition,
+} from "@/services/resumePositions";
+import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
@@ -53,6 +59,13 @@ const loadedTrackIds: (string | null)[] = [null, null];
 let isLoading = false;
 let playbackInitialized = false;
 let endlessFetchInFlight = false;
+
+// A resume seek can't be applied the instant a source is replaced — expo-audio
+// may not have the media ready, and the bookmark map may still be loading. We
+// arm the target here and (re)apply it from the status listener once the active
+// player reports the track is ready, clearing it after the first application.
+let pendingResumeId: string | null = null;
+let pendingResumeAt = 0;
 
 const slotListeners = new Set<() => void>();
 function notifySlotChange() {
@@ -257,7 +270,22 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   const { url } = resolveTrackUrl(track);
   p.replace({ uri: url });
   p.volume = getReplayGainFactor(track);
-  if (slot === activeSlot) applyLockScreen(p, track);
+  if (slot === activeSlot) {
+    applyLockScreen(p, track);
+    // Resume long tracks from their saved bookmark position. Arm the seek so the
+    // status listener re-applies it once the media is ready, and try an
+    // immediate best-effort seek too.
+    const resumeAt = getResumePosition(track);
+    if (resumeAt != null) {
+      pendingResumeId = track.id;
+      pendingResumeAt = resumeAt;
+      try {
+        p.seekTo(resumeAt);
+      } catch {}
+    } else {
+      pendingResumeId = null;
+    }
+  }
   if (autoplay) {
     p.play();
     reportNowPlaying(track);
@@ -468,9 +496,33 @@ function handleNextTrackStarted() {
 function makeStatusListener(slot: Slot) {
   return (status: AudioStatus) => {
     if (slot !== activeSlot) return;
+    // Apply an armed resume seek as soon as the media reports a known duration
+    // (i.e. it's loaded enough to seek). Only while still at the start, so a
+    // user scrub isn't clobbered, and only once per arming.
+    if (pendingResumeId && status.duration > 0) {
+      const cur = useQueue.getState().getCurrent();
+      if (
+        cur?.id === pendingResumeId &&
+        loadedTrackIds[activeSlot] === pendingResumeId
+      ) {
+        const target = pendingResumeAt;
+        pendingResumeId = null;
+        if (Math.abs((status.currentTime ?? 0) - target) > 1.5) {
+          try {
+            players[activeSlot].seekTo(target);
+          } catch {}
+        }
+      } else if (cur?.id !== pendingResumeId) {
+        // Track changed out from under us — drop the stale arming.
+        pendingResumeId = null;
+      }
+    }
     if (status.playing) {
       const cur = useQueue.getState().getCurrent();
-      if (cur) reportNowPlaying(cur);
+      if (cur) {
+        reportNowPlaying(cur);
+        recordResumePosition(cur, status.currentTime ?? 0);
+      }
     }
     maybeSubmitScrobble(status);
 
@@ -504,6 +556,8 @@ function makeStatusListener(slot: Slot) {
     if (status.didJustFinish && !isLoading) {
       const previousId = useQueue.getState().getCurrent()?.id ?? null;
       const previous = useQueue.getState().getCurrent();
+      // Fully played — drop any resume bookmark so it doesn't reopen at the end.
+      clearResumePosition(previousId);
       if (
         previousId &&
         submittedScrobbleId !== previousId &&
@@ -657,6 +711,10 @@ const appUnsub = useAppBase.subscribe((state, prev) => {
 
 let lastTrackId: string | null = null;
 let hasHydrated = false;
+// When restoring a queue saved on the server, we want the same "load but don't
+// auto-play" behaviour as cold-start hydration. This flag tells the next queue
+// subscription firing to load silently.
+let suppressAutoplayOnce = false;
 const queueUnsub = useQueue.subscribe((state) => {
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
@@ -665,6 +723,13 @@ const queueUnsub = useQueue.subscribe((state) => {
     lastTrackId = id;
     if (expectedNextTrackId && expectedNextTrackId === id) {
       expectedNextTrackId = null;
+      return;
+    }
+    if (suppressAutoplayOnce) {
+      suppressAutoplayOnce = false;
+      if (transition.kind !== "idle") abortTransition();
+      resetScrobbleState();
+      loadTrack(activeSlot, current, false);
       return;
     }
     // Jukebox mode owns playback server-side; the local player just tracks
@@ -733,6 +798,23 @@ function hydratePlayerFromQueue() {
     loadTrack(activeSlot, current, false);
   }
   hasHydrated = true;
+  // Bookmarks load asynchronously, so the loadTrack above usually runs before
+  // the resume map is populated. Once it lands, arm the resume seek for the
+  // restored (and not-yet-played) track so reopening the app lands at the saved
+  // position instead of the start.
+  if (current && !playbackInitialized) {
+    void loadResumePositions().then(() => {
+      if (loadedTrackIds[activeSlot] !== current.id) return;
+      if (playbackInitialized || players[activeSlot].playing) return;
+      const resumeAt = getResumePosition(current);
+      if (resumeAt == null) return;
+      pendingResumeId = current.id;
+      pendingResumeAt = resumeAt;
+      try {
+        players[activeSlot].seekTo(resumeAt);
+      } catch {}
+    });
+  }
 }
 
 if (useQueue.persist.hasHydrated()) {
@@ -762,6 +844,26 @@ export function playTracks(tracks: QueueTrack[], startIndex = 0) {
   }
 }
 
+// Replace the queue with one restored from the server, positioned at `index`
+// and `positionSeconds`, without auto-playing. Resets playbackInitialized so
+// the user's first play re-loads the track (and applies the seek reliably).
+export function restoreServerQueue(
+  tracks: QueueTrack[],
+  index: number,
+  positionSeconds: number,
+) {
+  if (tracks.length === 0) return;
+  if (transition.kind !== "idle") abortTransition();
+  suppressAutoplayOnce = true;
+  playbackInitialized = false;
+  useQueue.getState().setQueue(tracks, index);
+  if (positionSeconds > 0) {
+    try {
+      players[activeSlot].seekTo(positionSeconds);
+    } catch {}
+  }
+}
+
 export function togglePlayPause() {
   if (useJukebox.getState().active) {
     jukeboxTogglePlayPause().catch(() => {});
@@ -785,6 +887,14 @@ export function pause() {
   if (useJukebox.getState().active) {
     jukeboxPauseAction().catch(() => {});
     return;
+  }
+  // Persist the resume position immediately on pause rather than waiting for
+  // the next throttled tick that may never come once playback stops.
+  const current = useQueue.getState().getCurrent();
+  if (current) {
+    recordResumePosition(current, players[activeSlot].currentTime ?? 0, {
+      force: true,
+    });
   }
   players[activeSlot].pause();
 }

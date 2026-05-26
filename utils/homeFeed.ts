@@ -5,6 +5,7 @@ import type { AlbumID3, Genre } from "@/services/openSubsonic/types";
 
 export type HomeSectionDescriptor =
   | { id: string; kind: "recentPlays" }
+  | { id: string; kind: "nowPlaying" }
   | {
       id: string;
       kind: "albumList";
@@ -218,6 +219,10 @@ export function buildHomeFeed({
   }
 
   sections.push({ id: "starred", kind: "starred" });
+
+  if (capabilities.nowPlaying) {
+    sections.push({ id: "nowPlaying", kind: "nowPlaying" });
+  }
 
   if (capabilities.setRating) {
     sections.push({

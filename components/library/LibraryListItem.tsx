@@ -223,7 +223,9 @@ export default function LibraryListItem({
                   ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
                   : type.id === "folder"
                     ? type.label
-                    : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
+                    : type.id === "playlist"
+                      ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
+                      : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
             </Text>
           </HStack>
         </VStack>
