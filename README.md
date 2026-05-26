@@ -1,6 +1,10 @@
 # Wavio
 
-Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic APIs.
+<p align="center">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
+</p>
+
+Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers.
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 
@@ -53,9 +57,10 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 ### Android
 
 1. Make sure you have the correct environnement for building on Android (Android Studio, SDK, Java, etc.)
-2. Make sure you are logged in to Expo with `eas login` (check with `eas whoami`)
-3. Build the app with the desired profile `eas build --profile preview --platform android`
-4. Install the app on your device with the generated APK file
+2. Make sure you are have the SENTRY_AUTH_TOKEN and are logged in to the sentry-cli with `sentry-cli login`
+3. Make sure you are logged in to Expo with `eas login` (check with `eas whoami`)
+4. Build the app with the desired profile `eas build --profile preview --platform android`
+5. Install the app on your device with the generated APK file
 
 #### Android Auto
 

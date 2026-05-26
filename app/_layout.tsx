@@ -6,9 +6,11 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import { NavigationBar } from "expo-navigation-bar";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+
 import { useEffect } from "react";
 import CarAutoSync from "@/components/CarAutoSync";
 import OfflineBanner from "@/components/OfflineBanner";
@@ -26,7 +28,6 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
-import * as NavigationBar from "expo-navigation-bar";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -79,9 +80,6 @@ function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active");
   }
-  if (Platform.OS === "android" && status === "active") {
-    NavigationBar.setStyle("dark");
-  }
 }
 
 export default sentryWrap(function RootLayout() {
@@ -110,9 +108,6 @@ export default sentryWrap(function RootLayout() {
       }),
     );
     const unsubscribeConnectionType = initConnectionType();
-    if (Platform.OS === "android") {
-      NavigationBar.setStyle("dark");
-    }
     const idle =
       typeof requestIdleCallback === "function"
         ? requestIdleCallback(() => {
@@ -164,6 +159,7 @@ export default sentryWrap(function RootLayout() {
           <ThemeProvider value={DarkTheme}>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <StatusBar style="light" />
+              <NavigationBar style="light" />
               <BottomSheetModalProvider>
                 <TrackActionsProvider>
                   <PodcastEpisodeActionsProvider>

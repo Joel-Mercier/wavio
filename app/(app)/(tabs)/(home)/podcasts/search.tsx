@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
-  BottomSheetView,
+  useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
@@ -783,36 +783,39 @@ function MultiSelectSheet<T extends string>({
   emerald,
 }: MultiSelectSheetProps<T>) {
   const selectedSet = new Set(selected ?? []);
+  const renderScrollComponent = useBottomSheetScrollableCreator();
   return (
     <BottomSheetModal
       ref={ref}
       snapPoints={["75%"]}
+      enableDynamicSizing={false}
       onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
-      <BottomSheetView style={{ flex: 1 }}>
-        <Box className="px-6 pt-2 pb-4">
-          <Heading className="text-white" size="lg">
-            {title}
-          </Heading>
-        </Box>
-        <FlashList
-          data={options}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <FadeOutScaleDown onPress={() => onToggle(item)}>
-              <HStack className="items-center justify-between px-6 py-3">
-                <Text className="text-md text-white flex-1 pr-4">
-                  {labelFor(item)}
-                </Text>
-                {selectedSet.has(item) && <Check size={20} color={emerald} />}
-              </HStack>
-            </FadeOutScaleDown>
-          )}
-        />
-      </BottomSheetView>
+      <FlashList
+        data={options}
+        keyExtractor={(item) => item}
+        renderScrollComponent={renderScrollComponent}
+        ListHeaderComponent={
+          <Box className="px-6 pt-2 pb-4">
+            <Heading className="text-white" size="lg">
+              {title}
+            </Heading>
+          </Box>
+        }
+        renderItem={({ item }) => (
+          <FadeOutScaleDown onPress={() => onToggle(item)}>
+            <HStack className="items-center justify-between px-6 py-3">
+              <Text className="text-md text-white flex-1 pr-4">
+                {labelFor(item)}
+              </Text>
+              {selectedSet.has(item) && <Check size={20} color={emerald} />}
+            </HStack>
+          </FadeOutScaleDown>
+        )}
+      />
     </BottomSheetModal>
   );
 }

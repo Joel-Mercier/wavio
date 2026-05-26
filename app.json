@@ -80,7 +80,7 @@
       [
         "expo-navigation-bar",
         {
-          "buttonStyle": "light",
+          "style": "light",
           "enforceContast": false
         }
       ],
