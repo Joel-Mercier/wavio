@@ -40,6 +40,7 @@ export default function RecentSearchesScreen() {
   const removeRecentSearch = useRecentSearches(
     (store) => store.removeRecentSearch,
   );
+  const addRecentSearch = useRecentSearches((store) => store.addRecentSearch);
   const form = useForm({
     defaultValues: {
       query: "",
@@ -88,6 +89,14 @@ export default function RecentSearchesScreen() {
   };
 
   const handleOnSumbit = () => {
+    const trimmed = query.trim();
+    if (trimmed.length > 0) {
+      addRecentSearch({
+        id: `query:${trimmed}`,
+        title: trimmed,
+        type: "query",
+      });
+    }
     router.navigate(`/(app)/(tabs)/(search)/search-results?query=${query}`);
   };
 

@@ -409,81 +409,81 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         <AlertDialogBackdrop />
         <KeyboardAvoidingView behavior="padding">
           <AlertDialogContent className="bg-primary-800 border-primary-400">
-          <AlertDialogHeader>
-            <Heading className="text-white font-bold" size="md">
-              {t("app.servers.editServer")}
-            </Heading>
-          </AlertDialogHeader>
-          <AlertDialogBody className="mt-3 mb-4">
-            <form.Field name="name">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t("app.servers.namePlaceholder")}
-                    />
-                  </Input>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </form.Field>
-            <form.Field name="url">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t("app.servers.urlPlaceholder")}
-                      autoCapitalize="none"
-                      textContentType="URL"
-                    />
-                  </Input>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </form.Field>
-          </AlertDialogBody>
-          <AlertDialogFooter className="items-center justify-center">
-            <FadeOutScaleDown
-              onPress={handleCloseEditServerModal}
-              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-            >
-              <Text className="text-white font-bold text-lg">
-                {t("app.shared.cancel")}
-              </Text>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={() => {
-                isDirty ? form.handleSubmit() : undefined;
-              }}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-            >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.save")}
-              </Text>
-            </FadeOutScaleDown>
-          </AlertDialogFooter>
+            <AlertDialogHeader>
+              <Heading className="text-white font-bold" size="md">
+                {t("app.servers.editServer")}
+              </Heading>
+            </AlertDialogHeader>
+            <AlertDialogBody className="mt-3 mb-4">
+              <form.Field name="name">
+                {(field) => (
+                  <FormControl
+                    isInvalid={showFieldError(field)}
+                    size="md"
+                    isDisabled={false}
+                    isReadOnly={false}
+                    isRequired={false}
+                    className="my-4"
+                  >
+                    <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                      <InputField
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={() => handleFieldBlur(field)}
+                        className="text-md text-white"
+                        placeholder={t("app.servers.namePlaceholder")}
+                      />
+                    </Input>
+                    <FieldError field={field} />
+                  </FormControl>
+                )}
+              </form.Field>
+              <form.Field name="url">
+                {(field) => (
+                  <FormControl
+                    isInvalid={showFieldError(field)}
+                    size="md"
+                    isDisabled={false}
+                    isReadOnly={false}
+                    isRequired={false}
+                    className="my-4"
+                  >
+                    <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                      <InputField
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={() => handleFieldBlur(field)}
+                        className="text-md text-white"
+                        placeholder={t("app.servers.urlPlaceholder")}
+                        autoCapitalize="none"
+                        textContentType="URL"
+                      />
+                    </Input>
+                    <FieldError field={field} />
+                  </FormControl>
+                )}
+              </form.Field>
+            </AlertDialogBody>
+            <AlertDialogFooter className="items-center justify-center">
+              <FadeOutScaleDown
+                onPress={handleCloseEditServerModal}
+                className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+              >
+                <Text className="text-white font-bold text-lg">
+                  {t("app.shared.cancel")}
+                </Text>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() => {
+                  isDirty ? form.handleSubmit() : undefined;
+                }}
+                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+              >
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.save")}
+                </Text>
+              </FadeOutScaleDown>
+            </AlertDialogFooter>
           </AlertDialogContent>
         </KeyboardAvoidingView>
       </AlertDialog>

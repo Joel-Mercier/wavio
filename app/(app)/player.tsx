@@ -41,7 +41,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, Image as RNImage } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Share from "react-native-share";
 import {
   CastButton,
   useCastSession,
@@ -52,6 +51,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import Share from "react-native-share";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";

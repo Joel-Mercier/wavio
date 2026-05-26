@@ -41,9 +41,9 @@ import {
   DateTimePickerTrigger,
 } from "@/components/ui/date-time-picker";
 import { FormControl } from "@/components/ui/form-control";
-import { CalendarDaysIcon } from "@/components/ui/icon";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { CalendarDaysIcon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
@@ -86,9 +86,7 @@ export default function ShareListItem({ share }: { share: Share }) {
   const form = useForm({
     defaultValues: {
       description: share.description,
-      expires: share.expires
-        ? new Date(share.expires).getTime()
-        : undefined,
+      expires: share.expires ? new Date(share.expires).getTime() : undefined,
     } as z.input<typeof updateShareSchema>,
     validators: {
       onChange: updateShareSchema,
@@ -401,102 +399,102 @@ export default function ShareListItem({ share }: { share: Share }) {
         <AlertDialogBackdrop />
         <KeyboardAvoidingView behavior="padding">
           <AlertDialogContent className="bg-primary-800 border-primary-400">
-          <AlertDialogHeader>
-            <Heading className="text-white font-bold" size="md">
-              {t("app.shares.editShareModalTitle")}
-            </Heading>
-          </AlertDialogHeader>
-          <AlertDialogBody className="mt-3 mb-4">
-            <form.Field name="description">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Textarea
-                    className="bg-primary-600 border-0 rounded-md"
-                    size="xl"
+            <AlertDialogHeader>
+              <Heading className="text-white font-bold" size="md">
+                {t("app.shares.editShareModalTitle")}
+              </Heading>
+            </AlertDialogHeader>
+            <AlertDialogBody className="mt-3 mb-4">
+              <form.Field name="description">
+                {(field) => (
+                  <FormControl
+                    isInvalid={showFieldError(field)}
+                    size="md"
+                    isDisabled={false}
+                    isReadOnly={false}
+                    isRequired={false}
+                    className="my-4"
                   >
-                    <TextareaInput
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className={cn(
-                        "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-lg",
-                        {
-                          "border-red-500": showFieldError(field),
-                        },
-                      )}
-                      placeholder={t("app.shares.descriptionPlaceholder")}
-                    />
-                  </Textarea>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </form.Field>
-            <form.Field name="expires">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <DateTimePicker
-                    mode="datetime"
-                    minimumDate={new Date()}
-                    value={
-                      field.state.value
-                        ? new Date(field.state.value)
-                        : undefined
-                    }
-                    onChange={(date) => {
-                      field.handleChange(date ? date.getTime() : undefined);
-                      handleFieldBlur(field);
-                    }}
-                    format="YYYY-MM-DD HH:mm"
-                    placeholder={t("app.shares.expiresPlaceholder")}
-                  >
-                    <DateTimePickerTrigger className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                      <DateTimePickerInput className="text-md text-white" />
-                      <DateTimePickerIcon
-                        as={CalendarDaysIcon}
-                        className="text-white mr-3"
+                    <Textarea
+                      className="bg-primary-600 border-0 rounded-md"
+                      size="xl"
+                    >
+                      <TextareaInput
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={() => handleFieldBlur(field)}
+                        className={cn(
+                          "text-md text-white border border-primary-600 focus:border-emerald-500 rounded-lg",
+                          {
+                            "border-red-500": showFieldError(field),
+                          },
+                        )}
+                        placeholder={t("app.shares.descriptionPlaceholder")}
                       />
-                    </DateTimePickerTrigger>
-                  </DateTimePicker>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </form.Field>
-          </AlertDialogBody>
-          <AlertDialogFooter className="items-center justify-center">
-            <FadeOutScaleDown
-              onPress={() => {
-                form.reset();
-                handleCloseEditAlertDialog();
-              }}
-              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-            >
-              <Text className="text-white font-bold text-lg">
-                {t("app.shared.cancel")}
-              </Text>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={isDirty ? form.handleSubmit : undefined}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-            >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.save")}
-              </Text>
-            </FadeOutScaleDown>
-          </AlertDialogFooter>
+                    </Textarea>
+                    <FieldError field={field} />
+                  </FormControl>
+                )}
+              </form.Field>
+              <form.Field name="expires">
+                {(field) => (
+                  <FormControl
+                    isInvalid={showFieldError(field)}
+                    size="md"
+                    isDisabled={false}
+                    isReadOnly={false}
+                    isRequired={false}
+                    className="my-4"
+                  >
+                    <DateTimePicker
+                      mode="datetime"
+                      minimumDate={new Date()}
+                      value={
+                        field.state.value
+                          ? new Date(field.state.value)
+                          : undefined
+                      }
+                      onChange={(date) => {
+                        field.handleChange(date ? date.getTime() : undefined);
+                        handleFieldBlur(field);
+                      }}
+                      format="YYYY-MM-DD HH:mm"
+                      placeholder={t("app.shares.expiresPlaceholder")}
+                    >
+                      <DateTimePickerTrigger className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                        <DateTimePickerInput className="text-md text-white" />
+                        <DateTimePickerIcon
+                          as={CalendarDaysIcon}
+                          className="text-white mr-3"
+                        />
+                      </DateTimePickerTrigger>
+                    </DateTimePicker>
+                    <FieldError field={field} />
+                  </FormControl>
+                )}
+              </form.Field>
+            </AlertDialogBody>
+            <AlertDialogFooter className="items-center justify-center">
+              <FadeOutScaleDown
+                onPress={() => {
+                  form.reset();
+                  handleCloseEditAlertDialog();
+                }}
+                className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+              >
+                <Text className="text-white font-bold text-lg">
+                  {t("app.shared.cancel")}
+                </Text>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={isDirty ? form.handleSubmit : undefined}
+                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+              >
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.save")}
+                </Text>
+              </FadeOutScaleDown>
+            </AlertDialogFooter>
           </AlertDialogContent>
         </KeyboardAvoidingView>
       </AlertDialog>

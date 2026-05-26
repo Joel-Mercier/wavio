@@ -71,15 +71,19 @@ describe("recentSearches store", () => {
     expect(get().recentSearches).toEqual([]);
   });
 
-  it("dedup is reference-based: a fresh object with same id duplicates", () => {
-    // The store uses Array.includes (reference equality) for dedup, so two
-    // distinct objects with the same id will both end up in the list. This
-    // test pins that behavior so a future change to id-based dedup is a
-    // deliberate choice rather than a silent regression.
+  it("dedups by id+type and moves the entry to the front", () => {
     get().addRecentSearch(make("a"));
+    get().addRecentSearch(make("b"));
     get().addRecentSearch(make("a"));
     expect(get().recentSearches).toHaveLength(2);
-    expect(get().recentSearches.map((s) => s.id)).toEqual(["a", "a"]);
+    expect(get().recentSearches.map((s) => s.id)).toEqual(["a", "b"]);
+  });
+
+  it("keeps entries with the same id but different type", () => {
+    get().addRecentSearch({ id: "a", title: "song-a", type: "song" });
+    get().addRecentSearch({ id: "a", title: "album-a", type: "album" });
+    expect(get().recentSearches).toHaveLength(2);
+    expect(get().recentSearches.map((s) => s.type)).toEqual(["album", "song"]);
   });
 
   it("__reset empties the list", () => {

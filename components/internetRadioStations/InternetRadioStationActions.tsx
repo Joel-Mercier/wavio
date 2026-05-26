@@ -364,9 +364,7 @@ export default function InternetRadioStationActions({
               </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
-              onPress={
-                isDirty && !isSubmitting ? form.handleSubmit : undefined
-              }
+              onPress={isDirty && !isSubmitting ? form.handleSubmit : undefined}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 opacity-65"
             >
               <Text className="text-primary-800 font-bold text-lg">

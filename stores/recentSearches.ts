@@ -27,14 +27,17 @@ const useRecentSearchesBase = create<RecentSearchesStore>()(
       recentSearches: [],
       addRecentSearch: (search: RecentSearch) => {
         set((state) => {
-          if (!state.recentSearches.includes(search)) {
-            const newRecentSearches = [search, ...state.recentSearches];
-            if (newRecentSearches.length > 24) {
-              newRecentSearches.length = 24;
-            }
-            return { recentSearches: newRecentSearches };
+          const newRecentSearches = [
+            search,
+            ...state.recentSearches.filter(
+              (existing) =>
+                existing.id !== search.id || existing.type !== search.type,
+            ),
+          ];
+          if (newRecentSearches.length > 24) {
+            newRecentSearches.length = 24;
           }
-          return { recentSearches: state.recentSearches };
+          return { recentSearches: newRecentSearches };
         });
       },
       clearRecentSearches: () => {
