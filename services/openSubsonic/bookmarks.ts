@@ -36,7 +36,10 @@ export const createBookmark = async (
 
 export const deleteBookmark = async (id: string) => {
   try {
-    const rsp = await openSubsonicApiInstance.delete<
+    // Subsonic endpoints aren't REST — deleteBookmark.view is a regular GET with
+    // the media `id` as a query param, not an HTTP DELETE (which some server
+    // routers won't match).
+    const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>
     >("/rest/deleteBookmark", {
       params: {
