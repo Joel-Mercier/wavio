@@ -619,6 +619,12 @@ export default function ArtistDetail() {
                     const h = e.nativeEvent.layout.height;
                     if (h && h !== topSongsContentHeight) {
                       setTopSongsContentHeight(h);
+                      // Keep the animated height in sync if content is
+                      // re-measured while expanded (e.g. artwork loads in),
+                      // otherwise the stale height would clip the content.
+                      if (topSongsExpanded) {
+                        topSongsHeight.value = h;
+                      }
                     }
                   }}
                 >
@@ -652,56 +658,13 @@ export default function ArtistDetail() {
                   {!isLoadingTopSongs &&
                     !topSongsError &&
                     !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
-                </Box>
-                {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
-                  <>
-                    <Animated.View
-                      pointerEvents={topSongsExpanded ? "none" : "auto"}
-                      style={[
-                        {
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                        },
-                        topSongsOverlayStyle,
-                      ]}
-                    >
-                      <LinearGradient
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 90,
-                        }}
-                        colors={["transparent", "rgba(0, 0, 0, 0.5)", "#000"]}
-                        locations={[0, 0.3, 0.7]}
-                      />
-                      <Center>
-                        <FadeOutScaleDown
-                          onPress={handleToggleTopSongs}
-                          className="rounded-full border border-gray-300 py-1 px-3"
-                        >
-                          <Text className="text-gray-300">
-                            {t("app.shared.seeMore")}
-                          </Text>
-                        </FadeOutScaleDown>
-                      </Center>
-                    </Animated.View>
+
+                  {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
                     <Animated.View
                       pointerEvents={topSongsExpanded ? "auto" : "none"}
-                      style={[
-                        {
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                        },
-                        topSongsSeeLessStyle,
-                      ]}
+                      style={topSongsSeeLessStyle}
                     >
-                      <Center>
+                      <Center className="pt-6 pb-2">
                         <FadeOutScaleDown
                           onPress={handleToggleTopSongs}
                           className="rounded-full border border-gray-300 py-1 px-3"
@@ -712,7 +675,43 @@ export default function ArtistDetail() {
                         </FadeOutScaleDown>
                       </Center>
                     </Animated.View>
-                  </>
+                  )}
+                </Box>
+                {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
+                  <Animated.View
+                    pointerEvents={topSongsExpanded ? "none" : "auto"}
+                    style={[
+                      {
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                      },
+                      topSongsOverlayStyle,
+                    ]}
+                  >
+                    <LinearGradient
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 110,
+                      }}
+                      colors={["transparent", "rgba(0, 0, 0, 0.85)", "#000"]}
+                      locations={[0, 0.4, 0.65]}
+                    />
+                    <Center>
+                      <FadeOutScaleDown
+                        onPress={handleToggleTopSongs}
+                        className="rounded-full border border-gray-300 py-1 px-3"
+                      >
+                        <Text className="text-gray-300">
+                          {t("app.shared.seeMore")}
+                        </Text>
+                      </FadeOutScaleDown>
+                    </Center>
+                  </Animated.View>
                 )}
               </AnimatedBox>
               <Heading className="text-white mb-6">
