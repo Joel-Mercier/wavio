@@ -1,0 +1,33 @@
+---
+import { Font } from 'astro:assets'
+import '../styles/global.css'
+import { defaultLang, type Lang } from '../i18n/ui'
+
+interface Props {
+	title: string
+	description: string
+	lang?: Lang
+}
+
+const { title, description, lang = defaultLang } = Astro.props
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<Font cssVariable="--font-inter" preload />
+		<title>{title}</title>
+	</head>
+	<body class="font-sans">
+		<slot />
+	</body>
+</html>

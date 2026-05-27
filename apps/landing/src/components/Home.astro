@@ -1,0 +1,321 @@
+---
+import { Image } from 'astro:assets'
+import Layout from '../layouts/Layout.astro'
+import Nav from './Nav.astro'
+import Footer from './Footer.astro'
+import Logo from '../assets/logo.svg'
+import Jellyfin from '../assets/jellyfin.svg'
+import Navidrome from '../assets/navidrome.svg'
+import OpenSubsonic from '../assets/opensubsonic.svg'
+import { GITHUB_URL, PLAY_STORE_URL } from '../consts'
+import { useTranslations, type Lang } from '../i18n/utils'
+import { useImages } from '../i18n/assets'
+
+interface Props {
+	lang: Lang
+}
+
+const { lang } = Astro.props
+const t = useTranslations(lang)
+const f = t.features
+
+const img = useImages(lang)
+const showcase = [img('home'), img('library'), img('queue'), img('smart-playlist'), img('offline-1'), img('settings'), img('login')]
+
+let wordIndex = 0
+const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)}s`
+---
+
+<Layout title={t.meta.homeTitle} description={t.meta.homeDescription} lang={lang}>
+	<Nav lang={lang} showLinks />
+
+	<!-- ─────────────  Hero  ───────────── -->
+	<section class="relative isolate min-h-[92vh] overflow-hidden pt-15 pb-25">
+		<div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+			<svg class="wave wave-1 absolute -left-1/2 h-auto w-[200%] opacity-55" viewBox="0 0 1200 200" fill="none" preserveAspectRatio="none">
+				<path d="M0 100 Q 150 20, 300 100 T 600 100 T 900 100 T 1200 100" stroke="#10b981" stroke-width="2" fill="none"/>
+			</svg>
+			<svg class="wave wave-2 absolute -left-1/2 h-auto w-[200%] opacity-35" viewBox="0 0 1200 200" fill="none" preserveAspectRatio="none">
+				<path d="M0 100 Q 150 180, 300 100 T 600 100 T 900 100 T 1200 100" stroke="#10b981" stroke-width="2" fill="none"/>
+			</svg>
+			<svg class="wave wave-3 absolute -left-1/2 h-auto w-[200%] opacity-20" viewBox="0 0 1200 200" fill="none" preserveAspectRatio="none">
+				<path d="M0 100 Q 150 40, 300 100 T 600 100 T 900 100 T 1200 100" stroke="#10b981" stroke-width="2" fill="none"/>
+			</svg>
+			<div
+				class="absolute inset-0"
+				style="background: radial-gradient(ellipse 70% 50% at 50% 110%, rgba(16,185,129,0.18), transparent 60%)"
+			>
+			</div>
+		</div>
+
+		<div
+			class="relative z-10 mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-10 px-8 lg:grid-cols-[1.1fr_0.9fr]"
+		>
+			<div class="pt-5">
+				<div class="mb-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+					<span class="h-px w-8 bg-accent"></span> {t.hero.tag}
+				</div>
+				<h1 class="mb-9 text-[clamp(56px,9vw,132px)] font-extrabold leading-[1.02] tracking-[-0.055em]">
+					{
+						t.hero.titleLines.map((line) => (
+							<span class="block">
+								{line.map((word) => (
+									<><span class="hero-word inline-block" style={wordDelay()}>{word}</span>{' '}</>
+								))}
+							</span>
+						))
+					}
+					<span class="block">
+						<span class="hero-word inline-block italic text-accent" style={wordDelay()}>{t.hero.titleAccent}</span>
+					</span>
+				</h1>
+				<p class="mb-10 max-w-[520px] text-[clamp(17px,1.4vw,20px)] text-text-2 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.6s_backwards]">
+					{t.hero.lead}
+				</p>
+				<div class="flex flex-wrap items-center gap-3.5 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.75s_backwards]">
+					<a
+						href={PLAY_STORE_URL}
+						target="_blank"
+						rel="noopener"
+						class="relative inline-flex items-center gap-3.5 rounded-[14px] bg-accent py-3.5 pl-[22px] pr-[26px] font-bold text-ink shadow-[0_12px_36px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]"
+					>
+						<svg class="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<path d="M4 3.5v17c0 .9 1 1.4 1.7.9l13-8.5c.6-.4.6-1.4 0-1.8l-13-8.5C5 2.1 4 2.6 4 3.5z" fill="currentColor"/>
+						</svg>
+						<span class="flex flex-col items-start leading-[1.15]">
+							<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.getItOn}</span>
+							<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.googlePlay}</span>
+						</span>
+					</a>
+					<a
+						href={GITHUB_URL}
+						target="_blank"
+						rel="noopener"
+						class="inline-flex items-center gap-2.5 rounded-[14px] border border-border-strong px-[22px] py-3.5 text-sm font-medium text-text transition-colors duration-200 hover:border-accent hover:bg-accent-soft"
+					>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+							<path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2.2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4s2.1.1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.3.8 1 .8 2v3c0 .3.2.6.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/>
+						</svg>
+						{t.cta.starGithub}
+					</a>
+				</div>
+			</div>
+
+			<div class="relative flex items-center justify-center [perspective:1200px]">
+				<div class="chip animate-chip-float absolute left-[-8%] top-[6%] flex size-[88px] items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-white p-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] [animation-delay:-1s]">
+					<Jellyfin class="size-full" aria-label="Jellyfin" />
+				</div>
+				<div class="chip animate-chip-float absolute bottom-[22%] left-[-4%] flex size-[70px] items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-white p-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] [animation-delay:-3s]">
+					<Navidrome class="size-full" aria-label="Navidrome" />
+				</div>
+				<div class="chip animate-chip-float absolute right-[-10%] top-[14%] flex size-[96px] items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-white p-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] [animation-delay:-2s]">
+					<OpenSubsonic class="size-full" aria-label="OpenSubsonic" />
+				</div>
+				<div
+					class="phone-float animate-hover relative w-[280px] overflow-hidden rounded-[44px] border border-border-strong bg-black shadow-[0_60px_120px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)_inset,0_0_80px_-10px_rgba(16,185,129,0.35)] sm:w-[340px]"
+				>
+					<Image src={img('home')} alt={f.home.title} loading="eager" class="block w-full" />
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ─────────────  Highlights  ───────────── -->
+	<section class="border-y border-border py-7">
+		<div class="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-8 gap-y-3.5 px-8 sm:grid-cols-2 lg:grid-cols-3">
+			{
+				t.highlights.map((hl) => (
+					<div class="flex items-center gap-2.5 text-[13.5px] font-medium text-text-2">
+						<span class="size-[5px] shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgba(16,185,129,0.35)]" />
+						{hl}
+					</div>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- ─────────────  Bento Features  ───────────── -->
+	<section id="features" class="relative pb-20 pt-35">
+		<div class="mx-auto max-w-[1280px] px-8">
+			<div class="mb-20 grid grid-cols-1 items-end gap-x-15 gap-y-6 lg:grid-cols-2">
+				<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[0.96] tracking-[-0.04em] text-balance">
+					{f.headingPre} <em class="font-extrabold italic text-accent">{f.headingEm}</em> {f.headingPost}
+				</h2>
+				<p class="self-end text-lg text-text-2 text-pretty">{f.sub}</p>
+			</div>
+
+			<div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-6 lg:auto-rows-[220px]">
+				<!-- hero cell -->
+				<div class="cell group relative flex flex-col overflow-hidden rounded-[20px] border border-border p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-4 lg:row-span-2" style="background:radial-gradient(ellipse 60% 100% at 80% 100%, rgba(16,185,129,0.22), transparent 60%), linear-gradient(180deg, #0b0e10, #0e1414)">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.home.label}</div>
+					<h3 class="mb-2.5 max-w-[380px] text-[36px] font-bold leading-[1.15] tracking-[-0.02em]">{f.home.title}</h3>
+					<p class="max-w-[360px] text-[14.5px] text-text-2 text-pretty">{f.home.desc}</p>
+					<div class="pointer-events-none absolute -bottom-[230px] right-9 w-[240px]">
+						<Image src={img('home')} alt="" class="w-full rounded-t-[18px] shadow-[0_-30px_60px_-10px_rgba(0,0,0,0.5)]" />
+					</div>
+				</div>
+
+				<!-- equalizer cell -->
+				<div class="cell group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-bg-2 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.audiophile.label}</div>
+					<h3 class="mb-2.5 text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.audiophile.title}</h3>
+					<p class="text-[14.5px] text-text-2">{f.audiophile.desc}</p>
+					<div class="eq-big mt-auto flex h-20 items-end gap-1.5" aria-hidden="true">
+						{Array.from({ length: 12 }).map(() => <i class="block flex-1 rounded-[3px]" />)}
+					</div>
+				</div>
+
+				<!-- offline image cell -->
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 lg:min-h-0 min-h-[300px]">
+					<Image src={img('offline-1')} alt={f.offline.title} class="absolute inset-0 size-full object-cover object-top" />
+					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+					<div class="relative z-10 mt-auto p-7">
+						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.offline.label}</div>
+						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.offline.title}</h3>
+					</div>
+				</div>
+
+				<!-- quote cell -->
+				<div class="group relative flex flex-col overflow-hidden rounded-[20px] border border-transparent p-7 text-ink transition-transform duration-300 hover:-translate-y-0.5 sm:col-span-2 lg:col-span-2" style="background:linear-gradient(135deg, #10b981, #0a7f5c)">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink/70">{f.quote.label}</div>
+					<h3 class="text-lg font-bold leading-[1.15] tracking-[-0.02em]">{f.quote.title}</h3>
+				</div>
+
+				<!-- playlists image -->
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
+					<Image src={img('smart-playlist')} alt={f.playlists.title} class="absolute inset-0 size-full object-cover object-top" />
+					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+					<div class="relative z-10 mt-auto p-7">
+						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.playlists.label}</div>
+						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.playlists.title}</h3>
+					</div>
+				</div>
+
+				<!-- android auto image -->
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
+					<Image src={img('android-auto')} alt={f.auto.title} class="absolute inset-0 size-full object-cover object-top" />
+					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+					<div class="relative z-10 mt-auto p-7">
+						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.auto.label}</div>
+						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.auto.title}</h3>
+					</div>
+				</div>
+
+				<!-- queue -->
+				<div class="cell group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-bg-2 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.queue.label}</div>
+					<h3 class="mb-2.5 text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.queue.title}</h3>
+					<p class="text-[14.5px] text-text-2 text-pretty">{f.queue.desc}</p>
+				</div>
+
+				<!-- servers -->
+				<div class="cell group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-bg-2 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.servers.label}</div>
+					<h3 class="mb-2.5 text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.servers.title}</h3>
+					<p class="text-[14.5px] text-text-2 text-pretty">{f.servers.desc}</p>
+				</div>
+
+				<!-- sleep timer -->
+				<div class="cell group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-bg-2 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2">
+					<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.sleep.label}</div>
+					<h3 class="mb-2.5 text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.sleep.title}</h3>
+					<p class="text-[14.5px] text-text-2 text-pretty">{f.sleep.desc}</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ─────────────  Showcase scroll  ───────────── -->
+	<section id="showcase" class="overflow-hidden pb-35 pt-20">
+		<div class="mx-auto mb-20 grid max-w-[1280px] grid-cols-1 items-end gap-x-15 gap-y-6 px-8 lg:grid-cols-2">
+			<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[0.96] tracking-[-0.04em] text-balance">
+				{t.showcase.headingPre} <em class="font-extrabold italic text-accent">{t.showcase.headingEm}</em>
+			</h2>
+			<p class="self-end text-lg text-text-2 text-pretty">{t.showcase.sub}</p>
+		</div>
+		<div class="animate-scroll flex w-max gap-7 [animation-duration:50s]">
+			{
+				[...showcase, ...showcase].map((shot) => (
+					<div class="w-[280px] shrink-0 overflow-hidden rounded-[32px] border border-border-strong bg-black shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
+						<Image src={shot} alt="" class="block w-full" />
+					</div>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- ─────────────  Final CTA  ───────────── -->
+	<section id="download" class="relative isolate overflow-hidden pb-40 pt-35">
+		<div
+			class="absolute inset-0 -z-10"
+			style="background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.25), transparent 60%), radial-gradient(ellipse 90% 80% at 50% 100%, rgba(16,185,129,0.1), transparent 70%)"
+		>
+		</div>
+		<div class="relative z-10 mx-auto max-w-[1280px] px-8 text-center">
+			<Logo width={88} height={88} class="animate-pulse-glow mx-auto mb-7" aria-hidden="true" />
+			<h2 class="mb-6 text-[clamp(48px,8vw,120px)] font-extrabold leading-[1.02] tracking-[-0.05em] text-balance">
+				{t.final.titleL1}<br /><em class="font-extrabold italic text-accent">{t.final.titleEm}</em>
+			</h2>
+			<p class="mx-auto mb-10 max-w-[520px] text-[19px] text-text-2 text-pretty">{t.final.desc}</p>
+			<div class="flex flex-wrap items-center justify-center gap-3.5">
+				<a
+					href={PLAY_STORE_URL}
+					target="_blank"
+					rel="noopener"
+					class="relative inline-flex items-center gap-3.5 rounded-[14px] bg-accent py-3.5 pl-[22px] pr-[26px] font-bold text-ink shadow-[0_12px_36px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-150 hover:-translate-y-0.5"
+				>
+					<svg class="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+						<path d="M4 3.5v17c0 .9 1 1.4 1.7.9l13-8.5c.6-.4.6-1.4 0-1.8l-13-8.5C5 2.1 4 2.6 4 3.5z" fill="currentColor"/>
+					</svg>
+					<span class="flex flex-col items-start leading-[1.15]">
+						<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.getItOn}</span>
+						<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.googlePlay}</span>
+					</span>
+				</a>
+				<a
+					href={GITHUB_URL}
+					target="_blank"
+					rel="noopener"
+					class="inline-flex items-center gap-2.5 rounded-[14px] border border-border-strong px-[22px] py-3.5 text-sm font-medium text-text transition-colors duration-200 hover:border-accent hover:bg-accent-soft"
+				>
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2.2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4s2.1.1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.3.8 1 .8 2v3c0 .3.2.6.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/>
+					</svg>
+					{t.cta.viewSource}
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<Footer lang={lang} />
+</Layout>
+
+<style>
+	/* Hero word entrance (delay set inline per word) */
+	.hero-word {
+		animation: rise 1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+	}
+
+	/* Drifting hero waves */
+	.wave-1 { top: 22%; animation: drift 18s ease-in-out infinite alternate; }
+	.wave-2 { top: 42%; animation: drift 24s ease-in-out infinite alternate-reverse; }
+	.wave-3 { top: 62%; animation: drift 30s ease-in-out infinite alternate; }
+
+	/* Big equalizer bars */
+	.eq-big i {
+		background: linear-gradient(180deg, #10b981, #0a7f5c);
+		animation: eq 1.2s ease-in-out infinite;
+	}
+	.eq-big i:nth-child(1) { animation-delay: -0.1s; }
+	.eq-big i:nth-child(2) { animation-delay: -0.4s; }
+	.eq-big i:nth-child(3) { animation-delay: -0.6s; }
+	.eq-big i:nth-child(4) { animation-delay: -0.2s; }
+	.eq-big i:nth-child(5) { animation-delay: -0.7s; }
+	.eq-big i:nth-child(6) { animation-delay: -0.3s; }
+	.eq-big i:nth-child(7) { animation-delay: -0.5s; }
+	.eq-big i:nth-child(8) { animation-delay: -0.15s; }
+	.eq-big i:nth-child(9) { animation-delay: -0.55s; }
+	.eq-big i:nth-child(10) { animation-delay: -0.25s; }
+	.eq-big i:nth-child(11) { animation-delay: -0.45s; }
+	.eq-big i:nth-child(12) { animation-delay: -0.65s; }
+</style>

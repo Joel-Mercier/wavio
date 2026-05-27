@@ -1,7 +1,7 @@
 # Wavio
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/mobile/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
 </p>
 
 Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers.
@@ -44,15 +44,22 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 ## Development
 
+This repository is a [Bun workspace](https://bun.sh/docs/pm/workspaces) monorepo with two workspaces:
+
+- `apps/mobile` — the Expo mobile app
+- `apps/landing` — the [Astro](https://astro.build/) marketing website
+
+A single `bun install` at the repo root installs both. Most scripts are exposed at the root as `mobile:*` / `landing:*` (which delegate to the relevant workspace), or you can run a workspace's own scripts with `bun run --cwd apps/<workspace> <script>`.
+
 ### Getting started
 
 1. Clone the repository
 2. Make sure you have Node v22+ installed
 3. Make sure you have bun installed
-4. Install dependencies with `bun install`
-5. Set environment variables in `.env` file
-6. Prebuild the native development app with `bun run prebuild`
-7. Run the app with `bun run start`
+4. Install dependencies with `bun install` (from the repo root)
+5. Set environment variables in `apps/mobile/.env` file
+6. Prebuild the native development app with `bun run mobile:prebuild`
+7. Run the app with `bun run mobile:start`
 
 ### Android
 
@@ -75,18 +82,35 @@ In order to test Android Auto, you need to :
 
 TODO
 
+### Marketing website (`apps/landing`)
+
+The landing page is a static [Astro](https://astro.build/) site (Tailwind v4, `en`/`fr` i18n), independent from the mobile app.
+
+1. Install dependencies with `bun install` (from the repo root, shared with the app)
+2. Start the local dev server with `bun run landing:dev` (defaults to `localhost:4321`)
+3. Build the production site with `bun run landing:build` (output to `apps/landing/dist/`)
+4. Preview the built site with `bun run landing:preview`
+
+For Astro CLI commands, run them inside the workspace: `cd apps/landing && bun run astro ...`.
+
 ### Useful commands
 
-- `bun run start`: Start the app in development mode
-- `bun run android`: Start the app in development mode on Android
-- `bun run ios`: Start the app in development mode on iOS
-- `bun run web`: Start the app in development mode with web support
-- `bun run prebuild`: Prebuild the native development app
-- `bun run doctor`: Check the app for any potential issues
-- `bun run lint`: Lint the codebase
-- `bun run lint:fix`: Fix linting issues
-- `bun run test`: Run the test suite
-- `eas build --profile preview --platform android`: Build the app for Android with the desired profile and platform (add `--local` to build locally)
+Run from the repo root:
+
+- `bun run mobile:start`: Start the app in development mode
+- `bun run mobile:android`: Start the app in development mode on Android
+- `bun run mobile:ios`: Start the app in development mode on iOS
+- `bun run mobile:web`: Start the app in development mode with web support
+- `bun run mobile:prebuild`: Prebuild the native development app
+- `bun run mobile:typecheck`: Type-check the app
+- `bun run mobile:lint`: Lint the codebase
+- `bun run mobile:lint:fix`: Fix linting issues
+- `bun run mobile:test`: Run the test suite
+- `bun run landing:dev`: Start the marketing site dev server
+- `bun run landing:build`: Build the marketing site
+- `bun run landing:preview`: Preview the built marketing site
+- `bun run doctor` (inside `apps/mobile`): Check the app for any potential issues
+- `eas build --profile preview --platform android` (inside `apps/mobile`): Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo
 

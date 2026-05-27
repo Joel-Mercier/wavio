@@ -1,0 +1,56 @@
+---
+import { GITHUB_URL } from '../consts'
+import Logo from '../assets/logo.svg'
+import { useTranslations, localizePath, type Lang } from '../i18n/utils'
+
+interface Props {
+	lang: Lang
+}
+
+const { lang } = Astro.props
+const t = useTranslations(lang)
+const home = localizePath('/', lang)
+---
+
+<footer class="relative overflow-hidden border-t border-border pt-14 text-[13px] text-text-3">
+	<div class="mx-auto max-w-[1280px] px-8">
+		<div class="mb-14 grid grid-cols-2 gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
+			<div>
+				<div class="flex items-center gap-3 text-[18px] font-extrabold tracking-[-0.02em] text-text">
+					<Logo width={24} height={24} aria-hidden="true" />
+					Wavio
+				</div>
+				<p class="mt-4 max-w-[280px] text-text-3">{t.footer.tagline}</p>
+			</div>
+			<div>
+				<h5 class="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-text-2">{t.footer.product}</h5>
+				<ul class="flex flex-col gap-2.5">
+					<li><a href={`${home}#features`} class="transition-colors hover:text-text">{t.footer.features}</a></li>
+					<li><a href={`${home}#download`} class="transition-colors hover:text-text">{t.footer.download}</a></li>
+					<li><a href={`${GITHUB_URL}/releases`} target="_blank" rel="noopener" class="transition-colors hover:text-text">{t.footer.changelog}</a></li>
+				</ul>
+			</div>
+			<div>
+				<h5 class="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-text-2">{t.footer.openSource}</h5>
+				<ul class="flex flex-col gap-2.5">
+					<li><a href={GITHUB_URL} target="_blank" rel="noopener" class="transition-colors hover:text-text">{t.footer.github}</a></li>
+				</ul>
+			</div>
+			<div>
+				<h5 class="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-text-2">{t.footer.legal}</h5>
+				<ul class="flex flex-col gap-2.5">
+					<li><a href={localizePath('/privacy', lang)} class="transition-colors hover:text-text">{t.footer.privacy}</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="flex flex-wrap items-center justify-between gap-3 border-t border-border py-6">
+			<div>{t.footer.copyright}</div>
+			<div>{t.footer.madeWith}</div>
+		</div>
+	</div>
+	<div class="pointer-events-none mt-10 w-full select-none overflow-hidden leading-[0.8]">
+		<span
+			class="-mb-[0.18em] block whitespace-nowrap bg-gradient-to-b from-white/5 via-white/[0.015] to-transparent bg-clip-text text-center text-[clamp(120px,28vw,420px)] font-extrabold tracking-[-0.06em] text-transparent"
+		>Wavio</span>
+	</div>
+</footer>

@@ -6,25 +6,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: [OpenSubsonic](https://opensubsonic.netlify.app/docs/) / Navidrome (Subsonic API) and Jellyfin. Podcast features use the Taddy API.
 
+## Monorepo layout
+
+The repo is a **Bun workspace monorepo** (`workspaces: ["apps/*"]` in the root `package.json`). Two workspaces:
+
+- `apps/mobile/` — the Expo app (everything described under **Architecture** below; all relative paths in this file are rooted here).
+- `apps/landing/` — the Astro marketing website (see **Marketing site** below).
+
+Root-level files that govern the whole repo:
+- `package.json` — private root; workspace globs, cross-workspace scripts, and `patchedDependencies` (Bun applies patches at install time, so this **must** live at the root, not in `apps/mobile`).
+- `bunfig.toml` — pins `linker = "hoisted"` so `node_modules` is flat; RN/Expo tooling (Metro) and `jest-expo`'s `transformIgnorePatterns` assume a hoisted layout, not Bun's isolated/symlinked default.
+- `bun.lock` (single root lockfile), `.bun-version`, `patches/`, `.gitignore`.
+
+One `bun install` at the root installs both workspaces. When bumping a patched dep (`expo-audio`, `lucide-react-native`, `zod`) keep the version exactly matching the `patchedDependencies` key — e.g. `expo-audio` is pinned to an exact `56.0.10` so its patch applies.
+
 ## Commands
 
 Package manager is **bun** (see `bun.lock`), though README still references pnpm. Use `bun install` / `bun run <script>`.
 
-- `bun run android` / `bun run ios` / `bun run web` — run dev client (sets `DARK_MODE=media`)
-- `bun run start` — `expo start`
-- `bun run prebuild` — regenerate `android/` and `ios/` native projects
-- `bun run lint` / `bun run lint:fix` — Biome check (formatter + linter, replaces ESLint/Prettier)
-- `bun run test` — `jest --watchAll` (preset `jest-expo`). Single test: `bunx jest __tests__/queue.store.test.ts`
-- `bun run doctor` — `expo-doctor`
-- `eas build --profile preview --platform android` — APK build (profiles in `eas.json`)
+Run from the **repo root** (delegate to a workspace via `--cwd`):
+- `bun run mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` — Expo dev client (sets `DARK_MODE=media`)
+- `bun run mobile:lint` / `mobile:lint:fix` — Biome check (formatter + linter, replaces ESLint/Prettier)
+- `bun run mobile:test` — `jest` (preset `jest-expo`)
+- `bun run mobile:typecheck` — `tsc --noEmit`
+- `bun run mobile:prebuild` — regenerate `apps/mobile/android/` and `apps/mobile/ios/`
+- `bun run landing:dev` / `landing:build` / `landing:preview` — Astro marketing site
 
-`.env` holds `EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION` and `EXPO_PUBLIC_NAVIDROME_CLIENT`, which are injected into every Subsonic request.
+Or run inside a workspace directly: `bun run --cwd apps/mobile <script>`, or `cd apps/mobile && bun run <script>`. Single mobile test: `cd apps/mobile && bunx jest __tests__/queue.store.test.ts`. APK build: `cd apps/mobile && eas build --profile preview --platform android` (profiles in `apps/mobile/eas.json`).
 
-TS path alias: `@/*` → repo root.
+`apps/mobile/.env` holds `EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION` and `EXPO_PUBLIC_NAVIDROME_CLIENT`, which are injected into every Subsonic request.
+
+TS path alias: `@/*` → `apps/mobile/` root.
 
 Don't execute prebuild and building yourself. Inform the user to do so.
 
 ## Architecture
+
+Everything in this section lives in `apps/mobile/`; paths are written relative to it.
 
 ### Routing (expo-router, file-based)
 
@@ -97,10 +115,19 @@ Realtime playback state for non-React consumers (widget, Android Auto) goes thro
 
 ### Testing
 
-Jest with `jest-expo` preset. Tests live in `__tests__/` at the repo root. Current coverage is minimal (queue store only).
+Jest with `jest-expo` preset. Tests live in `apps/mobile/__tests__/`.
+
+## Marketing site (`apps/landing`)
+
+Static [Astro](https://astro.build/) website (Astro 6) for the marketing/landing page, separate from the Expo app and with no shared code.
+
+- Styling is **Tailwind v4** via the `@tailwindcss/vite` plugin (`astro.config.mjs`); global styles in `src/styles/global.css`. Fonts (Inter) are loaded through Astro's `fonts` config (Google provider).
+- **i18n**: Astro's built-in i18n, locales `en` (default, unprefixed) + `fr`, configured in `astro.config.mjs`. Translation strings and helpers live in `src/i18n/` (`ui.ts`, `assets.ts`, `utils.ts`); locale-specific screenshots are suffixed `-en` / `-fr` in `src/assets/`.
+- Pages in `src/pages/` (`index.astro`, `privacy.astro`), composed from components in `src/components/` (`Home.astro`, `Nav.astro`, `Footer.astro`, `Privacy.astro`) wrapped by `src/layouts/Layout.astro`. Shared constants in `src/consts.ts`.
+- Dev/build with `bun run landing:dev` / `landing:build` from the root (output is static, to `apps/landing/dist/`).
 
 ## Conventions
 
-- Biome enforces double quotes, 2-space indent. Run `bun run lint:fix` before committing.
-- Bun patches runs the patches; check `patches/` before upgrading patched deps.
-- Native directories `android/` and `ios/` are generated by `expo prebuild` but currently committed — edits there can be overwritten by prebuild.
+- Biome (in `apps/mobile`) enforces double quotes, 2-space indent. Run `bun run mobile:lint:fix` before committing. Its `vcs.root` points at the monorepo root (`../..`) so it reads the root `.gitignore`. The landing site has no Biome config.
+- Bun applies patches from the root `patches/` during install; check it before upgrading patched deps, and keep the dep version matching the `patchedDependencies` key.
+- Native directories `apps/mobile/android/` and `apps/mobile/ios/` are generated by `expo prebuild` but currently committed — edits there can be overwritten by prebuild.

@@ -14,7 +14,7 @@ android/build/
 android/app/build/
 android/.gradle/
 **/android/build/
-modules/car-auto/android/build/
+**/modules/car-auto/android/build/
 *.iml
 *.orig.*
 *.jks
@@ -49,5 +49,8 @@ yarn-error.*
 app-example
 
 .fallow
+
+# Astro (apps/landing)
+.astro/
 
 .env.local

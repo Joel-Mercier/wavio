@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Nav from './Nav.astro'
+import Footer from './Footer.astro'
+import { useTranslations, localizePath, type Lang } from '../i18n/utils'
+
+interface Props {
+	lang: Lang
+}
+
+const { lang } = Astro.props
+const t = useTranslations(lang)
+const p = t.privacy
+---
+
+<Layout title={t.meta.privacyTitle} description={t.meta.privacyDescription} lang={lang}>
+	<Nav lang={lang} />
+
+	<!-- ─── Hero ─── -->
+	<section class="relative isolate overflow-hidden border-b border-border pt-25 pb-15">
+		<div
+			class="pointer-events-none absolute inset-x-0 -top-25 -z-10 h-[500px]"
+			style="background: radial-gradient(ellipse 60% 70% at 50% 0%, rgba(16,185,129,0.16), transparent 60%)"
+		>
+		</div>
+		<div class="mx-auto max-w-[760px] px-8">
+			<a href={localizePath('/', lang)} class="group mb-6 inline-flex items-center gap-2 text-[13px] text-text-3 transition-colors hover:text-text">
+				<svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="transition-transform group-hover:-translate-x-0.5">
+					<path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+				{p.back}
+			</a>
+			<h1 class="mb-6 text-[clamp(48px,8vw,104px)] font-extrabold leading-[0.96] tracking-[-0.05em] text-balance">
+				{p.titlePre} <em class="font-extrabold italic text-accent">{p.titleEm}</em>
+			</h1>
+			<div class="flex flex-wrap gap-x-[18px] gap-y-2 text-sm text-text-3">
+				<span><span class="mr-2 inline-block size-[5px] rounded-full bg-accent align-middle shadow-[0_0_8px_rgba(16,185,129,0.35)]"></span>{p.updated}</span>
+				<span><span class="mr-2 inline-block size-[5px] rounded-full bg-accent align-middle shadow-[0_0_8px_rgba(16,185,129,0.35)]"></span>{p.readTime}</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- ─── Body ─── -->
+	<main class="pb-30">
+		<div class="mx-auto max-w-[760px] px-8">
+			<div
+				class="my-16 rounded-2xl border border-border-strong px-8 py-7"
+				style="background: radial-gradient(ellipse 80% 100% at 100% 0%, rgba(16,185,129,0.08), transparent 60%), #0b0e10"
+			>
+				<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{p.summaryLabel}</div>
+				<p class="text-lg font-medium leading-[1.45] tracking-[-0.01em] text-pretty">{p.summary}</p>
+			</div>
+
+			<div class="legal-body">
+				{
+					p.sections.map((s) => (
+						<>
+							<h2 class="mt-14 mb-4 flex items-baseline gap-3.5 text-2xl font-bold tracking-[-0.02em]">
+								<span class="shrink-0 text-[13px] font-bold tracking-[0.1em] text-accent tabular-nums">{s.num}</span>
+								{s.title}
+							</h2>
+							<Fragment set:html={s.body} />
+						</>
+					))
+				}
+			</div>
+		</div>
+	</main>
+
+	<Footer lang={lang} />
+</Layout>
+
+<style>
+	.legal-body :global(p),
+	.legal-body :global(li) {
+		color: var(--color-text-2);
+		font-size: 16.5px;
+		text-wrap: pretty;
+	}
+	.legal-body :global(p) {
+		margin: 0 0 18px;
+	}
+	.legal-body :global(ul) {
+		padding-left: 22px;
+		margin: 0 0 18px;
+	}
+	.legal-body :global(li) {
+		margin-bottom: 8px;
+	}
+	.legal-body :global(li::marker) {
+		color: var(--color-accent);
+	}
+	.legal-body :global(strong) {
+		color: var(--color-text);
+		font-weight: 600;
+	}
+</style>

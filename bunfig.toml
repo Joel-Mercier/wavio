@@ -1,0 +1,4 @@
+[install]
+# React Native / Expo tooling (Metro, jest-expo) assume a flat node_modules,
+# so use the hoisted linker instead of Bun's isolated (symlinked) workspace layout.
+linker = "hoisted"
