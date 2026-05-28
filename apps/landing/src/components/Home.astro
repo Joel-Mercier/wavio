@@ -121,16 +121,33 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 	</section>
 
 	<!-- ─────────────  Highlights  ───────────── -->
-	<section class="border-y border-border py-7">
-		<div class="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-8 gap-y-3.5 px-8 sm:grid-cols-2 lg:grid-cols-3">
-			{
-				t.highlights.map((hl) => (
-					<div class="flex items-center gap-2.5 text-[13.5px] font-medium text-text-2">
-						<span class="size-[5px] shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgba(16,185,129,0.35)]" />
-						{hl}
-					</div>
-				))
-			}
+	<section class="py-20">
+		<div class="mx-auto max-w-[1280px] px-8">
+			<div class="mb-10 text-center text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
+				{t.highlightsLabel}
+			</div>
+			<div class="mx-auto grid max-w-[1080px] grid-cols-1 overflow-hidden rounded-[20px] border border-border sm:grid-cols-2 lg:grid-cols-3">
+				{
+					t.highlights.map((hl, i) => (
+						<div
+							class:list={[
+								'flex items-center gap-5 p-7',
+								i % 3 !== 2 && 'lg:border-r lg:border-border',
+								i % 2 !== 1 && 'sm:max-lg:border-r sm:max-lg:border-border',
+								i < t.highlights.length - 3 && 'lg:border-b lg:border-border',
+								i < t.highlights.length - 2 && 'max-lg:border-b max-lg:border-border',
+							]}
+						>
+							<span class="flex size-11 shrink-0 items-center justify-center rounded-xl border border-accent/30 bg-accent/10 text-accent shadow-[0_0_24px_-4px_rgba(16,185,129,0.35)]">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<path d="M5 12l5 5L20 7" />
+								</svg>
+							</span>
+							<span class="text-[17px] font-bold leading-snug tracking-[-0.01em] text-text text-balance">{hl}</span>
+						</div>
+					))
+				}
+			</div>
 		</div>
 	</section>
 

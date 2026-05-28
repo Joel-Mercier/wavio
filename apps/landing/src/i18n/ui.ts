@@ -39,6 +39,7 @@ export const ui = {
       starGithub: 'View on GitHub',
       viewSource: 'View source',
     },
+    highlightsLabel: 'What you get',
     highlights: [
       'Open source, MIT licensed',
       'No ads, ever',
@@ -210,6 +211,7 @@ export const ui = {
       starGithub: 'Voir sur GitHub',
       viewSource: 'Voir le code source',
     },
+    highlightsLabel: 'Ce que vous obtenez',
     highlights: [
       'Open source, sous licence MIT',
       'Sans publicité, pour toujours',

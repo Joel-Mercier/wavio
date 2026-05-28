@@ -38,7 +38,7 @@ Or run inside a workspace directly: `bun run --cwd apps/mobile <script>`, or `cd
 
 TS path alias: `@/*` → `apps/mobile/` root.
 
-Don't execute prebuild and building yourself. Inform the user to do so.
+Don't execute prebuild and building the mobile app yourself. Also don't launch the landing dev server youself. Inform the user to do so.
 
 ## Architecture
 
