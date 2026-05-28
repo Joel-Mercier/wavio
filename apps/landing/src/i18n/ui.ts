@@ -85,6 +85,26 @@ export const ui = {
         title: 'Fade gracefully.',
         desc: 'Schedule a soft fade-out so your favorite album can carry you under.',
       },
+      podcasts: {
+        label: 'Podcasts',
+        title: 'Learn something everywhere you go.',
+        desc: 'Search, follow and play podcasts powered by Taddy. Your queue and your shows, under one roof.',
+      },
+      radio: {
+        label: 'Internet radio',
+        title: 'Tune in, anywhere.',
+        desc: 'Stream the internet radio stations from your server in a tap. Browse, save, and listen live.',
+      },
+      lyrics: {
+        label: 'Lyrics',
+        title: 'Sing along, in sync.',
+        desc: 'Synchronised lyrics from LRCLib, scrolling line by line with the track.',
+      },
+      widgets: {
+        label: 'Home screen widgets',
+        title: 'A glance away.',
+        desc: 'Now playing and recently played, right on your Android home screen. No need to open the app.',
+      },
     },
     showcase: {
       headingPre: 'Every screen,',
@@ -98,7 +118,7 @@ export const ui = {
     },
     footer: {
       tagline:
-        'An open-source music player for Android. For Navidrome, Jellyfin and OpenSubsonic.',
+        'An open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic.',
       product: 'Product',
       features: 'Features',
       download: 'Download',
@@ -278,6 +298,26 @@ export const ui = {
         title: 'Une extinction tout en douceur.',
         desc: 'Programmez un fondu en sortie pour que votre album préféré vous accompagne jusqu’au sommeil.',
       },
+      podcasts: {
+        label: 'Podcasts',
+        title: 'Vos émissions, où que vous soyez.',
+        desc: "Cherchez, suivez et écoutez des podcasts grâce à Taddy. Vos morceaux et vos émissions, sous un seul toit.",
+      },
+      radio: {
+        label: 'Radio en ligne',
+        title: 'Branchez-vous, partout.',
+        desc: "Écoutez les stations de radio en ligne de votre serveur en un geste. Parcourez, enregistrez, écoutez en direct.",
+      },
+      lyrics: {
+        label: 'Paroles',
+        title: 'Chantez, en rythme.',
+        desc: 'Paroles synchronisées depuis LRCLib, défilant ligne par ligne avec le morceau.',
+      },
+      widgets: {
+        label: "Widgets d'accueil",
+        title: "À portée d'œil.",
+        desc: "Lecture en cours et écoutes récentes, directement sur votre écran d'accueil Android. Sans ouvrir l'appli.",
+      },
     },
     showcase: {
       headingPre: 'Chaque écran,',
@@ -291,7 +331,7 @@ export const ui = {
     },
     footer: {
       tagline:
-        'Un lecteur de musique open source pour Android. Pour Navidrome, Jellyfin et OpenSubsonic.',
+        'Un lecteur de musique open source pour Android. Compatible avec Navidrome, Jellyfin et OpenSubsonic.',
       product: 'Produit',
       features: 'Fonctionnalités',
       download: 'Télécharger',

@@ -86,7 +86,6 @@
       ],
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
-      "./plugins/withCarPlay",
       "./plugins/withWidgets",
       [
         "@sentry/react-native/expo",
