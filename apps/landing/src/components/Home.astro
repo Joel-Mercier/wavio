@@ -259,16 +259,111 @@ const wordDelay = () =>
 			</h2>
 			<p class="self-end text-lg text-text-2 text-pretty">{t.showcase.sub}</p>
 		</div>
-		<div class="animate-scroll flex w-max gap-7 [animation-duration:50s]">
+		<div id="showcase-track" class="showcase-track flex w-max gap-7 cursor-grab touch-pan-y select-none will-change-transform">
 			{
 				[...showcase, ...showcase].map((shot) => (
-					<div class="w-[280px] shrink-0 overflow-hidden rounded-[32px] border border-border-strong bg-black shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
-						<Image src={shot} alt="" class="block w-full" />
+					<div class="w-[280px] shrink-0 overflow-hidden rounded-[32px] border border-border-strong bg-black shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] pointer-events-none">
+						<Image src={shot} alt="" class="block w-full" draggable={false} />
 					</div>
 				))
 			}
 		</div>
 	</section>
+
+	<script>
+		const track = document.getElementById('showcase-track');
+		if (track) {
+			const SPEED = 50; // px/sec
+			let halfWidth = 0;
+			const measure = () => {
+				halfWidth = track.scrollWidth / 2;
+			};
+			measure();
+			window.addEventListener('resize', measure);
+			if ('fonts' in document) document.fonts.ready.then(measure);
+
+			let offset = 0;
+			let paused = false;
+			let hovered = false;
+			let dragging = false;
+			let dragStartX = 0;
+			let dragStartOffset = 0;
+			let lastT = performance.now();
+			let velocity = 0; // px/sec, carries momentum after release
+			let lastPointerX = 0;
+			let lastPointerT = 0;
+
+			const wrap = (v: number) => {
+				if (halfWidth <= 0) return v;
+				while (v <= -halfWidth) v += halfWidth;
+				while (v > 0) v -= halfWidth;
+				return v;
+			};
+
+			const apply = () => {
+				track.style.transform = `translate3d(${offset}px, 0, 0)`;
+			};
+
+			const tick = (t: number) => {
+				const dt = (t - lastT) / 1000;
+				lastT = t;
+				if (!dragging) {
+					if (Math.abs(velocity) > 0.5) {
+						// momentum: decay toward the base scroll speed
+						offset = wrap(offset + velocity * dt);
+						velocity *= Math.pow(0.001, dt); // ~exponential decay, ~halves every ~70ms
+						apply();
+					} else if (!paused && !hovered) {
+						velocity = 0;
+						offset = wrap(offset - SPEED * dt);
+						apply();
+					}
+				}
+				requestAnimationFrame(tick);
+			};
+			requestAnimationFrame((t) => { lastT = t; tick(t); });
+
+			track.addEventListener('mouseenter', () => { hovered = true; });
+			track.addEventListener('mouseleave', () => { hovered = false; });
+
+			track.addEventListener('pointerdown', (e) => {
+				dragging = true;
+				velocity = 0;
+				dragStartX = e.clientX;
+				dragStartOffset = offset;
+				lastPointerX = e.clientX;
+				lastPointerT = performance.now();
+				track.setPointerCapture(e.pointerId);
+				track.style.cursor = 'grabbing';
+			});
+			track.addEventListener('pointermove', (e) => {
+				if (!dragging) return;
+				const now = performance.now();
+				const dt = (now - lastPointerT) / 1000;
+				if (dt > 0) {
+					// low-pass filter so a single jittery sample doesn't dominate
+					const instantV = (e.clientX - lastPointerX) / dt;
+					velocity = velocity * 0.6 + instantV * 0.4;
+				}
+				lastPointerX = e.clientX;
+				lastPointerT = now;
+				offset = wrap(dragStartOffset + (e.clientX - dragStartX));
+				apply();
+			});
+			const endDrag = (e: PointerEvent) => {
+				if (!dragging) return;
+				dragging = false;
+				// clamp so a tiny flick doesn't fling forever
+				const MAX_V = 4000;
+				if (velocity > MAX_V) velocity = MAX_V;
+				if (velocity < -MAX_V) velocity = -MAX_V;
+				try { track.releasePointerCapture(e.pointerId); } catch {}
+				track.style.cursor = 'grab';
+			};
+			track.addEventListener('pointerup', endDrag);
+			track.addEventListener('pointercancel', endDrag);
+		}
+	</script>
 
 	<!-- ─────────────  Final CTA  ───────────── -->
 	<section id="download" class="relative isolate overflow-hidden pb-40 pt-35">
