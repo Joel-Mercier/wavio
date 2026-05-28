@@ -1,15 +1,15 @@
 ---
-import { Font } from 'astro:assets'
-import '../styles/global.css'
-import { defaultLang, type Lang } from '../i18n/ui'
+import { Font } from "astro:assets";
+import "../styles/global.css";
+import { defaultLang, type Lang } from "../i18n/ui";
 
 interface Props {
-	title: string
-	description: string
-	lang?: Lang
+  title: string;
+  description: string;
+  lang?: Lang;
 }
 
-const { title, description, lang = defaultLang } = Astro.props
+const { title, description, lang = defaultLang } = Astro.props;
 ---
 
 <!doctype html>

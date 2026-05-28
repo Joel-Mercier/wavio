@@ -208,7 +208,7 @@ export default function LibraryListItem({
             numberOfLines={layout === "grid" ? 2 : 1}
             className="text-white text-md font-normal capitalize"
           >
-            {item.name}
+            {item.isFavorites ? type.label : item.name}
           </Heading>
           <HStack className="items-center">
             {offlineModeEnabled && type.id === "favorites" && (

@@ -1,14 +1,14 @@
 ---
-import Home from '../../components/Home.astro'
-import { ui, defaultLang, type Lang } from '../../i18n/ui'
+import Home from "../../components/Home.astro";
+import { defaultLang, type Lang, ui } from "../../i18n/ui";
 
 export function getStaticPaths() {
-	return (Object.keys(ui) as Lang[])
-		.filter((lang) => lang !== defaultLang)
-		.map((lang) => ({ params: { lang } }))
+  return (Object.keys(ui) as Lang[])
+    .filter((lang) => lang !== defaultLang)
+    .map((lang) => ({ params: { lang } }));
 }
 
-const { lang } = Astro.params as { lang: Lang }
+const { lang } = Astro.params as { lang: Lang };
 ---
 
 <Home lang={lang} />

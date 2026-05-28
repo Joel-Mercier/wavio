@@ -1,14 +1,14 @@
 ---
-import Privacy from '../../components/Privacy.astro'
-import { ui, defaultLang, type Lang } from '../../i18n/ui'
+import Privacy from "../../components/Privacy.astro";
+import { defaultLang, type Lang, ui } from "../../i18n/ui";
 
 export function getStaticPaths() {
-	return (Object.keys(ui) as Lang[])
-		.filter((lang) => lang !== defaultLang)
-		.map((lang) => ({ params: { lang } }))
+  return (Object.keys(ui) as Lang[])
+    .filter((lang) => lang !== defaultLang)
+    .map((lang) => ({ params: { lang } }));
 }
 
-const { lang } = Astro.params as { lang: Lang }
+const { lang } = Astro.params as { lang: Lang };
 ---
 
 <Privacy lang={lang} />

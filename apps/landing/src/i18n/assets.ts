@@ -7,15 +7,15 @@ import { defaultLang, type Lang } from './ui'
  * literal pattern, so add new extensions here if you introduce them.
  */
 const modules = import.meta.glob<{ default: ImageMetadata }>(
-	'../assets/*-{en,fr}.{png,jpg,jpeg,webp}',
-	{ eager: true },
+  '../assets/*-{en,fr}.{png,jpg,jpeg,webp}',
+  { eager: true },
 )
 
 // Index by "<base>-<lang>" (filename without extension) for O(1) lookup.
 const byKey = new Map<string, ImageMetadata>()
 for (const [path, mod] of Object.entries(modules)) {
-	const key = path.split('/').pop()!.replace(/\.[^.]+$/, '')
-	byKey.set(key, mod.default)
+  const key = path.split('/').pop()!.replace(/\.[^.]+$/, '')
+  byKey.set(key, mod.default)
 }
 
 /**
@@ -23,9 +23,9 @@ for (const [path, mod] of Object.entries(modules)) {
  * default language when a translation is missing.
  */
 export function localizedImage(base: string, lang: Lang): ImageMetadata {
-	const hit = byKey.get(`${base}-${lang}`) ?? byKey.get(`${base}-${defaultLang}`)
-	if (!hit) throw new Error(`No localized asset found for "${base}"`)
-	return hit
+  const hit = byKey.get(`${base}-${lang}`) ?? byKey.get(`${base}-${defaultLang}`)
+  if (!hit) throw new Error(`No localized asset found for "${base}"`)
+  return hit
 }
 
 /**
@@ -33,5 +33,5 @@ export function localizedImage(base: string, lang: Lang): ImageMetadata {
  * page/component (where `Astro.props.lang` is available) and reuse the result.
  */
 export function useImages(lang: Lang) {
-	return (base: string) => localizedImage(base, lang)
+  return (base: string) => localizedImage(base, lang)
 }

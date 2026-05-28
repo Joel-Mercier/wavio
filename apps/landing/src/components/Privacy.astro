@@ -1,16 +1,16 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import Nav from './Nav.astro'
-import Footer from './Footer.astro'
-import { useTranslations, localizePath, type Lang } from '../i18n/utils'
+import { type Lang, localizePath, useTranslations } from "../i18n/utils";
+import Layout from "../layouts/Layout.astro";
+import Footer from "./Footer.astro";
+import Nav from "./Nav.astro";
 
 interface Props {
-	lang: Lang
+  lang: Lang;
 }
 
-const { lang } = Astro.props
-const t = useTranslations(lang)
-const p = t.privacy
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const p = t.privacy;
 ---
 
 <Layout title={t.meta.privacyTitle} description={t.meta.privacyDescription} lang={lang}>
@@ -30,7 +30,7 @@ const p = t.privacy
 				</svg>
 				{p.back}
 			</a>
-			<h1 class="mb-6 text-[clamp(48px,8vw,104px)] font-extrabold leading-[0.96] tracking-[-0.05em] text-balance">
+			<h1 class="mb-6 text-[clamp(48px,8vw,104px)] font-extrabold leading-[1.02] tracking-[-0.05em] text-balance">
 				{p.titlePre} <em class="font-extrabold italic text-accent">{p.titleEm}</em>
 			</h1>
 			<div class="flex flex-wrap gap-x-[18px] gap-y-2 text-sm text-text-3">

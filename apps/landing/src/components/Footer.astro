@@ -1,15 +1,15 @@
 ---
-import { GITHUB_URL } from '../consts'
-import Logo from '../assets/logo.svg'
-import { useTranslations, localizePath, type Lang } from '../i18n/utils'
+import Logo from "../assets/logo.svg";
+import { GITHUB_URL } from "../consts";
+import { type Lang, localizePath, useTranslations } from "../i18n/utils";
 
 interface Props {
-	lang: Lang
+  lang: Lang;
 }
 
-const { lang } = Astro.props
-const t = useTranslations(lang)
-const home = localizePath('/', lang)
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const home = localizePath("/", lang);
 ---
 
 <footer class="relative overflow-hidden border-t border-border pt-14 text-[13px] text-text-3">

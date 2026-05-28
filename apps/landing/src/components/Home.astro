@@ -1,29 +1,38 @@
 ---
-import { Image } from 'astro:assets'
-import Layout from '../layouts/Layout.astro'
-import Nav from './Nav.astro'
-import Footer from './Footer.astro'
-import Logo from '../assets/logo.svg'
-import Jellyfin from '../assets/jellyfin.svg'
-import Navidrome from '../assets/navidrome.svg'
-import OpenSubsonic from '../assets/opensubsonic.svg'
-import { GITHUB_URL, PLAY_STORE_URL } from '../consts'
-import { useTranslations, type Lang } from '../i18n/utils'
-import { useImages } from '../i18n/assets'
+import { Image } from "astro:assets";
+import Jellyfin from "../assets/jellyfin.svg";
+import Logo from "../assets/logo.svg";
+import Navidrome from "../assets/navidrome.svg";
+import OpenSubsonic from "../assets/opensubsonic.svg";
+import { GITHUB_URL, PLAY_STORE_URL } from "../consts";
+import { useImages } from "../i18n/assets";
+import { type Lang, useTranslations } from "../i18n/utils";
+import Layout from "../layouts/Layout.astro";
+import Footer from "./Footer.astro";
+import Nav from "./Nav.astro";
 
 interface Props {
-	lang: Lang
+  lang: Lang;
 }
 
-const { lang } = Astro.props
-const t = useTranslations(lang)
-const f = t.features
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const f = t.features;
 
-const img = useImages(lang)
-const showcase = [img('home'), img('library'), img('queue'), img('smart-playlist'), img('offline-1'), img('settings'), img('login')]
+const img = useImages(lang);
+const showcase = [
+  img("home"),
+  img("library"),
+  img("queue"),
+  img("smart-playlist"),
+  img("offline-1"),
+  img("settings"),
+  img("login"),
+];
 
-let wordIndex = 0
-const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)}s`
+let wordIndex = 0;
+const wordDelay = () =>
+  `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)}s`;
 ---
 
 <Layout title={t.meta.homeTitle} description={t.meta.homeDescription} lang={lang}>
@@ -155,7 +164,7 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 	<section id="features" class="relative pb-20 pt-35">
 		<div class="mx-auto max-w-[1280px] px-8">
 			<div class="mb-20 grid grid-cols-1 items-end gap-x-15 gap-y-6 lg:grid-cols-2">
-				<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[0.96] tracking-[-0.04em] text-balance">
+				<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[1.02] tracking-[-0.04em] text-balance">
 					{f.headingPre} <em class="font-extrabold italic text-accent">{f.headingEm}</em> {f.headingPost}
 				</h2>
 				<p class="self-end text-lg text-text-2 text-pretty">{f.sub}</p>
@@ -183,9 +192,9 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 				</div>
 
 				<!-- offline image cell -->
-				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 lg:min-h-0 min-h-[300px]">
-					<Image src={img('offline-1')} alt={f.offline.title} class="absolute inset-0 size-full object-cover object-top" />
-					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-linear-to-r from-transparent to-[#1c1c1e] transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 lg:min-h-0 min-h-[300px]">
+					<Image src={img('offline-1')} alt={f.offline.title} class="absolute top-1/2 left-1/2 -translate-1/2 size-2/3 object-cover object-top" />
+					<div class="absolute inset-0 bg-linear-to-b from-transparent from-30% to-black"></div>
 					<div class="relative z-10 mt-auto p-7">
 						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.offline.label}</div>
 						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.offline.title}</h3>
@@ -199,9 +208,9 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 				</div>
 
 				<!-- playlists image -->
-				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
-					<Image src={img('smart-playlist')} alt={f.playlists.title} class="absolute inset-0 size-full object-cover object-top" />
-					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-linear-to-r from-transparent to-[#1c1c1e] transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
+					<Image src={img('smart-playlist')} alt={f.playlists.title} class="absolute top-1/2 left-1/2 -translate-1/2 size-2/3 object-cover object-top" />
+					<div class="absolute inset-0 bg-linear-to-b from-transparent from-30% to-black"></div>
 					<div class="relative z-10 mt-auto p-7">
 						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.playlists.label}</div>
 						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.playlists.title}</h3>
@@ -209,9 +218,9 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 				</div>
 
 				<!-- android auto image -->
-				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
-					<Image src={img('android-auto')} alt={f.auto.title} class="absolute inset-0 size-full object-cover object-top" />
-					<div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% to-black"></div>
+				<div class="cell-image group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-linear-to-r from-transparent to-[#1c1c1e] transition-all duration-300 hover:-translate-y-0.5 hover:border-accent sm:col-span-2 lg:col-span-2 min-h-[300px] lg:min-h-0">
+					<Image src={img('android-auto')} alt={f.auto.title} class="absolute top-1/2 left-1/2 -translate-1/2 size-2/3 object-cover object-center" />
+					<div class="absolute inset-0 bg-linear-to-b from-transparent from-30% to-black"></div>
 					<div class="relative z-10 mt-auto p-7">
 						<div class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{f.auto.label}</div>
 						<h3 class="text-[22px] font-bold leading-[1.15] tracking-[-0.02em]">{f.auto.title}</h3>
@@ -245,7 +254,7 @@ const wordDelay = () => `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)
 	<!-- ─────────────  Showcase scroll  ───────────── -->
 	<section id="showcase" class="overflow-hidden pb-35 pt-20">
 		<div class="mx-auto mb-20 grid max-w-[1280px] grid-cols-1 items-end gap-x-15 gap-y-6 px-8 lg:grid-cols-2">
-			<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[0.96] tracking-[-0.04em] text-balance">
+			<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[1.02] tracking-[-0.04em] text-balance">
 				{t.showcase.headingPre} <em class="font-extrabold italic text-accent">{t.showcase.headingEm}</em>
 			</h2>
 			<p class="self-end text-lg text-text-2 text-pretty">{t.showcase.sub}</p>

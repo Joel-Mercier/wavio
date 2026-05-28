@@ -1,32 +1,32 @@
 ---
-import { GITHUB_URL } from '../consts'
-import Logo from '../assets/logo.svg'
+import Logo from "../assets/logo.svg";
+import { GITHUB_URL } from "../consts";
 import {
-	useTranslations,
-	localizePath,
-	stripLangFromPath,
-	languages,
-	defaultLang,
-	type Lang,
-} from '../i18n/utils'
+  defaultLang,
+  type Lang,
+  languages,
+  localizePath,
+  stripLangFromPath,
+  useTranslations,
+} from "../i18n/utils";
 
 interface Props {
-	lang: Lang
-	/** Show the Features / GitHub links (homepage only) */
-	showLinks?: boolean
+  lang: Lang;
+  /** Show the Features / GitHub links (homepage only) */
+  showLinks?: boolean;
 }
 
-const { lang, showLinks = false } = Astro.props
-const t = useTranslations(lang)
-const home = localizePath('/', lang)
+const { lang, showLinks = false } = Astro.props;
+const t = useTranslations(lang);
+const home = localizePath("/", lang);
 
 // Build language-switcher targets that keep the visitor on the current page.
-const basePath = stripLangFromPath(Astro.url.pathname)
+const basePath = stripLangFromPath(Astro.url.pathname);
 const langLinks = (Object.keys(languages) as Lang[]).map((code) => ({
-	code,
-	href: localizePath(basePath, code),
-	current: code === lang,
-}))
+  code,
+  href: localizePath(basePath, code),
+  current: code === lang,
+}));
 ---
 
 <nav class="sticky top-0 z-50 border-b border-white/5 bg-bg/65 backdrop-blur-xl">
