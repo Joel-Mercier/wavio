@@ -696,9 +696,10 @@ export default {
           restoreInvalidFileMessage:
             "Le fichier sélectionné n'est pas une sauvegarde Wavio valide",
           restoreErrorMessage: "Impossible de restaurer la sauvegarde",
-          restartRequiredTitle: "Redémarrage requis",
+          restartRequiredTitle: "Sauvegarde restaurée",
           restartRequiredDescription:
-            "Sauvegarde restaurée. Veuillez fermer complètement Wavio puis le rouvrir pour charger les données restaurées.",
+            "Vos données ont été restaurées. Connectez-vous à votre serveur pour terminer.",
+          restartRequiredAction: "Continuer",
         },
         podcastSettings: {
           title: "Paramètres des podcasts",
@@ -1035,6 +1036,7 @@ export default {
           currentServer: "Serveur actuel",
           version: "version {{version}}",
           seeProfile: "Voir le profil",
+          privacyPolicy: "Politique de confidentialité",
         },
         languages: {
           en: "English",

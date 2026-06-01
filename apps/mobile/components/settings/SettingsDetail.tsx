@@ -73,11 +73,13 @@ import {
 import { Country, Language } from "@/services/taddyPodcasts/types";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
+import { useAuthBase } from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
+import { switchToServer } from "@/utils/switchServer";
 import { cn } from "@/utils/tailwind";
 import {
   Select,
@@ -119,6 +121,10 @@ export default function SettingsDetail() {
     useState(false);
   const [showRestartRequiredAlertDialog, setShowRestartRequiredAlertDialog] =
     useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<{
+    serverId: string | null;
+    username: string | null;
+  } | null>(null);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } = useBottomSheetBackHandler(
     bottomSheetLanguageModalRef,
@@ -472,12 +478,28 @@ export default function SettingsDetail() {
     setShowRestoreConfirmAlertDialog(false);
   };
 
+  // Finishing a restore re-routes through the logout → re-login flow so React
+  // Query and the per-account stores are rebuilt cleanly for the restored
+  // server, instead of being hot-swapped in place (which mixes content).
+  const handleFinishRestore = () => {
+    setShowRestartRequiredAlertDialog(false);
+    const target = restoreTarget;
+    setRestoreTarget(null);
+    if (target?.serverId) {
+      switchToServer(router, target.serverId, target.username ?? undefined);
+    } else {
+      useAuthBase.getState().logout();
+      router.replace("/(auth)/login");
+    }
+  };
+
   const handleConfirmRestoreBackupPress = async () => {
     setShowRestoreConfirmAlertDialog(false);
     try {
       const backup = await pickBackupFile();
       if (!backup) return;
-      restoreBackup(backup);
+      const outcome = await restoreBackup(backup);
+      setRestoreTarget(outcome);
       setShowRestartRequiredAlertDialog(true);
     } catch (error) {
       console.error(error);
@@ -1820,11 +1842,11 @@ export default function SettingsDetail() {
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
             <FadeOutScaleDown
-              onPress={() => setShowRestartRequiredAlertDialog(false)}
+              onPress={handleFinishRestore}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
             >
               <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.close")}
+                {t("app.settings.backupSettings.restartRequiredAction")}
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>

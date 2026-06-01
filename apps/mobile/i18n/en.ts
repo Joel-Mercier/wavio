@@ -675,9 +675,10 @@ export default {
           restoreInvalidFileMessage:
             "The selected file is not a valid Wavio backup",
           restoreErrorMessage: "Could not restore the backup",
-          restartRequiredTitle: "Restart required",
+          restartRequiredTitle: "Backup restored",
           restartRequiredDescription:
-            "Backup restored. Please force-close Wavio and reopen it to load the restored data.",
+            "Your data has been restored. Sign in to your server to finish.",
+          restartRequiredAction: "Continue",
         },
         podcastSettings: {
           title: "Podcast settings",
@@ -1003,6 +1004,7 @@ export default {
           currentServer: "Current server",
           version: "version {{version}}",
           seeProfile: "See profile",
+          privacyPolicy: "Privacy policy",
         },
         languages: {
           en: "English",

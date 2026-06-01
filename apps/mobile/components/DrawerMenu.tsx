@@ -9,8 +9,10 @@ import LogOut from "lucide-react-native/dist/esm/icons/log-out.mjs";
 import Server from "lucide-react-native/dist/esm/icons/server.mjs";
 import Settings from "lucide-react-native/dist/esm/icons/settings.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -80,7 +82,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
     "--color-white",
     "--color-red-500",
   ]) as string[];
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
@@ -129,6 +131,11 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const handleLogoutPress = () => {
     logout();
     onClose();
+  };
+
+  const handlePrivacyPolicyPress = () => {
+    const path = i18n.language.startsWith("fr") ? "/fr/privacy" : "/privacy";
+    Linking.openURL(`https://wavio-landing.vercel.app${path}`);
   };
 
   const handleSwitchUser = (nextUsername: string) => {
@@ -281,13 +288,22 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 </Heading>
               </Pressable>
             </VStack>
-            <Center className="mt-4">
-              <Text className="text-primary-100">
+            <VStack className="mt-4 pt-4 border-t-2 border-primary-500">
+              <Pressable
+                className="flex-row items-center m-1 p-3 gap-x-3 rounded-md active:bg-primary-800"
+                onPress={handlePrivacyPolicyPress}
+              >
+                <ShieldCheck size={20} color={white} />
+                <Text className="text-white">
+                  {t("app.shared.sidebar.privacyPolicy")}
+                </Text>
+              </Pressable>
+              <Text className="mt-2 ml-4 text-primary-100">
                 {t("app.shared.sidebar.version", {
                   version: Application.nativeApplicationVersion,
                 })}
               </Text>
-            </Center>
+            </VStack>
           </VStack>
         </DrawerBody>
       </DrawerContent>
