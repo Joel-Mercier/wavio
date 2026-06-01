@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { queryClient } from "@/config/queryClient";
 import { zustandStorage } from "@/config/storage";
 import { type ServerType, serverTypeSchema } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
@@ -141,6 +142,12 @@ export const useAuthBase = create<AuthStore>()(
           jellyfinUserId: null,
           serverVersion: null,
         });
+        // Wipe every cached server response so reconnecting to a different
+        // server (or user) never shows stale content that isn't backed by a
+        // zustand store. Cancel in-flight queries first so their results can't
+        // repopulate the cache after it's cleared.
+        queryClient.cancelQueries();
+        queryClient.clear();
       },
     }),
     {

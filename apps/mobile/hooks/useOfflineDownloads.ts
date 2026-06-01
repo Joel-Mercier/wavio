@@ -106,6 +106,20 @@ export const useOfflineDownloads = () => {
   };
 };
 
+// Narrow boolean subscription for the offline-mode toggle. Use this in list
+// items instead of useOfflineDownloads() so a row doesn't also subscribe to the
+// downloadedTracks map (which re-renders every row on any add/remove).
+export const useOfflineModeEnabled = () =>
+  useOffline((s) => s.offlineModeEnabled);
+
+// Per-id reactive downloaded check. The selector returns a boolean, so a row
+// re-renders only when ITS OWN track's download status flips — not when any
+// other track is added or removed. Prefer this over
+// useOfflineDownloads().isTrackDownloaded in list items, which subscribes to the
+// whole downloadedTracks map.
+export const useIsTrackDownloaded = (trackId: string) =>
+  useOffline((s) => trackId in s.downloadedTracks);
+
 // Reactive view of the downloaded-tracks list for the active server. Subscribes
 // to downloadedTracks only (changes on add/remove/clear — not progress ticks).
 export const useDownloadedTracksList = () => {

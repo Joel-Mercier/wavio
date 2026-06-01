@@ -1,21 +1,21 @@
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { Box } from "@/components/ui/box";
-import { usePlaybackProgress } from "@/hooks/player";
+import { usePlaybackProgressValue } from "@/hooks/player";
 
 export default function PlaybackProgressBar() {
-  const { currentTime, duration } = usePlaybackProgress();
-  const progress =
-    duration && duration > 0
-      ? Math.min(1, Math.max(0, (currentTime ?? 0) / duration))
-      : 0;
+  // Driven on the UI thread from a shared value. This bar lives in the always-on
+  // FloatingPlayer, so re-rendering it on every ~4 Hz progress tick would commit
+  // a layout on the JS thread app-wide; the animated width avoids React renders.
+  const progress = usePlaybackProgressValue();
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
   return (
     <Box
       className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-100"
       style={{ zIndex: 3 }}
     >
-      <Box
-        className="h-full bg-white"
-        style={{ width: `${progress * 100}%` }}
-      />
+      <Animated.View className="h-full bg-white" style={fillStyle} />
     </Box>
   );
 }

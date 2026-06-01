@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { Box } from "@/components/ui/box";
-import { usePlaybackProgress } from "@/hooks/player";
+import {
+  getPlaybackSnapshot,
+  subscribePlaybackProgress,
+} from "@/hooks/player/playbackSnapshot";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { findCurrentLineIndex } from "@/utils/lyrics";
 
@@ -14,13 +17,23 @@ export default function CurrentLyricLine({
 }: {
   lyrics: StructuredLyrics | null;
 }) {
-  const { currentTime } = usePlaybackProgress();
-  const offsetMs = lyrics?.offset ?? 0;
-  const positionMs = (currentTime ?? 0) * 1000 + offsetMs;
-  const currentIndex = useMemo(
-    () => (lyrics ? findCurrentLineIndex(lyrics.line, positionMs) : -1),
-    [lyrics, positionMs],
-  );
+  // Subscribe to the raw progress channel and only re-render when the active
+  // line *index* changes — not on every ~4 Hz tick. findCurrentLineIndex still
+  // runs per tick (cheap, JS thread), but the setState bails out via referential
+  // equality unless the line actually advances.
+  const [currentIndex, setCurrentIndex] = useState(-1);
+
+  useEffect(() => {
+    const update = () => {
+      const { currentTime } = getPlaybackSnapshot();
+      const positionMs = (currentTime ?? 0) * 1000 + (lyrics?.offset ?? 0);
+      const next = lyrics ? findCurrentLineIndex(lyrics.line, positionMs) : -1;
+      setCurrentIndex((prev) => (prev === next ? prev : next));
+    };
+    update();
+    return subscribePlaybackProgress(update);
+  }, [lyrics]);
+
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(8);
   const lastIndexRef = useRef<number>(-2);

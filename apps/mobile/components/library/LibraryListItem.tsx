@@ -18,7 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { useOfflineModeEnabled } from "@/hooks/useOfflineDownloads";
 import type {
   AlbumID3,
   ArtistID3,
@@ -83,7 +83,7 @@ export default function LibraryListItem({
     "--color-black",
   ]) as string[];
   const { t, i18n } = useTranslation();
-  const { offlineModeEnabled } = useOfflineDownloads();
+  const offlineModeEnabled = useOfflineModeEnabled();
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
       return {

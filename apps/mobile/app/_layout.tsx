@@ -24,7 +24,6 @@ import { init as sentryInit, wrap as sentryWrap } from "@sentry/react-native";
 import {
   focusManager,
   onlineManager,
-  QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { getLocales } from "expo-localization";
@@ -41,6 +40,7 @@ import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
+import { queryClient } from "@/config/queryClient";
 import { initConnectionType } from "@/services/network";
 import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
@@ -65,16 +65,6 @@ sentryInit({
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 30 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {

@@ -21,7 +21,10 @@ import { VStack } from "@/components/ui/vstack";
 import { useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsCurrentTrack } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import {
+  useIsTrackDownloaded,
+  useOfflineModeEnabled,
+} from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { artworkUrl } from "@/utils/artwork";
@@ -60,9 +63,10 @@ export default function TrackListItem({
   const isCurrentTrack = useIsCurrentTrack(track.id);
   const doUnfavorite = useUnstar();
   const toast = useToast();
-  const { offlineModeEnabled, isTrackDownloaded } = useOfflineDownloads();
+  const offlineModeEnabled = useOfflineModeEnabled();
+  const isTrackDownloaded = useIsTrackDownloaded(track.id);
   const isOnline = useIsOnline();
-  const isUnavailableOffline = !isOnline && !isTrackDownloaded(track.id);
+  const isUnavailableOffline = !isOnline && !isTrackDownloaded;
   const { open } = useTrackActions();
 
   const handlePresentModalPress = () => {
@@ -163,7 +167,7 @@ export default function TrackListItem({
               {track.title}
             </Heading>
             <HStack className="items-center">
-              {offlineModeEnabled && isTrackDownloaded(track.id) && (
+              {offlineModeEnabled && isTrackDownloaded && (
                 <Box className="flex items-center justify-center rounded-full size-4 bg-emerald-500 mr-2">
                   <ArrowDown color={black} size={12} />
                 </Box>

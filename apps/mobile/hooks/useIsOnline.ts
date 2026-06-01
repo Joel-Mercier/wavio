@@ -1,20 +1,13 @@
-import NetInfo from "@react-native-community/netinfo";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+import { getIsOnline, subscribeIsOnline } from "@/services/network";
 
+// Reads the shared connectivity singleton (services/network.ts) instead of
+// creating its own NetInfo listener. This matters because useIsOnline is called
+// per row in TrackListItem — a dedicated listener + fetch per row meant native
+// subscription churn on every FlashList recycle. The singleton's single
+// persistent listener (wired once at root via initConnectionType) keeps the
+// cached value fresh, so rows mounting later read the current state without an
+// extra fetch.
 export function useIsOnline() {
-  const [isOnline, setIsOnline] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    NetInfo.fetch().then((state) => {
-      if (!cancelled) setIsOnline(!!state.isConnected);
-    });
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOnline(!!state.isConnected);
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
-  return isOnline;
+  return useSyncExternalStore(subscribeIsOnline, getIsOnline);
 }

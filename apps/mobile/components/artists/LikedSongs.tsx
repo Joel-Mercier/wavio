@@ -3,6 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -78,6 +79,9 @@ import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
 
 export default function LikedSongs() {
   const [white, emerald500, gray200] = Uniwind.getCSSVariable([
@@ -354,6 +358,34 @@ export default function LikedSongs() {
     );
   };
 
+  // Both sections render through a single FlashList — two vertical lists (or a
+  // list inside a ScrollView) would nest virtualization and render every row.
+  // Songs, the "Liked Albums" divider, and albums are flattened into one typed
+  // array; getItemType keeps a separate recycle pool per shape.
+  type Row =
+    | { type: "song"; song: (typeof likedSongs)[number]; index: number }
+    | { type: "songsEmpty" }
+    | { type: "albumsHeader" }
+    | { type: "album"; album: (typeof likedAlbums)[number]; index: number };
+
+  const rows = useMemo<Row[]>(() => {
+    const result: Row[] = [];
+    if (likedSongs.length === 0) {
+      result.push({ type: "songsEmpty" });
+    } else {
+      likedSongs.forEach((song, index) => {
+        result.push({ type: "song", song, index });
+      });
+    }
+    if (likedAlbums.length > 0) {
+      result.push({ type: "albumsHeader" });
+      likedAlbums.forEach((album, index) => {
+        result.push({ type: "album", album, index });
+      });
+    }
+    return result;
+  }, [likedSongs, likedAlbums]);
+
   return (
     <Box className="h-full bg-black">
       <AnimatedBox
@@ -384,7 +416,7 @@ export default function LikedSongs() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <Animated.ScrollView
+      <AnimatedFlashList
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{
@@ -392,113 +424,122 @@ export default function LikedSongs() {
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
         }}
         showsVerticalScrollIndicator={false}
-      >
-        <LinearGradient
-          colors={[gradientPrimary, "#000000"]}
-          className="h-48"
-          style={{ height: 192 }}
-        >
-          <Box
-            className="bg-black/25 flex-1"
-            style={{ paddingTop: insets.top }}
-          >
-            <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-              <FadeOutScaleDown onPress={() => router.back()}>
-                <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                  <ArrowLeft size={24} color={white} />
-                </Box>
-              </FadeOutScaleDown>
-              <Heading
-                numberOfLines={2}
-                className="text-white mb-12 font-bold"
-                size="xl"
-              >
-                {data?.artist?.name}
-              </Heading>
-            </VStack>
-          </Box>
-        </LinearGradient>
-        <VStack className="px-6 bg-black">
-          <Text className="text-primary-100 mt-4" numberOfLines={1}>
-            {t("app.shared.songCount", { count: likedSongs.length })}
-            {likedAlbums.length > 0 && (
-              <>
-                {" • "}
-                {t("app.shared.albumCount", { count: likedAlbums.length })}
-              </>
-            )}
-          </Text>
-          <HStack className="items-center justify-between my-4">
-            <HStack className="items-center gap-x-4">
-              {data?.artist?.starred ? (
-                <FadeOutScaleDown onPress={handleUnfavoritePress}>
-                  <Heart color={emerald500} fill={emerald500} />
-                </FadeOutScaleDown>
-              ) : (
-                <FadeOutScaleDown onPress={handleFavoritePress}>
-                  <Heart color={white} />
-                </FadeOutScaleDown>
-              )}
-              <FadeOutScaleDown onPress={handlePresentModalPress}>
-                <EllipsisVertical color={white} />
-              </FadeOutScaleDown>
-            </HStack>
-            <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown onPress={handleShufflePress}>
-                {shuffle ? (
-                  <>
-                    <Shuffle color={emerald500} />
-                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                      <Box className="bg-emerald-500 rounded-full size-1" />
-                    </Box>
-                  </>
-                ) : (
-                  <Shuffle color={white} />
-                )}
-              </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handlePlayPress}>
-                <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  {isPlayingFromList && isPlaying ? (
-                    <Pause color={white} fill={white} />
-                  ) : (
-                    <Play color={white} fill={white} />
-                  )}
-                </Box>
-              </FadeOutScaleDown>
-            </HStack>
-          </HStack>
-          <Heading className="text-white mb-4" size="lg">
-            {t("app.artists.likedSongs")}
-          </Heading>
-          {likedSongs.length === 0 ? (
-            <EmptyDisplay />
-          ) : (
-            <Box className="-mt-6">
-              {likedSongs.map((song, index) => (
+        data={rows}
+        keyExtractor={(item: Row) =>
+          item.type === "song"
+            ? item.song.id
+            : item.type === "album"
+              ? `album-${item.album.id}`
+              : item.type
+        }
+        getItemType={(item: Row) => item.type}
+        renderItem={({ item }: { item: Row }) => {
+          switch (item.type) {
+            case "song":
+              return (
                 <TrackListItem
-                  key={song.id}
-                  track={song}
-                  index={index}
+                  track={item.song}
+                  index={item.index}
+                  className="px-6"
                   onPress={handleTrackPress}
                   onPlayCallback={handleTrackPressCallback}
                 />
-              ))}
-            </Box>
-          )}
-          {likedAlbums.length > 0 && (
-            <>
-              <Heading className="text-white mt-6 mb-4" size="lg">
-                {t("app.artists.likedAlbums")}
-              </Heading>
-              <Box className="-mx-6">
-                {likedAlbums.map((album, index) => (
-                  <AlbumListItem key={album.id} album={album} index={index} />
-                ))}
+              );
+            case "songsEmpty":
+              return <EmptyDisplay />;
+            case "albumsHeader":
+              return (
+                <Heading className="text-white px-6 mt-6 mb-4" size="lg">
+                  {t("app.artists.likedAlbums")}
+                </Heading>
+              );
+            case "album":
+              return <AlbumListItem album={item.album} index={item.index} />;
+          }
+        }}
+        ListHeaderComponent={() => (
+          <>
+            <LinearGradient
+              colors={[gradientPrimary, "#000000"]}
+              className="h-48"
+              style={{ height: 192 }}
+            >
+              <Box
+                className="bg-black/25 flex-1"
+                style={{ paddingTop: insets.top }}
+              >
+                <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
+                  <FadeOutScaleDown onPress={() => router.back()}>
+                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                      <ArrowLeft size={24} color={white} />
+                    </Box>
+                  </FadeOutScaleDown>
+                  <Heading
+                    numberOfLines={2}
+                    className="text-white mb-12 font-bold"
+                    size="xl"
+                  >
+                    {data?.artist?.name}
+                  </Heading>
+                </VStack>
               </Box>
-            </>
-          )}
-        </VStack>
-      </Animated.ScrollView>
+            </LinearGradient>
+            <VStack className="px-6 bg-black">
+              <Text className="text-primary-100 mt-4" numberOfLines={1}>
+                {t("app.shared.songCount", { count: likedSongs.length })}
+                {likedAlbums.length > 0 && (
+                  <>
+                    {" • "}
+                    {t("app.shared.albumCount", { count: likedAlbums.length })}
+                  </>
+                )}
+              </Text>
+              <HStack className="items-center justify-between my-4">
+                <HStack className="items-center gap-x-4">
+                  {data?.artist?.starred ? (
+                    <FadeOutScaleDown onPress={handleUnfavoritePress}>
+                      <Heart color={emerald500} fill={emerald500} />
+                    </FadeOutScaleDown>
+                  ) : (
+                    <FadeOutScaleDown onPress={handleFavoritePress}>
+                      <Heart color={white} />
+                    </FadeOutScaleDown>
+                  )}
+                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                    <EllipsisVertical color={white} />
+                  </FadeOutScaleDown>
+                </HStack>
+                <HStack className="items-center gap-x-4">
+                  <FadeOutScaleDown onPress={handleShufflePress}>
+                    {shuffle ? (
+                      <>
+                        <Shuffle color={emerald500} />
+                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                          <Box className="bg-emerald-500 rounded-full size-1" />
+                        </Box>
+                      </>
+                    ) : (
+                      <Shuffle color={white} />
+                    )}
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handlePlayPress}>
+                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
+                      {isPlayingFromList && isPlaying ? (
+                        <Pause color={white} fill={white} />
+                      ) : (
+                        <Play color={white} fill={white} />
+                      )}
+                    </Box>
+                  </FadeOutScaleDown>
+                </HStack>
+              </HStack>
+              <Heading className="text-white mb-4" size="lg">
+                {t("app.artists.likedSongs")}
+              </Heading>
+            </VStack>
+          </>
+        )}
+      />
       <BottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}

@@ -496,6 +496,7 @@ export default function ArtistDetail() {
           <>
             <LinearGradient
               colors={["transparent", "#000000"]}
+              locations={[0, 0.9]}
               className="h-96"
               style={{ height: 384 }}
             >
