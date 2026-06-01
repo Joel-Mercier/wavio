@@ -5,14 +5,14 @@ import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -41,7 +41,6 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
     "--color-blue-500",
     "--color-emerald-500",
   ]) as string[];
-  const [imageFailed, setImageFailed] = useState(false);
   const href = useMemo<Href>(() => {
     if (recentPlay.type === "artist") {
       return `/artists/${recentPlay.id}`;
@@ -72,38 +71,40 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
   return (
     <FadeOutScaleDown href={href} className="w-1/2">
       <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
-        {recentPlay.coverArt && !imageFailed ? (
-          <Image
-            size="none"
-            source={{
-              uri:
-                recentPlay.type === "internetRadioStation"
-                  ? recentPlay.coverArt
-                  : artworkUrl(recentPlay.id),
-            }}
-            className="w-16 h-16 aspect-square"
-            alt="Home shortcut cover"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-            {recentPlay.type === "favorites" ? (
-              <LinearGradient
-                colors={[blue500, emerald500]}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+        <ImageWithFallback
+          size="none"
+          source={
+            recentPlay.coverArt
+              ? {
+                  uri:
+                    recentPlay.type === "internetRadioStation"
+                      ? recentPlay.coverArt
+                      : artworkUrl(recentPlay.id),
+                }
+              : undefined
+          }
+          className="w-16 h-16 aspect-square"
+          alt="Home shortcut cover"
+          fallback={
+            <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+              {recentPlay.type === "favorites" ? (
+                <LinearGradient
+                  colors={[blue500, emerald500]}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <HomeShortcutIcon type={recentPlay.type} />
+                </LinearGradient>
+              ) : (
                 <HomeShortcutIcon type={recentPlay.type} />
-              </LinearGradient>
-            ) : (
-              <HomeShortcutIcon type={recentPlay.type} />
-            )}
-          </Box>
-        )}
+              )}
+            </Box>
+          }
+        />
 
         <Box className="flex-1">
           <Heading
