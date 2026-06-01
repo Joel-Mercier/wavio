@@ -1,12 +1,16 @@
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import DownloadedBadge from "@/components/DownloadedBadge";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
-import { Image } from "@/components/ui/image";
+import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
+import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -26,14 +30,18 @@ export default function AlbumListItem({
 }: AlbumListItemProps) {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const isReachableOffline = useIsCachedOffline(["album", album.id]);
+  const isDownloaded = useIsCollectionDownloaded("album", album.id);
   return (
     <FadeOutScaleDown
       href={`/albums/${album.id}`}
+      disabled={!isReachableOffline}
       className={cn(className, {
         "mt-0": layout === "vertical" && index === 0,
         "pt-4": layout === "vertical" && index !== 0,
         "px-6": layout === "vertical",
         "mr-6": layout === "horizontal",
+        "opacity-80": !isReachableOffline,
       })}
     >
       <VStack
@@ -42,28 +50,29 @@ export default function AlbumListItem({
           "flex-row items-center": layout === "vertical",
         })}
       >
-        {album.coverArt ? (
-          <Image
-            source={{ uri: artworkUrl(album.coverArt) }}
-            className={cn("rounded-md aspect-square", {
-              "w-32 h-32": layout === "horizontal",
-              "w-24 h-24": layout === "vertical",
-            })}
-            alt="Album cover"
-          />
-        ) : (
-          <Box
-            className={cn(
-              "rounded-md bg-primary-600 items-center justify-center",
-              {
-                "w-32 h-32": layout === "horizontal",
-                "w-24 h-24": layout === "vertical",
-              },
-            )}
-          >
-            <Disc3 size={48} color={white} />
-          </Box>
-        )}
+        <ImageWithFallback
+          source={
+            album.coverArt ? { uri: artworkUrl(album.coverArt) } : undefined
+          }
+          className={cn("rounded-md aspect-square", {
+            "w-32 h-32": layout === "horizontal",
+            "w-24 h-24": layout === "vertical",
+          })}
+          alt="Album cover"
+          fallback={
+            <Box
+              className={cn(
+                "rounded-md bg-primary-600 items-center justify-center aspect-square",
+                {
+                  "w-32 h-32": layout === "horizontal",
+                  "w-24 h-24": layout === "vertical",
+                },
+              )}
+            >
+              <Disc3 size={48} color={white} />
+            </Box>
+          }
+        />
         <VStack
           className={cn({
             "flex-col ml-4 flex-1": layout === "vertical",
@@ -85,13 +94,16 @@ export default function AlbumListItem({
               {" "}
             </Text>
           )}
-          <Heading
-            size={layout === "horizontal" ? "sm" : "lg"}
-            className="text-white"
-            numberOfLines={1}
-          >
-            {album.name}
-          </Heading>
+          <HStack className="items-center gap-x-2">
+            {isDownloaded && <DownloadedBadge />}
+            <Heading
+              size={layout === "horizontal" ? "sm" : "lg"}
+              className="text-white flex-1"
+              numberOfLines={1}
+            >
+              {album.name}
+            </Heading>
+          </HStack>
           <Text numberOfLines={2} className="text-md text-primary-100">
             {layout === "horizontal" ? album.artist : album.year}
           </Text>

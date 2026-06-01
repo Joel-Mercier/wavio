@@ -10,11 +10,13 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
 import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
@@ -48,9 +50,11 @@ import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import DownloadedBadge from "@/components/DownloadedBadge";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import StarRating from "@/components/StarRating";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
@@ -58,7 +62,6 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
-import { Image } from "@/components/ui/image";
 import {
   Modal,
   ModalBackdrop,
@@ -86,6 +89,7 @@ import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useCollectionDownload } from "@/hooks/useCollectionDownload";
 import useImageColors from "@/hooks/useImageColors";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -102,14 +106,17 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function AlbumDetail() {
-  const [white, emerald500, gray200] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-emerald-500",
-    "--color-gray-200",
-  ]) as string[];
+  const [white, emerald500, gray200, black, gray400, red500] =
+    Uniwind.getCSSVariable([
+      "--color-white",
+      "--color-emerald-500",
+      "--color-gray-200",
+      "--color-black",
+      "--color-gray-400",
+      "--color-red-500",
+    ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -410,6 +417,73 @@ export default function AlbumDetail() {
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
   const handleTrackPress = useTrackListPress(albumTracks);
+  const albumDownload = useCollectionDownload(albumTracks);
+
+  const handleSaveOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await albumDownload.saveAll();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.saveSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error saving album for offline:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.saveErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleRemoveOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await albumDownload.removeAll();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.removeSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error removing album offline downloads:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.removeErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
   const trackIdSet = useMemo(
     () => new Set(albumTracks?.map((t) => t.id)),
     [albumTracks],
@@ -669,40 +743,48 @@ export default function AlbumDetail() {
               >
                 <ArrowLeft size={24} color={white} />
               </FadeOutScaleDown>
-              {!data?.album?.coverArt ? (
-                <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                  <Disc3 size={48} color={white} />
-                </Box>
-              ) : (
-                <AnimatedImage
-                  style={artworkStyle}
-                  source={{
-                    uri: artworkUrl(data?.album?.coverArt),
-                  }}
-                  className="w-[70%] aspect-square rounded-md"
+              <AnimatedBox
+                style={artworkStyle}
+                className="w-[70%] aspect-square"
+              >
+                <ImageWithFallback
+                  source={
+                    data?.album?.coverArt
+                      ? { uri: artworkUrl(data?.album?.coverArt) }
+                      : undefined
+                  }
+                  className="w-full h-full aspect-square rounded-md"
                   alt="Album cover"
+                  fallback={
+                    <Box className="w-full h-full aspect-square rounded-md bg-primary-600 items-center justify-center">
+                      <Disc3 size={48} color={white} />
+                    </Box>
+                  }
                 />
-              )}
+              </AnimatedBox>
               <Box className="w-10" />
             </HStack>
             <VStack>
-              <HStack className="mt-5 items-center justify-between">
+              <HStack className="mt-5 items-center">
                 <Heading numberOfLines={2} className="text-white" size="2xl">
                   {data?.album?.name}
                 </Heading>
               </HStack>
               <HStack className="mt-4 items-center">
-                {data?.album?.artistId ? (
-                  <Image
-                    source={{ uri: artworkUrl(data?.album?.artistId) }}
-                    className="w-8 h-8 rounded-full aspect-square"
-                    alt="Artist cover"
-                  />
-                ) : (
-                  <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
-                    <User size={16} color={white} />
-                  </Box>
-                )}
+                <ImageWithFallback
+                  source={
+                    data?.album?.artistId
+                      ? { uri: artworkUrl(data?.album?.artistId) }
+                      : undefined
+                  }
+                  className="w-8 h-8 rounded-full aspect-square"
+                  alt="Artist cover"
+                  fallback={
+                    <Box className="w-8 h-8 rounded-full bg-primary-600 items-center justify-center">
+                      <User size={16} color={white} />
+                    </Box>
+                  }
+                />
                 <Text
                   className="ml-4 text-white text-md font-bold"
                   numberOfLines={1}
@@ -731,7 +813,8 @@ export default function AlbumDetail() {
                     )}
                 </Text>
               </HStack>
-              <HStack className="mt-2 items-center">
+              <HStack className="mt-2 items-center gap-x-2">
+                {albumDownload.status === "all" && <DownloadedBadge />}
                 <Text className="text-primary-100">
                   {data?.album?.releaseTypes &&
                   data.album.releaseTypes.length > 0
@@ -948,17 +1031,20 @@ export default function AlbumDetail() {
         >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
-              {data?.album?.coverArt ? (
-                <Image
-                  source={{ uri: artworkUrl(data?.album?.coverArt) }}
-                  className="w-16 h-16 rounded-md aspect-square"
-                  alt="Album cover"
-                />
-              ) : (
-                <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <Disc3 size={24} color={white} />
-                </Box>
-              )}
+              <ImageWithFallback
+                source={
+                  data?.album?.coverArt
+                    ? { uri: artworkUrl(data?.album?.coverArt) }
+                    : undefined
+                }
+                className="w-16 h-16 rounded-md aspect-square"
+                alt="Album cover"
+                fallback={
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                    <Disc3 size={24} color={white} />
+                  </Box>
+                }
+              />
               <VStack className="ml-4 flex-1">
                 <Heading
                   className="text-white font-normal"
@@ -989,6 +1075,35 @@ export default function AlbumDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
+              {albumDownload.status === "downloading" ? (
+                <HStack className="items-center">
+                  <Download size={24} color={gray400} />
+                  <Text className="ml-4 text-lg text-gray-400">
+                    {t("app.shared.offline.savingForOffline")} (
+                    {albumDownload.downloadedCount}/{albumDownload.total})
+                  </Text>
+                </HStack>
+              ) : albumDownload.status === "all" ? (
+                <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                  <HStack className="items-center">
+                    <X size={24} color={red500} />
+                    <Text className="ml-4 text-lg text-red-400">
+                      {t("app.shared.offline.removeOfflineDownloads")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ) : (
+                <FadeOutScaleDown onPress={handleSaveOfflinePress}>
+                  <HStack className="items-center">
+                    <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                      <ArrowDown size={20} color={black} />
+                    </Box>
+                    <Text className="ml-4 text-lg text-emerald-400">
+                      {t("app.shared.offline.saveForOfflineListening")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown onPress={handleGoToArtistPress}>
                 <HStack className="items-center">
                   <User size={24} color={gray200} />

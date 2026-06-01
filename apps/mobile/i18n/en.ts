@@ -543,6 +543,23 @@ export default {
           downloadsWifiOnlyDescription:
             "Pause the download queue when on cellular. Resumes automatically when Wi-Fi returns.",
         },
+        storageSettings: {
+          title: "Storage",
+          downloads: "Wavio downloads",
+          cache: "Wavio cache",
+          otherAppData: "Other app data",
+          available: "Available",
+        },
+        cacheSettings: {
+          label: "Clear cache",
+          description:
+            "Remove cached library data. Downloaded tracks are kept. Content reloads when you're back online.",
+          clearAction: "Clear",
+          confirmTitle: "Clear cached data?",
+          confirmDescription:
+            "This clears cached library data for this server. Your downloaded tracks are not affected.",
+          successMessage: "Cache cleared successfully",
+        },
         musicLibrarySettings: {
           title: "Music library settings",
           scanMusicLibraryLabel: "Scan music library",
@@ -825,7 +842,7 @@ export default {
         shareErrorMessage: "An error occurred while sharing the track",
         downloadSuccessMessage: "Track successfully downloaded",
         downloadErrorMessage: "An error occurred while downloading the track",
-        downloadForOffline: "Download for offline",
+        downloadForOffline: "Save for offline listening",
         downloadingForOffline: "Downloading for offline",
         removeOfflineDownload: "Remove offline download",
         offlineDownloadSuccessMessage:
@@ -953,6 +970,17 @@ export default {
         delete: "Delete",
         clear: "Clear",
         unknown: "Unknown",
+        offline: {
+          saveForOfflineListening: "Save for offline listening",
+          savingForOffline: "Saving for offline",
+          removeOfflineDownloads: "Remove offline downloads",
+          saveSuccessMessage: "Saved for offline listening",
+          saveErrorMessage:
+            "An error occurred while saving for offline listening",
+          removeSuccessMessage: "Removed from offline downloads",
+          removeErrorMessage:
+            "An error occurred while removing offline downloads",
+        },
         favorites: "Favorites",
         album_one: "Album",
         album_other: "Albums",

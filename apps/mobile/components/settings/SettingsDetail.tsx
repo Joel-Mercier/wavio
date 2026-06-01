@@ -25,6 +25,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import StorageOverview from "@/components/settings/StorageOverview";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -51,6 +52,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { SupportedLanguages } from "@/config/i18n";
+import { queryPersister } from "@/config/queryClient";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import {
   useGetScanStatus,
@@ -121,6 +123,9 @@ export default function SettingsDetail() {
     useState(false);
   const [showRestartRequiredAlertDialog, setShowRestartRequiredAlertDialog] =
     useState(false);
+  const [showClearCacheAlertDialog, setShowClearCacheAlertDialog] =
+    useState(false);
+  const [storageRefreshToken, setStorageRefreshToken] = useState(0);
   const [restoreTarget, setRestoreTarget] = useState<{
     serverId: string | null;
     username: string | null;
@@ -319,6 +324,31 @@ export default function SettingsDetail() {
 
   const handleCloseDeletePodcastsAlertDialog = () => {
     setShowDeletePodcastsAlertDialog(false);
+  };
+
+  const handleCloseClearCacheAlertDialog = () => {
+    setShowClearCacheAlertDialog(false);
+  };
+
+  const handleClearCachePress = () => {
+    // Clears only the active server's query cache (in-memory + persisted blob).
+    // Downloaded files are untouched.
+    queryClient.clear();
+    void queryPersister.removeClient();
+    setShowClearCacheAlertDialog(false);
+    setStorageRefreshToken((value) => value + 1);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.settings.cacheSettings.successMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
   };
 
   const handleDeleteRecentPlaysPress = () => {
@@ -689,6 +719,32 @@ export default function SettingsDetail() {
                 </FadeOutScaleDown>
               </HStack>
             )}
+            <Divider className="bg-primary-400" />
+            <Heading className="text-white mt-4" size="lg">
+              {t("app.settings.storageSettings.title")}
+            </Heading>
+            <StorageOverview refreshToken={storageRefreshToken} />
+            <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
+              <VStack className="gap-y-2 w-1/2">
+                <Heading className="text-white font-normal" size="md">
+                  {t("app.settings.cacheSettings.label")}
+                </Heading>
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.cacheSettings.description")}
+                </Text>
+              </VStack>
+              <FadeOutScaleDown
+                onPress={() => setShowClearCacheAlertDialog(true)}
+                className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+              >
+                <Text
+                  numberOfLines={1}
+                  className="text-primary-800 font-bold text-lg"
+                >
+                  {t("app.settings.cacheSettings.clearAction")}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
             <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.podcastSettings.title")}
@@ -1420,6 +1476,43 @@ export default function SettingsDetail() {
           </Box>
         </BottomSheetView>
       </BottomSheetModal>
+      <AlertDialog
+        isOpen={showClearCacheAlertDialog}
+        onClose={handleCloseClearCacheAlertDialog}
+        size="md"
+      >
+        <AlertDialogBackdrop />
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.settings.cacheSettings.confirmTitle")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text className="text-primary-50" size="sm">
+              {t("app.settings.cacheSettings.confirmDescription")}
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseClearCacheAlertDialog}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={handleClearCachePress}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.clear")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog
         isOpen={showRecentPlaysAlertDialog}
         onClose={handleCloseRecentPlaysAlertDialog}

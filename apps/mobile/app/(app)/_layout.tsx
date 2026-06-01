@@ -1,8 +1,14 @@
+import { persistQueryClientRestore } from "@tanstack/react-query-persist-client";
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
+import {
+  persistOptions,
+  queryClient,
+  setCacheRestoring,
+} from "@/config/queryClient";
 import { getAuthScope } from "@/config/storage";
 import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
 import {
@@ -47,6 +53,25 @@ export default function AppLayout() {
       useQueue.getState().__reset();
       useOffline.getState().__reset();
     }
+
+    // Restore the persisted React Query cache for this scope. On a server
+    // switch, clear the in-memory cache first so the previous server's data is
+    // never visible, then restore the new scope's blob (the persister's storage
+    // adapter is scope-dynamic, so this reads `${scope}:wavio-rq-cache`).
+    setCacheRestoring(true);
+    void (async () => {
+      try {
+        if (isScopeChange) {
+          await queryClient.cancelQueries();
+          queryClient.clear();
+        }
+        await persistQueryClientRestore({ queryClient, ...persistOptions });
+      } catch (error) {
+        console.error("[app] Failed to restore persisted query cache", error);
+      } finally {
+        setCacheRestoring(false);
+      }
+    })();
     useRecentPlays.persist.rehydrate();
     useRecentSearches.persist.rehydrate();
     usePlaylists.persist.rehydrate();

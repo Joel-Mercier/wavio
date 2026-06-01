@@ -14,11 +14,12 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
+import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import {
@@ -30,6 +31,7 @@ import {
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
@@ -45,6 +47,7 @@ export default function FloatingPlayer() {
   const { t } = useTranslation();
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
+  const isOnline = useIsOnline();
   const router = useRouter();
   const pathname = usePathname();
   const colors = useImageColors(playingTrack?.artwork);
@@ -304,7 +307,10 @@ export default function FloatingPlayer() {
   return (
     <GestureDetector gesture={panGesture}>
       <Pressable
-        className="absolute bottom-28 right-0 left-0"
+        className="absolute right-0 left-0"
+        style={{
+          bottom: 96 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
+        }}
         onPress={handlePress}
       >
         <HStack
@@ -315,18 +321,21 @@ export default function FloatingPlayer() {
         >
           <HStack className="items-center flex-1">
             <Box style={{ zIndex: 2 }} className="rounded-md">
-              {playingTrack.artwork ? (
-                <Image
-                  source={{ uri: playingTrack.artwork }}
-                  className="w-12 h-12 rounded-md aspect-square"
-                  alt="Track cover"
-                  contentFit={playingTrack.isRadio ? "contain" : "cover"}
-                />
-              ) : (
-                <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
-                  <AudioLines size={24} color={white} />
-                </Box>
-              )}
+              <ImageWithFallback
+                source={
+                  playingTrack.artwork
+                    ? { uri: playingTrack.artwork }
+                    : undefined
+                }
+                className="w-12 h-12 rounded-md aspect-square"
+                alt="Track cover"
+                contentFit={playingTrack.isRadio ? "contain" : "cover"}
+                fallback={
+                  <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
+                    <AudioLines size={24} color={white} />
+                  </Box>
+                }
+              />
             </Box>
 
             <Animated.View

@@ -9,10 +9,20 @@ import type React from "react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
 import DrawerMenu from "@/components/DrawerMenu";
+import OfflineBanner, {
+  OFFLINE_BANNER_HEIGHT,
+} from "@/components/OfflineBanner";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
+
+// Approximate default react-navigation bottom tab content height (excluding the
+// safe-area inset). Used to grow the bar so the offline banner fits beneath the
+// icons inside the gradient.
+const TAB_BAR_CONTENT_HEIGHT = 49;
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -22,6 +32,8 @@ export default function TabLayout() {
   const addBottomSheetRef = useRef<BottomSheetModal>(null);
   const emerald = useCSSVariable("--color-emerald-500") as string | undefined;
   const gray = useCSSVariable("--color-gray-200") as string | undefined;
+  const isOnline = useIsOnline();
+  const insets = useSafeAreaInsets();
 
   const handleClose = () => {
     setShowDrawer(false);
@@ -44,6 +56,17 @@ export default function TabLayout() {
             borderTopWidth: 0,
             elevation: 0,
             shadowOpacity: 0,
+            // While offline, grow the tab bar so the offline banner sits inside
+            // the gradient just below the icons (icons stay put via paddingBottom).
+            ...(isOnline
+              ? {}
+              : {
+                  height:
+                    TAB_BAR_CONTENT_HEIGHT +
+                    insets.bottom +
+                    OFFLINE_BANNER_HEIGHT,
+                  paddingBottom: insets.bottom + OFFLINE_BANNER_HEIGHT,
+                }),
             // backgroundColor: "transparent",
           },
           tabBarButton: (props) => (
@@ -63,7 +86,9 @@ export default function TabLayout() {
               ]}
               style={{ height: "100%" }}
               locations={[0, 0.1, 0.2, 0.5, 1]}
-            />
+            >
+              <OfflineBanner />
+            </LinearGradient>
           ),
           tabBarActiveTintColor: emerald,
           tabBarInactiveTintColor: gray,

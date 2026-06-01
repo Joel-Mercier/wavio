@@ -8,7 +8,7 @@ import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
 
 // Resume positions are backed by Subsonic bookmarks, so they only make sense
-// for content that actually lives on the Subsonic server and podcasts come 
+// for content that actually lives on the Subsonic server and podcasts come
 // from the Taddy API (their ids are unknown to the server), so both are excluded.
 const RESUME_MIN_DURATION_SECONDS = 60; // 1 minute
 // Don't bookmark the very start, and treat the tail as "finished".
@@ -113,7 +113,7 @@ export function recordResumePosition(
   lastWriteAt = now;
   lastWrittenId = track.id;
   lastWrittenPosition = positionSeconds;
-  createBookmark(track.id, positionSeconds, {}).catch(() => { });
+  createBookmark(track.id, positionSeconds, {}).catch(() => {});
 }
 
 // Drop the bookmark once a track is fully played (or the user asks to).
@@ -123,7 +123,7 @@ export function clearResumePosition(trackId: string | null): void {
   positions.delete(trackId);
   if (lastWrittenId === trackId) lastWrittenId = null;
   if (!bookmarksEnabled()) return;
-  deleteBookmark(trackId).catch(() => { });
+  deleteBookmark(trackId).catch(() => {});
 }
 
 // Reset everything when the active server/user changes so positions don't bleed

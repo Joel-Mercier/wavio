@@ -13,7 +13,6 @@ import { StatusBar } from "expo-status-bar";
 
 import { useEffect } from "react";
 import CarAutoSync from "@/components/CarAutoSync";
-import OfflineBanner from "@/components/OfflineBanner";
 import { PodcastEpisodeActionsProvider } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
@@ -26,6 +25,7 @@ import {
   onlineManager,
   QueryClientProvider,
 } from "@tanstack/react-query";
+import { persistQueryClientSubscribe } from "@tanstack/react-query-persist-client";
 import { getLocales } from "expo-localization";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -40,7 +40,7 @@ import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
-import { queryClient } from "@/config/queryClient";
+import { persistOptions, queryClient } from "@/config/queryClient";
 import { initConnectionType } from "@/services/network";
 import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
@@ -97,6 +97,13 @@ export default sentryWrap(function RootLayout() {
         setOnline(!!state.isConnected);
       }),
     );
+    // Continuously persist the query cache to the active (server, user) scope.
+    // The initial restore happens in app/(app)/_layout.tsx's scope-change
+    // effect, which can also re-restore when switching servers in-app.
+    const unsubscribePersist = persistQueryClientSubscribe({
+      queryClient,
+      ...persistOptions,
+    });
     const unsubscribeConnectionType = initConnectionType();
     const idle =
       typeof requestIdleCallback === "function"
@@ -117,6 +124,7 @@ export default sentryWrap(function RootLayout() {
       }
       subscription.remove();
       unsubscribeConnectionType();
+      unsubscribePersist();
     };
   }, []);
 
@@ -162,7 +170,6 @@ export default sentryWrap(function RootLayout() {
                       <Stack.Screen name="(auth)" />
                       <Stack.Screen name="+not-found" />
                     </Stack>
-                    <OfflineBanner />
                     <CarAutoSync />
                   </PodcastEpisodeActionsProvider>
                 </TrackActionsProvider>

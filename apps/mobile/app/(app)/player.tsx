@@ -39,7 +39,7 @@ import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, Image as RNImage } from "react-native";
+import { Linking } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import {
   CastButton,
@@ -57,6 +57,7 @@ import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
 import LyricsDialog from "@/components/player/LyricsDialog";
@@ -64,7 +65,6 @@ import PlaybackSlider from "@/components/player/PlaybackSlider";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
 import {
   Slider,
@@ -120,26 +120,26 @@ function CoverSlot({
 }) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   if (!size) return null;
-  if (track?.artwork) {
-    return (
-      <RNImage
-        source={{ uri: track.artwork }}
-        style={{ width: size, height: size, borderRadius: 6 }}
-        resizeMode={track.isRadio ? "contain" : "cover"}
-      />
-    );
-  }
   return (
-    <Box
-      style={{ width: size, height: size }}
-      className="rounded-md bg-primary-600 items-center justify-center"
-    >
-      {track?.isRadio ? (
-        <RadioIcon size={64} color={white} />
-      ) : (
-        <AudioLines size={64} color={white} />
-      )}
-    </Box>
+    <ImageWithFallback
+      size="none"
+      source={track?.artwork ? { uri: track.artwork } : undefined}
+      style={{ width: size, height: size, borderRadius: 6 }}
+      contentFit={track?.isRadio ? "contain" : "cover"}
+      alt="Track cover"
+      fallback={
+        <Box
+          style={{ width: size, height: size }}
+          className="rounded-md bg-primary-600 items-center justify-center"
+        >
+          {track?.isRadio ? (
+            <RadioIcon size={64} color={white} />
+          ) : (
+            <AudioLines size={64} color={white} />
+          )}
+        </Box>
+      }
+    />
   );
 }
 
@@ -155,7 +155,6 @@ export default function PlayerScreen() {
   ) as string[];
   const { t } = useTranslation();
   const capabilities = useCapabilities();
-  const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const router = useRouter();
@@ -1170,24 +1169,25 @@ export default function PlayerScreen() {
           >
             <Box className="p-6 w-full mb-12">
               <HStack className="items-center">
-                {playingTrack?.artwork ? (
-                  <Image
-                    source={{
-                      uri: playingTrack?.artwork,
-                    }}
-                    className="w-16 h-16 rounded-md aspect-square"
-                    alt="Track cover"
-                    contentFit={isRadio ? "contain" : "cover"}
-                  />
-                ) : (
-                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                    {isRadio ? (
-                      <RadioIcon size={24} color={white} />
-                    ) : (
-                      <AudioLines size={24} color={white} />
-                    )}
-                  </Box>
-                )}
+                <ImageWithFallback
+                  source={
+                    playingTrack?.artwork
+                      ? { uri: playingTrack.artwork }
+                      : undefined
+                  }
+                  className="w-16 h-16 rounded-md aspect-square"
+                  alt="Track cover"
+                  contentFit={isRadio ? "contain" : "cover"}
+                  fallback={
+                    <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                      {isRadio ? (
+                        <RadioIcon size={24} color={white} />
+                      ) : (
+                        <AudioLines size={24} color={white} />
+                      )}
+                    </Box>
+                  }
+                />
                 <VStack className="ml-4 flex-1">
                   <Heading
                     className="text-white font-normal"

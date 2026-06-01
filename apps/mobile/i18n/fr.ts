@@ -562,6 +562,23 @@ export default {
           downloadsWifiOnlyDescription:
             "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
         },
+        storageSettings: {
+          title: "Stockage",
+          downloads: "Téléchargements Wavio",
+          cache: "Cache Wavio",
+          otherAppData: "Autres données d'app",
+          available: "Disponible",
+        },
+        cacheSettings: {
+          label: "Vider le cache",
+          description:
+            "Supprime les données de bibliothèque en cache. Les morceaux téléchargés sont conservés. Le contenu se recharge une fois en ligne.",
+          clearAction: "Vider",
+          confirmTitle: "Vider les données en cache ?",
+          confirmDescription:
+            "Cela vide les données de bibliothèque en cache pour ce serveur. Vos morceaux téléchargés ne sont pas affectés.",
+          successMessage: "Cache vidé avec succès",
+        },
         musicLibrarySettings: {
           title: "Paramètres de la bibliothèque musicale",
           scanMusicLibraryLabel: "Scanner la bibliothèque musicale",
@@ -850,7 +867,7 @@ export default {
         downloadSuccessMessage: "Titre téléchargé",
         downloadErrorMessage:
           "Une erreur s'est produite lors du téléchargement du titre",
-        downloadForOffline: "Rendre accessible en mode hors ligne",
+        downloadForOffline: "Enregistrer pour écoute hors ligne",
         downloadingForOffline: "Téléchargement en mode hors ligne",
         removeOfflineDownload: "Supprimer le téléchargement en mode hors ligne",
         offlineDownloadSuccessMessage:
@@ -983,6 +1000,17 @@ export default {
         delete: "Supprimer",
         clear: "Effacer",
         unknown: "Inconnu",
+        offline: {
+          saveForOfflineListening: "Enregistrer pour écoute hors ligne",
+          savingForOffline: "Enregistrement hors ligne",
+          removeOfflineDownloads: "Supprimer les téléchargements hors ligne",
+          saveSuccessMessage: "Enregistré pour écoute hors ligne",
+          saveErrorMessage:
+            "Une erreur s'est produite lors de l'enregistrement hors ligne",
+          removeSuccessMessage: "Supprimé des téléchargements hors ligne",
+          removeErrorMessage:
+            "Une erreur s'est produite lors de la suppression des téléchargements hors ligne",
+        },
         favorites: "Favoris",
         album_one: "Album",
         album_other: "Albums",

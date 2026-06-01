@@ -16,6 +16,7 @@ import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
 import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
+import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
@@ -40,9 +41,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import DownloadedBadge from "@/components/DownloadedBadge";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import {
   AlertDialog,
@@ -56,7 +59,6 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -75,6 +77,7 @@ import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useCollectionDownload } from "@/hooks/useCollectionDownload";
 import useImageColors from "@/hooks/useImageColors";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -94,19 +97,21 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 const SKELETON_DATA = loadingData(16);
 const EMPTY_DATA: Child[] = [];
 const keyExtractor = (item: Child, index: number) => item.id ?? String(index);
 
 export default function PlaylistDetail() {
-  const [white, emerald500, gray200, red500] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-emerald-500",
-    "--color-gray-200",
-    "--color-red-500",
-  ]) as string[];
+  const [white, emerald500, gray200, red500, black, gray400] =
+    Uniwind.getCSSVariable([
+      "--color-white",
+      "--color-emerald-500",
+      "--color-gray-200",
+      "--color-red-500",
+      "--color-black",
+      "--color-gray-400",
+    ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -476,6 +481,73 @@ export default function PlaylistDetail() {
 
   const isLoadingRows = !playlistData;
   const handleTrackPress = useTrackListPress(data);
+  const playlistDownload = useCollectionDownload(playlistData?.playlist?.entry);
+
+  const handleSaveOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await playlistDownload.saveAll();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.saveSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error saving playlist for offline:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.saveErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleRemoveOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await playlistDownload.removeAll();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.removeSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      console.error("Error removing playlist offline downloads:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.removeErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
   const renderRow = useCallback(
     ({ item, index }: { item: Child; index: number }) =>
       isLoadingRows ? (
@@ -587,18 +659,25 @@ export default function PlaylistDetail() {
                 <ArrowLeft size={24} color={white} />
               </FadeOutScaleDown>
               {/* https://github.com/navidrome/navidrome/issues/406 */}
-              {playlistData?.playlist?.coverArt ? (
-                <AnimatedImage
-                  style={artworkStyle}
-                  source={{ uri: artworkUrl(playlistData?.playlist?.coverArt) }}
-                  className="w-[70%] aspect-square rounded-md"
+              <AnimatedBox
+                style={artworkStyle}
+                className="w-[70%] aspect-square"
+              >
+                <ImageWithFallback
+                  source={
+                    playlistData?.playlist?.coverArt
+                      ? { uri: artworkUrl(playlistData?.playlist?.coverArt) }
+                      : undefined
+                  }
+                  className="w-full h-full aspect-square rounded-md"
                   alt="Playlist cover"
+                  fallback={
+                    <Box className="w-full h-full aspect-square rounded-md bg-primary-600 items-center justify-center">
+                      <ListMusic size={48} color={white} />
+                    </Box>
+                  }
                 />
-              ) : (
-                <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                  <ListMusic size={48} color={white} />
-                </Box>
-              )}
+              </AnimatedBox>
 
               <Box className="w-6" />
             </HStack>
@@ -634,7 +713,8 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              <HStack className="mt-2 items-center">
+              <HStack className="mt-2 items-center gap-x-2">
+                {playlistDownload.status === "all" && <DownloadedBadge />}
                 <Clock color={"#808080"} size={16} />
                 <Text className="ml-2 text-primary-100">
                   {Math.round((playlistData?.playlist.duration || 0) / 60)} min
@@ -785,17 +865,20 @@ export default function PlaylistDetail() {
         >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
-              {playlistData?.playlist?.coverArt ? (
-                <Image
-                  source={{ uri: artworkUrl(playlistData?.playlist?.coverArt) }}
-                  className="w-16 h-16 rounded-full aspect-square"
-                  alt="Playlist cover"
-                />
-              ) : (
-                <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                  <ListMusic size={24} color={white} />
-                </Box>
-              )}
+              <ImageWithFallback
+                source={
+                  playlistData?.playlist?.coverArt
+                    ? { uri: artworkUrl(playlistData?.playlist?.coverArt) }
+                    : undefined
+                }
+                className="w-16 h-16 rounded-md aspect-square"
+                alt="Playlist cover"
+                fallback={
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                    <ListMusic size={24} color={white} />
+                  </Box>
+                }
+              />
               <VStack className="ml-4 flex-1">
                 <Heading
                   className="text-white font-normal"
@@ -843,6 +926,35 @@ export default function PlaylistDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
+              {playlistDownload.status === "downloading" ? (
+                <HStack className="items-center">
+                  <Download size={24} color={gray400} />
+                  <Text className="ml-4 text-lg text-gray-400">
+                    {t("app.shared.offline.savingForOffline")} (
+                    {playlistDownload.downloadedCount}/{playlistDownload.total})
+                  </Text>
+                </HStack>
+              ) : playlistDownload.status === "all" ? (
+                <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                  <HStack className="items-center">
+                    <X size={24} color={red500} />
+                    <Text className="ml-4 text-lg text-red-400">
+                      {t("app.shared.offline.removeOfflineDownloads")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ) : (
+                <FadeOutScaleDown onPress={handleSaveOfflinePress}>
+                  <HStack className="items-center">
+                    <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                      <ArrowDown size={20} color={black} />
+                    </Box>
+                    <Text className="ml-4 text-lg text-emerald-400">
+                      {t("app.shared.offline.saveForOfflineListening")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
                   <Pencil size={24} color={gray200} />

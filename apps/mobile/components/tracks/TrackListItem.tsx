@@ -1,14 +1,14 @@
-import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import DownloadedBadge from "@/components/DownloadedBadge";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import {
@@ -21,10 +21,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsCurrentTrack } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import {
-  useIsTrackDownloaded,
-  useOfflineModeEnabled,
-} from "@/hooks/useOfflineDownloads";
+import { useIsTrackDownloaded } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { artworkUrl } from "@/utils/artwork";
@@ -53,9 +50,8 @@ export default function TrackListItem({
   onPlayCallback,
   showCoverArt = true,
 }: TrackListItemProps) {
-  const [white, black, emerald500, gray300] = Uniwind.getCSSVariable([
+  const [white, emerald500, gray300] = Uniwind.getCSSVariable([
     "--color-white",
-    "--color-black",
     "--color-emerald-500",
     "--color-gray-300",
   ]) as string[];
@@ -63,7 +59,6 @@ export default function TrackListItem({
   const isCurrentTrack = useIsCurrentTrack(track.id);
   const doUnfavorite = useUnstar();
   const toast = useToast();
-  const offlineModeEnabled = useOfflineModeEnabled();
   const isTrackDownloaded = useIsTrackDownloaded(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
@@ -130,7 +125,7 @@ export default function TrackListItem({
           "items-center justify-between mb-4",
           {
             "mt-6": index === 0,
-            "opacity-40": isUnavailableOffline,
+            "opacity-80": isUnavailableOffline,
           },
           className,
         )}
@@ -139,20 +134,20 @@ export default function TrackListItem({
           {showIndex && (
             <Text className="text-sm text-white mr-4">{index + 1}</Text>
           )}
-          {showCoverArt &&
-            (track.coverArt ? (
-              <Image
-                source={{
-                  uri: artworkUrl(track.coverArt),
-                }}
-                className="w-16 h-16 rounded-md aspect-square"
-                alt="Track cover"
-              />
-            ) : (
-              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
-                <AudioLines size={24} color={white} />
-              </Box>
-            ))}
+          {showCoverArt && (
+            <ImageWithFallback
+              source={
+                track.coverArt ? { uri: artworkUrl(track.coverArt) } : undefined
+              }
+              className="w-16 h-16 rounded-md aspect-square"
+              alt="Track cover"
+              fallback={
+                <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <AudioLines size={24} color={white} />
+                </Box>
+              }
+            />
+          )}
           <VStack
             className={cn("flex-1", {
               "ml-4": showCoverArt,
@@ -167,11 +162,7 @@ export default function TrackListItem({
               {track.title}
             </Heading>
             <HStack className="items-center">
-              {offlineModeEnabled && isTrackDownloaded && (
-                <Box className="flex items-center justify-center rounded-full size-4 bg-emerald-500 mr-2">
-                  <ArrowDown color={black} size={12} />
-                </Box>
-              )}
+              {isTrackDownloaded && <DownloadedBadge className="mr-2" />}
               {track.explicitStatus === "explicit" && (
                 <Box className="flex items-center justify-center rounded-sm bg-primary-100 px-1 py-0.5 mr-2">
                   <Text className="text-black text-xs font-bold leading-none">
@@ -187,7 +178,11 @@ export default function TrackListItem({
         </HStack>
         <HStack className="items-center">
           {track.starred && (
-            <FadeOutScaleDown onPress={handleUnfavoritePress} className="mr-3">
+            <FadeOutScaleDown
+              onPress={handleUnfavoritePress}
+              disabled={isUnavailableOffline}
+              className="mr-3"
+            >
               <Heart
                 color={emerald500}
                 size={24}
@@ -196,7 +191,10 @@ export default function TrackListItem({
               />
             </FadeOutScaleDown>
           )}
-          <FadeOutScaleDown onPress={handlePresentModalPress}>
+          <FadeOutScaleDown
+            onPress={handlePresentModalPress}
+            disabled={isUnavailableOffline}
+          >
             <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
         </HStack>

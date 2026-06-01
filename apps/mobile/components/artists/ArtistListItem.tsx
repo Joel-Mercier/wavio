@@ -1,13 +1,15 @@
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
-import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
+import { cn } from "@/utils/tailwind";
 
 interface ArtistListItemProps {
   artist: ArtistID3;
@@ -15,20 +17,26 @@ interface ArtistListItemProps {
 
 export default function ArtistListItem({ artist }: ArtistListItemProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const isReachableOffline = useIsCachedOffline(["artist", artist.id]);
   return (
-    <FadeOutScaleDown href={`/artists/${artist.id}`} className="mr-6">
+    <FadeOutScaleDown
+      href={`/artists/${artist.id}`}
+      disabled={!isReachableOffline}
+      className={cn("mr-6", { "opacity-80": !isReachableOffline })}
+    >
       <VStack className="gap-y-2 w-32">
-        {artist.coverArt ? (
-          <Image
-            source={{ uri: artworkUrl(artist.coverArt) }}
-            className="w-32 h-32 rounded-full aspect-square"
-            alt="Artist cover"
-          />
-        ) : (
-          <Box className="w-32 h-32 rounded-full bg-primary-600 items-center justify-center">
-            <User size={48} color={white} />
-          </Box>
-        )}
+        <ImageWithFallback
+          source={
+            artist.coverArt ? { uri: artworkUrl(artist.coverArt) } : undefined
+          }
+          className="w-32 h-32 rounded-full aspect-square"
+          alt="Artist cover"
+          fallback={
+            <Box className="w-32 h-32 rounded-full bg-primary-600 items-center justify-center aspect-square">
+              <User size={48} color={white} />
+            </Box>
+          }
+        />
         <Heading size="sm" className="text-white" numberOfLines={1}>
           {artist.name}
         </Heading>
