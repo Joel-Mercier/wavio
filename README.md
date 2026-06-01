@@ -8,6 +8,8 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 
+[Presentation website](https://wavio-landing.vercel.app)
+
 ## Features
 
 - Supports Navidrome, OpenSubsonic and Jellyfin servers
@@ -80,7 +82,7 @@ In order to test Android Auto, you need to :
 
 ### iOS
 
-TODO
+Mostly functional, no carplay or widgets support yet. No plan yet to publish to the App Store.
 
 ### Marketing website (`apps/landing`)
 
@@ -116,7 +118,8 @@ Run from the repo root:
 
 ## Useful links
 
-- OpenSubsonic API documentation: https://opensubsonic.netlify.app/docs/
-- Navidrome documentation: https://www.navidrome.org/docs/
-- Expo documentation: https://docs.expo.dev/
-- React Native documentation: https://reactnative.dev/
+- [OpenSubsonic API documentation](https://opensubsonic.netlify.app/docs/)
+- [Navidrome documentation](https://www.navidrome.org/docs/)
+- [Jellyfin documentation](https://jellyfin.org/docs/)
+- [Expo documentation](https://docs.expo.dev/)
+- [React Native documentation](https://reactnative.dev/)

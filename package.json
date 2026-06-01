@@ -2,13 +2,16 @@
   "name": "wavio-monorepo",
   "private": true,
   "packageManager": "bun@1.3.13",
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "mobile:start": "bun run --cwd apps/mobile start",
     "mobile:android": "bun run --cwd apps/mobile android",
     "mobile:ios": "bun run --cwd apps/mobile ios",
     "mobile:web": "bun run --cwd apps/mobile web",
     "mobile:test": "bun run --cwd apps/mobile test",
+    "mobile:doctor": "bun run --cwd apps/mobile doctor",
     "mobile:lint": "bun run --cwd apps/mobile lint",
     "mobile:lint:fix": "bun run --cwd apps/mobile lint:fix",
     "mobile:typecheck": "bun run --cwd apps/mobile typecheck",
@@ -18,8 +21,8 @@
     "landing:preview": "bun run --cwd apps/landing preview"
   },
   "patchedDependencies": {
-    "expo-audio@56.0.10": "patches/expo-audio@56.0.10.patch",
-    "lucide-react-native@1.16.0": "patches/lucide-react-native@1.16.0.patch",
+    "expo-audio@56.0.11": "patches/expo-audio@56.0.11.patch",
+    "lucide-react-native@1.17.0": "patches/lucide-react-native@1.17.0.patch",
     "zod@4.4.3": "patches/zod@4.4.3.patch"
   }
 }
