@@ -88,7 +88,7 @@ export const ui = {
       podcasts: {
         label: 'Podcasts',
         title: 'Learn something everywhere you go.',
-        desc: 'Search, follow and play podcasts powered by Taddy. Your queue and your shows, under one roof.',
+        desc: 'Search, follow and play podcasts powered by Taddy. Your tracks and your shows, under one roof.',
       },
       radio: {
         label: 'Internet radio',

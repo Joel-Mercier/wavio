@@ -1,5 +1,6 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
 import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
@@ -51,6 +52,9 @@ interface Props {
   name: string;
   streamUrl: string;
   homePageUrl?: string;
+  source?: "server" | "radioBrowser";
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   onActionStart?: () => void;
   onDeleted?: () => void;
 }
@@ -60,10 +64,16 @@ export default function InternetRadioStationActions({
   name,
   streamUrl,
   homePageUrl,
+  source = "server",
+  isFavorite,
+  onToggleFavorite,
   onActionStart,
   onDeleted,
 }: Props) {
-  const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
+  const [gray200, emerald500] = Uniwind.getCSSVariable([
+    "--color-gray-200",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -136,6 +146,11 @@ export default function InternetRadioStationActions({
     }
   };
 
+  const handleToggleFavoritePress = () => {
+    onActionStart?.();
+    onToggleFavorite?.();
+  };
+
   const handleEditPress = () => {
     onActionStart?.();
     setShowEditDialog(true);
@@ -189,6 +204,20 @@ export default function InternetRadioStationActions({
   return (
     <>
       <VStack className="mt-6 gap-y-8">
+        <FadeOutScaleDown onPress={handleToggleFavoritePress}>
+          <HStack className="items-center">
+            <Heart
+              size={24}
+              color={isFavorite ? emerald500 : gray200}
+              fill={isFavorite ? emerald500 : "transparent"}
+            />
+            <Text className="ml-4 text-lg text-gray-200">
+              {isFavorite
+                ? t("app.internetRadioStations.removeFromFavorites")
+                : t("app.internetRadioStations.addToFavorites")}
+            </Text>
+          </HStack>
+        </FadeOutScaleDown>
         {homePageUrl && (
           <FadeOutScaleDown onPress={handleVisitHomePagePress}>
             <HStack className="items-center">
@@ -199,22 +228,26 @@ export default function InternetRadioStationActions({
             </HStack>
           </FadeOutScaleDown>
         )}
-        <FadeOutScaleDown onPress={handleEditPress}>
-          <HStack className="items-center">
-            <Pencil size={24} color={gray200} />
-            <Text className="ml-4 text-lg text-gray-200">
-              {t("app.internetRadioStations.editInternetRadioStation")}
-            </Text>
-          </HStack>
-        </FadeOutScaleDown>
-        <FadeOutScaleDown onPress={() => setShowDeleteDialog(true)}>
-          <HStack className="items-center">
-            <Trash size={24} color={gray200} />
-            <Text className="ml-4 text-lg text-gray-200">
-              {t("app.internetRadioStations.deleteInternetRadioStation")}
-            </Text>
-          </HStack>
-        </FadeOutScaleDown>
+        {source === "server" && (
+          <>
+            <FadeOutScaleDown onPress={handleEditPress}>
+              <HStack className="items-center">
+                <Pencil size={24} color={gray200} />
+                <Text className="ml-4 text-lg text-gray-200">
+                  {t("app.internetRadioStations.editInternetRadioStation")}
+                </Text>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={() => setShowDeleteDialog(true)}>
+              <HStack className="items-center">
+                <Trash size={24} color={gray200} />
+                <Text className="ml-4 text-lg text-gray-200">
+                  {t("app.internetRadioStations.deleteInternetRadioStation")}
+                </Text>
+              </HStack>
+            </FadeOutScaleDown>
+          </>
+        )}
       </VStack>
       <AlertDialog
         isOpen={showDeleteDialog}

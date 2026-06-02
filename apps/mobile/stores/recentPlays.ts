@@ -11,6 +11,13 @@ export type RecentPlay = {
   coverArt?: string;
   homePageUrl?: string;
   streamUrl?: string;
+  // Extra internet-radio metadata so the home shortcut can reopen the detail
+  // screen with everything it needs (esp. Radio-Browser stations).
+  source?: "server" | "radioBrowser";
+  tags?: string;
+  country?: string;
+  countrySubdivision?: string;
+  languages?: string;
 };
 
 let ensuredRecentPlayOnHydration: RecentPlay | null = {

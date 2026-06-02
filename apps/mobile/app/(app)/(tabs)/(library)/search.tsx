@@ -1,5 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Fuse, { type FuseResult } from "fuse.js";
@@ -16,6 +17,7 @@ import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
   type LibraryFolder,
+  type LibraryRadioStation,
 } from "@/components/library/LibraryListItem";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Badge, BadgeText } from "@/components/ui/badge";
@@ -33,10 +35,17 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import useRadioStations from "@/stores/radioStations";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
-type SearchFilter = "albums" | "artists" | "playlists" | "folders" | null;
+type SearchFilter =
+  | "albums"
+  | "artists"
+  | "playlists"
+  | "radioStations"
+  | "folders"
+  | null;
 
 export default function LibrarySearchScreen() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -55,6 +64,9 @@ export default function LibrarySearchScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const musicFolderId = useCurrentMusicFolderId();
+  const favoriteRadioStations = useRadioStations(
+    (store) => store.favoriteRadioStations,
+  );
   const [filter, setFilter] = useState<SearchFilter>(null);
 
   useEffect(() => {
@@ -114,12 +126,39 @@ export default function LibrarySearchScreen() {
         })),
       );
     }
+    if (
+      (!filter || filter === "radioStations") &&
+      favoriteRadioStations.length > 0
+    ) {
+      items.push(
+        favoriteRadioStations.map((r) => ({
+          id: r.id,
+          name: r.name,
+          isRadioStation: true,
+          imageUrl: r.imageUrl,
+          streamUrl: r.streamUrl,
+          homePageUrl: r.homePageUrl,
+          tags: r.tags,
+          source: r.source,
+        })),
+      );
+    }
 
     return new Fuse<
-      AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+      AlbumID3 &
+        Playlist &
+        ArtistID3 &
+        Favorites &
+        LibraryFolder &
+        LibraryRadioStation
     >(
       items.flat() as Array<
-        AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+        AlbumID3 &
+          Playlist &
+          ArtistID3 &
+          Favorites &
+          LibraryFolder &
+          LibraryRadioStation
       >,
       {
         includeScore: true,
@@ -127,7 +166,13 @@ export default function LibrarySearchScreen() {
         keys: ["name"],
       },
     );
-  }, [starredData, playlistsData, musicFoldersData, filter]);
+  }, [
+    starredData,
+    playlistsData,
+    musicFoldersData,
+    favoriteRadioStations,
+    filter,
+  ]);
 
   const data = useMemo(() => {
     if (!fuse || !debouncedQuery) return [];
@@ -165,56 +210,96 @@ export default function LibrarySearchScreen() {
           </form.Field>
         </HStack>
       </Box>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="grow-0 px-6 mb-6"
-      >
-        <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
-          <Badge
-            className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500": filter === "albums",
-            })}
-          >
-            <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.album_other")}
-            </BadgeText>
-          </Badge>
-        </FadeOutScaleDown>
-        <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
-          <Badge
-            className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500": filter === "artists",
-            })}
-          >
-            <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.artist_other")}
-            </BadgeText>
-          </Badge>
-        </FadeOutScaleDown>
-        <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
-          <Badge
-            className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500": filter === "playlists",
-            })}
-          >
-            <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.playlist_other")}
-            </BadgeText>
-          </Badge>
-        </FadeOutScaleDown>
-        <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
-          <Badge
-            className={cn("rounded-full bg-gray-800 px-4 py-1", {
-              "bg-emerald-500": filter === "folders",
-            })}
-          >
-            <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.folder_other")}
-            </BadgeText>
-          </Badge>
-        </FadeOutScaleDown>
-      </ScrollView>
+      <Box className="relative mb-6">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="grow-0"
+          contentContainerStyle={{ paddingHorizontal: 24 }}
+        >
+          <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+            <Badge
+              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                "bg-emerald-500": filter === "albums",
+              })}
+            >
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.shared.album_other")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+            <Badge
+              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                "bg-emerald-500": filter === "artists",
+              })}
+            >
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.shared.artist_other")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
+            <Badge
+              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                "bg-emerald-500": filter === "playlists",
+              })}
+            >
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.shared.playlist_other")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={() => handleFilterPress("radioStations")}>
+            <Badge
+              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                "bg-emerald-500": filter === "radioStations",
+              })}
+            >
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.shared.radioStation_other")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
+            <Badge
+              className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                "bg-emerald-500": filter === "folders",
+              })}
+            >
+              <BadgeText className="normal-case text-md text-white">
+                {t("app.shared.folder_other")}
+              </BadgeText>
+            </Badge>
+          </FadeOutScaleDown>
+        </ScrollView>
+        <LinearGradient
+          colors={["#000000", "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 24,
+          }}
+        />
+        <LinearGradient
+          colors={["transparent", "#000000"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 24,
+          }}
+        />
+      </Box>
       {(playlistsError || starredError || musicFoldersError) && (
         <ErrorDisplay
           error={(playlistsError || starredError || musicFoldersError) as Error}
@@ -226,7 +311,12 @@ export default function LibrarySearchScreen() {
             isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders
               ? (loadingData(12) as Array<
                   FuseResult<
-                    AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+                    AlbumID3 &
+                      Playlist &
+                      ArtistID3 &
+                      Favorites &
+                      LibraryFolder &
+                      LibraryRadioStation
                   >
                 >)
               : data
@@ -241,7 +331,12 @@ export default function LibrarySearchScreen() {
             index,
           }: {
             item: FuseResult<
-              AlbumID3 & Playlist & ArtistID3 & Favorites & LibraryFolder
+              AlbumID3 &
+                Playlist &
+                ArtistID3 &
+                Favorites &
+                LibraryFolder &
+                LibraryRadioStation
             >;
             index: number;
           }) =>

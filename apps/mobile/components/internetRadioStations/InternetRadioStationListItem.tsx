@@ -8,33 +8,106 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
+import type { RadioBrowserStation } from "@/services/radioBrowser/types";
+import type {
+  FavoriteRadioStation,
+  RadioStationSource,
+} from "@/stores/radioStations";
 import { cn } from "@/utils/tailwind";
 
+// Normalized shape shared by Radio-Browser results, server stations and
+// stored favorites, so one list item renders every radio source.
+export interface RadioStationItem {
+  id: string;
+  name: string;
+  streamUrl: string;
+  homePageUrl?: string;
+  imageUrl?: string;
+  tags?: string;
+  // Radio-Browser-only metadata, surfaced on the detail screen.
+  country?: string;
+  countrySubdivision?: string;
+  languages?: string;
+  source: RadioStationSource;
+}
+
+export const radioBrowserToItem = (
+  station: RadioBrowserStation,
+): RadioStationItem => ({
+  id: station.stationuuid,
+  name: station.name,
+  streamUrl: station.url_resolved || station.url,
+  homePageUrl: station.homepage,
+  imageUrl: station.favicon,
+  tags: station.tags,
+  country: station.country,
+  countrySubdivision: station.state,
+  languages: station.language,
+  source: "radioBrowser",
+});
+
+export const serverToItem = (
+  station: InternetRadioStation,
+): RadioStationItem => ({
+  id: station.id,
+  name: station.name,
+  streamUrl: station.streamUrl,
+  homePageUrl: station.homePageUrl,
+  source: "server",
+});
+
+export const favoriteToItem = (
+  station: FavoriteRadioStation,
+): RadioStationItem => ({
+  id: station.id,
+  name: station.name,
+  streamUrl: station.streamUrl,
+  homePageUrl: station.homePageUrl,
+  imageUrl: station.imageUrl,
+  tags: station.tags,
+  country: station.country,
+  countrySubdivision: station.countrySubdivision,
+  languages: station.languages,
+  source: station.source,
+});
+
 interface InternetRadioStationListItemProps {
-  internetRadioStation: InternetRadioStation;
+  station: RadioStationItem;
   index?: number;
   layout?: "vertical" | "horizontal";
   className?: string;
 }
 
 export default function InternetRadioStationListItem({
-  internetRadioStation,
+  station,
   index = 0,
   layout = "horizontal",
   className = "",
 }: InternetRadioStationListItemProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
-  const meta = useWebsiteMetadata(internetRadioStation?.homePageUrl);
-  const image = meta.image || meta["twitter:image"];
+  // Only server stations need homepage scraping for cover art — Radio-Browser
+  // (api) stations already provide an image, so skip the network round-trip.
+  const meta = useWebsiteMetadata(
+    station.source === "server" && !station.imageUrl
+      ? station.homePageUrl
+      : undefined,
+  );
+  const image = station.imageUrl || meta.image || meta["twitter:image"];
   return (
     <FadeOutScaleDown
       href={{
         pathname: "/internet-radio-stations/[id]",
         params: {
-          id: internetRadioStation.id,
-          name: internetRadioStation.name,
-          streamUrl: internetRadioStation.streamUrl,
-          homePageUrl: internetRadioStation?.homePageUrl,
+          id: station.id,
+          name: station.name,
+          streamUrl: station.streamUrl,
+          homePageUrl: station.homePageUrl,
+          imageUrl: image,
+          tags: station.tags,
+          country: station.country,
+          countrySubdivision: station.countrySubdivision,
+          languages: station.languages,
+          source: station.source,
         },
       }}
       className={cn(className, {
@@ -83,13 +156,13 @@ export default function InternetRadioStationListItem({
             className="text-white"
             numberOfLines={1}
           >
-            {internetRadioStation.name}
+            {station.name}
           </Heading>
           <Text
             numberOfLines={layout === "horizontal" ? 2 : 1}
             className="text-md text-primary-100"
           >
-            {internetRadioStation?.homePageUrl}
+            {station.homePageUrl}
           </Text>
         </VStack>
       </VStack>

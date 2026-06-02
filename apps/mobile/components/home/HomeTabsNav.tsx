@@ -20,7 +20,8 @@ type ActiveTab =
   | "music"
   | "podcasts"
   | "favoritePodcasts"
-  | "internetRadioStations";
+  | "internetRadioStations"
+  | "internetRadioStationsFavorites";
 
 interface HomeTabsNavProps {
   active: ActiveTab;
@@ -35,7 +36,6 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const insets = useSafeAreaInsets();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
-  const isJellyfin = useAuth((store) => store.serverType === "jellyfin");
   const scrollRef = useRef<RNScrollView>(null);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -44,6 +44,9 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
 
   const showPodcastsSplit =
     active === "podcasts" || active === "favoritePodcasts";
+  const showRadioSplit =
+    active === "internetRadioStations" ||
+    active === "internetRadioStationsFavorites";
 
   return (
     <HStack
@@ -65,7 +68,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
           contentOffset={{ x: persistedScrollX, y: 0 }}
           onScroll={handleScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingRight: 24 }}
+          contentContainerStyle={{ paddingRight: 32 }}
         >
           <HStack className="items-center ml-4">
             <FadeOutScaleDown
@@ -117,7 +120,38 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                 </Badge>
               </FadeOutScaleDown>
             )}
-            {!isJellyfin && (
+            {showRadioSplit ? (
+              <Badge className="p-0 bg-transparent">
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate(
+                      "/(app)/(tabs)/(home)/internet-radio-stations",
+                    )
+                  }
+                >
+                  <Badge className="rounded-full rounded-r-none bg-emerald-500 px-4 py-1 pr-4">
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.home.tabs.internetRadioStations")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate(
+                      "/(app)/(tabs)/(home)/internet-radio-stations/favorites",
+                    )
+                  }
+                >
+                  <Badge
+                    className={`rounded-full rounded-l-none ${active === "internetRadioStationsFavorites" ? "bg-emerald-600" : "bg-gray-800"} text-primary-800 px-4 py-1 mr-2`}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.home.tabs.radioFavorites")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+              </Badge>
+            ) : (
               <FadeOutScaleDown
                 onPress={() =>
                   router.navigate(
@@ -125,9 +159,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                   )
                 }
               >
-                <Badge
-                  className={`rounded-full ${active === "internetRadioStations" ? "bg-emerald-500" : "bg-gray-800"} px-4 py-1 mr-2`}
-                >
+                <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
                   <BadgeText className="normal-case text-md text-white">
                     {t("app.home.tabs.internetRadioStations")}
                   </BadgeText>
@@ -147,6 +179,19 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
             top: 0,
             bottom: 0,
             width: 16,
+          }}
+        />
+        <LinearGradient
+          colors={["transparent", "#000000"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 24,
           }}
         />
       </HStack>

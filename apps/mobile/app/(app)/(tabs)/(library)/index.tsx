@@ -4,6 +4,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -28,6 +29,7 @@ import LibraryListItem, {
   type Favorites,
   type LibraryFolder,
   type LibraryPodcast,
+  type LibraryRadioStation,
 } from "@/components/library/LibraryListItem";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -43,6 +45,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useSyncServerRadioFavorites } from "@/hooks/useRadioFavorites";
 import type {
   AlbumID3,
   ArtistID3,
@@ -52,6 +55,7 @@ import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
+import useRadioStations from "@/stores/radioStations";
 import { loadingData } from "@/utils/loadingData";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 import { cn } from "@/utils/tailwind";
@@ -84,6 +88,10 @@ export default function LibraryScreen() {
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   const podcastsEnabled = Boolean(taddyPodcastsApiKey && taddyPodcastsUserId);
+  const favoriteRadioStations = useRadioStations(
+    (store) => store.favoriteRadioStations,
+  );
+  useSyncServerRadioFavorites();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -118,7 +126,13 @@ export default function LibraryScreen() {
   };
 
   const handleFilterPress = (
-    type: "artists" | "albums" | "playlists" | "podcasts" | "folders",
+    type:
+      | "artists"
+      | "albums"
+      | "playlists"
+      | "podcasts"
+      | "radioStations"
+      | "folders",
   ) => {
     setFilter(type === filter ? null : type);
   };
@@ -204,6 +218,21 @@ export default function LibraryScreen() {
         })),
       );
     }
+    if (!filter || filter === "radioStations") {
+      data.push(
+        favoriteRadioStations.map((r) => ({
+          id: r.id,
+          name: r.name,
+          isRadioStation: true,
+          imageUrl: r.imageUrl,
+          streamUrl: r.streamUrl,
+          homePageUrl: r.homePageUrl,
+          tags: r.tags,
+          source: r.source,
+          dateAdded: r.dateAdded,
+        })),
+      );
+    }
     if (
       (!filter || filter === "folders") &&
       musicFoldersData?.musicFolders?.musicFolder
@@ -249,6 +278,7 @@ export default function LibraryScreen() {
     sort,
     podcastsEnabled,
     favoritePodcasts,
+    favoriteRadioStations,
     musicFoldersData,
   ]);
 
@@ -281,70 +311,113 @@ export default function LibraryScreen() {
               </FadeOutScaleDown>
             </HStack>
           </HStack>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="gap-x-4 my-6"
-          >
-            <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
-              <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                  "bg-emerald-500 text-primary-800": filter === "playlists",
-                })}
-              >
-                <BadgeText className="normal-case text-md text-white">
-                  {t("app.shared.playlist_other")}
-                </BadgeText>
-              </Badge>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
-              <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                  "bg-emerald-500 text-primary-800": filter === "albums",
-                })}
-              >
-                <BadgeText className="normal-case text-md text-white">
-                  {t("app.shared.album_other")}
-                </BadgeText>
-              </Badge>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
-              <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                  "bg-emerald-500 text-primary-800": filter === "artists",
-                  "mr-2": podcastsEnabled,
-                })}
-              >
-                <BadgeText className="normal-case text-md text-white">
-                  {t("app.shared.artist_other")}
-                </BadgeText>
-              </Badge>
-            </FadeOutScaleDown>
-            {podcastsEnabled && (
-              <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
+          <Box className="relative -mx-6 my-6">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="gap-x-4"
+              contentContainerStyle={{ paddingHorizontal: 24 }}
+            >
+              <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800": filter === "podcasts",
+                    "bg-emerald-500 text-primary-800": filter === "playlists",
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.podcast_other")}
+                    {t("app.shared.playlist_other")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
-            )}
-            <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
-              <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                  "bg-emerald-500 text-primary-800": filter === "folders",
-                })}
+              <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500 text-primary-800": filter === "albums",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.album_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500 text-primary-800": filter === "artists",
+                    "mr-2": podcastsEnabled,
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.artist_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              {podcastsEnabled && (
+                <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                      "bg-emerald-500 text-primary-800": filter === "podcasts",
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.shared.podcast_other")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+              )}
+              <FadeOutScaleDown
+                onPress={() => handleFilterPress("radioStations")}
               >
-                <BadgeText className="normal-case text-md text-white">
-                  {t("app.shared.folder_other")}
-                </BadgeText>
-              </Badge>
-            </FadeOutScaleDown>
-          </ScrollView>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    "bg-emerald-500 text-primary-800":
+                      filter === "radioStations",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.radioStation_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
+                <Badge
+                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                    "bg-emerald-500 text-primary-800": filter === "folders",
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.shared.folder_other")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+            </ScrollView>
+            <LinearGradient
+              colors={["#000000", "transparent"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: 24,
+              }}
+            />
+            <LinearGradient
+              colors={["transparent", "#000000"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 24,
+              }}
+            />
+          </Box>
         </Box>
         <HStack className="px-6 pb-4 items-center justify-between">
           <FadeOutScaleDown onPress={handlePresentSortModalPress}>
@@ -382,7 +455,8 @@ export default function LibraryScreen() {
                 ArtistID3 &
                 Favorites &
                 LibraryPodcast &
-                LibraryFolder
+                LibraryFolder &
+                LibraryRadioStation
             >
           }
           keyExtractor={(item) => item.id}

@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import HomeSection from "@/components/home/sections/HomeSection";
-import InternetRadioStationListItem from "@/components/internetRadioStations/InternetRadioStationListItem";
+import InternetRadioStationListItem, {
+  serverToItem,
+} from "@/components/internetRadioStations/InternetRadioStationListItem";
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
 import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
 import { loadingData } from "@/utils/loadingData";
@@ -35,7 +37,7 @@ export default function InternetRadioSection({
       {stations?.map((station) => (
         <InternetRadioStationListItem
           key={station.id}
-          internetRadioStation={station}
+          station={serverToItem(station)}
         />
       ))}
     </HomeSection>

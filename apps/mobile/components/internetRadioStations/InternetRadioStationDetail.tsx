@@ -8,54 +8,179 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
+import MapPin from "lucide-react-native/dist/esm/icons/map-pin.mjs";
 import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
 import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SquareArrowOutUpRight from "lucide-react-native/dist/esm/icons/square-arrow-out-up-right.mjs";
+import Tag from "lucide-react-native/dist/esm/icons/tag.mjs";
 import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import { pause as pausePlayback, playTracks } from "@/services/player";
+import { registerStationClick } from "@/services/radioBrowser/stations";
+import { useCurrentAuthScope } from "@/stores/musicFolders";
+import useRadioStations from "@/stores/radioStations";
 import useRecentPlays from "@/stores/recentPlays";
 
+const titleize = (value: string) =>
+  value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+
+// Radio-Browser delivers tags/languages as comma-separated strings; normalize
+// the spacing and optionally titleize each entry for display.
+const formatList = (
+  value: string | undefined,
+  transform?: (entry: string) => string,
+) =>
+  (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => (transform ? transform(entry) : entry))
+    .join(", ");
+
 export default function InternetRadioStationDetail() {
-  const [blue500, white, gray800] = Uniwind.getCSSVariable([
-    "--color-blue-500",
-    "--color-white",
-    "--color-gray-800",
-  ]) as string[];
+  const [blue500, white, gray800, emerald500, primary100] =
+    Uniwind.getCSSVariable([
+      "--color-blue-500",
+      "--color-white",
+      "--color-gray-800",
+      "--color-emerald-500",
+      "--color-primary-100",
+    ]) as string[];
   const { t } = useTranslation();
-  const { id, streamUrl, name, homePageUrl } = useLocalSearchParams<{
+  const {
+    id,
+    streamUrl,
+    name,
+    homePageUrl,
+    imageUrl,
+    tags,
+    country,
+    countrySubdivision,
+    languages,
+    source = "server",
+  } = useLocalSearchParams<{
     id: string;
     streamUrl: string;
     name: string;
     homePageUrl?: string;
+    imageUrl?: string;
+    tags?: string;
+    country?: string;
+    countrySubdivision?: string;
+    languages?: string;
+    source?: "server" | "radioBrowser";
   }>();
   const router = useRouter();
+  const toast = useToast();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const isFavorite = useRadioStations((store) =>
+    store.favoriteRadioStations.some((fav) => fav.id === id),
+  );
+  const addFavoriteRadioStation = useRadioStations(
+    (store) => store.addFavoriteRadioStation,
+  );
+  const removeFavoriteRadioStation = useRadioStations(
+    (store) => store.removeFavoriteRadioStation,
+  );
+  const scope = useCurrentAuthScope();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const isPlaying = useIsPlaying();
-  const meta = useWebsiteMetadata(homePageUrl);
-  const colors = useImageColors(meta.image || meta["twitter:image"]);
+  // Only server stations need homepage scraping for cover art — Radio-Browser
+  // (api) stations already provide an image, so skip the network round-trip.
+  const meta = useWebsiteMetadata(
+    source === "server" && !imageUrl ? homePageUrl : undefined,
+  );
+  const image = imageUrl || meta.image || meta["twitter:image"];
+  const colors = useImageColors(image);
+
+  const isRadioBrowser = source === "radioBrowser";
+
+  // Extra metadata Radio-Browser provides; not available for server stations.
+  const tagList = formatList(tags, titleize);
+  const locationList = [country, countrySubdivision]
+    .filter((value): value is string => !!value)
+    .map(titleize)
+    .join(", ");
+  const languageList = formatList(languages, titleize);
+  const hasRadioBrowserInfo =
+    isRadioBrowser && (!!tagList || !!locationList || !!languageList);
+
+  const handleToggleFavoritePress = () => {
+    if (isFavorite) {
+      removeFavoriteRadioStation(id);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.internetRadioStations.removeFromFavoritesSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } else {
+      addFavoriteRadioStation({
+        id,
+        name,
+        streamUrl,
+        homePageUrl,
+        imageUrl: image,
+        tags,
+        country,
+        countrySubdivision,
+        languages,
+        source,
+        scope: source === "server" ? scope : undefined,
+      });
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.internetRadioStations.addToFavoritesSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -72,13 +197,17 @@ export default function InternetRadioStationDetail() {
     if (isPlaying) {
       pausePlayback();
     } else {
+      if (isRadioBrowser) {
+        // Fire-and-forget click registration for Radio-Browser analytics.
+        registerStationClick(id);
+      }
       playTracks(
         [
           {
             id,
             url: streamUrl,
             title: name,
-            artwork: meta.image || meta["twitter:image"],
+            artwork: image,
             artist: homePageUrl,
             isRadio: true,
             streamUrl,
@@ -93,7 +222,12 @@ export default function InternetRadioStationDetail() {
         type: "internetRadioStation",
         homePageUrl,
         streamUrl,
-        coverArt: meta.image || meta["twitter:image"],
+        coverArt: image,
+        source,
+        tags,
+        country,
+        countrySubdivision,
+        languages,
       });
     }
   };
@@ -123,18 +257,17 @@ export default function InternetRadioStationDetail() {
           >
             <ArrowLeft size={24} color={white} />
           </FadeOutScaleDown>
-          {meta.image || meta["twitter:image"] ? (
-            <Image
-              source={{ uri: meta.image || meta["twitter:image"] }}
-              className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center"
-              alt="Internet radio station cover"
-              contentFit="contain"
-            />
-          ) : (
-            <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-              <Radio size={48} color={white} />
-            </Box>
-          )}
+          <ImageWithFallback
+            source={image ? { uri: image } : undefined}
+            className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center"
+            alt="Internet radio station cover"
+            contentFit="contain"
+            fallback={
+              <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+                <Radio size={48} color={white} />
+              </Box>
+            }
+          />
           <Box className="w-10" />
         </HStack>
         <VStack>
@@ -147,6 +280,12 @@ export default function InternetRadioStationDetail() {
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown onPress={handlePresentModalPress}>
                 <EllipsisVertical color={white} />
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleToggleFavoritePress}>
+                <Heart
+                  color={isFavorite ? emerald500 : white}
+                  fill={isFavorite ? emerald500 : "transparent"}
+                />
               </FadeOutScaleDown>
             </HStack>
             <HStack className="items-center gap-x-4">
@@ -164,6 +303,34 @@ export default function InternetRadioStationDetail() {
         </VStack>
       </LinearGradient>
       <VStack>
+        {hasRadioBrowserInfo && (
+          <VStack className="px-6 mt-6 gap-y-3">
+            {!!tagList && (
+              <HStack className="items-center gap-x-3">
+                <Tag size={18} color={primary100} />
+                <Text className="flex-1 text-md text-primary-100">
+                  {tagList}
+                </Text>
+              </HStack>
+            )}
+            {!!locationList && (
+              <HStack className="items-center gap-x-3">
+                <MapPin size={18} color={primary100} />
+                <Text className="flex-1 text-md text-primary-100">
+                  {locationList}
+                </Text>
+              </HStack>
+            )}
+            {!!languageList && (
+              <HStack className="items-center gap-x-3">
+                <Languages size={18} color={primary100} />
+                <Text className="flex-1 text-md text-primary-100">
+                  {languageList}
+                </Text>
+              </HStack>
+            )}
+          </VStack>
+        )}
         {homePageUrl && (
           <Center className="mt-6">
             <FadeOutScaleDown
@@ -197,9 +364,17 @@ export default function InternetRadioStationDetail() {
         >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
-              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                <Radio size={24} color={white} />
-              </Box>
+              <ImageWithFallback
+                source={image ? { uri: image } : undefined}
+                className="w-16 h-16 aspect-square rounded-md bg-primary-800"
+                alt="Internet radio station cover"
+                contentFit="contain"
+                fallback={
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                    <Radio size={24} color={white} />
+                  </Box>
+                }
+              />
               <VStack className="ml-4 flex-1">
                 <Heading
                   className="text-white font-normal"
@@ -218,6 +393,9 @@ export default function InternetRadioStationDetail() {
               name={name}
               streamUrl={streamUrl}
               homePageUrl={homePageUrl}
+              source={source}
+              isFavorite={isFavorite}
+              onToggleFavorite={handleToggleFavoritePress}
               onActionStart={() => bottomSheetModalRef.current?.dismiss()}
               onDeleted={() => router.back()}
             />

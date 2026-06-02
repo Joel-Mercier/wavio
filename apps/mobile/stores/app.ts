@@ -28,6 +28,7 @@ interface AppStore {
     | "albums"
     | "playlists"
     | "podcasts"
+    | "radioStations"
     | "folders"
     | null;
   setLibraryFilter: (
@@ -36,6 +37,7 @@ interface AppStore {
       | "albums"
       | "playlists"
       | "podcasts"
+      | "radioStations"
       | "folders"
       | null,
   ) => void;
@@ -116,6 +118,7 @@ export const useAppBase = create<AppStore>()(
           | "albums"
           | "playlists"
           | "podcasts"
+          | "radioStations"
           | "folders"
           | null,
       ) => {

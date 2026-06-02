@@ -62,6 +62,12 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
           homePageUrl: recentPlay.homePageUrl,
           streamUrl: recentPlay.streamUrl,
           name: recentPlay.title,
+          imageUrl: recentPlay.coverArt,
+          tags: recentPlay.tags,
+          country: recentPlay.country,
+          countrySubdivision: recentPlay.countrySubdivision,
+          languages: recentPlay.languages,
+          source: recentPlay.source,
         },
       };
     }

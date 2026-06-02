@@ -6,6 +6,7 @@ import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +28,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import type { RadioStationSource } from "@/stores/radioStations";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
@@ -44,13 +46,22 @@ export type LibraryPodcast = {
 export type LibraryFolder = {
   isFolder?: boolean;
 };
+export type LibraryRadioStation = {
+  isRadioStation?: boolean;
+  imageUrl?: string;
+  streamUrl?: string;
+  homePageUrl?: string;
+  tags?: string;
+  source?: RadioStationSource;
+};
 interface LibraryListItemProps {
   item: Playlist &
     AlbumID3 &
     ArtistID3 &
     Favorites &
     LibraryPodcast &
-    LibraryFolder;
+    LibraryFolder &
+    LibraryRadioStation;
   layout: LibraryLayout;
   index: number;
 }
@@ -68,6 +79,9 @@ function LibraryListItemIcon({ type }: { type: string }) {
   }
   if (type === "podcast") {
     return <Podcast size={32} color={white} />;
+  }
+  if (type === "radioStation") {
+    return <Radio size={32} color={white} />;
   }
   if (type === "folder") {
     return <Folder size={32} color={white} />;
@@ -117,6 +131,24 @@ export default function LibraryListItem({
             description: item.description ?? "",
             imageUrl: item.imageUrl,
             authorName: item.authorName,
+          },
+        } as Href,
+      };
+    }
+    if (item.isRadioStation) {
+      return {
+        id: "radioStation",
+        label: t("app.shared.radioStation_one"),
+        url: {
+          pathname: "/internet-radio-stations/[id]",
+          params: {
+            id: item.id,
+            name: item.name,
+            streamUrl: item.streamUrl,
+            homePageUrl: item.homePageUrl,
+            imageUrl: item.imageUrl,
+            tags: item.tags,
+            source: item.source ?? "radioBrowser",
           },
         } as Href,
       };
@@ -252,13 +284,17 @@ export default function LibraryListItem({
             <Text numberOfLines={1} className="text-md text-primary-100">
               {type.id === "podcast"
                 ? `${type.label} ⦁ ${item.authorName}`
-                : type.id === "artist"
-                  ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
-                  : type.id === "folder"
-                    ? type.label
-                    : type.id === "playlist"
-                      ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
-                      : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
+                : type.id === "radioStation"
+                  ? item.tags
+                    ? `${type.label} ⦁ ${item.tags}`
+                    : type.label
+                  : type.id === "artist"
+                    ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
+                    : type.id === "folder"
+                      ? type.label
+                      : type.id === "playlist"
+                        ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
+                        : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
             </Text>
           </HStack>
         </VStack>

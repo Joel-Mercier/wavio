@@ -144,6 +144,9 @@ function resolveTrackUrl(track: QueueTrack): {
   url: string;
   isOffline: boolean;
 } {
+  // Internet radio streams its own absolute URL — there's no Subsonic
+  // /stream?id endpoint for it, and it's never an offline download.
+  if (track.isRadio && track.url) return { url: track.url, isOffline: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
   if (downloaded) return { url: downloaded.path, isOffline: true };
   if (track.source === "podcast" && track.url)
