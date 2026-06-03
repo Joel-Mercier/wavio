@@ -1,9 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -13,10 +10,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
-import FadeOut from "@/components/FadeOut";
+import AnimatedHeart from "@/components/AnimatedHeart";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
+import PlayPauseButton from "@/components/PlayPauseButton";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
@@ -54,8 +52,7 @@ export default function FloatingPlayer() {
   const toast = useToast();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-  const [emerald, white, primary] = Uniwind.getCSSVariable([
-    "--color-emerald-500",
+  const [white, primary] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-primary-500",
   ]) as string[];
@@ -350,42 +347,35 @@ export default function FloatingPlayer() {
           </HStack>
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
             {!playingTrack.isRadio && isPodcast && podcastSeries && (
-              <FadeOut
+              <AnimatedHeart
                 hitSlop={12}
+                filled={isPodcastSeriesFavorite}
                 onPress={
                   isPodcastSeriesFavorite
                     ? handleRemovePodcastFavoritePress
                     : handleAddPodcastFavoritePress
                 }
-              >
-                <Heart
-                  color={isPodcastSeriesFavorite ? emerald : white}
-                  fill={isPodcastSeriesFavorite ? emerald : "transparent"}
-                />
-              </FadeOut>
+              />
             )}
             {!playingTrack.isRadio && !isPodcast && (
-              <FadeOut
+              <AnimatedHeart
                 hitSlop={12}
+                filled={!!playingTrack.starred}
                 onPress={
                   playingTrack.starred
                     ? handleUnfavoritePress
                     : handleFavoritePress
                 }
-              >
-                <Heart
-                  color={playingTrack.starred ? emerald : white}
-                  fill={playingTrack.starred ? emerald : "transparent"}
-                />
-              </FadeOut>
+              />
             )}
-            <FadeOut hitSlop={12} onPress={handlePlayPausePress}>
-              {isPlaying ? (
-                <Pause color={white} stroke={undefined} fill={white} />
-              ) : (
-                <Play color={white} stroke={undefined} fill={white} />
-              )}
-            </FadeOut>
+            <PlayPauseButton
+              isPlaying={isPlaying}
+              onPress={handlePlayPausePress}
+              size={24}
+              iconSize={24}
+              color={white}
+              hitSlop={12}
+            />
           </HStack>
           <Box className="absolute inset-0 bg-black/30 -z-10" />
           <PlaybackProgressBar />

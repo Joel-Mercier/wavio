@@ -1,8 +1,8 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import AnimatedHeart from "@/components/AnimatedHeart";
 import DownloadedBadge from "@/components/DownloadedBadge";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
@@ -50,9 +50,8 @@ export default function TrackListItem({
   onPlayCallback,
   showCoverArt = true,
 }: TrackListItemProps) {
-  const [white, emerald500, gray300] = Uniwind.getCSSVariable([
+  const [white, gray300] = Uniwind.getCSSVariable([
     "--color-white",
-    "--color-emerald-500",
     "--color-gray-300",
   ]) as string[];
   const { t } = useTranslation();
@@ -178,18 +177,12 @@ export default function TrackListItem({
         </HStack>
         <HStack className="items-center">
           {track.starred && (
-            <FadeOutScaleDown
+            <AnimatedHeart
+              filled
               onPress={handleUnfavoritePress}
               disabled={isUnavailableOffline}
               className="mr-3"
-            >
-              <Heart
-                color={emerald500}
-                size={24}
-                stroke={undefined}
-                fill={emerald500}
-              />
-            </FadeOutScaleDown>
+            />
           )}
           <FadeOutScaleDown
             onPress={handlePresentModalPress}

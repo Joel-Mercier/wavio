@@ -3,16 +3,14 @@ import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { File, Paths } from "expo-file-system";
 import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import PlayPauseButton from "@/components/PlayPauseButton";
 import { usePodcastEpisodeActions } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import RichText from "@/components/RichText";
-import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
@@ -231,15 +229,14 @@ export default function PodcastListItem({
               <EllipsisVertical size={24} color={white} />
             </FadeOutScaleDown>
           </HStack>
-          <FadeOutScaleDown onPress={handlePlayPress}>
-            <Box className="w-10 h-10 rounded-full bg-white items-center justify-center">
-              {isCurrent && isPlaying ? (
-                <Pause size={20} color={black} fill={black} />
-              ) : (
-                <Play size={20} color={black} fill={black} />
-              )}
-            </Box>
-          </FadeOutScaleDown>
+          <PlayPauseButton
+            isPlaying={isCurrent && isPlaying}
+            onPress={handlePlayPress}
+            size={40}
+            iconSize={20}
+            color={black}
+            className="bg-white"
+          />
         </HStack>
       </VStack>
     </Pressable>

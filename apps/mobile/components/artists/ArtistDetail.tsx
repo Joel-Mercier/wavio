@@ -12,9 +12,6 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -34,12 +31,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
+import AnimatedHeart from "@/components/AnimatedHeart";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import PlayPauseButton from "@/components/PlayPauseButton";
+import ShuffleToggle from "@/components/ShuffleToggle";
 import StarRating from "@/components/StarRating";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
@@ -520,41 +520,31 @@ export default function ArtistDetail() {
             <VStack className="px-6 bg-black">
               <HStack className="items-center justify-between my-4">
                 <HStack className="items-center gap-x-4">
-                  {data?.artist?.starred ? (
-                    <FadeOutScaleDown onPress={handleUnfavoritePress}>
-                      <Heart color={emerald500} fill={emerald500} />
-                    </FadeOutScaleDown>
-                  ) : (
-                    <FadeOutScaleDown onPress={handleFavoritePress}>
-                      <Heart color={white} />
-                    </FadeOutScaleDown>
-                  )}
+                  <AnimatedHeart
+                    filled={!!data?.artist?.starred}
+                    onPress={
+                      data?.artist?.starred
+                        ? handleUnfavoritePress
+                        : handleFavoritePress
+                    }
+                  />
                   <FadeOutScaleDown onPress={handlePresentModalPress}>
                     <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>
                 <HStack className="items-center gap-x-4">
-                  <FadeOutScaleDown onPress={handleShufflePress}>
-                    {shuffle ? (
-                      <>
-                        <Shuffle color={emerald500} />
-                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                          <Box className="bg-emerald-500 rounded-full size-1" />
-                        </Box>
-                      </>
-                    ) : (
-                      <Shuffle color={white} />
-                    )}
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handlePlayPress}>
-                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromArtist && isPlaying ? (
-                        <Pause color={white} fill={white} />
-                      ) : (
-                        <Play color={white} fill={white} />
-                      )}
-                    </Box>
-                  </FadeOutScaleDown>
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={handleShufflePress}
+                  />
+                  <PlayPauseButton
+                    isPlaying={isPlayingFromArtist && isPlaying}
+                    onPress={handlePlayPress}
+                    size={48}
+                    iconSize={24}
+                    color={white}
+                    className="bg-emerald-500"
+                  />
                 </HStack>
               </HStack>
               {likedSongs.length > 0 && (

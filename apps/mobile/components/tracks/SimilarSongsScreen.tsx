@@ -3,9 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
@@ -21,6 +18,8 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import PlayPauseButton from "@/components/PlayPauseButton";
+import ShuffleToggle from "@/components/ShuffleToggle";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -174,18 +173,15 @@ export default function SimilarSongsScreen() {
               </HStack>
               <HStack className="items-center justify-end">
                 <HStack className="items-center gap-x-4">
-                  <Pressable onPress={handleShufflePress}>
-                    <Shuffle color={white} />
-                  </Pressable>
-                  <Pressable onPress={handlePlayPress}>
-                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && isPlaying ? (
-                        <Pause color={white} fill={white} />
-                      ) : (
-                        <Play color={white} fill={white} />
-                      )}
-                    </Box>
-                  </Pressable>
+                  <ShuffleToggle active={false} onPress={handleShufflePress} />
+                  <PlayPauseButton
+                    isPlaying={isPlayingFromList && isPlaying}
+                    onPress={handlePlayPress}
+                    size={48}
+                    iconSize={24}
+                    color={white}
+                    className="bg-emerald-500"
+                  />
                 </HStack>
               </HStack>
               {error && <ErrorDisplay error={error} />}

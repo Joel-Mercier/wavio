@@ -8,11 +8,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
 import MapPin from "lucide-react-native/dist/esm/icons/map-pin.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SquareArrowOutUpRight from "lucide-react-native/dist/esm/icons/square-arrow-out-up-right.mjs";
 import Tag from "lucide-react-native/dist/esm/icons/tag.mjs";
@@ -21,9 +18,11 @@ import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import AnimatedHeart from "@/components/AnimatedHeart";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
+import PlayPauseButton from "@/components/PlayPauseButton";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
@@ -67,14 +66,12 @@ const formatList = (
     .join(", ");
 
 export default function InternetRadioStationDetail() {
-  const [blue500, white, gray800, emerald500, primary100] =
-    Uniwind.getCSSVariable([
-      "--color-blue-500",
-      "--color-white",
-      "--color-gray-800",
-      "--color-emerald-500",
-      "--color-primary-100",
-    ]) as string[];
+  const [blue500, white, gray800, primary100] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-white",
+    "--color-gray-800",
+    "--color-primary-100",
+  ]) as string[];
   const { t } = useTranslation();
   const {
     id,
@@ -281,23 +278,20 @@ export default function InternetRadioStationDetail() {
               <FadeOutScaleDown onPress={handlePresentModalPress}>
                 <EllipsisVertical color={white} />
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handleToggleFavoritePress}>
-                <Heart
-                  color={isFavorite ? emerald500 : white}
-                  fill={isFavorite ? emerald500 : "transparent"}
-                />
-              </FadeOutScaleDown>
+              <AnimatedHeart
+                filled={isFavorite}
+                onPress={handleToggleFavoritePress}
+              />
             </HStack>
             <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown onPress={handlePlayPausePress}>
-                <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                  {isPlaying ? (
-                    <Pause color={white} fill={white} />
-                  ) : (
-                    <Play color={white} fill={white} />
-                  )}
-                </Box>
-              </FadeOutScaleDown>
+              <PlayPauseButton
+                isPlaying={isPlaying}
+                onPress={handlePlayPausePress}
+                size={48}
+                iconSize={24}
+                color={white}
+                className="bg-emerald-500"
+              />
             </HStack>
           </HStack>
         </VStack>

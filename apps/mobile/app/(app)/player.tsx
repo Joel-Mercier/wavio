@@ -18,19 +18,13 @@ import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.m
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import PodcastIcon from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
-import Repeat from "lucide-react-native/dist/esm/icons/repeat.mjs";
-import Repeat1 from "lucide-react-native/dist/esm/icons/repeat-1.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
@@ -55,13 +49,17 @@ import Share from "react-native-share";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
+import AnimatedHeart from "@/components/AnimatedHeart";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
+import PlayPauseButton from "@/components/PlayPauseButton";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
 import LyricsDialog from "@/components/player/LyricsDialog";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
+import RepeatToggle from "@/components/RepeatToggle";
+import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -1035,34 +1033,24 @@ export default function PlayerScreen() {
                   </FadeOut>
                 </VStack>
                 {!isRadio && isPodcast && podcastSeries && (
-                  <FadeOut
+                  <AnimatedHeart
+                    filled={isPodcastFavorite}
                     onPress={
                       isPodcastFavorite
                         ? handleRemoveFavoritePodcastPress
                         : handleAddFavoritePodcastPress
                     }
-                  >
-                    <Heart
-                      size={24}
-                      color={isPodcastFavorite ? emerald500 : "white"}
-                      fill={isPodcastFavorite ? emerald500 : "transparent"}
-                    />
-                  </FadeOut>
+                  />
                 )}
                 {!isRadio && !isPodcast && (
-                  <FadeOut
+                  <AnimatedHeart
+                    filled={!!playingTrack?.starred}
                     onPress={
                       playingTrack?.starred
                         ? handleUnfavoritePress
                         : handleFavoritePress
                     }
-                  >
-                    <Heart
-                      size={24}
-                      color={playingTrack?.starred ? emerald500 : "white"}
-                      fill={playingTrack?.starred ? emerald500 : "transparent"}
-                    />
-                  </FadeOut>
+                  />
                 )}
               </HStack>
               {!isRadio && <PlaybackSlider />}
@@ -1075,55 +1063,42 @@ export default function PlayerScreen() {
                 }
               >
                 {!isRadio && (
-                  <FadeOut onPress={() => handleShufflePress(!shuffle)}>
-                    {shuffle ? (
-                      <>
-                        <Shuffle size={24} color={emerald500} />
-                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                          <Box className="bg-emerald-500 rounded-full size-1" />
-                        </Box>
-                      </>
-                    ) : (
-                      <Shuffle size={24} color="white" />
-                    )}
-                  </FadeOut>
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={() => handleShufflePress(!shuffle)}
+                  />
                 )}
                 {!isRadio && (
                   <FadeOut onPress={handlePreviousPress}>
                     <SkipBack size={36} color="white" fill="white" />
                   </FadeOut>
                 )}
-                <FadeOut onPress={handlePlayPausePress}>
-                  <Box className="h-16 w-16 rounded-full bg-white items-center justify-center">
-                    {isPlaying ? (
-                      <Pause size={24} color={gray800} fill={gray800} />
-                    ) : (
-                      <Play size={24} color={gray800} fill={gray800} />
-                    )}
-                  </Box>
-                </FadeOut>
+                <PlayPauseButton
+                  isPlaying={isPlaying}
+                  onPress={handlePlayPausePress}
+                  size={64}
+                  iconSize={24}
+                  color={gray800}
+                  className="bg-white"
+                />
                 {!isRadio && (
                   <FadeOut onPress={handleNextPress}>
                     <SkipForward size={36} color="white" fill="white" />
                   </FadeOut>
                 )}
-                {!isRadio && repeatMode === "off" && (
-                  <FadeOut onPress={() => handleRepeatModePress("all")}>
-                    <Repeat size={24} color="white" />
-                  </FadeOut>
-                )}
-                {!isRadio && repeatMode === "all" && (
-                  <FadeOut onPress={() => handleRepeatModePress("one")}>
-                    <Repeat size={24} color={emerald500} />
-                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                      <Box className="bg-emerald-500 rounded-full size-1" />
-                    </Box>
-                  </FadeOut>
-                )}
-                {!isRadio && repeatMode === "one" && (
-                  <FadeOut onPress={() => handleRepeatModePress("off")}>
-                    <Repeat1 size={24} color={emerald500} />
-                  </FadeOut>
+                {!isRadio && (
+                  <RepeatToggle
+                    mode={repeatMode}
+                    onPress={() =>
+                      handleRepeatModePress(
+                        repeatMode === "off"
+                          ? "all"
+                          : repeatMode === "all"
+                            ? "one"
+                            : "off",
+                      )
+                    }
+                  />
                 )}
               </HStack>
               <HStack className="items-center justify-between mt-8">

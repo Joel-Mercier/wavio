@@ -15,8 +15,6 @@ import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
@@ -34,6 +32,7 @@ import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import PlayPauseButton from "@/components/PlayPauseButton";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -406,15 +405,14 @@ export default function PodcastScreen() {
                 </FadeOutScaleDown>
               </HStack>
               <HStack className="items-center gap-x-4">
-                <FadeOutScaleDown onPress={handlePlayPress}>
-                  <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                    {isCurrent && isPlaying ? (
-                      <Pause color={white} fill={white} />
-                    ) : (
-                      <Play color={white} fill={white} />
-                    )}
-                  </Box>
-                </FadeOutScaleDown>
+                <PlayPauseButton
+                  isPlaying={isCurrent && isPlaying}
+                  onPress={handlePlayPress}
+                  size={48}
+                  iconSize={24}
+                  color={white}
+                  className="bg-emerald-500"
+                />
               </HStack>
             </HStack>
             {podcast.description && (

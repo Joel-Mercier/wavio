@@ -11,10 +11,7 @@ import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
 import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
@@ -30,6 +27,8 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import PlayPauseButton from "@/components/PlayPauseButton";
+import ShuffleToggle from "@/components/ShuffleToggle";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -318,27 +317,18 @@ export default function FavoritesScreen() {
                   </HStack>
                 </FadeOutScaleDown>
                 <HStack className="items-center gap-x-4">
-                  <Pressable onPress={handleShufflePress}>
-                    {shuffle ? (
-                      <>
-                        <Shuffle color={emerald500} />
-                        <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                          <Box className="bg-emerald-500 rounded-full size-1" />
-                        </Box>
-                      </>
-                    ) : (
-                      <Shuffle color={white} />
-                    )}
-                  </Pressable>
-                  <Pressable onPress={handlePlayPress}>
-                    <Box className="w-12 h-12 rounded-full bg-emerald-500 items-center justify-center">
-                      {isPlayingFromList && isPlaying ? (
-                        <Pause color={white} fill={white} />
-                      ) : (
-                        <Play color={white} fill={white} />
-                      )}
-                    </Box>
-                  </Pressable>
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={handleShufflePress}
+                  />
+                  <PlayPauseButton
+                    isPlaying={isPlayingFromList && isPlaying}
+                    onPress={handlePlayPress}
+                    size={48}
+                    iconSize={24}
+                    color={white}
+                    className="bg-emerald-500"
+                  />
                 </HStack>
               </HStack>
               <FadeOutScaleDown href={"/favorites/search"} className="my-4">
