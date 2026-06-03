@@ -1121,6 +1121,8 @@ export default {
         showPassword: "Afficher le mot de passe",
         hidePassword: "Masquer le mot de passe",
         demo: "Mode démo",
+        navidromeSetupHelp: "Installer un serveur Navidrome",
+        jellyfinSetupHelp: "Installer un serveur Jellyfin",
       },
     },
     openSubsonic: {
