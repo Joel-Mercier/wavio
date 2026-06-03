@@ -239,7 +239,9 @@ export default function QueueDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
+              <FadeOutScaleDown
+                onPress={isEmpty ? undefined : handleClearPress}
+              >
                 <HStack className="items-center gap-x-2">
                   <Trash2
                     size={16}

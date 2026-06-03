@@ -130,9 +130,9 @@ describe("radioStations store - updateFavoriteRadioStation", () => {
     get().addFavoriteRadioStation(make("a"));
     get().addFavoriteRadioStation(make("b"));
     get().updateFavoriteRadioStation("a", { name: "renamed" });
-    expect(
-      get().favoriteRadioStations.find((s) => s.id === "b")?.name,
-    ).toBe("station-b");
+    expect(get().favoriteRadioStations.find((s) => s.id === "b")?.name).toBe(
+      "station-b",
+    );
   });
 
   it("is a no-op when the id does not exist", () => {
