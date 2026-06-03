@@ -4,7 +4,10 @@ import {
   getIsCacheRestoring,
   subscribeCacheRestoring,
 } from "@/config/queryClient";
-import { getIsOnline, subscribeIsOnline } from "@/services/network";
+import {
+  getIsEffectivelyOnline,
+  subscribeEffectiveOnline,
+} from "@/services/network";
 
 // Returns whether a collection row (album / artist / playlist) should be
 // ENABLED. When online — or while the persisted cache is still restoring — it's
@@ -20,7 +23,7 @@ export function useIsCachedOffline(detailKey: QueryKey | null): boolean {
 
   const subscribe = useCallback(
     (cb: () => void) => {
-      const unsubOnline = subscribeIsOnline(cb);
+      const unsubOnline = subscribeEffectiveOnline(cb);
       const unsubRestoring = subscribeCacheRestoring(cb);
       const unsubCache = queryClient.getQueryCache().subscribe(cb);
       return () => {
@@ -34,7 +37,7 @@ export function useIsCachedOffline(detailKey: QueryKey | null): boolean {
 
   const getSnapshot = useCallback(() => {
     if (detailKey === null) return true;
-    if (getIsOnline() || getIsCacheRestoring()) return true;
+    if (getIsEffectivelyOnline() || getIsCacheRestoring()) return true;
     return queryClient.getQueryData(detailKey) !== undefined;
     // detailKey is a fresh array each render; depend on its serialized form.
   }, [queryClient, JSON.stringify(detailKey)]);

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: [OpenSubsonic](https://opensubsonic.netlify.app/docs/) / Navidrome (Subsonic API) and Jellyfin. Podcast features use the Taddy API.
+Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: OpenSubsonic, Navidrome and Jellyfin. Podcast features use the Taddy API.
 
 ## Monorepo layout
 
@@ -50,14 +50,14 @@ Everything in this section lives in `apps/mobile/`; paths are written relative t
 - `app/(auth)/login.tsx` — unauthenticated flow
 - `app/(app)/(tabs)/(home|library|search)/` — three stacked tab groups, each owns its own nested stack (albums, artists, playlists, etc.). Duplicated screens like `settings.tsx` / `servers.tsx` across tab groups are intentional so back-stack stays within the active tab.
 - `app/(app)/player.tsx`, `app/(app)/playlists/`, `app/(app)/internet-radio-stations/` — modal / full-screen routes outside the tab bar
-- Root `app/_layout.tsx` wires all providers: `QueryClientProvider`, `KeyboardProvider`, `GluestackUIProvider`, `ThemeProvider`, `GestureHandlerRootView`, `BottomSheetModalProvider`, plus online/focus managers (NetInfo → react-query `onlineManager`, AppState → `focusManager`) and i18n/zod locale bootstrapping.
+- Root `app/_layout.tsx` wires all providers: `QueryClientProvider`, `KeyboardProvider`, `GluestackUIProvider`, `ThemeProvider`, `GestureHandlerRootView`, `BottomSheetModalProvider`, plus online/focus managers (effective connectivity → react-query `onlineManager`, AppState → `focusManager` + a foreground reachability probe) and i18n/zod locale bootstrapping.
 
 ### Server backends (multi-protocol)
 
 Three server types are supported, tracked by `ServerType` in `stores/servers.ts`: `navidrome`, `opensubsonic`, `jellyfin`. The active server's type is mirrored on `useAuthBase().serverType` (`stores/auth.ts`).
 
 Each backend has its own service tree mirroring the same API sections:
-- `services/openSubsonic/*.ts` — axios calls for Subsonic / OpenSubsonic / Navidrome. `services/openSubsonic/index.ts` exports a shared axios instance whose request interceptor injects `u`, `p`, `v`, `c`, `f=json` from `useAuthBase` and sets `baseURL` from the active server URL. Response interceptor logs out on `ERR_NETWORK`.
+- `services/openSubsonic/*.ts` — axios calls for Subsonic / OpenSubsonic / Navidrome. `services/openSubsonic/index.ts` exports a shared axios instance (15s `timeout`) whose request interceptor injects `u`, `p`, `v`, `c`, `f=json` from `useAuthBase` and sets `baseURL` from the active server URL. Response interceptor logs out **only** on Subsonic error code 40 (wrong credentials); network errors never log out, so offline mode keeps the session alive.
 - `services/jellyfin/*.ts` — axios calls for Jellyfin. `services/jellyfin/index.ts` builds the `Authorization` header (Client/Device/DeviceId/Token via `getDeviceId`). `services/jellyfin/mappers.ts` adapts Jellyfin DTOs to the Subsonic envelope shape so the rest of the app can stay protocol-agnostic. `unsupported.ts` throws for endpoints Jellyfin doesn't expose.
 - `services/backend/*.ts` — the unified dispatch layer. Each file (one per API section: browsing, lists, searching, playlists, mediaAnnotation, mediaRetrieval, sharing, bookmarks, users, system, mediaLibraryScanning, internetRadioStations, streaming, capabilities) re-exports functions that pick the right implementation via `dispatch(subsonicFn, jellyfinFn)` from `services/backend/dispatch.ts` (`isJellyfin()` reads `useAuthBase.getState().serverType`). Callers consume Subsonic-shaped responses regardless of backend.
 - `hooks/backend/*.ts` — `@tanstack/react-query` hooks wrapping the dispatched services. **Always import from `@/services/backend` and `@/hooks/backend` in app code** — don't call `services/openSubsonic` or `services/jellyfin` directly from screens/components.
@@ -71,6 +71,7 @@ When adding an endpoint:
 Subsonic error codes are translated via `openSubsonicErrorCodes` using `config/i18n`. Navidrome-specific (non-Subsonic) endpoints live under `hooks/navidrome/` and bypass the dispatch layer.
 
 Podcast services (`services/taddyPodcasts`, `hooks/taddyPodcasts`) follow the same split for the Taddy GraphQL API.
+Radio stations services use the Radio Browser API.
 
 ### State (zustand + MMKV)
 
@@ -79,7 +80,7 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 - `servers.ts` — saved server list
 - `app.ts` — app-wide settings (locale, theme, etc.)
 - `queue.ts` — playback queue (tested in `__tests__/queue.store.test.ts`)
-- `playlists.ts`, `podcasts.ts`, `recentPlays.ts`, `recentSearches.ts`, `offline.ts`
+- `playlists.ts`, `podcasts.ts`, `radioStations.ts`, `recentPlays.ts`, `recentSearches.ts`, `offline.ts`
 
 `createScopedStorage(scope)` in `config/storage.ts` namespaces storage per server+user; use `getAuthScope(url, username)` to build the scope key so switching servers doesn't bleed state.
 
@@ -90,6 +91,16 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 `expo-audio` is the audio engine. `services/player.ts` is the registered background service; the queue store drives it. Offline downloads go through `services/offlineDownloadService.ts` + `hooks/useOfflineDownloads.ts` using `expo-file-system`.
 
 Realtime playback state for non-React consumers (widget, Android Auto) goes through `hooks/player/playbackSnapshot.ts`: call `getPlaybackSnapshot()` for the current state and `subscribePlaybackStatus(cb)` to observe changes.
+
+### Connectivity & offline detection
+
+`services/network.ts` is the connectivity singleton (wired once at root via `initConnectionType`) and models **two** axes:
+- **device online** — NetInfo `isConnected` (`getIsOnline` / `useIsDeviceOnline`).
+- **server reachable** — whether the active server answered its last `ping` probe (`probeServer`, which enforces its own short deadline). The device can be online while the server is unreachable (e.g. its LAN IP changed after switching networks).
+
+`getIsEffectivelyOnline()` = device online **AND** server reachable, and is what almost all UI keys off: `useIsOnline()` returns the effective value; use `useIsDeviceOnline()` only to distinguish "no internet" from "server unreachable" (e.g. `OfflineBanner` copy). React Query's `onlineManager` tracks the effective value, so it pauses refetches and serves cache instead of hammering an unreachable server. `probeServer()` runs on app foreground, on a device offline→online transition, on a recovery poll while unreachable, and on cold start / server switch (`resetServerReachable()` clears the previous server's state).
+
+The two states are handled differently on purpose: **offline** (no network) keeps the session alive so cached content / offline mode keep working, whereas a server that stays **unreachable while the device is online** is treated as genuinely gone — after `DISCONNECT_AFTER_FAILURES` consecutive failed probes (~24s) `services/network.ts` calls `useAuthBase.logout()` (clearing credentials + query cache) so the user lands on the login/server screen instead of stale cache. The failure counter resets on any successful probe or when the device drops offline, so transient blips don't log you out. This auto-detected state is independent of the user-toggled `offlineModeEnabled` (`stores/offline.ts`, which governs downloads).
 
 ### Android Auto / CarPlay
 

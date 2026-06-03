@@ -3,6 +3,7 @@ export default {
     app: {
       offlineBanner: {
         noConnection: "No internet connection",
+        serverUnreachable: "Can't reach server",
         backOnline: "Back online",
       },
       home: {

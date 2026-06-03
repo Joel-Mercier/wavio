@@ -45,12 +45,13 @@ export const getOpenSubsonicExtensions = async () => {
   }
 };
 
-export const ping = async () => {
+export const ping = async (opts?: { signal?: AbortSignal }) => {
   try {
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<Record<string, never>>
     >("/rest/ping", {
       params: {},
+      signal: opts?.signal,
     });
     if (rsp.data["subsonic-response"]?.status !== "ok") {
       throw rsp.data["subsonic-response"].error;

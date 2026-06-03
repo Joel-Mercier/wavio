@@ -6,9 +6,10 @@ import type {
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
 
-export const ping = async () => {
+export const ping = async (opts?: { signal?: AbortSignal }) => {
   const rsp = await jellyfinApiInstance.get<{ Version?: string }>(
     "/System/Info",
+    { signal: opts?.signal },
   );
   if (rsp.data?.Version) {
     const current = useAuthBase.getState().serverVersion;

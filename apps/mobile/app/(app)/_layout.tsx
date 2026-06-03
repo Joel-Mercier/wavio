@@ -11,6 +11,7 @@ import {
 } from "@/config/queryClient";
 import { getAuthScope } from "@/config/storage";
 import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
+import { probeServer, resetServerReachable } from "@/services/network";
 import {
   flushPlayQueue,
   initPlayQueueSync,
@@ -52,6 +53,9 @@ export default function AppLayout() {
       useActivity.getState().__reset();
       useQueue.getState().__reset();
       useOffline.getState().__reset();
+      // Clear the previous server's reachability state so the new server starts
+      // optimistic; the probe below confirms it.
+      resetServerReachable();
     }
 
     // Restore the persisted React Query cache for this scope. On a server
@@ -85,6 +89,10 @@ export default function AppLayout() {
       void initPlayQueueSync();
       void loadResumePositions();
     });
+
+    // Confirm the active server is reachable (covers cold start and server
+    // switch); NetInfo's optimistic default would otherwise leave us "online".
+    void probeServer();
   }, [isAuthenticated]);
 
   // Persist the play queue to the server promptly when leaving the app.

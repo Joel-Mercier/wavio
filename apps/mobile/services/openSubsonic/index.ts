@@ -33,6 +33,10 @@ export type OpenSubsonicErrorResponse = {
 const openSubsonicApiInstance = axios.create({
   baseURL: "",
   headers: { "Content-Type": "application/json" },
+  // Fail fast when the server is unreachable (e.g. its LAN IP changed) instead
+  // of hanging on the OS TCP timeout. The reachability probe enforces its own
+  // shorter deadline on top of this (see services/network.ts).
+  timeout: 15000,
 });
 
 openSubsonicApiInstance.interceptors.request.use(

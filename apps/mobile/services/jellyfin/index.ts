@@ -19,6 +19,9 @@ export function buildAuthorizationHeader(token?: string | null): string {
 const jellyfinApiInstance = axios.create({
   baseURL: "",
   headers: { "Content-Type": "application/json" },
+  // Fail fast when the server is unreachable instead of hanging on the OS TCP
+  // timeout. The reachability probe enforces its own shorter deadline on top.
+  timeout: 15000,
 });
 
 jellyfinApiInstance.interceptors.request.use(

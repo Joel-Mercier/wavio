@@ -18,7 +18,6 @@ import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "react-native-reanimated";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import NetInfo from "@react-native-community/netinfo";
 import { init as sentryInit, wrap as sentryWrap } from "@sentry/react-native";
 import {
   focusManager,
@@ -41,7 +40,12 @@ import i18n, {
   type TSupportedLanguages,
 } from "@/config/i18n";
 import { persistOptions, queryClient } from "@/config/queryClient";
-import { initConnectionType } from "@/services/network";
+import {
+  getIsEffectivelyOnline,
+  initConnectionType,
+  probeServer,
+  subscribeEffectiveOnline,
+} from "@/services/network";
 import { configurePlayback } from "@/services/player";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
@@ -70,6 +74,11 @@ function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
     focusManager.setFocused(status === "active");
   }
+  if (status === "active") {
+    // Re-check server reachability on foreground: the network (and thus the
+    // server's reachability) may have changed while backgrounded.
+    void probeServer();
+  }
 }
 
 export default sentryWrap(function RootLayout() {
@@ -92,11 +101,15 @@ export default sentryWrap(function RootLayout() {
       level: ReanimatedLogLevel.warn,
       strict: false, // Reanimated runs in strict mode by default
     });
-    onlineManager.setEventListener((setOnline) =>
-      NetInfo.addEventListener((state) => {
-        setOnline(!!state.isConnected);
-      }),
-    );
+    // Drive React Query's online state off effective connectivity (device
+    // online AND server reachable) so it pauses refetches and serves cache when
+    // the server is unreachable, instead of hammering it with failing requests.
+    onlineManager.setEventListener((setOnline) => {
+      setOnline(getIsEffectivelyOnline());
+      return subscribeEffectiveOnline(() =>
+        setOnline(getIsEffectivelyOnline()),
+      );
+    });
     // Continuously persist the query cache to the active (server, user) scope.
     // The initial restore happens in app/(app)/_layout.tsx's scope-change
     // effect, which can also re-restore when switching servers in-app.
