@@ -52,19 +52,25 @@ export default function CurrentLyricLine({
     transform: [{ translateY: translateY.value }],
   }));
 
-  if (!lyrics || currentIndex < 0) return null;
-  const value = lyrics.line[currentIndex]?.value?.trim();
-  if (!value) return null;
+  // Always reserve the slot's height so the surrounding layout doesn't shift
+  // when there's no active line yet, during instrumental pauses (empty line
+  // value), or for tracks without lyrics at all. Only the text fades in/out.
+  const value =
+    lyrics && currentIndex >= 0
+      ? lyrics.line[currentIndex]?.value?.trim()
+      : undefined;
 
   return (
     <Box className="px-6 h-12 items-center justify-center">
-      <Animated.Text
-        numberOfLines={2}
-        style={animatedStyle}
-        className="text-white text-center font-bold text-base"
-      >
-        {value}
-      </Animated.Text>
+      {value ? (
+        <Animated.Text
+          numberOfLines={2}
+          style={animatedStyle}
+          className="text-white text-center font-bold text-base"
+        >
+          {value}
+        </Animated.Text>
+      ) : null}
     </Box>
   );
 }

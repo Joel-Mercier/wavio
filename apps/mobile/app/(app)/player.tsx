@@ -930,7 +930,7 @@ export default function PlayerScreen() {
               <EllipsisVertical size={24} color="white" />
             </FadeOutScaleDown>
           </HStack>
-          <VStack className={hasSyncedLyrics ? "mt-2" : "mt-12"}>
+          <VStack className="mt-2">
             <Box
               className="w-full mb-4 overflow-hidden"
               style={{ height: Math.max(0, coverWidth - 48) }}
@@ -972,7 +972,7 @@ export default function PlayerScreen() {
                 </GestureDetector>
               )}
             </Box>
-            {hasSyncedLyrics && <CurrentLyricLine lyrics={lyrics} />}
+            <CurrentLyricLine lyrics={hasSyncedLyrics ? lyrics : null} />
             <VStack className="px-6">
               <HStack className="items-center justify-between gap-x-4">
                 <VStack className="my-6 flex-1">

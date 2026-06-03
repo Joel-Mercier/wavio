@@ -26,7 +26,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
-- Internet radio stations, listen to radio streams
+- Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of favorited songs, downloads management screen
 - Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen with now playing users

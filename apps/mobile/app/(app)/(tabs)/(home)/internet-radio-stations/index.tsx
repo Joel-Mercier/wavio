@@ -137,9 +137,13 @@ export default function InternetRadioStationsScreen() {
 function TagRow({ tag }: { tag: string }) {
   const { t } = useTranslation();
   const { data, isLoading, error } = useStationsByTag({ tag });
+  const titleizedTag = tag
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
   return (
     <RadioStationRow
-      title={t("app.internetRadioStations.byTag", { tag })}
+      title={t("app.internetRadioStations.byTag", { tag: titleizedTag })}
       isLoading={isLoading}
       error={error}
       stations={data?.map(radioBrowserToItem)}
