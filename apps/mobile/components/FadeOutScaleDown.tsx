@@ -1,5 +1,5 @@
 import { type Link, useRouter } from "expo-router";
-import React, { type ComponentProps } from "react";
+import React, { type ComponentProps, useEffect } from "react";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
 import { Pressable } from "@/components/ui/pressable";
 
@@ -10,6 +10,7 @@ interface FadeOutScaleDownProps {
   onPress?: ComponentProps<typeof Pressable>["onPress"];
   defaultOpacity?: number;
   disabled?: boolean;
+  disabledOpacity?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -26,12 +27,20 @@ const FadeOutScaleDown = React.forwardRef<
       onPress,
       defaultOpacity = 1,
       disabled = false,
+      disabledOpacity = 0.6,
     },
     ref,
   ) => {
     const router = useRouter();
-    const opacity = useSharedValue(defaultOpacity);
+    const restingOpacity = disabled ? disabledOpacity : defaultOpacity;
+    const opacity = useSharedValue(restingOpacity);
     const scale = useSharedValue(1);
+
+    useEffect(() => {
+      opacity.value = withSpring(restingOpacity, {
+        duration: 100,
+      });
+    }, [restingOpacity, opacity]);
 
     const handlePressIn = () => {
       opacity.value = withSpring(0.5, {
@@ -43,7 +52,7 @@ const FadeOutScaleDown = React.forwardRef<
     };
 
     const handlePressOut = () => {
-      opacity.value = withSpring(1, {
+      opacity.value = withSpring(restingOpacity, {
         duration: 100,
       });
       scale.value = withSpring(1, {

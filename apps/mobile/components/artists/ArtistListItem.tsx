@@ -9,7 +9,6 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
-import { cn } from "@/utils/tailwind";
 
 interface ArtistListItemProps {
   artist: ArtistID3;
@@ -22,7 +21,7 @@ export default function ArtistListItem({ artist }: ArtistListItemProps) {
     <FadeOutScaleDown
       href={`/artists/${artist.id}`}
       disabled={!isReachableOffline}
-      className={cn("mr-6", { "opacity-80": !isReachableOffline })}
+      className="mr-6"
     >
       <VStack className="gap-y-2 w-32">
         <ImageWithFallback

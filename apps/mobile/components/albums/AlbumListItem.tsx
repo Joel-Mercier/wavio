@@ -41,7 +41,6 @@ export default function AlbumListItem({
         "pt-4": layout === "vertical" && index !== 0,
         "px-6": layout === "vertical",
         "mr-6": layout === "horizontal",
-        "opacity-80": !isReachableOffline,
       })}
     >
       <VStack

@@ -28,7 +28,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
-import { cn } from "@/utils/tailwind";
 
 interface CreatePlaylistFromQueueDialogProps {
   isOpen: boolean;
@@ -153,10 +152,8 @@ export default function CreatePlaylistFromQueueDialog({
                 <FadeOutScaleDown
                   onPress={disabled ? undefined : () => form.handleSubmit()}
                   disabled={disabled}
-                  className={cn(
-                    "items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4",
-                    { "opacity-50": disabled },
-                  )}
+                  disabledOpacity={0.5}
+                  className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
                 >
                   <Text className="text-primary-800 font-bold text-lg">
                     {t("app.shared.create")}

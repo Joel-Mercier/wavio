@@ -214,9 +214,7 @@ export default function LibraryListItem({
     <FadeOutScaleDown
       href={type.url}
       disabled={!isReachableOffline}
-      className={cn("mb-4", gridMarginClass, {
-        "opacity-80": !isReachableOffline,
-      })}
+      className={cn("mb-4", gridMarginClass)}
     >
       <HStack
         className={cn("flex-row transition duration-100 items-center", {

@@ -187,6 +187,7 @@ export default function TrackListItem({
           <FadeOutScaleDown
             onPress={handlePresentModalPress}
             disabled={isUnavailableOffline}
+            disabledOpacity={0.8}
           >
             <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
