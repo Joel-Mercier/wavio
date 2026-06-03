@@ -8,7 +8,7 @@ import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import Logo from "@/assets/images/logo.svg";
@@ -319,17 +319,20 @@ export default function LoginScreen() {
 		preselectedServer?.name ?? t("auth.login.serverPlaceholder");
 
 	return (
-		<Box
-			className="justify-center h-full"
-			style={{
-				paddingTop: insets.top,
-				paddingBottom: insets.bottom,
+		<KeyboardAwareScrollView
+			bottomOffset={24}
+			contentContainerStyle={{
+				flexGrow: 1,
+				justifyContent: "center",
+				paddingTop: insets.top + 24,
+				paddingBottom: insets.bottom + 24,
 				paddingLeft: insets.left,
 				paddingRight: insets.right,
 			}}
+			showsVerticalScrollIndicator={false}
+			keyboardShouldPersistTaps="handled"
 		>
-			<KeyboardAvoidingView behavior={"padding"}>
-				<Box className="px-6">
+			<Box className="px-6">
 					<Center className="mb-4 ">
 						<Logo width={64} height={64} />
 					</Center>
@@ -550,8 +553,7 @@ export default function LoginScreen() {
 							return null;
 						}}
 					</form.Subscribe>
-				</Box>
-			</KeyboardAvoidingView>
-		</Box>
+			</Box>
+		</KeyboardAwareScrollView>
 	);
 }
