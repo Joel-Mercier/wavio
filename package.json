@@ -1,28 +1,29 @@
 {
-  "name": "wavio-monorepo",
-  "private": true,
-  "packageManager": "bun@1.3.13",
-  "workspaces": [
-    "apps/*"
-  ],
-  "scripts": {
-    "mobile:start": "bun run --cwd apps/mobile start",
-    "mobile:android": "bun run --cwd apps/mobile android",
-    "mobile:ios": "bun run --cwd apps/mobile ios",
-    "mobile:web": "bun run --cwd apps/mobile web",
-    "mobile:test": "bun run --cwd apps/mobile test",
-    "mobile:doctor": "bun run --cwd apps/mobile doctor",
-    "mobile:lint": "bun run --cwd apps/mobile lint",
-    "mobile:lint:fix": "bun run --cwd apps/mobile lint:fix",
-    "mobile:typecheck": "bun run --cwd apps/mobile typecheck",
-    "mobile:prebuild": "bun run --cwd apps/mobile prebuild",
-    "landing:dev": "bun run --cwd apps/landing dev",
-    "landing:build": "bun run --cwd apps/landing build",
-    "landing:preview": "bun run --cwd apps/landing preview"
-  },
-  "patchedDependencies": {
-    "expo-audio@56.0.11": "patches/expo-audio@56.0.11.patch",
-    "lucide-react-native@1.17.0": "patches/lucide-react-native@1.17.0.patch",
-    "zod@4.4.3": "patches/zod@4.4.3.patch"
-  }
+	"name": "wavio-monorepo",
+	"private": true,
+	"packageManager": "bun@1.3.13",
+	"workspaces": [
+		"apps/*"
+	],
+	"scripts": {
+		"mobile:start": "bun run --cwd apps/mobile start",
+		"mobile:android": "bun run --cwd apps/mobile android",
+		"mobile:ios": "bun run --cwd apps/mobile ios",
+		"mobile:web": "bun run --cwd apps/mobile web",
+		"mobile:test": "bun run --cwd apps/mobile test",
+		"mobile:doctor": "bun run --cwd apps/mobile doctor",
+		"mobile:lint": "bun run --cwd apps/mobile lint",
+		"mobile:lint:fix": "bun run --cwd apps/mobile lint:fix",
+		"mobile:typecheck": "bun run --cwd apps/mobile typecheck",
+		"mobile:prebuild": "bun run --cwd apps/mobile prebuild",
+		"mobile:build:android:preview": "bun run --cwd apps/mobile build:android:preview",
+		"landing:dev": "bun run --cwd apps/landing dev",
+		"landing:build": "bun run --cwd apps/landing build",
+		"landing:preview": "bun run --cwd apps/landing preview"
+	},
+	"patchedDependencies": {
+		"expo-audio@56.0.11": "patches/expo-audio@56.0.11.patch",
+		"lucide-react-native@1.17.0": "patches/lucide-react-native@1.17.0.patch",
+		"zod@4.4.3": "patches/zod@4.4.3.patch"
+	}
 }

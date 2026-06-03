@@ -4,6 +4,7 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -206,73 +207,101 @@ export default function QueueDetail() {
           </Heading>
           <Box className="w-6" />
         </HStack>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="grow-0"
-          contentContainerStyle={{ paddingHorizontal: 24 }}
-        >
-          <HStack className="items-center justify-end gap-x-6 mb-4">
-            <FadeOutScaleDown onPress={handleSleepTimerPress}>
-              <HStack className="items-center gap-x-2">
-                <Timer
-                  size={16}
-                  color={sleepActive ? emerald500 : iconActiveColor}
-                />
-                <Text className="text-white font-bold">
-                  {t("app.queue.setTimer")}
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={isEmpty ? undefined : handleCreatePlaylistPress}
-            >
-              <HStack className="items-center gap-x-2">
-                <ListPlus
-                  size={16}
-                  color={isEmpty ? iconDisabledColor : iconActiveColor}
-                />
-                <Text className="text-white font-bold">
-                  {t("app.queue.createPlaylistAction")}
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
-              <HStack className="items-center gap-x-2">
-                <Trash2
-                  size={16}
-                  color={isEmpty ? iconDisabledColor : iconActiveColor}
-                />
-                <Text className="text-white font-bold">
-                  {t("app.queue.clear")}
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={
-                isEmpty
-                  ? undefined
-                  : editMode
-                    ? handleExitEdit
-                    : handleEnterEdit
-              }
-            >
-              <HStack className="items-center gap-x-2">
-                {editMode ? (
-                  <Check size={16} color={emerald500} />
-                ) : (
-                  <ListOrdered
+        <Box className="relative">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="grow-0"
+            contentContainerStyle={{ paddingHorizontal: 24 }}
+          >
+            <HStack className="items-center justify-end gap-x-6 mb-4">
+              <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                <HStack className="items-center gap-x-2">
+                  <Timer
+                    size={16}
+                    color={sleepActive ? emerald500 : iconActiveColor}
+                  />
+                  <Text className="text-white font-bold">
+                    {t("app.queue.setTimer")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={isEmpty ? undefined : handleCreatePlaylistPress}
+              >
+                <HStack className="items-center gap-x-2">
+                  <ListPlus
                     size={16}
                     color={isEmpty ? iconDisabledColor : iconActiveColor}
                   />
-                )}
-                <Text className="text-white font-bold">
-                  {editMode ? t("app.queue.done") : t("app.queue.order")}
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
-          </HStack>
-        </ScrollView>
+                  <Text className="text-white font-bold">
+                    {t("app.queue.createPlaylistAction")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={isEmpty ? undefined : handleClearPress}>
+                <HStack className="items-center gap-x-2">
+                  <Trash2
+                    size={16}
+                    color={isEmpty ? iconDisabledColor : iconActiveColor}
+                  />
+                  <Text className="text-white font-bold">
+                    {t("app.queue.clear")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={
+                  isEmpty
+                    ? undefined
+                    : editMode
+                      ? handleExitEdit
+                      : handleEnterEdit
+                }
+              >
+                <HStack className="items-center gap-x-2">
+                  {editMode ? (
+                    <Check size={16} color={emerald500} />
+                  ) : (
+                    <ListOrdered
+                      size={16}
+                      color={isEmpty ? iconDisabledColor : iconActiveColor}
+                    />
+                  )}
+                  <Text className="text-white font-bold">
+                    {editMode ? t("app.queue.done") : t("app.queue.order")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+            </HStack>
+          </ScrollView>
+          <LinearGradient
+            colors={["#000000", "transparent"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 16,
+            }}
+          />
+          <LinearGradient
+            colors={["transparent", "#000000"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 24,
+            }}
+          />
+        </Box>
         <Box className="px-6 flex-1">
           {isEmpty ? (
             <VStack className="flex-1 items-center justify-center">

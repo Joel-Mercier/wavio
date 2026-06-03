@@ -108,6 +108,7 @@ import { downloadUrl, streamUrl } from "@/utils/streaming";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
+const ICON_HIT_SLOP = { top: 16, bottom: 16, left: 16, right: 16 };
 
 function CoverSlot({
   track,
@@ -1035,6 +1036,7 @@ export default function PlayerScreen() {
                 {!isRadio && isPodcast && podcastSeries && (
                   <AnimatedHeart
                     filled={isPodcastFavorite}
+                    hitSlop={ICON_HIT_SLOP}
                     onPress={
                       isPodcastFavorite
                         ? handleRemoveFavoritePodcastPress
@@ -1045,6 +1047,7 @@ export default function PlayerScreen() {
                 {!isRadio && !isPodcast && (
                   <AnimatedHeart
                     filled={!!playingTrack?.starred}
+                    hitSlop={ICON_HIT_SLOP}
                     onPress={
                       playingTrack?.starred
                         ? handleUnfavoritePress
@@ -1065,6 +1068,7 @@ export default function PlayerScreen() {
                 {!isRadio && (
                   <ShuffleToggle
                     active={shuffle}
+                    hitSlop={ICON_HIT_SLOP}
                     onPress={() => handleShufflePress(!shuffle)}
                   />
                 )}
@@ -1089,6 +1093,7 @@ export default function PlayerScreen() {
                 {!isRadio && (
                   <RepeatToggle
                     mode={repeatMode}
+                    hitSlop={ICON_HIT_SLOP}
                     onPress={() =>
                       handleRepeatModePress(
                         repeatMode === "off"
@@ -1103,10 +1108,11 @@ export default function PlayerScreen() {
               </HStack>
               <HStack className="items-center justify-between mt-8">
                 <CastButton
+                  hitSlop={ICON_HIT_SLOP}
                   style={{ width: 24, height: 24, tintColor: "white" }}
                 />
                 {capabilities.jukebox && !isRadio && !castSession && (
-                  <FadeOut onPress={handleJukeboxPress}>
+                  <FadeOut hitSlop={ICON_HIT_SLOP} onPress={handleJukeboxPress}>
                     <Speaker
                       size={24}
                       color={jukeboxActive ? emerald500 : "white"}
@@ -1118,7 +1124,10 @@ export default function PlayerScreen() {
                     )}
                   </FadeOut>
                 )}
-                <FadeOut onPress={() => router.replace("/queue")}>
+                <FadeOut
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={() => router.replace("/queue")}
+                >
                   <ListMusic size={24} color="white" />
                 </FadeOut>
               </HStack>
