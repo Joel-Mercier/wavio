@@ -19,9 +19,11 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
+  armResume,
   clearResumePosition,
   getResumePosition,
   loadResumePositions,
+  notePlaybackTrack,
   recordResumePosition,
 } from "@/services/resumePositions";
 import {
@@ -275,6 +277,9 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   p.volume = getReplayGainFactor(track);
   if (slot === activeSlot) {
     applyLockScreen(p, track);
+    // Moving the active track off the launch track disarms resume so returning
+    // to it later starts at 0 rather than its stale bookmark.
+    notePlaybackTrack(track.id);
     // Resume long tracks from their saved bookmark position. Arm the seek so the
     // status listener re-applies it once the media is ready, and try an
     // immediate best-effort seek too.
@@ -797,6 +802,9 @@ if (
 function hydratePlayerFromQueue() {
   const current = useQueue.getState().getCurrent();
   lastTrackId = current?.id ?? null;
+  // The restored current track is the only one eligible to resume from its saved
+  // position; arm before loading so the resume read below honours it.
+  armResume(current?.id ?? null);
   if (current && loadedTrackIds[activeSlot] !== current.id) {
     loadTrack(activeSlot, current, false);
   }

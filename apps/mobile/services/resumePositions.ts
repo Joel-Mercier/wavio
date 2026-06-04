@@ -34,6 +34,13 @@ let lastWriteAt = 0;
 let lastWrittenId: string | null = null;
 let lastWrittenPosition = 0;
 
+// Only the track that was active at app launch may be resumed. Replaying a
+// previously abandoned track should start from 0 (the user picked it on purpose
+// and doesn't remember/care where they wandered off last time), so a stored
+// bookmark is honoured exclusively for this id. Set once during cold-start
+// hydration and cleared the moment that track finishes or the user moves on.
+let resumeArmedId: string | null = null;
+
 function bookmarksEnabled(): boolean {
   return getCapabilities(useAuthBase.getState().serverType).bookmarks;
 }
@@ -77,6 +84,8 @@ export async function loadResumePositions(): Promise<void> {
 export function getResumePosition(track: QueueTrack | null): number | null {
   if (!RESUME_ENABLED) return null;
   if (!bookmarksEnabled() || !isResumeEligible(track) || !track) return null;
+  // Resume only the launch track — every other bookmarked track starts at 0.
+  if (track.id !== resumeArmedId) return null;
   const position = positions.get(track.id);
   if (position == null || position < RESUME_MIN_POSITION_SECONDS) return null;
   const duration = track.duration ?? 0;
@@ -91,6 +100,20 @@ export function getResumeProgress(track: QueueTrack | null): number | null {
   const duration = track?.duration ?? 0;
   if (position == null || duration <= 0) return null;
   return Math.min(1, position / duration);
+}
+
+// Mark `trackId` as the launch track eligible for resume. Called once at
+// cold-start hydration with the restored current track.
+export function armResume(trackId: string | null): void {
+  resumeArmedId = trackId;
+}
+
+// Note which track playback has moved to. Once the active track is no longer the
+// armed launch track, drop the arming so returning to it later starts at 0.
+export function notePlaybackTrack(trackId: string | null): void {
+  if (resumeArmedId != null && trackId !== resumeArmedId) {
+    resumeArmedId = null;
+  }
 }
 
 // Throttled write while listening. Updates the in-memory map immediately so the
@@ -119,20 +142,28 @@ export function recordResumePosition(
   ) {
     return;
   }
+  // Keep a single resume bookmark on the server: when recording moves to a new
+  // track, drop the previous track's bookmark before writing the new one.
+  if (changedTrack && lastWrittenId != null) {
+    const previousId = lastWrittenId;
+    positions.delete(previousId);
+    deleteBookmark(previousId).catch(() => {});
+  }
   lastWriteAt = now;
   lastWrittenId = track.id;
   lastWrittenPosition = positionSeconds;
-  createBookmark(track.id, positionSeconds, {}).catch(() => { });
+  createBookmark(track.id, positionSeconds, {}).catch(() => {});
 }
 
 // Drop the bookmark once a track is fully played (or the user asks to).
 export function clearResumePosition(trackId: string | null): void {
   if (!trackId) return;
+  if (resumeArmedId === trackId) resumeArmedId = null;
   if (!positions.has(trackId)) return;
   positions.delete(trackId);
   if (lastWrittenId === trackId) lastWrittenId = null;
   if (!bookmarksEnabled()) return;
-  deleteBookmark(trackId).catch(() => { });
+  deleteBookmark(trackId).catch(() => {});
 }
 
 // Reset everything when the active server/user changes so positions don't bleed
@@ -144,6 +175,7 @@ export function resetResumePositions(): void {
   lastWriteAt = 0;
   lastWrittenId = null;
   lastWrittenPosition = 0;
+  resumeArmedId = null;
 }
 
 let lastScope = `${useAuthBase.getState().url}::${useAuthBase.getState().username}`;
