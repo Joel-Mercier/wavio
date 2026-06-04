@@ -1632,7 +1632,10 @@ export default function SettingsDetail() {
         size="md"
       >
         <AlertDialogBackdrop />
-        <KeyboardAvoidingView behavior="padding">
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={{ width: "100%", alignItems: "center" }}
+        >
           <AlertDialogContent className="bg-primary-800 border-primary-400">
             <AlertDialogHeader>
               <Heading className="text-white font-bold" size="md">
@@ -1721,7 +1724,7 @@ export default function SettingsDetail() {
                     >
                       <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
                         <SelectInput
-                          className="text-md text-white"
+                          className="flex-1 text-md text-white"
                           placeholder={t(
                             "app.settings.podcastSettings.countryPlaceholder",
                           )}
@@ -1777,9 +1780,9 @@ export default function SettingsDetail() {
                     >
                       <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
                         <SelectInput
-                          className="text-md text-white"
+                          className="flex-1 text-md text-white"
                           placeholder={t(
-                            "app.settings.podcastSettings.countryPlaceholder",
+                            "app.settings.podcastSettings.languagePlaceholder",
                           )}
                         />
                         <SelectIcon className="mr-3" as={ChevronDownIcon} />
