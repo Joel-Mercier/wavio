@@ -10,12 +10,18 @@ import type { QueueTrack } from "@/stores/queue";
 // Resume positions are backed by Subsonic bookmarks, so they only make sense
 // for content that actually lives on the Subsonic server and podcasts come
 // from the Taddy API (their ids are unknown to the server), so both are excluded.
-const RESUME_MIN_DURATION_SECONDS = 60; // 1 minute
+const RESUME_MIN_DURATION_SECONDS = 600; // 10 minutes
 // Don't bookmark the very start, and treat the tail as "finished".
 const RESUME_MIN_POSITION_SECONDS = 15;
 const RESUME_END_GUARD_SECONDS = 15;
 // Throttle server writes while a track plays.
 const WRITE_THROTTLE_MS = 10_000;
+
+// Position resuming is temporarily disabled: replaying a previously abandoned
+// track jumped to a random offset the user no longer cares about. Flip this back
+// to re-enable reads/writes once it only resumes the track that was active at
+// app launch rather than every bookmarked track.
+const RESUME_ENABLED = false;
 
 // trackId -> last known position in seconds. Hydrated from getBookmarks and
 // kept in sync as the user listens, so the player can resume without an async
@@ -44,6 +50,7 @@ export function isResumeEligible(track: QueueTrack | null): boolean {
 // Pull the user's bookmarks into the in-memory map. Safe to call repeatedly;
 // only the first call hits the network until reset() is invoked.
 export async function loadResumePositions(): Promise<void> {
+  if (!RESUME_ENABLED) return;
   if (!bookmarksEnabled()) return;
   if (loaded) return;
   if (loadInFlight) return loadInFlight;
@@ -68,6 +75,7 @@ export async function loadResumePositions(): Promise<void> {
 // Position (seconds) to resume `track` at, or null when there's nothing useful
 // to restore (no bookmark, ineligible, too close to start/end).
 export function getResumePosition(track: QueueTrack | null): number | null {
+  if (!RESUME_ENABLED) return null;
   if (!bookmarksEnabled() || !isResumeEligible(track) || !track) return null;
   const position = positions.get(track.id);
   if (position == null || position < RESUME_MIN_POSITION_SECONDS) return null;
@@ -92,6 +100,7 @@ export function recordResumePosition(
   positionSeconds: number,
   { force = false }: { force?: boolean } = {},
 ): void {
+  if (!RESUME_ENABLED) return;
   if (!bookmarksEnabled() || !isResumeEligible(track) || !track) return;
   if (positionSeconds < RESUME_MIN_POSITION_SECONDS) return;
   const duration = track.duration ?? 0;
@@ -113,7 +122,7 @@ export function recordResumePosition(
   lastWriteAt = now;
   lastWrittenId = track.id;
   lastWrittenPosition = positionSeconds;
-  createBookmark(track.id, positionSeconds, {}).catch(() => {});
+  createBookmark(track.id, positionSeconds, {}).catch(() => { });
 }
 
 // Drop the bookmark once a track is fully played (or the user asks to).
@@ -123,7 +132,7 @@ export function clearResumePosition(trackId: string | null): void {
   positions.delete(trackId);
   if (lastWrittenId === trackId) lastWrittenId = null;
   if (!bookmarksEnabled()) return;
-  deleteBookmark(trackId).catch(() => {});
+  deleteBookmark(trackId).catch(() => { });
 }
 
 // Reset everything when the active server/user changes so positions don't bleed
