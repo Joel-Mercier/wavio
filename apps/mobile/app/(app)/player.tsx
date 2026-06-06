@@ -45,6 +45,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
@@ -63,7 +64,6 @@ import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { SafeAreaView } from "@/components/ui/safe-area-view";
 import {
   Slider,
   SliderFilledTrack,
@@ -153,6 +153,7 @@ export default function PlayerScreen() {
     ],
   ) as string[];
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
@@ -238,7 +239,11 @@ export default function PlayerScreen() {
     currentIndex != null && currentIndex < queueLength - 1
       ? queue[currentIndex + 1]
       : null;
-  const [coverWidth, setCoverWidth] = useState(0);
+  const [coverArea, setCoverArea] = useState({ width: 0, height: 0 });
+  const coverSize = Math.max(
+    0,
+    Math.min(coverArea.width - 48, coverArea.height),
+  );
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const { lyrics } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
@@ -255,7 +260,7 @@ export default function PlayerScreen() {
       let tx = e.translationX;
       if (tx > 0 && !canSkipPrevious) return;
       if (tx < 0 && !canSkipNext) return;
-      const max = coverWidth + COVER_SWIPE_BUFFER;
+      const max = coverArea.width + COVER_SWIPE_BUFFER;
       if (tx > max) tx = max;
       if (tx < -max) tx = -max;
       coverTranslateX.value = tx;
@@ -263,7 +268,7 @@ export default function PlayerScreen() {
     .onEnd((e) => {
       if (e.translationX <= -COVER_SWIPE_THRESHOLD && canSkipNext) {
         coverTranslateX.value = withTiming(
-          -coverWidth,
+          -coverArea.width,
           { duration: 200 },
           (finished) => {
             if (finished) {
@@ -274,7 +279,7 @@ export default function PlayerScreen() {
         );
       } else if (e.translationX >= COVER_SWIPE_THRESHOLD && canSkipPrevious) {
         coverTranslateX.value = withTiming(
-          coverWidth,
+          coverArea.width,
           { duration: 200 },
           (finished) => {
             if (finished) {
@@ -906,353 +911,446 @@ export default function PlayerScreen() {
         "#191A1F",
       ]}
       locations={[0, 0.7]}
+      style={{ flex: 1 }}
     >
-      <SafeAreaView>
-        <VStack className="h-screen">
-          <HStack className="items-center justify-between my-6 px-6">
-            <FadeOutScaleDown
-              onPress={() => {
-                if (router.canGoBack()) router.back();
-                else router.replace("/");
-              }}
-              className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-            >
-              <ChevronDown size={24} color="white" />
-            </FadeOutScaleDown>
-            <Text className="text-white font-bold uppercase tracking-wider">
-              {t("app.player.title")}
-            </Text>
-            <FadeOutScaleDown
-              onPress={handlePresentModalPress}
-              className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-            >
-              <EllipsisVertical size={24} color="white" />
-            </FadeOutScaleDown>
-          </HStack>
-          <VStack className="mt-2">
-            <Box
-              className="w-full mb-4 overflow-hidden"
-              style={{ height: Math.max(0, coverWidth - 48) }}
-              onLayout={(e) => setCoverWidth(e.nativeEvent.layout.width)}
-            >
-              {coverWidth > 0 && (
-                <GestureDetector gesture={coverPanGesture}>
-                  <Animated.View
-                    style={[
-                      { width: coverWidth, height: coverWidth - 48 },
-                      coverRowStyle,
-                    ]}
-                  >
-                    <Box style={{ position: "absolute", top: 0, left: 24 }}>
-                      <CoverSlot
-                        track={playingTrack ?? null}
-                        size={coverWidth - 48}
-                      />
-                    </Box>
-                    <Box
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: -coverWidth + 24,
-                      }}
-                    >
-                      <CoverSlot track={prevTrack} size={coverWidth - 48} />
-                    </Box>
-                    <Box
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: coverWidth + 24,
-                      }}
-                    >
-                      <CoverSlot track={nextTrack} size={coverWidth - 48} />
-                    </Box>
-                  </Animated.View>
-                </GestureDetector>
-              )}
-            </Box>
-            <CurrentLyricLine lyrics={hasSyncedLyrics ? lyrics : null} />
-            <VStack className="px-6">
-              <HStack className="items-center justify-between gap-x-4">
-                <VStack className="my-6 flex-1">
-                  <FadeOut
-                    onPress={() => {
-                      if (isPodcast) {
-                        if (!playingTrack?.id) return;
-                        router.replace({
-                          pathname: "/podcasts/[id]",
-                          params: {
-                            id: playingTrack.id,
-                            uuid: playingTrack.id,
-                            name: playingTrack.title,
-                            description: playingTrack.description,
-                            imageUrl: playingTrack.artwork,
-                            datePublished: playingTrack.datePublished,
-                            duration: playingTrack.duration,
-                            audioUrl: playingTrack.url,
-                            websiteUrl: playingTrack.websiteUrl,
-                            podcastSeries: JSON.stringify(
-                              playingTrack.podcastSeries,
-                            ),
-                          },
-                        });
-                        return;
-                      }
-                      if (!playingTrack?.albumId) return;
-                      router.replace(`/albums/${playingTrack.albumId}`);
-                    }}
-                  >
-                    <Heading className="text-white" size="xl" numberOfLines={2}>
-                      {playingTrack?.title}
-                    </Heading>
-                  </FadeOut>
-                  <FadeOut
-                    onPress={() => {
-                      if (isPodcast) {
-                        if (!podcastSeries?.uuid) return;
-                        router.replace({
-                          pathname: "/podcast-series/[id]",
-                          params: {
-                            id: podcastSeries.uuid,
-                            uuid: podcastSeries.uuid,
-                            name: podcastSeries.name,
-                            description: podcastSeries.description,
-                            imageUrl: podcastSeries.imageUrl,
-                            authorName: podcastSeries.authorName,
-                            genres: podcastSeries.genres?.join(","),
-                          },
-                        });
-                        return;
-                      }
-                      if (!playingTrack?.artistId) return;
-                      router.replace(`/artists/${playingTrack.artistId}`);
-                    }}
-                  >
-                    <Text className="text-primary-100 text-lg">
-                      {playingTrack?.artist}
-                    </Text>
-                  </FadeOut>
-                </VStack>
-                {!isRadio && isPodcast && podcastSeries && (
-                  <AnimatedHeart
-                    filled={isPodcastFavorite}
-                    hitSlop={ICON_HIT_SLOP}
-                    onPress={
-                      isPodcastFavorite
-                        ? handleRemoveFavoritePodcastPress
-                        : handleAddFavoritePodcastPress
-                    }
-                  />
-                )}
-                {!isRadio && !isPodcast && (
-                  <AnimatedHeart
-                    filled={!!playingTrack?.starred}
-                    hitSlop={ICON_HIT_SLOP}
-                    onPress={
-                      playingTrack?.starred
-                        ? handleUnfavoritePress
-                        : handleFavoritePress
-                    }
-                  />
-                )}
-              </HStack>
-              {!isRadio && <PlaybackSlider />}
-              {isRadio && <Box className="mb-6" />}
-              <HStack
-                className={
-                  isRadio
-                    ? "items-center justify-center"
-                    : "items-center justify-between"
-                }
-              >
-                {!isRadio && (
-                  <ShuffleToggle
-                    active={shuffle}
-                    hitSlop={ICON_HIT_SLOP}
-                    onPress={() => handleShufflePress(!shuffle)}
-                  />
-                )}
-                {!isRadio && (
-                  <FadeOut onPress={handlePreviousPress}>
-                    <SkipBack size={36} color="white" fill="white" />
-                  </FadeOut>
-                )}
-                <PlayPauseButton
-                  isPlaying={isPlaying}
-                  onPress={handlePlayPausePress}
-                  size={64}
-                  iconSize={24}
-                  color={gray800}
-                  className="bg-white"
-                />
-                {!isRadio && (
-                  <FadeOut onPress={handleNextPress}>
-                    <SkipForward size={36} color="white" fill="white" />
-                  </FadeOut>
-                )}
-                {!isRadio && (
-                  <RepeatToggle
-                    mode={repeatMode}
-                    hitSlop={ICON_HIT_SLOP}
-                    onPress={() =>
-                      handleRepeatModePress(
-                        repeatMode === "off"
-                          ? "all"
-                          : repeatMode === "all"
-                            ? "one"
-                            : "off",
-                      )
-                    }
-                  />
-                )}
-              </HStack>
-              <HStack className="items-center justify-between mt-8">
-                <CastButton
-                  hitSlop={ICON_HIT_SLOP}
-                  style={{ width: 24, height: 24, tintColor: "white" }}
-                />
-                {capabilities.jukebox && !isRadio && !castSession && (
-                  <FadeOut hitSlop={ICON_HIT_SLOP} onPress={handleJukeboxPress}>
-                    <Speaker
-                      size={24}
-                      color={jukeboxActive ? emerald500 : "white"}
-                    />
-                    {jukeboxActive && (
-                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                        <Box className="bg-emerald-500 rounded-full size-1" />
-                      </Box>
-                    )}
-                  </FadeOut>
-                )}
-                <FadeOut
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={() => router.replace("/queue")}
-                >
-                  <ListMusic size={24} color="white" />
-                </FadeOut>
-              </HStack>
-            </VStack>
-          </VStack>
-        </VStack>
-        <BottomSheetModal
-          ref={bottomSheetModalRef}
-          onChange={handleSheetPositionChange}
-          backgroundStyle={{
-            backgroundColor: "rgb(41, 41, 41)",
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: "#b3b3b3",
-          }}
-          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-        >
-          <BottomSheetView
-            style={{
-              flex: 1,
-              alignItems: "center",
+      <VStack
+        className="flex-1"
+        style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+      >
+        <HStack className="items-center justify-between my-6 px-6">
+          <FadeOutScaleDown
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace("/");
             }}
+            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
-            <Box className="p-6 w-full mb-12">
-              <HStack className="items-center">
-                <ImageWithFallback
-                  source={
-                    playingTrack?.artwork
-                      ? { uri: playingTrack.artwork }
-                      : undefined
-                  }
-                  className="w-16 h-16 rounded-md aspect-square"
-                  alt="Track cover"
-                  contentFit={isRadio ? "contain" : "cover"}
-                  fallback={
-                    <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                      {isRadio ? (
-                        <RadioIcon size={24} color={white} />
-                      ) : (
-                        <AudioLines size={24} color={white} />
-                      )}
-                    </Box>
-                  }
-                />
-                <VStack className="ml-4 flex-1">
-                  <Heading
-                    className="text-white font-normal"
-                    size="lg"
-                    numberOfLines={1}
+            <ChevronDown size={24} color="white" />
+          </FadeOutScaleDown>
+          <Text className="text-white font-bold uppercase tracking-wider">
+            {t("app.player.title")}
+          </Text>
+          <FadeOutScaleDown
+            onPress={handlePresentModalPress}
+            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+          >
+            <EllipsisVertical size={24} color="white" />
+          </FadeOutScaleDown>
+        </HStack>
+        <VStack className="flex-1 mt-2">
+          <Box
+            className="w-full flex-1 mb-4 overflow-hidden"
+            onLayout={(e) =>
+              setCoverArea({
+                width: e.nativeEvent.layout.width,
+                height: e.nativeEvent.layout.height,
+              })
+            }
+          >
+            {coverSize > 0 && (
+              <GestureDetector gesture={coverPanGesture}>
+                <Animated.View
+                  style={[
+                    { width: coverArea.width, height: coverArea.height },
+                    coverRowStyle,
+                  ]}
+                >
+                  <Box
+                    style={{
+                      position: "absolute",
+                      top: (coverArea.height - coverSize) / 2,
+                      left: (coverArea.width - coverSize) / 2,
+                    }}
                   >
+                    <CoverSlot track={playingTrack ?? null} size={coverSize} />
+                  </Box>
+                  <Box
+                    style={{
+                      position: "absolute",
+                      top: (coverArea.height - coverSize) / 2,
+                      left: (coverArea.width - coverSize) / 2 - coverArea.width,
+                    }}
+                  >
+                    <CoverSlot track={prevTrack} size={coverSize} />
+                  </Box>
+                  <Box
+                    style={{
+                      position: "absolute",
+                      top: (coverArea.height - coverSize) / 2,
+                      left: (coverArea.width - coverSize) / 2 + coverArea.width,
+                    }}
+                  >
+                    <CoverSlot track={nextTrack} size={coverSize} />
+                  </Box>
+                </Animated.View>
+              </GestureDetector>
+            )}
+          </Box>
+          <CurrentLyricLine lyrics={hasSyncedLyrics ? lyrics : null} />
+          <VStack className="px-6">
+            <HStack className="items-center justify-between gap-x-4">
+              <VStack className="my-6 flex-1">
+                <FadeOut
+                  onPress={() => {
+                    if (isPodcast) {
+                      if (!playingTrack?.id) return;
+                      router.replace({
+                        pathname: "/podcasts/[id]",
+                        params: {
+                          id: playingTrack.id,
+                          uuid: playingTrack.id,
+                          name: playingTrack.title,
+                          description: playingTrack.description,
+                          imageUrl: playingTrack.artwork,
+                          datePublished: playingTrack.datePublished,
+                          duration: playingTrack.duration,
+                          audioUrl: playingTrack.url,
+                          websiteUrl: playingTrack.websiteUrl,
+                          podcastSeries: JSON.stringify(
+                            playingTrack.podcastSeries,
+                          ),
+                        },
+                      });
+                      return;
+                    }
+                    if (!playingTrack?.albumId) return;
+                    router.replace(`/albums/${playingTrack.albumId}`);
+                  }}
+                >
+                  <Heading className="text-white" size="xl" numberOfLines={2}>
                     {playingTrack?.title}
                   </Heading>
-                  {!isRadio && !isPodcast && (
-                    <Text
-                      numberOfLines={1}
-                      className="text-md text-primary-100"
-                    >
-                      {playingTrack?.artist} ⦁ {playingTrack?.album}
-                    </Text>
-                  )}
-                  {isPodcast && (
-                    <Text
-                      numberOfLines={1}
-                      className="text-md text-primary-100"
-                    >
-                      {playingTrack?.artist}
-                    </Text>
-                  )}
-                  {isRadio && (
-                    <Text
-                      numberOfLines={1}
-                      className="text-md text-primary-100"
-                    >
-                      {playingTrack?.streamUrl}
-                    </Text>
-                  )}
-                </VStack>
-              </HStack>
-              {isRadio ? (
-                <InternetRadioStationActions
-                  id={playingTrack?.id ?? ""}
-                  name={playingTrack?.title ?? ""}
-                  streamUrl={playingTrack?.streamUrl ?? playingTrack?.url ?? ""}
-                  homePageUrl={playingTrack?.homePageUrl}
-                  onActionStart={() => bottomSheetModalRef.current?.dismiss()}
-                  onDeleted={() => {
-                    if (router.canGoBack()) router.back();
-                    else router.replace("/");
+                </FadeOut>
+                <FadeOut
+                  onPress={() => {
+                    if (isPodcast) {
+                      if (!podcastSeries?.uuid) return;
+                      router.replace({
+                        pathname: "/podcast-series/[id]",
+                        params: {
+                          id: podcastSeries.uuid,
+                          uuid: podcastSeries.uuid,
+                          name: podcastSeries.name,
+                          description: podcastSeries.description,
+                          imageUrl: podcastSeries.imageUrl,
+                          authorName: podcastSeries.authorName,
+                          genres: podcastSeries.genres?.join(","),
+                        },
+                      });
+                      return;
+                    }
+                    if (!playingTrack?.artistId) return;
+                    router.replace(`/artists/${playingTrack.artistId}`);
                   }}
+                >
+                  <Text className="text-primary-100 text-lg">
+                    {playingTrack?.artist}
+                  </Text>
+                </FadeOut>
+              </VStack>
+              {!isRadio && isPodcast && podcastSeries && (
+                <AnimatedHeart
+                  filled={isPodcastFavorite}
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={
+                    isPodcastFavorite
+                      ? handleRemoveFavoritePodcastPress
+                      : handleAddFavoritePodcastPress
+                  }
                 />
-              ) : isPodcast ? (
-                <VStack className="mt-6 gap-y-8">
-                  {podcastSeries && (
-                    <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
+              )}
+              {!isRadio && !isPodcast && (
+                <AnimatedHeart
+                  filled={!!playingTrack?.starred}
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={
+                    playingTrack?.starred
+                      ? handleUnfavoritePress
+                      : handleFavoritePress
+                  }
+                />
+              )}
+            </HStack>
+            {!isRadio && <PlaybackSlider />}
+            {isRadio && <Box className="mb-6" />}
+            <HStack
+              className={
+                isRadio
+                  ? "items-center justify-center"
+                  : "items-center justify-between"
+              }
+            >
+              {!isRadio && (
+                <ShuffleToggle
+                  active={shuffle}
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={() => handleShufflePress(!shuffle)}
+                />
+              )}
+              {!isRadio && (
+                <FadeOut onPress={handlePreviousPress}>
+                  <SkipBack size={36} color="white" fill="white" />
+                </FadeOut>
+              )}
+              <PlayPauseButton
+                isPlaying={isPlaying}
+                onPress={handlePlayPausePress}
+                size={64}
+                iconSize={24}
+                color={gray800}
+                className="bg-white"
+              />
+              {!isRadio && (
+                <FadeOut onPress={handleNextPress}>
+                  <SkipForward size={36} color="white" fill="white" />
+                </FadeOut>
+              )}
+              {!isRadio && (
+                <RepeatToggle
+                  mode={repeatMode}
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={() =>
+                    handleRepeatModePress(
+                      repeatMode === "off"
+                        ? "all"
+                        : repeatMode === "all"
+                          ? "one"
+                          : "off",
+                    )
+                  }
+                />
+              )}
+            </HStack>
+            <HStack className="items-center justify-between mt-8">
+              <CastButton
+                hitSlop={ICON_HIT_SLOP}
+                style={{ width: 24, height: 24, tintColor: "white" }}
+              />
+              {capabilities.jukebox && !isRadio && !castSession && (
+                <FadeOut hitSlop={ICON_HIT_SLOP} onPress={handleJukeboxPress}>
+                  <Speaker
+                    size={24}
+                    color={jukeboxActive ? emerald500 : "white"}
+                  />
+                  {jukeboxActive && (
+                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                      <Box className="bg-emerald-500 rounded-full size-1" />
+                    </Box>
+                  )}
+                </FadeOut>
+              )}
+              <FadeOut
+                hitSlop={ICON_HIT_SLOP}
+                onPress={() => router.replace("/queue")}
+              >
+                <ListMusic size={24} color="white" />
+              </FadeOut>
+            </HStack>
+          </VStack>
+        </VStack>
+      </VStack>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        onChange={handleSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <ImageWithFallback
+                source={
+                  playingTrack?.artwork
+                    ? { uri: playingTrack.artwork }
+                    : undefined
+                }
+                className="w-16 h-16 rounded-md aspect-square"
+                alt="Track cover"
+                contentFit={isRadio ? "contain" : "cover"}
+                fallback={
+                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                    {isRadio ? (
+                      <RadioIcon size={24} color={white} />
+                    ) : (
+                      <AudioLines size={24} color={white} />
+                    )}
+                  </Box>
+                }
+              />
+              <VStack className="ml-4 flex-1">
+                <Heading
+                  className="text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {playingTrack?.title}
+                </Heading>
+                {!isRadio && !isPodcast && (
+                  <Text numberOfLines={1} className="text-md text-primary-100">
+                    {playingTrack?.artist} ⦁ {playingTrack?.album}
+                  </Text>
+                )}
+                {isPodcast && (
+                  <Text numberOfLines={1} className="text-md text-primary-100">
+                    {playingTrack?.artist}
+                  </Text>
+                )}
+                {isRadio && (
+                  <Text numberOfLines={1} className="text-md text-primary-100">
+                    {playingTrack?.streamUrl}
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
+            {isRadio ? (
+              <InternetRadioStationActions
+                id={playingTrack?.id ?? ""}
+                name={playingTrack?.title ?? ""}
+                streamUrl={playingTrack?.streamUrl ?? playingTrack?.url ?? ""}
+                homePageUrl={playingTrack?.homePageUrl}
+                onActionStart={() => bottomSheetModalRef.current?.dismiss()}
+                onDeleted={() => {
+                  if (router.canGoBack()) router.back();
+                  else router.replace("/");
+                }}
+              />
+            ) : isPodcast ? (
+              <VStack className="mt-6 gap-y-8">
+                {podcastSeries && (
+                  <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
+                    <HStack className="items-center">
+                      <PodcastIcon size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.podcasts.goToPodcastSeries")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {podcastSeries &&
+                  (isPodcastFavorite ? (
+                    <FadeOutScaleDown
+                      onPress={handleRemoveFavoritePodcastPress}
+                    >
                       <HStack className="items-center">
-                        <PodcastIcon size={24} color={gray200} />
+                        <CircleMinus size={24} color={gray200} />
                         <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.podcasts.goToPodcastSeries")}
+                          {t("app.podcasts.removeFromFavorites")}
                         </Text>
                       </HStack>
                     </FadeOutScaleDown>
-                  )}
-                  {podcastSeries &&
-                    (isPodcastFavorite ? (
-                      <FadeOutScaleDown
-                        onPress={handleRemoveFavoritePodcastPress}
-                      >
-                        <HStack className="items-center">
-                          <CircleMinus size={24} color={gray200} />
-                          <Text className="ml-4 text-lg text-gray-200">
-                            {t("app.podcasts.removeFromFavorites")}
-                          </Text>
-                        </HStack>
-                      </FadeOutScaleDown>
-                    ) : (
-                      <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
-                        <HStack className="items-center">
-                          <PlusCircle size={24} color={gray200} />
-                          <Text className="ml-4 text-lg text-gray-200">
-                            {t("app.podcasts.addToFavorites")}
-                          </Text>
-                        </HStack>
-                      </FadeOutScaleDown>
-                    ))}
-                  <FadeOutScaleDown onPress={handleSharePodcastEpisodePress}>
+                  ) : (
+                    <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
+                      <HStack className="items-center">
+                        <PlusCircle size={24} color={gray200} />
+                        <Text className="ml-4 text-lg text-gray-200">
+                          {t("app.podcasts.addToFavorites")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                  ))}
+                <FadeOutScaleDown onPress={handleSharePodcastEpisodePress}>
+                  <HStack className="items-center">
+                    <Share2 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.share")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                  <HStack className="items-center">
+                    <Timer
+                      size={24}
+                      color={sleepActive ? emerald500 : gray200}
+                    />
+                    <Text
+                      className="ml-4 text-lg"
+                      style={{
+                        color: sleepActive ? emerald500 : gray200,
+                      }}
+                    >
+                      {sleepActive && sleepRemainingLabel
+                        ? t("app.player.sleepTimerActive", {
+                            label: sleepRemainingLabel,
+                          })
+                        : t("app.player.sleepTimer")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              </VStack>
+            ) : (
+              <VStack className="mt-6 gap-y-8">
+                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
+                  <HStack className="items-center">
+                    <PlusCircle size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.addToPlaylist")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleGoToArtistPress}>
+                  <HStack className="items-center">
+                    <User size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.goToArtist", {
+                        count: trackArtists.length || 1,
+                      })}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                {playingTrack?.albumId && (
+                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
+                    <HStack className="items-center">
+                      <Disc3 size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.goToAlbum")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                <FadeOutScaleDown onPress={handlePlayNextPress}>
+                  <HStack className="items-center">
+                    <ListStart size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.player.playNext")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleAddToQueuePress}>
+                  <HStack className="items-center">
+                    <ListPlus size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.player.addToQueue")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleShowLyricsPress}>
+                  <HStack className="items-center">
+                    <Mic2 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.player.lyrics")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                  <HStack className="items-center">
+                    <Sparkles size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.similarSongs")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                {capabilities.sharing && (
+                  <FadeOutScaleDown onPress={handleSharePress}>
                     <HStack className="items-center">
                       <Share2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -1260,380 +1358,284 @@ export default function PlayerScreen() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                )}
+                <FadeOutScaleDown onPress={handleDownloadPress}>
+                  <HStack className="items-center">
+                    <Download size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.download")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSleepTimerPress}>
+                  <HStack className="items-center">
+                    <Timer
+                      size={24}
+                      color={sleepActive ? emerald500 : gray200}
+                    />
+                    <Text
+                      className="ml-4 text-lg"
+                      style={{
+                        color: sleepActive ? emerald500 : gray200,
+                      }}
+                    >
+                      {sleepActive && sleepRemainingLabel
+                        ? t("app.player.sleepTimerActive", {
+                            label: sleepRemainingLabel,
+                          })
+                        : t("app.player.sleepTimer")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                {playingTrack?.musicBrainzId && (
+                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
                     <HStack className="items-center">
-                      <Timer
-                        size={24}
-                        color={sleepActive ? emerald500 : gray200}
-                      />
-                      <Text
-                        className="ml-4 text-lg"
-                        style={{
-                          color: sleepActive ? emerald500 : gray200,
-                        }}
-                      >
-                        {sleepActive && sleepRemainingLabel
-                          ? t("app.player.sleepTimerActive", {
-                              label: sleepRemainingLabel,
-                            })
-                          : t("app.player.sleepTimer")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                </VStack>
-              ) : (
-                <VStack className="mt-6 gap-y-8">
-                  <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
-                    <HStack className="items-center">
-                      <PlusCircle size={24} color={gray200} />
+                      <MusicBrainz width={24} height={24} fill={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.addToPlaylist")}
+                        {t("app.tracks.musicBrainz")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleGoToArtistPress}>
-                    <HStack className="items-center">
-                      <User size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.goToArtist", {
-                          count: trackArtists.length || 1,
-                        })}
-                      </Text>
-                    </HStack>
+                )}
+              </VStack>
+            )}
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={sleepTimerSheetRef}
+        onChange={handleSleepSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center mb-6">
+              <Timer size={24} color={gray200} />
+              <Heading
+                className="ml-4 text-white font-normal"
+                size="lg"
+                numberOfLines={1}
+              >
+                {t("app.player.sleepTimer")}
+              </Heading>
+            </HStack>
+            <VStack className="gap-y-6">
+              <FadeOutScaleDown onPress={handleSleepCancelPress}>
+                <Text
+                  className="text-lg"
+                  style={{
+                    color: !sleepActive ? emerald500 : gray200,
+                  }}
+                >
+                  {t("app.player.sleepTimerOff")}
+                </Text>
+              </FadeOutScaleDown>
+              {[5, 10, 15, 30, 45, 60].map((minutes) => {
+                const active =
+                  !sleepEndOfTrack &&
+                  sleepEndsAt != null &&
+                  Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
+                return (
+                  <FadeOutScaleDown
+                    key={minutes}
+                    onPress={() => handleSleepPresetPress(minutes)}
+                  >
+                    <Text
+                      className="text-lg"
+                      style={{
+                        color: active ? emerald500 : gray200,
+                      }}
+                    >
+                      {t("app.player.sleepTimerMinutes", { count: minutes })}
+                    </Text>
                   </FadeOutScaleDown>
-                  {playingTrack?.albumId && (
-                    <FadeOutScaleDown onPress={handleGoToAlbumPress}>
-                      <HStack className="items-center">
-                        <Disc3 size={24} color={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.tracks.goToAlbum")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
-                  <FadeOutScaleDown onPress={handlePlayNextPress}>
-                    <HStack className="items-center">
-                      <ListStart size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.player.playNext")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleAddToQueuePress}>
-                    <HStack className="items-center">
-                      <ListPlus size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.player.addToQueue")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleShowLyricsPress}>
-                    <HStack className="items-center">
-                      <Mic2 size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.player.lyrics")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleSimilarSongsPress}>
-                    <HStack className="items-center">
-                      <Sparkles size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.similarSongs")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  {capabilities.sharing && (
-                    <FadeOutScaleDown onPress={handleSharePress}>
-                      <HStack className="items-center">
-                        <Share2 size={24} color={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.tracks.share")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
-                  <FadeOutScaleDown onPress={handleDownloadPress}>
-                    <HStack className="items-center">
-                      <Download size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.download")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                    <HStack className="items-center">
-                      <Timer
-                        size={24}
-                        color={sleepActive ? emerald500 : gray200}
-                      />
-                      <Text
-                        className="ml-4 text-lg"
-                        style={{
-                          color: sleepActive ? emerald500 : gray200,
-                        }}
-                      >
-                        {sleepActive && sleepRemainingLabel
-                          ? t("app.player.sleepTimerActive", {
-                              label: sleepRemainingLabel,
-                            })
-                          : t("app.player.sleepTimer")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                  {playingTrack?.musicBrainzId && (
-                    <FadeOutScaleDown onPress={handleMusicBrainzPress}>
-                      <HStack className="items-center">
-                        <MusicBrainz width={24} height={24} fill={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.tracks.musicBrainz")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
+                );
+              })}
+              <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
+                <Text
+                  className="text-lg"
+                  style={{
+                    color: sleepEndOfTrack ? emerald500 : gray200,
+                  }}
+                >
+                  {t("app.player.sleepTimerEndOfTrack")}
+                </Text>
+              </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetArtistsModalRef}
+        onChange={handleArtistsSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <VStack className="gap-y-6">
+              {trackArtists.map((artist) => (
+                <FadeOutScaleDown
+                  key={artist.id}
+                  onPress={() => handleArtistPickPress(artist.id)}
+                >
+                  <HStack className="items-center">
+                    <User size={24} color={gray200} />
+                    <Text
+                      className="ml-4 text-lg text-gray-200"
+                      numberOfLines={1}
+                    >
+                      {artist.name}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetShareModalRef}
+        onChange={handleShareSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView
+          style={{
+            flex: 1,
+            alignItems: "center",
+          }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <FadeOutScaleDown
+                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
+                onPress={handleCopyShareUrlPress}
+              >
+                {clipoardCopyDone ? (
+                  <ClipboardCheck size={24} color={emerald500} />
+                ) : (
+                  <ClipboardIcon size={24} color={gray200} />
+                )}
+                <Text
+                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                >
+                  {clipboardText}
+                </Text>
+              </FadeOutScaleDown>
+            </HStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={jukeboxSheetRef}
+        onChange={handleJukeboxSheetPositionChange}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
+      >
+        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center mb-6">
+              <Speaker size={24} color={jukeboxActive ? emerald500 : gray200} />
+              <Heading
+                className="ml-4 text-white font-normal"
+                size="lg"
+                numberOfLines={1}
+              >
+                {t("app.player.jukebox")}
+              </Heading>
+            </HStack>
+            <VStack className="gap-y-6">
+              <FadeOutScaleDown onPress={handleJukeboxToggle}>
+                <Text
+                  className="text-lg"
+                  style={{
+                    color: jukeboxActive ? emerald500 : gray200,
+                  }}
+                >
+                  {jukeboxActive
+                    ? t("app.player.jukeboxOn")
+                    : t("app.player.jukeboxOff")}
+                </Text>
+              </FadeOutScaleDown>
+              {jukeboxActive && (
+                <VStack className="gap-y-2">
+                  <Text className="text-sm text-primary-100">
+                    {t("app.player.jukeboxGain")}
+                  </Text>
+                  <Slider
+                    defaultValue={Math.round(jukeboxGain * 100)}
+                    value={Math.round(jukeboxGain * 100)}
+                    step={1}
+                    minValue={0}
+                    maxValue={100}
+                    size="md"
+                    orientation="horizontal"
+                    isDisabled={false}
+                    isReversed={false}
+                    onChange={handleJukeboxGainChange}
+                  >
+                    <SliderTrack
+                      className="bg-primary-400"
+                      hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
+                    >
+                      <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
+                    </SliderTrack>
+                    <SliderThumb
+                      className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
+                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    />
+                  </Slider>
+                  {jukeboxStatus && (
+                    <Text className="text-sm text-primary-100 mt-2">
+                      {t("app.player.jukeboxStatus", {
+                        state: jukeboxStatus.playing
+                          ? t("app.player.jukeboxStatePlaying")
+                          : t("app.player.jukeboxStatePaused"),
+                        index: (jukeboxStatus.currentIndex ?? 0) + 1,
+                        total: queueLength,
+                      })}
+                    </Text>
                   )}
                 </VStack>
               )}
-            </Box>
-          </BottomSheetView>
-        </BottomSheetModal>
-        <BottomSheetModal
-          ref={sleepTimerSheetRef}
-          onChange={handleSleepSheetPositionChange}
-          backgroundStyle={{
-            backgroundColor: "rgb(41, 41, 41)",
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: "#b3b3b3",
-          }}
-          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-        >
-          <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-            <Box className="p-6 w-full mb-12">
-              <HStack className="items-center mb-6">
-                <Timer size={24} color={gray200} />
-                <Heading
-                  className="ml-4 text-white font-normal"
-                  size="lg"
-                  numberOfLines={1}
-                >
-                  {t("app.player.sleepTimer")}
-                </Heading>
-              </HStack>
-              <VStack className="gap-y-6">
-                <FadeOutScaleDown onPress={handleSleepCancelPress}>
-                  <Text
-                    className="text-lg"
-                    style={{
-                      color: !sleepActive ? emerald500 : gray200,
-                    }}
-                  >
-                    {t("app.player.sleepTimerOff")}
-                  </Text>
-                </FadeOutScaleDown>
-                {[5, 10, 15, 30, 45, 60].map((minutes) => {
-                  const active =
-                    !sleepEndOfTrack &&
-                    sleepEndsAt != null &&
-                    Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
-                  return (
-                    <FadeOutScaleDown
-                      key={minutes}
-                      onPress={() => handleSleepPresetPress(minutes)}
-                    >
-                      <Text
-                        className="text-lg"
-                        style={{
-                          color: active ? emerald500 : gray200,
-                        }}
-                      >
-                        {t("app.player.sleepTimerMinutes", { count: minutes })}
-                      </Text>
-                    </FadeOutScaleDown>
-                  );
-                })}
-                <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
-                  <Text
-                    className="text-lg"
-                    style={{
-                      color: sleepEndOfTrack ? emerald500 : gray200,
-                    }}
-                  >
-                    {t("app.player.sleepTimerEndOfTrack")}
-                  </Text>
-                </FadeOutScaleDown>
-              </VStack>
-            </Box>
-          </BottomSheetView>
-        </BottomSheetModal>
-        <BottomSheetModal
-          ref={bottomSheetArtistsModalRef}
-          onChange={handleArtistsSheetPositionChange}
-          backgroundStyle={{
-            backgroundColor: "rgb(41, 41, 41)",
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: "#b3b3b3",
-          }}
-          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-        >
-          <BottomSheetView
-            style={{
-              flex: 1,
-              alignItems: "center",
-            }}
-          >
-            <Box className="p-6 w-full mb-12">
-              <VStack className="gap-y-6">
-                {trackArtists.map((artist) => (
-                  <FadeOutScaleDown
-                    key={artist.id}
-                    onPress={() => handleArtistPickPress(artist.id)}
-                  >
-                    <HStack className="items-center">
-                      <User size={24} color={gray200} />
-                      <Text
-                        className="ml-4 text-lg text-gray-200"
-                        numberOfLines={1}
-                      >
-                        {artist.name}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                ))}
-              </VStack>
-            </Box>
-          </BottomSheetView>
-        </BottomSheetModal>
-        <BottomSheetModal
-          ref={bottomSheetShareModalRef}
-          onChange={handleShareSheetPositionChange}
-          backgroundStyle={{
-            backgroundColor: "rgb(41, 41, 41)",
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: "#b3b3b3",
-          }}
-          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-        >
-          <BottomSheetView
-            style={{
-              flex: 1,
-              alignItems: "center",
-            }}
-          >
-            <Box className="p-6 w-full mb-12">
-              <HStack className="items-center">
-                <FadeOutScaleDown
-                  className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
-                  onPress={handleCopyShareUrlPress}
-                >
-                  {clipoardCopyDone ? (
-                    <ClipboardCheck size={24} color={emerald500} />
-                  ) : (
-                    <ClipboardIcon size={24} color={gray200} />
-                  )}
-                  <Text
-                    className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
-                    ellipsizeMode="tail"
-                    numberOfLines={1}
-                  >
-                    {clipboardText}
-                  </Text>
-                </FadeOutScaleDown>
-              </HStack>
-            </Box>
-          </BottomSheetView>
-        </BottomSheetModal>
-        <BottomSheetModal
-          ref={jukeboxSheetRef}
-          onChange={handleJukeboxSheetPositionChange}
-          backgroundStyle={{
-            backgroundColor: "rgb(41, 41, 41)",
-          }}
-          handleIndicatorStyle={{
-            backgroundColor: "#b3b3b3",
-          }}
-          backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-        >
-          <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-            <Box className="p-6 w-full mb-12">
-              <HStack className="items-center mb-6">
-                <Speaker
-                  size={24}
-                  color={jukeboxActive ? emerald500 : gray200}
-                />
-                <Heading
-                  className="ml-4 text-white font-normal"
-                  size="lg"
-                  numberOfLines={1}
-                >
-                  {t("app.player.jukebox")}
-                </Heading>
-              </HStack>
-              <VStack className="gap-y-6">
-                <FadeOutScaleDown onPress={handleJukeboxToggle}>
-                  <Text
-                    className="text-lg"
-                    style={{
-                      color: jukeboxActive ? emerald500 : gray200,
-                    }}
-                  >
-                    {jukeboxActive
-                      ? t("app.player.jukeboxOn")
-                      : t("app.player.jukeboxOff")}
-                  </Text>
-                </FadeOutScaleDown>
-                {jukeboxActive && (
-                  <VStack className="gap-y-2">
-                    <Text className="text-sm text-primary-100">
-                      {t("app.player.jukeboxGain")}
-                    </Text>
-                    <Slider
-                      defaultValue={Math.round(jukeboxGain * 100)}
-                      value={Math.round(jukeboxGain * 100)}
-                      step={1}
-                      minValue={0}
-                      maxValue={100}
-                      size="md"
-                      orientation="horizontal"
-                      isDisabled={false}
-                      isReversed={false}
-                      onChange={handleJukeboxGainChange}
-                    >
-                      <SliderTrack
-                        className="bg-primary-400"
-                        hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
-                      >
-                        <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                      </SliderTrack>
-                      <SliderThumb
-                        className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
-                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                      />
-                    </Slider>
-                    {jukeboxStatus && (
-                      <Text className="text-sm text-primary-100 mt-2">
-                        {t("app.player.jukeboxStatus", {
-                          state: jukeboxStatus.playing
-                            ? t("app.player.jukeboxStatePlaying")
-                            : t("app.player.jukeboxStatePaused"),
-                          index: (jukeboxStatus.currentIndex ?? 0) + 1,
-                          total: queueLength,
-                        })}
-                      </Text>
-                    )}
-                  </VStack>
-                )}
-              </VStack>
-            </Box>
-          </BottomSheetView>
-        </BottomSheetModal>
-        <LyricsDialog
-          isOpen={showLyricsDialog}
-          onClose={() => setShowLyricsDialog(false)}
-          lyrics={lyrics}
-        />
-      </SafeAreaView>
+            </VStack>
+          </Box>
+        </BottomSheetView>
+      </BottomSheetModal>
+      <LyricsDialog
+        isOpen={showLyricsDialog}
+        onClose={() => setShowLyricsDialog(false)}
+        lyrics={lyrics}
+      />
     </LinearGradient>
   );
 }
