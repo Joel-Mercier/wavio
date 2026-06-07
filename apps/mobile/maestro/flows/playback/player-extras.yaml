@@ -17,7 +17,7 @@ tags:
     id: "floating-player"
 - extendedWaitUntil:
     visible: "Playing now"
-    timeout: 10000
+    timeout: 5000
 
 # --- Lyrics dialog ----------------------------------------------------------
 # Open the "…" menu and assert the secondary actions are present, then open the
@@ -28,13 +28,13 @@ tags:
     id: "player-menu-button"
 - extendedWaitUntil:
     visible: "Lyrics"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "Sleep timer"
 - assertVisible: "Similar songs"
 - tapOn: "Lyrics"
 - extendedWaitUntil:
     visible: "Close"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Close"
 - assertVisible: "Playing now"
 
@@ -47,7 +47,7 @@ tags:
 - tapOn: "Sleep timer"
 - extendedWaitUntil:
     visible: "End of track"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "Off"
 - tapOn: "15 minutes"
 - assertVisible: "Playing now"
@@ -59,8 +59,8 @@ tags:
     id: "player-menu-button"
 - extendedWaitUntil:
     visible: "Similar songs"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Similar songs"
 - extendedWaitUntil:
     notVisible: "Playing now"
-    timeout: 15000
+    timeout: 8000

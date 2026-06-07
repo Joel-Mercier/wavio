@@ -14,11 +14,11 @@ import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import RecentSearchListItem from "@/components/search/RecentSearchListItem";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -177,16 +177,13 @@ export default function RecentSearchesScreen() {
           <Box>
             {query.length === 0 && recentSearches.length > 0 && (
               <Center className="my-6">
-                <FadeOutScaleDown onPress={handleClearAllPress}>
-                  <Button
-                    variant="outline"
-                    action="default"
-                    className="rounded-full border-white"
-                  >
-                    <ButtonText className="text-white">
-                      {t("app.search.clearRecentSearches")}
-                    </ButtonText>
-                  </Button>
+                <FadeOutScaleDown
+                  onPress={handleClearAllPress}
+                  className="rounded-full border border-white py-1 px-3"
+                >
+                  <Text className="text-white">
+                    {t("app.search.clearRecentSearches")}
+                  </Text>
                 </FadeOutScaleDown>
               </Center>
             )}

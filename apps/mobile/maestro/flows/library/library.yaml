@@ -16,7 +16,7 @@ tags:
 - tapOn: "Library"
 - extendedWaitUntil:
     visible: "Recent"
-    timeout: 15000
+    timeout: 8000
 
 # The filter chips render (the leading ones — trailing chips like "Folders" sit
 # off the horizontal scroll, so assert the ones in view).
@@ -30,19 +30,38 @@ tags:
 - tapOn: "Playlists"
 - extendedWaitUntil:
     visible: "Favorites"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Albums"
 - extendedWaitUntil:
     notVisible: "Favorites"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Playlists"
 - extendedWaitUntil:
     visible: "Favorites"
-    timeout: 10000
+    timeout: 5000
 
 # Drill into the Favorites screen ("Favorite tracks" exists only there).
 - tapOn: "Favorites"
 - extendedWaitUntil:
     visible: "Favorite tracks"
-    timeout: 15000
+    timeout: 8000
 - assertVisible: "Search your favorite tracks"
+
+# Open the Favorites search screen (a dedicated fuzzy search over starred
+# tracks). Both screens share the "Search your favorite tracks" placeholder, so
+# confirm the route change via the "Favorite tracks" heading disappearing. The
+# field auto-focuses, so type straight away; content-agnostic (we only prove the
+# input accepts text, not which results come back).
+- tapOn: "Search your favorite tracks"
+- extendedWaitUntil:
+    notVisible: "Favorite tracks"
+    timeout: 5000
+- inputText: "a"
+- assertVisible: "a"
+# The field auto-focuses, so dismiss the keyboard first — otherwise the Android
+# `back` only closes the keyboard and leaves us on the search screen.
+- hideKeyboard
+- back
+- extendedWaitUntil:
+    visible: "Favorite tracks"
+    timeout: 5000

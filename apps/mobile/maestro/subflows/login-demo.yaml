@@ -18,7 +18,7 @@ tags:
 # Wait for first paint (login background animation + Compose view).
 - extendedWaitUntil:
     visible: "Sign in"
-    timeout: 10000
+    timeout: 8000
 # "Demo mode" prefills https://demo.navidrome.org with demo/demo (Navidrome).
 - tapOn: "Demo mode"
 - tapOn: "Login"
@@ -27,4 +27,4 @@ tags:
 # when this subflow returns, we are on Home.
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 20000
+    timeout: 12000

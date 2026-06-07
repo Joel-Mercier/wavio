@@ -13,19 +13,19 @@ tags:
 # Album -> "…" menu -> Go to artist.
 - extendedWaitUntil:
     visible: "Album cover"
-    timeout: 20000
+    timeout: 10000
 - tapOn:
     text: "Album cover"
     index: 0
 - extendedWaitUntil:
     visible:
       id: "album-menu-button"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "album-menu-button"
 - extendedWaitUntil:
     visible: "Go to artist"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Go to artist"
 
 # Artist detail: "Top songs" confirms the route. ("About" is omitted — it only
@@ -33,11 +33,11 @@ tags:
 # for artists with many top songs, so scroll it into view.
 - extendedWaitUntil:
     visible: "Top songs"
-    timeout: 15000
+    timeout: 8000
 - scrollUntilVisible:
     element: "Discography"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 
 # Drill into the full Discography screen via the footer "See all" link. It only
 # renders when the artist has more than 3 albums, so scroll down to the album
@@ -48,7 +48,7 @@ tags:
     element:
       text: ".*albums?"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 - runFlow:
     when:
       visible: "See all"
@@ -56,9 +56,9 @@ tags:
       - tapOn: "See all"
       - extendedWaitUntil:
           notVisible: "Top songs"
-          timeout: 10000
+          timeout: 5000
       - back
       - scrollUntilVisible:
           element: "Top songs"
           direction: UP
-          timeout: 15000
+          timeout: 8000

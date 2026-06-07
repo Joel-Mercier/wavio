@@ -1,0 +1,97 @@
+appId: com.jmercier.wavio
+name: smart-playlist
+# Critical path — Smart playlist lifecycle (one session, write path, self-cleaning).
+# A full create -> open -> delete round-trip for a *smart* (rule-based) playlist,
+# the sibling of `playlists.yaml`'s manual playlist path. Creates one from the
+# Library "+" sheet's "Smart playlist" option (filling a single "title contains"
+# rule so the criteria is valid and deterministic), confirms it's a smart
+# playlist via the rules-only "…" menu entry, then deletes it — the delete
+# doubles as cleanup, so no artifact is left on the shared demo server.
+#
+# Smart playlists are Navidrome-only (`showSmartPlaylist`), which the demo server
+# this suite runs against supports, so the "Smart playlist" sheet option is
+# expected to appear (we wait for it rather than guarding — a point-in-time guard
+# races the sheet's entrance animation).
+#
+# `output` usage: a run-unique, timestamped name (`evalScript`) so repeated runs
+# never collide and every assertion targets exactly the playlist this run made.
+tags:
+  - playlists
+  - smart-playlist
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Generate a run-unique name.
+- evalScript: ${output.smartPlaylistName = 'maestro-smart-' + Date.now()}
+
+# --- Open the create sheet -> Smart playlist form --------------------------
+- tapOn: "Library"
+# "Recent" (the sort header) is a stable signal the Library tab mounted.
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn:
+    id: "library-create-button"
+# Wait for the sheet's "Smart playlist" option to settle in, then open it.
+- extendedWaitUntil:
+    visible: "Smart playlist"
+    timeout: 8000
+- tapOn: "Smart playlist"
+- extendedWaitUntil:
+    visible: "New smart playlist"
+    timeout: 8000
+
+# --- Create ----------------------------------------------------------------
+# Name the playlist (the field doesn't auto-focus, so tap it first).
+- tapOn: "Smart playlist name"
+- inputText: ${output.smartPlaylistName}
+- hideKeyboard
+# Give the default "title contains …" rule a value so the criteria is non-empty
+# and deterministic. The value input sits below the name / comment / public-switch
+# block, so scroll it into view first.
+- scrollUntilVisible:
+    element: "Value"
+    direction: DOWN
+    timeout: 8000
+- tapOn: "Value"
+- inputText: "love"
+- hideKeyboard
+# "Create" lives in a fixed footer, so it's always reachable.
+- tapOn: "Create"
+
+# --- Read: it shows up in the Library, then open its detail -----------------
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn: "Playlists"
+# The "Recent" sort can place the new playlist below the fold, so scroll it in
+# rather than asserting it's already on screen.
+- scrollUntilVisible:
+    element:
+      text: ${output.smartPlaylistName}
+    direction: DOWN
+    timeout: 8000
+- tapOn: ${output.smartPlaylistName}
+- extendedWaitUntil:
+    visible:
+      id: "playlist-menu-button"
+    timeout: 8000
+
+# --- Delete (also cleanup) -------------------------------------------------
+# The "…" menu's "Edit smart playlist rules" entry is unique to smart playlists,
+# so asserting it confirms we created a smart (not manual) one.
+- tapOn:
+    id: "playlist-menu-button"
+- extendedWaitUntil:
+    visible: "Edit smart playlist rules"
+    timeout: 5000
+- tapOn: "Delete this playlist"
+- extendedWaitUntil:
+    visible: "Are you sure you want to delete this playlist?"
+    timeout: 5000
+- tapOn: "Delete"
+
+# Back on the Library, the playlist is gone.
+- extendedWaitUntil:
+    notVisible: ${output.smartPlaylistName}
+    timeout: 8000

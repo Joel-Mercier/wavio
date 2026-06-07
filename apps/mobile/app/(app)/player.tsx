@@ -1062,6 +1062,7 @@ export default function PlayerScreen() {
               )}
               {!isRadio && !isPodcast && (
                 <AnimatedHeart
+                  testID="player-favorite-button"
                   filled={!!playingTrack?.starred}
                   hitSlop={ICON_HIT_SLOP}
                   onPress={

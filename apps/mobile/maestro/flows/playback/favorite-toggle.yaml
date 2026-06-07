@@ -1,0 +1,118 @@
+appId: com.jmercier.wavio
+name: favorite-toggle
+# Critical path — Favorite (star) toggle (one session, write path, self-cleaning).
+# Plays a track and toggles its favorite state from the full player heart twice,
+# verifying via the Favorites song-count (the only reliable, observable signal in
+# this build — success toasts render in a portal Maestro can't match, and the
+# heart's filled state isn't exposed).
+#
+# Why the count and not the toast: `useStar`/`useUnstar` invalidate the
+# `starred2` query, so the Library's "Favorites ⦁ N songs" pseudo-item is the
+# deterministic reflection of a star/unstar. We read it before/after each tap and
+# wait for the refetch by watching the *old* count text disappear.
+#
+# Direction-aware + self-cleaning: we first read the playing track's initial
+# favorite state from its album-row "…" menu ("Add to favorites" shows only when
+# NOT starred — TrackActionsProvider gates it on `!track.starred`). The first tap
+# therefore moves the count by `1 - 2*startFav` (UP if it began unfavorited, DOWN
+# if it began favorited); the second tap reverses it, so the count returns to the
+# baseline. Net effect is zero: any favorite we *make* we delete, and a
+# pre-existing favorite is restored — nothing is left behind on the shared demo.
+#
+# Targets the label-less heart via the `player-favorite-button` testID
+# (AnimatedHeart forwards testID to its Pressable).
+tags:
+  - playback
+  - favorites
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/play-first-album.yaml
+
+# --- Read the playing (first) track's initial favorite state ----------------
+# Open its album-row "…" menu; "Add to favorites" present => not yet starred.
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 5000
+- runFlow:
+    when:
+      visible: "Add to favorites"
+    commands:
+      - evalScript: ${output.startFav = 0}
+- runFlow:
+    when:
+      notVisible: "Add to favorites"
+    commands:
+      - evalScript: ${output.startFav = 1}
+- back
+
+# --- Baseline favorites count ----------------------------------------------
+# The "Favorites" pseudo-item (pinned under the Playlists filter) reads
+# "Favorites ⦁ N songs". Capture the exact text (to detect the refetch later)
+# and the number. The expected post-tap count is +1 if we start unfavorited,
+# -1 if already favorited (1 - 2*startFav).
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn: "Playlists"
+- extendedWaitUntil:
+    visible:
+      text: "Favorites.*songs?.*"
+    timeout: 8000
+- copyTextFrom:
+    text: "Favorites.*songs?.*"
+- evalScript: ${output.favText0 = maestro.copiedText}
+- evalScript: ${output.favCount0 = parseInt((maestro.copiedText || '').replace(/[^0-9]/g, ''), 10)}
+- evalScript: ${output.expected1 = output.favCount0 + 1 - 2 * output.startFav}
+
+# --- First tap: toggle the playing track's favorite -------------------------
+- tapOn:
+    id: "floating-player"
+- extendedWaitUntil:
+    visible: "Playing now"
+    timeout: 5000
+- tapOn:
+    id: "player-favorite-button"
+- back
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+# Wait for the starred2 refetch to land (the old count text disappears).
+- extendedWaitUntil:
+    notVisible:
+      text: ${output.favText0}
+    timeout: 12000
+- copyTextFrom:
+    text: "Favorites.*songs?.*"
+- evalScript: ${output.favText1 = maestro.copiedText}
+- evalScript: ${output.favCount1 = parseInt((maestro.copiedText || '').replace(/[^0-9]/g, ''), 10)}
+- assertTrue: ${output.favCount1 === output.expected1}
+
+# --- Second tap: reverse it (cleanup) ---------------------------------------
+- tapOn:
+    id: "floating-player"
+- extendedWaitUntil:
+    visible: "Playing now"
+    timeout: 5000
+- tapOn:
+    id: "player-favorite-button"
+- back
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- extendedWaitUntil:
+    notVisible:
+      text: ${output.favText1}
+    timeout: 12000
+- copyTextFrom:
+    text: "Favorites.*songs?.*"
+- evalScript: ${output.favCount2 = parseInt((maestro.copiedText || '').replace(/[^0-9]/g, ''), 10)}
+# Back to the baseline -> any favorite we made is deleted (and a pre-existing one restored).
+- assertTrue: ${output.favCount2 === output.favCount0}

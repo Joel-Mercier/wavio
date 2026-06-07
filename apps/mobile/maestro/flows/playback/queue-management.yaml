@@ -18,12 +18,12 @@ tags:
     id: "floating-player"
 - extendedWaitUntil:
     visible: "Playing now"
-    timeout: 10000
+    timeout: 5000
 - tapOn:
     id: "player-queue-button"
 - extendedWaitUntil:
     visible: "Queue"
-    timeout: 10000
+    timeout: 5000
 # Playing an album populated the queue.
 - assertNotVisible: "The queue is empty."
 
@@ -32,11 +32,11 @@ tags:
 - tapOn: "Create playlist"
 - extendedWaitUntil:
     visible: "New playlist from queue"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Cancel"
 - extendedWaitUntil:
     visible: "Queue"
-    timeout: 10000
+    timeout: 5000
 
 # --- Clear queue: confirm -> the queue empties (local-only, no server write) -
 # "Clear queue" is both the toolbar button and the confirm button; target the
@@ -44,11 +44,11 @@ tags:
 - tapOn: "Clear queue"
 - extendedWaitUntil:
     visible: "Clear queue?"
-    timeout: 10000
+    timeout: 5000
 - tapOn:
     text: "Clear queue"
     below:
       text: "Clear queue?"
 - extendedWaitUntil:
     visible: "The queue is empty."
-    timeout: 10000
+    timeout: 5000

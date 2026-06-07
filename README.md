@@ -95,6 +95,14 @@ The landing page is a static [Astro](https://astro.build/) site (Tailwind v4, `e
 
 For Astro CLI commands, run them inside the workspace: `cd apps/landing && bun run astro ...`.
 
+### E2E tests
+
+The mobile app has E2E tests that are powered by [Maestro](https://docs.maestro.dev/).
+To run the tests, you need to have the [Maestro CLI installed](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli) and need access to a iOS or Android simulator.
+The test scenarios are defined in `apps/mobile/maestro/flows`. Each flow is a sequence of steps that are executed in order.
+To run the tests, run `maestro test apps/mobile/maestro/` from the repo root.
+You can find more information about the test scenarios in the [E2E tests README](apps/mobile/maestro/README.md).
+
 ### Useful commands
 
 Run from the repo root:

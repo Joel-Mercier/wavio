@@ -18,7 +18,7 @@ tags:
     id: "floating-player"
 - extendedWaitUntil:
     visible: "Playing now"
-    timeout: 10000
+    timeout: 5000
 
 # Transport controls present and survive input (the play/pause icon swap has no
 # label to assert, so we verify the player stays mounted after each tap).
@@ -46,7 +46,7 @@ tags:
     id: "player-menu-button"
 - extendedWaitUntil:
     visible: "Sleep timer"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "Lyrics"
 - tapOn: "Add to queue"
 - assertVisible: "Playing now"
@@ -56,7 +56,7 @@ tags:
     id: "player-queue-button"
 - extendedWaitUntil:
     visible: "Queue"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "Set timer"
 - tapOn: "Order"
 - assertVisible: "Done"

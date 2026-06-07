@@ -18,14 +18,14 @@ tags:
     id: "home-radio-tab"
 - extendedWaitUntil:
     visible: "Search radio stations"
-    timeout: 15000
+    timeout: 8000
 
 # Open the search screen from the browse screen's search box. Leaving the browse
 # screen drops its "Search radio stations" box, which confirms the route change.
 - tapOn: "Search radio stations"
 - extendedWaitUntil:
     notVisible: "Search radio stations"
-    timeout: 10000
+    timeout: 5000
 
 # The search field auto-focuses; type a query and confirm it's accepted.
 - inputText: "jazz"
@@ -38,4 +38,4 @@ tags:
 - back
 - extendedWaitUntil:
     visible: "Search radio stations"
-    timeout: 10000
+    timeout: 5000

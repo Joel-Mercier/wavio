@@ -17,14 +17,14 @@ tags:
 - tapOn: "Library"
 - extendedWaitUntil:
     visible: "Favorites"
-    timeout: 15000
+    timeout: 8000
 
 # Open the library search screen.
 - tapOn:
     id: "library-search-button"
 - extendedWaitUntil:
     visible: "Search your library"
-    timeout: 15000
+    timeout: 8000
 
 # All filter chips render.
 - assertVisible: "Albums"
@@ -47,4 +47,4 @@ tags:
 - back
 - extendedWaitUntil:
     visible: "Favorites"
-    timeout: 10000
+    timeout: 5000

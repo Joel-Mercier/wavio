@@ -20,13 +20,13 @@ tags:
 - extendedWaitUntil:
     visible:
       id: "genre-item"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "genre-item"
     index: 0
 - extendedWaitUntil:
     notVisible: "Explore genres"
-    timeout: 10000
+    timeout: 5000
 - back
 - assertVisible: "Explore genres"
 
@@ -36,11 +36,35 @@ tags:
 - pressKey: "Enter"
 - extendedWaitUntil:
     visible: "Albums"
-    timeout: 15000
+    timeout: 8000
 - assertVisible: "Artists"
 - assertVisible: "Songs"
 - tapOn: "Songs"
 - assertVisible: "Songs"
+
+# --- Open a result -> detail screen -> back ---------------------------------
+# Completes the discovery path: tap the first result row and land on a detail
+# screen. Result rows render an alt="Recent search cover" image; a song result
+# routes to its album (SearchResultListItem), so assert the album detail mounted
+# via its "…" menu testID, then return to the results screen (the filter chips
+# are unique to it). Guarded on a result being present so an empty result set is
+# a no-op rather than a failure.
+- runFlow:
+    when:
+      visible:
+        text: "Recent search cover"
+    commands:
+      - tapOn:
+          text: "Recent search cover"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: "album-menu-button"
+          timeout: 8000
+      - back
+      - extendedWaitUntil:
+          visible: "Songs"
+          timeout: 5000
 
 # --- Recent searches: query was remembered, then clear it -------------------
 # Submitting recorded "love" in the recent-searches store and pushed a separate
@@ -52,10 +76,10 @@ tags:
     id: "search-clear-button"
 - extendedWaitUntil:
     visible: "Recent searches"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "love"
 - assertVisible: "Clear all"
 - tapOn: "Clear all"
 - extendedWaitUntil:
     notVisible: "love"
-    timeout: 10000
+    timeout: 5000

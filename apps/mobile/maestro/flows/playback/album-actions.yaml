@@ -2,9 +2,11 @@ appId: com.jmercier.wavio
 name: album-actions
 # Critical path — Album-screen context actions (one session).
 # Covers the two menus on an album screen back-to-back: the per-track "…" menu
-# (open it, assert its options, open the Track info modal) and the album-level
-# "…" menu ("Add to queue", verified via the drawer → Queue path). Reuses the
-# `track-menu-button` / `album-menu-button` handles; content-agnostic throughout.
+# (assert its options, open the Add-to-playlist picker, then the Track info
+# modal) and the album-level "…" menu ("Add to queue", verified via the drawer →
+# Queue path). Reuses the `track-menu-button` / `album-menu-button` handles;
+# content-agnostic throughout and side-effect free (the picker is backed out of
+# without selecting a playlist, so nothing is written to the demo server).
 tags:
   - playback
   - browse
@@ -14,46 +16,82 @@ tags:
 # Open the first Home album.
 - extendedWaitUntil:
     visible: "Album cover"
-    timeout: 20000
+    timeout: 10000
 - tapOn:
     text: "Album cover"
     index: 0
 
-# --- Per-track "…" menu -> Track info modal --------------------------------
+# --- Per-track "…" menu: assert options + Track info modal -----------------
 - extendedWaitUntil:
     visible:
       id: "track-menu-button"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "track-menu-button"
     index: 0
 - extendedWaitUntil:
     visible: "Get info"
-    timeout: 10000
+    timeout: 5000
 - assertVisible: "Add to queue"
 - assertVisible: "Play next"
+- assertVisible: "Add to playlist"
 - tapOn: "Get info"
 - extendedWaitUntil:
     visible: "Track info"
-    timeout: 10000
+    timeout: 5000
 # Dismiss the info modal via its close button — it's a Gluestack Modal that the
-# Android `back` button does NOT dismiss, so tap the "X" (testID) instead.
+# Android `back` button does NOT dismiss, so tap the "X" (testID) instead. Let
+# the entrance animation settle first, and re-tap if the first tap was absorbed
+# by it (the close is otherwise racy right after the modal mounts).
+- waitForAnimationToEnd
 - tapOn:
     id: "track-info-close-button"
+- runFlow:
+    when:
+      visible: "Track info"
+    commands:
+      - tapOn:
+          id: "track-info-close-button"
 - extendedWaitUntil:
     notVisible: "Track info"
-    timeout: 10000
+    timeout: 8000
+
+# --- Per-track "…" menu: Add to playlist picker ----------------------------
+# Reopen the menu and open the picker. The menu item label matches the picker's
+# title ("Add to playlist"), so confirm the route via its unique "New playlist" /
+# "Finished" affordances instead. Back out without selecting a playlist, so no
+# track is written to the shared demo server. Ends back on the album.
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Add to playlist"
+    timeout: 5000
+- tapOn: "Add to playlist"
+- extendedWaitUntil:
+    visible: "New playlist"
+    timeout: 8000
+- assertVisible: "Finished"
+- back
+- extendedWaitUntil:
+    visible:
+      id: "album-menu-button"
+    timeout: 8000
 
 # --- Album-level "…" menu -> Add to queue ----------------------------------
 - extendedWaitUntil:
     visible:
       id: "album-menu-button"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "album-menu-button"
 - extendedWaitUntil:
     visible: "Add to queue"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Add to queue"
 - assertVisible:
     text: ".*to the queue.*"
@@ -65,5 +103,5 @@ tags:
 - tapOn: "Queue"
 - extendedWaitUntil:
     visible: "Queue"
-    timeout: 10000
+    timeout: 5000
 - assertNotVisible: "The queue is empty."

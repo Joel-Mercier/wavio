@@ -19,6 +19,7 @@ type AnimatedHeartProps = {
   disabled?: boolean;
   className?: string;
   hitSlop?: ComponentProps<typeof Pressable>["hitSlop"];
+  testID?: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -32,6 +33,7 @@ export const AnimatedHeart = memo(function AnimatedHeart({
   disabled = false,
   className,
   hitSlop,
+  testID,
 }: AnimatedHeartProps) {
   const [emerald500, white] = Uniwind.getCSSVariable([
     "--color-emerald-500",
@@ -69,6 +71,7 @@ export const AnimatedHeart = memo(function AnimatedHeart({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      testID={testID}
       hitSlop={hitSlop}
       disabled={disabled}
       onPress={handlePress}

@@ -15,11 +15,11 @@ tags:
 - extendedWaitUntil:
     visible:
       id: "open-drawer-button"
-    timeout: 10000
+    timeout: 5000
 - tapOn:
     id: "open-drawer-button"
 # The drawer animates in; assert a stable menu entry so callers can rely on the
 # menu being interactable when this subflow returns.
 - extendedWaitUntil:
     visible: "Settings"
-    timeout: 10000
+    timeout: 5000

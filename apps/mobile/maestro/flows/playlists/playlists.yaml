@@ -21,18 +21,18 @@ tags:
 # "Recent" (the sort header) is a stable signal the Library tab mounted.
 - extendedWaitUntil:
     visible: "Recent"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "library-create-button"
 # Target the option's unique description (the "Playlist" heading is a substring of
 # the "Playlists" filter chip behind the sheet).
 - extendedWaitUntil:
     visible: "Create a playlist with songs"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Create a playlist with songs"
 - extendedWaitUntil:
     visible: "Give a name to your playlist"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "My awesome playlist"
 - inputText: ${output.playlistName}
 - tapOn: "Create"
@@ -40,7 +40,7 @@ tags:
 # --- Read: it shows up in the Library, then open its detail -----------------
 - extendedWaitUntil:
     visible: "Recent"
-    timeout: 15000
+    timeout: 8000
 - tapOn: "Playlists"
 # The "Recent" sort can place the new playlist below the fold, so scroll it in
 # rather than asserting it's already on screen.
@@ -48,26 +48,44 @@ tags:
     element:
       text: ${output.playlistName}
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 - tapOn: ${output.playlistName}
 - extendedWaitUntil:
     visible:
       id: "playlist-menu-button"
-    timeout: 15000
+    timeout: 8000
+
+# --- Edit: open the edit screen from the "…" menu, then back out ------------
+# The "…" menu's "Edit this playlist" navigates to the edit-playlist form. Assert
+# its unique "Edit playlist" title, then back out without saving (no write).
+- tapOn:
+    id: "playlist-menu-button"
+- extendedWaitUntil:
+    visible: "Edit this playlist"
+    timeout: 5000
+- tapOn: "Edit this playlist"
+- extendedWaitUntil:
+    visible: "Edit playlist"
+    timeout: 8000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "playlist-menu-button"
+    timeout: 8000
 
 # --- Delete (also cleanup) -------------------------------------------------
 - tapOn:
     id: "playlist-menu-button"
 - extendedWaitUntil:
     visible: "Delete this playlist"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Delete this playlist"
 - extendedWaitUntil:
     visible: "Are you sure you want to delete this playlist?"
-    timeout: 10000
+    timeout: 5000
 - tapOn: "Delete"
 
 # Back on the Library, the playlist is gone.
 - extendedWaitUntil:
     notVisible: ${output.playlistName}
-    timeout: 15000
+    timeout: 8000

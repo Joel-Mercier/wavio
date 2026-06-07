@@ -12,17 +12,19 @@ maestro/
     navigation/navigation.yaml      tabs + drawer + Servers/Activity/Libraries/Shares
     home/home.yaml                  feed "See all" -> section detail + Radio sub-tab
     home/radio.yaml                 Radio sub-tab -> radio search screen + back
-    library/library.yaml            filter chips toggle the list + Favorites screen
+    library/library.yaml            filter chips toggle the list + Favorites screen + favorites search
     library/library-search.yaml     library search screen: chips + query + filter toggle
-    search/search.yaml              genres + query/results/filter + recent-searches store
-    settings/settings.yaml          open Settings -> scroll every section
+    search/search.yaml              genres + query/results/filter + open result + recent-searches store
+    settings/settings.yaml          open Settings -> scroll every section + offline-downloads manager
     playback/playback.yaml          play -> full player transport + "…" menu -> queue
     playback/player-extras.yaml     player "…" menu: Lyrics dialog + Sleep timer + Similar songs
     playback/queue-management.yaml  queue toolbar: create-from-queue dialog (cancel) + Clear queue
-    playback/album-actions.yaml     track "…" menu (Track info) + album "…" menu (Add to queue)
+    playback/album-actions.yaml     track "…" menu (Add to playlist + Track info) + album "…" menu (Add to queue)
+    playback/favorite-toggle.yaml   player heart: star then un-star a track (write path, self-cleaning)
     browse/artist.yaml              album -> Go to artist -> artist detail + Discography
     browse/profile.yaml             drawer "See profile" -> profile + (conditional) edit profile
-    playlists/playlists.yaml        create -> open -> delete a playlist (write path, self-cleaning)
+    playlists/playlists.yaml        create -> open -> edit -> delete a playlist (write path, self-cleaning)
+    playlists/smart-playlist.yaml   create -> open -> delete a smart playlist (Navidrome-only, self-cleaning)
     auth/logout.yaml                logout -> back on the sign-in screen
   subflows/              Reusable building blocks, pulled in via `runFlow`
     login-demo.yaml          clean launch + one-tap demo-server login -> Home
@@ -83,10 +85,12 @@ set of `testID`s added to the app:
 | `search-clear-button` | clear "X" in the search field (`recent-searches`) | search |
 | `track-info-close-button` | Track info modal close "X" (`TrackActionsProvider`) | album-actions |
 | `player-play-pause-button` / `player-previous-button` / `player-next-button` / `player-queue-button` / `player-menu-button` | full player transport + "…" menu (`player.tsx`) | playback |
+| `player-favorite-button` | full player heart toggle (`player.tsx`, `AnimatedHeart`) | favorite-toggle |
 
 The press wrappers `FadeOut` / `FadeOutScaleDown` forward a `testID` prop to their
 underlying `Pressable`, which is how the avatar / transport / "+" handles are wired
-without changing the visual tree.
+without changing the visual tree. `AnimatedHeart` forwards `testID` to its animated
+`Pressable` the same way, exposing the player's favorite toggle.
 
 ## Running
 
@@ -102,17 +106,22 @@ maestro test --include-tags smoke-test maestro/   # filter by tag
 ```
 
 Tags in use: `smoke-test`, `auth`, `search`, `playback`, `queue`, `navigation`,
-`home`, `radio`, `library`, `settings`, `playlists`, `browse`, `profile`,
-`subflow`.
+`home`, `radio`, `library`, `settings`, `playlists`, `smart-playlist`, `favorites`,
+`browse`, `profile`, `subflow`.
 
 Note: several journeys (`navigation`, `home`, `radio`, `search`, `library-search`,
 `album-actions`, `artist`, `profile`) use the Android-only `back` command to move
-between screens (the app primarily targets Android). `playlists.yaml` creates and
-then deletes a playlist on the shared demo server (self-cleaning);
-`queue-management.yaml` clears the (local) playback queue and only *opens* the
-create-from-queue dialog before cancelling, so it never writes a playlist.
+between screens (the app primarily targets Android). The write-path flows all
+clean up after themselves on the shared demo server: `playlists.yaml` and
+`smart-playlist.yaml` each create then delete the playlist they make, and
+`favorite-toggle.yaml` stars a track then un-stars it (each tap confirmed by its
+own toast). `queue-management.yaml` clears the (local) playback queue and only
+*opens* the create-from-queue dialog before cancelling, so it never writes a
+playlist; `album-actions.yaml` opens the Add-to-playlist picker but backs out
+without selecting one.
 Conditional `runFlow`s keep server-dependent steps no-ops where unsupported: the
-`Shares` destination in `navigation.yaml` (server sharing capability) and the
-`Edit` step in `profile.yaml` (Navidrome-owner profile editing).
+`Shares` destination in `navigation.yaml` (server sharing capability), the
+`Edit` step in `profile.yaml` (Navidrome-owner profile editing), and the whole
+body of `smart-playlist.yaml` (Navidrome-only smart-playlist capability).
 `radio.yaml` drives the live Radio Browser API but asserts only that the search
 input accepts the query, not which stations return.

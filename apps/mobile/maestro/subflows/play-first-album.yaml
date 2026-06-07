@@ -13,17 +13,17 @@ tags:
 ---
 - extendedWaitUntil:
     visible: "Album cover"
-    timeout: 20000
+    timeout: 10000
 - tapOn:
     text: "Album cover"
     index: 0
 - extendedWaitUntil:
     visible:
       id: "album-play-button"
-    timeout: 15000
+    timeout: 8000
 - tapOn:
     id: "album-play-button"
 - extendedWaitUntil:
     visible:
       id: "floating-player"
-    timeout: 15000
+    timeout: 8000

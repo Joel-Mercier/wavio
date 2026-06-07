@@ -16,22 +16,22 @@ tags:
 # "Music library settings" is the first section at the top of the screen.
 - extendedWaitUntil:
     visible: "Music library settings"
-    timeout: 15000
+    timeout: 8000
 
 # Walk down the screen; each section heading must be reachable by scrolling.
 - scrollUntilVisible:
     element: "Display settings"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 - scrollUntilVisible:
     element: "Playback"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 - scrollUntilVisible:
     element: "Streaming settings"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000
 - scrollUntilVisible:
     element: "Content settings"
     direction: DOWN
-    timeout: 15000
+    timeout: 8000

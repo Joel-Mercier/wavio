@@ -19,11 +19,11 @@ tags:
     index: 0
 - extendedWaitUntil:
     notVisible: "See all"
-    timeout: 10000
+    timeout: 5000
 - back
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 10000
+    timeout: 5000
 
 # Radio sub-tab → internet-radio browse screen. Targeted by testID because its
 # label ("Internet radio stations") also appears as a feed section heading. The
@@ -32,8 +32,8 @@ tags:
     id: "home-radio-tab"
 - extendedWaitUntil:
     visible: "Search radio stations"
-    timeout: 15000
+    timeout: 8000
 - back
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 10000
+    timeout: 5000

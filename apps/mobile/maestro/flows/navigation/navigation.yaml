@@ -20,7 +20,7 @@ tags:
 - tapOn: "Library"
 - extendedWaitUntil:
     visible: "Recent"
-    timeout: 15000
+    timeout: 8000
 - tapOn: "Search"
 - assertVisible: "Explore genres"
 - tapOn: "Home"
@@ -42,33 +42,33 @@ tags:
 - tapOn: "Servers"
 - extendedWaitUntil:
     visible: "https://demo.navidrome.org"
-    timeout: 15000
+    timeout: 8000
 - back
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 10000
+    timeout: 5000
 
 # --- Drawer destination: Activity -----------------------------------------
 - runFlow: ../../subflows/open-drawer.yaml
 - tapOn: "Activity"
 - extendedWaitUntil:
     visible: "Activity"
-    timeout: 15000
+    timeout: 8000
 - back
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 10000
+    timeout: 5000
 
 # --- Drawer destination: Libraries (music folders) ------------------------
 - runFlow: ../../subflows/open-drawer.yaml
 - tapOn: "Libraries"
 - extendedWaitUntil:
     visible: "All libraries"
-    timeout: 15000
+    timeout: 8000
 - back
 - extendedWaitUntil:
     visible: "Recently played"
-    timeout: 10000
+    timeout: 5000
 
 # --- Drawer destination: Shares -------------------------------------------
 # "Shares" is gated on the server's sharing capability, so only follow it through
@@ -81,4 +81,4 @@ tags:
       - tapOn: "Shares"
       - extendedWaitUntil:
           visible: "Shares"
-          timeout: 15000
+          timeout: 8000

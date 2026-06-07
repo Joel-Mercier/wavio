@@ -18,7 +18,7 @@ tags:
 - tapOn: "See profile"
 - extendedWaitUntil:
     visible: "Playlists"
-    timeout: 15000
+    timeout: 8000
 
 # Edit profile is gated on the server supporting it (Navidrome owner only), so
 # only follow it through when the button is present. Open the form, assert its
@@ -30,8 +30,8 @@ tags:
       - tapOn: "Edit"
       - extendedWaitUntil:
           visible: "Edit profile"
-          timeout: 15000
+          timeout: 8000
       - back
       - extendedWaitUntil:
           visible: "Playlists"
-          timeout: 10000
+          timeout: 5000

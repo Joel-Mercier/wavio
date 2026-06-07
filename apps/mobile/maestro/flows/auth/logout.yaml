@@ -17,5 +17,5 @@ tags:
 # Back on the unauthenticated login screen.
 - extendedWaitUntil:
     visible: "Sign in"
-    timeout: 15000
+    timeout: 8000
 - assertVisible: "Demo mode"
