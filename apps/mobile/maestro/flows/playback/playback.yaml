@@ -1,0 +1,64 @@
+appId: com.jmercier.wavio
+name: playback
+# Critical path #4 — Playback (one session).
+# The core music journey: play an album, expand the mini-player into the full
+# player, exercise the transport controls, and open the queue. Browsing →
+# album → queue/player wiring is the heart of the app. Uses the
+# `play-first-album` subflow for the shared "start playback" steps, then keys off
+# testIDs + the "Playing now" / "Queue" headers.
+tags:
+  - playback
+  - smoke-test
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/play-first-album.yaml
+
+# Expand the mini-player into the full player.
+- tapOn:
+    id: "floating-player"
+- extendedWaitUntil:
+    visible: "Playing now"
+    timeout: 10000
+
+# Transport controls present and survive input (the play/pause icon swap has no
+# label to assert, so we verify the player stays mounted after each tap).
+- assertVisible:
+    id: "player-previous-button"
+- assertVisible:
+    id: "player-next-button"
+- assertVisible:
+    id: "player-play-pause-button"
+- tapOn:
+    id: "player-next-button"
+- assertVisible: "Playing now"
+- tapOn:
+    id: "player-previous-button"
+- assertVisible: "Playing now"
+- tapOn:
+    id: "player-play-pause-button"
+- tapOn:
+    id: "player-play-pause-button"
+- assertVisible: "Playing now"
+
+# Player "…" menu: assert its options, then run a safe action ("Add to queue")
+# which dismisses the sheet and returns us to the player.
+- tapOn:
+    id: "player-menu-button"
+- extendedWaitUntil:
+    visible: "Sleep timer"
+    timeout: 10000
+- assertVisible: "Lyrics"
+- tapOn: "Add to queue"
+- assertVisible: "Playing now"
+
+# Open the queue from the player and toggle edit mode.
+- tapOn:
+    id: "player-queue-button"
+- extendedWaitUntil:
+    visible: "Queue"
+    timeout: 10000
+- assertVisible: "Set timer"
+- tapOn: "Order"
+- assertVisible: "Done"
+- tapOn: "Done"
+- assertVisible: "Order"

@@ -1,0 +1,21 @@
+appId: com.jmercier.wavio
+name: logout
+# Critical path #8 — Logout / session teardown.
+# The mirror of login: from a logged-in session a user opens the drawer, taps
+# Logout, and is returned to the sign-in screen with credentials cleared. If this
+# breaks, users can't switch accounts or recover from a bad server. `logout()`
+# clears the store + query cache synchronously (no confirm dialog), so landing
+# back on "Sign in" is the contract we assert.
+tags:
+  - auth
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/open-drawer.yaml
+
+- tapOn: "Logout"
+
+# Back on the unauthenticated login screen.
+- extendedWaitUntil:
+    visible: "Sign in"
+    timeout: 15000
+- assertVisible: "Demo mode"

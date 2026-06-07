@@ -1,0 +1,37 @@
+appId: com.jmercier.wavio
+name: profile
+# Critical path — User profile (one session).
+# The drawer header doubles as a profile link ("See profile"): tapping it opens
+# the user's profile screen (avatar + their playlists). On a Navidrome server
+# the owner also gets an "Edit" button into the edit-profile form. This flow
+# reaches the profile, asserts its stable "Playlists" heading, and — only when
+# the server exposes editing — opens the edit form and backs out without saving,
+# so it stays side-effect free.
+tags:
+  - profile
+  - browse
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/open-drawer.yaml
+
+# Drawer header "See profile" -> the profile screen.
+- tapOn: "See profile"
+- extendedWaitUntil:
+    visible: "Playlists"
+    timeout: 15000
+
+# Edit profile is gated on the server supporting it (Navidrome owner only), so
+# only follow it through when the button is present. Open the form, assert its
+# title, then back out without saving.
+- runFlow:
+    when:
+      visible: "Edit"
+    commands:
+      - tapOn: "Edit"
+      - extendedWaitUntil:
+          visible: "Edit profile"
+          timeout: 15000
+      - back
+      - extendedWaitUntil:
+          visible: "Playlists"
+          timeout: 10000

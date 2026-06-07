@@ -1,0 +1,36 @@
+# Maestro workspace configuration
+# Docs: https://docs.maestro.dev/maestro-flows/workspace-management/design-your-test-architecture/repository-configuration
+#
+# `flows` lists the globs Maestro treats as runnable entry points. Only files
+# under flows/** are executed; subflows/** holds reusable building blocks that
+# are pulled in via `runFlow` and are intentionally NOT matched here, so they
+# never run standalone.
+flows:
+  - "flows/**"
+
+# Run every flow even if an earlier one fails, in a deterministic order so the
+# cheap smoke test (login) runs before the heavier journeys that depend on it.
+executionOrder:
+  continueOnFailure: true
+  flowsOrder:
+    # Cheapest smoke test first, then one journey per feature area (each is a
+    # single cold start that walks all the related screens in that area), then
+    # the write paths last. Every flow is self-contained — it clears state and
+    # logs in via login-demo — so this order is about fail-fast signal rather
+    # than shared state.
+    - login            # sign in -> Home (smoke)
+    - navigation       # tabs + drawer + drawer destinations
+    - home             # feed "See all" + Radio sub-tab
+    - radio            # radio browse -> radio search screen
+    - library          # filter chips + Favorites screen
+    - library-search   # library search screen (chips + query + filter)
+    - search           # genres + query/results + recent searches
+    - settings         # all settings sections
+    - playback         # play -> full player transport + "…" menu -> queue
+    - player-extras    # player "…" menu: Lyrics + Sleep timer + Similar songs
+    - queue-management # queue toolbar: create-from-queue dialog + clear queue
+    - album-actions    # track "…" menu (info) + album "…" menu (add to queue)
+    - artist           # album -> Go to artist -> artist + discography
+    - profile          # drawer "See profile" -> profile (+ edit profile)
+    - playlists        # create -> open -> delete (write path, self-cleaning)
+    - logout           # session teardown

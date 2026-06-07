@@ -1,0 +1,73 @@
+appId: com.jmercier.wavio
+name: playlists
+# Critical path — Playlist lifecycle (one session, write path).
+# A full create → open → delete round-trip: create a playlist from the Library
+# "+" sheet, open its detail screen, then delete it via the detail "…" menu and
+# confirm it's gone from the Library. The delete step doubles as cleanup, so the
+# flow leaves no artifact on the shared demo server.
+#
+# `output` usage: a run-unique, timestamped name (`evalScript`) so repeated runs
+# never collide and every assertion targets exactly the playlist this run made.
+tags:
+  - playlists
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Generate a run-unique name.
+- evalScript: ${output.playlistName = 'maestro-' + Date.now()}
+
+# --- Create ----------------------------------------------------------------
+- tapOn: "Library"
+# "Recent" (the sort header) is a stable signal the Library tab mounted.
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 15000
+- tapOn:
+    id: "library-create-button"
+# Target the option's unique description (the "Playlist" heading is a substring of
+# the "Playlists" filter chip behind the sheet).
+- extendedWaitUntil:
+    visible: "Create a playlist with songs"
+    timeout: 10000
+- tapOn: "Create a playlist with songs"
+- extendedWaitUntil:
+    visible: "Give a name to your playlist"
+    timeout: 10000
+- tapOn: "My awesome playlist"
+- inputText: ${output.playlistName}
+- tapOn: "Create"
+
+# --- Read: it shows up in the Library, then open its detail -----------------
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 15000
+- tapOn: "Playlists"
+# The "Recent" sort can place the new playlist below the fold, so scroll it in
+# rather than asserting it's already on screen.
+- scrollUntilVisible:
+    element:
+      text: ${output.playlistName}
+    direction: DOWN
+    timeout: 15000
+- tapOn: ${output.playlistName}
+- extendedWaitUntil:
+    visible:
+      id: "playlist-menu-button"
+    timeout: 15000
+
+# --- Delete (also cleanup) -------------------------------------------------
+- tapOn:
+    id: "playlist-menu-button"
+- extendedWaitUntil:
+    visible: "Delete this playlist"
+    timeout: 10000
+- tapOn: "Delete this playlist"
+- extendedWaitUntil:
+    visible: "Are you sure you want to delete this playlist?"
+    timeout: 10000
+- tapOn: "Delete"
+
+# Back on the Library, the playlist is gone.
+- extendedWaitUntil:
+    notVisible: ${output.playlistName}
+    timeout: 15000

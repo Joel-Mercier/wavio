@@ -1,0 +1,69 @@
+appId: com.jmercier.wavio
+name: album-actions
+# Critical path — Album-screen context actions (one session).
+# Covers the two menus on an album screen back-to-back: the per-track "…" menu
+# (open it, assert its options, open the Track info modal) and the album-level
+# "…" menu ("Add to queue", verified via the drawer → Queue path). Reuses the
+# `track-menu-button` / `album-menu-button` handles; content-agnostic throughout.
+tags:
+  - playback
+  - browse
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Open the first Home album.
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 20000
+- tapOn:
+    text: "Album cover"
+    index: 0
+
+# --- Per-track "…" menu -> Track info modal --------------------------------
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 15000
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 10000
+- assertVisible: "Add to queue"
+- assertVisible: "Play next"
+- tapOn: "Get info"
+- extendedWaitUntil:
+    visible: "Track info"
+    timeout: 10000
+# Dismiss the info modal via its close button — it's a Gluestack Modal that the
+# Android `back` button does NOT dismiss, so tap the "X" (testID) instead.
+- tapOn:
+    id: "track-info-close-button"
+- extendedWaitUntil:
+    notVisible: "Track info"
+    timeout: 10000
+
+# --- Album-level "…" menu -> Add to queue ----------------------------------
+- extendedWaitUntil:
+    visible:
+      id: "album-menu-button"
+    timeout: 15000
+- tapOn:
+    id: "album-menu-button"
+- extendedWaitUntil:
+    visible: "Add to queue"
+    timeout: 10000
+- tapOn: "Add to queue"
+- assertVisible:
+    text: ".*to the queue.*"
+    optional: true
+
+# Verify via the Queue screen (drawer → Queue, populated).
+- back
+- runFlow: ../../subflows/open-drawer.yaml
+- tapOn: "Queue"
+- extendedWaitUntil:
+    visible: "Queue"
+    timeout: 10000
+- assertNotVisible: "The queue is empty."

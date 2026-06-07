@@ -1,0 +1,54 @@
+appId: com.jmercier.wavio
+name: queue-management
+# Critical path — Queue management actions (one session).
+# `playback.yaml` opens the queue and toggles edit mode; this flow covers the
+# queue toolbar's destructive/creative actions instead: the "Create playlist
+# from queue" dialog (opened then cancelled, so no artifact is written to the
+# shared demo server) and "Clear queue" (confirm -> the queue empties). Reaches
+# the queue by expanding the mini-player and tapping its queue button.
+tags:
+  - playback
+  - queue
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/play-first-album.yaml
+
+# Expand the mini-player, then open the queue from the player.
+- tapOn:
+    id: "floating-player"
+- extendedWaitUntil:
+    visible: "Playing now"
+    timeout: 10000
+- tapOn:
+    id: "player-queue-button"
+- extendedWaitUntil:
+    visible: "Queue"
+    timeout: 10000
+# Playing an album populated the queue.
+- assertNotVisible: "The queue is empty."
+
+# --- Create playlist from queue: open the dialog, then cancel ----------------
+# Cancelling avoids writing a playlist to the shared demo server.
+- tapOn: "Create playlist"
+- extendedWaitUntil:
+    visible: "New playlist from queue"
+    timeout: 10000
+- tapOn: "Cancel"
+- extendedWaitUntil:
+    visible: "Queue"
+    timeout: 10000
+
+# --- Clear queue: confirm -> the queue empties (local-only, no server write) -
+# "Clear queue" is both the toolbar button and the confirm button; target the
+# confirm one via its position below the "Clear queue?" dialog title.
+- tapOn: "Clear queue"
+- extendedWaitUntil:
+    visible: "Clear queue?"
+    timeout: 10000
+- tapOn:
+    text: "Clear queue"
+    below:
+      text: "Clear queue?"
+- extendedWaitUntil:
+    visible: "The queue is empty."
+    timeout: 10000

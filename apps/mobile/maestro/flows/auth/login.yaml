@@ -1,0 +1,14 @@
+appId: com.jmercier.wavio
+name: login
+# Critical path #1 — Authentication.
+# A user with no saved server can sign in (here via the one-tap demo server)
+# and lands on the Home screen. If this breaks, nobody can use the app.
+tags:
+  - auth
+  - smoke-test
+---
+- runFlow: ../../subflows/login-demo.yaml
+# `login-demo` already waits for "Recently played"; re-assert a couple of stable
+# Home affordances to make this flow's intent explicit and self-contained.
+- assertVisible: "Recently played"
+- assertVisible: "Search"

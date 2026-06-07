@@ -125,7 +125,11 @@ export default function RecentSearchesScreen() {
                   enterKeyHint="search"
                   onSubmitEditing={handleOnSumbit}
                 />
-                <InputSlot className="pr-3" onPress={handleSearchClearPress}>
+                <InputSlot
+                  testID="search-clear-button"
+                  className="pr-3"
+                  onPress={handleSearchClearPress}
+                >
                   <InputIcon as={X} size="xl" />
                 </InputSlot>
               </Input>
@@ -173,12 +177,11 @@ export default function RecentSearchesScreen() {
           <Box>
             {query.length === 0 && recentSearches.length > 0 && (
               <Center className="my-6">
-                <FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleClearAllPress}>
                   <Button
                     variant="outline"
                     action="default"
                     className="rounded-full border-white"
-                    onPress={handleClearAllPress}
                   >
                     <ButtonText className="text-white">
                       {t("app.search.clearRecentSearches")}

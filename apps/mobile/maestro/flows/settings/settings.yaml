@@ -1,0 +1,37 @@
+appId: com.jmercier.wavio
+name: settings
+# Critical path #7 — Settings screen.
+# Settings is a long scroll of grouped sections (offline, display, playback,
+# streaming, content, …) reached from the drawer. This flow opens it and scrolls
+# down asserting the section headings appear in order, proving the screen mounted
+# and renders its full content rather than erroring partway. It only reads — it
+# doesn't toggle anything — so it stays deterministic and side-effect free.
+tags:
+  - settings
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/open-drawer.yaml
+
+- tapOn: "Settings"
+# "Music library settings" is the first section at the top of the screen.
+- extendedWaitUntil:
+    visible: "Music library settings"
+    timeout: 15000
+
+# Walk down the screen; each section heading must be reachable by scrolling.
+- scrollUntilVisible:
+    element: "Display settings"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Playback"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Streaming settings"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Content settings"
+    direction: DOWN
+    timeout: 15000

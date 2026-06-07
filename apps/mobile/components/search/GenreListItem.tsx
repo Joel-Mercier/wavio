@@ -16,7 +16,7 @@ export default function GenreListItem({ genre }: GenreListItemProps) {
   const serverType = useAuth((s) => s.serverType);
   const showCounts = serverType !== "jellyfin";
   return (
-    <FadeOutScaleDown href={`/genres/${genre.value}`}>
+    <FadeOutScaleDown testID="genre-item" href={`/genres/${genre.value}`}>
       <VStack className="bg-primary-600 p-4 w-full rounded-md">
         <Heading
           size="md"

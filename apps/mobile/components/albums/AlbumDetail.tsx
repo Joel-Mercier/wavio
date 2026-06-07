@@ -854,7 +854,10 @@ export default function AlbumDetail() {
                         : handleFavoritePress
                     }
                   />
-                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                  <FadeOutScaleDown
+                    testID="album-menu-button"
+                    onPress={handlePresentModalPress}
+                  >
                     <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>
@@ -870,6 +873,7 @@ export default function AlbumDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    testID="album-play-button"
                   />
                 </HStack>
               </HStack>

@@ -304,6 +304,7 @@ export default function FloatingPlayer() {
   return (
     <GestureDetector gesture={panGesture}>
       <Pressable
+        testID="floating-player"
         className="absolute right-0 left-0"
         style={{
           bottom: 96 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
@@ -369,6 +370,7 @@ export default function FloatingPlayer() {
               />
             )}
             <PlayPauseButton
+              testID="floating-player-play-pause"
               isPlaying={isPlaying}
               onPress={handlePlayPausePress}
               size={24}

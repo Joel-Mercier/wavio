@@ -883,7 +883,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             <Heading className="text-white">
               {t("app.tracks.trackInfoModalTitle")}
             </Heading>
-            <ModalCloseButton>
+            <ModalCloseButton testID="track-info-close-button">
               <Icon as={X} size="md" className="color-white" />
             </ModalCloseButton>
           </ModalHeader>

@@ -1,0 +1,66 @@
+appId: com.jmercier.wavio
+name: player-extras
+# Critical path — Player "…" menu secondary actions (one session).
+# Beyond transport (covered by `playback.yaml`), the full player's "…" menu
+# fans out to three feature surfaces this flow walks back-to-back: the Lyrics
+# dialog, the Sleep timer sheet (setting a preset flips the menu row to its
+# active "Sleep timer · mm:ss" label), and the Similar songs screen. Reuses the
+# `play-first-album` subflow + the player testIDs; content-agnostic throughout.
+tags:
+  - playback
+---
+- runFlow: ../../subflows/login-demo.yaml
+- runFlow: ../../subflows/play-first-album.yaml
+
+# Expand the mini-player into the full player.
+- tapOn:
+    id: "floating-player"
+- extendedWaitUntil:
+    visible: "Playing now"
+    timeout: 10000
+
+# --- Lyrics dialog ----------------------------------------------------------
+# Open the "…" menu and assert the secondary actions are present, then open the
+# Lyrics dialog. Its header label ("Lyrics") matches the menu item, so we key
+# off the dialog-only "Close" button to confirm the dialog mounted, then dismiss
+# it back to the player.
+- tapOn:
+    id: "player-menu-button"
+- extendedWaitUntil:
+    visible: "Lyrics"
+    timeout: 10000
+- assertVisible: "Sleep timer"
+- assertVisible: "Similar songs"
+- tapOn: "Lyrics"
+- extendedWaitUntil:
+    visible: "Close"
+    timeout: 10000
+- tapOn: "Close"
+- assertVisible: "Playing now"
+
+# --- Sleep timer ------------------------------------------------------------
+# Open the Sleep timer sheet ("End of track" is unique to it), pick a preset,
+# and the sheet dismisses back to the player (the armed timer flips the menu
+# row to an active label, but a color/text swap isn't worth asserting here).
+- tapOn:
+    id: "player-menu-button"
+- tapOn: "Sleep timer"
+- extendedWaitUntil:
+    visible: "End of track"
+    timeout: 10000
+- assertVisible: "Off"
+- tapOn: "15 minutes"
+- assertVisible: "Playing now"
+
+# --- Similar songs ----------------------------------------------------------
+# Reopen the menu and jump to the Similar songs screen (router.replace), which
+# leaves the player behind — so the player title disappearing confirms the route.
+- tapOn:
+    id: "player-menu-button"
+- extendedWaitUntil:
+    visible: "Similar songs"
+    timeout: 10000
+- tapOn: "Similar songs"
+- extendedWaitUntil:
+    notVisible: "Playing now"
+    timeout: 15000

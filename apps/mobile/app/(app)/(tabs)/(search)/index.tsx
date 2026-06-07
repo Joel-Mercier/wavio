@@ -42,7 +42,10 @@ export default function SearchScreen() {
         className="px-6 gap-x-4 my-6 items-center"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+        <FadeOutScaleDown
+          testID="open-drawer-button"
+          onPress={() => setShowDrawer(true)}
+        >
           <Avatar className="border-emerald-500 border-2 w-10 h-10">
             <AvatarFallbackText className="font-body ">
               {username}

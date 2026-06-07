@@ -1,0 +1,25 @@
+appId: com.jmercier.wavio
+name: "subflow: open the navigation drawer"
+# Reusable building block: opens the left navigation drawer (the slide-in menu
+# with Activity / Queue / Settings / Servers / Logout) from any of the three
+# tab screens. Every tab header (Home, Search, Library) renders the same user
+# avatar wired to `setShowDrawer(true)` and tagged with the `open-drawer-button`
+# testID, so this subflow is tab-agnostic.
+#
+# Precondition: the app is already on a logged-in tab screen (pull in
+# `login-demo.yaml` first). On return, the drawer is open and its menu items are
+# visible — callers tap the entry they need (asserted here via "Settings").
+tags:
+  - subflow
+---
+- extendedWaitUntil:
+    visible:
+      id: "open-drawer-button"
+    timeout: 10000
+- tapOn:
+    id: "open-drawer-button"
+# The drawer animates in; assert a stable menu entry so callers can rely on the
+# menu being interactable when this subflow returns.
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000

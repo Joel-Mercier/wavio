@@ -931,6 +931,7 @@ export default function PlayerScreen() {
             {t("app.player.title")}
           </Text>
           <FadeOutScaleDown
+            testID="player-menu-button"
             onPress={handlePresentModalPress}
             className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
@@ -1088,11 +1089,15 @@ export default function PlayerScreen() {
                 />
               )}
               {!isRadio && (
-                <FadeOut onPress={handlePreviousPress}>
+                <FadeOut
+                  testID="player-previous-button"
+                  onPress={handlePreviousPress}
+                >
                   <SkipBack size={36} color="white" fill="white" />
                 </FadeOut>
               )}
               <PlayPauseButton
+                testID="player-play-pause-button"
                 isPlaying={isPlaying}
                 onPress={handlePlayPausePress}
                 size={64}
@@ -1101,7 +1106,7 @@ export default function PlayerScreen() {
                 className="bg-white"
               />
               {!isRadio && (
-                <FadeOut onPress={handleNextPress}>
+                <FadeOut testID="player-next-button" onPress={handleNextPress}>
                   <SkipForward size={36} color="white" fill="white" />
                 </FadeOut>
               )}
@@ -1140,6 +1145,7 @@ export default function PlayerScreen() {
                 </FadeOut>
               )}
               <FadeOut
+                testID="player-queue-button"
                 hitSlop={ICON_HIT_SLOP}
                 onPress={() => router.replace("/queue")}
               >

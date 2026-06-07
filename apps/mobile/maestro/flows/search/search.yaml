@@ -1,0 +1,61 @@
+appId: com.jmercier.wavio
+name: search
+# Critical path #3 — Search (one session).
+# Walks the whole search surface end-to-end: the genre grid on the landing
+# screen, a live query through to the results screen + its filter chips, and the
+# recent-searches store round-trip (the query is remembered, then "Clear all"
+# wipes it). Folds three previously separate journeys into one cold start.
+tags:
+  - search
+  - smoke-test
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+- tapOn: "Search"
+- assertVisible: "Explore genres"
+
+# --- Genre grid: tap the first tile -> genre detail -> back -----------------
+# Genre names are server-specific, so target the first tile by testID and prove
+# we left the landing screen.
+- extendedWaitUntil:
+    visible:
+      id: "genre-item"
+    timeout: 15000
+- tapOn:
+    id: "genre-item"
+    index: 0
+- extendedWaitUntil:
+    notVisible: "Explore genres"
+    timeout: 10000
+- back
+- assertVisible: "Explore genres"
+
+# --- Query -> results -> filter --------------------------------------------
+- tapOn: "What do you want to listen to ?"
+- inputText: "love"
+- pressKey: "Enter"
+- extendedWaitUntil:
+    visible: "Albums"
+    timeout: 15000
+- assertVisible: "Artists"
+- assertVisible: "Songs"
+- tapOn: "Songs"
+- assertVisible: "Songs"
+
+# --- Recent searches: query was remembered, then clear it -------------------
+# Submitting recorded "love" in the recent-searches store and pushed a separate
+# results screen. Back returns to the recent-searches screen, still holding the
+# query (so it shows live results); the history list only renders when the field
+# is empty, so clear it via the "X" (testID) to surface the recorded search.
+- back
+- tapOn:
+    id: "search-clear-button"
+- extendedWaitUntil:
+    visible: "Recent searches"
+    timeout: 10000
+- assertVisible: "love"
+- assertVisible: "Clear all"
+- tapOn: "Clear all"
+- extendedWaitUntil:
+    notVisible: "love"
+    timeout: 10000

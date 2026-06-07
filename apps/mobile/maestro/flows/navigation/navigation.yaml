@@ -1,0 +1,84 @@
+appId: com.jmercier.wavio
+name: navigation
+# Critical path #2 — App navigation surface (one session).
+# Covers the whole secondary-navigation surface without a cold start per screen:
+# the bottom tab bar (Home / Search / Library), the drawer and all its entries,
+# and two drawer destinations (Servers, Activity) following through to their
+# screens. Each target is asserted via a screen-unique affordance, and Android
+# `back` returns to Home between hops.
+tags:
+  - navigation
+  - smoke-test
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# --- Bottom tabs -----------------------------------------------------------
+- assertVisible: "Recently played"
+# The Library list defaults to the "Recent" sort, whose header is a stable,
+# always-present signal that the tab mounted (the "Favorites" entry is racy here
+# — it's pushed first then reordered below the fold by the sort).
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 15000
+- tapOn: "Search"
+- assertVisible: "Explore genres"
+- tapOn: "Home"
+- assertVisible: "Recently played"
+
+# --- Drawer: every entry present ------------------------------------------
+- runFlow: ../../subflows/open-drawer.yaml
+- assertVisible: "Activity"
+- assertVisible: "Queue"
+- assertVisible: "Libraries"
+- assertVisible: "Servers"
+- assertVisible: "Settings"
+- assertVisible: "Logout"
+
+# --- Drawer destination: Servers ------------------------------------------
+# The Servers screen exposes "Add server" only inside the dialog behind the "+"
+# header button, so assert the saved demo server's URL (stable on this backend)
+# to confirm we reached the list.
+- tapOn: "Servers"
+- extendedWaitUntil:
+    visible: "https://demo.navidrome.org"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 10000
+
+# --- Drawer destination: Activity -----------------------------------------
+- runFlow: ../../subflows/open-drawer.yaml
+- tapOn: "Activity"
+- extendedWaitUntil:
+    visible: "Activity"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 10000
+
+# --- Drawer destination: Libraries (music folders) ------------------------
+- runFlow: ../../subflows/open-drawer.yaml
+- tapOn: "Libraries"
+- extendedWaitUntil:
+    visible: "All libraries"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 10000
+
+# --- Drawer destination: Shares -------------------------------------------
+# "Shares" is gated on the server's sharing capability, so only follow it through
+# when the drawer actually exposes the entry.
+- runFlow: ../../subflows/open-drawer.yaml
+- runFlow:
+    when:
+      visible: "Shares"
+    commands:
+      - tapOn: "Shares"
+      - extendedWaitUntil:
+          visible: "Shares"
+          timeout: 15000

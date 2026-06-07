@@ -10,6 +10,7 @@ interface FadeOutProps {
   hitSlop?: ComponentProps<typeof Pressable>["hitSlop"];
   onPress?: ComponentProps<typeof Pressable>["onPress"];
   disabled?: boolean;
+  testID?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -17,7 +18,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const FadeOut = React.forwardRef<
   React.ElementRef<typeof Pressable>,
   FadeOutProps
->(({ children, className, href, hitSlop, onPress, disabled }, ref) => {
+>(({ children, className, href, hitSlop, onPress, disabled, testID }, ref) => {
   const router = useRouter();
   const opacity = useSharedValue(1);
 
@@ -36,6 +37,7 @@ const FadeOut = React.forwardRef<
   return (
     <AnimatedPressable
       ref={ref}
+      testID={testID}
       onPress={href ? () => router.navigate(href) : onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}

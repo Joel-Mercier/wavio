@@ -1,0 +1,50 @@
+appId: com.jmercier.wavio
+name: library-search
+# Critical path — Library search screen.
+# The Library tab has its own search (reached via the header search icon),
+# separate from the global Search tab: it fuzzy-matches the user's own library
+# (favorites, playlists, folders, radio stations) and exposes a row of type
+# filter chips. This flow opens it, asserts the chips render, runs a query, and
+# toggles a filter — all content-agnostic, so it holds whatever the demo server
+# serves. Targets the header icon via the `library-search-button` testID (it has
+# no label).
+tags:
+  - library
+  - search
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 15000
+
+# Open the library search screen.
+- tapOn:
+    id: "library-search-button"
+- extendedWaitUntil:
+    visible: "Search your library"
+    timeout: 15000
+
+# All filter chips render.
+- assertVisible: "Albums"
+- assertVisible: "Artists"
+- assertVisible: "Playlists"
+- assertVisible: "Radio stations"
+- assertVisible: "Folders"
+
+# Run a query (fuzzy match over the user's own library) — content-agnostic, so
+# we only prove the input accepts text, not which results come back.
+- tapOn: "Search your library"
+- inputText: "a"
+- assertVisible: "a"
+
+# Toggle a filter chip; it stays on screen (it's the active selection now).
+- tapOn: "Albums"
+- assertVisible: "Albums"
+
+# Back to the Library.
+- back
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 10000

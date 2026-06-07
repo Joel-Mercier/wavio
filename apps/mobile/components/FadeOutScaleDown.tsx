@@ -11,6 +11,7 @@ interface FadeOutScaleDownProps {
   defaultOpacity?: number;
   disabled?: boolean;
   disabledOpacity?: number;
+  testID?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -28,6 +29,7 @@ const FadeOutScaleDown = React.forwardRef<
       defaultOpacity = 1,
       disabled = false,
       disabledOpacity = 0.6,
+      testID,
     },
     ref,
   ) => {
@@ -63,6 +65,7 @@ const FadeOutScaleDown = React.forwardRef<
     return (
       <AnimatedPressable
         ref={ref}
+        testID={testID}
         onPress={href ? () => router.navigate(href) : onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

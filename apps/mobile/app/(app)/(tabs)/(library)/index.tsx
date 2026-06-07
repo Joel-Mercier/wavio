@@ -291,7 +291,10 @@ export default function LibraryScreen() {
         <Box className="px-6" style={{ paddingTop: insets.top }}>
           <HStack className="mt-6 items-center justify-between">
             <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+              <FadeOutScaleDown
+                testID="open-drawer-button"
+                onPress={() => setShowDrawer(true)}
+              >
                 <Avatar className="border-emerald-500 border-2 w-10 h-10">
                   <AvatarFallbackText className="font-body ">
                     {username}
@@ -303,10 +306,16 @@ export default function LibraryScreen() {
               </Heading>
             </HStack>
             <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown onPress={handleSearchPress}>
+              <FadeOutScaleDown
+                testID="library-search-button"
+                onPress={handleSearchPress}
+              >
                 <Search color={white} />
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handlePresentModalPress}>
+              <FadeOutScaleDown
+                testID="library-create-button"
+                onPress={handlePresentModalPress}
+              >
                 <Plus color={white} />
               </FadeOutScaleDown>
             </HStack>

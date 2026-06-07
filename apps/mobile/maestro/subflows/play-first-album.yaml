@@ -1,0 +1,29 @@
+appId: com.jmercier.wavio
+name: "subflow: play the first Home album"
+# Reusable building block: from a logged-in Home, opens the first album in the
+# feed and starts playback, leaving the mini-player mounted. Encapsulates the
+# content-agnostic handles shared by every playback journey — the
+# alt="Album cover" image label, the `album-play-button` testID on the album
+# header, and the `floating-player` testID on the mini-player.
+#
+# Precondition: on Home (pull in `login-demo.yaml` first). On return, a track is
+# playing and the mini-player is visible.
+tags:
+  - subflow
+---
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 20000
+- tapOn:
+    text: "Album cover"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "album-play-button"
+    timeout: 15000
+- tapOn:
+    id: "album-play-button"
+- extendedWaitUntil:
+    visible:
+      id: "floating-player"
+    timeout: 15000

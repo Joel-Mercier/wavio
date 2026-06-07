@@ -739,7 +739,10 @@ export default function PlaylistDetail() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  <FadeOutScaleDown onPress={handlePresentModalPress}>
+                  <FadeOutScaleDown
+                    testID="playlist-menu-button"
+                    onPress={handlePresentModalPress}
+                  >
                     <EllipsisVertical color={white} />
                   </FadeOutScaleDown>
                 </HStack>

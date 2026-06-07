@@ -23,6 +23,7 @@ type PlayPauseButtonProps = {
   color?: string;
   className?: string;
   hitSlop?: ComponentProps<typeof Pressable>["hitSlop"];
+  testID?: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -35,6 +36,7 @@ export default function PlayPauseButton({
   color: colorProp,
   className,
   hitSlop,
+  testID,
 }: PlayPauseButtonProps) {
   const [gray800] = Uniwind.getCSSVariable(["--color-gray-800"]) as string[];
   const color = colorProp ?? gray800;
@@ -85,6 +87,7 @@ export default function PlayPauseButton({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      testID={testID}
       hitSlop={hitSlop}
       onPress={onPress}
       onPressIn={handlePressIn}

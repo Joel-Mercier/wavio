@@ -1,0 +1,41 @@
+appId: com.jmercier.wavio
+name: radio
+# Critical path — Internet radio search.
+# `home.yaml` reaches the radio browse screen via the Radio sub-tab; this flow
+# drills one level deeper into its dedicated search screen (backed by the
+# Radio Browser API). It opens search from the browse screen's search box, runs
+# a query, and returns. Content-agnostic: we assert the typed query is accepted,
+# not which stations come back (results depend on the live Radio Browser API).
+tags:
+  - home
+  - radio
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Home -> Radio sub-tab -> radio browse screen (testID because the tab label
+# doubles as a feed section heading).
+- tapOn:
+    id: "home-radio-tab"
+- extendedWaitUntil:
+    visible: "Search radio stations"
+    timeout: 15000
+
+# Open the search screen from the browse screen's search box. Leaving the browse
+# screen drops its "Search radio stations" box, which confirms the route change.
+- tapOn: "Search radio stations"
+- extendedWaitUntil:
+    notVisible: "Search radio stations"
+    timeout: 10000
+
+# The search field auto-focuses; type a query and confirm it's accepted.
+- inputText: "jazz"
+- assertVisible: "jazz"
+
+# Back to the radio browse screen. The field auto-focuses, so dismiss the
+# keyboard first — otherwise the Android `back` only closes the keyboard and
+# leaves us on the search screen.
+- hideKeyboard
+- back
+- extendedWaitUntil:
+    visible: "Search radio stations"
+    timeout: 10000

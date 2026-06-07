@@ -1,0 +1,39 @@
+appId: com.jmercier.wavio
+name: home
+# Critical path — Home feed navigation.
+# The Home feed is a vertical list of horizontal carousels, each with a "See all"
+# link, plus the Music / Podcasts / Radio sub-tabs at the top. This flow proves
+# "See all" drills into a section-detail list and that the Radio sub-tab reaches
+# the internet-radio browse screen, returning to the Music feed each time.
+tags:
+  - home
+---
+- runFlow: ../../subflows/login-demo.yaml
+- assertVisible: "Recently played"
+
+# "See all" on the first carousel → its section-detail list. Multiple carousels
+# expose "See all", so target the first and prove we left the feed (no more
+# "See all" once on the detail screen), then return.
+- tapOn:
+    text: "See all"
+    index: 0
+- extendedWaitUntil:
+    notVisible: "See all"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 10000
+
+# Radio sub-tab → internet-radio browse screen. Targeted by testID because its
+# label ("Internet radio stations") also appears as a feed section heading. The
+# radio screen's search box copy is unique, so it confirms the route.
+- tapOn:
+    id: "home-radio-tab"
+- extendedWaitUntil:
+    visible: "Search radio stations"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 10000

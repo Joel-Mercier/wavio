@@ -1,0 +1,48 @@
+appId: com.jmercier.wavio
+name: library
+# Critical path — Library tab (one session).
+# Exercises the two related Library behaviors in a single session: the filter
+# chips (selecting "Albums" drops the "Favorites" pseudo-item, clearing it brings
+# it back) and drilling into the Favorites screen. Both are content-agnostic, so
+# they hold whatever the demo server serves.
+tags:
+  - library
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# The Library list defaults to the "Recent" sort; its header is a stable signal
+# the tab mounted (the "Favorites" entry is only pinned to the top under the
+# Playlists filter — in the default view the sort pushes it below the fold).
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 15000
+
+# The filter chips render (the leading ones — trailing chips like "Folders" sit
+# off the horizontal scroll, so assert the ones in view).
+- assertVisible: "Playlists"
+- assertVisible: "Albums"
+- assertVisible: "Artists"
+
+# Under the "Playlists" filter the "Favorites" entry is pinned at the top.
+# Switching to "Albums" drops it (favorites aren't in the albums filter), and
+# returning to "Playlists" brings it back.
+- tapOn: "Playlists"
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 10000
+- tapOn: "Albums"
+- extendedWaitUntil:
+    notVisible: "Favorites"
+    timeout: 10000
+- tapOn: "Playlists"
+- extendedWaitUntil:
+    visible: "Favorites"
+    timeout: 10000
+
+# Drill into the Favorites screen ("Favorite tracks" exists only there).
+- tapOn: "Favorites"
+- extendedWaitUntil:
+    visible: "Favorite tracks"
+    timeout: 15000
+- assertVisible: "Search your favorite tracks"

@@ -1,0 +1,30 @@
+appId: com.jmercier.wavio
+name: "subflow: login to Navidrome demo server"
+# Reusable building block: brings the app from a cold, clean state to a
+# logged-in Home screen against the public Navidrome demo server
+# (https://demo.navidrome.org, demo/demo). Pulled in by the journey flows via
+# `runFlow` so each journey starts from an identical, deterministic state.
+#
+# Run against a `preview` or `production` build, NOT the `development` build:
+# the Expo dev client opens a launcher + dev menu that block the flow.
+tags:
+  - subflow
+---
+# Clean slate so no previously saved server/credentials change the screen.
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+# Wait for first paint (login background animation + Compose view).
+- extendedWaitUntil:
+    visible: "Sign in"
+    timeout: 10000
+# "Demo mode" prefills https://demo.navidrome.org with demo/demo (Navidrome).
+- tapOn: "Demo mode"
+- tapOn: "Login"
+# The success toast (3s) is too transient to match after navigation, so assert
+# a stable Home-screen element instead. This is the contract callers rely on:
+# when this subflow returns, we are on Home.
+- extendedWaitUntil:
+    visible: "Recently played"
+    timeout: 20000

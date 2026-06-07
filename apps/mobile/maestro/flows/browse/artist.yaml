@@ -1,0 +1,64 @@
+appId: com.jmercier.wavio
+name: artist
+# Critical path — Artist browsing (one session).
+# Reaches the artist screen from an album's "…" menu (there is no artist tab),
+# then drills into its Discography sub-screen and back. Covers the artist detail
+# route + one of its nested routes (discography / biography / liked-songs cluster)
+# without a cold start per screen.
+tags:
+  - browse
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Album -> "…" menu -> Go to artist.
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 20000
+- tapOn:
+    text: "Album cover"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "album-menu-button"
+    timeout: 15000
+- tapOn:
+    id: "album-menu-button"
+- extendedWaitUntil:
+    visible: "Go to artist"
+    timeout: 10000
+- tapOn: "Go to artist"
+
+# Artist detail: "Top songs" confirms the route. ("About" is omitted — it only
+# renders when the server returns a biography.) "Discography" sits below the fold
+# for artists with many top songs, so scroll it into view.
+- extendedWaitUntil:
+    visible: "Top songs"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Discography"
+    direction: DOWN
+    timeout: 15000
+
+# Drill into the full Discography screen via the footer "See all" link. It only
+# renders when the artist has more than 3 albums, so scroll down to the album
+# count footer and guard the tap — artists with fewer albums simply skip it.
+# Leaving the artist detail drops the "Top songs" heading, which confirms the
+# route; coming back, scroll up to it again.
+- scrollUntilVisible:
+    element:
+      text: ".*albums?"
+    direction: DOWN
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "See all"
+    commands:
+      - tapOn: "See all"
+      - extendedWaitUntil:
+          notVisible: "Top songs"
+          timeout: 10000
+      - back
+      - scrollUntilVisible:
+          element: "Top songs"
+          direction: UP
+          timeout: 15000

@@ -185,6 +185,7 @@ export default function TrackListItem({
             />
           )}
           <FadeOutScaleDown
+            testID="track-menu-button"
             onPress={handlePresentModalPress}
             disabled={isUnavailableOffline}
             disabledOpacity={0.8}

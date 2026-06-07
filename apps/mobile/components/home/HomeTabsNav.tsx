@@ -53,7 +53,10 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
       className="pl-6 gap-x-4 my-6 items-center"
       style={{ paddingTop: insets.top }}
     >
-      <FadeOutScaleDown onPress={() => setShowDrawer(true)}>
+      <FadeOutScaleDown
+        testID="open-drawer-button"
+        onPress={() => setShowDrawer(true)}
+      >
         <Avatar className="border-emerald-500 border-2 w-10 h-10">
           <AvatarFallbackText className="font-body ">
             {username}
@@ -153,6 +156,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
               </Badge>
             ) : (
               <FadeOutScaleDown
+                testID="home-radio-tab"
                 onPress={() =>
                   router.navigate(
                     "/(app)/(tabs)/(home)/internet-radio-stations",
