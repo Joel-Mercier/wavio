@@ -611,6 +611,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
+                testID="share-copy-button"
                 className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
                 onPress={handleCopyShareUrlPress}
               >
@@ -857,7 +858,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             <Heading className="text-white">
               {t("app.tracks.rateModalTitle")}
             </Heading>
-            <ModalCloseButton>
+            <ModalCloseButton testID="track-rating-close-button">
               <Icon as={X} size="md" className="color-white" />
             </ModalCloseButton>
           </ModalHeader>
@@ -1055,7 +1056,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             <Heading className="text-white">
               {t("app.tracks.creditsModalTitle")}
             </Heading>
-            <ModalCloseButton>
+            <ModalCloseButton testID="track-credits-close-button">
               <Icon as={X} size="md" className="color-white" />
             </ModalCloseButton>
           </ModalHeader>

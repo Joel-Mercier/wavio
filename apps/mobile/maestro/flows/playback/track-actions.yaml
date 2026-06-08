@@ -1,0 +1,593 @@
+appId: com.jmercier.wavio
+name: track-actions
+# Critical path — Track "…" context menu (one session, exhaustive).
+# Exercises every action wired in components/tracks/TrackActionsProvider.tsx by
+# opening the per-track "…" sheet on an album and firing each item in turn,
+# re-opening the sheet between actions (every item except "Add to favorites"
+# dismisses the sheet on tap). Reuses the `track-menu-button` handle from
+# TrackListItem and the modal/sheet handles added for this flow
+# (`track-rating-close-button`, `track-credits-close-button`,
+# `share-copy-button`, plus the existing `track-info-close-button`).
+#
+# Coverage map (handler -> step):
+#   handleFavoritePress ............ "Add to favorites"
+#   handleGoToArtistPress .......... "Go to artist"
+#   handleGoToAlbumPress ........... "Go to album"
+#   handlePlayNextPress ............ "Play next"
+#   handleAddToQueuePress .......... "Add to queue"
+#   handleRatingPress / Change ..... "Rate" -> star -> close
+#   handleSimilarSongsPress ........ "Similar songs"
+#   handleSharePress / CopyShareUrl  "Share" -> copy
+#   handleInfoPress ................ "Get info"
+#   handleCreditsPress ............. "Show track credits"
+#   handleOfflineDownloadPress ..... "Save for offline listening"
+#   handleRemoveOfflineDownloadPress "Remove offline download"
+#   handleDownloadPress ............ "Download"
+#   handleAddToPlaylistPress ....... "Add to playlist" (picker; executed in the
+#                                    playlist round-trip at the end)
+#   handleRemoveFromPlaylistPress .. playlist round-trip ("Remove from playlist")
+#   handleMusicBrainzPress ......... guarded (demo tracks expose no MBID)
+#   handleArtistPickPress .......... guarded (demo first track is single-artist)
+#
+# Side effects on the shared demo are kept minimal: the playlist actions run
+# against a throwaway playlist this flow creates and deletes; the Add-to-playlist
+# picker in the album section is backed out of without committing. Favoriting /
+# rating a demo track are intentional (that is the action under test) and left
+# as-is — the public demo resets periodically.
+tags:
+  - playback
+  - browse
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# Open the first Home album and land on its track list.
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 10000
+- tapOn:
+    text: "Album cover"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# --- Add to favorites -------------------------------------------------------
+# Favoriting is the one action that does NOT dismiss the sheet, so close it with
+# `back` afterwards. Guarded because the item is hidden once a track is starred.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Add to favorites"
+    commands:
+      - tapOn: "Add to favorites"
+      - assertVisible:
+          text: "Track successfully added to favorites"
+          optional: true
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Go to artist -----------------------------------------------------------
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- tapOn: "Go to artist"
+# "Top songs" confirms the artist detail route mounted.
+- extendedWaitUntil:
+    visible: "Top songs"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# --- Go to album ------------------------------------------------------------
+# The first track belongs to the album we're already viewing, so `router.navigate`
+# to that same album is a no-op (no new screen is pushed) — we must NOT `back`
+# afterwards or we'd pop the album back to Home. Tapping still fires the handler
+# (dismiss + navigate); asserting `album-play-button` (hidden behind the open
+# sheet until it dismisses) confirms the sheet closed onto the album. We stay put.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Go to album"
+    timeout: 8000
+- tapOn: "Go to album"
+- extendedWaitUntil:
+    visible:
+      id: "album-play-button"
+    timeout: 8000
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# NOTE: "Play next" and "Add to queue" are tested at the end of the album section
+# (see "Queue actions + Queue-screen verification" below) so that, after firing
+# them, we can leave the album for the Queue screen and assert the resulting order
+# without having to navigate back here.
+
+# --- Rate (modal + star + close) -------------------------------------------
+# Guarded on the server advertising the setRating capability. Tapping a star
+# fires handleRatingChange (success toast) but leaves the modal open, so close it
+# via its "X" (testID). The Gluestack Modal ignores Android `back`.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Rate"
+    commands:
+      - tapOn: "Rate"
+      - extendedWaitUntil:
+          visible: "Rate track"
+          timeout: 5000
+      - waitForAnimationToEnd
+      - tapOn: "Rate 3 stars"
+      - assertVisible:
+          text: "Rating successfully set"
+          optional: true
+      - tapOn:
+          id: "track-rating-close-button"
+      - runFlow:
+          when:
+            visible: "Rate track"
+          commands:
+            - tapOn:
+                id: "track-rating-close-button"
+      - extendedWaitUntil:
+          notVisible: "Rate track"
+          timeout: 8000
+# If the capability was absent the sheet is still open — close it.
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Similar songs ----------------------------------------------------------
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Similar songs"
+    timeout: 8000
+- tapOn: "Similar songs"
+- extendedWaitUntil:
+    visible:
+      text: "Tracks similar to.*"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# --- Share (creates a share on the demo, copies the URL) --------------------
+# Guarded on the sharing capability. The success path dismisses the sheet and
+# opens the share sub-sheet with the copy button; tap it (handleCopyShareUrlPress)
+# then `back` to dismiss the sub-sheet.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Share"
+    commands:
+      - tapOn: "Share"
+      - extendedWaitUntil:
+          visible:
+            id: "share-copy-button"
+          timeout: 10000
+      - tapOn:
+          id: "share-copy-button"
+      - assertVisible:
+          text: "Share url copied to clipboard"
+          optional: true
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "track-menu-button"
+          timeout: 8000
+# If sharing was unavailable the main sheet is still open — close it.
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Get info (modal) -------------------------------------------------------
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- tapOn: "Get info"
+- extendedWaitUntil:
+    visible: "Track info"
+    timeout: 5000
+- waitForAnimationToEnd
+- tapOn:
+    id: "track-info-close-button"
+- runFlow:
+    when:
+      visible: "Track info"
+    commands:
+      - tapOn:
+          id: "track-info-close-button"
+- extendedWaitUntil:
+    notVisible: "Track info"
+    timeout: 8000
+
+# --- Show track credits (modal) --------------------------------------------
+# Guarded: the item only renders when the track carries credit metadata.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Show track credits"
+    commands:
+      - tapOn: "Show track credits"
+      - extendedWaitUntil:
+          visible: "Track credits"
+          timeout: 5000
+      - waitForAnimationToEnd
+      - tapOn:
+          id: "track-credits-close-button"
+      - runFlow:
+          when:
+            visible: "Track credits"
+          commands:
+            - tapOn:
+                id: "track-credits-close-button"
+      - extendedWaitUntil:
+          notVisible: "Track credits"
+          timeout: 8000
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Save for offline, then remove the offline download ---------------------
+# Both handlers dismiss the sheet immediately and finish the disk work async, and
+# their toasts aren't reliably visible — so we verify via the menu item itself,
+# which is driven by the reactive isTrackDownloaded()/isTrackDownloading() hooks:
+# after saving it flips to "Remove offline download"; after removing it flips back
+# to "Save for offline listening". Re-open the sheet and wait for each flip.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Save for offline listening"
+    commands:
+      - tapOn: "Save for offline listening"
+      - extendedWaitUntil:
+          notVisible: "Get info"
+          timeout: 8000
+      # Re-open and wait (sheet stays open) for the download to finish and the
+      # item to flip to the removable state.
+      - tapOn:
+          id: "track-menu-button"
+          index: 0
+      - extendedWaitUntil:
+          visible: "Get info"
+          timeout: 8000
+      - extendedWaitUntil:
+          visible: "Remove offline download"
+          timeout: 60000
+      - tapOn: "Remove offline download"
+      - extendedWaitUntil:
+          notVisible: "Get info"
+          timeout: 8000
+      # Re-open once more and confirm the item flipped back (removal succeeded).
+      - tapOn:
+          id: "track-menu-button"
+          index: 0
+      - extendedWaitUntil:
+          visible: "Get info"
+          timeout: 8000
+      - extendedWaitUntil:
+          visible: "Save for offline listening"
+          timeout: 30000
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Download (save to the device media library) ----------------------------
+# Dismisses the sheet immediately, then downloads asynchronously; the toast is
+# best-effort (network-bound on the demo).
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- tapOn: "Download"
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 8000
+- assertVisible:
+    text: "Track successfully downloaded"
+    optional: true
+
+# --- Open in MusicBrainz (guarded — demo tracks carry no MBID) --------------
+# Kept last because tapping it leaves the app for the browser. On the demo the
+# item is absent, so this just opens and closes the sheet, documenting the path.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Open in MusicBrainz"
+    commands:
+      - tapOn: "Open in MusicBrainz"
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# --- Go to artists sub-sheet (guarded — needs a multi-artist track) ---------
+# When a track has several artists, "Go to artist" opens a picker sub-sheet
+# (handleArtistPickPress) instead of navigating. The demo's first track is
+# single-artist, so this only runs when the plural label is present.
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- runFlow:
+    when:
+      visible: "Go to artists"
+    commands:
+      - tapOn: "Go to artists"
+      - extendedWaitUntil:
+          visible: "Top songs"
+          timeout: 10000
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "track-menu-button"
+          timeout: 8000
+- runFlow:
+    when:
+      visible: "Get info"
+    commands:
+      - back
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 5000
+
+# ===========================================================================
+# Queue actions + Queue-screen verification ("Play next" / "Add to queue").
+# Fire both from the album, then open the Queue screen and assert the ordering.
+# Capture the two track titles first (content-agnostic — the demo's first Home
+# album varies); "Play next" uses track 0 and "Add to queue" a DIFFERENT track
+# (track 1) so the two are distinguishable in the queue. The flow started from a
+# cleared state and nothing has been played, so the queue is empty when "Play
+# next" runs: per enqueueNext the track lands at index 0 AND becomes the current
+# track — i.e. it is the ONLY track in the queue, with nothing above it. "Add to
+# queue" then appends track 1 at the bottom.
+# ===========================================================================
+- copyTextFrom:
+    id: "track-title"
+    index: 0
+- evalScript: ${output.playNextTitle = maestro.copiedText}
+- copyTextFrom:
+    id: "track-title"
+    index: 1
+- evalScript: ${output.addQueueTitle = maestro.copiedText}
+
+# Play next -> track 0 (becomes the current/only track on the empty queue).
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- tapOn: "Play next"
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 8000
+
+# Add to queue -> track 1 (appended to the bottom).
+- tapOn:
+    id: "track-menu-button"
+    index: 1
+- extendedWaitUntil:
+    visible: "Get info"
+    timeout: 8000
+- tapOn: "Add to queue"
+- extendedWaitUntil:
+    notVisible: "Get info"
+    timeout: 8000
+
+# Open the Queue screen via the drawer (reachable only from a tab screen, so
+# `back` to the Home feed first).
+- back
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 8000
+- runFlow: ../../subflows/open-drawer.yaml
+- tapOn: "Queue"
+- extendedWaitUntil:
+    visible: "Queue"
+    timeout: 8000
+
+# The "Play next" track is the current/top track (nothing above it — it is the
+# only track the empty queue held), and the "Add to queue" track sits below it,
+# at the bottom.
+- assertVisible: ${output.playNextTitle}
+- assertVisible:
+    text: ${output.addQueueTitle}
+    below:
+      text: ${output.playNextTitle}
+
+# Leave the Queue screen so the Home tab returns to its feed for the playlist
+# section that follows (otherwise Home would still be showing the Queue screen).
+- back
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 8000
+
+# ===========================================================================
+# Add to playlist + Remove from playlist (executed on a throwaway playlist).
+# Create a uniquely-named playlist, add the current track to it via the menu's
+# Add-to-playlist picker, open it, remove the track from it via the in-playlist
+# "…" menu, then delete the playlist. No shared-demo content is mutated.
+# ===========================================================================
+- evalScript: ${output.playlistName = 'maestro-trk-' + Date.now()}
+
+# Create the (empty) playlist from the Library "+" sheet.
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn:
+    id: "library-create-button"
+- extendedWaitUntil:
+    visible: "Create a playlist with songs"
+    timeout: 5000
+- tapOn: "Create a playlist with songs"
+- extendedWaitUntil:
+    visible: "Give a name to your playlist"
+    timeout: 5000
+- tapOn: "My awesome playlist"
+- inputText: ${output.playlistName}
+- tapOn: "Create"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+
+# Back to Home, open the first album, and add its first track to our playlist
+# through the track "…" menu -> Add to playlist picker -> select -> Finished.
+- tapOn: "Home"
+- extendedWaitUntil:
+    visible: "Album cover"
+    timeout: 10000
+- tapOn:
+    text: "Album cover"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Add to playlist"
+    timeout: 8000
+- tapOn: "Add to playlist"
+- extendedWaitUntil:
+    visible: "New playlist"
+    timeout: 8000
+- scrollUntilVisible:
+    element:
+      text: ${output.playlistName}
+    direction: DOWN
+    timeout: 8000
+- tapOn: ${output.playlistName}
+- tapOn: "Finished"
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# Open our playlist from the Library and remove the track we just added.
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn: "Playlists"
+- scrollUntilVisible:
+    element:
+      text: ${output.playlistName}
+    direction: DOWN
+    timeout: 8000
+- tapOn: ${output.playlistName}
+- extendedWaitUntil:
+    visible:
+      id: "track-menu-button"
+    timeout: 8000
+- tapOn:
+    id: "track-menu-button"
+    index: 0
+- extendedWaitUntil:
+    visible: "Remove from playlist"
+    timeout: 8000
+# In a playlist context the "Add to playlist" item reads "Add to another playlist".
+- assertVisible: "Add to another playlist"
+- tapOn: "Remove from playlist"
+- extendedWaitUntil:
+    notVisible:
+      id: "track-menu-button"
+    timeout: 8000
+
+# Delete the throwaway playlist (cleanup) so the run leaves no artifact.
+- tapOn:
+    id: "playlist-menu-button"
+- extendedWaitUntil:
+    visible: "Delete this playlist"
+    timeout: 5000
+- tapOn: "Delete this playlist"
+- extendedWaitUntil:
+    visible: "Are you sure you want to delete this playlist?"
+    timeout: 5000
+- tapOn: "Delete"
+- extendedWaitUntil:
+    notVisible: ${output.playlistName}
+    timeout: 8000

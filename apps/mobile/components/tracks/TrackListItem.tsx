@@ -153,6 +153,7 @@ export default function TrackListItem({
             })}
           >
             <Heading
+              testID="track-title"
               className={cn("text-white text-md font-normal capitalize mr-4", {
                 "text-emerald-500": isCurrentTrack,
               })}

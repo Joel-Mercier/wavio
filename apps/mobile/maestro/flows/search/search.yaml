@@ -74,10 +74,13 @@ tags:
 - back
 - tapOn:
     id: "search-clear-button"
+- hideKeyboard
 - extendedWaitUntil:
     visible: "Recent searches"
     timeout: 5000
-- assertVisible: "love"
+- extendedWaitUntil:
+    visible: "love"
+    timeout: 5000
 - assertVisible: "Clear all"
 - tapOn: "Clear all"
 - extendedWaitUntil:
