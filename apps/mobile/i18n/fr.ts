@@ -491,6 +491,10 @@ export default {
           lastplayed: "Dernière écoute",
           bpm: "BPM",
           duration: "Durée",
+          rgalbumgain: "ReplayGain gain album",
+          rgalbumpeak: "ReplayGain crête album",
+          rgtrackgain: "ReplayGain gain piste",
+          rgtrackpeak: "ReplayGain crête piste",
           inPlaylist: "Playlist",
         },
         operators: {
@@ -509,6 +513,8 @@ export default {
           notInTheLast: "pas dans les derniers (jours)",
           inPlaylist: "dans la playlist",
           notInPlaylist: "pas dans la playlist",
+          isMissing: "est absent",
+          isPresent: "est présent",
         },
         sortFields: {
           title: "Titre",
@@ -918,6 +924,7 @@ export default {
           track: "Numéro de piste",
           year: "Année de sortie",
           genres: "Genres",
+          grouping: "Regroupement",
           duration: "Durée",
           codec: "Codec",
           bitRate: "Bitrate",

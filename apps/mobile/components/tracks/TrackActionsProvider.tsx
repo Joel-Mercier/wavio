@@ -76,6 +76,7 @@ import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
+import { logError } from "@/utils/log";
 import { downloadUrl } from "@/utils/streaming";
 
 export interface TrackActionsContextValue {
@@ -283,7 +284,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -420,7 +421,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -468,7 +469,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -517,7 +518,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         ),
       });
     } catch (error) {
-      console.error("Error downloading track for offline:", error);
+      logError("Error downloading track for offline:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -551,7 +552,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         ),
       });
     } catch (error) {
-      console.error("Error removing offline download:", error);
+      logError("Error removing offline download:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -949,6 +950,14 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     {track.genres?.map((genre) => genre.name)?.join(", ")}
                   </Text>
                 </VStack>
+                {track.groupings ? (
+                  <VStack className="border-b border-primary-600 py-2">
+                    <Text className="text-primary-100 text-sm">
+                      {t("app.tracks.infoModal.grouping")}
+                    </Text>
+                    <Text className="text-white">{track.groupings}</Text>
+                  </VStack>
+                ) : null}
                 <VStack className="border-b border-primary-600 py-2">
                   <Text className="text-primary-100 text-sm">
                     {t("app.tracks.infoModal.duration")}

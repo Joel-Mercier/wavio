@@ -23,6 +23,9 @@ export function gte(version: SemVer | null, target: SemVer): boolean {
 
 export const SMART_PLAYLIST_MIN_VERSION: SemVer = [0, 49, 0];
 export const MULTI_FIELD_SORT_MIN_VERSION: SemVer = [0, 53, 0];
+// v0.62.0 added ReplayGain criteria fields (rgalbumgain/...) and the
+// isMissing/isPresent tag-presence operators to smart playlists.
+export const V062_MIN_VERSION: SemVer = [0, 62, 0];
 
 export function supportsSmartPlaylists(
   raw: string | null | undefined,
@@ -34,4 +37,16 @@ export function supportsMultiFieldSort(
   raw: string | null | undefined,
 ): boolean {
   return gte(parseServerVersion(raw), MULTI_FIELD_SORT_MIN_VERSION);
+}
+
+export function supportsReplayGainCriteria(
+  raw: string | null | undefined,
+): boolean {
+  return gte(parseServerVersion(raw), V062_MIN_VERSION);
+}
+
+export function supportsTagPresenceOperators(
+  raw: string | null | undefined,
+): boolean {
+  return gte(parseServerVersion(raw), V062_MIN_VERSION);
 }

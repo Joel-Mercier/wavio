@@ -48,6 +48,20 @@ export const setRating = async (id: string, rating: number) => {
   return fakeEnvelope({});
 };
 
+// Jellyfin never advertises the playbackReport OpenSubsonic extension, so the
+// client always takes the scrobble path for Jellyfin servers and never calls
+// this. Present only for dispatch-layer type completeness.
+export const reportPlayback = async (_params: {
+  mediaId: string;
+  mediaType?: "song" | "podcast";
+  positionMs: number;
+  state: "starting" | "playing" | "paused" | "stopped";
+  playbackRate?: number;
+  ignoreScrobble?: boolean;
+}) => {
+  return fakeEnvelope({});
+};
+
 export const scrobble = async (
   id: string,
   { time: _time, submission }: { time?: number; submission?: boolean },

@@ -60,7 +60,7 @@ export default function CarAutoSync() {
         const { url, username } = useAuthBase.getState();
         if (!url || !username) return;
         const tree = await buildBrowseTree().catch((e) => {
-          console.log("[carauto] buildBrowseTree threw", e);
+          if (__DEV__) console.log("[carauto] buildBrowseTree threw", e);
           return null;
         });
         if (cancelled || !tree) return;

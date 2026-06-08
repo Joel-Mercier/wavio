@@ -89,6 +89,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
+import { logError } from "@/utils/log";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
@@ -258,7 +259,7 @@ export default function PlaylistDetail() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -338,7 +339,7 @@ export default function PlaylistDetail() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -406,7 +407,7 @@ export default function PlaylistDetail() {
         });
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -499,7 +500,7 @@ export default function PlaylistDetail() {
         ),
       });
     } catch (error) {
-      console.error("Error saving playlist for offline:", error);
+      logError("Error saving playlist for offline:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -532,7 +533,7 @@ export default function PlaylistDetail() {
         ),
       });
     } catch (error) {
-      console.error("Error removing playlist offline downloads:", error);
+      logError("Error removing playlist offline downloads:", error);
       toast.show({
         placement: "top",
         duration: 3000,

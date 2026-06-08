@@ -20,6 +20,7 @@ import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
+import { logError } from "@/utils/log";
 
 export default function AddToPlaylistDetail() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
@@ -73,7 +74,7 @@ export default function AddToPlaylistDetail() {
               });
             },
             onError: (error) => {
-              console.error(error);
+              logError(error);
               toast.show({
                 placement: "top",
                 duration: 3000,

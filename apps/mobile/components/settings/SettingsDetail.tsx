@@ -81,6 +81,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
+import { logError } from "@/utils/log";
 import { switchToServer } from "@/utils/switchServer";
 import { cn } from "@/utils/tailwind";
 import {
@@ -426,7 +427,7 @@ export default function SettingsDetail() {
         });
       },
       onError: (error) => {
-        console.error(error);
+        logError(error);
         toast.show({
           placement: "top",
           duration: 3000,
@@ -488,7 +489,7 @@ export default function SettingsDetail() {
         ),
       });
     } catch (error) {
-      console.error(error);
+      logError(error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -532,7 +533,7 @@ export default function SettingsDetail() {
       setRestoreTarget(outcome);
       setShowRestartRequiredAlertDialog(true);
     } catch (error) {
-      console.error(error);
+      logError(error);
       const isValidationError = error instanceof z.ZodError;
       toast.show({
         placement: "top",

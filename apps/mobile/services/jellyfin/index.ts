@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { useAuthBase } from "@/stores/auth";
+import { logError } from "@/utils/log";
 
 const client = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "Wavio";
 
@@ -38,7 +39,7 @@ jellyfinApiInstance.interceptors.request.use(
     return request;
   },
   (error) => {
-    console.error(error);
+    logError(error);
     return Promise.reject(error);
   },
 );

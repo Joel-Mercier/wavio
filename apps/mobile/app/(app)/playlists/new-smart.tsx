@@ -31,6 +31,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCreateSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import useAuth from "@/stores/auth";
+import { logError } from "@/utils/log";
 import {
   defaultRule,
   type FormRule,
@@ -118,7 +119,7 @@ export default function NewSmartPlaylistScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

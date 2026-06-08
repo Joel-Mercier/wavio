@@ -28,6 +28,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
+import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 
 interface PodcastListItemProps {
@@ -150,7 +151,7 @@ export default function PodcastListItem({
         failOnCancel: false,
       });
     } catch (error) {
-      console.error(error);
+      logError(error);
       toast.show({
         placement: "top",
         duration: 3000,

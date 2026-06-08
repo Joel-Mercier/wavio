@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
+import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import {
   persistOptions,
   queryClient,
@@ -25,6 +26,8 @@ import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
+import { useServerExtensionsBase } from "@/stores/serverExtensions";
+import { logError } from "@/utils/log";
 
 // Module-level so it survives AppLayout unmount/remount during the
 // logout → login flow used by switchToServer.
@@ -45,7 +48,7 @@ export default function AppLayout() {
     // wipe data that's about to be restored from storage.
     const isScopeChange = lastHydratedScope !== null;
     lastHydratedScope = scope;
-    console.log("[app] Hydrating scoped stores for scope", scope);
+    if (__DEV__) console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
       stopPlayQueueSync();
       useRecentPlays.getState().__reset();
@@ -53,6 +56,9 @@ export default function AppLayout() {
       useActivity.getState().__reset();
       useQueue.getState().__reset();
       useOffline.getState().__reset();
+      // Drop the previous server's advertised OpenSubsonic extensions; the
+      // ServerExtensionsSync component repopulates them for the new server.
+      useServerExtensionsBase.getState().reset();
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
       resetServerReachable();
@@ -71,7 +77,7 @@ export default function AppLayout() {
         }
         await persistQueryClientRestore({ queryClient, ...persistOptions });
       } catch (error) {
-        console.error("[app] Failed to restore persisted query cache", error);
+        logError("[app] Failed to restore persisted query cache", error);
       } finally {
         setCacheRestoring(false);
       }
@@ -112,11 +118,13 @@ export default function AppLayout() {
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
-    console.log("[app] User is not authenticated, redirecting to login");
+    if (__DEV__)
+      console.log("[app] User is not authenticated, redirecting to login");
     return <Redirect href="/(auth)/login" />;
   }
 
-  console.log("[app] User is authenticated, rendering (app) layout");
+  if (__DEV__)
+    console.log("[app] User is authenticated, rendering (app) layout");
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
@@ -139,6 +147,7 @@ export default function AppLayout() {
       </Stack>
       <FloatingPlayer />
       <OfflineStarredAutoSync />
+      <ServerExtensionsSync />
     </>
   );
 }

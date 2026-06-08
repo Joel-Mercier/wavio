@@ -28,6 +28,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
+import { logError } from "@/utils/log";
 
 interface CreatePlaylistFromQueueDialogProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export default function CreatePlaylistFromQueueDialog({
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

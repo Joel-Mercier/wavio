@@ -104,6 +104,7 @@ import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatRichTextPlain } from "@/utils/formatRichText";
+import { logError } from "@/utils/log";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
 
 const COVER_SWIPE_THRESHOLD = 80;
@@ -495,7 +496,7 @@ export default function PlayerScreen() {
         const { position } = await deactivateJukebox();
         if (position > 0) seekLocal(position);
       } catch (e) {
-        console.error(e);
+        logError(e);
       }
       jukeboxSheetRef.current?.dismiss();
       return;
@@ -506,7 +507,7 @@ export default function PlayerScreen() {
     try {
       await activateJukebox({ position, autoplay: wasPlaying });
     } catch (error) {
-      console.error(error);
+      logError(error);
       if (wasPlaying) playLocal();
       toast.show({
         placement: "top",
@@ -646,7 +647,7 @@ export default function PlayerScreen() {
         failOnCancel: false,
       });
     } catch (error) {
-      console.error(error);
+      logError(error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -802,7 +803,7 @@ export default function PlayerScreen() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -839,7 +840,7 @@ export default function PlayerScreen() {
         });
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,

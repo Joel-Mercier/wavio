@@ -3,11 +3,16 @@ import type {
   SmartPlaylistCriteria,
   SmartPlaylistRule,
 } from "@/services/navidrome/smartPlaylists";
-import { supportsMultiFieldSort } from "@/utils/navidromeVersion";
+import {
+  supportsMultiFieldSort,
+  supportsReplayGainCriteria,
+  supportsTagPresenceOperators,
+} from "@/utils/navidromeVersion";
 
 export type FieldValueType =
   | "string"
   | "integer"
+  | "decimal"
   | "rating"
   | "boolean"
   | "date"
@@ -17,6 +22,11 @@ export interface SmartPlaylistField {
   key: string;
   valueType: FieldValueType;
   i18nKey: string;
+  // Server version (Navidrome) at which this criteria field became available.
+  // Undefined = available on every version we support smart playlists on.
+  minVersion?: "v062";
+  // Tag/role (JSON-backed) field — supports the isMissing/isPresent operators.
+  tagPresence?: boolean;
 }
 
 export const SMART_PLAYLIST_FIELDS: SmartPlaylistField[] = [
@@ -24,7 +34,7 @@ export const SMART_PLAYLIST_FIELDS: SmartPlaylistField[] = [
   { key: "album", valueType: "string", i18nKey: "album" },
   { key: "artist", valueType: "string", i18nKey: "artist" },
   { key: "albumartist", valueType: "string", i18nKey: "albumartist" },
-  { key: "genre", valueType: "string", i18nKey: "genre" },
+  { key: "genre", valueType: "string", i18nKey: "genre", tagPresence: true },
   { key: "comment", valueType: "string", i18nKey: "comment" },
   { key: "year", valueType: "integer", i18nKey: "year" },
   { key: "playcount", valueType: "integer", i18nKey: "playcount" },
@@ -34,7 +44,60 @@ export const SMART_PLAYLIST_FIELDS: SmartPlaylistField[] = [
   { key: "lastplayed", valueType: "date", i18nKey: "lastplayed" },
   { key: "bpm", valueType: "integer", i18nKey: "bpm" },
   { key: "duration", valueType: "integer", i18nKey: "duration" },
+  // ReplayGain criteria, added in Navidrome v0.62.0.
+  {
+    key: "rgalbumgain",
+    valueType: "decimal",
+    i18nKey: "rgalbumgain",
+    minVersion: "v062",
+  },
+  {
+    key: "rgalbumpeak",
+    valueType: "decimal",
+    i18nKey: "rgalbumpeak",
+    minVersion: "v062",
+  },
+  {
+    key: "rgtrackgain",
+    valueType: "decimal",
+    i18nKey: "rgtrackgain",
+    minVersion: "v062",
+  },
+  {
+    key: "rgtrackpeak",
+    valueType: "decimal",
+    i18nKey: "rgtrackpeak",
+    minVersion: "v062",
+  },
 ];
+
+// Fields available for the active server, hiding criteria the server is too old
+// to understand so older Navidrome versions keep working.
+export function getAvailableFields(
+  serverVersion: string | null,
+): SmartPlaylistField[] {
+  const allowReplayGain = supportsReplayGainCriteria(serverVersion);
+  return SMART_PLAYLIST_FIELDS.filter(
+    (f) => f.minVersion !== "v062" || allowReplayGain,
+  );
+}
+
+// Operators valid for a given field on the active server, appending the
+// version-gated tag-presence operators for tag fields.
+export function getOperatorsForField(
+  field: SmartPlaylistField,
+  serverVersion: string | null,
+): RuleOperator[] {
+  const base = OPERATORS_BY_VALUE_TYPE[field.valueType];
+  if (field.tagPresence && supportsTagPresenceOperators(serverVersion)) {
+    return [...base, "isMissing", "isPresent"];
+  }
+  return base;
+}
+
+export function isTagPresenceOperator(op: RuleOperator): boolean {
+  return op === "isMissing" || op === "isPresent";
+}
 
 export const SMART_PLAYLIST_PLAYLIST_REFS: SmartPlaylistField[] = [
   { key: "id", valueType: "playlist", i18nKey: "inPlaylist" },
@@ -73,11 +136,14 @@ export type RuleOperator =
   | "inTheLast"
   | "notInTheLast"
   | "inPlaylist"
-  | "notInPlaylist";
+  | "notInPlaylist"
+  | "isMissing"
+  | "isPresent";
 
 export const OPERATORS_BY_VALUE_TYPE: Record<FieldValueType, RuleOperator[]> = {
   string: ["is", "isNot", "contains", "notContains", "startsWith", "endsWith"],
   integer: ["is", "isNot", "gt", "lt", "inTheRange"],
+  decimal: ["is", "isNot", "gt", "lt", "inTheRange"],
   rating: ["is", "isNot", "gt", "lt", "inTheRange"],
   date: ["before", "after", "inTheLast", "notInTheLast"],
   boolean: ["is"],
@@ -126,6 +192,8 @@ const ruleSchema = z
     if (!field) return;
     const op = rule.operator as RuleOperator;
     if (field.valueType === "boolean") return;
+    // isMissing/isPresent carry a boolean, not a typed value.
+    if (isTagPresenceOperator(op)) return;
     if (field.valueType === "playlist") {
       if (!rule.playlistId)
         ctx.addIssue({
@@ -153,6 +221,7 @@ const ruleSchema = z
     }
     if (
       (field.valueType === "integer" ||
+        field.valueType === "decimal" ||
         field.valueType === "rating" ||
         op === "inTheLast" ||
         op === "notInTheLast") &&
@@ -191,7 +260,7 @@ function coerceRuleValue(
   if (field.valueType === "playlist") {
     return { [op]: { id: rule.playlistId } } as Record<string, unknown>;
   }
-  if (field.valueType === "boolean") {
+  if (field.valueType === "boolean" || isTagPresenceOperator(op)) {
     return { [op]: { [field.key]: rule.boolValue } } as Record<string, unknown>;
   }
   if (op === "inTheRange") {
@@ -203,6 +272,7 @@ function coerceRuleValue(
   }
   if (
     field.valueType === "integer" ||
+    field.valueType === "decimal" ||
     field.valueType === "rating" ||
     op === "inTheLast" ||
     op === "notInTheLast"
@@ -273,7 +343,7 @@ export function fromNavidromeCriteria(
     const fieldDef = getFieldByKey(fieldKey);
     if (!fieldDef) return [];
     const raw = payload[fieldKey];
-    if (fieldDef.valueType === "boolean") {
+    if (fieldDef.valueType === "boolean" || isTagPresenceOperator(op)) {
       return [
         {
           field: fieldKey,

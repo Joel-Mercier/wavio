@@ -12,13 +12,16 @@ export type NumberOperator = "is" | "isNot" | "gt" | "lt" | "inTheRange";
 export type DateOperator = "before" | "after" | "inTheLast" | "notInTheLast";
 export type BooleanOperator = "is";
 export type PlaylistRefOperator = "inPlaylist" | "notInPlaylist";
+// Tag/role presence operators added in Navidrome v0.62.0.
+export type TagPresenceOperator = "isMissing" | "isPresent";
 
 export type SmartPlaylistOperator =
   | StringOperator
   | NumberOperator
   | DateOperator
   | BooleanOperator
-  | PlaylistRefOperator;
+  | PlaylistRefOperator
+  | TagPresenceOperator;
 
 export type SmartPlaylistRuleValue =
   | string

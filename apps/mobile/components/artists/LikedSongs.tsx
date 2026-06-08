@@ -76,6 +76,7 @@ import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
+import { logError } from "@/utils/log";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -338,7 +339,7 @@ export default function LikedSongs() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useCreateInternetRadioStation } from "@/hooks/backend/useInternetRadioStations";
+import { logError } from "@/utils/log";
 
 const newInternetRadioStationSchema = z.object({
   name: z.string().trim().min(1),
@@ -76,7 +77,7 @@ export default function NewInternetRadioStationScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

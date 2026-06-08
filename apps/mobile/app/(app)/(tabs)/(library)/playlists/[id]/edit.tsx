@@ -36,6 +36,7 @@ import { VStack } from "@/components/ui/vstack";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { artworkUrl } from "@/utils/artwork";
+import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 
 const editPlaylistSchema = z.object({
@@ -91,7 +92,7 @@ export default function EditPlaylistScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

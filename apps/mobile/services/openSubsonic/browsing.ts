@@ -19,6 +19,7 @@ import type {
   PodcastEpisode,
   SimilarSongs,
   SimilarSongs2,
+  SonicSimilarTracks,
   TopSongs,
   VideoInfo,
   Videos,
@@ -324,6 +325,31 @@ export const getSimilarSongs2 = async (
     const rsp = await openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ similarSongs2: SimilarSongs2 }>
     >("/rest/getSimilarSongs2", {
+      params: {
+        id,
+        count,
+      },
+    });
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error;
+    }
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error;
+    }
+    throw error;
+  }
+};
+
+export const getSonicSimilarTracks = async (
+  id: string,
+  { count }: { count?: number },
+) => {
+  try {
+    const rsp = await openSubsonicApiInstance.get<
+      OpenSubsonicResponse<{ sonicSimilarTracks: SonicSimilarTracks }>
+    >("/rest/getSonicSimilarTracks", {
       params: {
         id,
         count,

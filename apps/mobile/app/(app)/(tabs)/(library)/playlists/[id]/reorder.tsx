@@ -27,6 +27,7 @@ import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
+import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
@@ -89,7 +90,7 @@ export default function ReorderPlaylistScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

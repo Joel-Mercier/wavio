@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { queryClient } from "@/config/queryClient";
 import { zustandStorage } from "@/config/storage";
+import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import { type ServerType, serverTypeSchema } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
 
@@ -148,6 +149,8 @@ export const useAuthBase = create<AuthStore>()(
         // repopulate the cache after it's cleared.
         queryClient.cancelQueries();
         queryClient.clear();
+        // Forget the previous server's advertised OpenSubsonic extensions.
+        useServerExtensionsBase.getState().reset();
       },
     }),
     {

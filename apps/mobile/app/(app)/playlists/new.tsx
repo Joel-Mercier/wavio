@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
+import { logError } from "@/utils/log";
 
 const newPlaylistSchema = z.object({
   name: z.string().trim().min(1),
@@ -70,7 +71,7 @@ export default function NewPlaylistScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

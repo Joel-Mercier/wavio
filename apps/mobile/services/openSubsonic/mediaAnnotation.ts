@@ -29,6 +29,53 @@ export const scrobble = async (
   }
 };
 
+// OpenSubsonic `playbackReport` extension (Navidrome v0.62.0). Reports playback
+// state/position so the server drives scrobbling and enriches getNowPlaying.
+export type PlaybackReportState = "starting" | "playing" | "paused" | "stopped";
+
+export const reportPlayback = async ({
+  mediaId,
+  mediaType = "song",
+  positionMs,
+  state,
+  playbackRate,
+  ignoreScrobble,
+}: {
+  mediaId: string;
+  // Required by Navidrome's handler — a missing mediaType makes every call fail
+  // (the request still 200s at the HTTP layer but returns a Subsonic error and
+  // nothing is recorded). The player only reports songs (podcasts are excluded).
+  mediaType?: "song" | "podcast";
+  positionMs: number;
+  state: PlaybackReportState;
+  playbackRate?: number;
+  ignoreScrobble?: boolean;
+}) => {
+  try {
+    const rsp = await openSubsonicApiInstance.get<
+      OpenSubsonicResponse<Record<string, never>>
+    >("/rest/reportPlayback", {
+      params: {
+        mediaId,
+        mediaType,
+        positionMs,
+        state,
+        playbackRate,
+        ignoreScrobble,
+      },
+    });
+    if (rsp.data["subsonic-response"]?.status !== "ok") {
+      throw rsp.data["subsonic-response"].error;
+    }
+    return rsp.data["subsonic-response"];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error;
+    }
+    throw error;
+  }
+};
+
 export const setRating = async (id: string, rating: number) => {
   try {
     const rsp = await openSubsonicApiInstance.get<

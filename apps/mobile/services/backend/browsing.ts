@@ -29,6 +29,10 @@ export const getSimilarSongs2 = dispatch(
   S.getSimilarSongs2,
   J.getSimilarSongs2,
 );
+export const getSonicSimilarTracks = dispatch(
+  S.getSonicSimilarTracks,
+  J.getSonicSimilarTracks,
+);
 export const getSong = dispatch(S.getSong, J.getSong);
 export const getTopSongs = dispatch(S.getTopSongs, J.getTopSongs);
 export const getVideoInfo = dispatch(S.getVideoInfo, J.getVideoInfo);

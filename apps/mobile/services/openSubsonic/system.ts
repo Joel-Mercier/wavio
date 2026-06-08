@@ -29,7 +29,7 @@ export const getLicense = async () => {
 export const getOpenSubsonicExtensions = async () => {
   try {
     const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ openSubsonicExtensions: OpenSubsonicExtensions }>
+      OpenSubsonicResponse<{ openSubsonicExtensions: OpenSubsonicExtensions[] }>
     >("/rest/getOpenSubsonicExtensions", {
       params: {},
     });

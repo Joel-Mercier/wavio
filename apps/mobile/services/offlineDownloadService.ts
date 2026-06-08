@@ -7,6 +7,7 @@ import useOffline, {
   type DownloadProgress,
   type OfflineTrack,
 } from "@/stores/offline";
+import { logError } from "@/utils/log";
 import { downloadUrl } from "@/utils/streaming";
 import type { Child } from "./openSubsonic/types";
 
@@ -94,7 +95,7 @@ export class OfflineDownloadService {
           offlineStore.addDownloadedTrack({ ...track, size: file.size });
         }
       } catch (error) {
-        console.error(
+        logError(
           `Download Manager: Error backfilling size for ${track.id}:`,
           error,
         );
@@ -169,10 +170,7 @@ export class OfflineDownloadService {
         progress: 0,
         error: error instanceof Error ? error.message : "Unknown error",
       });
-      console.error(
-        `Download Manager: Error downloading track ${track.id}:`,
-        error,
-      );
+      logError(`Download Manager: Error downloading track ${track.id}:`, error);
       resolvers?.reject(error);
     } finally {
       this.activeIds.delete(track.id);
@@ -245,7 +243,7 @@ export class OfflineDownloadService {
       offlineStore.removeDownloadedTrack(trackId);
       offlineStore.removeDownloadProgress(trackId);
     } catch (error) {
-      console.error(`Error removing track ${trackId}:`, error);
+      logError(`Error removing track ${trackId}:`, error);
       throw error;
     }
   }
@@ -267,7 +265,7 @@ export class OfflineDownloadService {
             file.delete();
           }
         } catch (error) {
-          console.error(
+          logError(
             `Download Manager: Error deleting file for track ${track.id}:`,
             error,
           );
@@ -286,7 +284,7 @@ export class OfflineDownloadService {
       this.resolvers.clear();
       offlineStore.clearAllDownloads();
     } catch (error) {
-      console.error("Download Manager: Error clearing downloads:", error);
+      logError("Download Manager: Error clearing downloads:", error);
       throw error;
     }
   }

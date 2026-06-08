@@ -58,7 +58,7 @@ export const CarAutoBridge = {
       const json = JSON.stringify({ nodes: tree });
       NativeCarAuto.setNodes(json);
     } catch (e) {
-      console.log("[carauto] setNodes threw", e);
+      if (__DEV__) console.log("[carauto] setNodes threw", e);
     }
   },
 
@@ -67,7 +67,7 @@ export const CarAutoBridge = {
     try {
       NativeCarAuto.setNowPlaying(track ? JSON.stringify(track) : null);
     } catch (e) {
-      console.log("[carauto] setNowPlaying threw", e);
+      if (__DEV__) console.log("[carauto] setNowPlaying threw", e);
     }
   },
 
@@ -76,7 +76,7 @@ export const CarAutoBridge = {
     try {
       NativeCarAuto.setQueue(JSON.stringify(payload));
     } catch (e) {
-      console.log("[carauto] setQueue threw", e);
+      if (__DEV__) console.log("[carauto] setQueue threw", e);
     }
   },
 
@@ -85,7 +85,7 @@ export const CarAutoBridge = {
     try {
       NativeCarAuto.setPlaybackState(JSON.stringify(state));
     } catch (e) {
-      console.log("[carauto] setPlaybackState threw", e);
+      if (__DEV__) console.log("[carauto] setPlaybackState threw", e);
     }
   },
 

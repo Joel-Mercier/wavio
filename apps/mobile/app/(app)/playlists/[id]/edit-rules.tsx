@@ -36,6 +36,7 @@ import {
   useUpdateSmartPlaylist,
 } from "@/hooks/navidrome/useSmartPlaylists";
 import useAuth from "@/stores/auth";
+import { logError } from "@/utils/log";
 import {
   type FormRule,
   type FormSortEntry,
@@ -144,7 +145,7 @@ export default function EditSmartPlaylistScreen() {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,

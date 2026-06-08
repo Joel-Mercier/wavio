@@ -3,6 +3,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { offlineDownloadService } from "@/services/offlineDownloadService";
 import useOffline from "@/stores/offline";
+import { logError } from "@/utils/log";
 
 // Mounted once at the app root. Auto-downloads any newly-starred tracks when
 // offline mode is on. Previously this effect lived inside useOfflineDownloads,
@@ -27,13 +28,14 @@ export default function OfflineStarredAutoSync() {
       (track) => !isTrackDownloaded(track.id),
     );
     if (tracksToDownload.length === 0) return;
-    console.log(
-      `Download Manager: Auto-downloading ${tracksToDownload.length} starred tracks`,
-    );
+    if (__DEV__)
+      console.log(
+        `Download Manager: Auto-downloading ${tracksToDownload.length} starred tracks`,
+      );
     offlineDownloadService
       .downloadAllStarredTracks(tracksToDownload)
       .catch((error) => {
-        console.error(
+        logError(
           "Download Manager: Error auto-downloading starred tracks:",
           error,
         );

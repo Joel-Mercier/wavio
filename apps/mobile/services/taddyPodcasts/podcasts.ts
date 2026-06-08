@@ -17,6 +17,7 @@ import type {
   SortOrder,
   TaddyType,
 } from "@/services/taddyPodcasts/types";
+import { logError } from "@/utils/log";
 
 export const getPodcastSeries = async ({
   uuid,
@@ -424,7 +425,7 @@ export const getPopularContent = async ({
       },
     });
     if (rsp.data?.errors) {
-      console.error(
+      logError(
         "[taddy] getPopularContent GraphQL errors:",
         JSON.stringify(rsp.data.errors, null, 2),
       );
@@ -433,7 +434,7 @@ export const getPopularContent = async ({
     return rsp.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error(
+      logError(
         "[taddy] getPopularContent HTTP error:",
         error.response?.status,
         JSON.stringify(error.response?.data, null, 2),

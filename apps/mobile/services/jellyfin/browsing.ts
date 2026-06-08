@@ -27,6 +27,7 @@ import type {
   MusicFolders,
   SimilarSongs,
   SimilarSongs2,
+  SonicSimilarTracks,
   TopSongs,
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
@@ -261,6 +262,17 @@ export const getSimilarSongs2 = async (
   const inner = await getSimilarSongs(id, opts);
   const sim2: SimilarSongs2 = { song: inner.similarSongs.song };
   return fakeEnvelope({ similarSongs2: sim2 });
+};
+
+// Jellyfin never advertises the sonicSimilarity OpenSubsonic extension, so the
+// client's fetchSimilarSongs helper never routes here — return an empty match
+// list for type-completeness of the dispatch layer.
+export const getSonicSimilarTracks = async (
+  _id: string,
+  _opts: { count?: number },
+) => {
+  const sonicSimilarTracks: SonicSimilarTracks = { sonicMatch: [] };
+  return fakeEnvelope({ sonicSimilarTracks });
 };
 
 export const getSong = async (id: string) => {

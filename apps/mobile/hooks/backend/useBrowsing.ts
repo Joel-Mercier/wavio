@@ -18,6 +18,8 @@ import {
   getVideoInfo,
   getVideos,
 } from "@/services/backend/browsing";
+import { fetchSimilarSongs } from "@/services/similarSongs";
+import { useServerExtensionsBase } from "@/stores/serverExtensions";
 
 export const useMusicFolders = () => {
   return useQuery({
@@ -180,6 +182,21 @@ export const useSimilarSongs2 = (id: string, params: { count?: number }) => {
   });
 
   return query;
+};
+
+// Returns a flat Child[] of similar songs, preferring the sonicSimilarity
+// extension when available (see services/similarSongs.ts). The extension flag is
+// part of the query key so results refetch when switching to a server with a
+// different capability.
+export const useSimilarTracks = (id: string, params: { count?: number }) => {
+  const hasSonicSimilarity = useServerExtensionsBase((s) =>
+    s.hasExtension("sonicSimilarity"),
+  );
+  return useQuery({
+    queryKey: ["similarTracks", id, params, hasSonicSimilarity],
+    queryFn: () => fetchSimilarSongs(id, params.count),
+    enabled: !!id,
+  });
 };
 
 export const useTopSongs = (artist: string, params: { count?: number }) => {

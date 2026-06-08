@@ -93,6 +93,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
+import { logError } from "@/utils/log";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -313,7 +314,7 @@ export default function ArtistDetail() {
         if (!songs || songs.length === 0) return;
         playTracks(songs.map(childToTrack), 0);
       } catch (e) {
-        console.error(e);
+        logError(e);
         return;
       }
     }
@@ -415,7 +416,7 @@ export default function ArtistDetail() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,

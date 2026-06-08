@@ -3,6 +3,7 @@ import { offlineDownloadService } from "@/services/offlineDownloadService";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
+import { logError } from "@/utils/log";
 
 // Narrow selectors only. Subscribing to the entire store would re-render every
 // consumer on each `setDownloadProgress` tick, and this hook is called from
@@ -33,7 +34,7 @@ export const useOfflineDownloads = () => {
     try {
       await offlineDownloadService.downloadTrack(track);
     } catch (error) {
-      console.error("Download Manager: Error downloading track:", error);
+      logError("Download Manager: Error downloading track:", error);
       throw error;
     }
   }, []);
@@ -42,7 +43,7 @@ export const useOfflineDownloads = () => {
     try {
       await offlineDownloadService.downloadTracks(tracks);
     } catch (error) {
-      console.error("Download Manager: Error downloading tracks:", error);
+      logError("Download Manager: Error downloading tracks:", error);
       throw error;
     }
   }, []);
@@ -51,10 +52,7 @@ export const useOfflineDownloads = () => {
     try {
       await offlineDownloadService.removeDownloadedTrack(trackId);
     } catch (error) {
-      console.error(
-        "Download Manager: Error removing downloaded track:",
-        error,
-      );
+      logError("Download Manager: Error removing downloaded track:", error);
       throw error;
     }
   }, []);
@@ -63,7 +61,7 @@ export const useOfflineDownloads = () => {
     try {
       await offlineDownloadService.clearAllDownloads();
     } catch (error) {
-      console.error("Download Manager: Error clearing all downloads:", error);
+      logError("Download Manager: Error clearing all downloads:", error);
       throw error;
     }
   }, []);

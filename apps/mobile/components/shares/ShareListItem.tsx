@@ -58,6 +58,7 @@ import { useDeleteShare, useUpdateShare } from "@/hooks/backend/useSharing";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
+import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 
 const updateShareSchema = z.object({
@@ -115,7 +116,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             });
           },
           onError: (error) => {
-            console.error(error);
+            logError(error);
             toast.show({
               placement: "top",
               duration: 3000,
@@ -164,7 +165,7 @@ export default function ShareListItem({ share }: { share: Share }) {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -210,7 +211,7 @@ export default function ShareListItem({ share }: { share: Share }) {
         ),
       });
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,

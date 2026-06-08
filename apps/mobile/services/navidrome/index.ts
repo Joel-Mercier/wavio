@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useAuthBase } from "@/stores/auth";
+import { logError } from "@/utils/log";
 
 export const NAVIDROME_AUTH_HEADER = "X-ND-Authorization";
 
@@ -19,7 +20,7 @@ navidromeApiInstance.interceptors.request.use(
     return request;
   },
   (error) => {
-    console.error(error);
+    logError(error);
     return Promise.reject(error);
   },
 );

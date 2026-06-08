@@ -19,6 +19,13 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
+  playbackReportEnabled,
+  reportPaused,
+  reportProgress,
+  reportStarting,
+  reportStopped,
+} from "@/services/playbackReport";
+import {
   armResume,
   clearResumePosition,
   getResumePosition,
@@ -94,6 +101,9 @@ export const player = players[0];
 let nowPlayingScrobbledId: string | null = null;
 let submittedScrobbleId: string | null = null;
 let scrobbleStartedAt: number | null = null;
+// Tracks the last observed playing flag so the status listener can detect the
+// play→pause edge for playbackReport's "paused" report.
+let wasPlaying = false;
 
 function isScrobblable(track: QueueTrack): boolean {
   return track.source !== "podcast";
@@ -104,14 +114,27 @@ function reportNowPlaying(track: QueueTrack) {
   nowPlayingScrobbledId = track.id;
   scrobbleStartedAt = Date.now();
   if (!isScrobblable(track)) return;
-  scrobble(track.id, { submission: false }).catch(() => {});
+  // On playbackReport-capable servers the server scrobbles from our state
+  // reports, so we emit "starting" instead of the classic now-playing scrobble.
+  if (playbackReportEnabled()) {
+    reportStarting(track.id);
+  } else {
+    scrobble(track.id, { submission: false }).catch(() => {});
+  }
 }
 
 function maybeSubmitScrobble(status: AudioStatus) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
-  if (submittedScrobbleId === current.id) return;
   if (!isScrobblable(current)) return;
+  // playbackReport path: stream progress to the server, which owns the scrobble
+  // decision (and the "stopped" report on track change finalises it). Only while
+  // actually playing, so a paused tick doesn't flip the server back to playing.
+  if (playbackReportEnabled()) {
+    if (status.playing) reportProgress((status.currentTime ?? 0) * 1000);
+    return;
+  }
+  if (submittedScrobbleId === current.id) return;
   const position = status.currentTime ?? 0;
   const duration = status.duration ?? current.duration ?? 0;
   if (duration < 30) return;
@@ -125,6 +148,9 @@ function maybeSubmitScrobble(status: AudioStatus) {
 }
 
 function resetScrobbleState() {
+  // Finalise the outgoing track for the playbackReport path before clearing
+  // local state. No-op when no track is being reported or the extension is off.
+  reportStopped();
   nowPlayingScrobbledId = null;
   submittedScrobbleId = null;
   scrobbleStartedAt = null;
@@ -531,7 +557,12 @@ function makeStatusListener(slot: Slot) {
         reportNowPlaying(cur);
         recordResumePosition(cur, status.currentTime ?? 0);
       }
+    } else if (wasPlaying && !status.didJustFinish && !isLoading) {
+      // Playback paused (UI, lock-screen or OS control). Report it for the
+      // playbackReport path; no-op when the extension is off.
+      reportPaused((status.currentTime ?? 0) * 1000);
     }
+    wasPlaying = status.playing;
     maybeSubmitScrobble(status);
 
     if (
@@ -567,6 +598,7 @@ function makeStatusListener(slot: Slot) {
       // Fully played — drop any resume bookmark so it doesn't reopen at the end.
       clearResumePosition(previousId);
       if (
+        !playbackReportEnabled() &&
         previousId &&
         submittedScrobbleId !== previousId &&
         previous &&

@@ -82,6 +82,7 @@ export default function RuleEditor({
             rule={rule}
             onChange={(next) => updateRule(i, next)}
             onRemove={() => removeRule(i)}
+            serverVersion={serverVersion}
           />
         ))}
       </VStack>

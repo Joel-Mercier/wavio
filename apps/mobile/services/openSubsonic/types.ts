@@ -143,6 +143,7 @@ export interface Child {
   discNumber?: number;
   duration?: number;
   genre?: string;
+  groupings?: string;
   id: string;
   isDir: boolean;
   isVideo?: boolean;
@@ -414,6 +415,18 @@ export interface SimilarSongs {
 
 export interface SimilarSongs2 {
   song?: Child[];
+}
+
+// OpenSubsonic `sonicSimilarity` extension (Navidrome v0.62.0 + a similarity
+// plugin such as AudioMuse-AI). Each match wraps a Child with a normalized
+// similarity score (1.0 identical … 0.0 most different, -1 unsupported).
+export interface SonicMatch {
+  entry: Child;
+  similarity?: number;
+}
+
+export interface SonicSimilarTracks {
+  sonicMatch?: SonicMatch[];
 }
 
 export interface Songs {

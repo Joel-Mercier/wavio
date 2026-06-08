@@ -101,6 +101,7 @@ import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { format } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
+import { logError } from "@/utils/log";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -397,7 +398,7 @@ export default function AlbumDetail() {
         ),
       });
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -436,7 +437,7 @@ export default function AlbumDetail() {
         ),
       });
     } catch (error) {
-      console.error("Error saving album for offline:", error);
+      logError("Error saving album for offline:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -469,7 +470,7 @@ export default function AlbumDetail() {
         ),
       });
     } catch (error) {
-      console.error("Error removing album offline downloads:", error);
+      logError("Error removing album offline downloads:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -596,7 +597,7 @@ export default function AlbumDetail() {
           });
         },
         onError: (error) => {
-          console.error(error);
+          logError(error);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -644,7 +645,7 @@ export default function AlbumDetail() {
         });
       }
     } catch (e) {
-      console.error(e);
+      logError(e);
       toast.show({
         placement: "top",
         duration: 3000,

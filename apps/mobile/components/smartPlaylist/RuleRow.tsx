@@ -25,33 +25,41 @@ import { VStack } from "@/components/ui/vstack";
 import {
   defaultRule,
   type FormRule,
+  getAvailableFields,
   getFieldByKey,
-  OPERATORS_BY_VALUE_TYPE,
+  getOperatorsForField,
+  isTagPresenceOperator,
   type RuleOperator,
-  SMART_PLAYLIST_FIELDS,
 } from "@/utils/smartPlaylist";
 
 interface RuleRowProps {
   rule: FormRule;
   onChange: (rule: FormRule) => void;
   onRemove: () => void;
+  serverVersion: string | null;
 }
 
-export default function RuleRow({ rule, onChange, onRemove }: RuleRowProps) {
+export default function RuleRow({
+  rule,
+  onChange,
+  onRemove,
+  serverVersion,
+}: RuleRowProps) {
   const { t } = useTranslation();
   const [gray200, gray400, red400] = Uniwind.getCSSVariable([
     "--color-gray-200",
     "--color-gray-400",
     "--color-red-400",
   ]) as string[];
+  const fields = getAvailableFields(serverVersion);
   const field = getFieldByKey(rule.field) ?? getFieldByKey("title");
   if (!field) return null;
-  const operators = OPERATORS_BY_VALUE_TYPE[field.valueType];
+  const operators = getOperatorsForField(field, serverVersion);
 
   const handleFieldChange = (key: string) => {
     const next = getFieldByKey(key);
     if (!next) return;
-    const validOps = OPERATORS_BY_VALUE_TYPE[next.valueType];
+    const validOps = getOperatorsForField(next, serverVersion);
     const baseRule = defaultRule();
     onChange({
       ...baseRule,
@@ -65,6 +73,7 @@ export default function RuleRow({ rule, onChange, onRemove }: RuleRowProps) {
   };
 
   const isRange = rule.operator === "inTheRange";
+  const isTagPresence = isTagPresenceOperator(rule.operator);
 
   return (
     <Box className="border border-primary-600 rounded-md p-3 mb-3">
@@ -94,7 +103,7 @@ export default function RuleRow({ rule, onChange, onRemove }: RuleRowProps) {
               </SelectDragIndicatorWrapper>
               <SelectScrollView>
                 <Box className="p-6 w-full mb-12">
-                  {SMART_PLAYLIST_FIELDS.map((f) => (
+                  {fields.map((f) => (
                     <SelectItem
                       key={f.key}
                       value={f.key}
@@ -140,7 +149,7 @@ export default function RuleRow({ rule, onChange, onRemove }: RuleRowProps) {
           </SelectPortal>
         </Select>
 
-        {field.valueType === "boolean" ? (
+        {field.valueType === "boolean" || isTagPresence ? (
           <HStack className="items-center justify-between px-2">
             <Text className="text-white">
               {t("app.smartPlaylist.boolValue")}
@@ -193,6 +202,7 @@ export default function RuleRow({ rule, onChange, onRemove }: RuleRowProps) {
               placeholderTextColor={gray400}
               keyboardType={
                 field.valueType === "integer" ||
+                field.valueType === "decimal" ||
                 field.valueType === "rating" ||
                 rule.operator === "inTheLast" ||
                 rule.operator === "notInTheLast"

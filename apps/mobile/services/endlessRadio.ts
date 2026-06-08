@@ -1,5 +1,6 @@
-import { getSimilarSongs2, getTopSongs } from "@/services/backend/browsing";
+import { getTopSongs } from "@/services/backend/browsing";
 import type { Child } from "@/services/openSubsonic/types";
+import { fetchSimilarSongs } from "@/services/similarSongs";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 
@@ -11,8 +12,7 @@ export async function fetchEndlessExtension(
   let songs: Child[] = [];
 
   try {
-    const rsp = await getSimilarSongs2(seed.id, { count: FETCH_COUNT });
-    songs = rsp.similarSongs2?.song ?? [];
+    songs = await fetchSimilarSongs(seed.id, FETCH_COUNT);
   } catch {
     songs = [];
   }

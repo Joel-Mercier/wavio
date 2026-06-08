@@ -55,6 +55,7 @@ import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
+import { logError } from "@/utils/log";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -276,7 +277,7 @@ export default function PodcastScreen() {
         failOnCancel: false,
       });
     } catch (error) {
-      console.error(error);
+      logError(error);
       toast.show({
         placement: "top",
         duration: 3000,

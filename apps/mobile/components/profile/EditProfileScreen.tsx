@@ -42,6 +42,7 @@ import {
   useUpdateUser as useUpdateNavidromeUser,
 } from "@/hooks/navidrome/useUsers";
 import useAuth from "@/stores/auth";
+import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 
 const ROLE_FIELDS = [
@@ -292,7 +293,7 @@ export default function EditProfileScreen() {
         });
         router.back();
       } catch (error) {
-        console.error(error);
+        logError(error);
         toast.show({
           placement: "top",
           duration: 3000,
