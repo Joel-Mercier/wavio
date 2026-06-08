@@ -163,6 +163,12 @@ export default {
           "An error occurred while adding the song to the playlist",
         addTrackErrorMessage_other:
           "An error occurred while adding the songs to the playlist",
+        duplicateTitle: "Already in playlist",
+        addAnyway: "Add anyway",
+        duplicateDescription_one:
+          "This song is already in {{playlists}}. Add it anyway?",
+        duplicateDescription_other:
+          "Some of these songs are already in {{playlists}}. Add them anyway?",
         empty: "This playlist is empty",
         emptyAction: "Find songs to add to this playlist",
         searchPlaceholder: "Search playlist",

@@ -164,6 +164,12 @@ export default {
           "Une erreur s'est produite lors de l'ajout du titre à la playlist",
         addTrackErrorMessage_other:
           "Une erreur s'est produite lors de l'ajout des titres à la playlist",
+        duplicateTitle: "Déjà dans la playlist",
+        addAnyway: "Ajouter quand même",
+        duplicateDescription_one:
+          "Ce titre est déjà dans {{playlists}}. L'ajouter quand même ?",
+        duplicateDescription_other:
+          "Certains de ces titres sont déjà dans {{playlists}}. Les ajouter quand même ?",
         empty: "Cette playlist est vide",
         emptyAction: "Rechercher des titres à ajouter à cette playlist",
         searchPlaceholder: "Rechercher dans la playlist",
