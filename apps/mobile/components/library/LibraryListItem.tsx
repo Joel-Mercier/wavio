@@ -8,7 +8,7 @@ import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import type { LibraryLayout } from "@/app/(app)/(tabs)/(library)/index";
@@ -23,12 +23,16 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
 import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
 import { useOfflineModeEnabled } from "@/hooks/useOfflineDownloads";
+import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
-import type { RadioStationSource } from "@/stores/radioStations";
+import type { PodcastSource } from "@/stores/podcasts";
+import useRadioStations, {
+  type RadioStationSource,
+} from "@/stores/radioStations";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
@@ -42,6 +46,11 @@ export type LibraryPodcast = {
   imageUrl?: string;
   authorName?: string;
   description?: string;
+  // "taddy" podcasts open the Taddy series screen; "server" podcasts open the
+  // OpenSubsonic channel screen.
+  podcastSource?: PodcastSource;
+  coverArt?: string;
+  url?: string;
 };
 export type LibraryFolder = {
   isFolder?: boolean;
@@ -119,6 +128,23 @@ export default function LibraryListItem({
       };
     }
     if (item.isPodcast) {
+      if (item.podcastSource === "server") {
+        return {
+          id: "podcast",
+          label: t("app.shared.podcast_one"),
+          url: {
+            pathname: "/podcast-channels/[id]",
+            params: {
+              id: item.id,
+              title: item.name,
+              imageUrl: item.imageUrl,
+              coverArt: item.coverArt,
+              url: item.url,
+              description: item.description ?? "",
+            },
+          } as Href,
+        };
+      }
       return {
         id: "podcast",
         label: t("app.shared.podcast_one"),
@@ -174,6 +200,55 @@ export default function LibraryListItem({
     };
   }, [item, i18n.language]);
 
+  const updateFavoriteRadioStation = useRadioStations(
+    (store) => store.updateFavoriteRadioStation,
+  );
+
+  // Server radio stations carry no cover art, so scrape the homepage for an
+  // image just like InternetRadioStationListItem does. Radio-Browser stations
+  // already ship an imageUrl, so skip the network round-trip for them.
+  const radioMeta = useWebsiteMetadata(
+    type.id === "radioStation" && item.source === "server" && !item.imageUrl
+      ? item.homePageUrl
+      : undefined,
+  );
+  const scrapedRadioImage = radioMeta.image || radioMeta["twitter:image"];
+  const radioImage =
+    type.id === "radioStation" ? item.imageUrl || scrapedRadioImage : undefined;
+
+  // Persist the scraped image back onto the favorite so we don't re-scrape the
+  // homepage on every render / app launch (the detail screen can miss it when
+  // the user favorites before the async scrape resolves).
+  useEffect(() => {
+    if (
+      type.id === "radioStation" &&
+      item.source === "server" &&
+      !item.imageUrl &&
+      scrapedRadioImage
+    ) {
+      updateFavoriteRadioStation(item.id, { imageUrl: scrapedRadioImage });
+    }
+  }, [
+    type.id,
+    item.source,
+    item.imageUrl,
+    item.id,
+    scrapedRadioImage,
+    updateFavoriteRadioStation,
+  ]);
+
+  // Forward the resolved cover art to the detail screen so it doesn't have to
+  // scrape again.
+  const href = useMemo<Href>(() => {
+    if (radioImage && typeof type.url === "object") {
+      return {
+        ...type.url,
+        params: { ...type.url.params, imageUrl: radioImage },
+      } as Href;
+    }
+    return type.url;
+  }, [type.url, radioImage]);
+
   // Offline greying: a row is reachable offline only if its destination's
   // detail query is cached. Folders/podcasts have no cacheable detail here, so
   // they stay enabled (null key).
@@ -212,7 +287,7 @@ export default function LibraryListItem({
 
   return (
     <FadeOutScaleDown
-      href={type.url}
+      href={href}
       disabled={!isReachableOffline}
       className={cn("mb-4", gridMarginClass)}
     >
@@ -223,19 +298,26 @@ export default function LibraryListItem({
       >
         <ImageWithFallback
           source={
-            item.coverArt || item.imageUrl
+            item.coverArt || radioImage || item.imageUrl
               ? {
                   uri:
+                    radioImage ||
                     item.imageUrl ||
                     item.artistImageUrl ||
                     artworkUrl(item.coverArt),
                 }
               : undefined
           }
+          // Radio-station logos are often transparent PNGs with a dark mark
+          // ("logo_noir"), so give them a backdrop and contain them like
+          // InternetRadioStationListItem does — otherwise they render
+          // invisibly on the dark background.
+          contentFit={type.id === "radioStation" ? "contain" : undefined}
           className={cn("rounded-md aspect-square", {
             "w-full": layout === "grid",
             "w-20 h-20": layout === "list",
             "rounded-full": type.id === "artist",
+            "bg-primary-600": type.id === "radioStation",
           })}
           alt="Libray item cover"
           fallback={

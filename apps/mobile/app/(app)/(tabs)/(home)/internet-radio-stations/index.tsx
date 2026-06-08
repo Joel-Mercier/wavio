@@ -1,9 +1,11 @@
 import { getLocales } from "expo-localization";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
+import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
@@ -30,6 +32,7 @@ const POPULAR_TAGS = ["jazz", "rock", "news"];
 
 export default function InternetRadioStationsScreen() {
   const { t } = useTranslation();
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
@@ -79,21 +82,28 @@ export default function InternetRadioStationsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <FadeOutScaleDown
-          href={"/(app)/(tabs)/(home)/internet-radio-stations/search"}
-          className="mb-4"
-        >
-          <HStack className="mx-6 px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
-            <Search
-              size={20}
-              color={"rgb(128, 128, 128)"}
-              className="text-primary-100"
-            />
-            <Text className="text-primary-100 text-sm">
-              {t("app.internetRadioStations.searchPlaceholder")}
-            </Text>
-          </HStack>
-        </FadeOutScaleDown>
+        <HStack className="mx-6 mb-4 gap-x-4 items-center">
+          <FadeOutScaleDown
+            href={"/(app)/(tabs)/(home)/internet-radio-stations/search"}
+            className="flex-1"
+          >
+            <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+              <Search
+                size={20}
+                color={"rgb(128, 128, 128)"}
+                className="text-primary-100"
+              />
+              <Text className="text-primary-100 text-sm">
+                {t("app.internetRadioStations.searchPlaceholder")}
+              </Text>
+            </HStack>
+          </FadeOutScaleDown>
+          {capabilities.internetRadio && (
+            <FadeOutScaleDown href={"/internet-radio-stations/new"}>
+              <Plus color={white} />
+            </FadeOutScaleDown>
+          )}
+        </HStack>
         {capabilities.internetRadio && serverStations.length > 0 && (
           <RadioStationRow
             title={t("app.internetRadioStations.yourStations")}

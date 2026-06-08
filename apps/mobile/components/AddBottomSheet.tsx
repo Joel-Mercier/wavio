@@ -5,6 +5,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { forwardRef } from "react";
@@ -51,6 +52,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const handleCreateInternetRadioStationPress = () => {
     dismiss();
     router.navigate("/internet-radio-stations/new");
+  };
+
+  const handleCreatePodcastChannelPress = () => {
+    dismiss();
+    router.navigate("/podcast-channels/new");
   };
 
   return (
@@ -106,6 +112,21 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                     </Heading>
                     <Text className="text-md text-gray-200 flex-1">
                       {t("app.create.internetRadioStationDescription")}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
+            {capabilities.podcasts && (
+              <FadeOutScaleDown onPress={handleCreatePodcastChannelPress}>
+                <HStack className="items-center">
+                  <Podcast size={32} color={gray200} />
+                  <VStack className="ml-4 flex-1">
+                    <Heading numberOfLines={1} className="text-white">
+                      {t("app.create.podcastChannelTitle")}
+                    </Heading>
+                    <Text className="text-md text-gray-200 flex-1">
+                      {t("app.create.podcastChannelDescription")}
                     </Text>
                   </VStack>
                 </HStack>

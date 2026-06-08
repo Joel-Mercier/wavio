@@ -66,6 +66,9 @@ export default {
         internetRadioStationTitle: "Internet radio station",
         internetRadioStationDescription:
           "Create an internet radio station you can stream from the app",
+        podcastChannelTitle: "Podcast channel",
+        podcastChannelDescription:
+          "Subscribe the server to a podcast feed by its RSS url",
       },
       carAuto: {
         home: "Home",
@@ -196,6 +199,37 @@ export default {
         publishedAt: "{{distance}} ago",
         configureTaddyPodcasts: "Configure in settings",
         taddyPodcastsNotConfigured: "Podcast access is not configured",
+        yourPodcasts: "Your podcasts",
+        noEpisodes: "No episodes available yet",
+        newChannelTitle: "Add a podcast channel",
+        channelUrlPlaceholder: "Podcast RSS feed URL",
+        newChannelSuccessMessage: "Podcast channel successfully added",
+        newChannelErrorMessage:
+          "An error occurred while adding the podcast channel",
+        deleteChannel: "Delete podcast channel",
+        deleteChannelSuccessMessage: "Podcast channel successfully deleted",
+        deleteChannelErrorMessage:
+          "An error occurred while deleting the podcast channel",
+        deleteChannelConfirmTitle:
+          "Are you sure you want to delete this podcast channel?",
+        deleteChannelConfirmDescription:
+          "Deleting the channel removes it and its episodes from the server permanently. Please confirm if you want to proceed.",
+        deleteEpisode: "Delete episode",
+        deleteEpisodeSuccessMessage: "Episode successfully deleted",
+        deleteEpisodeErrorMessage:
+          "An error occurred while deleting the episode",
+        deleteEpisodeConfirmTitle:
+          "Are you sure you want to delete this episode?",
+        deleteEpisodeConfirmDescription:
+          "Deleting the episode removes its downloaded media from the server. Please confirm if you want to proceed.",
+        episodeStatus: {
+          new: "Not downloaded",
+          downloading: "Downloading…",
+          completed: "Completed",
+          error: "Download error",
+          deleted: "Deleted",
+          skipped: "Skipped",
+        },
         search: {
           inputPlaceholder: "Search",
           filters: "Filters",

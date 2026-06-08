@@ -66,6 +66,9 @@ export default {
         internetRadioStationTitle: "Station de radio en ligne",
         internetRadioStationDescription:
           "Créer une station de radio en ligne que vous pouvez diffuser depuis l'application",
+        podcastChannelTitle: "Chaîne de podcast",
+        podcastChannelDescription:
+          "Abonner le serveur à un flux de podcast à partir de son URL RSS",
       },
       carAuto: {
         home: "Accueil",
@@ -199,6 +202,37 @@ export default {
         publishedAt: "il y a {{distance}}",
         configureTaddyPodcasts: "Configurer dans les paramètres",
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
+        yourPodcasts: "Vos podcasts",
+        noEpisodes: "Aucun épisode disponible pour le moment",
+        newChannelTitle: "Ajouter une chaîne de podcast",
+        channelUrlPlaceholder: "URL du flux RSS du podcast",
+        newChannelSuccessMessage: "Chaîne de podcast ajoutée avec succès",
+        newChannelErrorMessage:
+          "Une erreur est survenue lors de l'ajout de la chaîne de podcast",
+        deleteChannel: "Supprimer la chaîne de podcast",
+        deleteChannelSuccessMessage: "Chaîne de podcast supprimée avec succès",
+        deleteChannelErrorMessage:
+          "Une erreur est survenue lors de la suppression de la chaîne de podcast",
+        deleteChannelConfirmTitle:
+          "Voulez-vous vraiment supprimer cette chaîne de podcast ?",
+        deleteChannelConfirmDescription:
+          "La suppression de la chaîne la retire ainsi que ses épisodes du serveur de façon permanente. Veuillez confirmer si vous souhaitez continuer.",
+        deleteEpisode: "Supprimer l'épisode",
+        deleteEpisodeSuccessMessage: "Épisode supprimé avec succès",
+        deleteEpisodeErrorMessage:
+          "Une erreur est survenue lors de la suppression de l'épisode",
+        deleteEpisodeConfirmTitle:
+          "Voulez-vous vraiment supprimer cet épisode ?",
+        deleteEpisodeConfirmDescription:
+          "La suppression de l'épisode retire son média téléchargé du serveur. Veuillez confirmer si vous souhaitez continuer.",
+        episodeStatus: {
+          new: "Non téléchargé",
+          downloading: "Téléchargement…",
+          completed: "Terminé",
+          error: "Erreur de téléchargement",
+          deleted: "Supprimé",
+          skipped: "Ignoré",
+        },
         search: {
           inputPlaceholder: "Rechercher",
           filters: "Filtres",

@@ -14,6 +14,7 @@ import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
 import List from "lucide-react-native/dist/esm/icons/list.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
@@ -45,6 +46,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useSyncServerPodcastFavorites } from "@/hooks/usePodcastFavorites";
 import { useSyncServerRadioFavorites } from "@/hooks/useRadioFavorites";
 import type {
   AlbumID3,
@@ -88,10 +90,14 @@ export default function LibraryScreen() {
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
   const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
   const podcastsEnabled = Boolean(taddyPodcastsApiKey && taddyPodcastsUserId);
+  // Show the Podcasts bucket when Taddy is configured OR the server hosts
+  // podcast channels (opensubsonic capability).
+  const showPodcasts = podcastsEnabled || capabilities.podcasts;
   const favoriteRadioStations = useRadioStations(
     (store) => store.favoriteRadioStations,
   );
   useSyncServerRadioFavorites();
+  useSyncServerPodcastFavorites();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -160,6 +166,11 @@ export default function LibraryScreen() {
     router.navigate("/internet-radio-stations/new");
   };
 
+  const handleCreatePodcastChannelPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate("/podcast-channels/new");
+  };
+
   const handleSortPress = (type: typeof sort) => {
     bottomSheetModalSortRef.current?.dismiss();
     setSort(type);
@@ -206,7 +217,7 @@ export default function LibraryScreen() {
         data.push(playlistsData.playlists.playlist);
       }
     }
-    if (podcastsEnabled && (!filter || filter === "podcasts")) {
+    if (showPodcasts && (!filter || filter === "podcasts")) {
       data.push(
         favoritePodcasts.map((p) => ({
           id: p.uuid,
@@ -215,6 +226,9 @@ export default function LibraryScreen() {
           imageUrl: p.imageUrl,
           authorName: p.authorName,
           dateAdded: p.dateAdded,
+          podcastSource: p.source,
+          coverArt: p.coverArt,
+          url: p.url,
         })),
       );
     }
@@ -276,7 +290,7 @@ export default function LibraryScreen() {
     playlistsData,
     filter,
     sort,
-    podcastsEnabled,
+    showPodcasts,
     favoritePodcasts,
     favoriteRadioStations,
     musicFoldersData,
@@ -353,7 +367,7 @@ export default function LibraryScreen() {
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
                     "bg-emerald-500 text-primary-800": filter === "artists",
-                    "mr-2": podcastsEnabled,
+                    "mr-2": showPodcasts,
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
@@ -361,7 +375,7 @@ export default function LibraryScreen() {
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
-              {podcastsEnabled && (
+              {showPodcasts && (
                 <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
                   <Badge
                     className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
@@ -559,6 +573,21 @@ export default function LibraryScreen() {
                       </Heading>
                       <Text className="text-md text-gray-200">
                         {t("app.create.internetRadioStationDescription")}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {capabilities.podcasts && (
+                <FadeOutScaleDown onPress={handleCreatePodcastChannelPress}>
+                  <HStack className="items-center">
+                    <Podcast size={32} color={gray200} />
+                    <VStack className="ml-4 flex-1">
+                      <Heading className="text-white">
+                        {t("app.create.podcastChannelTitle")}
+                      </Heading>
+                      <Text className="text-md text-gray-200">
+                        {t("app.create.podcastChannelDescription")}
                       </Text>
                     </VStack>
                   </HStack>

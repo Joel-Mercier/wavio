@@ -3,6 +3,10 @@ import type { ServerType } from "@/stores/servers";
 export type BackendCapabilities = {
   sharing: boolean;
   internetRadio: boolean;
+  // Server-hosted podcast channels (Subsonic getPodcasts/createPodcastChannel).
+  // Navidrome returns 501 for the whole podcast section and Jellyfin has no
+  // equivalent, so this is opensubsonic-only.
+  podcasts: boolean;
   smartPlaylists: boolean;
   bookmarks: boolean;
   setRating: boolean;
@@ -23,6 +27,7 @@ export type BackendCapabilities = {
 const SUBSONIC: BackendCapabilities = {
   sharing: true,
   internetRadio: true,
+  podcasts: true,
   smartPlaylists: false,
   bookmarks: true,
   setRating: true,
@@ -40,11 +45,14 @@ const SUBSONIC: BackendCapabilities = {
 const NAVIDROME: BackendCapabilities = {
   ...SUBSONIC,
   smartPlaylists: true,
+  // Navidrome registers every podcast endpoint as 501 Not Implemented.
+  podcasts: false,
 };
 
 const JELLYFIN: BackendCapabilities = {
   sharing: false,
   internetRadio: false,
+  podcasts: false,
   smartPlaylists: false,
   bookmarks: false,
   // Jellyfin only exposes thumbs-up/down via Likes; there's no 1-5 numeric

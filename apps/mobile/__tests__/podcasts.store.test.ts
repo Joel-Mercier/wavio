@@ -29,6 +29,16 @@ const makePodcast = (overrides: Partial<any> = {}): any => ({
   ...overrides,
 });
 
+const makeChannel = (overrides: Partial<any> = {}): any => ({
+  id: "c1",
+  title: "Channel",
+  url: "https://feed.example/rss.xml",
+  coverArt: "cover-1",
+  originalImageUrl: "https://img.example/cover.jpg",
+  status: "completed",
+  ...overrides,
+});
+
 beforeEach(() => {
   usePodcastsBase.setState(
     {
@@ -79,6 +89,11 @@ describe("podcasts store - favorites", () => {
     expect(get().favoritePodcasts.map((p) => p.uuid)).toEqual(["b", "a"]);
   });
 
+  it("addFavoritePodcast tags the favorite with source 'taddy'", () => {
+    get().addFavoritePodcast(makePodcast({ uuid: "a" }));
+    expect(get().favoritePodcasts[0].source).toBe("taddy");
+  });
+
   it("falls back to store country when itunesInfo.country missing", () => {
     get().addFavoritePodcast(makePodcast({ uuid: "a", itunesInfo: undefined }));
     expect(get().favoritePodcasts[0].country).toBe("UNITED_STATES_OF_AMERICA");
@@ -95,6 +110,118 @@ describe("podcasts store - favorites", () => {
     get().addFavoritePodcast(makePodcast({ uuid: "a" }));
     get().clearFavoritePodcasts();
     expect(get().favoritePodcasts).toEqual([]);
+  });
+});
+
+describe("podcasts store - server favorites", () => {
+  it("addFavoriteServerPodcast stores channel id, scope and source 'server'", () => {
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    const fav = get().favoritePodcasts[0];
+    expect(fav.uuid).toBe("c1");
+    expect(fav.source).toBe("server");
+    expect(fav.scope).toBe("scope-a");
+    expect(fav.coverArt).toBe("cover-1");
+    expect(fav.url).toBe("https://feed.example/rss.xml");
+    expect(fav.imageUrl).toBe("https://img.example/cover.jpg");
+    expect(fav.isFavorite).toBe(true);
+  });
+
+  it("addFavoriteServerPodcast falls back to the feed url when title is missing", () => {
+    get().addFavoriteServerPodcast(
+      makeChannel({ id: "c1", title: undefined }),
+      "scope-a",
+    );
+    expect(get().favoritePodcasts[0].name).toBe("https://feed.example/rss.xml");
+  });
+
+  it("addFavoriteServerPodcast ignores duplicates by channel id", () => {
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    get().addFavoriteServerPodcast(
+      makeChannel({ id: "c1", title: "Renamed" }),
+      "scope-a",
+    );
+    expect(get().favoritePodcasts).toHaveLength(1);
+    // The duplicate add is a no-op, so the original title is preserved.
+    expect(get().favoritePodcasts[0].name).toBe("Channel");
+  });
+
+  it("addFavoriteServerPodcast prepends ahead of existing favorites", () => {
+    get().addFavoritePodcast(makePodcast({ uuid: "taddy-1" }));
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    expect(get().favoritePodcasts.map((p) => p.uuid)).toEqual([
+      "c1",
+      "taddy-1",
+    ]);
+  });
+
+  it("updateFavoriteServerPodcast patches the matching favorite only", () => {
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    get().addFavoriteServerPodcast(makeChannel({ id: "c2" }), "scope-a");
+    get().updateFavoriteServerPodcast("c1", {
+      name: "New name",
+      imageUrl: "new-image",
+      coverArt: "cover-2",
+      url: "https://feed.example/new.xml",
+    });
+    const c1 = get().favoritePodcasts.find((p) => p.uuid === "c1");
+    const c2 = get().favoritePodcasts.find((p) => p.uuid === "c2");
+    expect(c1?.name).toBe("New name");
+    expect(c1?.imageUrl).toBe("new-image");
+    expect(c1?.coverArt).toBe("cover-2");
+    expect(c1?.url).toBe("https://feed.example/new.xml");
+    expect(c2?.name).toBe("Channel");
+  });
+
+  it("removeFavoritePodcast removes server favorites by channel id", () => {
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    get().removeFavoritePodcast("c1");
+    expect(get().favoritePodcasts).toEqual([]);
+  });
+
+  it("server favorites do not contribute to genre or language recommendations", () => {
+    get().addFavoritePodcast(
+      makePodcast({
+        uuid: "taddy-1",
+        genres: ["G1"] as any,
+        language: "ENGLISH",
+        itunesInfo: { country: "FRANCE" },
+      }),
+    );
+    get().addFavoriteServerPodcast(makeChannel({ id: "c1" }), "scope-a");
+    // Genre rotation only reflects the Taddy favorite's genre.
+    expect(get().getTopGenres()).toEqual(["G1"]);
+    const params = get().getRecommendationParams();
+    expect(params.language).toBe("ENGLISH");
+    expect(params.country).toBe("FRANCE");
+    // Both favorites are excluded from recommendations by their id/uuid.
+    expect(params.excludeUuids?.sort()).toEqual(["c1", "taddy-1"]);
+  });
+});
+
+describe("podcasts store - persistence migration", () => {
+  it("migrates v0 favorites by backfilling source 'taddy'", async () => {
+    const { zustandStorage } = require("@/config/storage");
+    zustandStorage.setItem(
+      "podcasts",
+      JSON.stringify({
+        version: 0,
+        state: {
+          favoritePodcasts: [
+            {
+              uuid: "legacy-1",
+              name: "Legacy",
+              imageUrl: "img",
+              authorName: "Author",
+              isFavorite: true,
+              dateAdded: 1,
+            },
+          ],
+        },
+      }),
+    );
+    await usePodcastsBase.persist.rehydrate();
+    const fav = get().favoritePodcasts.find((p) => p.uuid === "legacy-1");
+    expect(fav?.source).toBe("taddy");
   });
 });
 

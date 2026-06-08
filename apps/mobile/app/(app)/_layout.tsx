@@ -133,6 +133,7 @@ export default function AppLayout() {
         <Stack.Screen name="playlists/new-smart" />
         <Stack.Screen name="playlists/[id]/edit-rules" />
         <Stack.Screen name="internet-radio-stations/new" />
+        <Stack.Screen name="podcast-channels/new" />
         <Stack.Screen
           name="player"
           options={{

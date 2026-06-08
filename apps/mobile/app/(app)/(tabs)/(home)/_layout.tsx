@@ -29,6 +29,7 @@ export default function HomeLayout() {
       <Stack.Screen name="podcast-series/[id]" />
       <Stack.Screen name="podcasts/[id]" />
       <Stack.Screen name="podcasts/search" />
+      <Stack.Screen name="podcast-channels/[id]" />
     </Stack>
   );
 }

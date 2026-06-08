@@ -7,14 +7,14 @@ import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { type LayoutChangeEvent, Linking } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -152,6 +152,9 @@ export default function SettingsDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
+  const { section } = useLocalSearchParams<{ section?: string }>();
+  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const hasScrolledToSection = useRef(false);
   const toast = useToast();
   const capabilities = useCapabilities();
   const locale = useApp((store) => store.locale);
@@ -446,6 +449,21 @@ export default function SettingsDetail() {
     });
   };
 
+  // When navigated here with `?section=podcasts` (e.g. from the podcasts
+  // screens' "configure" CTA), auto-scroll to the podcast section once it has
+  // been laid out. The y from onLayout is relative to the ScrollView content,
+  // so it maps directly to a scroll offset.
+  const handlePodcastSectionLayout = (event: LayoutChangeEvent) => {
+    if (section !== "podcasts" || hasScrolledToSection.current) {
+      return;
+    }
+    hasScrolledToSection.current = true;
+    scrollViewRef.current?.scrollTo({
+      y: event.nativeEvent.layout.y,
+      animated: true,
+    });
+  };
+
   const handleConfigurePodcastsPress = () => {
     setShowPodcastsAlertDialog(true);
   };
@@ -570,6 +588,7 @@ export default function SettingsDetail() {
           <Box className="w-6" />
         </HStack>
         <ScrollView
+          ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom:
@@ -747,7 +766,11 @@ export default function SettingsDetail() {
               </FadeOutScaleDown>
             </HStack>
             <Divider className="bg-primary-400" />
-            <Heading className="text-white mt-4" size="lg">
+            <Heading
+              className="text-white mt-4"
+              size="lg"
+              onLayout={handlePodcastSectionLayout}
+            >
               {t("app.settings.podcastSettings.title")}
             </Heading>
             <HStack className="items-center gap-x-4 py-4 justify-between">

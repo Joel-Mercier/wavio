@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandStorage } from "@/config/storage";
+import type { PodcastChannel } from "@/services/openSubsonic/types";
 import type {
   Country,
   Genre,
@@ -9,16 +10,33 @@ import type {
 } from "@/services/taddyPodcasts/types";
 import createSelectors from "@/utils/createSelectors";
 
+// Where a favorited podcast came from. "taddy" podcasts are discovered through
+// the Taddy API; "server" podcasts are channels hosted by an OpenSubsonic
+// server (getPodcasts). Taddy-only metadata (genres/language/country) is absent
+// for server podcasts, hence optional.
+export type PodcastSource = "taddy" | "server";
+
 export interface FavoritePodcast {
+  // For "taddy" podcasts this is the Taddy uuid; for "server" podcasts it is
+  // the Subsonic PodcastChannel id.
   uuid: string;
   name: string;
-  genres: (keyof typeof Genre)[];
-  language: keyof typeof Language;
-  country: keyof typeof Country;
+  genres?: (keyof typeof Genre)[];
+  language?: keyof typeof Language;
+  country?: keyof typeof Country;
   imageUrl: string;
   authorName: string;
   dateAdded: number;
   isFavorite: boolean;
+  source: PodcastSource;
+  // "server" podcasts only: the Subsonic coverArt id (resolved via artworkUrl
+  // when imageUrl is empty) and the channel feed url.
+  coverArt?: string;
+  url?: string;
+  // Auth scope (getAuthScope) of the origin server for "server" favorites, so
+  // we only sync/prune them against the server they belong to. Undefined for
+  // "taddy" favorites, which are server-independent.
+  scope?: string;
 }
 
 export interface RecommendationParams {
@@ -56,7 +74,14 @@ interface PodcastsStore {
   clearTaddyPodcastsConfig: () => void;
   favoritePodcasts: FavoritePodcast[];
   addFavoritePodcast: (podcast: PodcastSeries) => void;
+  addFavoriteServerPodcast: (channel: PodcastChannel, scope?: string) => void;
   removeFavoritePodcast: (uuid: string) => void;
+  updateFavoriteServerPodcast: (
+    uuid: string,
+    patch: Partial<
+      Pick<FavoritePodcast, "name" | "imageUrl" | "coverArt" | "url">
+    >,
+  ) => void;
   clearFavoritePodcasts: () => void;
   getRecommendationParams: () => RecommendationParams;
   getGenreRotation: () => (keyof typeof Genre)[];
@@ -100,6 +125,7 @@ export const usePodcastsBase = create<PodcastsStore>()(
             authorName: podcast.authorName,
             isFavorite: true,
             dateAdded: Date.now(),
+            source: "taddy",
           };
           const newFavoritePodcasts = [
             favoritePodcast,
@@ -107,6 +133,35 @@ export const usePodcastsBase = create<PodcastsStore>()(
           ];
           return { favoritePodcasts: newFavoritePodcasts };
         });
+      },
+      addFavoriteServerPodcast: (channel: PodcastChannel, scope?: string) => {
+        set((state) => {
+          if (state.favoritePodcasts.some((fav) => fav.uuid === channel.id)) {
+            return { favoritePodcasts: state.favoritePodcasts };
+          }
+          const favoritePodcast: FavoritePodcast = {
+            uuid: channel.id,
+            name: channel.title || channel.url,
+            imageUrl: channel.originalImageUrl || "",
+            coverArt: channel.coverArt,
+            url: channel.url,
+            authorName: "",
+            isFavorite: true,
+            dateAdded: Date.now(),
+            source: "server",
+            scope,
+          };
+          return {
+            favoritePodcasts: [favoritePodcast, ...state.favoritePodcasts],
+          };
+        });
+      },
+      updateFavoriteServerPodcast: (uuid, patch) => {
+        set((state) => ({
+          favoritePodcasts: state.favoritePodcasts.map((fav) =>
+            fav.uuid === uuid ? { ...fav, ...patch } : fav,
+          ),
+        }));
       },
       removeFavoritePodcast: (uuid: string) => {
         set((state) => {
@@ -213,6 +268,21 @@ export const usePodcastsBase = create<PodcastsStore>()(
     {
       name: "podcasts",
       storage: createJSONStorage(() => zustandStorage),
+      version: 1,
+      // v0 → v1: favorites predate the server/taddy split, so backfill the
+      // source discriminator (every existing favorite came from Taddy).
+      migrate: (persistedState, version) => {
+        const state = persistedState as {
+          favoritePodcasts?: FavoritePodcast[];
+        };
+        if (version < 1 && Array.isArray(state?.favoritePodcasts)) {
+          state.favoritePodcasts = state.favoritePodcasts.map((fav) => ({
+            ...fav,
+            source: fav.source ?? "taddy",
+          }));
+        }
+        return state as PodcastsStore;
+      },
     },
   ),
 );
