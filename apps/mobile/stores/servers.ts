@@ -8,6 +8,8 @@ export const serverTypeSchema = z.enum([
   "navidrome",
   "opensubsonic",
   "jellyfin",
+  // On-device library: no remote server, just filesystem paths (see `paths`).
+  "local",
 ]);
 export type ServerType = z.infer<typeof serverTypeSchema>;
 
@@ -28,6 +30,10 @@ export type Server = {
   url: string;
   current: boolean;
   type: ServerType;
+  // Only set for `type === "local"`: the user-selected filesystem source
+  // folders the on-device indexer scans. There is a single local server (no
+  // remote URL, no multiple accounts), so this is where its config lives.
+  paths?: string[];
 };
 
 export type ServerUser = {
@@ -42,13 +48,15 @@ interface ServersStore {
     name: string;
     url: string;
     type?: ServerType;
+    paths?: string[];
   }) => Server;
   editServer: (
     id: string,
-    patch: { name?: string; url?: string; type?: ServerType },
+    patch: { name?: string; url?: string; type?: ServerType; paths?: string[] },
   ) => void;
   removeServer: (id: string) => void;
   setCurrentServer: (id: string) => void;
+  getCurrentServer: () => Server | undefined;
   getServerById: (id: string) => Server | undefined;
   getServerByUrl: (url: string) => Server | undefined;
   getUsersForServer: (id: string) => ServerUser[];
@@ -65,18 +73,21 @@ const useServersBase = create<ServersStore>()(
     (set, get) => ({
       servers: [],
       users: [],
-      addServer: ({ name, url, type }) => {
+      addServer: ({ name, url, type, paths }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
         const existing = get().servers.find((s) => s.url === trimmedUrl);
         if (existing) {
-          if (type && existing.type !== type) {
+          const patch: Partial<Server> = {};
+          if (type && existing.type !== type) patch.type = type;
+          if (paths) patch.paths = paths;
+          if (Object.keys(patch).length > 0) {
             set((state) => ({
               servers: state.servers.map((s) =>
-                s.id === existing.id ? { ...s, type } : s,
+                s.id === existing.id ? { ...s, ...patch } : s,
               ),
             }));
-            return { ...existing, type };
+            return { ...existing, ...patch };
           }
           return existing;
         }
@@ -87,6 +98,7 @@ const useServersBase = create<ServersStore>()(
           url: trimmedUrl,
           current: !hasCurrent,
           type: type ?? "navidrome",
+          ...(paths ? { paths } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -108,6 +120,7 @@ const useServersBase = create<ServersStore>()(
                     : {}),
                   ...(patch.url !== undefined ? { url: patch.url.trim() } : {}),
                   ...(patch.type !== undefined ? { type: patch.type } : {}),
+                  ...(patch.paths !== undefined ? { paths: patch.paths } : {}),
                 }
               : s,
           ),
@@ -127,6 +140,7 @@ const useServersBase = create<ServersStore>()(
           })),
         }));
       },
+      getCurrentServer: () => get().servers.find((s) => s.current),
       getServerById: (id) => get().servers.find((s) => s.id === id),
       getServerByUrl: (url) => {
         const trimmed = url.trim();

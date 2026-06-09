@@ -17,6 +17,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LocalPathsField from "@/components/forms/LocalPathsField";
 import UrlInputField from "@/components/forms/UrlInputField";
 import LoginBackground from "@/components/LoginBackground";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
@@ -146,6 +147,7 @@ export default function LoginScreen() {
       password: "",
       url: preselectedServer?.url ?? "https://",
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
+      paths: (preselectedServer?.paths ?? []) as string[],
     },
     validators: {
       onChange: loginSchema,
@@ -157,7 +159,37 @@ export default function LoginScreen() {
         const trimmedPassword = value.password.trim();
         const serverType: ServerType = value.type;
 
-        if (serverType === "jellyfin") {
+        if (serverType === "local") {
+          const paths = (value.paths ?? [])
+            .map((p) => p.trim())
+            .filter(Boolean);
+          if (paths.length === 0) {
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("auth.login.localNoPaths")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+            return;
+          }
+          // Single local server (no remote URL, no multiple accounts): a fixed
+          // sentinel URL/username so the per-(server,user) scope is stable.
+          const existing = servers.find((s) => s.type === "local");
+          const server = addServer({
+            name: existing?.name ?? t("auth.login.localLibraryName"),
+            url: "local",
+            type: "local",
+            paths,
+          });
+          setCurrentServer(server.id);
+          login("local", "local", "", { serverType: "local" });
+        } else if (serverType === "jellyfin") {
           const payload = await jellyfinAuthenticate(
             trimmedUrl,
             trimmedUsername,
@@ -292,7 +324,10 @@ export default function LoginScreen() {
     form.setFieldValue("username", "");
     form.setFieldValue("password", "");
     form.setFieldValue("type", server.type);
-    setTimeout(() => usernameRef.current?.focus(), 250);
+    form.setFieldValue("paths", server.paths ?? []);
+    if (server.type !== "local") {
+      setTimeout(() => usernameRef.current?.focus(), 250);
+    }
   };
 
   const handleDemoModePress = () => {
@@ -314,6 +349,7 @@ export default function LoginScreen() {
     { value: "navidrome", label: t("auth.login.serverTypeNavidrome") },
     { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
     { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
+    { value: "local", label: t("auth.login.serverTypeLocal") },
   ];
 
   const triggerLabel =
@@ -414,101 +450,118 @@ export default function LoginScreen() {
               </HStack>
             )}
           </form.Field>
-          <form.Field name="url">
-            {(field) => (
-              <FormControl
-                isInvalid={showFieldError(field)}
-                isDisabled={false}
-                isReadOnly={false}
-                isRequired={false}
-                className="mb-2 mt-0"
-              >
-                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                  <UrlInputField
-                    value={field.state.value}
-                    onChangeText={field.handleChange}
-                    onBlur={() => handleFieldBlur(field)}
-                    placeholder={t("auth.login.urlPlaceholder")}
-                  />
-                </Input>
-                <FieldError field={field} />
-              </FormControl>
-            )}
-          </form.Field>
-          <form.Field name="username">
-            {(field) => (
-              <FormControl
-                isInvalid={showFieldError(field)}
-                size="md"
-                isDisabled={false}
-                isReadOnly={false}
-                isRequired={false}
-                className="my-2"
-              >
-                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                  <InputField
-                    ref={usernameRef}
-                    value={field.state.value}
-                    onChangeText={field.handleChange}
-                    onBlur={() => handleFieldBlur(field)}
-                    className="text-md text-white"
-                    placeholder={t("auth.login.usernamePlaceholder")}
-                    autoCapitalize="none"
-                    textContentType="username"
-                    returnKeyType="next"
-                    onSubmitEditing={() => passwordRef.current?.focus()}
-                  />
-                </Input>
-                <FieldError field={field} />
-              </FormControl>
-            )}
-          </form.Field>
-          <form.Field name="password">
-            {(field) => (
-              <FormControl
-                isInvalid={showFieldError(field)}
-                size="md"
-                isDisabled={false}
-                isReadOnly={false}
-                isRequired={false}
-                className="my-2"
-              >
-                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                  <InputField
-                    ref={passwordRef}
-                    value={field.state.value}
-                    onChangeText={field.handleChange}
-                    onBlur={() => handleFieldBlur(field)}
-                    className="text-md text-white"
-                    placeholder={t("auth.login.passwordPlaceholder")}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    textContentType="password"
-                    returnKeyType="go"
-                    onSubmitEditing={() => form.handleSubmit()}
-                  />
-                  <InputSlot>
-                    <Pressable
-                      onPress={() => setShowPassword((v) => !v)}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        showPassword
-                          ? t("auth.login.hidePassword")
-                          : t("auth.login.showPassword")
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOffIcon size={20} color={white} />
-                      ) : (
-                        <EyeIcon size={20} color={white} />
-                      )}
-                    </Pressable>
-                  </InputSlot>
-                </Input>
-                <FieldError field={field} />
-              </FormControl>
-            )}
-          </form.Field>
+          <form.Subscribe selector={(state) => state.values.type}>
+            {(type) =>
+              type === "local" ? (
+                <form.Field name="paths">
+                  {(field) => (
+                    <LocalPathsField
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                    />
+                  )}
+                </form.Field>
+              ) : (
+                <>
+                  <form.Field name="url">
+                    {(field) => (
+                      <FormControl
+                        isInvalid={showFieldError(field)}
+                        isDisabled={false}
+                        isReadOnly={false}
+                        isRequired={false}
+                        className="mb-2 mt-0"
+                      >
+                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                          <UrlInputField
+                            value={field.state.value}
+                            onChangeText={field.handleChange}
+                            onBlur={() => handleFieldBlur(field)}
+                            placeholder={t("auth.login.urlPlaceholder")}
+                          />
+                        </Input>
+                        <FieldError field={field} />
+                      </FormControl>
+                    )}
+                  </form.Field>
+                  <form.Field name="username">
+                    {(field) => (
+                      <FormControl
+                        isInvalid={showFieldError(field)}
+                        size="md"
+                        isDisabled={false}
+                        isReadOnly={false}
+                        isRequired={false}
+                        className="my-2"
+                      >
+                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                          <InputField
+                            ref={usernameRef}
+                            value={field.state.value}
+                            onChangeText={field.handleChange}
+                            onBlur={() => handleFieldBlur(field)}
+                            className="text-md text-white"
+                            placeholder={t("auth.login.usernamePlaceholder")}
+                            autoCapitalize="none"
+                            textContentType="username"
+                            returnKeyType="next"
+                            onSubmitEditing={() => passwordRef.current?.focus()}
+                          />
+                        </Input>
+                        <FieldError field={field} />
+                      </FormControl>
+                    )}
+                  </form.Field>
+                  <form.Field name="password">
+                    {(field) => (
+                      <FormControl
+                        isInvalid={showFieldError(field)}
+                        size="md"
+                        isDisabled={false}
+                        isReadOnly={false}
+                        isRequired={false}
+                        className="my-2"
+                      >
+                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                          <InputField
+                            ref={passwordRef}
+                            value={field.state.value}
+                            onChangeText={field.handleChange}
+                            onBlur={() => handleFieldBlur(field)}
+                            className="text-md text-white"
+                            placeholder={t("auth.login.passwordPlaceholder")}
+                            secureTextEntry={!showPassword}
+                            autoCapitalize="none"
+                            textContentType="password"
+                            returnKeyType="go"
+                            onSubmitEditing={() => form.handleSubmit()}
+                          />
+                          <InputSlot>
+                            <Pressable
+                              onPress={() => setShowPassword((v) => !v)}
+                              accessibilityRole="button"
+                              accessibilityLabel={
+                                showPassword
+                                  ? t("auth.login.hidePassword")
+                                  : t("auth.login.showPassword")
+                              }
+                            >
+                              {showPassword ? (
+                                <EyeOffIcon size={20} color={white} />
+                              ) : (
+                                <EyeIcon size={20} color={white} />
+                              )}
+                            </Pressable>
+                          </InputSlot>
+                        </Input>
+                        <FieldError field={field} />
+                      </FormControl>
+                    )}
+                  </form.Field>
+                </>
+              )
+            }
+          </form.Subscribe>
           <FadeOutScaleDown
             onPress={() => {
               form.state.isDirty ? form.handleSubmit() : undefined;

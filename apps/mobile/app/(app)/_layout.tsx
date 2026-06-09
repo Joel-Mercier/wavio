@@ -21,6 +21,7 @@ import {
 import { loadResumePositions } from "@/services/resumePositions";
 import useActivity from "@/stores/activity";
 import useAuth, { useAuthBase } from "@/stores/auth";
+import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
@@ -56,6 +57,7 @@ export default function AppLayout() {
       useActivity.getState().__reset();
       useQueue.getState().__reset();
       useOffline.getState().__reset();
+      useLocalLibrary.getState().__reset();
       // Drop the previous server's advertised OpenSubsonic extensions; the
       // ServerExtensionsSync component repopulates them for the new server.
       useServerExtensionsBase.getState().reset();
@@ -88,6 +90,7 @@ export default function AppLayout() {
     useActivity.persist.rehydrate();
     useQueue.persist.rehydrate();
     useOffline.persist.rehydrate();
+    useLocalLibrary.persist.rehydrate();
 
     // Once the local queue is in place, start server play-queue sync (which may
     // restore the server's queue when prioritised) and prime resume positions.

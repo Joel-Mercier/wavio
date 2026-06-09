@@ -1156,6 +1156,7 @@ export default {
         serverTypeNavidrome: "Navidrome",
         serverTypeOpenSubsonic: "OpenSubsonic",
         serverTypeJellyfin: "Jellyfin",
+        serverTypeLocal: "Local",
         urlPlaceholder: "Entrer l'URL du serveur",
         usernamePlaceholder: "Entrer le nom d'utilisateur",
         passwordPlaceholder: "Entrer le mot de passe",
@@ -1170,6 +1171,15 @@ export default {
         demo: "Mode démo",
         navidromeSetupHelp: "Installer un serveur Navidrome",
         jellyfinSetupHelp: "Installer un serveur Jellyfin",
+        localLibraryName: "Bibliothèque locale",
+        localFoldersLabel: "Dossiers sources",
+        localFoldersHelp:
+          "Ajoutez un ou plusieurs dossiers de cet appareil à analyser.",
+        localPathPlaceholder: "/storage/emulated/0/Music",
+        localAddPath: "Ajouter un dossier",
+        localPickFolder: "Choisir un dossier",
+        localNoPaths: "Ajoutez au moins un dossier pour continuer",
+        localRemovePath: "Supprimer le dossier",
       },
     },
     openSubsonic: {

@@ -3,6 +3,7 @@ import {
   hlsStreamUrl as jellyfinHlsStreamUrl,
   streamUrl as jellyfinStreamUrl,
 } from "@/services/jellyfin/streaming";
+import { parseLocalTrackId } from "@/services/local/keys";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -15,7 +16,18 @@ function isJellyfin(): boolean {
   return useAuthBase.getState().serverType === "jellyfin";
 }
 
+// Local tracks play straight off disk: the id encodes the file URI, so we hand
+// expo-audio the `file://` URI directly (no /stream endpoint, no transcoding).
+// Returns null when the active server isn't local or `id` isn't a local id.
+function localFileUrl(id: string): string | null {
+  return useAuthBase.getState().serverType === "local"
+    ? parseLocalTrackId(id)
+    : null;
+}
+
 export const hlsStreamUrl = (id: string) => {
+  const local = localFileUrl(id);
+  if (local != null) return local;
   if (isJellyfin()) return jellyfinHlsStreamUrl(id);
   const { url, username, password } = useAuthBase.getState();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
@@ -25,6 +37,8 @@ export const hlsStreamUrl = (id: string) => {
 };
 
 export const streamUrl = (id: string) => {
+  const local = localFileUrl(id);
+  if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id);
   const { url, username, password } = useAuthBase.getState();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
@@ -34,6 +48,8 @@ export const streamUrl = (id: string) => {
 };
 
 export const downloadUrl = (id: string) => {
+  const local = localFileUrl(id);
+  if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
   const { url, username, password } = useAuthBase.getState();
   return `${url}/rest/download?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;

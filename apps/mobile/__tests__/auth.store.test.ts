@@ -150,6 +150,18 @@ describe("auth login schema", () => {
       username: "alice",
       password: "secret",
       type: "navidrome",
+      paths: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a local payload without url or credentials", () => {
+    const result = loginSchema.safeParse({
+      url: "",
+      username: "",
+      password: "",
+      type: "local",
+      paths: ["/storage/emulated/0/Music"],
     });
     expect(result.success).toBe(true);
   });

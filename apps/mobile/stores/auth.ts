@@ -7,12 +7,48 @@ import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import { type ServerType, serverTypeSchema } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
 
-export const loginSchema = z.object({
-  url: z.url().min(1).trim(),
-  username: z.string().min(1).trim(),
-  password: z.string().min(1).trim(),
-  type: serverTypeSchema,
-});
+// `local` servers have no URL or credentials — only filesystem paths picked in
+// the UI — so those fields are validated only for remote server types. Errors
+// are forwarded at the field path with their locale-aware messages so the login
+// form still highlights the right input for remote logins.
+export const loginSchema = z
+  .object({
+    url: z.string().trim(),
+    username: z.string().trim(),
+    password: z.string().trim(),
+    type: serverTypeSchema,
+    // Local-server source folders; only relevant when `type === "local"`. The
+    // login form always supplies this (defaults to []), so it's required here to
+    // match the form's value shape for the StandardSchema validator.
+    paths: z.array(z.string()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "local") return;
+    const url = z.url().min(1).trim().safeParse(data.url);
+    if (!url.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: url.error.issues[0]?.message,
+      });
+    }
+    const username = z.string().min(1).trim().safeParse(data.username);
+    if (!username.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["username"],
+        message: username.error.issues[0]?.message,
+      });
+    }
+    const password = z.string().min(1).trim().safeParse(data.password);
+    if (!password.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: password.error.issues[0]?.message,
+      });
+    }
+  });
 
 export type NavidromeNativeSession = {
   token: string;

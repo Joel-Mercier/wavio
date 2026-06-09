@@ -60,6 +60,7 @@
     "expo-navigation-bar": "~56.0.3",
     "expo-router": "~56.2.8",
     "expo-splash-screen": "~56.0.10",
+    "expo-sqlite": "~56.0.4",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.5",
     "expo-system-ui": "~56.0.5",
