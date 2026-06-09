@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Text } from "@/components/ui/text";
 
 export const LYRICS_LINE_HEIGHT = 56;
@@ -12,10 +13,12 @@ export default function LyricsDialogLine({
   value,
   isActive,
   isPast,
+  onPress,
 }: {
   value: string;
   isActive: boolean;
   isPast: boolean;
+  onPress?: () => void;
 }) {
   const opacity = useSharedValue(isActive ? 1 : isPast ? 0.45 : 0.7);
   const scale = useSharedValue(isActive ? 1 : 0.96);
@@ -33,7 +36,7 @@ export default function LyricsDialogLine({
   }));
 
   const trimmed = value?.trim();
-  return (
+  const content = (
     <Animated.View
       style={[
         { height: LYRICS_LINE_HEIGHT, justifyContent: "center" },
@@ -49,4 +52,7 @@ export default function LyricsDialogLine({
       </Text>
     </Animated.View>
   );
+
+  if (!onPress) return content;
+  return <FadeOutScaleDown onPress={onPress}>{content}</FadeOutScaleDown>;
 }

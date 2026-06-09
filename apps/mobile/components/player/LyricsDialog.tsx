@@ -17,6 +17,7 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { usePlaybackProgress } from "@/hooks/player";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
+import { seekTo } from "@/services/player";
 import { findCurrentLineIndex } from "@/utils/lyrics";
 
 export default function LyricsDialog({
@@ -71,14 +72,22 @@ export default function LyricsDialog({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingVertical: 16 }}
           >
-            {lyrics?.line.map((line, index) => (
-              <LyricsDialogLine
-                key={`${index}-${line.start ?? 0}`}
-                value={line.value}
-                isActive={index === currentIndex}
-                isPast={index < currentIndex}
-              />
-            ))}
+            {lyrics?.line.map((line, index) => {
+              const { start } = line;
+              return (
+                <LyricsDialogLine
+                  key={`${index}-${start ?? 0}`}
+                  value={line.value}
+                  isActive={index === currentIndex}
+                  isPast={index < currentIndex}
+                  onPress={
+                    lyrics.synced && start != null
+                      ? () => seekTo(Math.max(0, (start - offsetMs) / 1000))
+                      : undefined
+                  }
+                />
+              );
+            })}
             {!lyrics && (
               <Text className="text-primary-100 text-center">
                 {t("app.player.lyricsUnavailable")}
