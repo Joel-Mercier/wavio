@@ -1,4 +1,6 @@
 PODS:
+  - AudioMetadata (0.0.1):
+    - ExpoModulesCore
   - EXApplication (56.0.3):
     - ExpoModulesCore
   - EXConstants (56.0.16):
@@ -2653,6 +2655,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - AudioMetadata (from `../modules/audio-metadata/ios`)
   - EXApplication (from `../../../node_modules/expo-application/ios`)
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../../../node_modules/expo-json-utils/ios`)
@@ -2795,6 +2798,8 @@ SPEC REPOS:
     - SwiftUIIntrospect
 
 EXTERNAL SOURCES:
+  AudioMetadata:
+    :path: "../modules/audio-metadata/ios"
   EXApplication:
     :path: "../../../node_modules/expo-application/ios"
   EXConstants:
@@ -3056,6 +3061,7 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AudioMetadata: b0b7c1379036a163b1da3615c6259f96f7d3631f
   EXApplication: e6040c92edc5522accd62852342e6b14742d42c0
   EXConstants: 1c400bb9969f4c9e5ab324553138b74ae47b9efe
   EXJSONUtils: dba2755f4e24009eaf87a876b2d615ea06c16e42

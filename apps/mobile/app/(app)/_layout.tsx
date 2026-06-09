@@ -134,6 +134,7 @@ export default function AppLayout() {
         <Stack.Screen name="playlists/[id]/edit-rules" />
         <Stack.Screen name="internet-radio-stations/new" />
         <Stack.Screen name="podcast-channels/new" />
+        {__DEV__ ? <Stack.Screen name="dev-metadata" /> : null}
         <Stack.Screen
           name="player"
           options={{

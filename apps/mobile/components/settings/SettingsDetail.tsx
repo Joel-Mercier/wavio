@@ -1275,6 +1275,38 @@ export default function SettingsDetail() {
                 </Text>
               </FadeOutScaleDown>
             </HStack>
+            {__DEV__ && (
+              <>
+                <Divider className="bg-primary-400" />
+                <Heading className="text-white mt-4" size="lg">
+                  Developer
+                </Heading>
+                <FadeOutScaleDown
+                  onPress={() => router.navigate("/dev-metadata")}
+                >
+                  <HStack className="items-center gap-x-4 py-4 justify-between">
+                    <VStack className="gap-y-2 w-3/5">
+                      <Heading className="text-white font-normal" size="md">
+                        Audio metadata extractor
+                      </Heading>
+                      <Text className="text-primary-100 text-sm">
+                        Inspect tags parsed from local audio files.
+                      </Text>
+                    </VStack>
+                    <Badge
+                      className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                      size="lg"
+                      variant="solid"
+                      action="success"
+                    >
+                      <BadgeText className="normal-case text-center text-emerald-700">
+                        DEV
+                      </BadgeText>
+                    </Badge>
+                  </HStack>
+                </FadeOutScaleDown>
+              </>
+            )}
           </VStack>
         </ScrollView>
       </Box>
