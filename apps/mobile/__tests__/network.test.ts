@@ -6,13 +6,17 @@ const mockLogout = jest.fn();
 jest.mock("@react-native-community/netinfo", () => ({
   __esModule: true,
   default: {
-    fetch: (...args: unknown[]) => mockFetch(...args),
-    addEventListener: (...args: unknown[]) => mockAddEventListener(...args),
+    // Lazy arrows so the hoisted factory defers reading the mock consts until
+    // call time (avoids the TDZ); typed non-rest params keep both tsc and the
+    // jest babel transform happy.
+    fetch: () => mockFetch(),
+    addEventListener: (cb: (state: unknown) => void) =>
+      mockAddEventListener(cb),
   },
 }));
 
 jest.mock("@/services/backend/system", () => ({
-  ping: (...args: unknown[]) => mockPing(...args),
+  ping: (opts?: unknown) => mockPing(opts),
 }));
 
 jest.mock("@/stores/auth", () => ({
@@ -22,6 +26,9 @@ jest.mock("@/stores/auth", () => ({
       url: "http://server.test",
       logout: mockLogout,
     }),
+    // network.ts subscribes to serverType changes; the tests don't exercise a
+    // switch, so a no-op subscription that returns a no-op unsubscribe suffices.
+    subscribe: () => () => {},
   },
 }));
 
