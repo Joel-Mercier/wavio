@@ -186,7 +186,11 @@ export default function LibraryListItem({
         url: `/artists/${item.id}`,
       };
     }
-    if (item.year) {
+    // Albums carry an `artistId` (or at least a year); playlists never do, and
+    // artists are already handled above via `albumCount`. Keying off `artistId`
+    // keeps albums whose tracks lack year metadata (common in local libraries)
+    // from falling through to the playlist branch.
+    if (item.year || item.artistId) {
       return {
         id: "album",
         label: t("app.shared.album_one"),

@@ -157,6 +157,9 @@ export default function SettingsDetail() {
   const hasScrolledToSection = useRef(false);
   const toast = useToast();
   const capabilities = useCapabilities();
+  // The on-device library reads straight off the filesystem: offline downloads
+  // and stream-bitrate settings don't apply, so those rows are hidden for it.
+  const isLocal = useAuthBase((store) => store.serverType === "local");
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
   const showAddTab = useApp((store) => store.showAddTab);
@@ -655,91 +658,100 @@ export default function SettingsDetail() {
               </Badge>
             </HStack>
             <Divider className="bg-primary-400" />
-            <Heading className="text-white mt-4" size="lg">
-              {t("app.settings.offlineSettings.title")}
-            </Heading>
-            <HStack className="items-center gap-x-4 py-4 justify-between">
-              <VStack className="gap-y-2 w-3/5">
-                <Heading className="text-white font-normal" size="md">
-                  {t("app.settings.offlineSettings.offlineModeLabel")}
+            {!isLocal && (
+              <>
+                <Heading className="text-white mt-4" size="lg">
+                  {t("app.settings.offlineSettings.title")}
                 </Heading>
-                <Text className="text-primary-100 text-sm">
-                  {t("app.settings.offlineSettings.offlineModeDescription")}
-                </Text>
-                {offlineModeEnabled && (
-                  <Text className="text-emerald-400 text-sm">
-                    {t("app.settings.offlineSettings.downloadedTracksCount", {
-                      count: downloadedTracksCount,
-                      total: Math.max(
-                        totalTracksToDownload,
-                        downloadedTracksList.length,
-                      ),
-                      size: niceBytes(totalDownloadSize),
-                    })}
-                  </Text>
-                )}
-              </VStack>
-              <Switch
-                size="md"
-                trackColor={{
-                  false: gray500,
-                  true: emerald500,
-                }}
-                thumbColor={white}
-                ios_backgroundColor={white}
-                value={offlineModeEnabled}
-                onToggle={(value) => setOfflineModeEnabled(value)}
-              />
-            </HStack>
-            <HStack className="items-center gap-x-4 py-4 justify-between">
-              <VStack className="gap-y-2 w-3/5">
-                <Heading className="text-white font-normal" size="md">
-                  {t("app.settings.offlineSettings.downloadsWifiOnlyLabel")}
-                </Heading>
-                <Text className="text-primary-100 text-sm">
-                  {t(
-                    "app.settings.offlineSettings.downloadsWifiOnlyDescription",
-                  )}
-                </Text>
-              </VStack>
-              <Switch
-                size="md"
-                trackColor={{
-                  false: gray500,
-                  true: emerald500,
-                }}
-                thumbColor={white}
-                ios_backgroundColor={white}
-                value={downloadsWifiOnly}
-                onToggle={(value) => setDownloadsWifiOnly(value)}
-              />
-            </HStack>
-            {offlineModeEnabled && downloadedTracksList.length > 0 && (
-              <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
-                <VStack className="gap-y-2 w-1/2">
-                  <Heading className="text-white font-normal" size="md">
-                    {t("app.settings.offlineSettings.manageDownloadsLabel")}
-                  </Heading>
-                  <Text className="text-primary-100 text-sm">
-                    {t(
-                      "app.settings.offlineSettings.manageDownloadsDescription",
+                <HStack className="items-center gap-x-4 py-4 justify-between">
+                  <VStack className="gap-y-2 w-3/5">
+                    <Heading className="text-white font-normal" size="md">
+                      {t("app.settings.offlineSettings.offlineModeLabel")}
+                    </Heading>
+                    <Text className="text-primary-100 text-sm">
+                      {t("app.settings.offlineSettings.offlineModeDescription")}
+                    </Text>
+                    {offlineModeEnabled && (
+                      <Text className="text-emerald-400 text-sm">
+                        {t(
+                          "app.settings.offlineSettings.downloadedTracksCount",
+                          {
+                            count: downloadedTracksCount,
+                            total: Math.max(
+                              totalTracksToDownload,
+                              downloadedTracksList.length,
+                            ),
+                            size: niceBytes(totalDownloadSize),
+                          },
+                        )}
+                      </Text>
                     )}
-                  </Text>
-                </VStack>
-                <FadeOutScaleDown
-                  onPress={() => router.navigate("/offline-downloads")}
-                  className="flex-1 items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
-                >
-                  <Text
-                    numberOfLines={1}
-                    className="text-primary-800 font-bold text-lg"
-                  >
-                    {t("app.settings.offlineSettings.manageDownloadsAction")}
-                  </Text>
-                </FadeOutScaleDown>
-              </HStack>
+                  </VStack>
+                  <Switch
+                    size="md"
+                    trackColor={{
+                      false: gray500,
+                      true: emerald500,
+                    }}
+                    thumbColor={white}
+                    ios_backgroundColor={white}
+                    value={offlineModeEnabled}
+                    onToggle={(value) => setOfflineModeEnabled(value)}
+                  />
+                </HStack>
+                <HStack className="items-center gap-x-4 py-4 justify-between">
+                  <VStack className="gap-y-2 w-3/5">
+                    <Heading className="text-white font-normal" size="md">
+                      {t("app.settings.offlineSettings.downloadsWifiOnlyLabel")}
+                    </Heading>
+                    <Text className="text-primary-100 text-sm">
+                      {t(
+                        "app.settings.offlineSettings.downloadsWifiOnlyDescription",
+                      )}
+                    </Text>
+                  </VStack>
+                  <Switch
+                    size="md"
+                    trackColor={{
+                      false: gray500,
+                      true: emerald500,
+                    }}
+                    thumbColor={white}
+                    ios_backgroundColor={white}
+                    value={downloadsWifiOnly}
+                    onToggle={(value) => setDownloadsWifiOnly(value)}
+                  />
+                </HStack>
+                {offlineModeEnabled && downloadedTracksList.length > 0 && (
+                  <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
+                    <VStack className="gap-y-2 w-1/2">
+                      <Heading className="text-white font-normal" size="md">
+                        {t("app.settings.offlineSettings.manageDownloadsLabel")}
+                      </Heading>
+                      <Text className="text-primary-100 text-sm">
+                        {t(
+                          "app.settings.offlineSettings.manageDownloadsDescription",
+                        )}
+                      </Text>
+                    </VStack>
+                    <FadeOutScaleDown
+                      onPress={() => router.navigate("/offline-downloads")}
+                      className="flex-1 items-center justify-center py-2 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
+                    >
+                      <Text
+                        numberOfLines={1}
+                        className="text-primary-800 font-bold text-lg"
+                      >
+                        {t(
+                          "app.settings.offlineSettings.manageDownloadsAction",
+                        )}
+                      </Text>
+                    </FadeOutScaleDown>
+                  </HStack>
+                )}
+                <Divider className="bg-primary-400" />
+              </>
             )}
-            <Divider className="bg-primary-400" />
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.storageSettings.title")}
             </Heading>
@@ -1044,56 +1056,62 @@ export default function SettingsDetail() {
             <Heading className="text-white mt-4" size="lg">
               {t("app.settings.streamingSettings.title")}
             </Heading>
-            <FadeOutScaleDown onPress={handlePresentBitRateModalPress}>
-              <HStack className="items-center gap-x-4 py-4 justify-between">
-                <VStack className="gap-y-2 w-1/2">
-                  <Heading className="text-white font-normal" size="md">
-                    {t("app.settings.streamingSettings.audioQualityLabel")}
-                  </Heading>
-                  <Text className="text-primary-100 text-sm">
-                    {t(
-                      "app.settings.streamingSettings.audioQualityDescription",
-                    )}
-                  </Text>
-                </VStack>
-                <Badge
-                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
-                  size="lg"
-                  variant="solid"
-                  action="success"
+            {!isLocal && (
+              <>
+                <FadeOutScaleDown onPress={handlePresentBitRateModalPress}>
+                  <HStack className="items-center gap-x-4 py-4 justify-between">
+                    <VStack className="gap-y-2 w-1/2">
+                      <Heading className="text-white font-normal" size="md">
+                        {t("app.settings.streamingSettings.audioQualityLabel")}
+                      </Heading>
+                      <Text className="text-primary-100 text-sm">
+                        {t(
+                          "app.settings.streamingSettings.audioQualityDescription",
+                        )}
+                      </Text>
+                    </VStack>
+                    <Badge
+                      className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                      size="lg"
+                      variant="solid"
+                      action="success"
+                    >
+                      <BadgeText className="normal-case text-center text-emerald-700">
+                        {formatBitRate(maxBitRate)}
+                      </BadgeText>
+                    </Badge>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown
+                  onPress={handlePresentCellularBitRateModalPress}
                 >
-                  <BadgeText className="normal-case text-center text-emerald-700">
-                    {formatBitRate(maxBitRate)}
-                  </BadgeText>
-                </Badge>
-              </HStack>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={handlePresentCellularBitRateModalPress}>
-              <HStack className="items-center gap-x-4 py-4 justify-between">
-                <VStack className="gap-y-2 w-1/2">
-                  <Heading className="text-white font-normal" size="md">
-                    {t(
-                      "app.settings.streamingSettings.cellularAudioQualityLabel",
-                    )}
-                  </Heading>
-                  <Text className="text-primary-100 text-sm">
-                    {t(
-                      "app.settings.streamingSettings.cellularAudioQualityDescription",
-                    )}
-                  </Text>
-                </VStack>
-                <Badge
-                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
-                  size="lg"
-                  variant="solid"
-                  action="success"
-                >
-                  <BadgeText className="normal-case text-center text-emerald-700">
-                    {formatBitRate(cellularMaxBitRate)}
-                  </BadgeText>
-                </Badge>
-              </HStack>
-            </FadeOutScaleDown>
+                  <HStack className="items-center gap-x-4 py-4 justify-between">
+                    <VStack className="gap-y-2 w-1/2">
+                      <Heading className="text-white font-normal" size="md">
+                        {t(
+                          "app.settings.streamingSettings.cellularAudioQualityLabel",
+                        )}
+                      </Heading>
+                      <Text className="text-primary-100 text-sm">
+                        {t(
+                          "app.settings.streamingSettings.cellularAudioQualityDescription",
+                        )}
+                      </Text>
+                    </VStack>
+                    <Badge
+                      className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                      size="lg"
+                      variant="solid"
+                      action="success"
+                    >
+                      <BadgeText className="normal-case text-center text-emerald-700">
+                        {formatBitRate(cellularMaxBitRate)}
+                      </BadgeText>
+                    </Badge>
+                  </HStack>
+                </FadeOutScaleDown>
+              </>
+            )}
             {capabilities.replayGain && (
               <FadeOutScaleDown onPress={handlePresentReplayGainModalPress}>
                 <HStack className="items-center gap-x-4 py-4 justify-between">

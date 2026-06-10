@@ -120,7 +120,10 @@ export async function scanLibrary(
       return result;
     }
     try {
-      const normalized = folder.startsWith("file://")
+      // SAF folders picked on Android are content:// tree URIs; bare absolute
+      // paths get the file:// scheme. Anything already carrying a scheme
+      // (content://, file://) is passed through untouched.
+      const normalized = /^[a-z][a-z0-9+.-]*:\/\//i.test(folder)
         ? folder
         : `file://${folder}`;
       const dir = new Directory(normalized);

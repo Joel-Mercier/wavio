@@ -11,9 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.jmercier.wavio",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       },
       "icon": {
         "dark": "./assets/images/ios-dark.png",
@@ -68,9 +66,7 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your files.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files.",
           "isAccessMediaLocationEnabled": true,
-          "granularPermissions": [
-            "audio"
-          ]
+          "granularPermissions": ["audio"]
         }
       ],
       [

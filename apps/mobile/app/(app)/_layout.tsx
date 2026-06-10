@@ -3,6 +3,7 @@ import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import {
@@ -36,6 +37,9 @@ let lastHydratedScope: string | null = null;
 
 export default function AppLayout() {
   const isAuthenticated = useAuth((store) => store.isAuthenticated);
+  const serverType = useAuthBase((s) => s.serverType);
+  const localLibReady = useLocalLibrary((s) => s.ready);
+  const lastScanAt = useLocalLibrary((s) => s.lastScanAt);
   useJellyfinDefaultLibrary();
 
   useEffect(() => {
@@ -90,7 +94,11 @@ export default function AppLayout() {
     useActivity.persist.rehydrate();
     useQueue.persist.rehydrate();
     useOffline.persist.rehydrate();
-    useLocalLibrary.persist.rehydrate();
+    // Flag the local-library store ready once its saved scan summary is back, so
+    // the first-login indexing gate below can trust `lastScanAt`.
+    void Promise.resolve(useLocalLibrary.persist.rehydrate()).then(() => {
+      useLocalLibrary.getState().setReady();
+    });
 
     // Once the local queue is in place, start server play-queue sync (which may
     // restore the server's queue when prioritised) and prime resume positions.
@@ -124,6 +132,14 @@ export default function AppLayout() {
     if (__DEV__)
       console.log("[app] User is not authenticated, redirecting to login");
     return <Redirect href="/(auth)/login" />;
+  }
+
+  // First login into a local library: hold on the indexing screen (spinner +
+  // live scan steps) until the on-device index is built, then fall through to
+  // render the app — which lands on Home. `!localLibReady` covers the brief
+  // window before the saved scan summary has rehydrated, so Home never flashes.
+  if (serverType === "local" && (!localLibReady || lastScanAt === undefined)) {
+    return <LocalLibraryIndexing />;
   }
 
   if (__DEV__)

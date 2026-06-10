@@ -73,12 +73,38 @@ const JELLYFIN: BackendCapabilities = {
   nowPlaying: false,
 };
 
+// On-device library: no remote server, everything is derived from files the
+// indexer scans (see `stores/servers.ts` `paths`). Synced lyrics and ReplayGain
+// come from extracted tags; song lists and (non-smart) playlists are built
+// locally. Everything that needs a remote server — sharing, podcasts, radio,
+// bookmarks, ratings, admin users, queue/now-playing sync — is unavailable.
+const LOCAL: BackendCapabilities = {
+  sharing: false,
+  internetRadio: false,
+  podcasts: false,
+  smartPlaylists: false,
+  bookmarks: false,
+  setRating: false,
+  lyricsSynced: true,
+  adminUsers: false,
+  // The indexer can re-scan the selected source folders on demand.
+  libraryScan: true,
+  playlistDescription: false,
+  replayGain: true,
+  jukebox: false,
+  songLists: true,
+  playQueueSync: false,
+  nowPlaying: false,
+};
+
 export function getCapabilities(serverType: ServerType): BackendCapabilities {
   switch (serverType) {
     case "jellyfin":
       return JELLYFIN;
     case "navidrome":
       return NAVIDROME;
+    case "local":
+      return LOCAL;
     default:
       return SUBSONIC;
   }

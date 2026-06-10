@@ -564,7 +564,11 @@ export default function LoginScreen() {
           </form.Subscribe>
           <FadeOutScaleDown
             onPress={() => {
-              form.state.isDirty ? form.handleSubmit() : undefined;
+              // Local logins have no credentials to edit and the saved folders
+              // pre-fill `paths`, so the form is never dirty on re-login; gate
+              // them on type instead. Remote servers keep the dirty guard.
+              const { isDirty, values } = form.state;
+              if (isDirty || values.type === "local") form.handleSubmit();
             }}
             className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 mt-4"
           >

@@ -23,23 +23,47 @@ export type ScanStatus = {
 
 const idleStatus: ScanStatus = { phase: "idle", processed: 0, total: 0 };
 
+/** Maps a starred id to the epoch-ms timestamp it was favourited at. */
+export type FavoriteMap = Record<string, number>;
+
+/** Star/unstar target, matching the OpenSubsonic star/unstar params. */
+export type StarTarget = { id?: string; albumId?: string; artistId?: string };
+
 interface LocalLibraryStore {
   // --- persisted ---
   lastScanAt: number | undefined;
   lastScanResult: ScanResult | undefined;
+  // The local backend has no server to track favourites, so star state lives
+  // here (scoped per server+user like the rest of the store). Keyed by the
+  // local track/album/artist id → when it was starred, so getStarred can sort
+  // and the mappers can stamp the `starred` field across the app.
+  favoriteTracks: FavoriteMap;
+  favoriteAlbums: FavoriteMap;
+  favoriteArtists: FavoriteMap;
 
   // --- ephemeral ---
   status: ScanStatus;
+  // True once this scope's persisted summary has been rehydrated, so consumers
+  // can tell "first login, never scanned" (`ready && lastScanAt === undefined`)
+  // apart from "still loading the saved scan summary".
+  ready: boolean;
 
   setStatus: (status: ScanStatus) => void;
   setScanFinished: (result: ScanResult) => void;
+  setReady: () => void;
+  star: (target: StarTarget) => void;
+  unstar: (target: StarTarget) => void;
   __reset: () => void;
 }
 
 const initialState = {
   lastScanAt: undefined as number | undefined,
   lastScanResult: undefined as ScanResult | undefined,
+  favoriteTracks: {} as FavoriteMap,
+  favoriteAlbums: {} as FavoriteMap,
+  favoriteArtists: {} as FavoriteMap,
   status: idleStatus,
+  ready: false,
 };
 
 const useLocalLibraryBase = create<LocalLibraryStore>()(
@@ -55,11 +79,45 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
         set({ status });
       },
 
+      setReady: () => {
+        set({ ready: true });
+      },
+
       setScanFinished: (result) => {
         set({
           status: idleStatus,
           lastScanAt: Date.now(),
           lastScanResult: result,
+        });
+      },
+
+      star: ({ id, albumId, artistId }) => {
+        const now = Date.now();
+        set((s) => ({
+          favoriteTracks: id
+            ? { ...s.favoriteTracks, [id]: now }
+            : s.favoriteTracks,
+          favoriteAlbums: albumId
+            ? { ...s.favoriteAlbums, [albumId]: now }
+            : s.favoriteAlbums,
+          favoriteArtists: artistId
+            ? { ...s.favoriteArtists, [artistId]: now }
+            : s.favoriteArtists,
+        }));
+      },
+
+      unstar: ({ id, albumId, artistId }) => {
+        set((s) => {
+          const drop = (map: FavoriteMap, key?: string): FavoriteMap => {
+            if (!key || !(key in map)) return map;
+            const { [key]: _, ...rest } = map;
+            return rest;
+          };
+          return {
+            favoriteTracks: drop(s.favoriteTracks, id),
+            favoriteAlbums: drop(s.favoriteAlbums, albumId),
+            favoriteArtists: drop(s.favoriteArtists, artistId),
+          };
         });
       },
     }),
@@ -76,6 +134,9 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
       partialize: (state) => ({
         lastScanAt: state.lastScanAt,
         lastScanResult: state.lastScanResult,
+        favoriteTracks: state.favoriteTracks,
+        favoriteAlbums: state.favoriteAlbums,
+        favoriteArtists: state.favoriteArtists,
       }),
     },
   ),

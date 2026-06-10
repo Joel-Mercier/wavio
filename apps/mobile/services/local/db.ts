@@ -4,6 +4,7 @@ import {
   type SQLiteDatabase,
 } from "expo-sqlite";
 import { getAuthScope } from "@/config/storage";
+import { localTrackId } from "@/services/local/keys";
 import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
@@ -16,7 +17,7 @@ import { logError } from "@/utils/log";
 // switching servers never mixes one account's local library into another's. The
 // handle follows the active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 3;
 
 const currentScope = (): string => {
   const { url, username } = useAuthBase.getState();
@@ -147,22 +148,87 @@ CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
 );
 `;
 
+// User-created playlists live on-device too (the local backend has no server to
+// store them). `playlist_tracks.position` is kept contiguous 0..n-1 so a song's
+// ordinal index — what Subsonic's `songIndexToRemove` addresses — maps straight
+// to its row. Track membership references `tracks.id` but is *not* FK-enforced:
+// a file pruned on rescan leaves a dangling row that read queries skip (and that
+// re-resolves if the file returns, since track ids are derived from the URI).
+const SCHEMA_V2 = `
+CREATE TABLE IF NOT EXISTS playlists (
+  id          TEXT PRIMARY KEY NOT NULL,
+  name        TEXT NOT NULL,
+  comment     TEXT,
+  created_at  INTEGER NOT NULL,
+  changed_at  INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS playlist_tracks (
+  playlist_id TEXT NOT NULL,
+  position    INTEGER NOT NULL,
+  track_id    TEXT NOT NULL,
+  PRIMARY KEY (playlist_id, position)
+);
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_pid
+  ON playlist_tracks(playlist_id, position);
+`;
+
 async function migrate(db: SQLiteDatabase): Promise<void> {
+  // The schema is entirely additive (`CREATE ... IF NOT EXISTS`), so apply it on
+  // every open. It's cheap (each statement short-circuits when the object
+  // exists) and self-healing: a DB whose `user_version` was advanced without its
+  // tables actually being created — an interrupted/partial migration — would be
+  // skipped forever by a version-gated approach, but is repaired here.
+  await db.execAsync(SCHEMA_V1);
+  await db.execAsync(SCHEMA_V2);
+
   const row = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version",
   );
   const version = row?.user_version ?? 0;
   if (version >= SCHEMA_VERSION) return;
 
+  // `user_version` gates *non-idempotent* migrations (column drops/renames, data
+  // backfills) that can't simply be re-run. PRAGMA can't be parameterized;
+  // SCHEMA_VERSION is a literal.
   await db.withExclusiveTransactionAsync(async (txn) => {
-    if (version < 1) {
-      await txn.execAsync(SCHEMA_V1);
+    if (version > 0 && version < 3) {
+      // v3: local ids moved from percent-encoded to hex payloads (decode-safe
+      // for expo-router params — see services/local/keys.ts). Re-key existing
+      // track rows in place from their stored `uri`, carrying the new id into
+      // the FTS shadow table and any playlist memberships, so the index and
+      // playlists survive the change without a rescan. (Album/artist ids are
+      // derived at read time, so nothing stored needs migrating for them.)
+      const rows = await txn.getAllAsync<{ id: string; uri: string }>(
+        "SELECT id, uri FROM tracks",
+      );
+      for (const r of rows) {
+        const next = localTrackId(r.uri);
+        if (next === r.id) continue;
+        await txn.runAsync("UPDATE tracks SET id = ? WHERE id = ?", next, r.id);
+        await txn.runAsync(
+          "UPDATE tracks_fts SET id = ? WHERE id = ?",
+          next,
+          r.id,
+        );
+        await txn.runAsync(
+          "UPDATE playlist_tracks SET track_id = ? WHERE track_id = ?",
+          next,
+          r.id,
+        );
+      }
     }
-    // Future migrations: `if (version < 2) { ... }` etc.
-    // PRAGMA user_version can't be parameterized; SCHEMA_VERSION is a literal.
     await txn.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   });
 }
+
+// Shape of a `playlists` row as stored. Read queries adapt this to `Playlist`.
+export type PlaylistRow = {
+  id: string;
+  name: string;
+  comment: string | null;
+  created_at: number;
+  changed_at: number;
+};
 
 // Shape of a `tracks` row as stored. Read queries adapt this to `Child`.
 export type TrackRow = {

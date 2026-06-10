@@ -51,6 +51,10 @@ export function getServerReachable(): boolean {
 // The value the app should treat as "online" for fetching/streaming: the device
 // has connectivity AND the active server is reachable.
 export function getIsEffectivelyOnline(): boolean {
+  // The local library lives on-device: there's no server to reach and no
+  // network round-trip to stream, so it's always effectively online regardless
+  // of device connectivity (airplane mode still plays your on-disk library).
+  if (useAuthBase.getState().serverType === "local") return true;
   return isOnline && serverReachable;
 }
 
@@ -120,8 +124,14 @@ function stopRecoveryPoll() {
 // server is signed in. Safe to call repeatedly — overlapping probes are ignored.
 export async function probeServer(): Promise<void> {
   if (probeInFlight) return;
+  const { isAuthenticated, url, serverType } = useAuthBase.getState();
+  // No server to ping for an on-device library — mark it reachable so the
+  // disconnect-on-unreachable logic never fires for local.
+  if (serverType === "local") {
+    setServerReachable(true);
+    return;
+  }
   if (!isOnline) return;
-  const { isAuthenticated, url } = useAuthBase.getState();
   if (!isAuthenticated || !url) return;
 
   probeInFlight = true;
@@ -194,7 +204,22 @@ function applyState(state: NetInfoState) {
 
 export function initConnectionType(): () => void {
   NetInfo.fetch().then(applyState);
-  return NetInfo.addEventListener(applyState);
+  const unsubscribeNetInfo = NetInfo.addEventListener(applyState);
+  // Switching to/from a local server flips the effective-online value even when
+  // device connectivity and server reachability don't change (local is always
+  // effectively online). Notify effective-online subscribers — onlineManager
+  // and useIsOnline — so React Query resumes and track rows become tappable.
+  let lastServerType = useAuthBase.getState().serverType;
+  const unsubscribeAuth = useAuthBase.subscribe((state) => {
+    if (state.serverType === lastServerType) return;
+    lastServerType = state.serverType;
+    for (const cb of onlineListeners) cb();
+    for (const cb of reachableListeners) cb();
+  });
+  return () => {
+    unsubscribeNetInfo();
+    unsubscribeAuth();
+  };
 }
 
 export function getEffectiveMaxBitRate(

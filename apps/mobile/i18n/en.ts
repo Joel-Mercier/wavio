@@ -1116,6 +1116,20 @@ export default {
         },
         fileSizes: ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
       },
+      localLibrary: {
+        unsupported: "The local library doesn't support this operation",
+      },
+      localIndexing: {
+        title: "Building your library",
+        listing: "Reading files from your folders…",
+        indexing: "Extracting metadata…",
+        pruning: "Cleaning up…",
+        finishing: "Almost done…",
+        countLabel: "{{processed}} of {{total}} tracks",
+        errorTitle: "Couldn't build your library",
+        retry: "Retry",
+        continue: "Continue anyway",
+      },
     },
     auth: {
       login: {
@@ -1143,8 +1157,6 @@ export default {
         localFoldersLabel: "Source folders",
         localFoldersHelp:
           "Add one or more folders on this device to scan for music.",
-        localPathPlaceholder: "/storage/emulated/0/Music",
-        localAddPath: "Add folder",
         localPickFolder: "Pick a folder",
         localNoPaths: "Add at least one folder to continue",
         localRemovePath: "Remove folder",

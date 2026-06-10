@@ -174,14 +174,7 @@ export default function AddToPlaylistDetail() {
   // so its top edge is this far from the bottom of the screen.
   const floatingPlayerTop = 96 + FLOATING_PLAYER_HEIGHT;
 
-  // TEMP: triple the list so scrolling can be tested (re-key to avoid dupes).
   const playlists = data?.playlists.playlist;
-  const testPlaylists = playlists
-    ? [...playlists, ...playlists, ...playlists].map((playlist, index) => ({
-        ...playlist,
-        id: `${playlist.id}-${index}`,
-      }))
-    : playlists;
 
   return (
     <Box className="h-full flex-1">
@@ -205,7 +198,7 @@ export default function AddToPlaylistDetail() {
         </HStack>
       </Box>
       <FlashList
-        data={testPlaylists}
+        data={playlists}
         contentContainerStyle={{
           paddingBottom: floatingPlayerTop + 96,
         }}

@@ -1,14 +1,31 @@
-import { localAlbumId } from "@/services/local/keys";
-import { mapAggToAlbum, mapRowToChild } from "@/services/local/mappers";
+import {
+  localAlbumId,
+  parseLocalAlbumId,
+  parseLocalArtistId,
+} from "@/services/local/keys";
+import {
+  mapAggToAlbum,
+  mapAggToArtist,
+  mapRowToChild,
+} from "@/services/local/mappers";
 import {
   type AlbumAggRow,
   type AlbumOrder,
+  queryAlbumByKey,
   queryAlbums,
+  queryArtistByKey,
   querySongs,
+  queryTrackById,
 } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
-import type { Child } from "@/services/openSubsonic/types";
+import type {
+  AlbumID3,
+  Artist,
+  ArtistID3,
+  Child,
+} from "@/services/openSubsonic/types";
+import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 
 // Maps a Subsonic album-list `type` onto the SQLite ordering we can serve.
 // Concepts the local index doesn't track (play counts, ratings, favourites)
@@ -109,11 +126,80 @@ export const getNowPlaying = async () => {
   return localEnvelope({ nowPlaying: { entry: [] } });
 };
 
-// The local index has no favourites concept; report empty starred lists.
+// Favourites are stored on-device (stores/localLibrary.ts → favoriteTracks /
+// favoriteAlbums / favoriteArtists). Resolve each starred id back to its indexed
+// row, oldest-starred first; ids whose file/album/artist has since left the
+// index are dropped. The mappers stamp the `starred` date from the same store.
+
+/** Starred ids ordered oldest → newest by when they were favourited. */
+function orderedIds(map: FavoriteMap): string[] {
+  return Object.entries(map)
+    .sort(([, a], [, b]) => a - b)
+    .map(([id]) => id);
+}
+
+async function starredSongs(): Promise<Child[]> {
+  const ids = orderedIds(useLocalLibrary.getState().favoriteTracks);
+  const rows = await Promise.all(ids.map((id) => queryTrackById(id)));
+  return rows.filter((r) => r != null).map(mapRowToChild);
+}
+
+async function starredAlbums(): Promise<AlbumID3[]> {
+  const ids = orderedIds(useLocalLibrary.getState().favoriteAlbums);
+  const rows = await Promise.all(
+    ids.map((id) => {
+      const key = parseLocalAlbumId(id);
+      return key != null ? queryAlbumByKey(key) : Promise.resolve(null);
+    }),
+  );
+  return rows.filter((r) => r != null).map(mapAggToAlbum);
+}
+
+async function starredArtists(): Promise<ArtistID3[]> {
+  const ids = orderedIds(useLocalLibrary.getState().favoriteArtists);
+  const rows = await Promise.all(
+    ids.map((id) => {
+      const key = parseLocalArtistId(id);
+      return key != null ? queryArtistByKey(key) : Promise.resolve(null);
+    }),
+  );
+  return rows.filter((r) => r != null).map(mapAggToArtist);
+}
+
 export const getStarred = async (_opts: { musicFolderId?: string } = {}) => {
-  return localEnvelope({ starred: { album: [], artist: [], song: [] } });
+  const [song, albums, artists] = await Promise.all([
+    starredSongs(),
+    starredAlbums(),
+    starredArtists(),
+  ]);
+  // Subsonic v1 shapes: albums as directory `Child`, artists as plain `Artist`.
+  const album: Child[] = albums.map((a) => ({
+    id: a.id,
+    isDir: true,
+    title: a.name,
+    album: a.name,
+    artist: a.artist,
+    artistId: a.artistId,
+    coverArt: a.coverArt,
+    year: a.year,
+    songCount: a.songCount,
+    starred: a.starred,
+  }));
+  const artist: Artist[] = artists.map((a) => ({
+    id: a.id,
+    name: a.name,
+    coverArt: a.coverArt,
+    albumCount: a.albumCount,
+    starred: a.starred,
+  }));
+  return localEnvelope({ starred: { album, artist, song } });
 };
 
 export const getStarred2 = async (_opts: { musicFolderId?: string } = {}) => {
-  return localEnvelope({ starred2: { album: [], artist: [], song: [] } });
+  const [song, album, artist] = await Promise.all([
+    starredSongs(),
+    starredAlbums(),
+    starredArtists(),
+  ]);
+  return localEnvelope({ starred2: { album, artist, song } });
 };

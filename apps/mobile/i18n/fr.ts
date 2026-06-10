@@ -1148,6 +1148,21 @@ export default {
         },
         fileSizes: ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"],
       },
+      localLibrary: {
+        unsupported:
+          "La bibliothèque locale ne prend pas en charge cette opération",
+      },
+      localIndexing: {
+        title: "Construction de votre bibliothèque",
+        listing: "Lecture des fichiers de vos dossiers…",
+        indexing: "Extraction des métadonnées…",
+        pruning: "Nettoyage…",
+        finishing: "Presque terminé…",
+        countLabel: "{{processed}} sur {{total}} pistes",
+        errorTitle: "Impossible de construire votre bibliothèque",
+        retry: "Réessayer",
+        continue: "Continuer quand même",
+      },
     },
     auth: {
       login: {
@@ -1175,8 +1190,6 @@ export default {
         localFoldersLabel: "Dossiers sources",
         localFoldersHelp:
           "Ajoutez un ou plusieurs dossiers de cet appareil à analyser.",
-        localPathPlaceholder: "/storage/emulated/0/Music",
-        localAddPath: "Ajouter un dossier",
         localPickFolder: "Choisir un dossier",
         localNoPaths: "Ajoutez au moins un dossier pour continuer",
         localRemovePath: "Supprimer le dossier",

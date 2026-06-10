@@ -4,6 +4,7 @@ import type {
   AlbumAggRow,
   ArtistAggRow,
   GenreRow,
+  PlaylistAggRow,
 } from "@/services/local/repository";
 import type {
   AlbumID3,
@@ -11,7 +12,9 @@ import type {
   Child,
   Genre,
   IndexID3,
+  Playlist,
 } from "@/services/openSubsonic/types";
+import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 
 // Adapts SQLite rows to the OpenSubsonic envelope shapes, mirroring
 // services/jellyfin/mappers.ts. The rest of the app stays protocol-agnostic.
@@ -20,9 +23,18 @@ import type {
 // artwork (content-hashed on disk), not a server cover-art id. UI rendering
 // local items should use the value directly rather than via `getCoverArtUrl`.
 
+// Reads the matching `starred` date out of the local favourites store so every
+// mapped item reflects its star state wherever it appears (lists, album/artist
+// headers, search, the favourites screen). Returns undefined when not starred.
+function starredAt(map: FavoriteMap, id: string): Date | undefined {
+  const ts = map[id];
+  return ts ? new Date(ts) : undefined;
+}
+
 export function mapRowToChild(row: TrackRow): Child {
   return {
     id: row.id,
+    starred: starredAt(useLocalLibrary.getState().favoriteTracks, row.id),
     parent: row.album_key ? localAlbumId(row.album_key) : undefined,
     isDir: false,
     title: row.title ?? "Unknown",
@@ -54,8 +66,10 @@ export function mapRowToChild(row: TrackRow): Child {
 }
 
 export function mapAggToAlbum(row: AlbumAggRow): AlbumID3 {
+  const id = localAlbumId(row.album_key);
   return {
-    id: localAlbumId(row.album_key),
+    id,
+    starred: starredAt(useLocalLibrary.getState().favoriteAlbums, id),
     name: row.name ?? "Unknown album",
     artist: row.album_artist ?? row.artist ?? undefined,
     artistId: row.artist_key ? localArtistId(row.artist_key) : undefined,
@@ -71,11 +85,29 @@ export function mapAggToAlbum(row: AlbumAggRow): AlbumID3 {
 }
 
 export function mapAggToArtist(row: ArtistAggRow): ArtistID3 {
+  const id = localArtistId(row.artist_key);
   return {
-    id: localArtistId(row.artist_key),
+    id,
+    starred: starredAt(useLocalLibrary.getState().favoriteArtists, id),
     name: row.name ?? "Unknown artist",
     albumCount: row.album_count,
     coverArt: row.cover ?? undefined,
+  };
+}
+
+export function mapPlaylist(row: PlaylistAggRow): Playlist {
+  return {
+    id: row.id,
+    name: row.name,
+    comment: row.comment ?? undefined,
+    coverArt: row.cover ?? undefined,
+    songCount: row.song_count,
+    duration: row.duration_ms != null ? Math.round(row.duration_ms / 1000) : 0,
+    created: new Date(row.created_at),
+    changed: new Date(row.changed_at),
+    // No accounts on-device: playlists are owned by the single local user and
+    // are never shared/public.
+    public: false,
   };
 }
 

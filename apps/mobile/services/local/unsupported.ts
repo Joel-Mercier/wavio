@@ -1,3 +1,4 @@
+import i18n from "@/config/i18n";
 import { useAuthBase } from "@/stores/auth";
 
 // Mirrors services/jellyfin/unsupported.ts for the on-device SQLite backend.
@@ -6,8 +7,15 @@ import { useAuthBase } from "@/stores/auth";
 // the existing hooks/backend hooks consume them unchanged.
 
 export class LocalUnsupportedError extends Error {
-  constructor(feature: string) {
-    super(`The local library does not support ${feature}`);
+  // `feature` is an optional internal hint (e.g. a malformed id from browsing.ts)
+  // kept in English for logs; with no feature the message is the localized,
+  // user-facing "operation not supported" string.
+  constructor(feature?: string) {
+    super(
+      feature
+        ? `The local library does not support ${feature}`
+        : i18n.t("app.localLibrary.unsupported"),
+    );
     this.name = "LocalUnsupportedError";
   }
 }
@@ -33,5 +41,5 @@ export function localEnvelope<T>(payload: T): T & {
 // here when the local backend is active but a section didn't supply a local fn,
 // so an un-backed feature fails loudly rather than silently hitting the network.
 export function localUnsupported(..._args: unknown[]): never {
-  throw new LocalUnsupportedError("this operation");
+  throw new LocalUnsupportedError();
 }
