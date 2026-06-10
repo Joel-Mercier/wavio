@@ -22,6 +22,12 @@ export type BackendCapabilities = {
   playQueueSync: boolean;
   // Subsonic getNowPlaying — what other users on the server are listening to.
   nowPlaying: boolean;
+  // getSimilarSongs — server-computed similar tracks. The on-device library has
+  // no recommendation engine, so this is unavailable for local servers.
+  similarSongs: boolean;
+  // Saving tracks for offline listening. Pointless for the local library, whose
+  // files already live on the device (offline mode is disabled for it too).
+  offlineDownload: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -40,6 +46,8 @@ const SUBSONIC: BackendCapabilities = {
   songLists: false,
   playQueueSync: true,
   nowPlaying: true,
+  similarSongs: true,
+  offlineDownload: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -71,6 +79,8 @@ const JELLYFIN: BackendCapabilities = {
   // sync/social surfaces stay hidden until a real adapter exists.
   playQueueSync: false,
   nowPlaying: false,
+  similarSongs: true,
+  offlineDownload: true,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -97,6 +107,8 @@ const LOCAL: BackendCapabilities = {
   songLists: true,
   playQueueSync: false,
   nowPlaying: false,
+  similarSongs: false,
+  offlineDownload: false,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

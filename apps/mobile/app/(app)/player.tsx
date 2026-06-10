@@ -1349,14 +1349,16 @@ export default function PlayerScreen() {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSimilarSongsPress}>
-                  <HStack className="items-center">
-                    <Sparkles size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.similarSongs")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {capabilities.similarSongs && (
+                  <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                    <HStack className="items-center">
+                      <Sparkles size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.similarSongs")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {capabilities.sharing && (
                   <FadeOutScaleDown onPress={handleSharePress}>
                     <HStack className="items-center">

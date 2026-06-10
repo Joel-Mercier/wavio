@@ -4,6 +4,7 @@ import Jellyfin from "../assets/jellyfin.svg";
 import Logo from "../assets/logo.svg";
 import Navidrome from "../assets/navidrome.svg";
 import OpenSubsonic from "../assets/opensubsonic.svg";
+import SmartPhone from "../assets/smartphone.svg";
 import widgets from "../assets/widgets.png";
 import { GITHUB_URL, PLAY_STORE_URL } from "../consts";
 import { useImages } from "../i18n/assets";
@@ -13,7 +14,7 @@ import Footer from "./Footer.astro";
 import Nav from "./Nav.astro";
 
 interface Props {
-  lang: Lang;
+	lang: Lang;
 }
 
 const { lang } = Astro.props;
@@ -22,21 +23,21 @@ const f = t.features;
 
 const img = useImages(lang);
 const showcase = [
-  img("home"),
-  img("album"),
-  img("artist"),
-  img("player"),
-  img("library"),
-  img("queue"),
-  img("smart-playlist"),
-  img("offline-1"),
-  img("settings"),
-  img("login"),
+	img("home"),
+	img("album"),
+	img("artist"),
+	img("player"),
+	img("library"),
+	img("queue"),
+	img("smart-playlist"),
+	img("offline-1"),
+	img("settings"),
+	img("login"),
 ];
 
 let wordIndex = 0;
 const wordDelay = () =>
-  `animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)}s`;
+	`animation-delay:${(0.05 + wordIndex++ * 0.1).toFixed(2)}s`;
 ---
 
 <Layout title={t.meta.homeTitle} description={t.meta.homeDescription} lang={lang}>
@@ -123,6 +124,9 @@ const wordDelay = () =>
 				</div>
 				<div class="chip animate-chip-float absolute right-[-10%] top-[14%] flex size-[96px] items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-white p-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] [animation-delay:-2s]">
 					<OpenSubsonic class="size-full" aria-label="OpenSubsonic" />
+				</div>
+        <div class="chip animate-chip-float absolute right-[-10%] top-[44%] flex size-[88px] items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-white p-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] [animation-delay:-4s]">
+					<SmartPhone class="size-full stroke-black" aria-label="SmartPhone" />
 				</div>
 				<div
 					class="phone-float animate-hover relative w-[280px] overflow-hidden rounded-[44px] border border-border-strong bg-black shadow-[0_60px_120px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)_inset,0_0_80px_-10px_rgba(16,185,129,0.35)] sm:w-[340px]"

@@ -14,7 +14,7 @@ export const ui = {
     meta: {
       homeTitle: 'Wavio. Your music, your server, your way.',
       homeDescription:
-        'An open-source Android music player for Navidrome, Jellyfin and OpenSubsonic. No ads, no tracking, fully offline-ready.',
+        'An open-source Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. No ads, no tracking, fully offline-ready.',
       privacyTitle: 'Privacy Policy. Wavio',
       privacyDescription:
         "Wavio runs entirely on your device and talks only to the music server you configure. We don't collect, sell, or share your data.",
@@ -31,7 +31,7 @@ export const ui = {
         ['your', 'server,'],
       ],
       titleAccent: 'your way.',
-      lead: 'An Android player for Navidrome, Jellyfin and OpenSubsonic. Built for people who own their library and want it to feel like home.',
+      lead: 'An Android player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home.',
     },
     cta: {
       getItOn: 'GET IT ON',
@@ -46,7 +46,7 @@ export const ui = {
       'No tracking, no telemetry',
       'Works fully offline',
       'Android Auto ready',
-      'Navidrome, Jellyfin & OpenSubsonic',
+      'Navidrome, Jellyfin & OpenSubsonic, local library',
     ],
     features: {
       headingPre: 'A player that',
@@ -78,7 +78,7 @@ export const ui = {
       servers: {
         label: 'Servers',
         title: 'Switch backends in one tap.',
-        desc: "Run Navidrome at home, Jellyfin at a friend's, OpenSubsonic somewhere else. One app for all of them.",
+        desc: "Run Navidrome at home, Jellyfin at a friend's, OpenSubsonic somewhere else and even a local library for backup. One app for all of them.",
       },
       sleep: {
         label: 'Sleep timer',
@@ -118,7 +118,7 @@ export const ui = {
     },
     footer: {
       tagline:
-        'An open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic.',
+        'An open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic or a local library.',
       product: 'Product',
       features: 'Features',
       download: 'Download',
@@ -224,7 +224,7 @@ export const ui = {
     meta: {
       homeTitle: 'Wavio. Votre musique, votre serveur, à votre façon.',
       homeDescription:
-        'Un lecteur de musique Android open source pour Navidrome, Jellyfin et OpenSubsonic. Sans publicité, sans pistage, entièrement utilisable hors ligne.',
+        'Un lecteur de musique Android open source pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Sans publicité, sans pistage, entièrement utilisable hors ligne.',
       privacyTitle: 'Politique de confidentialité. Wavio',
       privacyDescription:
         "Wavio fonctionne entièrement sur votre appareil et ne communique qu'avec le serveur de musique que vous configurez. Nous ne collectons, ne vendons ni ne partageons vos données.",
@@ -241,7 +241,7 @@ export const ui = {
         ['votre', 'serveur,'],
       ],
       titleAccent: 'à votre façon.',
-      lead: "Un lecteur Android pour Navidrome, Jellyfin et OpenSubsonic. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi.",
+      lead: "Un lecteur Android pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi.",
     },
     cta: {
       getItOn: 'DISPONIBLE SUR',
@@ -291,7 +291,7 @@ export const ui = {
       servers: {
         label: 'Serveurs',
         title: "Changez de serveur d'un geste.",
-        desc: 'Navidrome à la maison, Jellyfin chez un ami, OpenSubsonic ailleurs. Une seule appli pour tous.',
+        desc: 'Navidrome à la maison, Jellyfin chez un ami, OpenSubsonic ailleurs et madeWithout ou une bibliothèque locale comme solution de secours. Une seule appli pour tous.',
       },
       sleep: {
         label: 'Minuterie',
@@ -331,7 +331,7 @@ export const ui = {
     },
     footer: {
       tagline:
-        'Un lecteur de musique open source pour Android. Compatible avec Navidrome, Jellyfin et OpenSubsonic.',
+        'Un lecteur de musique open source pour Android. Compatible avec Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale.',
       product: 'Produit',
       features: 'Fonctionnalités',
       download: 'Télécharger',

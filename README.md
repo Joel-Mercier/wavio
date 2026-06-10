@@ -4,7 +4,7 @@
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/mobile/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
 </p>
 
-Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers.
+Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers or a local library.
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 
@@ -12,7 +12,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 ## Features
 
-- Supports Navidrome, OpenSubsonic and Jellyfin servers
+- Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library
 - Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random and internet radio stations sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums
