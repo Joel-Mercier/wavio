@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,6 +40,7 @@ export default function NewPlaylistScreen() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const doCreatePlaylist = useCreatePlaylist();
@@ -56,7 +57,11 @@ export default function NewPlaylistScreen() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
-            router.navigate("/(app)/(tabs)/(library)");
+            if (returnTo === "add-to-playlist") {
+              router.back();
+            } else {
+              router.navigate("/(app)/(tabs)/(library)");
+            }
             toast.show({
               placement: "top",
               duration: 3000,

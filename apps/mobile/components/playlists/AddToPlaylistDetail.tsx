@@ -52,7 +52,10 @@ export default function AddToPlaylistDetail() {
   const doUpdatePlaylist = useUpdatePlaylist();
 
   const handleNewPlaylistPress = () => {
-    router.navigate("/playlists/new");
+    router.navigate({
+      pathname: "/playlists/new",
+      params: { returnTo: "add-to-playlist" },
+    });
   };
 
   const addToSelectedPlaylists = () => {
