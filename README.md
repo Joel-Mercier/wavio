@@ -8,7 +8,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 
-[Presentation website](https://wavio-landing.vercel.app)
+[Presentation website](https://wavio-app.vercel.app)
 
 ## Features
 
