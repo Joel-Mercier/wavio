@@ -31,10 +31,18 @@ function starredAt(map: FavoriteMap, id: string): Date | undefined {
   return ts ? new Date(ts) : undefined;
 }
 
+// Reads the user rating (1–5) for an id from the local store, undefined if none.
+function ratingOf(id: string): number | undefined {
+  return useLocalLibrary.getState().ratings[id] || undefined;
+}
+
 export function mapRowToChild(row: TrackRow): Child {
   return {
     id: row.id,
     starred: starredAt(useLocalLibrary.getState().favoriteTracks, row.id),
+    userRating: ratingOf(row.id),
+    playCount: row.play_count || undefined,
+    played: row.last_played_at ? new Date(row.last_played_at) : undefined,
     parent: row.album_key ? localAlbumId(row.album_key) : undefined,
     isDir: false,
     title: row.title ?? "Unknown",
@@ -70,6 +78,9 @@ export function mapAggToAlbum(row: AlbumAggRow): AlbumID3 {
   return {
     id,
     starred: starredAt(useLocalLibrary.getState().favoriteAlbums, id),
+    userRating: ratingOf(id),
+    playCount: row.play_count || undefined,
+    played: row.last_played_at ? new Date(row.last_played_at) : undefined,
     name: row.name ?? "Unknown album",
     artist: row.album_artist ?? row.artist ?? undefined,
     artistId: row.artist_key ? localArtistId(row.artist_key) : undefined,
@@ -89,6 +100,7 @@ export function mapAggToArtist(row: ArtistAggRow): ArtistID3 {
   return {
     id,
     starred: starredAt(useLocalLibrary.getState().favoriteArtists, id),
+    userRating: ratingOf(id),
     name: row.name ?? "Unknown artist",
     albumCount: row.album_count,
     coverArt: row.cover ?? undefined,

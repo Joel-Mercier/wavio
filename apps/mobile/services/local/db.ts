@@ -172,6 +172,26 @@ CREATE INDEX IF NOT EXISTS idx_playlist_tracks_pid
   ON playlist_tracks(playlist_id, position);
 `;
 
+// Per-track play statistics (the local-backend analogue of Subsonic's
+// playCount / played). Kept in its own table rather than as columns on `tracks`
+// because the indexer rewrites track rows with INSERT OR REPLACE on every
+// re-index, which would otherwise reset the counts. Keyed by `tracks.id` (which
+// is URI-derived and therefore stable across rescans) but, like
+// `playlist_tracks`, not FK-enforced and not pruned: a row left dangling by a
+// removed file simply never surfaces (reads LEFT JOIN), and re-links if the file
+// returns. Drives getAlbumList2 type=frequent (play count) and type=recent (last
+// played). Ratings are user-curated and small, so they live in the local-library
+// store alongside favourites rather than here.
+const SCHEMA_STATS = `
+CREATE TABLE IF NOT EXISTS track_stats (
+  track_id       TEXT PRIMARY KEY NOT NULL,
+  play_count     INTEGER NOT NULL DEFAULT 0,
+  last_played_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_track_stats_last_played
+  ON track_stats(last_played_at);
+`;
+
 async function migrate(db: SQLiteDatabase): Promise<void> {
   // The schema is entirely additive (`CREATE ... IF NOT EXISTS`), so apply it on
   // every open. It's cheap (each statement short-circuits when the object
@@ -180,6 +200,7 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   // skipped forever by a version-gated approach, but is repaired here.
   await db.execAsync(SCHEMA_V1);
   await db.execAsync(SCHEMA_V2);
+  await db.execAsync(SCHEMA_STATS);
 
   const row = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version",
@@ -263,4 +284,8 @@ export type TrackRow = {
   album_key: string | null;
   artist_key: string | null;
   indexed_at: number;
+  // Joined from `track_stats` (LEFT JOIN): play_count defaults to 0 and
+  // last_played_at is null when the track has never been played.
+  play_count: number;
+  last_played_at: number | null;
 };

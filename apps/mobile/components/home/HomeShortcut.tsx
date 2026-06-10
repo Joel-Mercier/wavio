@@ -85,7 +85,7 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
                   uri:
                     recentPlay.type === "internetRadioStation"
                       ? recentPlay.coverArt
-                      : artworkUrl(recentPlay.id),
+                      : artworkUrl(recentPlay.coverArt),
                 }
               : undefined
           }

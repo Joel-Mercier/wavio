@@ -51,25 +51,31 @@ export default function SearchResultListItem({
     label: string;
     url: Href;
   }>(() => {
-    if (searchResult.albumCount) {
+    // Discriminate by field presence rather than truthiness: search3 mixes
+    // ArtistID3 / AlbumID3 / Child (song) into one list, and the local backend
+    // emits placeholder counts (e.g. `albumCount: 0`) and frequently-missing
+    // `year`, so heuristics like `if (albumCount)` or `year && name` misclassify
+    // local artists/albums as playlists. Songs (Child) carry `title`, artists
+    // carry `albumCount` (0 is valid), albums carry `name`.
+    if (searchResult.title) {
+      return {
+        id: "song",
+        label: t("app.shared.song_one"),
+        url: `/albums/${searchResult.albumId}`,
+      };
+    }
+    if (searchResult.albumCount !== undefined) {
       return {
         id: "artist",
         label: t("app.shared.artist_one"),
         url: `/artists/${searchResult.id}`,
       };
     }
-    if (searchResult.year && searchResult.name) {
+    if (searchResult.name) {
       return {
         id: "album",
         label: t("app.shared.album_one"),
         url: `/albums/${searchResult.id}`,
-      };
-    }
-    if (searchResult.title) {
-      return {
-        id: "song",
-        label: t("app.shared.song_one"),
-        url: `/albums/${searchResult.albumId}`,
       };
     }
     return {

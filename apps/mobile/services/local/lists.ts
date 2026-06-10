@@ -27,21 +27,24 @@ import type {
 } from "@/services/openSubsonic/types";
 import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 
-// Maps a Subsonic album-list `type` onto the SQLite ordering we can serve.
-// Concepts the local index doesn't track (play counts, ratings, favourites)
-// fall back to a sensible neighbour or an empty result.
-const ORDER_FOR_TYPE: Record<AlbumListType, AlbumOrder | "starred"> = {
-  random: "random",
-  newest: "recent",
-  recent: "recent",
-  frequent: "recent",
-  highest: "name",
-  alphabeticalByName: "name",
-  alphabeticalByArtist: "artist",
-  starred: "starred",
-  byYear: "year",
-  byGenre: "name",
-};
+// Maps a Subsonic album-list `type` onto how we serve it locally.
+//  - SQLite orders: play counts ("plays"=frequent) and last-played ("played"=
+//    recent) come from track_stats; the rest are static index orders.
+//  - "starred"/"rated" are resolved from the on-device store (favourites /
+//    ratings) rather than from a SQL ordering.
+const ORDER_FOR_TYPE: Record<AlbumListType, AlbumOrder | "starred" | "rated"> =
+  {
+    random: "random",
+    newest: "recent",
+    recent: "played",
+    frequent: "plays",
+    highest: "rated",
+    alphabeticalByName: "name",
+    alphabeticalByArtist: "artist",
+    starred: "starred",
+    byYear: "year",
+    byGenre: "name",
+  };
 
 type ListOpts = {
   size?: number;
@@ -52,12 +55,34 @@ type ListOpts = {
   musicFolderId?: string;
 };
 
+// Albums whose id the user has rated, highest rating first, resolved back to
+// their indexed rows (mirrors the favourites path in starredAlbums below).
+// Ratings live in stores/localLibrary.ts; ids no longer in the index are dropped.
+async function ratedAlbums(
+  offset: number,
+  size: number,
+): Promise<AlbumAggRow[]> {
+  const albumIds = Object.entries(useLocalLibrary.getState().ratings)
+    .filter(([id]) => parseLocalAlbumId(id) != null)
+    .sort(([, a], [, b]) => b - a)
+    .map(([id]) => id)
+    .slice(offset, offset + size);
+  const rows = await Promise.all(
+    albumIds.map((id) => {
+      const key = parseLocalAlbumId(id);
+      return key != null ? queryAlbumByKey(key) : Promise.resolve(null);
+    }),
+  );
+  return rows.filter((r): r is AlbumAggRow => r != null);
+}
+
 async function albumsForType(
   type: AlbumListType,
   opts: ListOpts,
 ): Promise<AlbumAggRow[]> {
   const order = ORDER_FOR_TYPE[type];
-  if (order === "starred") return []; // no favourites in the local index
+  if (order === "starred") return []; // favourites surface via getStarred2
+  if (order === "rated") return ratedAlbums(opts.offset ?? 0, opts.size ?? 10);
   return queryAlbums({
     order,
     limit: opts.size ?? 10,

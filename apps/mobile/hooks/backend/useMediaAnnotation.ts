@@ -30,6 +30,22 @@ const STARRED_AFFECTED_KEYS = [
   ["topSongs"],
 ] as const;
 
+// Rating changes the `userRating` field on cached Child/AlbumID3/ArtistID3 (and,
+// for the local backend, which albums the rating-sorted "highest" list returns),
+// so the same rating-stamped surfaces need a refetch.
+const RATING_AFFECTED_KEYS = [
+  ["album"],
+  ["albumList"],
+  ["albumList2"],
+  ["albumList2:infinite"],
+  ["artist"],
+  ["artists"],
+  ["playlist"],
+  ["search3"],
+  ["randomSongs"],
+  ["songsByGenre"],
+] as const;
+
 export const useScrobble = () => {
   const query = useMutation({
     mutationFn: (params: {
@@ -46,10 +62,14 @@ export const useScrobble = () => {
 };
 
 export const useSetRating = () => {
+  const queryClient = useQueryClient();
   const query = useMutation({
     mutationFn: (params: { id: string; rating: number }) => {
       const { id, rating } = params;
       return setRating(id, rating);
+    },
+    onSuccess: () => {
+      invalidateKeys(queryClient, RATING_AFFECTED_KEYS);
     },
   });
 

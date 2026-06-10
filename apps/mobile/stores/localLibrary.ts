@@ -26,6 +26,9 @@ const idleStatus: ScanStatus = { phase: "idle", processed: 0, total: 0 };
 /** Maps a starred id to the epoch-ms timestamp it was favourited at. */
 export type FavoriteMap = Record<string, number>;
 
+/** Maps a rated id (track/album/artist) to its 1–5 star rating. */
+export type RatingMap = Record<string, number>;
+
 /** Star/unstar target, matching the OpenSubsonic star/unstar params. */
 export type StarTarget = { id?: string; albumId?: string; artistId?: string };
 
@@ -40,6 +43,10 @@ interface LocalLibraryStore {
   favoriteTracks: FavoriteMap;
   favoriteAlbums: FavoriteMap;
   favoriteArtists: FavoriteMap;
+  // Likewise, the local backend has no server to store ratings, so user ratings
+  // (1–5) live here keyed by the local track/album/artist id. The mappers stamp
+  // `userRating` from this map and getAlbumList2 type=highest sorts by it.
+  ratings: RatingMap;
 
   // --- ephemeral ---
   status: ScanStatus;
@@ -53,6 +60,8 @@ interface LocalLibraryStore {
   setReady: () => void;
   star: (target: StarTarget) => void;
   unstar: (target: StarTarget) => void;
+  /** Set a 1–5 rating for a local id; a rating of 0 clears it (Subsonic). */
+  setRating: (id: string, rating: number) => void;
   __reset: () => void;
 }
 
@@ -62,6 +71,7 @@ const initialState = {
   favoriteTracks: {} as FavoriteMap,
   favoriteAlbums: {} as FavoriteMap,
   favoriteArtists: {} as FavoriteMap,
+  ratings: {} as RatingMap,
   status: idleStatus,
   ready: false,
 };
@@ -120,6 +130,17 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           };
         });
       },
+
+      setRating: (id, rating) => {
+        set((s) => {
+          if (rating <= 0) {
+            if (!(id in s.ratings)) return s;
+            const { [id]: _, ...rest } = s.ratings;
+            return { ratings: rest };
+          }
+          return { ratings: { ...s.ratings, [id]: rating } };
+        });
+      },
     }),
     {
       name: "localLibraryStore",
@@ -137,6 +158,7 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
         favoriteTracks: state.favoriteTracks,
         favoriteAlbums: state.favoriteAlbums,
         favoriteArtists: state.favoriteArtists,
+        ratings: state.ratings,
       }),
     },
   ),

@@ -12,6 +12,17 @@ const TRACK_COLUMNS =
   "artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json, " +
   "album_key, artist_key, indexed_at";
 
+// Track reads alias the table as `t` and LEFT JOIN per-track play stats so every
+// mapped Child can carry its playCount / played (see mappers.ts). play_count
+// defaults to 0 and last_played_at is null for never-played tracks.
+const STATS_JOIN = "LEFT JOIN track_stats s ON s.track_id = t.id";
+const TRACK_PROJECTION = `${TRACK_COLUMNS.split(", ")
+  .map((c) => `t.${c}`)
+  .join(
+    ", ",
+  )}, COALESCE(s.play_count, 0) AS play_count, s.last_played_at AS last_played_at`;
+const TRACK_SELECT = `SELECT ${TRACK_PROJECTION} FROM tracks t ${STATS_JOIN}`;
+
 // One row per album, aggregated across its tracks.
 export type AlbumAggRow = {
   album_key: string;
@@ -26,6 +37,9 @@ export type AlbumAggRow = {
   is_compilation: number;
   music_brainz_id: string | null;
   indexed_at: number;
+  // Rolled up from track_stats across the album's tracks.
+  play_count: number;
+  last_played_at: number | null;
 };
 
 export type ArtistAggRow = {
@@ -41,21 +55,26 @@ export type GenreRow = {
   song_count: number;
 };
 
+// track_stats joins 1:0-or-1 (its PK is track_id), so COUNT(*)/SUM(duration_ms)
+// still count each track once; play_count rolls up as a sum and last_played_at
+// as the most recent across the album's tracks.
 const ALBUM_SELECT = `
   SELECT
-    album_key,
-    MAX(album) AS name,
-    MAX(album_artist) AS album_artist,
-    MAX(artist) AS artist,
-    MAX(artist_key) AS artist_key,
+    t.album_key AS album_key,
+    MAX(t.album) AS name,
+    MAX(t.album_artist) AS album_artist,
+    MAX(t.artist) AS artist,
+    MAX(t.artist_key) AS artist_key,
     COUNT(*) AS song_count,
-    SUM(duration_ms) AS duration_ms,
-    MIN(year) AS year,
-    MAX(artwork_path) AS cover,
-    MAX(is_compilation) AS is_compilation,
-    MAX(music_brainz_id) AS music_brainz_id,
-    MAX(indexed_at) AS indexed_at
-  FROM tracks`;
+    SUM(t.duration_ms) AS duration_ms,
+    MIN(t.year) AS year,
+    MAX(t.artwork_path) AS cover,
+    MAX(t.is_compilation) AS is_compilation,
+    MAX(t.music_brainz_id) AS music_brainz_id,
+    MAX(t.indexed_at) AS indexed_at,
+    SUM(COALESCE(s.play_count, 0)) AS play_count,
+    MAX(s.last_played_at) AS last_played_at
+  FROM tracks t ${STATS_JOIN}`;
 
 export type LibraryStats = {
   trackCount: number;
@@ -77,19 +96,37 @@ export async function queryStats(): Promise<LibraryStats> {
 
 export async function queryTrackById(id: string): Promise<TrackRow | null> {
   const db = await getLocalLibraryDb();
-  return db.getFirstAsync<TrackRow>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks WHERE id = ?`,
-    id,
-  );
+  return db.getFirstAsync<TrackRow>(`${TRACK_SELECT} WHERE t.id = ?`, id);
 }
 
 export async function queryAlbumTracksByKey(key: string): Promise<TrackRow[]> {
   const db = await getLocalLibraryDb();
   return db.getAllAsync<TrackRow>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks
-     WHERE album_key = ?
-     ORDER BY disc_number ASC, track_number ASC, title COLLATE NOCASE ASC`,
+    `${TRACK_SELECT}
+     WHERE t.album_key = ?
+     ORDER BY t.disc_number ASC, t.track_number ASC, t.title COLLATE NOCASE ASC`,
     key,
+  );
+}
+
+/**
+ * Record one play of a track: increment its count and advance last_played_at.
+ * `playedAt` is epoch-ms (the scrobble's start time). A single upsert keeps the
+ * playback hot-path cheap. Called from the local scrobble on a real submission.
+ */
+export async function recordPlay(
+  trackId: string,
+  playedAt: number,
+): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `INSERT INTO track_stats (track_id, play_count, last_played_at)
+     VALUES (?, 1, ?)
+     ON CONFLICT(track_id) DO UPDATE SET
+       play_count = play_count + 1,
+       last_played_at = MAX(COALESCE(last_played_at, 0), excluded.last_played_at)`,
+    trackId,
+    playedAt,
   );
 }
 
@@ -107,31 +144,40 @@ export async function querySongs(filter: SongFilter = {}): Promise<TrackRow[]> {
   const where: string[] = [];
   const params: (string | number)[] = [];
   if (genre) {
-    where.push("genre = ? COLLATE NOCASE");
+    where.push("t.genre = ? COLLATE NOCASE");
     params.push(genre);
   }
   if (fromYear != null) {
-    where.push("year >= ?");
+    where.push("t.year >= ?");
     params.push(fromYear);
   }
   if (toYear != null) {
-    where.push("year <= ?");
+    where.push("t.year <= ?");
     params.push(toYear);
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const orderSql = random
     ? "ORDER BY RANDOM()"
-    : "ORDER BY title COLLATE NOCASE ASC";
+    : "ORDER BY t.title COLLATE NOCASE ASC";
   const db = await getLocalLibraryDb();
   return db.getAllAsync<TrackRow>(
-    `SELECT ${TRACK_COLUMNS} FROM tracks ${whereSql} ${orderSql} LIMIT ? OFFSET ?`,
+    `${TRACK_SELECT} ${whereSql} ${orderSql} LIMIT ? OFFSET ?`,
     ...params,
     limit,
     offset,
   );
 }
 
-export type AlbumOrder = "name" | "artist" | "year" | "recent" | "random";
+export type AlbumOrder =
+  | "name"
+  | "artist"
+  | "year"
+  | "recent"
+  | "random"
+  // Play-stats orders: "plays" = most played (frequent), "played" = most
+  // recently played (recent). Both filter out albums with no plays via HAVING.
+  | "plays"
+  | "played";
 
 export type AlbumFilter = {
   order?: AlbumOrder;
@@ -148,6 +194,16 @@ const ALBUM_ORDER_SQL: Record<AlbumOrder, string> = {
   year: "year ASC, name COLLATE NOCASE ASC",
   recent: "indexed_at DESC",
   random: "RANDOM()",
+  plays: "play_count DESC, last_played_at DESC",
+  played: "last_played_at DESC",
+};
+
+// HAVING for the play-stats orders so unplayed albums are excluded (the
+// "frequent"/"recent" home sections should be empty — and thus auto-hidden —
+// until something has actually been played).
+const ALBUM_HAVING_SQL: Partial<Record<AlbumOrder, string>> = {
+  plays: "HAVING play_count > 0",
+  played: "HAVING last_played_at IS NOT NULL",
 };
 
 export async function queryAlbums(
@@ -181,6 +237,7 @@ export async function queryAlbums(
     `${ALBUM_SELECT}
      WHERE ${where.join(" AND ")}
      GROUP BY album_key
+     ${ALBUM_HAVING_SQL[order] ?? ""}
      ORDER BY ${ALBUM_ORDER_SQL[order]}
      LIMIT ? OFFSET ?`,
     ...params,
@@ -266,13 +323,11 @@ export async function searchTracks(
   const match = toFtsQuery(query);
   if (!match) return [];
   const db = await getLocalLibraryDb();
-  const projected = TRACK_COLUMNS.split(", ")
-    .map((c) => `t.${c}`)
-    .join(", ");
   return db.getAllAsync<TrackRow>(
-    `SELECT ${projected}
+    `SELECT ${TRACK_PROJECTION}
      FROM tracks_fts f
      JOIN tracks t ON t.id = f.id
+     ${STATS_JOIN}
      WHERE tracks_fts MATCH ?
      ORDER BY rank
      LIMIT ? OFFSET ?`,
@@ -345,13 +400,11 @@ export async function queryPlaylistById(
 /** Resolvable tracks of a playlist, in stored order (dangling rows skipped). */
 export async function queryPlaylistEntries(id: string): Promise<TrackRow[]> {
   const db = await getLocalLibraryDb();
-  const projected = TRACK_COLUMNS.split(", ")
-    .map((c) => `t.${c}`)
-    .join(", ");
   return db.getAllAsync<TrackRow>(
-    `SELECT ${projected}
+    `SELECT ${TRACK_PROJECTION}
      FROM playlist_tracks pt
      JOIN tracks t ON t.id = pt.track_id
+     ${STATS_JOIN}
      WHERE pt.playlist_id = ?
      ORDER BY pt.position ASC`,
     id,

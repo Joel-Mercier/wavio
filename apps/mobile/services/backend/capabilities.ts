@@ -76,15 +76,17 @@ const JELLYFIN: BackendCapabilities = {
 // On-device library: no remote server, everything is derived from files the
 // indexer scans (see `stores/servers.ts` `paths`). Synced lyrics and ReplayGain
 // come from extracted tags; song lists and (non-smart) playlists are built
-// locally. Everything that needs a remote server — sharing, podcasts, radio,
-// bookmarks, ratings, admin users, queue/now-playing sync — is unavailable.
+// locally. Play counts/last-played (track_stats) and ratings (local-library
+// store) are tracked on-device, so setRating and the play-stats home sections
+// work. Everything else that needs a remote server — sharing, podcasts, radio,
+// bookmarks, admin users, queue/now-playing sync — is unavailable.
 const LOCAL: BackendCapabilities = {
   sharing: false,
   internetRadio: false,
   podcasts: false,
   smartPlaylists: false,
   bookmarks: false,
-  setRating: false,
+  setRating: true,
   lyricsSynced: true,
   adminUsers: false,
   // The indexer can re-scan the selected source folders on demand.

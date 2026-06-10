@@ -1,13 +1,16 @@
+import { recordPlay } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
 import useLocalLibrary, { type StarTarget } from "@/stores/localLibrary";
 
-// Local-backend media annotation. Star state has nowhere to live server-side, so
-// it's kept in the local-library store (stores/localLibrary.ts) and surfaced
-// back through getStarred/getStarred2 (services/local/lists.ts) and the `starred`
-// field stamped by the mappers (services/local/mappers.ts).
+// Local-backend media annotation. With no server, user-curated state lives
+// on-device: star state and ratings in the local-library store
+// (stores/localLibrary.ts), play counts / last-played in SQLite (track_stats).
+// Both surface back through the list endpoints (services/local/lists.ts) and the
+// fields the mappers stamp (services/local/mappers.ts).
 //
-// Rating / scrobble / playback reporting have no on-device equivalent; they
-// resolve as no-ops so normal local playback never trips the "unsupported" path.
+// Playback reporting (the OpenSubsonic playbackReport extension) has no on-device
+// equivalent and the local backend never advertises the extension, so the player
+// uses the classic scrobble flow; reportPlayback resolves as a no-op.
 
 export const star = async (target: StarTarget) => {
   useLocalLibrary.getState().star(target);
@@ -19,14 +22,18 @@ export const unstar = async (target: StarTarget) => {
   return localEnvelope({});
 };
 
-export const setRating = async (_id: string, _rating: number) => {
+export const setRating = async (id: string, rating: number) => {
+  useLocalLibrary.getState().setRating(id, rating);
   return localEnvelope({});
 };
 
 export const scrobble = async (
-  _id: string,
-  _opts: { time?: number; submission?: boolean } = {},
+  id: string,
+  { time, submission }: { time?: number; submission?: boolean } = {},
 ) => {
+  // Mirror Subsonic semantics: only a submission counts as a play; submission:
+  // false is the now-playing ping. time is when playback started (epoch-ms).
+  if (submission) await recordPlay(id, time ?? Date.now());
   return localEnvelope({});
 };
 
