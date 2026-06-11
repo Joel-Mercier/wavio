@@ -79,7 +79,10 @@ interface PodcastsStore {
   updateFavoriteServerPodcast: (
     uuid: string,
     patch: Partial<
-      Pick<FavoritePodcast, "name" | "imageUrl" | "coverArt" | "url">
+      Pick<
+        FavoritePodcast,
+        "name" | "imageUrl" | "coverArt" | "url" | "authorName"
+      >
     >,
   ) => void;
   clearFavoritePodcasts: () => void;
@@ -145,7 +148,7 @@ export const usePodcastsBase = create<PodcastsStore>()(
             imageUrl: channel.originalImageUrl || "",
             coverArt: channel.coverArt,
             url: channel.url,
-            authorName: "",
+            authorName: channel.author || "",
             isFavorite: true,
             dateAdded: Date.now(),
             source: "server",

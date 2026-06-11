@@ -1,4 +1,9 @@
-import type { TrackRow } from "@/services/local/db";
+import type {
+  PodcastChannelRow,
+  PodcastEpisodeRow,
+  RadioStationRow,
+  TrackRow,
+} from "@/services/local/db";
 import { localAlbumId, localArtistId } from "@/services/local/keys";
 import type {
   AlbumAggRow,
@@ -12,7 +17,11 @@ import type {
   Child,
   Genre,
   IndexID3,
+  InternetRadioStation,
   Playlist,
+  PodcastChannel,
+  PodcastEpisode,
+  PodcastStatus,
 } from "@/services/openSubsonic/types";
 import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 
@@ -145,6 +154,59 @@ export function buildArtistIndex(artists: ArtistID3[]): IndexID3[] {
   return [...buckets.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, artist]) => ({ name, artist }));
+}
+
+export function mapRadioRow(row: RadioStationRow): InternetRadioStation {
+  return {
+    id: row.id,
+    name: row.name,
+    streamUrl: row.stream_url,
+    homePageUrl: row.home_page_url ?? undefined,
+  };
+}
+
+export function mapChannelRow(
+  row: PodcastChannelRow,
+  episodes?: PodcastEpisode[],
+): PodcastChannel {
+  return {
+    id: row.id,
+    url: row.url,
+    title: row.title ?? undefined,
+    description: row.description ?? undefined,
+    author: row.author ?? undefined,
+    // A self-hosted channel's artwork is a direct feed image URL, not a Subsonic
+    // cover-art id; UI prefers `originalImageUrl`, and `artworkUrl` passes
+    // absolute URLs through for the local backend.
+    originalImageUrl: row.original_image_url ?? undefined,
+    status: row.status as PodcastStatus,
+    errorMessage: row.error_message ?? undefined,
+    episode: episodes,
+  };
+}
+
+// Local episodes stream straight from their enclosure URL, so they're always
+// "completed" and immediately playable. `streamId` is set to the episode id,
+// which `utils/streaming.ts` decodes back to the enclosure URL — so
+// `podcastEpisodeToTrack` / `isPlayablePodcastEpisode` work unchanged.
+export function mapEpisodeRow(row: PodcastEpisodeRow): PodcastEpisode {
+  return {
+    id: row.id,
+    channelId: row.channel_id,
+    streamId: row.id,
+    status: "completed",
+    isDir: false,
+    title: row.title ?? "Unknown episode",
+    description: row.description ?? undefined,
+    publishDate: row.publish_date ? new Date(row.publish_date) : undefined,
+    duration: row.duration ?? undefined,
+    suffix: row.suffix ?? undefined,
+    contentType: row.content_type ?? undefined,
+    size: row.size ?? undefined,
+    coverArt: row.original_image_url ?? undefined,
+    type: "podcast",
+    created: new Date(row.created_at),
+  };
 }
 
 function parseArtists(

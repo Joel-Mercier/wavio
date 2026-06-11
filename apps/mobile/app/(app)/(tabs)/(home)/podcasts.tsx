@@ -13,6 +13,7 @@ import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
 import ServerPodcastRow from "@/components/podcasts/ServerPodcastRow";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
+import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
@@ -26,6 +27,7 @@ import {
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSyncServerPodcastFavorites } from "@/hooks/usePodcastFavorites";
 import type { Genre } from "@/services/taddyPodcasts/types";
+import { useCurrentAuthScope } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 
 export default function PodcastsScreen() {
@@ -33,6 +35,7 @@ export default function PodcastsScreen() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const tabBarHeight = useBottomTabBarHeight();
   const capabilities = useCapabilities();
+  const scope = useCurrentAuthScope();
   const favorites = usePodcasts((store) => store.favoritePodcasts);
   const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -45,11 +48,13 @@ export default function PodcastsScreen() {
 
   useSyncServerPodcastFavorites();
 
-  // Taddy subscriptions only — server channels surface in the "Your podcasts"
-  // row below and shouldn't double up in this grid.
-  const taddyFavorites = useMemo(
-    () => favorites.filter((fav) => fav.source !== "server"),
-    [favorites],
+  // One favorites grid for everything: Taddy subscriptions plus self-hosted
+  // (server/local) channels favorited on the active server — scoped so another
+  // server's favorites don't leak in.
+  const favoriteItems = useMemo(
+    () =>
+      favorites.filter((fav) => fav.source !== "server" || fav.scope === scope),
+    [favorites, scope],
   );
 
   const {
@@ -126,58 +131,69 @@ export default function PodcastsScreen() {
           </HStack>
         )}
 
-        {capabilities.podcasts && serverChannels.length > 0 && (
-          <ServerPodcastRow
-            title={t("app.podcasts.yourPodcasts")}
-            isLoading={isLoadingServer}
-            error={serverError}
-            channels={serverChannels}
-            skeletonKey="your-podcasts"
-          />
+        {favoriteItems.length > 0 && (
+          <VStack className="gap-y-4 px-6 mt-4">
+            {favoriteItems
+              .slice(0, 8)
+              .reduce((rows: ReactElement[], favorite, index) => {
+                if (index % 4 === 0) {
+                  rows.push(
+                    <HStack
+                      key={`row-${Math.floor(index / 4)}`}
+                      className="gap-x-4"
+                    >
+                      <FavoritePodcastListItem
+                        key={favorite.uuid}
+                        podcast={favorite}
+                      />
+                      {favoriteItems[index + 1] && (
+                        <FavoritePodcastListItem
+                          key={favoriteItems[index + 1].uuid}
+                          podcast={favoriteItems[index + 1]}
+                        />
+                      )}
+                      {favoriteItems[index + 2] && (
+                        <FavoritePodcastListItem
+                          key={favoriteItems[index + 2].uuid}
+                          podcast={favoriteItems[index + 2]}
+                        />
+                      )}
+                      {favoriteItems[index + 3] && (
+                        <FavoritePodcastListItem
+                          key={favoriteItems[index + 3].uuid}
+                          podcast={favoriteItems[index + 3]}
+                        />
+                      )}
+                    </HStack>,
+                  );
+                }
+                return rows;
+              }, [])}
+          </VStack>
         )}
+
+        {capabilities.podcasts &&
+          (serverChannels.length > 0 || isLoadingServer ? (
+            <ServerPodcastRow
+              title={t("app.podcasts.yourPodcasts")}
+              isLoading={isLoadingServer}
+              error={serverError}
+              channels={serverChannels}
+              skeletonKey="your-podcasts"
+            />
+          ) : (
+            <VStack className="px-6 mt-4 mb-2 gap-y-2">
+              <Heading size="xl" className="text-white">
+                {t("app.podcasts.yourPodcasts")}
+              </Heading>
+              <Text className="text-primary-100">
+                {t("app.podcasts.noServerPodcasts")}
+              </Text>
+            </VStack>
+          ))}
 
         {podcastsEnabled ? (
           <>
-            {taddyFavorites.length > 0 && (
-              <VStack className="gap-y-4 px-6 mt-4">
-                {taddyFavorites
-                  .slice(0, 8)
-                  .reduce((rows: ReactElement[], favorite, index) => {
-                    if (index % 4 === 0) {
-                      rows.push(
-                        <HStack
-                          key={`row-${Math.floor(index / 4)}`}
-                          className="gap-x-4"
-                        >
-                          <FavoritePodcastListItem
-                            key={favorite.uuid}
-                            podcast={favorite}
-                          />
-                          {taddyFavorites[index + 1] && (
-                            <FavoritePodcastListItem
-                              key={taddyFavorites[index + 1].uuid}
-                              podcast={taddyFavorites[index + 1]}
-                            />
-                          )}
-                          {taddyFavorites[index + 2] && (
-                            <FavoritePodcastListItem
-                              key={taddyFavorites[index + 2].uuid}
-                              podcast={taddyFavorites[index + 2]}
-                            />
-                          )}
-                          {taddyFavorites[index + 3] && (
-                            <FavoritePodcastListItem
-                              key={taddyFavorites[index + 3].uuid}
-                              podcast={taddyFavorites[index + 3]}
-                            />
-                          )}
-                        </HStack>,
-                      );
-                    }
-                    return rows;
-                  }, [])}
-              </VStack>
-            )}
             <PodcastSeriesRow
               title={t("app.podcasts.dailyTopChartsByCountry", {
                 country: recommandationParams.country,
@@ -206,6 +222,26 @@ export default function PodcastsScreen() {
               />
             )}
           </>
+        ) : capabilities.podcasts ? (
+          // Taddy unconfigured but the backend self-hosts podcasts: keep the
+          // favorites + self-hosted sections above as the focus and offer Taddy
+          // discovery as a small, non-dominating hint rather than a full CTA.
+          <Box className="px-6 mt-8">
+            <Text className="text-primary-100 text-sm">
+              {t("app.podcasts.taddyDiscoveryHint")}
+            </Text>
+            <FadeOutScaleDown
+              href={{
+                pathname: "/(app)/(tabs)/(home)/settings",
+                params: { section: "podcasts" },
+              }}
+              className="mt-3 self-start"
+            >
+              <Text className="text-white font-semibold underline">
+                {t("app.podcasts.configureTaddyPodcasts")}
+              </Text>
+            </FadeOutScaleDown>
+          </Box>
         ) : (
           <Box className="items-center px-6 mt-10">
             <Text className="text-primary-50 text-center">

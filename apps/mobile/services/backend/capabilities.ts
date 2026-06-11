@@ -94,12 +94,15 @@ const JELLYFIN: BackendCapabilities = {
 // come from extracted tags; song lists and (non-smart) playlists are built
 // locally. Play counts/last-played (track_stats) and ratings (local-library
 // store) are tracked on-device, so setRating and the play-stats home sections
-// work. Everything else that needs a remote server — sharing, podcasts, radio,
-// bookmarks, admin users, queue/now-playing sync — is unavailable.
+// work. Internet radio stations and podcasts are self-hosted on-device too: the
+// same OpenSubsonic-style create/edit/delete flows persist to SQLite, with
+// podcast feeds fetched + parsed on-device (services/podcastFeed.ts). Everything
+// else that genuinely needs a remote server — sharing, bookmarks, admin users,
+// queue/now-playing sync — is unavailable.
 const LOCAL: BackendCapabilities = {
   sharing: false,
-  internetRadio: false,
-  podcasts: false,
+  internetRadio: true,
+  podcasts: true,
   smartPlaylists: false,
   bookmarks: false,
   setRating: true,

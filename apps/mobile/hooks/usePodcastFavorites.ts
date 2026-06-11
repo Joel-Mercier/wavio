@@ -35,17 +35,20 @@ export function useSyncServerPodcastFavorites() {
       }
       const name = channel.title || channel.url;
       const imageUrl = channel.originalImageUrl || "";
+      const authorName = channel.author || "";
       if (
         name !== fav.name ||
         imageUrl !== fav.imageUrl ||
         channel.coverArt !== fav.coverArt ||
-        channel.url !== fav.url
+        channel.url !== fav.url ||
+        authorName !== fav.authorName
       ) {
         updateFavoriteServerPodcast(fav.uuid, {
           name,
           imageUrl,
           coverArt: channel.coverArt,
           url: channel.url,
+          authorName,
         });
       }
     }

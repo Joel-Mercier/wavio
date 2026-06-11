@@ -3,7 +3,10 @@ import {
   hlsStreamUrl as jellyfinHlsStreamUrl,
   streamUrl as jellyfinStreamUrl,
 } from "@/services/jellyfin/streaming";
-import { parseLocalTrackId } from "@/services/local/keys";
+import {
+  parseLocalPodcastEpisodeId,
+  parseLocalTrackId,
+} from "@/services/local/keys";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -16,13 +19,14 @@ function isJellyfin(): boolean {
   return useAuthBase.getState().serverType === "jellyfin";
 }
 
-// Local tracks play straight off disk: the id encodes the file URI, so we hand
-// expo-audio the `file://` URI directly (no /stream endpoint, no transcoding).
-// Returns null when the active server isn't local or `id` isn't a local id.
+// Local media plays straight from a URL the id encodes: a track id decodes to a
+// `file://` URI on disk, a self-hosted podcast episode id decodes to its remote
+// enclosure URL. Either way expo-audio gets the URL directly (no /stream
+// endpoint, no transcoding). Returns null when the active server isn't local or
+// `id` isn't a recognised local id.
 function localFileUrl(id: string): string | null {
-  return useAuthBase.getState().serverType === "local"
-    ? parseLocalTrackId(id)
-    : null;
+  if (useAuthBase.getState().serverType !== "local") return null;
+  return parseLocalTrackId(id) ?? parseLocalPodcastEpisodeId(id);
 }
 
 export const hlsStreamUrl = (id: string) => {

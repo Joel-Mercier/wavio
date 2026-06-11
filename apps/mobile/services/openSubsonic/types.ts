@@ -335,6 +335,9 @@ export interface PodcastChannel {
   title?: string;
   url: string;
   episode?: PodcastEpisode[];
+  // Not part of the Subsonic spec — populated by the local backend from the
+  // feed's <itunes:author> (see services/podcastFeed.ts). Undefined elsewhere.
+  author?: string;
 }
 
 export interface PodcastEpisode extends Child {

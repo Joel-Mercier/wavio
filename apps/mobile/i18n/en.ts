@@ -200,7 +200,15 @@ export default {
         configureTaddyPodcasts: "Configure in settings",
         taddyPodcastsNotConfigured: "Podcast access is not configured",
         yourPodcasts: "Your podcasts",
+        noServerPodcasts:
+          "You haven't added any podcasts yet. Tap + to add one by its RSS feed.",
+        taddyDiscoveryHint:
+          "Want to discover and search podcasts? Configure podcast access in settings.",
         noEpisodes: "No episodes available yet",
+        downloadEpisode: "Download episode",
+        removeDownload: "Remove download",
+        downloadEpisodeErrorMessage:
+          "An error occurred while downloading the episode",
         newChannelTitle: "Add a podcast channel",
         channelUrlPlaceholder: "Podcast RSS feed URL",
         newChannelSuccessMessage: "Podcast channel successfully added",
@@ -409,6 +417,8 @@ export default {
       },
       favoritePodcasts: {
         title: "Recent episodes",
+        noServerFavorites:
+          "You haven't favorited any podcasts yet. Open a podcast and tap the heart to add it here.",
       },
       newPlaylist: {
         title: "Give a name to your playlist",
@@ -1078,7 +1088,7 @@ export default {
         seeMore: "See more",
         seeLess: "See less",
         seeAll: "See all",
-        noData: "No data",
+        noData: "Empty",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
         songCount_one: "{{count}} song",

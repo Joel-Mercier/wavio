@@ -2,10 +2,14 @@ import {
   albumKey,
   localAlbumId,
   localArtistId,
+  localPodcastEpisodeId,
   localTrackId,
+  newLocalPodcastChannelId,
+  newLocalRadioStationId,
   normalizeKey,
   parseLocalAlbumId,
   parseLocalArtistId,
+  parseLocalPodcastEpisodeId,
   parseLocalTrackId,
 } from "@/services/local/keys";
 
@@ -31,6 +35,33 @@ describe("localLibrary keys", () => {
     it("returns null for non-track ids", () => {
       expect(parseLocalTrackId("123")).toBeNull();
       expect(parseLocalTrackId(localAlbumId("x"))).toBeNull();
+    });
+  });
+
+  describe("localPodcastEpisodeId", () => {
+    it("round-trips the enclosure URL (so stream/download URLs resolve with no DB hit)", () => {
+      const url = "https://cdn.example.com/show/ep 1?token=a&b=c.mp3";
+      expect(parseLocalPodcastEpisodeId(localPodcastEpisodeId(url))).toBe(url);
+    });
+
+    it("is filesystem-safe (used as a download filename) — no path-unsafe chars", () => {
+      const id = localPodcastEpisodeId("https://x/ep.mp3?q=1");
+      expect(id).toMatch(/^local-pod-ep-[0-9a-f]+$/);
+    });
+
+    it("returns null for non-episode ids", () => {
+      expect(parseLocalPodcastEpisodeId("123")).toBeNull();
+      expect(
+        parseLocalPodcastEpisodeId(localTrackId("file:///a.mp3")),
+      ).toBeNull();
+    });
+  });
+
+  describe("minted ids", () => {
+    it("are uniquely prefixed and distinct per call", () => {
+      expect(newLocalRadioStationId()).toMatch(/^local-radio:/);
+      expect(newLocalPodcastChannelId()).toMatch(/^local-pod-ch:/);
+      expect(newLocalRadioStationId()).not.toBe(newLocalRadioStationId());
     });
   });
 

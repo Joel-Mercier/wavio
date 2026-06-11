@@ -12,10 +12,10 @@ interface AppStore {
   showAddTab: boolean;
   setShowAddTab: (showAddTab: boolean) => void;
   librarySort:
-  | "addedAtAsc"
-  | "addedAtDesc"
-  | "alphabeticalAsc"
-  | "alphabeticalDesc";
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc";
   setLibrarySort: (
     librarySort:
       | "addedAtAsc"
@@ -24,13 +24,13 @@ interface AppStore {
       | "alphabeticalDesc",
   ) => void;
   libraryFilter:
-  | "artists"
-  | "albums"
-  | "playlists"
-  | "podcasts"
-  | "radioStations"
-  | "folders"
-  | null;
+    | "artists"
+    | "albums"
+    | "playlists"
+    | "podcasts"
+    | "radioStations"
+    | "folders"
+    | null;
   setLibraryFilter: (
     libraryFilter:
       | "artists"
@@ -42,14 +42,14 @@ interface AppStore {
       | null,
   ) => void;
   favoritesSort:
-  | "addedAtAsc"
-  | "addedAtDesc"
-  | "alphabeticalAsc"
-  | "alphabeticalDesc"
-  | "artistAsc"
-  | "artistDesc"
-  | "albumAsc"
-  | "albumDesc";
+    | "addedAtAsc"
+    | "addedAtDesc"
+    | "alphabeticalAsc"
+    | "alphabeticalDesc"
+    | "artistAsc"
+    | "artistDesc"
+    | "albumAsc"
+    | "albumDesc";
   setFavoritesSort: (
     favoritesSort:
       | "addedAtAsc"

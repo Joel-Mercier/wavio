@@ -37,6 +37,15 @@ const TRACK_PREFIX = "local-track:";
 const ALBUM_PREFIX = "local-album:";
 const ARTIST_PREFIX = "local-artist:";
 const PLAYLIST_PREFIX = "local-playlist:";
+// Self-hosted podcast episodes encode their enclosure URL (like tracks encode
+// their file URI) so the synchronous stream-URL builder (utils/streaming.ts) can
+// recover the audio URL straight from the id — no DB round-trip — and the
+// offline downloader can fetch it. The prefix uses a dash (not a colon) because
+// this id doubles as a download filename (`<id>.<suffix>`), and hex contains no
+// path-unsafe characters, so the whole id stays filesystem-safe.
+const PODCAST_EPISODE_PREFIX = "local-pod-ep-";
+const RADIO_PREFIX = "local-radio:";
+const PODCAST_CHANNEL_PREFIX = "local-pod-ch:";
 
 const encodePayload = (value: string): string => {
   const bytes = new TextEncoder().encode(value);
@@ -81,10 +90,26 @@ export const parseLocalArtistId = (id: string): string | null =>
     ? decodePayload(id.slice(ARTIST_PREFIX.length))
     : null;
 
-// Playlist ids aren't reversible (a playlist has no source value to encode);
-// they're freshly minted on creation and looked up by id in SQLite. The prefix
-// keeps them from clashing with track/album/artist ids or server-issued ones.
-export const newLocalPlaylistId = (): string =>
-  `${PLAYLIST_PREFIX}${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
+/** Reversible id for a self-hosted podcast episode, encoding its enclosure URL. */
+export const localPodcastEpisodeId = (enclosureUrl: string): string =>
+  `${PODCAST_EPISODE_PREFIX}${encodePayload(enclosureUrl)}`;
+
+/** Recover the enclosure URL from a podcast-episode id, or null if it isn't one. */
+export const parseLocalPodcastEpisodeId = (id: string): string | null =>
+  id.startsWith(PODCAST_EPISODE_PREFIX)
+    ? decodePayload(id.slice(PODCAST_EPISODE_PREFIX.length))
+    : null;
+
+// Playlist / radio-station / podcast-channel ids aren't reversible (they have no
+// source value to encode); they're freshly minted on creation and looked up by
+// id in SQLite. The prefix keeps them from clashing with track/album/artist ids
+// or server-issued ones.
+const mintId = (prefix: string): string =>
+  `${prefix}${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+export const newLocalPlaylistId = (): string => mintId(PLAYLIST_PREFIX);
+
+export const newLocalRadioStationId = (): string => mintId(RADIO_PREFIX);
+
+export const newLocalPodcastChannelId = (): string =>
+  mintId(PODCAST_CHANNEL_PREFIX);

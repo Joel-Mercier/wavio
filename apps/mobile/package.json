@@ -65,6 +65,7 @@
     "expo-symbols": "~56.0.6",
     "expo-system-ui": "~56.0.5",
     "expo-web-browser": "~56.0.5",
+    "fast-xml-parser": "^5.8.0",
     "fuse.js": "^7.4.2",
     "html-entities": "^2.6.0",
     "i18next": "^26.3.1",

@@ -203,7 +203,15 @@ export default {
         configureTaddyPodcasts: "Configurer dans les paramètres",
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
         yourPodcasts: "Vos podcasts",
+        noServerPodcasts:
+          "Vous n'avez pas encore ajouté de podcast. Appuyez sur + pour en ajouter un via son flux RSS.",
+        taddyDiscoveryHint:
+          "Envie de découvrir et rechercher des podcasts ? Configurez l'accès aux podcasts dans les réglages.",
         noEpisodes: "Aucun épisode disponible pour le moment",
+        downloadEpisode: "Télécharger l'épisode",
+        removeDownload: "Supprimer le téléchargement",
+        downloadEpisodeErrorMessage:
+          "Une erreur est survenue lors du téléchargement de l'épisode",
         newChannelTitle: "Ajouter une chaîne de podcast",
         channelUrlPlaceholder: "URL du flux RSS du podcast",
         newChannelSuccessMessage: "Chaîne de podcast ajoutée avec succès",
@@ -418,6 +426,8 @@ export default {
       },
       favoritePodcasts: {
         title: "Derniers épisodes",
+        noServerFavorites:
+          "Vous n'avez pas encore de podcast favori. Ouvrez un podcast et appuyez sur le cœur pour l'ajouter ici.",
       },
       newPlaylist: {
         title: "Donnez un nom à votre playlist",
@@ -1108,7 +1118,7 @@ export default {
         seeMore: "Voir plus",
         seeLess: "Voir moins",
         seeAll: "Voir tout",
-        noData: "Aucune donnée",
+        noData: "Vide",
         albumCount_one: "{{count}} album",
         albumCount_other: "{{count}} albums",
         songCount_one: "{{count}} titre",

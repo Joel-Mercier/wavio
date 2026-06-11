@@ -17,7 +17,7 @@ import { logError } from "@/utils/log";
 // switching servers never mixes one account's local library into another's. The
 // handle follows the active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const currentScope = (): string => {
   const { url, username } = useAuthBase.getState();
@@ -193,6 +193,55 @@ CREATE INDEX IF NOT EXISTS idx_track_stats_last_played
   ON track_stats(last_played_at);
 `;
 
+// Self-hosted internet radio stations and podcasts. With a local backend there's
+// no server to hold these (the way OpenSubsonic does), so they live on-device in
+// SQLite and are managed through the same create/edit/delete flows. Stations and
+// channels are user-curated; podcast episodes are parsed from the channel's RSS
+// feed on-device (see services/podcastFeed.ts) and re-`upsert`ed on refresh. An
+// episode's id encodes its enclosure URL (services/local/keys.ts), so the row is
+// upserted by `id` — re-parsing a feed updates existing episodes in place rather
+// than duplicating them. Episodes stream straight from the enclosure URL.
+const SCHEMA_V4 = `
+CREATE TABLE IF NOT EXISTS internet_radio_stations (
+  id            TEXT PRIMARY KEY NOT NULL,
+  name          TEXT NOT NULL,
+  stream_url    TEXT NOT NULL,
+  home_page_url TEXT,
+  created_at    INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS podcast_channels (
+  id                 TEXT PRIMARY KEY NOT NULL,
+  url                TEXT NOT NULL UNIQUE,
+  title              TEXT,
+  description        TEXT,
+  author             TEXT,
+  original_image_url TEXT,
+  status             TEXT NOT NULL,
+  error_message      TEXT,
+  created_at         INTEGER NOT NULL,
+  updated_at         INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS podcast_episodes (
+  id                 TEXT PRIMARY KEY NOT NULL,
+  channel_id         TEXT NOT NULL,
+  guid               TEXT,
+  title              TEXT,
+  description        TEXT,
+  publish_date       INTEGER,
+  duration           INTEGER,
+  suffix             TEXT,
+  content_type       TEXT,
+  size               INTEGER,
+  stream_url         TEXT NOT NULL,
+  original_image_url TEXT,
+  created_at         INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_podcast_episodes_channel
+  ON podcast_episodes(channel_id, publish_date DESC);
+`;
+
 /** Add `column` to `table` if it isn't already there. SQLite has no
  *  `ADD COLUMN IF NOT EXISTS`, so probe `table_info` first. */
 async function ensureColumn(
@@ -217,11 +266,15 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(SCHEMA_V1);
   await db.execAsync(SCHEMA_V2);
   await db.execAsync(SCHEMA_STATS);
+  await db.execAsync(SCHEMA_V4);
 
   // SCHEMA_V1's `CREATE TABLE IF NOT EXISTS` won't add a column to a `tracks`
   // table that already exists from an earlier schema, so add later columns with
   // an idempotent ALTER. Cheap and self-healing on every open.
   await ensureColumn(db, "tracks", "release_types_json", "TEXT");
+  // `podcast_channels.author` was added after the table shipped (still v4), so
+  // existing on-device indexes need the column backfilled the same way.
+  await ensureColumn(db, "podcast_channels", "author", "TEXT");
 
   const row = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version",
@@ -309,4 +362,45 @@ export type TrackRow = {
   // last_played_at is null when the track has never been played.
   play_count: number;
   last_played_at: number | null;
+};
+
+// Shape of an `internet_radio_stations` row. Read queries adapt this to
+// `InternetRadioStation`.
+export type RadioStationRow = {
+  id: string;
+  name: string;
+  stream_url: string;
+  home_page_url: string | null;
+  created_at: number;
+};
+
+// Shape of a `podcast_channels` row. Read queries adapt this to `PodcastChannel`.
+export type PodcastChannelRow = {
+  id: string;
+  url: string;
+  title: string | null;
+  description: string | null;
+  author: string | null;
+  original_image_url: string | null;
+  status: string;
+  error_message: string | null;
+  created_at: number;
+  updated_at: number;
+};
+
+// Shape of a `podcast_episodes` row. Read queries adapt this to `PodcastEpisode`.
+export type PodcastEpisodeRow = {
+  id: string;
+  channel_id: string;
+  guid: string | null;
+  title: string | null;
+  description: string | null;
+  publish_date: number | null;
+  duration: number | null;
+  suffix: string | null;
+  content_type: string | null;
+  size: number | null;
+  stream_url: string;
+  original_image_url: string | null;
+  created_at: number;
 };

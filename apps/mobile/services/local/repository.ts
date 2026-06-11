@@ -1,4 +1,11 @@
-import { getLocalLibraryDb, type PlaylistRow, type TrackRow } from "./db";
+import {
+  getLocalLibraryDb,
+  type PlaylistRow,
+  type PodcastChannelRow,
+  type PodcastEpisodeRow,
+  type RadioStationRow,
+  type TrackRow,
+} from "./db";
 
 // Data-access layer for the local backend: raw SQLite reads returning row
 // shapes. The section files (browsing/lists/searching/…) call these and adapt
@@ -596,4 +603,208 @@ async function resequencePlaylist(db: Db, id: string): Promise<void> {
       );
     }
   }
+}
+
+// --- internet radio stations ----------------------------------------------
+
+export async function queryRadioStations(): Promise<RadioStationRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<RadioStationRow>(
+    "SELECT * FROM internet_radio_stations ORDER BY name COLLATE NOCASE ASC",
+  );
+}
+
+export async function insertRadioStation(row: RadioStationRow): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `INSERT INTO internet_radio_stations (id, name, stream_url, home_page_url, created_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    row.id,
+    row.name,
+    row.stream_url,
+    row.home_page_url,
+    row.created_at,
+  );
+}
+
+export async function updateRadioStation(
+  id: string,
+  fields: { name: string; stream_url: string; home_page_url: string | null },
+): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `UPDATE internet_radio_stations
+     SET name = ?, stream_url = ?, home_page_url = ?
+     WHERE id = ?`,
+    fields.name,
+    fields.stream_url,
+    fields.home_page_url,
+    id,
+  );
+}
+
+export async function deleteRadioStation(id: string): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync("DELETE FROM internet_radio_stations WHERE id = ?", id);
+}
+
+// --- podcasts --------------------------------------------------------------
+
+export async function queryPodcastChannels(): Promise<PodcastChannelRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<PodcastChannelRow>(
+    "SELECT * FROM podcast_channels ORDER BY title COLLATE NOCASE ASC",
+  );
+}
+
+export async function queryPodcastChannelById(
+  id: string,
+): Promise<PodcastChannelRow | null> {
+  const db = await getLocalLibraryDb();
+  return db.getFirstAsync<PodcastChannelRow>(
+    "SELECT * FROM podcast_channels WHERE id = ?",
+    id,
+  );
+}
+
+/** Channel id of the channel a given feed url belongs to, if already added. */
+export async function queryPodcastChannelByUrl(
+  url: string,
+): Promise<PodcastChannelRow | null> {
+  const db = await getLocalLibraryDb();
+  return db.getFirstAsync<PodcastChannelRow>(
+    "SELECT * FROM podcast_channels WHERE url = ?",
+    url,
+  );
+}
+
+export async function queryPodcastEpisodesByChannel(
+  channelId: string,
+): Promise<PodcastEpisodeRow[]> {
+  const db = await getLocalLibraryDb();
+  // Newest first; episodes without a publish date sort last.
+  return db.getAllAsync<PodcastEpisodeRow>(
+    `SELECT * FROM podcast_episodes
+     WHERE channel_id = ?
+     ORDER BY publish_date DESC NULLS LAST, created_at DESC`,
+    channelId,
+  );
+}
+
+export async function queryPodcastEpisodeById(
+  id: string,
+): Promise<PodcastEpisodeRow | null> {
+  const db = await getLocalLibraryDb();
+  return db.getFirstAsync<PodcastEpisodeRow>(
+    "SELECT * FROM podcast_episodes WHERE id = ?",
+    id,
+  );
+}
+
+export async function insertPodcastChannel(
+  row: PodcastChannelRow,
+): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `INSERT INTO podcast_channels
+       (id, url, title, description, author, original_image_url, status, error_message, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    row.id,
+    row.url,
+    row.title,
+    row.description,
+    row.author,
+    row.original_image_url,
+    row.status,
+    row.error_message,
+    row.created_at,
+    row.updated_at,
+  );
+}
+
+export async function updatePodcastChannelMeta(
+  id: string,
+  fields: {
+    title: string | null;
+    description: string | null;
+    author: string | null;
+    original_image_url: string | null;
+    status: string;
+    error_message: string | null;
+    updated_at: number;
+  },
+): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `UPDATE podcast_channels
+     SET title = ?, description = ?, author = ?, original_image_url = ?, status = ?, error_message = ?, updated_at = ?
+     WHERE id = ?`,
+    fields.title,
+    fields.description,
+    fields.author,
+    fields.original_image_url,
+    fields.status,
+    fields.error_message,
+    fields.updated_at,
+    id,
+  );
+}
+
+/**
+ * Insert (or update in place) a channel's episodes. Keyed on the episode `id`,
+ * which encodes the enclosure URL (see keys.ts), so re-parsing a feed refreshes
+ * existing episodes rather than duplicating them. Newly-removed feed entries are
+ * left in place (mirrors how a Subsonic server keeps already-downloaded
+ * episodes); a deleted episode is only gone when the user deletes it.
+ */
+export async function upsertPodcastEpisodes(
+  rows: PodcastEpisodeRow[],
+): Promise<void> {
+  if (rows.length === 0) return;
+  const db = await getLocalLibraryDb();
+  await db.withTransactionAsync(async () => {
+    for (const row of rows) {
+      await db.runAsync(
+        `INSERT INTO podcast_episodes
+           (id, channel_id, guid, title, description, publish_date, duration, suffix, content_type, size, stream_url, original_image_url, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           guid = excluded.guid,
+           title = excluded.title,
+           description = excluded.description,
+           publish_date = excluded.publish_date,
+           duration = excluded.duration,
+           suffix = excluded.suffix,
+           content_type = excluded.content_type,
+           size = excluded.size,
+           original_image_url = excluded.original_image_url`,
+        row.id,
+        row.channel_id,
+        row.guid,
+        row.title,
+        row.description,
+        row.publish_date,
+        row.duration,
+        row.suffix,
+        row.content_type,
+        row.size,
+        row.stream_url,
+        row.original_image_url,
+        row.created_at,
+      );
+    }
+  });
+}
+
+export async function deletePodcastChannel(id: string): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync("DELETE FROM podcast_episodes WHERE channel_id = ?", id);
+    await db.runAsync("DELETE FROM podcast_channels WHERE id = ?", id);
+  });
+}
+
+export async function deletePodcastEpisode(id: string): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync("DELETE FROM podcast_episodes WHERE id = ?", id);
 }

@@ -367,7 +367,9 @@ export default function LibraryListItem({
             {showDownloadedBadge && <DownloadedBadge className="mr-2" />}
             <Text numberOfLines={1} className="text-md text-primary-100">
               {type.id === "podcast"
-                ? `${type.label} ⦁ ${item.authorName}`
+                ? item.authorName
+                  ? `${type.label} ⦁ ${item.authorName}`
+                  : type.label
                 : type.id === "radioStation"
                   ? item.tags
                     ? `${type.label} ⦁ ${item.tags}`
