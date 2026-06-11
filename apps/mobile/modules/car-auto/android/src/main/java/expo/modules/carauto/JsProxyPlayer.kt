@@ -1,6 +1,5 @@
 package expo.modules.carauto
 
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.OptIn
@@ -115,8 +114,21 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     }
     val activeIndex = if (q.isNotEmpty()) currentIndex.coerceIn(0, q.size - 1) else 0
 
+    // Embed local cover art as bytes so AA's Now Playing / queue / home card
+    // can render file:// artwork its host process can't read. The whole queue
+    // travels in one player-state transaction, so cap how much art we embed:
+    // the current item always gets it (the big Now Playing art), and the rest
+    // are embedded in order until a byte budget is hit, after which they fall
+    // back to the (host-unreadable for local, but tiny) uri. Keeps the timeline
+    // under the binder transaction limit for very large local queues.
     val builder = ImmutableList.builder<MediaItemData>()
-    for (item in source) builder.add(item.toMediaItemData())
+    var artBudget = ART_BUDGET_BYTES
+    for ((i, item) in source.withIndex()) {
+      val isCurrent = i == activeIndex
+      val embed = isCurrent || artBudget > 0
+      val used = item.toMediaItemDataInto(builder, embed)
+      if (!isCurrent) artBudget -= used
+    }
     val items = builder.build()
 
     val extrapolated = if (playing) {
@@ -155,25 +167,39 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
       .build()
   }
 
-  private fun NowPlaying.toMediaItemData(): MediaItemData {
+  // Builds the timeline item and appends it to [out]. Returns the number of
+  // embedded artwork bytes so the caller can budget the player-state binder
+  // transaction; when [embed] is false the art falls back to its uri.
+  private fun NowPlaying.toMediaItemDataInto(
+    out: ImmutableList.Builder<MediaItemData>,
+    embed: Boolean,
+  ): Int {
+    val metadata = MediaMetadata.Builder()
+      .setTitle(title)
+      .setArtist(artist)
+      .setAlbumTitle(album)
+      .setIsBrowsable(false)
+      .setIsPlayable(true)
+      .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+    val used = CarArtwork.apply(metadata, artworkUrl, embed)
     val mi = MediaItem.Builder()
       .setMediaId(id)
-      .setMediaMetadata(
-        MediaMetadata.Builder()
-          .setTitle(title)
-          .setArtist(artist)
-          .setAlbumTitle(album)
-          .setArtworkUri(artworkUrl?.let(Uri::parse))
-          .setIsBrowsable(false)
-          .setIsPlayable(true)
-          .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-          .build()
-      )
+      .setMediaMetadata(metadata.build())
       .build()
-    return MediaItemData.Builder(id)
-      .setMediaItem(mi)
-      .setDurationUs(if (durationMs > 0) durationMs * 1000 else C.TIME_UNSET)
-      .build()
+    out.add(
+      MediaItemData.Builder(id)
+        .setMediaItem(mi)
+        .setDurationUs(if (durationMs > 0) durationMs * 1000 else C.TIME_UNSET)
+        .build()
+    )
+    return used
+  }
+
+  private companion object {
+    // Cap on embedded queue artwork per player-state push (~768KB), leaving
+    // headroom under the ~1MB binder transaction limit for the rest of the
+    // timeline (titles, ids, durations).
+    const val ART_BUDGET_BYTES = 768 * 1024
   }
 
   override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {

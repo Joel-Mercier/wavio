@@ -5,8 +5,10 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
+import { getAlbumList2 } from "@/services/backend/lists";
 import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import { useAuthBase } from "@/stores/auth";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -118,6 +120,20 @@ function albumsFromQueryCache(queryClient: QueryClient): AlbumID3[] {
   return [];
 }
 
+// The recent strip is populated from the React Query cache, which is only
+// filled once Home fetches `getAlbumList2("recent")`. Prime it on launch so the
+// widget isn't blank before the user opens Home; the cache subscription in
+// `initWidget` then forwards the result to `pushRecent`. Best-effort only.
+function primeRecent(queryClient: QueryClient) {
+  if (!Native || !useAuthBase.getState().isAuthenticated) return;
+  void queryClient
+    .fetchQuery({
+      queryKey: ["albumList2", { type: "recent", size: 12 }],
+      queryFn: () => getAlbumList2("recent", { size: 12 }),
+    })
+    .catch(() => {});
+}
+
 function pushRecent(queryClient: QueryClient) {
   if (!Native) return;
   const albums = albumsFromQueryCache(queryClient);
@@ -179,4 +195,5 @@ export function initWidget(queryClient: QueryClient) {
 
   void pushNowPlaying();
   pushRecent(queryClient);
+  primeRecent(queryClient);
 }

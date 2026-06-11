@@ -110,6 +110,25 @@ export async function queryTrackById(id: string): Promise<TrackRow | null> {
   return db.getFirstAsync<TrackRow>(`${TRACK_SELECT} WHERE t.id = ?`, id);
 }
 
+/**
+ * An artist's tracks ordered by play count (most-played first), used for the
+ * "Top songs" surface. Mirrors Subsonic's getTopSongs; ties break on title.
+ */
+export async function queryTopSongsByArtist(
+  artistKey: string,
+  limit: number,
+): Promise<TrackRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<TrackRow>(
+    `${TRACK_SELECT}
+     WHERE t.artist_key = ?
+     ORDER BY play_count DESC, t.title COLLATE NOCASE ASC
+     LIMIT ?`,
+    artistKey,
+    limit,
+  );
+}
+
 export async function queryAlbumTracksByKey(key: string): Promise<TrackRow[]> {
   const db = await getLocalLibraryDb();
   return db.getAllAsync<TrackRow>(

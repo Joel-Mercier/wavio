@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   getAlbum,
   getAlbumInfo,
@@ -42,22 +43,26 @@ export const useAlbum = (id: string) => {
 };
 
 export const useAlbumInfo = (id: string) => {
+  const { extendedMetadata } = useCapabilities();
   const query = useQuery({
     queryKey: ["albumInfo", id],
     queryFn: () => {
       return getAlbumInfo(id);
     },
+    enabled: !!id && extendedMetadata,
   });
 
   return query;
 };
 
 export const useAlbumInfo2 = (id: string) => {
+  const { extendedMetadata } = useCapabilities();
   const query = useQuery({
     queryKey: ["albumInfo2", id],
     queryFn: () => {
       return getAlbumInfo2(id);
     },
+    enabled: !!id && extendedMetadata,
   });
 
   return query;
@@ -89,11 +94,13 @@ export const useArtistAppearances = (
 };
 
 export const useArtistInfo = (id: string) => {
+  const { extendedMetadata } = useCapabilities();
   const query = useQuery({
     queryKey: ["artistInfo", id],
     queryFn: () => {
       return getArtistInfo(id);
     },
+    enabled: !!id && extendedMetadata,
   });
 
   return query;
@@ -103,11 +110,13 @@ export const useArtistInfo2 = (
   id: string,
   params: { count?: number; includeNotPresent?: boolean },
 ) => {
+  const { extendedMetadata } = useCapabilities();
   const query = useQuery({
     queryKey: ["artistInfo2", id, params],
     queryFn: () => {
       return getArtistInfo2(id, params);
     },
+    enabled: !!id && extendedMetadata,
   });
 
   return query;

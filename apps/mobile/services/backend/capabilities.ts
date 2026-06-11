@@ -28,6 +28,10 @@ export type BackendCapabilities = {
   // Saving tracks for offline listening. Pointless for the local library, whose
   // files already live on the device (offline mode is disabled for it too).
   offlineDownload: boolean;
+  // Extended artist/album metadata — Subsonic getArtistInfo(2)/getAlbumInfo(2)
+  // bios, images and similar artists. The on-device library has no such data
+  // source, so these queries are skipped (rather than erroring) for local.
+  extendedMetadata: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -48,6 +52,7 @@ const SUBSONIC: BackendCapabilities = {
   nowPlaying: true,
   similarSongs: true,
   offlineDownload: true,
+  extendedMetadata: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -81,6 +86,7 @@ const JELLYFIN: BackendCapabilities = {
   nowPlaying: false,
   similarSongs: true,
   offlineDownload: true,
+  extendedMetadata: true,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -109,6 +115,7 @@ const LOCAL: BackendCapabilities = {
   nowPlaying: false,
   similarSongs: false,
   offlineDownload: false,
+  extendedMetadata: false,
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

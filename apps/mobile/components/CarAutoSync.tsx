@@ -57,8 +57,12 @@ export default function CarAutoSync() {
       if (timer) clearTimeout(timer);
       timer = setTimeout(async () => {
         if (cancelled) return;
-        const { url, username } = useAuthBase.getState();
-        if (!url || !username) return;
+        const { isAuthenticated, url, username, serverType } =
+          useAuthBase.getState();
+        // The on-device library has no url/username, so gate on the session
+        // being authenticated and only require credentials for remote servers.
+        if (!isAuthenticated) return;
+        if (serverType !== "local" && (!url || !username)) return;
         const tree = await buildBrowseTree().catch((e) => {
           if (__DEV__) console.log("[carauto] buildBrowseTree threw", e);
           return null;

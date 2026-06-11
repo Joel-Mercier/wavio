@@ -1,4 +1,8 @@
-import { parseLocalAlbumId, parseLocalArtistId } from "@/services/local/keys";
+import {
+  normalizeKey,
+  parseLocalAlbumId,
+  parseLocalArtistId,
+} from "@/services/local/keys";
 import {
   buildArtistIndex,
   mapAggToAlbum,
@@ -13,6 +17,7 @@ import {
   queryArtistAlbumsByKey,
   queryArtists,
   queryGenres,
+  queryTopSongsByArtist,
   queryTrackById,
 } from "@/services/local/repository";
 import {
@@ -99,6 +104,16 @@ export const getSong = async (id: string) => {
   const row = await queryTrackById(id);
   if (!row) throw new LocalUnsupportedError(`song "${id}" (not indexed)`);
   return localEnvelope({ song: mapRowToChild(row) });
+};
+
+// `artist` is the display name; its artist_key is normalizeKey(albumArtist ||
+// artist) at index time, so normalizing the name recovers the same key.
+export const getTopSongs = async (
+  artist: string,
+  { count }: { count?: number } = {},
+) => {
+  const rows = await queryTopSongsByArtist(normalizeKey(artist), count ?? 50);
+  return localEnvelope({ topSongs: { song: rows.map(mapRowToChild) } });
 };
 
 export const getGenres = async () => {

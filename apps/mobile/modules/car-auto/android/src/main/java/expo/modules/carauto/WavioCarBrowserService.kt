@@ -99,8 +99,19 @@ class WavioCarBrowserService : MediaLibraryService() {
       pageSize: Int,
       params: LibraryParams?,
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-      val nodes = BrowseTreeCache.getChildren(parentId)
-      val items = ImmutableList.copyOf(nodes.map { it.toMediaItem() })
+      // Honor the controller's paging window. Each browse MediaItem embeds its
+      // (downscaled) local cover art as bytes, so returning a whole large list
+      // in one shot could exceed the binder transaction limit. Slicing to the
+      // requested page bounds each transaction; Android Auto pages through with
+      // a sane pageSize, then stops when a short page comes back.
+      val all = BrowseTreeCache.getChildren(parentId)
+      val from = page.toLong() * pageSize.toLong()
+      if (from >= all.size) {
+        return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
+      }
+      val start = from.toInt()
+      val end = minOf(from + pageSize.toLong(), all.size.toLong()).toInt()
+      val items = ImmutableList.copyOf(all.subList(start, end).map { it.toMediaItem() })
       return Futures.immediateFuture(LibraryResult.ofItemList(items, params))
     }
 
@@ -205,20 +216,19 @@ private fun BrowseNode.toMediaItem(): MediaItem {
     extras.putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, styleValue)
     extras.putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_PLAYABLE, styleValue)
   }
-  val metadata = MediaMetadata.Builder()
+  val builder = MediaMetadata.Builder()
     .setTitle(title)
     .setSubtitle(subtitle)
     .setIsBrowsable(!playable)
     .setIsPlayable(playable)
-    .setArtworkUri(artworkUrl?.let { android.net.Uri.parse(it) })
     .setMediaType(
       if (playable) MediaMetadata.MEDIA_TYPE_MUSIC
       else MediaMetadata.MEDIA_TYPE_FOLDER_MIXED,
     )
     .setExtras(extras)
-    .build()
+  CarArtwork.apply(builder, artworkUrl)
   return MediaItem.Builder()
     .setMediaId(id)
-    .setMediaMetadata(metadata)
+    .setMediaMetadata(builder.build())
     .build()
 }

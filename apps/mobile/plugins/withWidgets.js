@@ -55,9 +55,10 @@ const TOP_STRIP_XML = `
 
         <ImageView
             android:id="@+id/cover"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:scaleType="centerCrop"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
             android:contentDescription="@null"
             android:src="@mipmap/ic_launcher" />
 
