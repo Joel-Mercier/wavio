@@ -22,8 +22,12 @@
 		"landing:preview": "bun run --cwd apps/landing preview"
 	},
 	"patchedDependencies": {
-		"expo-audio@56.0.11": "patches/expo-audio@56.0.11.patch",
+		"expo-audio@56.0.12": "patches/expo-audio@56.0.12.patch",
 		"lucide-react-native@1.17.0": "patches/lucide-react-native@1.17.0.patch",
 		"zod@4.4.3": "patches/zod@4.4.3.patch"
+	},
+	"dependencies": {
+		"jest": "~29.7.0",
+		"jest-expo": "~56.0.5"
 	}
 }
