@@ -209,6 +209,7 @@ export default function InternetRadioStationDetail() {
             isRadio: true,
             streamUrl,
             homePageUrl,
+            source,
           },
         ],
         0,

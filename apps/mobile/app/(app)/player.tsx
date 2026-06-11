@@ -1267,6 +1267,11 @@ export default function PlayerScreen() {
                 name={playingTrack?.title ?? ""}
                 streamUrl={playingTrack?.streamUrl ?? playingTrack?.url ?? ""}
                 homePageUrl={playingTrack?.homePageUrl}
+                source={
+                  playingTrack?.source === "radioBrowser"
+                    ? "radioBrowser"
+                    : "server"
+                }
                 onActionStart={() => bottomSheetModalRef.current?.dismiss()}
                 onDeleted={() => {
                   if (router.canGoBack()) router.back();
