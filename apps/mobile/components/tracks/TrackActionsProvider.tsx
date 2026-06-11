@@ -816,7 +816,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   )}
                 {capabilities.offlineDownload &&
                   isTrackDownloaded(track.id) && (
-                    <FadeOutScaleDown onPress={handleRemoveOfflineDownloadPress}>
+                    <FadeOutScaleDown
+                      onPress={handleRemoveOfflineDownloadPress}
+                    >
                       <HStack className="items-center">
                         <X size={24} color={red500} />
                         <Text className="ml-4 text-lg text-red-400">

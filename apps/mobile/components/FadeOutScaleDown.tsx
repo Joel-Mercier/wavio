@@ -8,6 +8,7 @@ interface FadeOutScaleDownProps {
   className?: string;
   href?: ComponentProps<typeof Link>["href"];
   onPress?: ComponentProps<typeof Pressable>["onPress"];
+  onLongPress?: ComponentProps<typeof Pressable>["onLongPress"];
   defaultOpacity?: number;
   disabled?: boolean;
   disabledOpacity?: number;
@@ -26,6 +27,7 @@ const FadeOutScaleDown = React.forwardRef<
       className,
       href,
       onPress,
+      onLongPress,
       defaultOpacity = 1,
       disabled = false,
       disabledOpacity = 0.6,
@@ -67,6 +69,7 @@ const FadeOutScaleDown = React.forwardRef<
         ref={ref}
         testID={testID}
         onPress={href ? () => router.navigate(href) : onPress}
+        onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={className}

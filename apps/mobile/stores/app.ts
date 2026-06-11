@@ -12,10 +12,10 @@ interface AppStore {
   showAddTab: boolean;
   setShowAddTab: (showAddTab: boolean) => void;
   librarySort:
-    | "addedAtAsc"
-    | "addedAtDesc"
-    | "alphabeticalAsc"
-    | "alphabeticalDesc";
+  | "addedAtAsc"
+  | "addedAtDesc"
+  | "alphabeticalAsc"
+  | "alphabeticalDesc";
   setLibrarySort: (
     librarySort:
       | "addedAtAsc"
@@ -24,13 +24,13 @@ interface AppStore {
       | "alphabeticalDesc",
   ) => void;
   libraryFilter:
-    | "artists"
-    | "albums"
-    | "playlists"
-    | "podcasts"
-    | "radioStations"
-    | "folders"
-    | null;
+  | "artists"
+  | "albums"
+  | "playlists"
+  | "podcasts"
+  | "radioStations"
+  | "folders"
+  | null;
   setLibraryFilter: (
     libraryFilter:
       | "artists"
@@ -42,14 +42,14 @@ interface AppStore {
       | null,
   ) => void;
   favoritesSort:
-    | "addedAtAsc"
-    | "addedAtDesc"
-    | "alphabeticalAsc"
-    | "alphabeticalDesc"
-    | "artistAsc"
-    | "artistDesc"
-    | "albumAsc"
-    | "albumDesc";
+  | "addedAtAsc"
+  | "addedAtDesc"
+  | "alphabeticalAsc"
+  | "alphabeticalDesc"
+  | "artistAsc"
+  | "artistDesc"
+  | "albumAsc"
+  | "albumDesc";
   setFavoritesSort: (
     favoritesSort:
       | "addedAtAsc"
@@ -77,9 +77,7 @@ interface AppStore {
   setGaplessEnabled: (enabled: boolean) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
-  // Cross-device play queue sync. "server": on launch restore the server's
-  // saved queue; "local": keep this device's queue but still upload it;
-  // "off": no sync at all. See services/playQueueSync.ts.
+  // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
 }

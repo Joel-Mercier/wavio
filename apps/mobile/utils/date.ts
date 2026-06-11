@@ -20,3 +20,11 @@ export const format = (date: Date, formatString: string) => {
     locale: locales[i18n.language],
   });
 };
+
+export const formatSeconds = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const remaining = total % 60;
+  return `${minutes}:${remaining.toString().padStart(2, "0")}`;
+};

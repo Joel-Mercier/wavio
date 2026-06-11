@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import BookmarkPlus from "lucide-react-native/dist/esm/icons/bookmark-plus.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
@@ -59,6 +60,7 @@ import PlayPauseButton from "@/components/PlayPauseButton";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
 import LyricsDialog from "@/components/player/LyricsDialog";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
+import PlayerBookmarks from "@/components/player/PlayerBookmarks";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
@@ -80,7 +82,12 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
-import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
+import {
+  useIsPlaying,
+  usePlaybackProgress,
+  usePlayingTrack,
+  useSyncedLyrics,
+} from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
@@ -100,9 +107,11 @@ import {
   togglePlayPause,
 } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
+import useBookmarks from "@/stores/bookmarks";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { downloadUrl, streamUrl } from "@/utils/streaming";
@@ -140,6 +149,19 @@ function CoverSlot({
         </Box>
       }
     />
+  );
+}
+
+// Live label for the "set bookmark at" action. Isolated in its own component so
+// only this row re-renders on the ~4 Hz progress tick (it's only mounted while
+// the action sheet is open).
+function SetBookmarkLabel() {
+  const { t } = useTranslation();
+  const { currentTime } = usePlaybackProgress();
+  return (
+    <Text className="ml-4 text-lg text-gray-200">
+      {t("app.player.setBookmarkAt", { time: formatSeconds(currentTime) })}
+    </Text>
   );
 }
 
@@ -385,6 +407,24 @@ export default function PlayerScreen() {
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
+
+  const handleSetBookmarkPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!playingTrack?.id) return;
+    // Read the live position at press time so the saved bookmark matches what
+    // the dynamic label was showing.
+    useBookmarks.getState().addBookmark(playingTrack.id, getCurrentTime());
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>{t("app.player.bookmarkAdded")}</ToastDescription>
+        </Toast>
+      ),
+    });
+  };
 
   const trackArtists: { id: string; name: string }[] = playingTrack?.artists
     ?.length
@@ -1128,6 +1168,7 @@ export default function PlayerScreen() {
                 />
               )}
             </HStack>
+            {!isRadio && <PlayerBookmarks />}
             <HStack className="items-center justify-between mt-8">
               <CastButton
                 hitSlop={ICON_HIT_SLOP}
@@ -1339,6 +1380,12 @@ export default function PlayerScreen() {
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.player.addToQueue")}
                     </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown onPress={handleSetBookmarkPress}>
+                  <HStack className="items-center">
+                    <BookmarkPlus size={24} color={gray200} />
+                    <SetBookmarkLabel />
                   </HStack>
                 </FadeOutScaleDown>
                 <FadeOutScaleDown onPress={handleShowLyricsPress}>
