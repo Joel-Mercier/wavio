@@ -10,7 +10,7 @@ import {
   mapGenreRow,
   mapRowToChild,
 } from "@/services/local/mappers";
-import { localFolders } from "@/services/local/paths";
+import { folderLabel, localFolders } from "@/services/local/paths";
 import {
   queryAlbumByKey,
   queryAlbumTracksByKey,
@@ -32,13 +32,10 @@ import type {
   MusicFolder,
 } from "@/services/openSubsonic/types";
 
-const basename = (path: string): string =>
-  path.replace(/\/+$/, "").split("/").pop() || path;
-
 export const getMusicFolders = async () => {
   const musicFolder: MusicFolder[] = localFolders().map((path) => ({
     id: path,
-    name: basename(path),
+    name: folderLabel(path),
   }));
   return localEnvelope({ musicFolders: { musicFolder } });
 };
