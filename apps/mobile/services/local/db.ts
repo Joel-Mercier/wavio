@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS tracks (
   music_brainz_id TEXT,
   artists_json  TEXT,
   replay_gain_json TEXT,
+  release_types_json TEXT,
   album_key     TEXT,
   artist_key    TEXT,
   indexed_at    INTEGER NOT NULL
@@ -192,6 +193,21 @@ CREATE INDEX IF NOT EXISTS idx_track_stats_last_played
   ON track_stats(last_played_at);
 `;
 
+/** Add `column` to `table` if it isn't already there. SQLite has no
+ *  `ADD COLUMN IF NOT EXISTS`, so probe `table_info` first. */
+async function ensureColumn(
+  db: SQLiteDatabase,
+  table: string,
+  column: string,
+  type: string,
+): Promise<void> {
+  const cols = await db.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(${table})`,
+  );
+  if (cols.some((c) => c.name === column)) return;
+  await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+}
+
 async function migrate(db: SQLiteDatabase): Promise<void> {
   // The schema is entirely additive (`CREATE ... IF NOT EXISTS`), so apply it on
   // every open. It's cheap (each statement short-circuits when the object
@@ -201,6 +217,11 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(SCHEMA_V1);
   await db.execAsync(SCHEMA_V2);
   await db.execAsync(SCHEMA_STATS);
+
+  // SCHEMA_V1's `CREATE TABLE IF NOT EXISTS` won't add a column to a `tracks`
+  // table that already exists from an earlier schema, so add later columns with
+  // an idempotent ALTER. Cheap and self-healing on every open.
+  await ensureColumn(db, "tracks", "release_types_json", "TEXT");
 
   const row = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version",

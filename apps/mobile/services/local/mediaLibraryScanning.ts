@@ -18,9 +18,11 @@ const PROGRESS_INTERVAL_MS = 150;
 
 let controller: ScanController | null = null;
 
-export const startScan = async () => {
+export const startScan = async (force = false) => {
   // Subsonic's startScan is fire-and-forget: kick the scan off and return the
   // scanning state immediately. A second call while one is running is a no-op.
+  // `force` re-extracts every file (used by an explicit "rescan" so new tag
+  // fields land on already-indexed files the incremental scan would skip).
   if (!controller) {
     const folders = localFolders();
     const { setStatus, setScanFinished } = useLocalLibrary.getState();
@@ -32,6 +34,7 @@ export const startScan = async () => {
         try {
           const result = await scanLibrary(folders, {
             controller: controller ?? undefined,
+            force,
             onProgress: (p) => {
               const now = Date.now();
               if (

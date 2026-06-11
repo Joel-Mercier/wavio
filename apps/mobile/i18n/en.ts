@@ -595,6 +595,7 @@ export default {
         storageSettings: {
           title: "Storage",
           downloads: "Wavio downloads",
+          importedLibrary: "Imported library",
           cache: "Wavio cache",
           otherAppData: "Other app data",
           available: "Available",

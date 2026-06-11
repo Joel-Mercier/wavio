@@ -98,9 +98,15 @@ export async function scanLibrary(
     controller?: ScanController;
     /** Recover ReplayGain / lyrics / multi-artist / MBID via raw-tag reads. */
     enrich?: boolean;
+    /**
+     * Re-extract every file even when its path/size/mtime are unchanged. The
+     * default incremental scan skips unchanged files, so a re-scan after an
+     * extractor change (new tag fields) would be a no-op without this.
+     */
+    force?: boolean;
   } = {},
 ): Promise<ScanResult> {
-  const { onProgress, controller, enrich = true } = opts;
+  const { onProgress, controller, enrich = true, force = false } = opts;
   const result: ScanResult = {
     indexed: 0,
     skipped: 0,
@@ -140,7 +146,12 @@ export async function scanLibrary(
   const work: ScannedFile[] = [];
   for (const file of seen.values()) {
     const prior = existing.get(file.uri);
-    if (prior && prior.mtime === file.mtime && prior.size === file.size) {
+    if (
+      !force &&
+      prior &&
+      prior.mtime === file.mtime &&
+      prior.size === file.size
+    ) {
       result.skipped++;
     } else {
       work.push(file);
@@ -300,6 +311,7 @@ type TrackInsert = {
   music_brainz_id: string | null;
   artists_json: string | null;
   replay_gain_json: string | null;
+  release_types_json: string | null;
   album_key: string;
   artist_key: string;
   indexed_at: number;
@@ -342,6 +354,9 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
     music_brainz_id: m.musicBrainzId ?? null,
     artists_json: m.artists?.length ? JSON.stringify(m.artists) : null,
     replay_gain_json: m.replayGain ? JSON.stringify(m.replayGain) : null,
+    release_types_json: m.releaseTypes?.length
+      ? JSON.stringify(m.releaseTypes)
+      : null,
     album_key: albumKey(m.album, albumArtist, artist),
     artist_key: normalizeKey(albumArtist || artist),
     indexed_at: Date.now(),
@@ -354,14 +369,14 @@ INSERT OR REPLACE INTO tracks (
   composer, genre, year, track_number, track_total, disc_number, disc_total,
   duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path,
   artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json,
-  album_key, artist_key, indexed_at
+  release_types_json, album_key, artist_key, indexed_at
 ) VALUES (
   $id, $uri, $path, $folder, $size, $mtime, $title, $artist, $album,
   $album_artist, $composer, $genre, $year, $track_number, $track_total,
   $disc_number, $disc_total, $duration_ms, $bitrate, $sample_rate,
   $is_compilation, $suffix, $artwork_path, $artwork_mime, $lyrics,
-  $music_brainz_id, $artists_json, $replay_gain_json, $album_key, $artist_key,
-  $indexed_at
+  $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
+  $album_key, $artist_key, $indexed_at
 )`;
 
 async function writeTrack(
@@ -400,6 +415,7 @@ async function writeTrack(
     $music_brainz_id: row.music_brainz_id,
     $artists_json: row.artists_json,
     $replay_gain_json: row.replay_gain_json,
+    $release_types_json: row.release_types_json,
     $album_key: row.album_key,
     $artist_key: row.artist_key,
     $indexed_at: row.indexed_at,

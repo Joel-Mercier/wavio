@@ -6,7 +6,9 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getPersistedCacheSize } from "@/config/queryClient";
+import { useLocalLibrarySize } from "@/hooks/useLocalLibrarySize";
 import { useTotalDownloadSize } from "@/hooks/useOfflineDownloads";
+import { useAuthBase } from "@/stores/auth";
 import { niceBytes } from "@/utils/fileSize";
 
 // Bumped by the parent after clear-cache / clear-downloads so the bar recomputes
@@ -27,7 +29,9 @@ export default function StorageOverview({
   refreshToken,
 }: StorageOverviewProps) {
   const { t } = useTranslation();
+  const isLocal = useAuthBase((s) => s.serverType === "local");
   const downloadsBytes = useTotalDownloadSize();
+  const libraryBytes = useLocalLibrarySize();
 
   const { total, segments } = useMemo(() => {
     // refreshToken participates in the dependency list so the values re-read
@@ -36,18 +40,28 @@ export default function StorageOverview({
     const total = Paths.totalDiskSpace || 0;
     const available = Paths.availableDiskSpace || 0;
     const cacheBytes = getPersistedCacheSize();
+    // Local mode has no Wavio downloads; the imported library files are the
+    // app-attributable chunk of used disk instead, so carve them out of "other".
+    const firstSegment: Segment = isLocal
+      ? {
+          key: "library",
+          label: t("app.settings.storageSettings.importedLibrary"),
+          bytes: libraryBytes,
+          color: "bg-emerald-500",
+        }
+      : {
+          key: "downloads",
+          label: t("app.settings.storageSettings.downloads"),
+          bytes: downloadsBytes,
+          color: "bg-emerald-500",
+        };
     const otherBytes = Math.max(
       0,
-      total - available - downloadsBytes - cacheBytes,
+      total - available - firstSegment.bytes - cacheBytes,
     );
 
     const segments: Segment[] = [
-      {
-        key: "downloads",
-        label: t("app.settings.storageSettings.downloads"),
-        bytes: downloadsBytes,
-        color: "bg-emerald-500",
-      },
+      firstSegment,
       {
         key: "cache",
         label: t("app.settings.storageSettings.cache"),
@@ -68,7 +82,7 @@ export default function StorageOverview({
       },
     ];
     return { total, segments };
-  }, [downloadsBytes, refreshToken, t]);
+  }, [downloadsBytes, libraryBytes, isLocal, refreshToken, t]);
 
   if (total <= 0) return null;
 

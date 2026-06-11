@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -41,15 +42,30 @@ export default function LocalLibraryIndexing() {
   const ready = useLocalLibrary((s) => s.ready);
   const lastScanAt = useLocalLibrary((s) => s.lastScanAt);
   const status = useLocalLibrary((s) => s.status);
+  const queryClient = useQueryClient();
 
+  // This gate only ever runs a *complete* scan — either first login (empty
+  // index) or an explicit rescan (lastScanAt cleared via `requestRescan`). Force
+  // a full re-extraction so a rescan picks up new tag fields on files the
+  // incremental scan would otherwise skip as unchanged.
   // Start the scan once the store is hydrated and we've confirmed it's never
   // been scanned. Deps stay stable across the scan (lastScanAt only flips when
   // it finishes), so this fires exactly once; `startScan` also self-guards.
   useEffect(() => {
     if (ready && lastScanAt === undefined) {
-      void startScan();
+      void startScan(true);
     }
   }, [ready, lastScanAt]);
+
+  // When the scan finishes, `setScanFinished` stamps `lastScanAt`, this gate
+  // closes and the app screens remount. Their cached queries can be up to
+  // `staleTime` (5 min) old, so invalidate on unmount to surface the freshly
+  // extracted metadata immediately rather than after the cache expires.
+  useEffect(() => {
+    return () => {
+      void queryClient.invalidateQueries();
+    };
+  }, [queryClient]);
 
   const retry = () => {
     useLocalLibrary.getState().setStatus({
@@ -57,7 +73,7 @@ export default function LocalLibraryIndexing() {
       processed: 0,
       total: 0,
     });
-    void startScan();
+    void startScan(true);
   };
 
   const skip = () => {

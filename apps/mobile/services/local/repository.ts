@@ -36,6 +36,7 @@ export type AlbumAggRow = {
   cover: string | null;
   is_compilation: number;
   music_brainz_id: string | null;
+  release_types_json: string | null;
   indexed_at: number;
   // Rolled up from track_stats across the album's tracks.
   play_count: number;
@@ -71,6 +72,7 @@ const ALBUM_SELECT = `
     MAX(t.artwork_path) AS cover,
     MAX(t.is_compilation) AS is_compilation,
     MAX(t.music_brainz_id) AS music_brainz_id,
+    MAX(t.release_types_json) AS release_types_json,
     MAX(t.indexed_at) AS indexed_at,
     SUM(COALESCE(s.play_count, 0)) AS play_count,
     MAX(s.last_played_at) AS last_played_at
@@ -92,6 +94,15 @@ export async function queryStats(): Promise<LibraryStats> {
      FROM tracks`,
   );
   return row ?? { trackCount: 0, albumCount: 0, artistCount: 0 };
+}
+
+/** Total bytes of every indexed file — the on-disk size of the imported library. */
+export async function queryLibrarySize(): Promise<number> {
+  const db = await getLocalLibraryDb();
+  const row = await db.getFirstAsync<{ bytes: number | null }>(
+    "SELECT SUM(size) AS bytes FROM tracks",
+  );
+  return row?.bytes ?? 0;
 }
 
 export async function queryTrackById(id: string): Promise<TrackRow | null> {

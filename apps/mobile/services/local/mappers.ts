@@ -92,6 +92,7 @@ export function mapAggToAlbum(row: AlbumAggRow): AlbumID3 {
     isCompilation: row.is_compilation === 1,
     musicBrainzId: row.music_brainz_id ?? undefined,
     displayArtist: row.album_artist ?? undefined,
+    releaseTypes: parseReleaseTypes(row.release_types_json),
   };
 }
 
@@ -155,6 +156,16 @@ function parseArtists(
     const names = JSON.parse(json) as string[];
     if (!Array.isArray(names) || names.length === 0) return undefined;
     return names.map((name) => ({ id: localArtistId(artistKey ?? ""), name }));
+  } catch {
+    return undefined;
+  }
+}
+
+function parseReleaseTypes(json: string | null): string[] | undefined {
+  if (!json) return undefined;
+  try {
+    const types = JSON.parse(json) as string[];
+    return Array.isArray(types) && types.length > 0 ? types : undefined;
   } catch {
     return undefined;
   }

@@ -76,6 +76,7 @@ import { Country, Language } from "@/services/taddyPodcasts/types";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import useLocalLibrary from "@/stores/localLibrary";
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
@@ -414,6 +415,13 @@ export default function SettingsDetail() {
   };
 
   const handleMediaLibraryScanPress = () => {
+    // Local mode: re-open the full-screen indexing gate, which runs a forced
+    // full re-extraction (with live progress) rather than the background
+    // incremental scan — so new tag fields land on already-indexed files.
+    if (isLocal) {
+      useLocalLibrary.getState().requestRescan();
+      return;
+    }
     doStartScan.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries();
@@ -624,39 +632,48 @@ export default function SettingsDetail() {
                 </Text>
               </FadeOutScaleDown>
             </HStack>
-            <HStack className="items-center gap-x-4 py-4 justify-between">
-              <VStack className="gap-y-2 w-3/5">
-                <Heading className="text-white font-normal" size="md">
-                  {t("app.settings.musicLibrarySettings.scanStatusLabel")}
-                </Heading>
-                <Text className="text-primary-100 text-sm">
-                  {t("app.settings.musicLibrarySettings.scanStatusDescription")}
-                </Text>
-                {data?.scanStatus?.lastScan && (
+            {!isLocal && (
+              <HStack className="items-center gap-x-4 py-4 justify-between">
+                <VStack className="gap-y-2 w-3/5">
+                  <Heading className="text-white font-normal" size="md">
+                    {t("app.settings.musicLibrarySettings.scanStatusLabel")}
+                  </Heading>
                   <Text className="text-primary-100 text-sm">
-                    {t("app.settings.musicLibrarySettings.scanStatusLastScan", {
-                      lastScan: formatDistanceToNow(
-                        parseISO(data?.scanStatus?.lastScan || ""),
-                      ),
-                    })}
+                    {t(
+                      "app.settings.musicLibrarySettings.scanStatusDescription",
+                    )}
                   </Text>
-                )}
-              </VStack>
-              <Badge
-                className="rounded-full normal-case py-1 px-3 bg-emerald-100"
-                size="lg"
-                variant="solid"
-                action={data?.scanStatus?.scanning ? "warning" : "success"}
-              >
-                <BadgeText className="normal-case text-center text-emerald-700">
-                  {data?.scanStatus?.scanning
-                    ? t(
-                        "app.settings.musicLibrarySettings.scanStatuses.scanning",
-                      )
-                    : t("app.settings.musicLibrarySettings.scanStatuses.idle")}
-                </BadgeText>
-              </Badge>
-            </HStack>
+                  {data?.scanStatus?.lastScan && (
+                    <Text className="text-primary-100 text-sm">
+                      {t(
+                        "app.settings.musicLibrarySettings.scanStatusLastScan",
+                        {
+                          lastScan: formatDistanceToNow(
+                            parseISO(data?.scanStatus?.lastScan || ""),
+                          ),
+                        },
+                      )}
+                    </Text>
+                  )}
+                </VStack>
+                <Badge
+                  className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+                  size="lg"
+                  variant="solid"
+                  action={data?.scanStatus?.scanning ? "warning" : "success"}
+                >
+                  <BadgeText className="normal-case text-center text-emerald-700">
+                    {data?.scanStatus?.scanning
+                      ? t(
+                          "app.settings.musicLibrarySettings.scanStatuses.scanning",
+                        )
+                      : t(
+                          "app.settings.musicLibrarySettings.scanStatuses.idle",
+                        )}
+                  </BadgeText>
+                </Badge>
+              </HStack>
+            )}
             <Divider className="bg-primary-400" />
             {!isLocal && (
               <>

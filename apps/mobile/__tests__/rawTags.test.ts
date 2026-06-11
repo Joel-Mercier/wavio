@@ -163,6 +163,36 @@ describe("parseId3Frames", () => {
     ]);
     expect(parseId3Frames(body, 4)).toEqual({});
   });
+
+  it("reads multi-value release types from a MusicBrainz Album Type TXXX", () => {
+    const body = buildId3Body([
+      id3Frame(
+        "TXXX",
+        [
+          0x03,
+          ...utf8("MusicBrainz Album Type"),
+          NUL,
+          ...utf8("album"),
+          NUL,
+          ...utf8("live"),
+        ],
+        4,
+      ),
+    ]);
+    expect(parseId3Frames(body, 4).releaseTypes).toEqual(["album", "live"]);
+  });
+
+  it("recovers a year from a TDRC timestamp frame", () => {
+    const body = buildId3Body([
+      id3Frame("TDRC", [0x03, ...utf8("2021-05-01T12:00:00")], 4),
+    ]);
+    expect(parseId3Frames(body, 4).year).toBe(2021);
+  });
+
+  it("recovers a year from a legacy TYER frame", () => {
+    const body = buildId3Body([id3Frame("TYER", [0x00, ...utf8("1998")], 3)]);
+    expect(parseId3Frames(body, 3).year).toBe(1998);
+  });
 });
 
 describe("parseVorbisComments", () => {
@@ -210,7 +240,17 @@ describe("parseVorbisComments", () => {
   });
 
   it("returns an empty object when there are no relevant comments", () => {
-    const bytes = buildVorbis("v", ["TITLE=x", "ALBUM=y", "DATE=2020"]);
+    const bytes = buildVorbis("v", ["TITLE=x", "ALBUM=y"]);
     expect(parseVorbisComments(bytes)).toEqual({});
+  });
+
+  it("collects multi-value RELEASETYPE comments", () => {
+    const bytes = buildVorbis("v", ["RELEASETYPE=album", "RELEASETYPE=live"]);
+    expect(parseVorbisComments(bytes).releaseTypes).toEqual(["album", "live"]);
+  });
+
+  it("recovers the year from a DATE comment, ignoring the day/month", () => {
+    const bytes = buildVorbis("v", ["DATE=2019-03-08"]);
+    expect(parseVorbisComments(bytes).year).toBe(2019);
   });
 });

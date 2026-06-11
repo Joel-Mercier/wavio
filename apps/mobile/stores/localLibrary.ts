@@ -58,6 +58,12 @@ interface LocalLibraryStore {
   setStatus: (status: ScanStatus) => void;
   setScanFinished: (result: ScanResult) => void;
   setReady: () => void;
+  /**
+   * Clear the last-scan stamp so the full-screen indexing gate
+   * (components/local/LocalLibraryIndexing) re-opens and runs a fresh scan.
+   * Used by the settings "rescan" action in local mode.
+   */
+  requestRescan: () => void;
   star: (target: StarTarget) => void;
   unstar: (target: StarTarget) => void;
   /** Set a 1–5 rating for a local id; a rating of 0 clears it (Subsonic). */
@@ -91,6 +97,10 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
 
       setReady: () => {
         set({ ready: true });
+      },
+
+      requestRescan: () => {
+        set({ lastScanAt: undefined, lastScanResult: undefined });
       },
 
       setScanFinished: (result) => {

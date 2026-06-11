@@ -58,6 +58,13 @@ export type AudioMetadata = {
   artists?: string[];
   /** MusicBrainz recording/track id (ID3 UFID / Vorbis MUSICBRAINZ_TRACKID). */
   musicBrainzId?: string;
+  /**
+   * MusicBrainz release group type(s) — ID3 `TXXX:MusicBrainz Album Type` /
+   * Vorbis `RELEASETYPE`. The OS metadata APIs don't surface these, so they only
+   * appear when `enrich` is requested. Album-level, but read off each track and
+   * rolled up by the local indexer.
+   */
+  releaseTypes?: string[];
 };
 
 type AudioMetadataNativeModule = {
@@ -125,5 +132,9 @@ function mergeRawTags(base: AudioMetadata, raw: RawTagData): AudioMetadata {
   if (raw.lyrics) merged.lyrics = raw.lyrics;
   if (raw.artists?.length) merged.artists = raw.artists;
   if (raw.musicBrainzId) merged.musicBrainzId = raw.musicBrainzId;
+  if (raw.releaseTypes?.length) merged.releaseTypes = raw.releaseTypes;
+  // The native APIs don't expose release types, so raw is authoritative there.
+  // For year they do, so only fall back to the raw frame when native found none.
+  if (merged.year == null && raw.year != null) merged.year = raw.year;
   return merged;
 }

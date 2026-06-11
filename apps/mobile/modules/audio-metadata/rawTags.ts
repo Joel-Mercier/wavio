@@ -23,6 +23,12 @@ export type RawTagData = {
   lyrics?: string;
   artists?: string[];
   musicBrainzId?: string;
+  /** MusicBrainz release group type(s): ID3 `TXXX:MusicBrainz Album Type` /
+   *  Vorbis `RELEASETYPE`. Multi-valued (e.g. ["album", "live"]). */
+  releaseTypes?: string[];
+  /** Release year recovered from ID3 `TDRC`/`TYER`/… or Vorbis `DATE`/`YEAR`.
+   *  A fallback for files where the OS metadata API returns no year. */
+  year?: number;
 };
 
 // Cap how much we'll pull for a tag region, as a safety valve against a
@@ -131,6 +137,13 @@ export function parseId3Frames(
       const value = decodeTextFrame(data);
       const artists = splitArtists(value);
       if (artists.length) result.artists = artists;
+    } else if (isYearFrame(id)) {
+      // Keep the first year-bearing frame found in tag order (files rarely carry
+      // more than one); this is only a fallback for a missing native year.
+      if (result.year == null) {
+        const year = parseYear(decodeTextFrame(data));
+        if (year != null) result.year = year;
+      }
     } else if (id === "USLT" || id === "ULT") {
       const lyrics = parseUslt(data);
       if (lyrics) result.lyrics = lyrics;
@@ -166,6 +179,12 @@ function applyTxxx(
     case "REPLAYGAIN_ALBUM_PEAK":
       replayGain.albumPeak = parseFloatSafe(value);
       break;
+    case "MUSICBRAINZ ALBUM TYPE":
+    case "RELEASETYPE": {
+      const types = splitValues(value);
+      if (types.length) result.releaseTypes = types;
+      break;
+    }
     default:
       if (
         key.includes("MUSICBRAINZ") &&
@@ -175,6 +194,19 @@ function applyTxxx(
         result.musicBrainzId = value.trim() || undefined;
       }
   }
+}
+
+// ID3 frames that carry a release/recording year: TDRC (v2.4 timestamp) and
+// TDRL (release time) take precedence over the legacy TYER/TYE year frames.
+function isYearFrame(id: string): boolean {
+  return (
+    id === "TDRC" ||
+    id === "TDRL" ||
+    id === "TYER" ||
+    id === "TYE" ||
+    id === "TORY" ||
+    id === "TOR"
+  );
 }
 
 function parseUslt(data: Uint8Array): string | undefined {
@@ -245,6 +277,7 @@ export function parseVorbisComments(bytes: Uint8Array): RawTagData {
   const result: RawTagData = {};
   const replayGain: ReplayGain = {};
   const artists: string[] = [];
+  const releaseTypes: string[] = [];
 
   let pos = 0;
   const vendorLen = readUInt32LE(bytes, pos);
@@ -282,6 +315,20 @@ export function parseVorbisComments(bytes: Uint8Array): RawTagData {
       case "ARTIST":
         artists.push(...splitArtists(value));
         break;
+      case "RELEASETYPE":
+      case "MUSICBRAINZ_ALBUMTYPE":
+        releaseTypes.push(...splitValues(value));
+        break;
+      case "DATE":
+      case "YEAR":
+      case "ORIGINALDATE":
+      case "ORIGINALYEAR":
+        // DATE/YEAR are the common spellings; ORIGINAL* are a weaker fallback.
+        if (result.year == null) {
+          const year = parseYear(value);
+          if (year != null) result.year = year;
+        }
+        break;
       case "LYRICS":
       case "UNSYNCEDLYRICS":
         if (!result.lyrics) result.lyrics = cleanup(value) || undefined;
@@ -294,6 +341,7 @@ export function parseVorbisComments(bytes: Uint8Array): RawTagData {
   }
 
   if (artists.length) result.artists = dedupe(artists);
+  if (releaseTypes.length) result.releaseTypes = dedupe(releaseTypes);
   if (Object.keys(replayGain).length) result.replayGain = replayGain;
   return result;
 }
@@ -316,6 +364,26 @@ function splitArtists(value: string): string[] {
   return dedupe(
     parts.map((p) => cleanup(p)).filter((p): p is string => p.length > 0),
   );
+}
+
+/** Split a possibly multi-valued tag (NUL- or "/"/";"-separated) into a list. */
+function splitValues(value: string): string[] {
+  const byNul = value
+    .split("\u0000")
+    .map((p) => cleanup(p))
+    .filter((p): p is string => p.length > 0);
+  const parts = byNul.length > 1 ? byNul : (byNul[0] ?? "").split(/\s*[/;]\s*/);
+  return dedupe(
+    parts.map((p) => cleanup(p)).filter((p): p is string => p.length > 0),
+  );
+}
+
+/** Pull a 4-digit year out of a date/timestamp tag value (e.g. "2021-05-01"). */
+function parseYear(value: string): number | undefined {
+  const match = value.match(/\d{4}/);
+  if (!match) return undefined;
+  const year = Number.parseInt(match[0], 10);
+  return Number.isFinite(year) ? year : undefined;
 }
 
 function dedupe(values: string[]): string[] {
