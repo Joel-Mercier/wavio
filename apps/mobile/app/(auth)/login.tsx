@@ -351,6 +351,13 @@ export default function LoginScreen() {
     { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
     { value: "local", label: t("auth.login.serverTypeLocal") },
   ];
+  const serverTypeRows: [
+    (typeof serverTypeOptions)[number],
+    (typeof serverTypeOptions)[number]?,
+  ][] = [];
+  for (let i = 0; i < serverTypeOptions.length; i += 2) {
+    serverTypeRows.push([serverTypeOptions[i], serverTypeOptions[i + 1]]);
+  }
 
   const triggerLabel =
     preselectedServer?.name ?? t("auth.login.serverPlaceholder");
@@ -419,35 +426,39 @@ export default function LoginScreen() {
           )}
           <form.Field name="type">
             {(field) => (
-              <HStack className="mb-4 gap-2">
-                {serverTypeOptions.map((opt) => {
-                  const selected = field.state.value === opt.value;
-                  return (
-                    <FadeOutScaleDown
-                      key={opt.value}
-                      onPress={() => field.handleChange(opt.value)}
-                      className={`flex-1 rounded-md border ${
-                        selected
-                          ? "border-emerald-500 bg-emerald-500"
-                          : "border-primary-600 bg-primary-600"
-                      }`}
-                    >
-                      <VStack className="items-center justify-center py-3 px-3 gap-y-2">
-                        <ServerTypeIcon type={opt.value} size={32} />
-                        <Text
-                          className={`text-sm text-center ${
-                            selected
-                              ? "text-primary-800 font-bold"
-                              : "text-white"
-                          }`}
+              <VStack className="mb-4 gap-y-4">
+                {serverTypeRows.map(([a, b]) => (
+                  <HStack key={a.value} className="gap-x-4">
+                    {[a, b].map((opt) => {
+                      if (!opt) return null;
+                      const selected = field.state.value === opt.value;
+                      return (
+                        <FadeOutScaleDown
+                          key={opt.value}
+                          onPress={() => field.handleChange(opt.value)}
+                          className="flex-1"
                         >
-                          {opt.label}
-                        </Text>
-                      </VStack>
-                    </FadeOutScaleDown>
-                  );
-                })}
-              </HStack>
+                          <HStack
+                            className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
+                              selected
+                                ? "border-emerald-500"
+                                : "border-primary-600"
+                            }`}
+                          >
+                            <ServerTypeIcon type={opt.value} size={28} />
+                            <Text
+                              className="text-sm text-white font-bold flex-1"
+                              numberOfLines={1}
+                            >
+                              {opt.label}
+                            </Text>
+                          </HStack>
+                        </FadeOutScaleDown>
+                      );
+                    })}
+                  </HStack>
+                ))}
+              </VStack>
             )}
           </form.Field>
           <form.Subscribe selector={(state) => state.values.type}>
