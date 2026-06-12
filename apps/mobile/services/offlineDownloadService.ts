@@ -19,6 +19,9 @@ export class OfflineDownloadService {
   private static instance: OfflineDownloadService;
   private activeIds: Set<string> = new Set();
   private resolvers: Map<string, Resolvers> = new Map();
+  // Bumped by clearAllDownloads so in-flight downloads from before the clear
+  // discard their result instead of re-registering into the wiped store.
+  private generation = 0;
 
   private constructor() {
     // Drain any persisted queue from a previous session and reconcile stale state.
@@ -157,20 +160,26 @@ export class OfflineDownloadService {
   private async executeDownload(track: Child): Promise<void> {
     const offlineStore = useOffline.getState();
     const resolvers = this.resolvers.get(track.id);
+    const generation = this.generation;
 
     try {
-      await this.writeTrackToDisk(track);
+      await this.writeTrackToDisk(track, generation);
       offlineStore.removeFromDownloadQueue(track.id);
       resolvers?.resolve();
     } catch (error) {
-      offlineStore.removeFromDownloadQueue(track.id);
-      offlineStore.setDownloadProgress(track.id, {
-        trackId: track.id,
-        status: "failed",
-        progress: 0,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      logError(`Download Manager: Error downloading track ${track.id}:`, error);
+      if (generation === this.generation) {
+        offlineStore.removeFromDownloadQueue(track.id);
+        offlineStore.setDownloadProgress(track.id, {
+          trackId: track.id,
+          status: "failed",
+          progress: 0,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        logError(
+          `Download Manager: Error downloading track ${track.id}:`,
+          error,
+        );
+      }
       resolvers?.reject(error);
     } finally {
       this.activeIds.delete(track.id);
@@ -179,7 +188,10 @@ export class OfflineDownloadService {
     }
   }
 
-  private async writeTrackToDisk(track: Child): Promise<void> {
+  private async writeTrackToDisk(
+    track: Child,
+    generation: number,
+  ): Promise<void> {
     const offlineStore = useOffline.getState();
 
     offlineStore.setDownloadProgress(track.id, {
@@ -208,6 +220,13 @@ export class OfflineDownloadService {
 
     if (!downloadResult.exists) {
       throw new Error("Download failed - file does not exist");
+    }
+
+    if (generation !== this.generation) {
+      try {
+        downloadResult.delete();
+      } catch {}
+      throw new Error("Downloads cleared");
     }
 
     const offlineTrack: OfflineTrack = {
@@ -277,6 +296,7 @@ export class OfflineDownloadService {
         if (scopedDir.exists) scopedDir.delete();
       }
 
+      this.generation++;
       this.activeIds.clear();
       for (const { reject } of this.resolvers.values()) {
         reject(new Error("Downloads cleared"));

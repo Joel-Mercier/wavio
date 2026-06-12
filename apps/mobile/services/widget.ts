@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
 import { getColors } from "react-native-image-colors";
+import { getAuthScope } from "@/config/storage";
 import {
   getPlaybackSnapshot,
   subscribePlaybackState,
@@ -169,6 +170,22 @@ export function initWidget(queryClient: QueryClient) {
     if (playing === lastIsPlaying) return;
     lastIsPlaying = playing;
     Native.setIsPlaying(playing);
+  });
+
+  let lastScope = (() => {
+    const { url, username } = useAuthBase.getState();
+    return getAuthScope(url, username);
+  })();
+  useAuthBase.subscribe((state) => {
+    const scope = getAuthScope(state.url, state.username);
+    if (scope === lastScope) return;
+    lastScope = scope;
+    // New (server, user) scope: drop the previous one's now-playing and recent
+    // strip rather than leaving them stale on the home screen.
+    lastTrackId = null;
+    void pushNowPlaying();
+    Native.updateRecent([]);
+    if (state.isAuthenticated) primeRecent(queryClient);
   });
 
   queryClient.getQueryCache().subscribe((event) => {

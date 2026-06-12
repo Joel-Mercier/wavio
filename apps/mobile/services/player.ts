@@ -509,9 +509,18 @@ const statusListeners: ReturnType<AudioPlayer["addListener"]>[] = [];
 // same player; we only need to sync queue/scrobble/lockscreen state.
 function handleNextTrackStarted() {
   if (transition.kind !== "queued") return;
+  const queuedId = transition.trackId;
   const next = peekNextTrack();
   if (!next) {
     transition = { kind: "idle" };
+    return;
+  }
+  if (next.id !== queuedId) {
+    // The queue changed after prepareNext(): ExoPlayer advanced into a stale
+    // source. Advance the queue and let the subscription load the real next
+    // track on the active player.
+    transition = { kind: "idle" };
+    useQueue.getState().next();
     return;
   }
   resetScrobbleState();
@@ -676,8 +685,10 @@ function makeStatusListener(slot: Slot) {
             }
             useQueue.getState().enqueueEnd(tracks);
             useQueue.getState().next();
+            // The queue subscription loads the new track on the id change; only
+            // load explicitly when the id didn't change (so it never fired).
             const c = useQueue.getState().getCurrent();
-            if (c) loadAndPlay(c);
+            if (c && c.id === previousId) loadAndPlay(c);
           })
           .catch(() => {
             try {
@@ -756,6 +767,13 @@ let hasHydrated = false;
 // subscription firing to load silently.
 let suppressAutoplayOnce = false;
 const queueUnsub = useQueue.subscribe((state) => {
+  // A queue edit (play-next insert, removal, reorder) can invalidate a source
+  // already queued on ExoPlayer's timeline via prepareNext(). Drop it — the
+  // status listener re-arms the preload on its next tick if still in window.
+  if (transition.kind === "queued") {
+    const upcoming = peekNextTrack();
+    if (upcoming?.id !== transition.trackId) abortTransition();
+  }
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;
@@ -992,17 +1010,21 @@ export function skipPrevious(options?: { force?: boolean }) {
     active.seekTo(0);
     return;
   }
-  if (transition.kind !== "idle") abortTransition();
   const queue = useQueue.getState();
-  const previousIndex =
-    queue.currentIndex != null ? queue.currentIndex - 1 : -1;
-  if (previousIndex >= 0) {
-    queue.setCurrentIndex(previousIndex);
-  } else if (queue.repeatMode === "all" && queue.queue.length > 0) {
-    queue.setCurrentIndex(queue.queue.length - 1);
-  } else {
+  // At the start of the playback order with no repeat there is no previous
+  // target — restart the current track instead of letting previous() clear the
+  // queue position (which would unload it).
+  const atStart =
+    queue.repeatMode !== "all" &&
+    (queue.shuffle && queue.shuffleOrderIds?.length
+      ? (queue.shuffleCursor ?? 0) <= 0
+      : (queue.currentIndex ?? 0) <= 0);
+  if (atStart) {
     active.seekTo(0);
+    return;
   }
+  if (transition.kind !== "idle") abortTransition();
+  queue.previous();
 }
 
 export function seekTo(seconds: number) {

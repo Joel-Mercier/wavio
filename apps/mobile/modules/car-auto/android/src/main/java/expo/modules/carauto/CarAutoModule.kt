@@ -59,6 +59,11 @@ class CarAutoModule : Module() {
       player.applyQueue(items, o.optInt("currentIndex", 0))
     }
 
+    Function("setQueueIndex") { index: Int ->
+      val player = WavioCarBrowserService.activePlayer ?: return@Function
+      player.applyQueueIndex(index)
+    }
+
     Function("setPlaybackState") { json: String ->
       val player = WavioCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function

@@ -122,7 +122,13 @@ private fun writeArtwork(bytes: ByteArray, dirSpec: String): Pair<String, String
     if (!dir.exists()) dir.mkdirs()
     val (ext, mime) = imageType(bytes)
     val out = File(dir, "${sha1Hex(bytes)}.$ext")
-    if (!out.exists()) out.writeBytes(bytes)
+    if (!out.exists()) {
+      // Write via temp + rename so concurrent extractions of tracks sharing
+      // the same artwork never expose a partially written file.
+      val tmp = File(dir, "${out.name}.${System.nanoTime()}.tmp")
+      tmp.writeBytes(bytes)
+      if (!tmp.renameTo(out)) tmp.delete()
+    }
     Pair("file://${out.absolutePath}", mime)
   } catch (e: Exception) {
     null

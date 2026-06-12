@@ -92,6 +92,15 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     invalidateState()
   }
 
+  // Cheap cursor move within the already-mirrored queue, so a track skip
+  // doesn't need the whole track list re-pushed from JS.
+  fun applyQueueIndex(index: Int) = runOnMain {
+    if (queue.isEmpty()) return@runOnMain
+    currentIndex = index.coerceIn(0, queue.size - 1)
+    queue.getOrNull(currentIndex)?.let { nowPlaying = it }
+    invalidateState()
+  }
+
   fun applyPlaybackState(isPlaying: Boolean, posMs: Long, shuf: Boolean, repeat: Int) = runOnMain {
     playing = isPlaying
     positionMs = posMs.coerceAtLeast(0L)

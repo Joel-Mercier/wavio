@@ -242,9 +242,7 @@ export function mapJellyfinLyrics(
     line: payload.Lyrics.map((l) => ({
       value: l.Text,
       start:
-        typeof l.Start === "number"
-          ? ticksToSeconds(l.Start) * 1000
-          : undefined,
+        typeof l.Start === "number" ? Math.round(l.Start / 10_000) : undefined,
     })),
     displayTitle: payload.Metadata?.Title,
   };

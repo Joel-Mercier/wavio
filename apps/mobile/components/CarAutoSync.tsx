@@ -86,6 +86,7 @@ export default function CarAutoSync() {
     // === Mirror current track + queue + playback state to native ===
     let lastTrackId: string | null = null;
     let lastQueueSig: string | null = null;
+    let lastQueueIndex: number | null = null;
     const pushNowPlaying = () => {
       if (!CarAutoBridge.available) return;
       const current = useQueue.getState().getCurrent();
@@ -102,11 +103,19 @@ export default function CarAutoSync() {
         .map(trackToNowPlaying)
         .filter((t): t is NowPlayingPayload => t != null);
       const idx = q.currentIndex ?? 0;
-      // Cheap signature so we don't re-serialize on every position tick.
-      const sig = `${idx}:${tracks.length}:${tracks[0]?.id ?? ""}:${tracks[tracks.length - 1]?.id ?? ""}`;
-      if (sig === lastQueueSig) return;
-      lastQueueSig = sig;
-      CarAutoBridge.setQueue({ tracks, currentIndex: idx });
+      // Only re-push the full track list when its contents actually changed;
+      // a plain skip just moves the cursor on the already-mirrored queue.
+      const sig = tracks.map((t) => t.id).join("|");
+      if (sig !== lastQueueSig) {
+        lastQueueSig = sig;
+        lastQueueIndex = idx;
+        CarAutoBridge.setQueue({ tracks, currentIndex: idx });
+        return;
+      }
+      if (idx !== lastQueueIndex) {
+        lastQueueIndex = idx;
+        CarAutoBridge.setQueueIndex(idx);
+      }
     };
 
     const pushPlaybackState = () => {

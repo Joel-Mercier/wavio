@@ -1,77 +1,40 @@
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { useQueryClient } from "@tanstack/react-query";
-import * as Clipboard from "expo-clipboard";
-import { Directory, File, Paths } from "expo-file-system";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
-import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import BookmarkPlus from "lucide-react-native/dist/esm/icons/bookmark-plus.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
-import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
-import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
-import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
-import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
-import PodcastIcon from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
-import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
-import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
 import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
-import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import {
-  CastButton,
-  useCastSession,
-  useMediaStatus,
-} from "react-native-google-cast";
+import { CastButton } from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Share from "react-native-share";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
-import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AnimatedHeart from "@/components/AnimatedHeart";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
-import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
-import LyricsDialog from "@/components/player/LyricsDialog";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
+import PlayerSheets from "@/components/player/PlayerSheets";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import {
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-} from "@/components/ui/slider";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -81,40 +44,14 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
-import { useCreateShare } from "@/hooks/backend/useSharing";
-import {
-  useIsPlaying,
-  usePlaybackProgress,
-  usePlayingTrack,
-  useSyncedLyrics,
-} from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
+import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
-import {
-  activate as activateJukebox,
-  deactivate as deactivateJukebox,
-  jukeboxSetGain,
-} from "@/services/jukebox";
-import {
-  getCurrentTime,
-  isPlaying as isLocalPlaying,
-  pause as pauseLocal,
-  play as playLocal,
-  seekTo as seekLocal,
-  skipNext,
-  skipPrevious,
-  togglePlayPause,
-} from "@/services/player";
-import { useSleepTimer } from "@/services/sleepTimer";
-import useBookmarks from "@/stores/bookmarks";
+import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
-import { formatSeconds } from "@/utils/date";
-import { formatRichTextPlain } from "@/utils/formatRichText";
-import { logError } from "@/utils/log";
-import { downloadUrl, streamUrl } from "@/utils/streaming";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -152,88 +89,41 @@ function CoverSlot({
   );
 }
 
-// Live label for the "set bookmark at" action. Isolated in its own component so
-// only this row re-renders on the ~4 Hz progress tick (it's only mounted while
-// the action sheet is open).
-function SetBookmarkLabel() {
-  const { t } = useTranslation();
-  const { currentTime } = usePlaybackProgress();
-  return (
-    <Text className="ml-4 text-lg text-gray-200">
-      {t("app.player.setBookmarkAt", { time: formatSeconds(currentTime) })}
-    </Text>
-  );
-}
-
 export default function PlayerScreen() {
-  const [blue500, emerald500, gray800, white, gray200] = Uniwind.getCSSVariable(
-    [
-      "--color-blue-500",
-      "--color-emerald-500",
-      "--color-gray-800",
-      "--color-white",
-      "--color-gray-200",
-    ],
-  ) as string[];
+  const [blue500, emerald500, gray800] = Uniwind.getCSSVariable([
+    "--color-blue-500",
+    "--color-emerald-500",
+    "--color-gray-800",
+  ]) as string[];
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
-  const [clipboardText, setClipboardText] = useState("");
-  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
-  const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
-  const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const toast = useToast();
+  const actionsSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
-  const { handleSheetPositionChange: handleSleepSheetPositionChange } =
-    useBottomSheetBackHandler(sleepTimerSheetRef);
-  const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetArtistsModalRef);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
-  const { handleSheetPositionChange: handleJukeboxSheetPositionChange } =
-    useBottomSheetBackHandler(jukeboxSheetRef);
   const jukeboxActive = useJukebox((s) => s.active);
-  const jukeboxGain = useJukebox((s) => s.gain);
-  const jukeboxStatus = useJukebox((s) => s.status);
-  const sleepEndsAt = useSleepTimer((s) => s.endsAt);
-  const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
-  const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
-  const setSleepEndOfTrack = useSleepTimer((s) => s.setEndOfTrack);
-  const cancelSleepTimer = useSleepTimer((s) => s.cancel);
-  const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
-  const [sleepNow, setSleepNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (sleepEndsAt == null) return;
-    const id = setInterval(() => setSleepNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [sleepEndsAt]);
-  const sleepRemainingLabel = (() => {
-    if (sleepEndOfTrack) return t("app.player.sleepTimerEndOfTrack");
-    if (sleepEndsAt == null) return null;
-    const remaining = Math.max(0, sleepEndsAt - sleepNow);
-    const totalSec = Math.ceil(remaining / 1000);
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  })();
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const colors = useImageColors(playingTrack?.artwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-  const doShare = useCreateShare();
   const repeatMode = useQueue((store) => store.repeatMode);
   const setRepeatMode = useQueue((store) => store.setRepeatMode);
   const shuffle = useQueue((store) => store.shuffle);
   const setShuffle = useQueue((store) => store.setShuffle);
-  const queue = useQueue((store) => store.queue);
   const currentIndex = useQueue((store) => store.currentIndex);
-  const queueLength = queue.length;
+  const queueLength = useQueue((store) => store.queue.length);
+  const prevTrack = useQueue((store) =>
+    store.currentIndex != null && store.currentIndex > 0
+      ? store.queue[store.currentIndex - 1]
+      : null,
+  );
+  const nextTrack = useQueue((store) =>
+    store.currentIndex != null && store.currentIndex < store.queue.length - 1
+      ? store.queue[store.currentIndex + 1]
+      : null,
+  );
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
@@ -256,18 +146,11 @@ export default function PlayerScreen() {
     (shuffle ||
       repeatMode !== "off" ||
       (currentIndex != null && currentIndex > 0));
-  const prevTrack =
-    currentIndex != null && currentIndex > 0 ? queue[currentIndex - 1] : null;
-  const nextTrack =
-    currentIndex != null && currentIndex < queueLength - 1
-      ? queue[currentIndex + 1]
-      : null;
   const [coverArea, setCoverArea] = useState({ width: 0, height: 0 });
   const coverSize = Math.max(
     0,
     Math.min(coverArea.width - 48, coverArea.height),
   );
-  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const { lyrics } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
   const coverTranslateX = useSharedValue(0);
@@ -315,401 +198,15 @@ export default function PlayerScreen() {
         coverTranslateX.value = withTiming(0, { duration: 200 });
       }
     });
-  const toast = useToast();
-  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
-  const castSession = useCastSession();
-  const castClient = castSession?.client ?? null;
-  const castMediaStatus = useMediaStatus();
-  const previousSessionIdRef = useRef<string | null>(null);
-  const wasPlayingBeforeCastRef = useRef(false);
-  const lastReceiverPositionRef = useRef(0);
-  const lastLoadedCastTrackIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    const pos = castMediaStatus?.streamPosition;
-    if (typeof pos === "number" && Number.isFinite(pos)) {
-      lastReceiverPositionRef.current = pos;
-    }
-  }, [castMediaStatus?.streamPosition]);
-
-  useEffect(() => {
-    const currentSessionId = castSession?.id ?? null;
-    const previousSessionId = previousSessionIdRef.current;
-    if (currentSessionId === previousSessionId) return;
-    previousSessionIdRef.current = currentSessionId;
-
-    if (currentSessionId && !previousSessionId) {
-      wasPlayingBeforeCastRef.current = isLocalPlaying();
-      const localPos = getCurrentTime();
-      pauseLocal();
-      if (castClient && playingTrack) {
-        const contentUrl = isRadio
-          ? (playingTrack.streamUrl ?? playingTrack.url)
-          : streamUrl(playingTrack.id);
-        if (contentUrl) {
-          lastLoadedCastTrackIdRef.current = playingTrack.id;
-          castClient.loadMedia({
-            autoplay: wasPlayingBeforeCastRef.current,
-            startTime: isRadio ? undefined : localPos,
-            mediaInfo: {
-              contentUrl,
-              contentType: "audio/mpeg",
-              metadata: {
-                type: "musicTrack",
-                title: playingTrack.title,
-                albumTitle: playingTrack.album,
-                artist: playingTrack.artist,
-                images: playingTrack.artwork
-                  ? [{ url: playingTrack.artwork }]
-                  : undefined,
-              },
-              streamDuration: playingTrack.duration,
-            },
-          });
-        }
-      }
-    } else if (!currentSessionId && previousSessionId) {
-      const resumePos = lastReceiverPositionRef.current;
-      lastLoadedCastTrackIdRef.current = null;
-      if (!isRadio && resumePos > 0) seekLocal(resumePos);
-      if (wasPlayingBeforeCastRef.current) playLocal();
-      wasPlayingBeforeCastRef.current = false;
-      lastReceiverPositionRef.current = 0;
-    }
-  }, [castSession, castClient, playingTrack, isRadio]);
-
-  useEffect(() => {
-    if (!castClient || !castSession || !playingTrack) return;
-    if (lastLoadedCastTrackIdRef.current === playingTrack.id) return;
-    const contentUrl = isRadio
-      ? (playingTrack.streamUrl ?? playingTrack.url)
-      : streamUrl(playingTrack.id);
-    if (!contentUrl) return;
-    lastLoadedCastTrackIdRef.current = playingTrack.id;
-    castClient.loadMedia({
-      mediaInfo: {
-        contentUrl,
-        contentType: "audio/mpeg",
-        metadata: {
-          type: "musicTrack",
-          title: playingTrack.title,
-          albumTitle: playingTrack.album,
-          artist: playingTrack.artist,
-          images: playingTrack.artwork
-            ? [{ url: playingTrack.artwork }]
-            : undefined,
-        },
-        streamDuration: playingTrack.duration,
-      },
-    });
-  }, [castClient, castSession, playingTrack, isRadio]);
+  const castSession = useCastSync(playingTrack, isRadio);
 
   const handlePresentModalPress = useCallback(() => {
-    bottomSheetModalRef.current?.present();
+    actionsSheetRef.current?.present();
   }, []);
-
-  const handleSetBookmarkPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!playingTrack?.id) return;
-    // Read the live position at press time so the saved bookmark matches what
-    // the dynamic label was showing.
-    useBookmarks.getState().addBookmark(playingTrack.id, getCurrentTime());
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>{t("app.player.bookmarkAdded")}</ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const trackArtists: { id: string; name: string }[] = playingTrack?.artists
-    ?.length
-    ? playingTrack.artists
-    : playingTrack?.artistId
-      ? [{ id: playingTrack.artistId, name: playingTrack.artist ?? "" }]
-      : [];
-  const hasMultipleArtists = trackArtists.length > 1;
-
-  const handleGoToArtistPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (hasMultipleArtists) {
-      bottomSheetArtistsModalRef.current?.present();
-      return;
-    }
-    const artistId = trackArtists[0]?.id ?? playingTrack?.artistId;
-    if (artistId) {
-      router.replace(`/artists/${artistId}`);
-    }
-  };
-
-  const handleArtistPickPress = (artistId: string) => {
-    bottomSheetArtistsModalRef.current?.dismiss();
-    router.replace(`/artists/${artistId}`);
-  };
-
-  const handleGoToAlbumPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!playingTrack?.albumId) return;
-    router.replace(`/albums/${playingTrack.albumId}`);
-  };
-
-  const handleMusicBrainzPress = async () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (
-      playingTrack?.musicBrainzId &&
-      (await Linking.canOpenURL(
-        `https://musicbrainz.org/recording/${playingTrack?.musicBrainzId}`,
-      ))
-    ) {
-      Linking.openURL(
-        `https://musicbrainz.org/recording/${playingTrack?.musicBrainzId}`,
-      );
-    }
-  };
-
-  const handleShowLyricsPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    setShowLyricsDialog(true);
-  };
-
-  const handleSimilarSongsPress = () => {
-    if (!playingTrack) return;
-    bottomSheetModalRef.current?.dismiss();
-    router.replace({
-      pathname: "/tracks/[id]/similar",
-      params: { id: playingTrack.id, title: playingTrack.title ?? "" },
-    });
-  };
-
-  const handlePlayNextPress = () => {
-    if (!playingTrack) return;
-    useQueue.getState().enqueueNext(playingTrack);
-    bottomSheetModalRef.current?.dismiss();
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleAddToQueuePress = () => {
-    if (!playingTrack) return;
-    useQueue.getState().enqueueEnd(playingTrack);
-    bottomSheetModalRef.current?.dismiss();
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.shared.addedToQueueMessage", { count: 1 })}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleSleepTimerPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    sleepTimerSheetRef.current?.present();
-  };
 
   const handleJukeboxPress = () => {
     jukeboxSheetRef.current?.present();
-  };
-
-  const handleJukeboxToggle = async () => {
-    if (jukeboxActive) {
-      try {
-        const { position } = await deactivateJukebox();
-        if (position > 0) seekLocal(position);
-      } catch (e) {
-        logError(e);
-      }
-      jukeboxSheetRef.current?.dismiss();
-      return;
-    }
-    const position = getCurrentTime();
-    const wasPlaying = isLocalPlaying();
-    pauseLocal();
-    try {
-      await activateJukebox({ position, autoplay: wasPlaying });
-    } catch (error) {
-      logError(error);
-      if (wasPlaying) playLocal();
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.player.jukeboxErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
-  const handleJukeboxGainChange = (value: number) => {
-    jukeboxSetGain(value / 100).catch(() => {});
-  };
-
-  const handleSleepPresetPress = (minutes: number) => {
-    setSleepMinutes(minutes);
-    sleepTimerSheetRef.current?.dismiss();
-  };
-
-  const handleSleepEndOfTrackPress = () => {
-    setSleepEndOfTrack();
-    sleepTimerSheetRef.current?.dismiss();
-  };
-
-  const handleSleepCancelPress = () => {
-    cancelSleepTimer();
-    sleepTimerSheetRef.current?.dismiss();
-  };
-
-  const handleGoToPodcastSeriesPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!podcastSeries) return;
-    router.navigate({
-      pathname: "/podcast-series/[id]",
-      params: {
-        id: podcastSeries.uuid,
-        uuid: podcastSeries.uuid,
-        name: podcastSeries.name,
-        description: podcastSeries.description,
-        imageUrl: podcastSeries.imageUrl,
-        authorName: podcastSeries.authorName,
-        genres: podcastSeries.genres?.join(","),
-      },
-    });
-  };
-
-  const handleAddFavoritePodcastPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!podcastSeries) return;
-    addFavoritePodcast(podcastSeries);
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.podcasts.addToFavoritesSuccessMessage")}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleRemoveFavoritePodcastPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!podcastSeries) return;
-    removeFavoritePodcast(podcastSeries.uuid);
-    toast.show({
-      placement: "top",
-      duration: 3000,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.podcasts.removeFromFavoritesSuccessMessage")}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleSharePodcastEpisodePress = async () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!playingTrack) return;
-    try {
-      const plain = formatRichTextPlain(playingTrack.description);
-      const excerpt =
-        plain.length > 240 ? `${plain.slice(0, 240).trimEnd()}…` : plain;
-      const message = [playingTrack.title, excerpt]
-        .filter(Boolean)
-        .join("\n\n");
-
-      const linkUrl =
-        playingTrack.websiteUrl ||
-        playingTrack.podcastSeries?.websiteUrl ||
-        undefined;
-
-      if (linkUrl) {
-        await Share.open({
-          title: playingTrack.title,
-          message,
-          url: linkUrl,
-          failOnCancel: false,
-        });
-        return;
-      }
-
-      let localImageUri: string | undefined;
-      if (playingTrack.artwork) {
-        try {
-          const ext = playingTrack.artwork.split("?")[0].split(".").pop();
-          const safeExt = ext && ext.length <= 5 ? ext : "jpg";
-          const fileName = `podcast-share-${playingTrack.id}.${safeExt}`;
-          const dest = new File(Paths.cache, fileName);
-          if (dest.exists) dest.delete();
-          const downloaded = await File.downloadFileAsync(
-            playingTrack.artwork,
-            dest,
-          );
-          localImageUri = downloaded.uri;
-        } catch (e) {
-          console.warn("Failed to download podcast cover for sharing", e);
-        }
-      }
-
-      await Share.open({
-        title: playingTrack.title,
-        message,
-        ...(localImageUri ? { url: localImageUri, type: "image/jpeg" } : {}),
-        failOnCancel: false,
-      });
-    } catch (error) {
-      logError(error);
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.podcasts.shareErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
-  const handleAddToPlaylistPress = () => {
-    if (!playingTrack) return;
-    bottomSheetModalRef.current?.dismiss();
-    router.replace({
-      pathname: "/playlists/add-to-playlist",
-      params: { ids: [playingTrack.id] },
-    });
   };
 
   const handlePlayPausePress = () => {
@@ -800,148 +297,48 @@ export default function PlayerScreen() {
     );
   };
 
+  const handleAddFavoritePodcastPress = () => {
+    actionsSheetRef.current?.dismiss();
+    if (!podcastSeries) return;
+    addFavoritePodcast(podcastSeries);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.addToFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
+  const handleRemoveFavoritePodcastPress = () => {
+    actionsSheetRef.current?.dismiss();
+    if (!podcastSeries) return;
+    removeFavoritePodcast(podcastSeries.uuid);
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="success">
+          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("app.podcasts.removeFromFavoritesSuccessMessage")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
   const handleRepeatModePress = (newRepeatMode: typeof repeatMode) => {
     setRepeatMode(newRepeatMode);
   };
 
   const handleShufflePress = (enabled: boolean) => {
     setShuffle(enabled);
-  };
-
-  useEffect(() => {
-    if (clipoardCopyDone) {
-      const timer = setTimeout(() => {
-        setClipoardCopyDone(false);
-      }, 1000);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [clipoardCopyDone]);
-
-  const handleSharePress = () => {
-    if (!playingTrack) return;
-    doShare.mutate(
-      { id: playingTrack.id },
-      {
-        onSuccess: (data) => {
-          bottomSheetModalRef.current?.dismiss();
-          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
-          queryClient.invalidateQueries({ queryKey: ["shares"] });
-          bottomSheetShareModalRef.current?.present();
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.shareSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: (error) => {
-          logError(error);
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.shareErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
-  };
-
-  const handleCopyShareUrlPress = async () => {
-    try {
-      if (clipboardText) {
-        await Clipboard.setStringAsync(clipboardText);
-        setClipoardCopyDone(true);
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.shared.shareUrlCopiedMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
-    } catch (e) {
-      logError(e);
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="success">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.shared.shareUrlErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
-  const handleDownloadPress = async () => {
-    bottomSheetModalRef.current?.dismiss();
-    if (!playingTrack) return;
-    if (permissionResponse?.status !== "granted") {
-      await requestPermission();
-    }
-    const url = downloadUrl(playingTrack.id);
-    const destination = new Directory(Paths.cache, "Downloads");
-    try {
-      destination.create({
-        idempotent: true,
-        intermediates: true,
-      });
-      const output = await File.downloadFileAsync(url, destination, {
-        idempotent: true,
-      });
-      if (output.exists) {
-        await MediaLibrary.saveToLibraryAsync(output.uri);
-        output.delete();
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.tracks.downloadSuccessMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
-    } catch (error) {
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.tracks.downloadErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
   };
 
   return (
@@ -1198,505 +595,13 @@ export default function PlayerScreen() {
           </VStack>
         </VStack>
       </VStack>
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center">
-              <ImageWithFallback
-                source={
-                  playingTrack?.artwork
-                    ? { uri: playingTrack.artwork }
-                    : undefined
-                }
-                className="w-16 h-16 rounded-md aspect-square"
-                alt="Track cover"
-                contentFit={isRadio ? "contain" : "cover"}
-                fallback={
-                  <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
-                    {isRadio ? (
-                      <RadioIcon size={24} color={white} />
-                    ) : (
-                      <AudioLines size={24} color={white} />
-                    )}
-                  </Box>
-                }
-              />
-              <VStack className="ml-4 flex-1">
-                <Heading
-                  className="text-white font-normal"
-                  size="lg"
-                  numberOfLines={1}
-                >
-                  {playingTrack?.title}
-                </Heading>
-                {!isRadio && !isPodcast && (
-                  <Text numberOfLines={1} className="text-md text-primary-100">
-                    {playingTrack?.artist} ⦁ {playingTrack?.album}
-                  </Text>
-                )}
-                {isPodcast && (
-                  <Text numberOfLines={1} className="text-md text-primary-100">
-                    {playingTrack?.artist}
-                  </Text>
-                )}
-                {isRadio && (
-                  <Text numberOfLines={1} className="text-md text-primary-100">
-                    {playingTrack?.streamUrl}
-                  </Text>
-                )}
-              </VStack>
-            </HStack>
-            {isRadio ? (
-              <InternetRadioStationActions
-                id={playingTrack?.id ?? ""}
-                name={playingTrack?.title ?? ""}
-                streamUrl={playingTrack?.streamUrl ?? playingTrack?.url ?? ""}
-                homePageUrl={playingTrack?.homePageUrl}
-                source={
-                  playingTrack?.source === "radioBrowser"
-                    ? "radioBrowser"
-                    : "server"
-                }
-                onActionStart={() => bottomSheetModalRef.current?.dismiss()}
-                onDeleted={() => {
-                  if (router.canGoBack()) router.back();
-                  else router.replace("/");
-                }}
-              />
-            ) : isPodcast ? (
-              <VStack className="mt-6 gap-y-8">
-                {podcastSeries && (
-                  <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
-                    <HStack className="items-center">
-                      <PodcastIcon size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.podcasts.goToPodcastSeries")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                )}
-                {podcastSeries &&
-                  (isPodcastFavorite ? (
-                    <FadeOutScaleDown
-                      onPress={handleRemoveFavoritePodcastPress}
-                    >
-                      <HStack className="items-center">
-                        <CircleMinus size={24} color={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.podcasts.removeFromFavorites")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  ) : (
-                    <FadeOutScaleDown onPress={handleAddFavoritePodcastPress}>
-                      <HStack className="items-center">
-                        <PlusCircle size={24} color={gray200} />
-                        <Text className="ml-4 text-lg text-gray-200">
-                          {t("app.podcasts.addToFavorites")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  ))}
-                <FadeOutScaleDown onPress={handleSharePodcastEpisodePress}>
-                  <HStack className="items-center">
-                    <Share2 size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.share")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                  <HStack className="items-center">
-                    <Timer
-                      size={24}
-                      color={sleepActive ? emerald500 : gray200}
-                    />
-                    <Text
-                      className="ml-4 text-lg"
-                      style={{
-                        color: sleepActive ? emerald500 : gray200,
-                      }}
-                    >
-                      {sleepActive && sleepRemainingLabel
-                        ? t("app.player.sleepTimerActive", {
-                            label: sleepRemainingLabel,
-                          })
-                        : t("app.player.sleepTimer")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-              </VStack>
-            ) : (
-              <VStack className="mt-6 gap-y-8">
-                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
-                  <HStack className="items-center">
-                    <PlusCircle size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.addToPlaylist")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleGoToArtistPress}>
-                  <HStack className="items-center">
-                    <User size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.goToArtist", {
-                        count: trackArtists.length || 1,
-                      })}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                {playingTrack?.albumId && (
-                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
-                    <HStack className="items-center">
-                      <Disc3 size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.goToAlbum")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                )}
-                <FadeOutScaleDown onPress={handlePlayNextPress}>
-                  <HStack className="items-center">
-                    <ListStart size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.player.playNext")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleAddToQueuePress}>
-                  <HStack className="items-center">
-                    <ListPlus size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.player.addToQueue")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSetBookmarkPress}>
-                  <HStack className="items-center">
-                    <BookmarkPlus size={24} color={gray200} />
-                    <SetBookmarkLabel />
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleShowLyricsPress}>
-                  <HStack className="items-center">
-                    <Mic2 size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.player.lyrics")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                {capabilities.similarSongs && (
-                  <FadeOutScaleDown onPress={handleSimilarSongsPress}>
-                    <HStack className="items-center">
-                      <Sparkles size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.similarSongs")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                )}
-                {capabilities.sharing && (
-                  <FadeOutScaleDown onPress={handleSharePress}>
-                    <HStack className="items-center">
-                      <Share2 size={24} color={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.share")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                )}
-                <FadeOutScaleDown onPress={handleDownloadPress}>
-                  <HStack className="items-center">
-                    <Download size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.download")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                  <HStack className="items-center">
-                    <Timer
-                      size={24}
-                      color={sleepActive ? emerald500 : gray200}
-                    />
-                    <Text
-                      className="ml-4 text-lg"
-                      style={{
-                        color: sleepActive ? emerald500 : gray200,
-                      }}
-                    >
-                      {sleepActive && sleepRemainingLabel
-                        ? t("app.player.sleepTimerActive", {
-                            label: sleepRemainingLabel,
-                          })
-                        : t("app.player.sleepTimer")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                {playingTrack?.musicBrainzId && (
-                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
-                    <HStack className="items-center">
-                      <MusicBrainz width={24} height={24} fill={gray200} />
-                      <Text className="ml-4 text-lg text-gray-200">
-                        {t("app.tracks.musicBrainz")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
-                )}
-              </VStack>
-            )}
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
-        ref={sleepTimerSheetRef}
-        onChange={handleSleepSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center mb-6">
-              <Timer size={24} color={gray200} />
-              <Heading
-                className="ml-4 text-white font-normal"
-                size="lg"
-                numberOfLines={1}
-              >
-                {t("app.player.sleepTimer")}
-              </Heading>
-            </HStack>
-            <VStack className="gap-y-6">
-              <FadeOutScaleDown onPress={handleSleepCancelPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: !sleepActive ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerOff")}
-                </Text>
-              </FadeOutScaleDown>
-              {[5, 10, 15, 30, 45, 60].map((minutes) => {
-                const active =
-                  !sleepEndOfTrack &&
-                  sleepEndsAt != null &&
-                  Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
-                return (
-                  <FadeOutScaleDown
-                    key={minutes}
-                    onPress={() => handleSleepPresetPress(minutes)}
-                  >
-                    <Text
-                      className="text-lg"
-                      style={{
-                        color: active ? emerald500 : gray200,
-                      }}
-                    >
-                      {t("app.player.sleepTimerMinutes", { count: minutes })}
-                    </Text>
-                  </FadeOutScaleDown>
-                );
-              })}
-              <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: sleepEndOfTrack ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerEndOfTrack")}
-                </Text>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
-        ref={bottomSheetArtistsModalRef}
-        onChange={handleArtistsSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
-          <Box className="p-6 w-full mb-12">
-            <VStack className="gap-y-6">
-              {trackArtists.map((artist) => (
-                <FadeOutScaleDown
-                  key={artist.id}
-                  onPress={() => handleArtistPickPress(artist.id)}
-                >
-                  <HStack className="items-center">
-                    <User size={24} color={gray200} />
-                    <Text
-                      className="ml-4 text-lg text-gray-200"
-                      numberOfLines={1}
-                    >
-                      {artist.name}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-              ))}
-            </VStack>
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
-        ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center">
-              <FadeOutScaleDown
-                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
-                onPress={handleCopyShareUrlPress}
-              >
-                {clipoardCopyDone ? (
-                  <ClipboardCheck size={24} color={emerald500} />
-                ) : (
-                  <ClipboardIcon size={24} color={gray200} />
-                )}
-                <Text
-                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
-                  ellipsizeMode="tail"
-                  numberOfLines={1}
-                >
-                  {clipboardText}
-                </Text>
-              </FadeOutScaleDown>
-            </HStack>
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
-        ref={jukeboxSheetRef}
-        onChange={handleJukeboxSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center mb-6">
-              <Speaker size={24} color={jukeboxActive ? emerald500 : gray200} />
-              <Heading
-                className="ml-4 text-white font-normal"
-                size="lg"
-                numberOfLines={1}
-              >
-                {t("app.player.jukebox")}
-              </Heading>
-            </HStack>
-            <VStack className="gap-y-6">
-              <FadeOutScaleDown onPress={handleJukeboxToggle}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: jukeboxActive ? emerald500 : gray200,
-                  }}
-                >
-                  {jukeboxActive
-                    ? t("app.player.jukeboxOn")
-                    : t("app.player.jukeboxOff")}
-                </Text>
-              </FadeOutScaleDown>
-              {jukeboxActive && (
-                <VStack className="gap-y-2">
-                  <Text className="text-sm text-primary-100">
-                    {t("app.player.jukeboxGain")}
-                  </Text>
-                  <Slider
-                    defaultValue={Math.round(jukeboxGain * 100)}
-                    value={Math.round(jukeboxGain * 100)}
-                    step={1}
-                    minValue={0}
-                    maxValue={100}
-                    size="md"
-                    orientation="horizontal"
-                    isDisabled={false}
-                    isReversed={false}
-                    onChange={handleJukeboxGainChange}
-                  >
-                    <SliderTrack
-                      className="bg-primary-400"
-                      hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
-                    >
-                      <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                    </SliderTrack>
-                    <SliderThumb
-                      className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
-                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                    />
-                  </Slider>
-                  {jukeboxStatus && (
-                    <Text className="text-sm text-primary-100 mt-2">
-                      {t("app.player.jukeboxStatus", {
-                        state: jukeboxStatus.playing
-                          ? t("app.player.jukeboxStatePlaying")
-                          : t("app.player.jukeboxStatePaused"),
-                        index: (jukeboxStatus.currentIndex ?? 0) + 1,
-                        total: queueLength,
-                      })}
-                    </Text>
-                  )}
-                </VStack>
-              )}
-            </VStack>
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModal>
-      <LyricsDialog
-        isOpen={showLyricsDialog}
-        onClose={() => setShowLyricsDialog(false)}
+      <PlayerSheets
+        actionsSheetRef={actionsSheetRef}
+        jukeboxSheetRef={jukeboxSheetRef}
+        playingTrack={playingTrack ?? null}
         lyrics={lyrics}
+        onAddFavoritePodcast={handleAddFavoritePodcastPress}
+        onRemoveFavoritePodcast={handleRemoveFavoritePodcastPress}
       />
     </LinearGradient>
   );

@@ -30,6 +30,12 @@ const MAX_DEPTH = 12;
 // Rows are written in batches inside one transaction for throughput; extraction
 // itself happens outside any transaction (it's slow, native I/O).
 const WRITE_BATCH_SIZE = 50;
+// Files extracted in parallel. Each extraction is native I/O plus a JS-side
+// raw-tag read, so a small pool overlaps the two without flooding either.
+const EXTRACT_CONCURRENCY = 4;
+// `dir.list()` is synchronous; yield to the event loop every N directories so
+// a large walk doesn't starve the UI thread.
+const LIST_YIELD_EVERY = 25;
 
 const isAudioFile = (name: string): boolean =>
   AUDIO_EXTENSIONS.has(name.split(".").pop()?.toLowerCase() ?? "");
@@ -120,6 +126,7 @@ export async function scanLibrary(
   // 1. Gather every audio file under the selected folders (de-duplicated by URI
   //    in case folders overlap or nest).
   const seen = new Map<string, ScannedFile>();
+  const listed = { dirs: 0 };
   for (const folder of folders) {
     if (controller?.cancelled) {
       result.cancelled = true;
@@ -133,7 +140,7 @@ export async function scanLibrary(
         ? folder
         : `file://${folder}`;
       const dir = new Directory(normalized);
-      if (dir.exists) collectAudioFiles(dir, seen, 0);
+      if (dir.exists) await collectAudioFiles(dir, seen, 0, listed);
     } catch (error) {
       logError(`[localLibrary] Failed to list folder ${folder}`, error);
     }
@@ -169,39 +176,54 @@ export async function scanLibrary(
   }
 
   let batch: TrackInsert[] = [];
-  const flush = async () => {
-    if (batch.length === 0) return;
+  // Workers extract in parallel, so transactions are chained to keep them from
+  // overlapping on the shared connection.
+  let writeChain: Promise<void> = Promise.resolve();
+  const flush = (): Promise<void> => {
+    if (batch.length === 0) return writeChain;
     const pending = batch;
     batch = [];
-    await db.withTransactionAsync(async () => {
-      for (const row of pending) await writeTrack(db, row);
-    });
+    writeChain = writeChain.then(() =>
+      db.withTransactionAsync(async () => {
+        for (const row of pending) await writeTrack(db, row);
+      }),
+    );
+    return writeChain;
   };
 
-  for (const file of work) {
-    if (controller?.cancelled) {
-      result.cancelled = true;
-      break;
-    }
-    onProgress?.({
-      phase: "indexing",
-      processed: result.indexed + result.failed,
-      total: work.length,
-      currentFile: file.name,
-    });
-    try {
-      const metadata = await getAudioMetadata(file.uri, {
-        artworkDir: dest.uri,
-        enrich,
+  let nextWorkIndex = 0;
+  const worker = async () => {
+    while (nextWorkIndex < work.length) {
+      if (controller?.cancelled) {
+        result.cancelled = true;
+        return;
+      }
+      const file = work[nextWorkIndex++];
+      onProgress?.({
+        phase: "indexing",
+        processed: result.indexed + result.failed,
+        total: work.length,
+        currentFile: file.name,
       });
-      batch.push(toTrackInsert(file, metadata));
-      result.indexed++;
-      if (batch.length >= WRITE_BATCH_SIZE) await flush();
-    } catch (error) {
-      result.failed++;
-      logError(`[localLibrary] Failed to index ${file.uri}`, error);
+      try {
+        const metadata = await getAudioMetadata(file.uri, {
+          artworkDir: dest.uri,
+          enrich,
+        });
+        batch.push(toTrackInsert(file, metadata));
+        result.indexed++;
+        if (batch.length >= WRITE_BATCH_SIZE) await flush();
+      } catch (error) {
+        result.failed++;
+        logError(`[localLibrary] Failed to index ${file.uri}`, error);
+      }
     }
-  }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(EXTRACT_CONCURRENCY, work.length) }, () =>
+      worker(),
+    ),
+  );
   await flush();
 
   // 4. Prune rows whose files are gone — but only after a *complete* scan, since
@@ -237,12 +259,16 @@ export async function scanLibrary(
 
 // --- internals -------------------------------------------------------------
 
-function collectAudioFiles(
+async function collectAudioFiles(
   dir: Directory,
   out: Map<string, ScannedFile>,
   depth: number,
-): void {
+  listed: { dirs: number },
+): Promise<void> {
   if (depth > MAX_DEPTH) return;
+  if (++listed.dirs % LIST_YIELD_EVERY === 0) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
   let entries: (File | Directory)[];
   try {
     entries = dir.list();
@@ -260,7 +286,7 @@ function collectAudioFiles(
         mtime: entry.modificationTime ?? 0,
       });
     } else {
-      collectAudioFiles(entry, out, depth + 1);
+      await collectAudioFiles(entry, out, depth + 1, listed);
     }
   }
 }

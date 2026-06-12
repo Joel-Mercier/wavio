@@ -9,6 +9,7 @@ type CarAutoNative = {
   setNodes: (json: string) => void;
   setNowPlaying: (json: string | null) => void;
   setQueue: (json: string) => void;
+  setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
   addListener: (
     event: "play" | "transport",
@@ -77,6 +78,15 @@ export const CarAutoBridge = {
       NativeCarAuto.setQueue(JSON.stringify(payload));
     } catch (e) {
       if (__DEV__) console.log("[carauto] setQueue threw", e);
+    }
+  },
+
+  setQueueIndex(index: number) {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.setQueueIndex(index);
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] setQueueIndex threw", e);
     }
   },
 
