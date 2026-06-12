@@ -1,7 +1,7 @@
+import { streamUrl } from "@/services/backend/streaming";
 import type { PodcastEpisode } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
-import { streamUrl } from "@/utils/streaming";
 
 // Builds a player track from a Subsonic podcast episode. Podcast episodes are
 // streamed through their `streamId` (the underlying media file the server

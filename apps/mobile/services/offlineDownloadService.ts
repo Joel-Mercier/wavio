@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { getAuthScope } from "@/config/storage";
+import { downloadUrl } from "@/services/backend/streaming";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -8,7 +9,6 @@ import useOffline, {
   type OfflineTrack,
 } from "@/stores/offline";
 import { logError } from "@/utils/log";
-import { downloadUrl } from "@/utils/streaming";
 import type { Child } from "./openSubsonic/types";
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
@@ -225,7 +225,7 @@ export class OfflineDownloadService {
     if (generation !== this.generation) {
       try {
         downloadResult.delete();
-      } catch {}
+      } catch { }
       throw new Error("Downloads cleared");
     }
 

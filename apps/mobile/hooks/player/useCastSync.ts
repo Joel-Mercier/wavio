@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useCastSession, useMediaStatus } from "react-native-google-cast";
+import { streamUrl } from "@/services/backend/streaming";
 import {
   getCurrentTime,
   isPlaying as isLocalPlaying,
@@ -8,7 +9,6 @@ import {
   seekTo as seekLocal,
 } from "@/services/player";
 import type { QueueTrack } from "@/stores/queue";
-import { streamUrl } from "@/utils/streaming";
 
 // Mirrors local playback onto an active Chromecast session: hands playback off
 // when a session starts (resuming at the local position), reloads media on

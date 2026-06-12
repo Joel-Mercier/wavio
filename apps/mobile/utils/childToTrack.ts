@@ -1,7 +1,7 @@
+import { streamUrl } from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
-import { streamUrl } from "@/utils/streaming";
 
 export function childToTrack(child: Child) {
   const offlineStore = useOffline.getState();
