@@ -1123,6 +1123,7 @@ export default {
           version: "version {{version}}",
           seeProfile: "See profile",
           privacyPolicy: "Privacy policy",
+          bugReport: "Report a bug",
         },
         languages: {
           en: "English",

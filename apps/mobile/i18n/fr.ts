@@ -1155,6 +1155,7 @@ export default {
           version: "version {{version}}",
           seeProfile: "Voir le profil",
           privacyPolicy: "Politique de confidentialité",
+          bugReport: "Signaler un bug",
         },
         languages: {
           en: "English",
