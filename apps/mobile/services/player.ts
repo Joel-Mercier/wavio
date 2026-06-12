@@ -41,10 +41,18 @@ import {
 import { useAppBase } from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
-import useQueue, { getQueueIndexById, type QueueTrack } from "@/stores/queue";
+import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 type Slot = 0 | 1;
+
+// Native engine calls (pause/seek/lock-screen/…) can throw while the
+// underlying player is mid-teardown or the media isn't loaded yet; those
+// failures are expected and safe to ignore, but surface them in dev so real
+// regressions aren't silent.
+function logSwallowed(label: string, error: unknown) {
+  if (__DEV__) console.warn(`[player] ${label}`, error);
+}
 
 // Slot 0 is the primary playback engine and is always live. Slot 1 is only
 // used for iOS preload/crossfade and the user-configurable crossfade path; it
@@ -119,7 +127,7 @@ function reportNowPlaying(track: QueueTrack) {
   if (playbackReportEnabled()) {
     reportStarting(track.id);
   } else {
-    scrobble(track.id, { submission: false }).catch(() => { });
+    scrobble(track.id, { submission: false }).catch(() => {});
   }
 }
 
@@ -144,7 +152,7 @@ function maybeSubmitScrobble(status: AudioStatus) {
   scrobble(current.id, {
     submission: true,
     time: scrobbleStartedAt ?? Date.now(),
-  }).catch(() => { });
+  }).catch(() => {});
 }
 
 function resetScrobbleState() {
@@ -230,29 +238,9 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
 function clearLockScreen(p: AudioPlayer) {
   try {
     p.clearLockScreenControls();
-  } catch { }
-}
-
-// Compute the next track in playback order without mutating the queue.
-// Mirrors the simple cases of useQueue.next(); returns null when shuffle would
-// regenerate (we don't preload across order regeneration to avoid surprises).
-function peekNextTrack(): QueueTrack | null {
-  const s = useQueue.getState();
-  if (s.queue.length === 0 || s.currentIndex == null) return null;
-  if (s.repeatMode === "one") return s.queue[s.currentIndex];
-  if (s.shuffle && s.shuffleOrderIds && s.shuffleOrderIds.length > 0) {
-    const cursor = s.shuffleCursor ?? -1;
-    const nextCursor = cursor + 1;
-    if (nextCursor < s.shuffleOrderIds.length) {
-      const id = s.shuffleOrderIds[nextCursor];
-      const idx = getQueueIndexById(id);
-      return idx >= 0 ? s.queue[idx] : null;
-    }
-    return null;
+  } catch (error) {
+    logSwallowed("clearLockScreenControls", error);
   }
-  if (s.currentIndex + 1 < s.queue.length) return s.queue[s.currentIndex + 1];
-  if (s.repeatMode === "all" && s.queue.length > 0) return s.queue[0];
-  return null;
 }
 
 type Transition =
@@ -263,16 +251,16 @@ type Transition =
   // gaplessly when the current source ends.
   | { kind: "queued"; trackId: string }
   | {
-    kind: "crossfading";
-    nextTrackId: string;
-    rampTimer: ReturnType<typeof setInterval>;
-    startedAt: number;
-    durationMs: number;
-    outFactor: number;
-    inFactor: number;
-    outSlot: Slot;
-    inSlot: Slot;
-  };
+      kind: "crossfading";
+      nextTrackId: string;
+      rampTimer: ReturnType<typeof setInterval>;
+      startedAt: number;
+      durationMs: number;
+      outFactor: number;
+      inFactor: number;
+      outSlot: Slot;
+      inSlot: Slot;
+    };
 
 let transition: Transition = { kind: "idle" };
 // Module-scoped handle so the ramp timer can always be cleared even if
@@ -315,7 +303,9 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
       pendingResumeAt = resumeAt;
       try {
         p.seekTo(resumeAt);
-      } catch { }
+      } catch (error) {
+        logSwallowed("resume seek on load", error);
+      }
     } else {
       pendingResumeId = null;
     }
@@ -359,7 +349,9 @@ function abortTransition() {
     if (Platform.OS === "android") {
       try {
         players[activeSlot].clearPreparedNext();
-      } catch { }
+      } catch (error) {
+        logSwallowed("clearPreparedNext", error);
+      }
     }
     transition = { kind: "idle" };
     expectedNextTrackId = null;
@@ -370,7 +362,9 @@ function abortTransition() {
   const inactive = players[inactiveSlot()];
   try {
     inactive.pause();
-  } catch { }
+  } catch (error) {
+    logSwallowed("pause inactive slot on abort", error);
+  }
   inactive.volume = 0;
   // Restore active to its natural ReplayGain factor.
   const current = useQueue.getState().getCurrent();
@@ -492,7 +486,9 @@ function finishCrossfade() {
   const { outSlot, inFactor } = transition;
   try {
     players[outSlot].pause();
-  } catch { }
+  } catch (error) {
+    logSwallowed("pause outgoing slot on crossfade end", error);
+  }
   players[outSlot].volume = 0;
   loadedTrackIds[outSlot] = null;
   players[activeSlot].volume = inFactor;
@@ -553,7 +549,9 @@ function makeStatusListener(slot: Slot) {
         if (Math.abs((status.currentTime ?? 0) - target) > 1.5) {
           try {
             players[activeSlot].seekTo(target);
-          } catch { }
+          } catch (error) {
+            logSwallowed("armed resume seek", error);
+          }
         }
       } else if (cur?.id !== pendingResumeId) {
         // Track changed out from under us — drop the stale arming.
@@ -617,7 +615,7 @@ function makeStatusListener(slot: Slot) {
         scrobble(previousId, {
           submission: true,
           time: scrobbleStartedAt ?? Date.now(),
-        }).catch(() => { });
+        }).catch(() => {});
       }
       if (consumeSleepEndOfTrack()) {
         if (transition.kind !== "idle") abortTransition();
@@ -668,19 +666,25 @@ function makeStatusListener(slot: Slot) {
           try {
             players[activeSlot].pause();
             players[activeSlot].seekTo(0);
-          } catch { }
+          } catch (error) {
+            logSwallowed("stop at queue end", error);
+          }
           return;
         }
         endlessFetchInFlight = true;
         try {
           players[activeSlot].pause();
-        } catch { }
+        } catch (error) {
+          logSwallowed("pause before endless fetch", error);
+        }
         fetchEndlessExtension(seed)
           .then((tracks) => {
             if (tracks.length === 0) {
               try {
                 players[activeSlot].seekTo(0);
-              } catch { }
+              } catch (error) {
+                logSwallowed("rewind after empty endless fetch", error);
+              }
               return;
             }
             useQueue.getState().enqueueEnd(tracks);
@@ -693,7 +697,9 @@ function makeStatusListener(slot: Slot) {
           .catch(() => {
             try {
               players[activeSlot].seekTo(0);
-            } catch { }
+            } catch (error) {
+              logSwallowed("rewind after failed endless fetch", error);
+            }
           })
           .finally(() => {
             endlessFetchInFlight = false;
@@ -820,31 +826,31 @@ if (
   ).hot.dispose(() => {
     try {
       queueUnsub();
-    } catch { }
+    } catch {}
     try {
       appUnsub();
-    } catch { }
+    } catch {}
     try {
       clearRampTimer();
-    } catch { }
+    } catch {}
     for (const sub of statusListeners) {
       try {
         sub?.remove?.();
-      } catch { }
+      } catch {}
     }
     for (const sub of remoteListeners) {
       try {
         sub?.remove?.();
-      } catch { }
+      } catch {}
     }
     for (const p of players) {
       if (!p) continue;
       try {
         p.pause();
-      } catch { }
+      } catch {}
       try {
         p.remove();
-      } catch { }
+      } catch {}
     }
   });
 }
@@ -873,7 +879,9 @@ function hydratePlayerFromQueue() {
       pendingResumeAt = resumeAt;
       try {
         players[activeSlot].seekTo(resumeAt);
-      } catch { }
+      } catch (error) {
+        logSwallowed("resume seek on hydrate", error);
+      }
     });
   }
 }
@@ -921,13 +929,15 @@ export function restoreServerQueue(
   if (positionSeconds > 0) {
     try {
       players[activeSlot].seekTo(positionSeconds);
-    } catch { }
+    } catch (error) {
+      logSwallowed("seek to restored position", error);
+    }
   }
 }
 
 export function togglePlayPause() {
   if (useJukebox.getState().active) {
-    jukeboxTogglePlayPause().catch(() => { });
+    jukeboxTogglePlayPause().catch(() => {});
     return;
   }
   const active = players[activeSlot];
@@ -946,7 +956,7 @@ export function togglePlayPause() {
 
 export function pause() {
   if (useJukebox.getState().active) {
-    jukeboxPauseAction().catch(() => { });
+    jukeboxPauseAction().catch(() => {});
     return;
   }
   // Persist the resume position immediately on pause rather than waiting for
@@ -964,7 +974,7 @@ registerSleepTimerPauseHandler(pause);
 
 export function play() {
   if (useJukebox.getState().active) {
-    jukeboxPlayAction().catch(() => { });
+    jukeboxPlayAction().catch(() => {});
     return;
   }
   const current = useQueue.getState().getCurrent();
@@ -993,7 +1003,7 @@ export function skipNext() {
     if (state.currentIndex >= state.queue.length - 1) return;
   }
   if (useJukebox.getState().active) {
-    jukeboxSkipNext().catch(() => { });
+    jukeboxSkipNext().catch(() => {});
     return;
   }
   if (transition.kind !== "idle") abortTransition();
@@ -1002,7 +1012,7 @@ export function skipNext() {
 
 export function skipPrevious(options?: { force?: boolean }) {
   if (useJukebox.getState().active) {
-    jukeboxSkipPrevious().catch(() => { });
+    jukeboxSkipPrevious().catch(() => {});
     return;
   }
   const active = players[activeSlot];
@@ -1029,7 +1039,7 @@ export function skipPrevious(options?: { force?: boolean }) {
 
 export function seekTo(seconds: number) {
   if (useJukebox.getState().active) {
-    jukeboxSeekTo(seconds).catch(() => { });
+    jukeboxSeekTo(seconds).catch(() => {});
     return;
   }
   players[activeSlot].seekTo(seconds);

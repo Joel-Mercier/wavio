@@ -18,6 +18,11 @@ import { formatSeconds } from "@/utils/date";
 
 export default function PlaybackSlider() {
   const { currentTime, duration } = usePlaybackProgress();
+  // While a skipped-to track loads, the snapshot reports duration 0; a zero
+  // maxValue makes the thumb percent NaN and the flex-centered fallback parks
+  // the thumb mid-bar. Keep the range non-zero and pin the value to 0 instead.
+  const hasDuration = duration > 0;
+  const sliderValue = hasDuration ? Math.min(currentTime, duration) : 0;
   const track = usePlayingTrack();
   const bookmarks = useTrackBookmarks(track?.id);
   const [trackWidth, setTrackWidth] = useState(0);
@@ -54,13 +59,13 @@ export default function PlaybackSlider() {
           })}
         <Slider
           defaultValue={0}
-          value={currentTime}
+          value={sliderValue}
           step={1}
           minValue={0}
-          maxValue={duration}
+          maxValue={hasDuration ? duration : 1}
           size="md"
           orientation="horizontal"
-          isDisabled={false}
+          isDisabled={!hasDuration}
           isReversed={false}
           onChange={seekTo}
         >

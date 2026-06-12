@@ -1,4 +1,5 @@
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import DownloadedBadge from "@/components/DownloadedBadge";
@@ -22,7 +23,9 @@ interface AlbumListItemProps {
   className?: string;
 }
 
-export default function AlbumListItem({
+// Rendered in album grids/rows app-wide — memoized so a parent re-render
+// doesn't re-render all visible rows.
+function AlbumListItem({
   album,
   index,
   layout = "vertical",
@@ -111,3 +114,5 @@ export default function AlbumListItem({
     </FadeOutScaleDown>
   );
 }
+
+export default memo(AlbumListItem);

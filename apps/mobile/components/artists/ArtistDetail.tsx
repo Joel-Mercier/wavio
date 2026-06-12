@@ -493,7 +493,7 @@ export default function ArtistDetail() {
           )
         }
         keyExtractor={(item: AlbumID3) => item.id}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <LinearGradient
               colors={["transparent", "#000000"]}
@@ -712,8 +712,8 @@ export default function ArtistDetail() {
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </>
-        )}
-        ListFooterComponent={() => (
+        }
+        ListFooterComponent={
           <Box className="bg-black">
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
@@ -799,12 +799,12 @@ export default function ArtistDetail() {
               </VStack>
             )}
           </Box>
-        )}
-        ListEmptyComponent={() => (
+        }
+        ListEmptyComponent={
           <Box className="bg-black">
             <EmptyDisplay />
           </Box>
-        )}
+        }
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

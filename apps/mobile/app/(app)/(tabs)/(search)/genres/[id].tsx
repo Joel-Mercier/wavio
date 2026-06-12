@@ -107,45 +107,43 @@ export default function GenreScreen() {
             <AlbumListItem album={item} index={index} />
           )
         }
-        ListHeaderComponent={() => (
-          <>
-            <LinearGradient
-              colors={[blue500, "#000000"]}
-              className="h-48"
-              style={{ height: 192 }}
+        ListHeaderComponent={
+          <LinearGradient
+            colors={[blue500, "#000000"]}
+            className="h-48"
+            style={{ height: 192 }}
+          >
+            <Box
+              className="bg-black/25 flex-1"
+              style={{ paddingTop: insets.top }}
             >
-              <Box
-                className="bg-black/25 flex-1"
-                style={{ paddingTop: insets.top }}
-              >
-                <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <Pressable onPress={() => router.back()}>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <ArrowLeft size={24} color={white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Heading
-                    numberOfLines={2}
-                    className="text-white mb-12"
-                    size="xl"
-                  >
-                    {id}
-                  </Heading>
-                </VStack>
-                {error && <ErrorDisplay error={error} />}
-              </Box>
-            </LinearGradient>
-          </>
-        )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+              <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
+                <Pressable onPress={() => router.back()}>
+                  {({ pressed }) => (
+                    <Animated.View
+                      className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                      style={{
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                        opacity: pressed ? 0.5 : 1,
+                      }}
+                    >
+                      <ArrowLeft size={24} color={white} />
+                    </Animated.View>
+                  )}
+                </Pressable>
+                <Heading
+                  numberOfLines={2}
+                  className="text-white mb-12"
+                  size="xl"
+                >
+                  {id}
+                </Heading>
+              </VStack>
+              {error && <ErrorDisplay error={error} />}
+            </Box>
+          </LinearGradient>
+        }
+        ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

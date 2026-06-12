@@ -1,7 +1,4 @@
-import axios from "axios";
-import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
-} from "@/services/openSubsonic/index";
+import { subsonicRequest } from "@/services/openSubsonic/index";
 import type {
   JukeboxPlaylist,
   JukeboxStatus,
@@ -25,85 +22,40 @@ const repeatParamsSerializer = (params: Record<string, unknown>) => {
   return search.toString();
 };
 
-type JukeboxStatusEnvelope = OpenSubsonicResponse<{
-  jukeboxStatus: JukeboxStatus;
-}>;
-type JukeboxPlaylistEnvelope = OpenSubsonicResponse<{
-  jukeboxPlaylist: JukeboxPlaylist;
-}>;
+type JukeboxStatusPayload = { jukeboxStatus: JukeboxStatus };
+type JukeboxPlaylistPayload = { jukeboxPlaylist: JukeboxPlaylist };
 
 async function call<T>(action: string, params: Record<string, unknown> = {}) {
-  try {
-    const rsp = await openSubsonicApiInstance.get<T>("/rest/jukeboxControl", {
-      params: { action, ...params },
-      paramsSerializer: repeatParamsSerializer,
-    });
-    const envelope = (
-      rsp.data as { "subsonic-response"?: { status?: string } }
-    )["subsonic-response"];
-    if (envelope?.status !== "ok") {
-      throw (envelope as { error?: unknown })?.error;
-    }
-    return (rsp.data as { "subsonic-response": unknown })["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
+  return subsonicRequest<T>(
+    "/rest/jukeboxControl",
+    { action, ...params },
+    { paramsSerializer: repeatParamsSerializer },
+  );
 }
 
-export const getJukebox = async () =>
-  call<JukeboxPlaylistEnvelope>("get") as Promise<
-    JukeboxPlaylistEnvelope["subsonic-response"]
-  >;
+export const getJukebox = async () => call<JukeboxPlaylistPayload>("get");
 
-export const statusJukebox = async () =>
-  call<JukeboxStatusEnvelope>("status") as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+export const statusJukebox = async () => call<JukeboxStatusPayload>("status");
 
 export const setJukebox = async (ids: string[]) =>
-  call<JukeboxStatusEnvelope>("set", { id: ids }) as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+  call<JukeboxStatusPayload>("set", { id: ids });
 
-export const startJukebox = async () =>
-  call<JukeboxStatusEnvelope>("start") as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+export const startJukebox = async () => call<JukeboxStatusPayload>("start");
 
-export const stopJukebox = async () =>
-  call<JukeboxStatusEnvelope>("stop") as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+export const stopJukebox = async () => call<JukeboxStatusPayload>("stop");
 
 export const skipJukebox = async (index: number, offset?: number) =>
-  call<JukeboxStatusEnvelope>("skip", { index, offset }) as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+  call<JukeboxStatusPayload>("skip", { index, offset });
 
 export const addJukebox = async (ids: string[]) =>
-  call<JukeboxStatusEnvelope>("add", { id: ids }) as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+  call<JukeboxStatusPayload>("add", { id: ids });
 
-export const clearJukebox = async () =>
-  call<JukeboxStatusEnvelope>("clear") as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+export const clearJukebox = async () => call<JukeboxStatusPayload>("clear");
 
 export const removeJukebox = async (index: number) =>
-  call<JukeboxStatusEnvelope>("remove", { index }) as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+  call<JukeboxStatusPayload>("remove", { index });
 
-export const shuffleJukebox = async () =>
-  call<JukeboxStatusEnvelope>("shuffle") as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+export const shuffleJukebox = async () => call<JukeboxStatusPayload>("shuffle");
 
 export const setGainJukebox = async (gain: number) =>
-  call<JukeboxStatusEnvelope>("setGain", { gain }) as Promise<
-    JukeboxStatusEnvelope["subsonic-response"]
-  >;
+  call<JukeboxStatusPayload>("setGain", { gain });

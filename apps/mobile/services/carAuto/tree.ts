@@ -1,4 +1,5 @@
 import i18n from "@/config/i18n";
+import { getAuthScope } from "@/config/storage";
 import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
 import { getAlbumList2, getStarred2 } from "@/services/backend/lists";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
@@ -10,7 +11,8 @@ import type {
   Playlist,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
-import usePodcasts from "@/stores/podcasts";
+import { useAuthBase } from "@/stores/auth";
+import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import type { BrowseNode, BrowseTree } from "./types";
@@ -284,7 +286,11 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
     podcastsState.taddyPodcastsApiKey && podcastsState.taddyPodcastsUserId,
   );
   if (podcastsEnabled) {
-    const favPodcasts = podcastsState.favoritePodcasts;
+    const { url, username } = useAuthBase.getState();
+    const favPodcasts = podcastFavoritesForScope(
+      podcastsState.favoritePodcasts,
+      getAuthScope(url, username),
+    );
     libraryChildren.push({
       id: "lib:podcasts",
       title: i18n.t("app.carAuto.podcasts"),

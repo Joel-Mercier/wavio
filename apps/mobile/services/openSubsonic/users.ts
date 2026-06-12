@@ -1,7 +1,4 @@
-import axios from "axios";
-import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
-} from "@/services/openSubsonic/index";
+import { subsonicRequest } from "@/services/openSubsonic/index";
 import type { User, Users } from "@/services/openSubsonic/types";
 
 export interface UpdateUserParams {
@@ -26,88 +23,27 @@ export interface UpdateUserParams {
   maxBitRate?: number;
 }
 
-export const getUser = async (username: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ user: User }>
-    >("/rest/getUser", {
-      params: {
-        username,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getUser = async (username: string) =>
+  subsonicRequest<{ user: User }>("/rest/getUser", { username });
 
-export const getUsers = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ users: Users }>
-    >("/rest/getUsers", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getUsers = async () =>
+  subsonicRequest<{ users: Users }>("/rest/getUsers");
 
-export const updateUser = async (params: UpdateUserParams) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/updateUser", {
-      params,
-      paramsSerializer: {
-        indexes: null,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const updateUser = async (params: UpdateUserParams) =>
+  subsonicRequest<Record<string, never>>(
+    "/rest/updateUser",
+    { ...params },
+    { paramsSerializer: { indexes: null } },
+  );
 
 export const changePassword = async (params: {
   username: string;
   password: string;
   currentPassword?: string;
 }) => {
-  try {
-    const { currentPassword: _currentPassword, ...subsonicParams } = params;
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/changePassword", {
-      params: subsonicParams,
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
+  const { currentPassword: _currentPassword, ...subsonicParams } = params;
+  return subsonicRequest<Record<string, never>>(
+    "/rest/changePassword",
+    subsonicParams,
+  );
 };

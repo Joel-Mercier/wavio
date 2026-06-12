@@ -33,6 +33,18 @@ export type AddFavoriteRadioStationInput = Omit<
   "dateAdded" | "isFavorite"
 >;
 
+// Favorites that belong to the given auth scope: server favorites from other
+// accounts are excluded (their ids are server-assigned and can collide across
+// servers), radioBrowser favorites are server-independent and always included.
+export function radioFavoritesForScope(
+  favorites: FavoriteRadioStation[],
+  scope: string | null | undefined,
+): FavoriteRadioStation[] {
+  return favorites.filter(
+    (fav) => fav.source !== "server" || fav.scope === scope,
+  );
+}
+
 interface RadioStationsStore {
   favoriteRadioStations: FavoriteRadioStation[];
   addFavoriteRadioStation: (station: AddFavoriteRadioStationInput) => void;

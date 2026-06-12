@@ -72,7 +72,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
-import usePodcasts from "@/stores/podcasts";
+import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import { artworkUrl } from "@/utils/artwork";
 import { formatDistanceToNow } from "@/utils/date";
 import {
@@ -122,8 +122,12 @@ export default function ServerPodcastChannelScreen() {
   const colors = useImageColors(image);
 
   const scope = useCurrentAuthScope();
+  // Server-assigned channel ids can collide across servers — only a favorite
+  // from the active scope counts.
   const isFavorite = usePodcasts((store) =>
-    store.favoritePodcasts.some((fav) => fav.uuid === id),
+    podcastFavoritesForScope(store.favoritePodcasts, scope).some(
+      (fav) => fav.uuid === id,
+    ),
   );
   const addFavoriteServerPodcast = usePodcasts(
     (store) => store.addFavoriteServerPodcast,

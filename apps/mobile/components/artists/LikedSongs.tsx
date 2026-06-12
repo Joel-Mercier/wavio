@@ -456,7 +456,7 @@ export default function LikedSongs() {
               return <AlbumListItem album={item.album} index={item.index} />;
           }
         }}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <LinearGradient
               colors={[gradientPrimary, "#000000"]}
@@ -527,7 +527,7 @@ export default function LikedSongs() {
               </Heading>
             </VStack>
           </>
-        )}
+        }
       />
       <BottomSheetModal
         ref={bottomSheetModalRef}

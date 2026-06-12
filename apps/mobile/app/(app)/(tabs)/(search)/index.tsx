@@ -81,15 +81,15 @@ export default function SearchScreen() {
           </Box>
         )}
         numColumns={2}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <Heading size="lg" className="text-white mb-4">
               {t("app.search.exploreGenres")}
             </Heading>
             {error && <ErrorDisplay error={error} />}
           </>
-        )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+        }
+        ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,

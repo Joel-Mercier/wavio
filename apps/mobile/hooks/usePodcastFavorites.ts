@@ -1,18 +1,33 @@
-import { useEffect } from "react";
+import { useCallback, useMemo } from "react";
 import { useGetPodcasts } from "@/hooks/backend/usePodcasts";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useSyncServerFavorites } from "@/hooks/useServerFavoritesSync";
+import type { PodcastChannel } from "@/services/openSubsonic/types";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
-import usePodcasts from "@/stores/podcasts";
+import usePodcasts, {
+  type FavoritePodcast,
+  podcastFavoritesForScope,
+} from "@/stores/podcasts";
+
+// Favorite podcasts visible for the active server: Taddy favorites plus the
+// "server"-sourced channels that belong to the current auth scope.
+export function useScopedPodcastFavorites(): FavoritePodcast[] {
+  const scope = useCurrentAuthScope();
+  const favorites = usePodcasts((s) => s.favoritePodcasts);
+  return useMemo(
+    () => podcastFavoritesForScope(favorites, scope),
+    [favorites, scope],
+  );
+}
+
+const channelId = (channel: PodcastChannel) => channel.id;
+const favoriteUuid = (fav: FavoritePodcast) => fav.uuid;
 
 // Keeps "server"-sourced podcast favorites in sync with the active server's
 // live podcast channels: patches title/cover when they change and prunes
-// favorites whose channel was deleted on the server. Only reconciles favorites
-// whose scope matches the active server, so the global favorites store never
-// purges another server's favorites when you switch servers. Mirrors
-// useSyncServerRadioFavorites.
+// favorites whose channel was deleted on the server.
 export function useSyncServerPodcastFavorites() {
   const capabilities = useCapabilities();
-  const scope = useCurrentAuthScope();
   const favorites = usePodcasts((s) => s.favoritePodcasts);
   const removeFavoritePodcast = usePodcasts((s) => s.removeFavoritePodcast);
   const updateFavoriteServerPodcast = usePodcasts(
@@ -22,17 +37,8 @@ export function useSyncServerPodcastFavorites() {
     enabled: capabilities.podcasts,
   });
 
-  useEffect(() => {
-    if (!capabilities.podcasts || isLoading || isError || !scope) return;
-    const live = data?.podcasts?.channel ?? [];
-    const byId = new Map(live.map((channel) => [channel.id, channel]));
-    for (const fav of favorites) {
-      if (fav.source !== "server" || fav.scope !== scope) continue;
-      const channel = byId.get(fav.uuid);
-      if (!channel) {
-        removeFavoritePodcast(fav.uuid);
-        continue;
-      }
+  const reconcile = useCallback(
+    (fav: FavoritePodcast, channel: PodcastChannel) => {
       const name = channel.title || channel.url;
       const imageUrl = channel.originalImageUrl || "";
       const authorName = channel.author || "";
@@ -51,15 +57,19 @@ export function useSyncServerPodcastFavorites() {
           authorName,
         });
       }
-    }
-  }, [
-    data,
-    favorites,
-    scope,
-    capabilities.podcasts,
+    },
+    [updateFavoriteServerPodcast],
+  );
+
+  useSyncServerFavorites({
+    enabled: capabilities.podcasts,
     isLoading,
     isError,
-    removeFavoritePodcast,
-    updateFavoriteServerPodcast,
-  ]);
+    live: data?.podcasts?.channel ?? [],
+    liveId: channelId,
+    favorites,
+    favoriteId: favoriteUuid,
+    remove: removeFavoritePodcast,
+    reconcile,
+  });
 }

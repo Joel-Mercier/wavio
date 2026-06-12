@@ -23,7 +23,7 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-import useQueue from "@/stores/queue";
+import useQueue, { peekNextTrack } from "@/stores/queue";
 
 type TestTrack = { id: string; url: string };
 
@@ -538,5 +538,100 @@ describe("queue store - shuffle / repeat interactions", () => {
     get().next(); // hits end-of-order regen branch
     expect(get().shuffleCursor).toBe(0);
     expect(get().shuffleOrderIds?.length ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe("queue store - peekNextTrack mirrors next()", () => {
+  // peekNextTrack must predict exactly where next() lands (it drives
+  // gapless/crossfade preloads), except when it returns null on purpose
+  // (shuffle-order regeneration / playback stop).
+  const expectPeekMatchesNext = () => {
+    const peeked = peekNextTrack();
+    get().next();
+    if (peeked !== null) {
+      expect(get().getCurrent()?.id).toBe(peeked.id);
+    }
+    return peeked;
+  };
+
+  test("simple advance without repeat", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    expect(peekNextTrack()?.id).toBe("t2");
+    expectPeekMatchesNext();
+  });
+
+  test("end of queue without repeat returns null", () => {
+    get().setQueue(makeTracks(3), 2);
+    get().setRemovePlayed(false);
+    expect(peekNextTrack()).toBeNull();
+  });
+
+  test("repeat one stays on current", () => {
+    get().setQueue(makeTracks(3), 1);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("one");
+    expect(peekNextTrack()?.id).toBe("t2");
+    expectPeekMatchesNext();
+  });
+
+  test("repeat all wraps to first", () => {
+    get().setQueue(makeTracks(3), 2);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    expect(peekNextTrack()?.id).toBe("t1");
+    expectPeekMatchesNext();
+  });
+
+  test("repeat all with a context subset wraps within the context", () => {
+    get().setQueue(makeTracks(5), 3); // current t4
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setContext(["t2", "t4"]);
+    // t4 is the last context entry: next() wraps to t2, not to queue[0].
+    expect(peekNextTrack()?.id).toBe("t2");
+    expectPeekMatchesNext();
+  });
+
+  test("shuffle follows the shuffle order", () => {
+    get().setQueue(makeTracks(5), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    const order = get().shuffleOrderIds as string[];
+    const cursor = get().shuffleCursor as number;
+    if (cursor + 1 < order.length) {
+      expect(peekNextTrack()?.id).toBe(order[cursor + 1]);
+      expectPeekMatchesNext();
+    }
+  });
+
+  test("shuffle at end of order returns null (regeneration boundary)", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    const order = get().shuffleOrderIds as string[];
+    while ((get().shuffleCursor as number) < order.length - 1) {
+      expectPeekMatchesNext();
+    }
+    expect(peekNextTrack()).toBeNull();
+  });
+
+  test("removePlayed advances to the following track", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(true);
+    expect(peekNextTrack()?.id).toBe("t2");
+    expectPeekMatchesNext();
+  });
+
+  test("removePlayed on the last remaining track returns null", () => {
+    get().setQueue(makeTracks(1), 0);
+    get().setRemovePlayed(true);
+    expect(peekNextTrack()).toBeNull();
+  });
+
+  test("empty queue and no current index return null", () => {
+    expect(peekNextTrack()).toBeNull();
+    useQueue.setState({ queue: makeTracks(2), currentIndex: null });
+    expect(peekNextTrack()).toBeNull();
   });
 });

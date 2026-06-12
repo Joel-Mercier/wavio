@@ -46,8 +46,14 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useSyncServerPodcastFavorites } from "@/hooks/usePodcastFavorites";
-import { useSyncServerRadioFavorites } from "@/hooks/useRadioFavorites";
+import {
+  useScopedPodcastFavorites,
+  useSyncServerPodcastFavorites,
+} from "@/hooks/usePodcastFavorites";
+import {
+  useScopedRadioFavorites,
+  useSyncServerRadioFavorites,
+} from "@/hooks/useRadioFavorites";
 import type {
   AlbumID3,
   ArtistID3,
@@ -57,7 +63,6 @@ import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
-import useRadioStations from "@/stores/radioStations";
 import { loadingData } from "@/utils/loadingData";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 import { cn } from "@/utils/tailwind";
@@ -88,14 +93,12 @@ export default function LibraryScreen() {
   const setFilter = useApp((store) => store.setLibraryFilter);
   const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
-  const favoritePodcasts = usePodcasts((store) => store.favoritePodcasts);
+  const favoritePodcasts = useScopedPodcastFavorites();
   const podcastsEnabled = Boolean(taddyPodcastsApiKey && taddyPodcastsUserId);
   // Show the Podcasts bucket when Taddy is configured OR the server hosts
   // podcast channels (opensubsonic capability).
   const showPodcasts = podcastsEnabled || capabilities.podcasts;
-  const favoriteRadioStations = useRadioStations(
-    (store) => store.favoriteRadioStations,
-  );
+  const favoriteRadioStations = useScopedRadioFavorites();
   useSyncServerRadioFavorites();
   useSyncServerPodcastFavorites();
   const tabBarHeight = useBottomTabBarHeight();

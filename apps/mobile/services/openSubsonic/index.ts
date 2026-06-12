@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
@@ -101,5 +101,31 @@ export const openSubsonicErrorCodes = new Proxy({} as Record<number, string>, {
 });
 
 export type ApiType = typeof openSubsonicApiInstance;
+
+// Validate a Subsonic envelope, throwing the envelope error on a "failed"
+// status. Used by subsonicRequest and the few non-GET endpoints.
+export function subsonicEnvelope<T>(
+  rsp: AxiosResponse<OpenSubsonicResponse<T>>,
+): OpenSubsonicResponse<T>["subsonic-response"] {
+  if (rsp.data["subsonic-response"]?.status !== "ok") {
+    throw rsp.data["subsonic-response"].error;
+  }
+  return rsp.data["subsonic-response"];
+}
+
+// Shared request wrapper for the section files: performs the GET and validates
+// the Subsonic envelope.
+export async function subsonicRequest<T>(
+  path: string,
+  params: Record<string, unknown> = {},
+  config: Omit<AxiosRequestConfig, "params"> = {},
+): Promise<OpenSubsonicResponse<T>["subsonic-response"]> {
+  return subsonicEnvelope(
+    await openSubsonicApiInstance.get<OpenSubsonicResponse<T>>(path, {
+      ...config,
+      params,
+    }),
+  );
+}
 
 export default openSubsonicApiInstance;

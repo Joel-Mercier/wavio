@@ -768,6 +768,58 @@ useQueueBase.subscribe((next, prev) => {
   if (next.queue !== prev.queue) rebuildQueueIndex(next.queue);
 });
 
+// Pure view of the track `next()` would advance to, without mutating state.
+// Mirrors next()'s decision order exactly (repeat-one, shuffle, context wrap,
+// removePlayed) so gapless/crossfade preloads always target the track the
+// queue will actually land on. Returns null when next() would regenerate the
+// shuffle order (callers must not preload across a regeneration) or when
+// playback would stop.
+export function peekNextTrack(): QueueTrack | null {
+  const s = useQueueBase.getState();
+  if (s.queue.length === 0 || s.currentIndex == null) return null;
+  if (s.repeatMode === "one") return s.queue[s.currentIndex] ?? null;
+
+  if (s.shuffle && s.shuffleOrderIds && s.shuffleOrderIds.length > 0) {
+    const currentId = s.queue[s.currentIndex]?.id;
+    const order = s.shuffleOrderIds;
+    if (s.removePlayed) {
+      const nextId = order.find((id) => id !== currentId);
+      if (nextId == null) return null;
+      const idx = getQueueIndexById(nextId);
+      return idx >= 0 ? (s.queue[idx] ?? null) : null;
+    }
+    const cursor =
+      s.shuffleCursor ?? (currentId != null ? order.indexOf(currentId) : -1);
+    const nextCursor = cursor + 1;
+    if (nextCursor >= order.length) return null;
+    const idx = getQueueIndexById(order[nextCursor]);
+    return idx >= 0 ? (s.queue[idx] ?? null) : null;
+  }
+
+  if (s.repeatMode === "all" && s.contextIds && s.contextIds.length > 0) {
+    const currentId = s.queue[s.currentIndex]?.id;
+    const ids = s.contextIds;
+    const pos = currentId ? ids.indexOf(currentId) : -1;
+    const startPos = pos >= 0 ? pos : 0;
+    for (let offset = 1; offset <= ids.length; offset++) {
+      const idx = getQueueIndexById(ids[(startPos + offset) % ids.length]);
+      if (idx >= 0) return s.queue[idx] ?? null;
+    }
+    return null;
+  }
+
+  if (s.removePlayed) {
+    if (s.queue.length === 1) return null;
+    if (s.currentIndex + 1 < s.queue.length)
+      return s.queue[s.currentIndex + 1] ?? null;
+    return s.queue[s.queue.length - 2] ?? null;
+  }
+
+  if (s.currentIndex + 1 < s.queue.length)
+    return s.queue[s.currentIndex + 1] ?? null;
+  return s.repeatMode === "all" ? (s.queue[0] ?? null) : null;
+}
+
 // Persistence is hand-rolled (instead of zustand's `persist` middleware) so
 // the hot path — a track skip that only changes `currentIndex` / `shuffleCursor`
 // — doesn't re-stringify the entire queue array on every set(). The queue and

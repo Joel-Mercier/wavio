@@ -30,7 +30,10 @@ function parseDate(value?: string): Date | undefined {
 
 function favoriteAsStarred(item: BaseItemDto): Date | undefined {
   if (item.UserData?.IsFavorite) {
-    return parseDate(item.UserData?.LastPlayedDate) ?? new Date(0);
+    // Jellyfin doesn't expose when an item was favorited; LastPlayedDate is the
+    // closest proxy. Fall back to now (not epoch) so "recently starred" sorts
+    // don't bury the item in 1970.
+    return parseDate(item.UserData?.LastPlayedDate) ?? new Date();
   }
   return undefined;
 }

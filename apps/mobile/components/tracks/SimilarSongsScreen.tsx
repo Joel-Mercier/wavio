@@ -129,7 +129,7 @@ export default function SimilarSongsScreen() {
             />
           )
         }
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <LinearGradient
               colors={[emerald500, "#000000"]}
@@ -186,8 +186,8 @@ export default function SimilarSongsScreen() {
               {error && <ErrorDisplay error={error} />}
             </VStack>
           </>
-        )}
-        ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
+        }
+        ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

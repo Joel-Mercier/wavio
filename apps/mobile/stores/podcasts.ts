@@ -39,6 +39,18 @@ export interface FavoritePodcast {
   scope?: string;
 }
 
+// Favorites that belong to the given auth scope: server favorites from other
+// accounts are excluded (their ids are server-assigned and can collide across
+// servers), Taddy favorites are server-independent and always included.
+export function podcastFavoritesForScope(
+  favorites: FavoritePodcast[],
+  scope: string | null | undefined,
+): FavoritePodcast[] {
+  return favorites.filter(
+    (fav) => fav.source !== "server" || fav.scope === scope,
+  );
+}
+
 export interface RecommendationParams {
   genres?: (keyof typeof Genre)[];
   language?: keyof typeof Language;

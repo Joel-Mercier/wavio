@@ -29,13 +29,13 @@ import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import useDebounce from "@/hooks/useDebounce";
+import { useScopedRadioFavorites } from "@/hooks/useRadioFavorites";
 import type {
   AlbumID3,
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import useRadioStations from "@/stores/radioStations";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
@@ -64,9 +64,7 @@ export default function LibrarySearchScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const musicFolderId = useCurrentMusicFolderId();
-  const favoriteRadioStations = useRadioStations(
-    (store) => store.favoriteRadioStations,
-  );
+  const favoriteRadioStations = useScopedRadioFavorites();
   const [filter, setFilter] = useState<SearchFilter>(null);
 
   useEffect(() => {

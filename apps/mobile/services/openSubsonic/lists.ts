@@ -1,7 +1,4 @@
-import axios from "axios";
-import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
-} from "@/services/openSubsonic/index";
+import { subsonicRequest } from "@/services/openSubsonic/index";
 import type {
   AlbumList,
   AlbumList2,
@@ -40,32 +37,16 @@ export const getAlbumList = async (
     genre?: string;
     musicFolderId?: string;
   },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ albumList: AlbumList }>
-    >("/rest/getAlbumList", {
-      params: {
-        type,
-        size,
-        offset,
-        fromYear,
-        toYear,
-        genre,
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ albumList: AlbumList }>("/rest/getAlbumList", {
+    type,
+    size,
+    offset,
+    fromYear,
+    toYear,
+    genre,
+    musicFolderId,
+  });
 
 export const getAlbumList2 = async (
   type: AlbumListType,
@@ -84,51 +65,19 @@ export const getAlbumList2 = async (
     genre?: string;
     musicFolderId?: string;
   },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ albumList2: AlbumList2 }>
-    >("/rest/getAlbumList2", {
-      params: {
-        type,
-        size,
-        offset,
-        fromYear,
-        toYear,
-        genre,
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ albumList2: AlbumList2 }>("/rest/getAlbumList2", {
+    type,
+    size,
+    offset,
+    fromYear,
+    toYear,
+    genre,
+    musicFolderId,
+  });
 
-export const getNowPlaying = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ nowPlaying: NowPlaying }>
-    >("/rest/getNowPlaying", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getNowPlaying = async () =>
+  subsonicRequest<{ nowPlaying: NowPlaying }>("/rest/getNowPlaying");
 
 export const getRandomSongs = async ({
   size,
@@ -142,30 +91,14 @@ export const getRandomSongs = async ({
   toYear?: number;
   genre?: string;
   musicFolderId?: string;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ songs: Songs }>
-    >("/rest/getRandomSongs", {
-      params: {
-        size,
-        fromYear,
-        toYear,
-        genre,
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) =>
+  subsonicRequest<{ songs: Songs }>("/rest/getRandomSongs", {
+    size,
+    fromYear,
+    toYear,
+    genre,
+    musicFolderId,
+  });
 
 export const getSongsByGenre = async (
   genre: string,
@@ -174,76 +107,26 @@ export const getSongsByGenre = async (
     offset,
     musicFolderId,
   }: { count?: number; offset?: number; musicFolderId?: string },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ songs: Songs }>
-    >("/rest/getSongsByGenre", {
-      params: {
-        genre,
-        count,
-        offset,
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ songs: Songs }>("/rest/getSongsByGenre", {
+    genre,
+    count,
+    offset,
+    musicFolderId,
+  });
 
 export const getStarred = async ({
   musicFolderId,
 }: {
   musicFolderId?: string;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ starred: Starred }>
-    >("/rest/getStarred", {
-      params: {
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) =>
+  subsonicRequest<{ starred: Starred }>("/rest/getStarred", { musicFolderId });
 
 export const getStarred2 = async ({
   musicFolderId,
 }: {
   musicFolderId?: string;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ starred2: Starred2 }>
-    >("/rest/getStarred2", {
-      params: {
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) =>
+  subsonicRequest<{ starred2: Starred2 }>("/rest/getStarred2", {
+    musicFolderId,
+  });

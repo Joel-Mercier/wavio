@@ -1,6 +1,6 @@
-import axios from "axios";
 import openSubsonicApiInstance, {
   type OpenSubsonicResponse,
+  subsonicRequest,
 } from "@/services/openSubsonic/index";
 import { search3 } from "@/services/openSubsonic/searching";
 import type {
@@ -25,129 +25,23 @@ import type {
   Videos,
 } from "@/services/openSubsonic/types";
 
-export const getMusicFolders = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ musicFolders: MusicFolders }>
-    >("/rest/getMusicFolders", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getMusicFolders = async () =>
+  subsonicRequest<{ musicFolders: MusicFolders }>("/rest/getMusicFolders");
 
-export const getAlbum = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ album: AlbumWithSongsID3 }>
-    >("/rest/getAlbum", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getAlbum = async (id: string) =>
+  subsonicRequest<{ album: AlbumWithSongsID3 }>("/rest/getAlbum", { id });
 
-export const getAlbumInfo = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ albumInfo: AlbumInfo }>
-    >("/rest/getAlbumInfo", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getAlbumInfo = async (id: string) =>
+  subsonicRequest<{ albumInfo: AlbumInfo }>("/rest/getAlbumInfo", { id });
 
-export const getAlbumInfo2 = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ albumInfo: AlbumInfo }>
-    >("/rest/getAlbumInfo2", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getAlbumInfo2 = async (id: string) =>
+  subsonicRequest<{ albumInfo: AlbumInfo }>("/rest/getAlbumInfo2", { id });
 
-export const getArtist = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ artist: ArtistWithAlbumsID3 }>
-    >("/rest/getArtist", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getArtist = async (id: string) =>
+  subsonicRequest<{ artist: ArtistWithAlbumsID3 }>("/rest/getArtist", { id });
 
-export const getArtistInfo = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ artistInfo: ArtistInfo }>
-    >("/rest/getArtistInfo", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getArtistInfo = async (id: string) =>
+  subsonicRequest<{ artistInfo: ArtistInfo }>("/rest/getArtistInfo", { id });
 
 export const getArtistInfo2 = async (
   id: string,
@@ -155,72 +49,24 @@ export const getArtistInfo2 = async (
     count,
     includeNotPresent = false,
   }: { count?: number; includeNotPresent?: boolean },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ artistInfo2: ArtistInfo2 }>
-    >("/rest/getArtistInfo2", {
-      params: {
-        id,
-        count,
-        includeNotPresent,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ artistInfo2: ArtistInfo2 }>("/rest/getArtistInfo2", {
+    id,
+    count,
+    includeNotPresent,
+  });
 
 export const getArtists = async ({
   musicFolderId,
 }: {
   musicFolderId?: string;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ artists: ArtistsID3 }>
-    >("/rest/getArtists", {
-      params: {
-        musicFolderId,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) =>
+  subsonicRequest<{ artists: ArtistsID3 }>("/rest/getArtists", {
+    musicFolderId,
+  });
 
-export const getGenres = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ genres: Genres }>
-    >("/rest/getGenres", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getGenres = async () =>
+  subsonicRequest<{ genres: Genres }>("/rest/getGenres");
 
 export const getIndexes = async ({
   musicFolderId,
@@ -228,230 +74,65 @@ export const getIndexes = async ({
 }: {
   musicFolderId?: string;
   ifModifiedSince?: number;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ indexes: Indexes }>
-    >("/rest/getIndexes", {
-      params: {
-        musicFolderId,
-        ifModifiedSince,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) =>
+  subsonicRequest<{ indexes: Indexes }>("/rest/getIndexes", {
+    musicFolderId,
+    ifModifiedSince,
+  });
 
-export const getMusicDirectory = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ directory: Directory }>
-    >("/rest/getMusicDirectory", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getMusicDirectory = async (id: string) =>
+  subsonicRequest<{ directory: Directory }>("/rest/getMusicDirectory", { id });
 
-export const getPodcastEpisode = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ podcastEpisode: PodcastEpisode }>
-    >("/rest/getPodcastEpisode", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getPodcastEpisode = async (id: string) =>
+  subsonicRequest<{ podcastEpisode: PodcastEpisode }>(
+    "/rest/getPodcastEpisode",
+    { id },
+  );
 
 export const getSimilarSongs = async (
   id: string,
   { count }: { count?: number },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ similarSongs: SimilarSongs }>
-    >("/rest/getSimilarSongs", {
-      params: {
-        id,
-        count,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ similarSongs: SimilarSongs }>("/rest/getSimilarSongs", {
+    id,
+    count,
+  });
 
 export const getSimilarSongs2 = async (
   id: string,
   { count }: { count?: number },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ similarSongs2: SimilarSongs2 }>
-    >("/rest/getSimilarSongs2", {
-      params: {
-        id,
-        count,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ similarSongs2: SimilarSongs2 }>("/rest/getSimilarSongs2", {
+    id,
+    count,
+  });
 
 export const getSonicSimilarTracks = async (
   id: string,
   { count }: { count?: number },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ sonicSimilarTracks: SonicSimilarTracks }>
-    >("/rest/getSonicSimilarTracks", {
-      params: {
-        id,
-        count,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ sonicSimilarTracks: SonicSimilarTracks }>(
+    "/rest/getSonicSimilarTracks",
+    { id, count },
+  );
 
-export const getSong = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ song: Child }>
-    >("/rest/getSong", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getSong = async (id: string) =>
+  subsonicRequest<{ song: Child }>("/rest/getSong", { id });
 
 export const getTopSongs = async (
   artist: string,
   { count }: { count?: number },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ topSongs: TopSongs }>
-    >("/rest/getTopSongs", {
-      params: {
-        artist,
-        count,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ topSongs: TopSongs }>("/rest/getTopSongs", {
+    artist,
+    count,
+  });
 
-export const getVideoInfo = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ videoInfo: VideoInfo }>
-    >("/rest/getVideoInfo", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getVideoInfo = async (id: string) =>
+  subsonicRequest<{ videoInfo: VideoInfo }>("/rest/getVideoInfo", { id });
 
-export const getVideos = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ videos: Videos }>
-    >("/rest/getVideos", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getVideos = async () =>
+  subsonicRequest<{ videos: Videos }>("/rest/getVideos");
 
 export const getArtistAppearances = async (
   id: string,
@@ -468,6 +149,8 @@ export const getArtistAppearances = async (
       songCount: 500,
       musicFolderId,
     }),
+    // Raw call on purpose: a failed envelope just skips the own-albums filter
+    // below instead of throwing like subsonicRequest would.
     openSubsonicApiInstance.get<
       OpenSubsonicResponse<{ artist: ArtistWithAlbumsID3 }>
     >("/rest/getArtist", { params: { id } }),

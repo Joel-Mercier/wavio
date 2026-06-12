@@ -691,6 +691,20 @@ export async function queryPodcastEpisodesByChannel(
   );
 }
 
+export async function queryPodcastEpisodesByChannelIds(
+  channelIds: string[],
+): Promise<PodcastEpisodeRow[]> {
+  if (channelIds.length === 0) return [];
+  const db = await getLocalLibraryDb();
+  const placeholders = channelIds.map(() => "?").join(", ");
+  return db.getAllAsync<PodcastEpisodeRow>(
+    `SELECT * FROM podcast_episodes
+     WHERE channel_id IN (${placeholders})
+     ORDER BY publish_date DESC NULLS LAST, created_at DESC`,
+    ...channelIds,
+  );
+}
+
 export async function queryPodcastEpisodeById(
   id: string,
 ): Promise<PodcastEpisodeRow | null> {
@@ -743,6 +757,26 @@ export async function updatePodcastChannelMeta(
     fields.description,
     fields.author,
     fields.original_image_url,
+    fields.status,
+    fields.error_message,
+    fields.updated_at,
+    id,
+  );
+}
+
+export async function updatePodcastChannelStatus(
+  id: string,
+  fields: {
+    status: string;
+    error_message: string | null;
+    updated_at: number;
+  },
+): Promise<void> {
+  const db = await getLocalLibraryDb();
+  await db.runAsync(
+    `UPDATE podcast_channels
+     SET status = ?, error_message = ?, updated_at = ?
+     WHERE id = ?`,
     fields.status,
     fields.error_message,
     fields.updated_at,

@@ -1,77 +1,25 @@
-import axios from "axios";
-import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
-} from "@/services/openSubsonic/index";
+import { subsonicRequest } from "@/services/openSubsonic/index";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 
 export const createInternetRadioStation = async (
   streamUrl: string,
   name: string,
   homePageUrl?: string,
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ radioStation: InternetRadioStation }>
-    >("/rest/createInternetRadioStation", {
-      params: {
-        streamUrl,
-        name,
-        homepageUrl: homePageUrl,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{ radioStation: InternetRadioStation }>(
+    "/rest/createInternetRadioStation",
+    { streamUrl, name, homepageUrl: homePageUrl },
+  );
 
-export const getInternetRadioStations = async () => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{
-        internetRadioStations: { internetRadioStation: InternetRadioStation[] };
-      }>
-    >("/rest/getInternetRadioStations", {
-      params: {},
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getInternetRadioStations = async () =>
+  subsonicRequest<{
+    internetRadioStations: { internetRadioStation: InternetRadioStation[] };
+  }>("/rest/getInternetRadioStations");
 
-export const deleteInternetRadioStation = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/deleteInternetRadioStation", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const deleteInternetRadioStation = async (id: string) =>
+  subsonicRequest<Record<string, never>>("/rest/deleteInternetRadioStation", {
+    id,
+  });
 
 export const updateInternetRadioStation = async (
   id: string,
@@ -80,26 +28,10 @@ export const updateInternetRadioStation = async (
     name,
     homePageUrl,
   }: { streamUrl: string; name: string; homePageUrl?: string },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/updateInternetRadioStation", {
-      params: {
-        id,
-        streamUrl,
-        name,
-        homePageUrl,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<Record<string, never>>("/rest/updateInternetRadioStation", {
+    id,
+    streamUrl,
+    name,
+    homePageUrl,
+  });

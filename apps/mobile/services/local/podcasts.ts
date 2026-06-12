@@ -13,7 +13,9 @@ import {
   queryPodcastChannels,
   queryPodcastEpisodeById,
   queryPodcastEpisodesByChannel,
+  queryPodcastEpisodesByChannelIds,
   updatePodcastChannelMeta,
+  updatePodcastChannelStatus,
   upsertPodcastEpisodes,
 } from "@/services/local/repository";
 import {
@@ -103,11 +105,9 @@ async function refreshChannel(
     });
     await upsertPodcastEpisodes(buildEpisodeRows(channelId, feed, now));
   } catch (error) {
-    await updatePodcastChannelMeta(channelId, {
-      title: null,
-      description: null,
-      author: null,
-      original_image_url: null,
+    // Keep the previously stored metadata/episodes: a transient failure (e.g.
+    // opening the channel offline) must not blank out the cached channel.
+    await updatePodcastChannelStatus(channelId, {
       status: "error",
       error_message: error instanceof Error ? error.message : "Unknown error",
       updated_at: now,
@@ -128,6 +128,10 @@ async function channelWithEpisodes(
   return mapChannelRow(row, episodes);
 }
 
+// Skip the feed re-parse when the channel was successfully refreshed recently,
+// so reopening a channel doesn't block the JS thread re-parsing a large feed.
+const REFRESH_TTL_MS = 15 * 60 * 1000;
+
 export const getPodcasts = async (
   options: { includeEpisodes?: boolean; id?: string } = {},
 ) => {
@@ -138,10 +142,15 @@ export const getPodcasts = async (
   if (id) {
     const row = await queryPodcastChannelById(id);
     if (!row) return localEnvelope({ podcasts: { channel: [] } });
-    try {
-      await refreshChannel(id, row.url, Date.now());
-    } catch (error) {
-      logError("[localLibrary] Failed to refresh podcast channel", error);
+    const now = Date.now();
+    const fresh =
+      row.status === "completed" && now - row.updated_at < REFRESH_TTL_MS;
+    if (!fresh) {
+      try {
+        await refreshChannel(id, row.url, now);
+      } catch (error) {
+        logError("[localLibrary] Failed to refresh podcast channel", error);
+      }
     }
     const channel = await channelWithEpisodes(id, includeEpisodes);
     return localEnvelope({ podcasts: { channel: channel ? [channel] : [] } });
@@ -149,15 +158,25 @@ export const getPodcasts = async (
 
   // The full list: read stored channels without hitting the network.
   const rows = await queryPodcastChannels();
-  const channels = await Promise.all(
-    rows.map(async (row) =>
-      mapChannelRow(
-        row,
-        includeEpisodes
-          ? (await queryPodcastEpisodesByChannel(row.id)).map(mapEpisodeRow)
-          : undefined,
-      ),
-    ),
+  if (!includeEpisodes) {
+    return localEnvelope({
+      podcasts: { channel: rows.map((row) => mapChannelRow(row)) },
+    });
+  }
+  const episodeRows = await queryPodcastEpisodesByChannelIds(
+    rows.map((row) => row.id),
+  );
+  const episodesByChannel = new Map<string, PodcastEpisode[]>();
+  for (const episode of episodeRows) {
+    let list = episodesByChannel.get(episode.channel_id);
+    if (!list) {
+      list = [];
+      episodesByChannel.set(episode.channel_id, list);
+    }
+    list.push(mapEpisodeRow(episode));
+  }
+  const channels = rows.map((row) =>
+    mapChannelRow(row, episodesByChannel.get(row.id) ?? []),
   );
   return localEnvelope({ podcasts: { channel: channels } });
 };

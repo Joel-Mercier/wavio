@@ -1,17 +1,34 @@
-import { useEffect } from "react";
+import { useCallback, useMemo } from "react";
 import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useSyncServerFavorites } from "@/hooks/useServerFavoritesSync";
+import type { InternetRadioStation } from "@/services/openSubsonic/types";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
-import useRadioStations from "@/stores/radioStations";
+import useRadioStations, {
+  type FavoriteRadioStation,
+  radioFavoritesForScope,
+} from "@/stores/radioStations";
+
+// Favorite radio stations visible for the active server: Radio-Browser
+// favorites plus the "server"-sourced stations that belong to the current auth
+// scope.
+export function useScopedRadioFavorites(): FavoriteRadioStation[] {
+  const scope = useCurrentAuthScope();
+  const favorites = useRadioStations((s) => s.favoriteRadioStations);
+  return useMemo(
+    () => radioFavoritesForScope(favorites, scope),
+    [favorites, scope],
+  );
+}
+
+const stationId = (station: InternetRadioStation) => station.id;
+const favoriteId = (fav: FavoriteRadioStation) => fav.id;
 
 // Keeps "server"-sourced radio favorites in sync with the active server's
 // live internet-radio stations: patches name/url/homepage when they change and
-// prunes favorites whose station was deleted on the server. Only reconciles
-// favorites whose scope matches the active server, so the global favorites
-// store never purges another server's favorites when you switch servers.
+// prunes favorites whose station was deleted on the server.
 export function useSyncServerRadioFavorites() {
   const capabilities = useCapabilities();
-  const scope = useCurrentAuthScope();
   const favorites = useRadioStations((s) => s.favoriteRadioStations);
   const removeFavoriteRadioStation = useRadioStations(
     (s) => s.removeFavoriteRadioStation,
@@ -23,17 +40,8 @@ export function useSyncServerRadioFavorites() {
     enabled: capabilities.internetRadio,
   });
 
-  useEffect(() => {
-    if (!capabilities.internetRadio || isLoading || isError || !scope) return;
-    const live = data?.internetRadioStations?.internetRadioStation ?? [];
-    const byId = new Map(live.map((station) => [station.id, station]));
-    for (const fav of favorites) {
-      if (fav.source !== "server" || fav.scope !== scope) continue;
-      const station = byId.get(fav.id);
-      if (!station) {
-        removeFavoriteRadioStation(fav.id);
-        continue;
-      }
+  const reconcile = useCallback(
+    (fav: FavoriteRadioStation, station: InternetRadioStation) => {
       if (
         station.name !== fav.name ||
         station.streamUrl !== fav.streamUrl ||
@@ -45,15 +53,19 @@ export function useSyncServerRadioFavorites() {
           homePageUrl: station.homePageUrl,
         });
       }
-    }
-  }, [
-    data,
-    favorites,
-    scope,
-    capabilities.internetRadio,
+    },
+    [updateFavoriteRadioStation],
+  );
+
+  useSyncServerFavorites({
+    enabled: capabilities.internetRadio,
     isLoading,
     isError,
-    removeFavoriteRadioStation,
-    updateFavoriteRadioStation,
-  ]);
+    live: data?.internetRadioStations?.internetRadioStation ?? [],
+    liveId: stationId,
+    favorites,
+    favoriteId,
+    remove: removeFavoriteRadioStation,
+    reconcile,
+  });
 }

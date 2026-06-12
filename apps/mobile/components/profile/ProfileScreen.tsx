@@ -179,7 +179,7 @@ export default function ProfileScreen() {
         renderItem={({ item }: { item: Playlist }) => (
           <PlaylistRow playlist={item} />
         )}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <LinearGradient
               colors={[blue500, "#000000"]}
@@ -238,8 +238,8 @@ export default function ProfileScreen() {
               </Box>
             )}
           </>
-        )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+        }
+        ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

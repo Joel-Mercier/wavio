@@ -520,23 +520,24 @@ export default function AlbumDetail() {
     setShuffle(!shuffle);
   };
 
-  const handleTrackPressCallback = () => {
-    if (data?.album) {
+  const album = data?.album;
+  const handleTrackPressCallback = useCallback(() => {
+    if (album) {
       addRecentPlay({
         id,
-        title: data?.album.name,
+        title: album.name,
         type: "album",
-        coverArt: data?.album?.coverArt,
+        coverArt: album.coverArt,
       });
       recordActivity({
         id,
-        title: data.album.name,
+        title: album.name,
         type: "album",
-        coverArt: data.album.coverArt,
-        artist: data.album.artist,
+        coverArt: album.coverArt,
+        artist: album.artist,
       });
     }
-  };
+  }, [album, id, addRecentPlay, recordActivity]);
 
   const handleMusicBrainzPress = async () => {
     bottomSheetModalRef.current?.dismiss();
@@ -722,7 +723,7 @@ export default function AlbumDetail() {
             />
           )
         }
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <LinearGradient
             colors={[
               (colors?.platform === "ios"
@@ -881,8 +882,8 @@ export default function AlbumDetail() {
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </LinearGradient>
-        )}
-        ListFooterComponent={() => (
+        }
+        ListFooterComponent={
           <VStack className="my-6">
             <Text className="text-white font-bold px-6">
               {`${t("app.shared.songCount", { count: data?.album?.songCount ?? 0 })} `}{" "}
@@ -965,8 +966,8 @@ export default function AlbumDetail() {
               );
             })()}
           </VStack>
-        )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+        }
+        ListEmptyComponent={<EmptyDisplay />}
         // contentContainerStyle={{ paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
       />

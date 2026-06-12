@@ -1,5 +1,6 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import AnimatedHeart from "@/components/AnimatedHeart";
@@ -40,7 +41,10 @@ interface TrackListItemProps {
   showCoverArt?: boolean;
 }
 
-export default function TrackListItem({
+// Rendered in every track list — memoized so a parent re-render (favorite
+// toggles, download progress, …) doesn't re-render all visible rows. Callers
+// must pass referentially stable onPress/onPlayCallback handlers.
+function TrackListItem({
   track,
   index,
   onPress,
@@ -198,3 +202,5 @@ export default function TrackListItem({
     </Pressable>
   );
 }
+
+export default memo(TrackListItem);

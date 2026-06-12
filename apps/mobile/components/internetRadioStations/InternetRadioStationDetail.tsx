@@ -42,7 +42,9 @@ import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import { pause as pausePlayback, playTracks } from "@/services/player";
 import { registerStationClick } from "@/services/radioBrowser/stations";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
-import useRadioStations from "@/stores/radioStations";
+import useRadioStations, {
+  radioFavoritesForScope,
+} from "@/stores/radioStations";
 import useRecentPlays from "@/stores/recentPlays";
 
 const titleize = (value: string) =>
@@ -102,8 +104,13 @@ export default function InternetRadioStationDetail() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const scope = useCurrentAuthScope();
+  // Server-assigned station ids can collide across servers — only a favorite
+  // from the active scope counts.
   const isFavorite = useRadioStations((store) =>
-    store.favoriteRadioStations.some((fav) => fav.id === id),
+    radioFavoritesForScope(store.favoriteRadioStations, scope).some(
+      (fav) => fav.id === id,
+    ),
   );
   const addFavoriteRadioStation = useRadioStations(
     (store) => store.addFavoriteRadioStation,
@@ -111,7 +118,6 @@ export default function InternetRadioStationDetail() {
   const removeFavoriteRadioStation = useRadioStations(
     (store) => store.removeFavoriteRadioStation,
   );
-  const scope = useCurrentAuthScope();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const isPlaying = useIsPlaying();

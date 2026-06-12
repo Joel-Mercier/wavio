@@ -318,44 +318,47 @@ export default function PlaylistDetail() {
     );
   };
 
-  const handleDeleteFromPlaylistPress = (index: string) => {
-    doUpdatePlaylist.mutate(
-      { id, songIndexToRemove: [index] },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["playlist", id] });
-          queryClient.invalidateQueries({ queryKey: ["playlists"] });
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.playlists.removeTrackSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
+  const handleDeleteFromPlaylistPress = useCallback(
+    (index: string) => {
+      doUpdatePlaylist.mutate(
+        { id, songIndexToRemove: [index] },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlist", id] });
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.playlists.removeTrackSuccessMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: (error) => {
+            logError(error);
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.playlists.removeTrackErrorMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
         },
-        onError: (error) => {
-          logError(error);
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.playlists.removeTrackErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
-  };
+      );
+    },
+    [doUpdatePlaylist.mutate, id, queryClient, toast, t],
+  );
 
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
@@ -638,8 +641,8 @@ export default function PlaylistDetail() {
         data={!playlistData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}
         renderItem={renderRow}
-        ListEmptyComponent={() => (!playlistData ? null : <EmptyDisplay />)}
-        ListHeaderComponent={() => (
+        ListEmptyComponent={!playlistData ? null : <EmptyDisplay />}
+        ListHeaderComponent={
           <LinearGradient
             colors={[
               (colors?.platform === "ios"
@@ -783,15 +786,15 @@ export default function PlaylistDetail() {
             </VStack>
             {error && <ErrorDisplay error={error} />}
           </LinearGradient>
-        )}
-        ListFooterComponent={() => (
+        }
+        ListFooterComponent={
           <VStack className="my-6 px-6">
             <Text className="text-white font-bold">
               {`${t("app.shared.songCount", { count: playlistData?.playlist.songCount ?? 0 })} `}{" "}
               ⦁ {Math.round((playlistData?.playlist.duration || 0) / 60)} min
             </Text>
           </VStack>
-        )}
+        }
         contentContainerStyle={{
           paddingLeft: insets.left,
           paddingRight: insets.right,

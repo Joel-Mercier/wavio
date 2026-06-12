@@ -1,6 +1,5 @@
-import axios from "axios";
 import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
+  subsonicRequest,
 } from "@/services/openSubsonic/index";
 import type { Lyrics, StructuredLyrics } from "@/services/openSubsonic/types";
 import { arrayBufferToBase64 } from "@/utils/arrayBufferToBase64";
@@ -53,54 +52,15 @@ export const getLyrics = async ({
 }: {
   artist?: string;
   title?: string;
-}) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ lyrics: Lyrics }>
-    >("/rest/getLyrics", {
-      params: {
-        artist,
-        title,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+}) => subsonicRequest<{ lyrics: Lyrics }>("/rest/getLyrics", { artist, title });
 
 export const getLyricsBySongId = async (
   id: string,
   { enhanced }: { enhanced?: boolean } = {},
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{
-        lyricsList: { structuredLyrics?: StructuredLyrics[] };
-      }>
-    >("/rest/getLyricsBySongId", {
-      params: {
-        id,
-        enhanced,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<{
+    lyricsList: { structuredLyrics?: StructuredLyrics[] };
+  }>("/rest/getLyricsBySongId", { id, enhanced });
 
 export const hls = async (id: string, bitRate: number, audioTrack: string) => {
   const rsp = await openSubsonicApiInstance.get<string>("/rest/hls", {

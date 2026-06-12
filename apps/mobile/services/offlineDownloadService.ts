@@ -225,7 +225,7 @@ export class OfflineDownloadService {
     if (generation !== this.generation) {
       try {
         downloadResult.delete();
-      } catch { }
+      } catch {}
       throw new Error("Downloads cleared");
     }
 

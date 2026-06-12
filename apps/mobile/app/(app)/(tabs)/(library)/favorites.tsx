@@ -253,7 +253,7 @@ export default function FavoritesScreen() {
         data={!starredData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}
         renderItem={renderRow}
-        ListHeaderComponent={() => (
+        ListHeaderComponent={
           <>
             <LinearGradient
               colors={[blue500, "#000000"]}
@@ -346,8 +346,8 @@ export default function FavoritesScreen() {
               {error && <ErrorDisplay error={error} />}
             </VStack>
           </>
-        )}
-        ListEmptyComponent={() => <EmptyDisplay />}
+        }
+        ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
             insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,

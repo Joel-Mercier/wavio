@@ -1,100 +1,25 @@
-import axios from "axios";
-import openSubsonicApiInstance, {
-  type OpenSubsonicResponse,
-} from "@/services/openSubsonic/index";
+import { subsonicRequest } from "@/services/openSubsonic/index";
 import type {
   Playlist,
   Playlists,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
 
-export const createPlaylist = async (name: string, songId?: string[]) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ playlist: Playlist }>
-    >("/rest/createPlaylist", {
-      params: {
-        name,
-        songId,
-      },
-      paramsSerializer: {
-        indexes: null,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const createPlaylist = async (name: string, songId?: string[]) =>
+  subsonicRequest<{ playlist: Playlist }>(
+    "/rest/createPlaylist",
+    { name, songId },
+    { paramsSerializer: { indexes: null } },
+  );
 
-export const deletePlaylist = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/deletePlaylist", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const deletePlaylist = async (id: string) =>
+  subsonicRequest<Record<string, never>>("/rest/deletePlaylist", { id });
 
-export const getPlaylist = async (id: string) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ playlist: PlaylistWithSongs }>
-    >("/rest/getPlaylist", {
-      params: {
-        id,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getPlaylist = async (id: string) =>
+  subsonicRequest<{ playlist: PlaylistWithSongs }>("/rest/getPlaylist", { id });
 
-export const getPlaylists = async ({ username }: { username?: string }) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<{ playlists: Playlists }>
-    >("/rest/getPlaylists", {
-      params: {
-        username,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+export const getPlaylists = async ({ username }: { username?: string }) =>
+  subsonicRequest<{ playlists: Playlists }>("/rest/getPlaylists", { username });
 
 export const updatePlaylist = async (
   id: string,
@@ -111,31 +36,16 @@ export const updatePlaylist = async (
     songIdToAdd?: string[];
     songIndexToRemove?: string[];
   },
-) => {
-  try {
-    const rsp = await openSubsonicApiInstance.get<
-      OpenSubsonicResponse<Record<string, never>>
-    >("/rest/updatePlaylist", {
-      params: {
-        playlistId: id,
-        name,
-        comment,
-        public: isPublic,
-        songIdToAdd,
-        songIndexToRemove,
-      },
-      paramsSerializer: {
-        indexes: null,
-      },
-    });
-    if (rsp.data["subsonic-response"]?.status !== "ok") {
-      throw rsp.data["subsonic-response"].error;
-    }
-    return rsp.data["subsonic-response"];
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
-  }
-};
+) =>
+  subsonicRequest<Record<string, never>>(
+    "/rest/updatePlaylist",
+    {
+      playlistId: id,
+      name,
+      comment,
+      public: isPublic,
+      songIdToAdd,
+      songIndexToRemove,
+    },
+    { paramsSerializer: { indexes: null } },
+  );
