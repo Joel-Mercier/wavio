@@ -12,9 +12,9 @@ export const defaultLang: Lang = 'en'
 export const ui = {
   en: {
     meta: {
-      homeTitle: 'Wavio. Your music, your server, your way.',
+      homeTitle: 'Wavio. Your music, your player, your way.',
       homeDescription:
-        'An open-source Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. No ads, no tracking, fully offline-ready.',
+        'A open-source Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. No ads, no tracking, fully offline-ready.',
       privacyTitle: 'Privacy Policy. Wavio',
       privacyDescription:
         "Wavio runs entirely on your device and talks only to the music server you configure. We don't collect, sell, or share your data.",
@@ -25,13 +25,13 @@ export const ui = {
       download: 'Download',
     },
     hero: {
-      tag: 'An open-source music player',
+      tag: 'A open-source music player',
       titleLines: [
         ['Your', 'music,'],
-        ['your', 'server,'],
+        ['your', 'player,'],
       ],
       titleAccent: 'your way.',
-      lead: 'An Android player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home.',
+      lead: 'A Android player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home.',
     },
     cta: {
       getItOn: 'GET IT ON',
@@ -118,7 +118,7 @@ export const ui = {
     },
     footer: {
       tagline:
-        'An open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic or a local library.',
+        'A open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic or a local library.',
       product: 'Product',
       features: 'Features',
       download: 'Download',
@@ -197,6 +197,7 @@ export const ui = {
 						<ul>
 							<li><strong><a href="https://lrclib.net/" target="_blank" rel="noopener" class="text-accent hover:underline">LRCLib</a></strong> is queried for synchronised lyrics when you open the lyrics view for a track.</li>
 							<li><strong><a href="https://taddy.org/" target="_blank" rel="noopener" class="text-accent hover:underline">Taddy</a></strong> powers podcast search and metadata, and is only contacted if you provide your own Taddy API key and user ID in the settings.</li>
+							<li><strong><a href="https://www.radio-browser.info/" target="_blank" rel="noopener" class="text-accent hover:underline">Radio Browser</a></strong> provides the internet radio station directory, and is queried when you browse or search for radio stations.</li>
 							<li><strong>Google Cast</strong> is used when you cast playback to a Chromecast-compatible device. Google's terms then apply to that session.</li>
 						</ul>
 						<p>No advertising network, no analytics provider, and no social tracker is integrated into Wavio.</p>`,
@@ -222,7 +223,7 @@ export const ui = {
 
   fr: {
     meta: {
-      homeTitle: 'Wavio. Votre musique, votre serveur, à votre façon.',
+      homeTitle: 'Wavio. Votre musique, votre lecteur, à votre façon.',
       homeDescription:
         'Un lecteur de musique Android open source pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Sans publicité, sans pistage, entièrement utilisable hors ligne.',
       privacyTitle: 'Politique de confidentialité. Wavio',
@@ -238,7 +239,7 @@ export const ui = {
       tag: 'Un lecteur de musique open source',
       titleLines: [
         ['Votre', 'musique,'],
-        ['votre', 'serveur,'],
+        ['votre', 'lecteur,'],
       ],
       titleAccent: 'à votre façon.',
       lead: "Un lecteur Android pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi.",
@@ -410,6 +411,7 @@ export const ui = {
 						<ul>
 							<li><strong><a href="https://lrclib.net/" target="_blank" rel="noopener" class="text-accent hover:underline">LRCLib</a></strong> est interrogé pour récupérer les paroles synchronisées lorsque vous ouvrez la vue des paroles d'un morceau.</li>
 							<li><strong><a href="https://taddy.org/" target="_blank" rel="noopener" class="text-accent hover:underline">Taddy</a></strong> alimente la recherche et les métadonnées de podcasts, et n'est contacté que si vous fournissez votre propre clé d'API et identifiant utilisateur Taddy dans les réglages.</li>
+							<li><strong><a href="https://www.radio-browser.info/" target="_blank" rel="noopener" class="text-accent hover:underline">Radio Browser</a></strong> fournit l'annuaire des stations de radio en ligne, et est interrogé lorsque vous parcourez ou recherchez des stations de radio.</li>
 							<li><strong>Google Cast</strong> est utilisé lorsque vous diffusez la lecture vers un appareil compatible Chromecast. Les conditions de Google s'appliquent alors à cette session.</li>
 						</ul>
 						<p>Aucun réseau publicitaire, fournisseur de statistiques ou traceur social n'est intégré à Wavio.</p>`,
