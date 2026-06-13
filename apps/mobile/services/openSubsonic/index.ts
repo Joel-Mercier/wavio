@@ -5,8 +5,8 @@ import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
 const navidromeSubsonicApiVersion =
-  process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
-const navidromeClient = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "";
+  process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
+const navidromeClient = process.env.EXPO_PUBLIC_CLIENT_NAME || "";
 
 if (__DEV__) {
   console.log(

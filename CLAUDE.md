@@ -34,7 +34,11 @@ Run from the **repo root** (delegate to a workspace via `--cwd`):
 
 Or run inside a workspace directly: `bun run --cwd apps/mobile <script>`, or `cd apps/mobile && bun run <script>`. Single mobile test: `cd apps/mobile && bunx jest __tests__/queue.store.test.ts`. APK build: `cd apps/mobile && eas build --profile preview --platform android` (profiles in `apps/mobile/eas.json`).
 
-`apps/mobile/.env` holds `EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION` and `EXPO_PUBLIC_NAVIDROME_CLIENT`, which are injected into every Subsonic request.
+`apps/mobile/.env` (gitignored) holds:
+- `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION` and `EXPO_PUBLIC_CLIENT_NAME` — injected into every Subsonic request.
+- `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID`, `EXPO_PUBLIC_TADDY_PODCASTS_API_KEY`, `EXPO_PUBLIC_TADDY_PODCASTS_API_LANGUAGE`, `EXPO_PUBLIC_TADDY_PODCASTS_API_COUNTRY` — optional dev defaults for the Taddy podcasts config. They seed the initial `stores/podcasts.ts` state (and `clearTaddyPodcastsConfig` resets back to them) so podcasts work without manually entering config; values set via the in-app settings override them and persist. Language/country must be valid `Language`/`Country` enum keys (e.g. `FRENCH`/`FRANCE`).
+
+`EXPO_PUBLIC_*` vars are inlined into the JS bundle at build time. Cloud EAS builds don't see `.env` (it's gitignored, so not uploaded — per-profile vars live in `apps/mobile/eas.json` instead), but **local** builds (`eas build --local`, local prebuild + gradle) do bake in whatever is in `.env`, so don't distribute a locally-built APK expecting the Taddy credentials to be stripped.
 
 TS path alias: `@/*` → `apps/mobile/` root.
 

@@ -68,7 +68,7 @@ export default {
           "Create an internet radio station you can stream from the app",
         podcastChannelTitle: "Podcast channel",
         podcastChannelDescription:
-          "Subscribe the server to a podcast feed by its RSS url",
+          "Subscribe the server to a podcast by its RSS feed",
       },
       carAuto: {
         home: "Home",

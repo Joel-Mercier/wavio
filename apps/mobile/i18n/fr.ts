@@ -68,7 +68,7 @@ export default {
           "Créer une station de radio en ligne que vous pouvez diffuser depuis l'application",
         podcastChannelTitle: "Chaîne de podcast",
         podcastChannelDescription:
-          "Abonner le serveur à un flux de podcast à partir de son URL RSS",
+          "Abonner le serveur à un podcast à partir de son flux RSS",
       },
       carAuto: {
         home: "Accueil",
@@ -204,7 +204,7 @@ export default {
         taddyPodcastsNotConfigured: "L'accès aux podcasts n'est pas configuré",
         yourPodcasts: "Vos podcasts",
         noServerPodcasts:
-          "Vous n'avez pas encore ajouté de podcast. Appuyez sur + pour en ajouter un via son flux RSS.",
+          "Vous n'avez pas encore ajouté de podcast. Appuyez sur + pour en ajouter un via un flux RSS.",
         taddyDiscoveryHint:
           "Envie de découvrir et rechercher des podcasts ? Configurez l'accès aux podcasts dans les réglages.",
         noEpisodes: "Aucun épisode disponible pour le moment",

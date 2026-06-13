@@ -12,8 +12,8 @@ import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
 const navidromeSubsonicApiVersion =
-  process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION || "";
-const navidromeClient = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "";
+  process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
+const navidromeClient = process.env.EXPO_PUBLIC_CLIENT_NAME || "";
 
 function isJellyfin(): boolean {
   return useAuthBase.getState().serverType === "jellyfin";
@@ -22,11 +22,16 @@ function isJellyfin(): boolean {
 // Local media plays straight from a URL the id encodes: a track id decodes to a
 // `file://` URI on disk, a self-hosted podcast episode id decodes to its remote
 // enclosure URL. Either way expo-audio gets the URL directly (no /stream
-// endpoint, no transcoding). Returns null when the active server isn't local or
-// `id` isn't a recognised local id.
+// endpoint, no transcoding). Returns null when `id` isn't a recognised local id.
 function localFileUrl(id: string): string | null {
+  // Self-hosted podcast episodes decode to their remote enclosure URL on every
+  // backend (Navidrome/Jellyfin reuse the on-device podcast store), so resolve
+  // them regardless of the active server type. Track ids decode to on-disk
+  // `file://` URIs that only exist in local mode, so keep those gated.
+  const podcastUrl = parseLocalPodcastEpisodeId(id);
+  if (podcastUrl != null) return podcastUrl;
   if (useAuthBase.getState().serverType !== "local") return null;
-  return parseLocalTrackId(id) ?? parseLocalPodcastEpisodeId(id);
+  return parseLocalTrackId(id);
 }
 
 export const hlsStreamUrl = (id: string) => {

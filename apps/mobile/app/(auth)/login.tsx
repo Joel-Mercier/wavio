@@ -225,8 +225,8 @@ export default function LoginScreen() {
               params: {
                 u: trimmedUsername,
                 p: trimmedPassword,
-                v: process.env.EXPO_PUBLIC_NAVIDROME_SUBSONIC_API_VERSION,
-                c: process.env.EXPO_PUBLIC_NAVIDROME_CLIENT,
+                v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
+                c: process.env.EXPO_PUBLIC_CLIENT_NAME,
                 f: "json",
               },
             });

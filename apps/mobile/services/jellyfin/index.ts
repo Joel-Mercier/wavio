@@ -3,7 +3,7 @@ import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
-const client = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "Wavio";
+const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
 export function buildAuthorizationHeader(token?: string | null): string {
   const deviceId = getDeviceId();

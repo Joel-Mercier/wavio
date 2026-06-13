@@ -3,7 +3,7 @@ import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
-const client = process.env.EXPO_PUBLIC_NAVIDROME_CLIENT || "Wavio";
+const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
 function baseUrl(): string {
   return useAuthBase.getState().url.replace(/\/+$/, "");

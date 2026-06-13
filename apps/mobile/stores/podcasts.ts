@@ -58,6 +58,19 @@ export interface RecommendationParams {
   excludeUuids?: string[];
 }
 
+const DEFAULT_TADDY_API_KEY =
+  process.env.EXPO_PUBLIC_TADDY_PODCASTS_API_KEY || "";
+const DEFAULT_TADDY_USER_ID =
+  process.env.EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID || "";
+const DEFAULT_TADDY_LANGUAGE =
+  (process.env.EXPO_PUBLIC_TADDY_PODCASTS_API_LANGUAGE as
+    | keyof typeof Language
+    | undefined) || "ENGLISH";
+const DEFAULT_TADDY_COUNTRY =
+  (process.env.EXPO_PUBLIC_TADDY_PODCASTS_API_COUNTRY as
+    | keyof typeof Country
+    | undefined) || "UNITED_STATES_OF_AMERICA";
+
 const DEFAULT_GENRES: (keyof typeof Genre)[] = [
   "PODCASTSERIES_NEWS_DAILY_NEWS",
   "PODCASTSERIES_COMEDY",
@@ -109,10 +122,10 @@ interface PodcastsStore {
 export const usePodcastsBase = create<PodcastsStore>()(
   persist(
     (set, get) => ({
-      taddyPodcastsApiKey: "",
-      taddyPodcastsUserId: "",
-      taddyPodcastsLanguage: "ENGLISH",
-      taddyPodcastsCountry: "UNITED_STATES_OF_AMERICA",
+      taddyPodcastsApiKey: DEFAULT_TADDY_API_KEY,
+      taddyPodcastsUserId: DEFAULT_TADDY_USER_ID,
+      taddyPodcastsLanguage: DEFAULT_TADDY_LANGUAGE,
+      taddyPodcastsCountry: DEFAULT_TADDY_COUNTRY,
       setTaddyPodcastsConfig: ({ apiKey, userId, language, country }) => {
         set({
           taddyPodcastsApiKey: apiKey,
@@ -122,7 +135,12 @@ export const usePodcastsBase = create<PodcastsStore>()(
         });
       },
       clearTaddyPodcastsConfig: () => {
-        set({ taddyPodcastsApiKey: "", taddyPodcastsUserId: "" });
+        set({
+          taddyPodcastsApiKey: DEFAULT_TADDY_API_KEY,
+          taddyPodcastsUserId: DEFAULT_TADDY_USER_ID,
+          taddyPodcastsLanguage: DEFAULT_TADDY_LANGUAGE,
+          taddyPodcastsCountry: DEFAULT_TADDY_COUNTRY,
+        });
       },
       favoritePodcasts: [],
       addFavoritePodcast: (podcast: PodcastSeries) => {

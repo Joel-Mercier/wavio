@@ -59,7 +59,7 @@ A single `bun install` at the repo root installs both. Most scripts are exposed 
 2. Make sure you have Node v22+ installed
 3. Make sure you have bun installed
 4. Install dependencies with `bun install` (from the repo root)
-5. Set environment variables in `apps/mobile/.env` file
+5. Set environment variables in `apps/mobile/.env` file (see `.env.example`)
 6. Prebuild the native development app with `bun run mobile:prebuild`
 7. Run the app with `bun run mobile:start`
 
