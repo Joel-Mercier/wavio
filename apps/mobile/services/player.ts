@@ -894,6 +894,34 @@ if (useQueue.persist.hasHydrated()) {
   });
 }
 
+// Re-arm cold-start hydration semantics when the active (server, user) scope
+// changes. The queue store is reset and re-hydrated for the new scope within
+// the same JS session, so without this the persisted-queue restore would look
+// like a user-initiated track change and auto-play. Resetting hasHydrated makes
+// the restored track load silently (and resume from its bookmark) exactly like
+// the initial app launch. Call this after useQueue.__reset() (so the queue store
+// reports not-hydrated) and before useQueue.persist.rehydrate().
+export function resetPlayerForScopeChange() {
+  if (transition.kind !== "idle") abortTransition();
+  resetScrobbleState();
+  try {
+    players[activeSlot].pause();
+  } catch (error) {
+    logSwallowed("pause on scope change", error);
+  }
+  hasHydrated = false;
+  playbackInitialized = false;
+  lastTrackId = null;
+  pendingResumeId = null;
+  if (useQueue.persist.hasHydrated()) {
+    hydratePlayerFromQueue();
+  } else {
+    useQueue.persist.onFinishHydration(() => {
+      hydratePlayerFromQueue();
+    });
+  }
+}
+
 export async function configurePlayback() {
   await setAudioModeAsync({
     playsInSilentMode: true,

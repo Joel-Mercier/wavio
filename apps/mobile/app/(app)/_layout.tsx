@@ -14,6 +14,7 @@ import {
 import { getAuthScope } from "@/config/storage";
 import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
 import { probeServer, resetServerReachable } from "@/services/network";
+import { resetPlayerForScopeChange } from "@/services/player";
 import {
   flushPlayQueue,
   initPlayQueueSync,
@@ -61,6 +62,11 @@ export default function AppLayout() {
       useRecentSearches.getState().__reset();
       useActivity.getState().__reset();
       useQueue.getState().__reset();
+      // Mirror cold-start hydration on the player so the new scope's restored
+      // queue loads silently instead of auto-playing. Must run after the queue
+      // __reset above (so the store reports not-hydrated) and before the
+      // rehydrate below.
+      resetPlayerForScopeChange();
       useOffline.getState().__reset();
       useLocalLibrary.getState().__reset();
       useBookmarks.getState().__reset();

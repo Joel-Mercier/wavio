@@ -2,13 +2,14 @@ import { getLocales } from "expo-localization";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import { useMemo } from "react";
+import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
+import FavoriteRadioStationListItem from "@/components/internetRadioStations/FavoriteRadioStationListItem";
 import {
   radioBrowserToItem,
   serverToItem,
@@ -18,6 +19,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioStations";
 import {
   usePopularStations,
@@ -26,7 +28,10 @@ import {
   useTopVotedStations,
 } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useSyncServerRadioFavorites } from "@/hooks/useRadioFavorites";
+import {
+  useScopedRadioFavorites,
+  useSyncServerRadioFavorites,
+} from "@/hooks/useRadioFavorites";
 
 const POPULAR_TAGS = ["jazz", "rock", "news"];
 
@@ -42,6 +47,8 @@ export default function InternetRadioStationsScreen() {
   );
 
   useSyncServerRadioFavorites();
+
+  const favoriteItems = useScopedRadioFavorites();
 
   const {
     data: serverData,
@@ -104,6 +111,48 @@ export default function InternetRadioStationsScreen() {
             </FadeOutScaleDown>
           )}
         </HStack>
+
+        {favoriteItems.length > 0 && (
+          <VStack className="gap-y-4 px-6 mt-4">
+            {favoriteItems
+              .slice(0, 8)
+              .reduce((rows: ReactElement[], favorite, index) => {
+                if (index % 4 === 0) {
+                  rows.push(
+                    <HStack
+                      key={`row-${Math.floor(index / 4)}`}
+                      className="gap-x-4"
+                    >
+                      <FavoriteRadioStationListItem
+                        key={favorite.id}
+                        station={favorite}
+                      />
+                      {favoriteItems[index + 1] && (
+                        <FavoriteRadioStationListItem
+                          key={favoriteItems[index + 1].id}
+                          station={favoriteItems[index + 1]}
+                        />
+                      )}
+                      {favoriteItems[index + 2] && (
+                        <FavoriteRadioStationListItem
+                          key={favoriteItems[index + 2].id}
+                          station={favoriteItems[index + 2]}
+                        />
+                      )}
+                      {favoriteItems[index + 3] && (
+                        <FavoriteRadioStationListItem
+                          key={favoriteItems[index + 3].id}
+                          station={favoriteItems[index + 3]}
+                        />
+                      )}
+                    </HStack>,
+                  );
+                }
+                return rows;
+              }, [])}
+          </VStack>
+        )}
+
         {capabilities.internetRadio && serverStations.length > 0 && (
           <RadioStationRow
             title={t("app.internetRadioStations.yourStations")}
