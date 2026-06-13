@@ -1,8 +1,7 @@
 import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
@@ -24,7 +23,18 @@ import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
 
-const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 1 };
+// A section counts as "seen" once half of it is on screen (not a 1px sliver).
+const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 50 };
+// Sections within this many slots below the last-seen one are enabled eagerly,
+// so their data is ready before the user scrolls them into view.
+const SECTION_LOOKAHEAD = 2;
+// Index up to which sections are enabled on first mount (above the fold).
+const INITIAL_ENABLED_INDEX = 2;
+// After first paint, the tail of the feed is unlocked in small batches on an
+// idle timer so scrolling never has to trigger loads — see the backfill effect.
+const BACKFILL_BATCH = 2;
+const BACKFILL_INTERVAL_MS = 350;
+const BACKFILL_START_DELAY_MS = 800;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -32,8 +42,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
-  const [sessionSeed, setSessionSeed] = useState(() => Date.now());
-  const [refreshing, setRefreshing] = useState(false);
+  const [sessionSeed] = useState(() => Date.now());
 
   // Eager seed data — drives the dynamic picks (featured artists / decades).
   const { data: recentlyPlayedData } = useAlbumList2({
@@ -83,8 +92,33 @@ export default function HomeScreen() {
     [seedAlbums, genresData?.genres?.genre, capabilities, sessionSeed],
   );
 
-  const [lastSeenIndex, setLastSeenIndex] = useState(2);
-  const lastSeenIndexRef = useRef(2);
+  const [lastSeenIndex, setLastSeenIndex] = useState(INITIAL_ENABLED_INDEX);
+  const lastSeenIndexRef = useRef(INITIAL_ENABLED_INDEX);
+
+  // Floor of enabled sections, advanced by the idle backfill independently of
+  // scroll. Both this and lastSeenIndex only ever increase, so once a section
+  // is enabled it stays enabled — the list never tears down loaded content.
+  const [backfillIndex, setBackfillIndex] = useState(INITIAL_ENABLED_INDEX);
+  const backfillRef = useRef(INITIAL_ENABLED_INDEX);
+
+  const sectionCount = sections.length;
+  useEffect(() => {
+    if (backfillRef.current >= sectionCount - 1) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = (delay: number) => {
+      timer = setTimeout(() => {
+        const next = Math.min(
+          backfillRef.current + BACKFILL_BATCH,
+          sectionCount - 1,
+        );
+        backfillRef.current = next;
+        setBackfillIndex(next);
+        if (next < sectionCount - 1) schedule(BACKFILL_INTERVAL_MS);
+      }, delay);
+    };
+    schedule(BACKFILL_START_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [sectionCount]);
 
   const handleViewableItemsChanged = useCallback(
     ({
@@ -106,20 +140,12 @@ export default function HomeScreen() {
     [],
   );
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setSessionSeed(Date.now());
-    lastSeenIndexRef.current = 2;
-    setLastSeenIndex(2);
-    // FlashList doesn't itself fetch — we just reseed and let queries refresh
-    // on next mount. Drop the spinner shortly.
-    setTimeout(() => setRefreshing(false), 400);
-  }, []);
-
   const renderItem = useCallback(
     ({ item, index }: { item: HomeSectionDescriptor; index: number }) => {
-      // Enable a section once the viewer is within one slot of it.
-      const enabled = index <= lastSeenIndex + 1;
+      // Enable a section once it's within the scroll lookahead window or has
+      // been unlocked by the idle backfill, whichever reaches it first.
+      const enabled =
+        index <= Math.max(lastSeenIndex + SECTION_LOOKAHEAD, backfillIndex);
       switch (item.kind) {
         case "recentPlays":
           return <RecentPlaysSection />;
@@ -178,7 +204,7 @@ export default function HomeScreen() {
           return <InternetRadioSection enabled={enabled} />;
       }
     },
-    [t, lastSeenIndex],
+    [t, lastSeenIndex, backfillIndex],
   );
 
   return (
@@ -191,17 +217,11 @@ export default function HomeScreen() {
         renderItem={renderItem}
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={VIEWABILITY_CONFIG}
+        drawDistance={500}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom,
         }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#fff"
-          />
-        }
       />
     </Box>
   );
