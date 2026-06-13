@@ -7,12 +7,16 @@ import {
   updatePlaylist,
 } from "@/services/backend/playlists";
 
-export const usePlaylists = (params: { username?: string }) => {
+export const usePlaylists = (
+  params: { username?: string },
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["playlists", params],
     queryFn: () => {
       return getPlaylists(params);
     },
+    enabled: options?.enabled,
   });
 };
 

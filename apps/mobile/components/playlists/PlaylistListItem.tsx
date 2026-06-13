@@ -1,37 +1,41 @@
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import DownloadedBadge from "@/components/DownloadedBadge";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
-import type { ArtistID3 } from "@/services/openSubsonic/types";
+import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
+import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
-interface ArtistListItemProps {
-  artist: ArtistID3;
-  index?: number;
+interface PlaylistListItemProps {
+  playlist: Playlist;
+  index: number;
   layout?: "vertical" | "horizontal";
   className?: string;
 }
 
-function ArtistListItem({
-  artist,
-  index = 0,
-  layout = "horizontal",
+function PlaylistListItem({
+  playlist,
+  index,
+  layout = "vertical",
   className = "",
-}: ArtistListItemProps) {
+}: PlaylistListItemProps) {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
-  const isReachableOffline = useIsCachedOffline(["artist", artist.id]);
+  const isReachableOffline = useIsCachedOffline(["playlist", playlist.id]);
+  const isDownloaded = useIsCollectionDownloaded("playlist", playlist.id);
   return (
     <FadeOutScaleDown
-      href={`/artists/${artist.id}`}
+      href={`/playlists/${playlist.id}`}
       disabled={!isReachableOffline}
       className={cn(className, {
         "mt-0": layout === "vertical" && index === 0,
@@ -41,31 +45,33 @@ function ArtistListItem({
       })}
     >
       <VStack
-        className={cn("gap-y-2", {
+        className={cn("transition duration-100 gap-y-2", {
           "w-32": layout === "horizontal",
           "flex-row items-center": layout === "vertical",
         })}
       >
         <ImageWithFallback
           source={
-            artist.coverArt ? { uri: artworkUrl(artist.coverArt) } : undefined
+            playlist.coverArt
+              ? { uri: artworkUrl(playlist.coverArt) }
+              : undefined
           }
-          className={cn("rounded-full aspect-square", {
+          className={cn("rounded-md aspect-square", {
             "w-32 h-32": layout === "horizontal",
             "w-24 h-24": layout === "vertical",
           })}
-          alt={t("app.artists.coverAlt")}
+          alt="Playlist cover"
           fallback={
             <Box
               className={cn(
-                "rounded-full bg-primary-600 items-center justify-center aspect-square",
+                "rounded-md bg-primary-600 items-center justify-center aspect-square",
                 {
                   "w-32 h-32": layout === "horizontal",
                   "w-24 h-24": layout === "vertical",
                 },
               )}
             >
-              <User size={48} color={white} />
+              <ListMusic size={48} color={white} />
             </Box>
           }
         />
@@ -74,15 +80,18 @@ function ArtistListItem({
             "flex-col ml-4 flex-1": layout === "vertical",
           })}
         >
-          <Heading
-            size={layout === "horizontal" ? "sm" : "lg"}
-            className="text-white"
-            numberOfLines={1}
-          >
-            {artist.name}
-          </Heading>
+          <HStack className="items-center gap-x-2">
+            {isDownloaded && <DownloadedBadge />}
+            <Heading
+              size={layout === "horizontal" ? "sm" : "lg"}
+              className="text-white flex-1"
+              numberOfLines={1}
+            >
+              {playlist.name}
+            </Heading>
+          </HStack>
           <Text numberOfLines={2} className="text-md text-primary-100">
-            {t("app.artists.label")}
+            {t("app.shared.songCount", { count: playlist.songCount })}
           </Text>
         </VStack>
       </VStack>
@@ -90,4 +99,4 @@ function ArtistListItem({
   );
 }
 
-export default memo(ArtistListItem);
+export default memo(PlaylistListItem);

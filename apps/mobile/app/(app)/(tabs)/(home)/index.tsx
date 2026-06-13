@@ -7,8 +7,11 @@ import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
+import ArtistCarouselSection from "@/components/home/sections/ArtistCarouselSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
 import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
+import PlaylistCarouselSection from "@/components/home/sections/PlaylistCarouselSection";
+import PodcastCarouselSection from "@/components/home/sections/PodcastCarouselSection";
 import RecentPlaysSection from "@/components/home/sections/RecentPlaysSection";
 import {
   RandomSongsSection,
@@ -198,8 +201,14 @@ export default function HomeScreen() {
               enabled={enabled}
             />
           );
+        case "randomArtists":
+          return <ArtistCarouselSection enabled={enabled} />;
+        case "playlists":
+          return <PlaylistCarouselSection enabled={enabled} />;
         case "starred":
           return <StarredSection enabled={enabled} />;
+        case "podcasts":
+          return <PodcastCarouselSection enabled={enabled} />;
         case "internetRadio":
           return <InternetRadioSection enabled={enabled} />;
       }

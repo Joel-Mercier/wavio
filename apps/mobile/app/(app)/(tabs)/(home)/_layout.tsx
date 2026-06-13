@@ -5,10 +5,12 @@ export default function HomeLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="albums/[id]" />
+      <Stack.Screen name="artists/index" />
       <Stack.Screen name="artists/[id]" />
       <Stack.Screen name="artists/[id]/biography" />
       <Stack.Screen name="artists/[id]/discography" />
       <Stack.Screen name="artists/[id]/liked-songs" />
+      <Stack.Screen name="playlists/index" />
       <Stack.Screen name="playlists/[id]/index" />
       <Stack.Screen name="playlists/[id]/search" />
       <Stack.Screen name="playlists/add-to-playlist" />

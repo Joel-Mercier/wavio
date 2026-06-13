@@ -2,6 +2,7 @@ import type { Href } from "expo-router";
 import type { BackendCapabilities } from "@/services/backend/capabilities";
 import type { AlbumListType } from "@/services/backend/lists";
 import type { AlbumID3, Genre } from "@/services/openSubsonic/types";
+import { mulberry32, shuffle } from "@/utils/shuffle";
 
 export type HomeSectionDescriptor =
   | { id: string; kind: "recentPlays" }
@@ -36,7 +37,10 @@ export type HomeSectionDescriptor =
       genre: string;
     }
   | { id: string; kind: "randomSongs" }
+  | { id: string; kind: "randomArtists" }
+  | { id: string; kind: "playlists" }
   | { id: string; kind: "starred" }
+  | { id: string; kind: "podcasts" }
   | { id: string; kind: "internetRadio" };
 
 export interface BuildHomeFeedInput {
@@ -44,27 +48,6 @@ export interface BuildHomeFeedInput {
   genres: Genre[];
   capabilities: BackendCapabilities;
   sessionSeed: number;
-}
-
-// Tiny deterministic PRNG so the same sessionSeed produces the same picks.
-function mulberry32(seed: number) {
-  let a = seed | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function shuffle<T>(arr: T[], rand: () => number): T[] {
-  const out = arr.slice();
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
 }
 
 function pickDecade(
@@ -147,6 +130,8 @@ export function buildHomeFeed({
     });
   }
 
+  sections.push({ id: "randomArtists", kind: "randomArtists" });
+
   const songGenres = shuffle(
     genres.filter((g) => g.songCount > 0).slice(0, 12),
     rand,
@@ -218,6 +203,8 @@ export function buildHomeFeed({
     });
   }
 
+  sections.push({ id: "playlists", kind: "playlists" });
+
   sections.push({ id: "starred", kind: "starred" });
 
   if (capabilities.nowPlaying) {
@@ -247,6 +234,10 @@ export function buildHomeFeed({
       params: { type: "random" },
     },
   });
+
+  if (capabilities.podcasts) {
+    sections.push({ id: "podcasts", kind: "podcasts" });
+  }
 
   if (capabilities.internetRadio) {
     sections.push({ id: "internetRadio", kind: "internetRadio" });

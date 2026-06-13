@@ -1,6 +1,5 @@
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import { memo } from "react";
-import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import DownloadedBadge from "@/components/DownloadedBadge";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -31,7 +30,6 @@ function AlbumListItem({
   layout = "vertical",
   className = "",
 }: AlbumListItemProps) {
-  const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const isReachableOffline = useIsCachedOffline(["album", album.id]);
   const isDownloaded = useIsCollectionDownloaded("album", album.id);

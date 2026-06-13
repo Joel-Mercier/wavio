@@ -15,11 +15,14 @@ export default {
         topRated: "Top rated",
         random: "Random",
         randomSongs: "Random songs",
+        artists: "Artists",
+        yourPlaylists: "Your playlists",
         starred: "Your favorites",
         songsByGenre: "{{genre}} songs",
         albumsByGenre: "{{genre}} albums",
         albumsByDecade: "Albums from the {{decade}}s",
         moreFromArtist: "More from {{artist}}",
+        podcasts: "Podcasts",
         internetRadioStations: "Internet radio stations",
         tabs: {
           music: "Music",
@@ -112,6 +115,8 @@ export default {
           "An error occurred while adding songs to favorites",
       },
       artists: {
+        label: "Artist",
+        coverAlt: "Artist cover",
         topSongs: "Top songs",
         discography: "Discography",
         appearsOn: "Appears on",

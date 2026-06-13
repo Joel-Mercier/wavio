@@ -15,11 +15,14 @@ export default {
         topRated: "Les mieux notés",
         random: "Au hasard",
         randomSongs: "Morceaux aléatoires",
+        artists: "Artistes",
+        yourPlaylists: "Vos playlists",
         starred: "Vos favoris",
         songsByGenre: "Morceaux {{genre}}",
         albumsByGenre: "Albums {{genre}}",
         albumsByDecade: "Albums des années {{decade}}",
         moreFromArtist: "Plus de {{artist}}",
+        podcasts: "Podcasts",
         internetRadioStations: "Stations de radio en ligne",
         tabs: {
           music: "Musique",
@@ -113,6 +116,8 @@ export default {
           "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
       },
       artists: {
+        label: "Artiste",
+        coverAlt: "Pochette de l'artiste",
         topSongs: "Chansons les plus écoutées",
         discography: "Discographie",
         appearsOn: "Apparait sur",

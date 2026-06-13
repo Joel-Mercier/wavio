@@ -122,12 +122,16 @@ export const useArtistInfo2 = (
   return query;
 };
 
-export const useArtists = (params: { musicFolderId?: string }) => {
+export const useArtists = (
+  params: { musicFolderId?: string },
+  options?: { enabled?: boolean },
+) => {
   const query = useQuery({
     queryKey: ["artists", params],
     queryFn: () => {
       return getArtists(params);
     },
+    enabled: options?.enabled,
   });
 
   return query;
