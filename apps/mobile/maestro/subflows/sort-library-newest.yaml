@@ -1,0 +1,23 @@
+appId: com.jmercier.wavio
+name: "subflow: sort the Library list newest-first"
+# Flips the Library list's "Recent" sort to descending (most-recent-first) so a
+# just-created item lands at the TOP of the list instead of the bottom, where the
+# floating player and tab bar overlap it (and a slow demo-server refetch can
+# delay it). Callers then wait for the item at the top rather than scrolling down
+# into the occluded bottom.
+#
+# Every journey starts clean via login-demo, so the sort is the default
+# `addedAtAsc`; tapping the "Recent" option once flips it to `addedAtDesc`. The
+# header "Recent" opens the sort sheet; the sheet's "Recent" option (disambiguated
+# from the header by sitting below the sheet handle) performs the toggle.
+tags:
+  - subflow
+---
+- tapOn: "Recent"
+- tapOn:
+    text: "Recent"
+    below:
+      text: "Bottom sheet handle"
+- extendedWaitUntil:
+    notVisible: "Alphabetical"
+    timeout: 5000

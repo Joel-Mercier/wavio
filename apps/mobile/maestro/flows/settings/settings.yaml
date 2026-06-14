@@ -19,19 +19,27 @@ tags:
     timeout: 8000
 
 # Walk down the screen; each section heading must be reachable by scrolling.
+# `centerElement` scrolls the heading to the middle of the viewport rather than
+# leaving it pinned at the bottom edge: the last sections (Streaming/Content)
+# otherwise settle behind the floating tab bar, where they never reach the
+# default 100% visibility threshold and the scroll times out.
 - scrollUntilVisible:
     element: "Display settings"
     direction: DOWN
+    centerElement: true
     timeout: 8000
 - scrollUntilVisible:
     element: "Playback"
     direction: DOWN
+    centerElement: true
     timeout: 8000
 - scrollUntilVisible:
     element: "Streaming settings"
     direction: DOWN
+    centerElement: true
     timeout: 8000
 - scrollUntilVisible:
     element: "Content settings"
     direction: DOWN
+    centerElement: true
     timeout: 8000

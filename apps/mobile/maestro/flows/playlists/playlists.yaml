@@ -42,13 +42,16 @@ tags:
     visible: "Recent"
     timeout: 8000
 - tapOn: "Playlists"
-# The "Recent" sort can place the new playlist below the fold, so scroll it in
-# rather than asserting it's already on screen.
-- scrollUntilVisible:
-    element:
+# Sort newest-first so the just-created playlist is at the top (clear of the
+# floating player / tab bar), then wait for it there — the demo server's list
+# refetch can take a moment to surface it.
+- runFlow: ../../subflows/sort-library-newest.yaml
+# Newest-first keeps the list at the top, so poll for the just-created playlist
+# to appear there — the demo server's list refetch can lag a few seconds.
+- extendedWaitUntil:
+    visible:
       text: ${output.playlistName}
-    direction: DOWN
-    timeout: 8000
+    timeout: 30000
 - tapOn: ${output.playlistName}
 - extendedWaitUntil:
     visible:

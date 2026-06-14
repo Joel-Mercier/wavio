@@ -3,7 +3,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
@@ -18,7 +18,7 @@ import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -105,6 +105,18 @@ export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
+  const listRef =
+    useRef<
+      FlashListRef<
+        Playlist &
+          AlbumID3 &
+          ArtistID3 &
+          Favorites &
+          LibraryPodcast &
+          LibraryFolder &
+          LibraryRadioStation
+      >
+    >(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { handleSheetPositionChange: handleSheetPositionChangeSort } =
@@ -302,6 +314,13 @@ export default function LibraryScreen() {
   const isLoading = isLoadingPlaylists || isLoadingStarred;
   const error = playlistsError || starredError;
 
+  // Changing the sort or filter swaps the list contents; without this the
+  // FlashList keeps its old offset and can land mid-list or at the bottom. Reset
+  // to the top so the new ordering / filtered set starts in view.
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [sort, filter]);
+
   return (
     <Box className="h-full">
       <>
@@ -473,6 +492,7 @@ export default function LibraryScreen() {
       </>
       {!error && (
         <FlashList
+          ref={listRef}
           key={`library-${layout}`}
           data={
             (data || loadingData(16)) as Array<
