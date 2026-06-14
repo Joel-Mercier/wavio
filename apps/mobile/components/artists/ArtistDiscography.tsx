@@ -6,6 +6,7 @@ import { Box } from "@/components/ui/box";
 import { useArtist } from "@/hooks/backend/useBrowsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import FadeOutScaleDown from "../FadeOutScaleDown";
@@ -24,7 +25,7 @@ export default function ArtistDiscography() {
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center truncate flex-1" size="lg">

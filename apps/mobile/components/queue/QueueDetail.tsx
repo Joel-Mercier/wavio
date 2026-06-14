@@ -49,6 +49,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { goBackOrHome } from "@/utils/navigation";
 import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
@@ -195,7 +196,7 @@ export default function QueueDetail() {
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading

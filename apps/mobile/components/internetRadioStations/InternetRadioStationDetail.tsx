@@ -46,6 +46,7 @@ import useRadioStations, {
   radioFavoritesForScope,
 } from "@/stores/radioStations";
 import useRecentPlays from "@/stores/recentPlays";
+import { goBackOrHome } from "@/utils/navigation";
 
 const titleize = (value: string) =>
   value
@@ -256,7 +257,7 @@ export default function InternetRadioStationDetail() {
       >
         <HStack className="mt-6 items-start justify-between">
           <FadeOutScaleDown
-            onPress={() => router.back()}
+            onPress={() => goBackOrHome(router)}
             className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
           >
             <ArrowLeft size={24} color={white} />
@@ -398,7 +399,7 @@ export default function InternetRadioStationDetail() {
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavoritePress}
               onActionStart={() => bottomSheetModalRef.current?.dismiss()}
-              onDeleted={() => router.back()}
+              onDeleted={() => goBackOrHome(router)}
             />
           </Box>
         </BottomSheetView>

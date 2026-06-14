@@ -90,6 +90,7 @@ import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
@@ -244,7 +245,7 @@ export default function PlaylistDetail() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["playlists"] });
-          router.back();
+          goBackOrHome(router);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -620,7 +621,7 @@ export default function PlaylistDetail() {
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <ArrowLeft size={24} color={white} />
               </Box>
@@ -658,7 +659,7 @@ export default function PlaylistDetail() {
             }}
           >
             <HStack className="mt-6 items-start justify-between">
-              <FadeOutScaleDown onPress={() => router.back()}>
+              <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
                 <ArrowLeft size={24} color={white} />
               </FadeOutScaleDown>
               {/* https://github.com/navidrome/navidrome/issues/406 */}

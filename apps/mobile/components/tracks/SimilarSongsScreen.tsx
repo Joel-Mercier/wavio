@@ -36,6 +36,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import useQueue from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -97,7 +98,7 @@ export default function SimilarSongsScreen() {
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <ArrowLeft size={24} color={white} />
               </Box>
@@ -141,7 +142,7 @@ export default function SimilarSongsScreen() {
                 style={{ paddingTop: insets.top }}
               >
                 <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <Pressable onPress={() => router.back()}>
+                  <Pressable onPress={() => goBackOrHome(router)}>
                     {({ pressed }) => (
                       <Animated.View
                         className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"

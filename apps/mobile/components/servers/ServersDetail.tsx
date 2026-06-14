@@ -46,6 +46,7 @@ import useServers, {
   type ServerType,
   serverFormSchema,
 } from "@/stores/servers";
+import { goBackOrHome } from "@/utils/navigation";
 
 export default function ServersDetail() {
   const { t } = useTranslation();
@@ -135,7 +136,7 @@ export default function ServersDetail() {
           className="items-center mb-6 justify-between"
           style={{ paddingTop: insets.top }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading className="text-white text-center flex-1" size="lg">

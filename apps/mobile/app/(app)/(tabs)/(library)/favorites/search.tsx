@@ -25,6 +25,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 export default function FavoritesSearch() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -100,7 +101,10 @@ export default function FavoritesSearch() {
       <Box className="bg-primary-600 px-6 py-6">
         <Box style={{ paddingTop: insets.top }}>
           <HStack className="items-center">
-            <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+            <FadeOutScaleDown
+              className="mr-4"
+              onPress={() => goBackOrHome(router)}
+            >
               <ArrowLeft size={24} color="white" />
             </FadeOutScaleDown>
             <form.Field name="query">

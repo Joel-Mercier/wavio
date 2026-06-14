@@ -66,6 +66,7 @@ import {
   SearchSortOrder,
 } from "@/services/taddyPodcasts/types";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 const filtersSchema = z.object({
   query: z.string().trim().min(1),
@@ -236,7 +237,10 @@ export default function PodcastsSearchScreen() {
       <Box className="bg-primary-600 px-6 py-6">
         <Box style={{ paddingTop: insets.top }}>
           <HStack className="items-center">
-            <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+            <FadeOutScaleDown
+              className="mr-4"
+              onPress={() => goBackOrHome(router)}
+            >
               <ArrowLeft size={24} color="white" />
             </FadeOutScaleDown>
             <form.Field name="query">

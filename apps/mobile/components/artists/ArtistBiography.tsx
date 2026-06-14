@@ -12,6 +12,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+import { goBackOrHome } from "@/utils/navigation";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 
 export default function ArtistBiography() {
@@ -54,7 +55,7 @@ export default function ArtistBiography() {
         className="items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center truncate flex-1" size="lg">

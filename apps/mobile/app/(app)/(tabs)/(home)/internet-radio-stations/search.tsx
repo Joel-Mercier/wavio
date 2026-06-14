@@ -46,6 +46,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
 import type { RadioBrowserStation } from "@/services/radioBrowser/types";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 interface SelectOption {
@@ -172,7 +173,10 @@ export default function InternetRadioStationsSearchScreen() {
         style={{ paddingTop: insets.top + 24 }}
       >
         <HStack className="items-center">
-          <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+          <FadeOutScaleDown
+            className="mr-4"
+            onPress={() => goBackOrHome(router)}
+          >
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <form.Field name="query">

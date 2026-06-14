@@ -25,6 +25,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 type Entry =
   | { kind: "dir"; id: string; name: string }
@@ -102,7 +103,7 @@ export default function FolderDetail() {
     <Box className="h-full w-full">
       <Box className="px-6 pb-4" style={{ paddingTop: insets.top + 16 }}>
         <HStack className="items-center justify-between">
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color={white} />
           </FadeOutScaleDown>
           <Heading

@@ -28,6 +28,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCreateInternetRadioStation } from "@/hooks/backend/useInternetRadioStations";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 
 const newInternetRadioStationSchema = z.object({
   name: z.string().trim().min(1),
@@ -97,7 +98,7 @@ export default function NewInternetRadioStationScreen() {
   });
 
   const handleCancelPress = () => {
-    router.back();
+    goBackOrHome(router);
   };
 
   return (

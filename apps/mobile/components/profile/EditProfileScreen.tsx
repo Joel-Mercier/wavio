@@ -43,6 +43,7 @@ import {
 } from "@/hooks/navidrome/useUsers";
 import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 const ROLE_FIELDS = [
@@ -291,7 +292,7 @@ export default function EditProfileScreen() {
             </Toast>
           ),
         });
-        router.back();
+        goBackOrHome(router);
       } catch (error) {
         logError(error);
         toast.show({
@@ -320,7 +321,7 @@ export default function EditProfileScreen() {
           style={{ paddingTop: insets.top + 16 }}
         >
           <Box className="flex-1 items-start">
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <X size={24} color={white} />
               </Box>

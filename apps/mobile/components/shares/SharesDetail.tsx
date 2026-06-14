@@ -13,6 +13,7 @@ import { HStack } from "@/components/ui/hstack";
 import { useGetShares } from "@/hooks/backend/useSharing";
 import type { Share } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 import EmptyDisplay from "../EmptyDisplay";
 import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import ShareListItemSkeleton from "./ShareListItemSkeleton";
@@ -29,7 +30,7 @@ export default function SharesDetail() {
         className="items-center justify-between mb-6"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center flex-1" size="lg">

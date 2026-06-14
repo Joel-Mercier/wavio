@@ -23,6 +23,7 @@ import {
   useMusicFoldersBase,
 } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 const FOLDER_QUERY_PREFIXES = [
   "albumList2",
@@ -57,7 +58,7 @@ export default function LibrariesDetail() {
     for (const prefix of FOLDER_QUERY_PREFIXES) {
       queryClient.invalidateQueries({ queryKey: [prefix] });
     }
-    router.back();
+    goBackOrHome(router);
   };
 
   return (
@@ -66,7 +67,7 @@ export default function LibrariesDetail() {
         className="items-center justify-between mb-6"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center flex-1" size="lg">

@@ -24,6 +24,7 @@ import useActivity, {
   type ActivityEntry,
   type ActivityType,
 } from "@/stores/activity";
+import { goBackOrHome } from "@/utils/navigation";
 
 type SectionKey = "today" | "yesterday" | "thisWeek" | "older";
 
@@ -80,7 +81,7 @@ export default function ActivityDetail() {
           className="items-center mb-6"
           style={{ paddingTop: insets.top }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading className="text-white text-center truncate flex-1" size="lg">

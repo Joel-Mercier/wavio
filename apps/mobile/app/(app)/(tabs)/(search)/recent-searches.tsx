@@ -23,6 +23,7 @@ import { useSearch3 } from "@/hooks/backend/useSearching";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
+import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 export default function RecentSearchesScreen() {
@@ -107,7 +108,10 @@ export default function RecentSearchesScreen() {
         style={{ paddingTop: insets.top + 24 }}
       >
         <HStack className="items-center">
-          <FadeOutScaleDown className="mr-4" onPress={() => router.back()}>
+          <FadeOutScaleDown
+            className="mr-4"
+            onPress={() => goBackOrHome(router)}
+          >
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <form.Field name="query">

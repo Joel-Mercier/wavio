@@ -35,6 +35,7 @@ import {
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
+import { goBackOrHome } from "@/utils/navigation";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -157,7 +158,7 @@ export default function ProfileScreen() {
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <ArrowLeft size={24} color={white} />
               </Box>
@@ -191,7 +192,7 @@ export default function ProfileScreen() {
                 style={{ paddingTop: insets.top }}
               >
                 <VStack className="mt-6 px-6 h-full">
-                  <FadeOutScaleDown onPress={() => router.back()}>
+                  <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
                     <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                       <ArrowLeft size={24} color={white} />
                     </Box>

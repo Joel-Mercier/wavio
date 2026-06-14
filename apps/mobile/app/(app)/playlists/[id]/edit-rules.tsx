@@ -37,6 +37,7 @@ import {
 } from "@/hooks/navidrome/useSmartPlaylists";
 import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 import {
   type FormRule,
   type FormSortEntry,
@@ -130,7 +131,7 @@ export default function EditSmartPlaylistScreen() {
         },
         {
           onSuccess: () => {
-            router.back();
+            goBackOrHome(router);
             toast.show({
               placement: "top",
               duration: 3000,
@@ -171,7 +172,7 @@ export default function EditSmartPlaylistScreen() {
           className="items-center justify-between"
           style={{ paddingTop: insets.top + 16 }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
               <X size={24} color={white} />
             </Box>

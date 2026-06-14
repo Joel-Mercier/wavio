@@ -11,6 +11,7 @@ import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import EmptyDisplay from "../EmptyDisplay";
@@ -49,7 +50,7 @@ export default function HomeSectionDetail() {
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center truncate flex-1" size="lg">

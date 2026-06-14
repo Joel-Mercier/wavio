@@ -30,6 +30,7 @@ import { VStack } from "@/components/ui/vstack";
 import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { getPlaylist } from "@/services/backend/playlists";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 
 export default function AddToPlaylistDetail() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
@@ -73,7 +74,7 @@ export default function AddToPlaylistDetail() {
                 selectedPlaylists.includes(query.queryKey[1] as string),
             });
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
-            router.back();
+            goBackOrHome(router);
             toast.show({
               placement: "top",
               duration: 3000,
@@ -112,7 +113,7 @@ export default function AddToPlaylistDetail() {
 
   const handlePlaylistUpdatePress = () => {
     if (selectedPlaylists.length === 0) {
-      router.back();
+      goBackOrHome(router);
       return;
     }
     const duplicateNames = selectedPlaylists
@@ -186,7 +187,7 @@ export default function AddToPlaylistDetail() {
           className="items-center justify-between"
           style={{ paddingTop: insets.top + 16 }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
               <X size={24} color={white} />
             </Box>

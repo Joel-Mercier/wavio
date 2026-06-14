@@ -35,6 +35,7 @@ import {
   useTotalDownloadSize,
 } from "@/hooks/useOfflineDownloads";
 import { niceBytes } from "@/utils/fileSize";
+import { goBackOrHome } from "@/utils/navigation";
 
 export default function OfflineDownloadsDetail() {
   const [gray500, white] = Uniwind.getCSSVariable([
@@ -127,7 +128,7 @@ export default function OfflineDownloadsDetail() {
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading

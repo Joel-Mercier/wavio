@@ -77,6 +77,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -399,7 +400,7 @@ export default function LikedSongs() {
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
           >
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <ArrowLeft size={24} color={white} />
               </Box>
@@ -468,7 +469,7 @@ export default function LikedSongs() {
                 style={{ paddingTop: insets.top }}
               >
                 <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <FadeOutScaleDown onPress={() => router.back()}>
+                  <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
                     <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                       <ArrowLeft size={24} color={white} />
                     </Box>

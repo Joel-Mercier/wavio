@@ -9,6 +9,7 @@ import { Box } from "@/components/ui/box";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 import { shuffleWithSeed } from "@/utils/shuffle";
 import EmptyDisplay from "../EmptyDisplay";
 import ErrorDisplay from "../ErrorDisplay";
@@ -36,7 +37,7 @@ export default function YourPlaylistsDetail() {
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
       >
-        <FadeOutScaleDown onPress={() => router.back()}>
+        <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
           <ArrowLeft size={24} color="white" />
         </FadeOutScaleDown>
         <Heading className="text-white text-center truncate flex-1" size="lg">

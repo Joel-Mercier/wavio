@@ -48,6 +48,7 @@ import type {
 } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
+import { goBackOrHome } from "@/utils/navigation";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -376,7 +377,7 @@ export default function PodcastSeriesScreen() {
         style={{ top: insets.top + 8 }}
       >
         <Box className="px-6">
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
               <ArrowLeft size={24} color={white} />
             </Box>

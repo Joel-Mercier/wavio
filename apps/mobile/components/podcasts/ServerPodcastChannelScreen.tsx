@@ -75,6 +75,7 @@ import { useCurrentAuthScope } from "@/stores/musicFolders";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import { artworkUrl } from "@/utils/artwork";
 import { formatDistanceToNow } from "@/utils/date";
+import { goBackOrHome } from "@/utils/navigation";
 import {
   isPlayablePodcastEpisode,
   podcastEpisodeToTrack,
@@ -218,7 +219,7 @@ export default function ServerPodcastChannelScreen() {
           queryClient.invalidateQueries({ queryKey: ["podcasts"] });
           // The channel is gone — drop the local favorite if it exists.
           if (isFavorite) removeFavoritePodcast(id);
-          router.back();
+          goBackOrHome(router);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -471,7 +472,7 @@ export default function ServerPodcastChannelScreen() {
         style={{ top: insets.top + 8 }}
       >
         <Box className="px-6">
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
               <ArrowLeft size={24} color={white} />
             </Box>

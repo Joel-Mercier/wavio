@@ -27,6 +27,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 
 const newPlaylistSchema = z.object({
   name: z.string().trim().min(1),
@@ -58,7 +59,7 @@ export default function NewPlaylistScreen() {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
             if (returnTo === "add-to-playlist") {
-              router.back();
+              goBackOrHome(router);
             } else {
               router.navigate("/(app)/(tabs)/(library)");
             }
@@ -96,7 +97,7 @@ export default function NewPlaylistScreen() {
   });
 
   const handleCancelPress = () => {
-    router.back();
+    goBackOrHome(router);
   };
 
   return (

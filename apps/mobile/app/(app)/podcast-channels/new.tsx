@@ -28,6 +28,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCreatePodcastChannel } from "@/hooks/backend/usePodcasts";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 
 const newPodcastChannelSchema = z.object({
   url: z.url().trim(),
@@ -92,7 +93,7 @@ export default function NewPodcastChannelScreen() {
   });
 
   const handleCancelPress = () => {
-    router.back();
+    goBackOrHome(router);
   };
 
   return (

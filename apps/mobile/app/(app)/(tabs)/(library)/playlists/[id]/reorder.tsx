@@ -28,6 +28,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
@@ -230,7 +231,7 @@ export default function ReorderPlaylistScreen() {
           style={{ paddingTop: insets.top + 16 }}
         >
           <Box className="flex-1 items-start">
-            <FadeOutScaleDown onPress={() => router.back()}>
+            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
                 <X size={24} color={white} />
               </Box>

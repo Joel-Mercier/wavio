@@ -68,6 +68,7 @@ import useRecentSearches from "@/stores/recentSearches";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 import { logError } from "@/utils/log";
+import { goBackOrHome } from "@/utils/navigation";
 import { switchToServer } from "@/utils/switchServer";
 import { cn } from "@/utils/tailwind";
 
@@ -370,7 +371,7 @@ export default function SettingsDetail() {
           className="items-center justify-between mb-6"
           style={{ paddingTop: insets.top }}
         >
-          <FadeOutScaleDown onPress={() => router.back()}>
+          <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
             <ArrowLeft size={24} color="white" />
           </FadeOutScaleDown>
           <Heading className="text-white text-center flex-1" size="lg">
