@@ -128,13 +128,13 @@ export default function NewPodcastChannelScreen() {
                 isRequired={false}
                 className="mb-6"
               >
-                <Input className="border-0 bg-primary-400 px-6 py-4">
+                <Input className="border border-primary-400 bg-primary-400 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 px-6 py-4">
                   <UrlInputField
                     value={field.state.value}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold"
+                    className="text-2xl text-white font-bold"
                     placeholderTextColor={gray400}
                     placeholder={t("app.podcasts.channelUrlPlaceholder")}
                   />

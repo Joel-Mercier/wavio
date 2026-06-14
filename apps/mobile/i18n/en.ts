@@ -822,7 +822,7 @@ export default {
         addToFavoritesSuccessMessage: "Radio station added to favorites",
         removeFromFavoritesSuccessMessage:
           "Radio station removed from favorites",
-        newTitle: "Give a name to your internet radio station",
+        newTitle: "Add your internet radio station",
         namePlaceholder: "Radio station name",
         streamUrlPlaceholder: "Stream URL",
         homePageUrlPlaceholder: "Homepage URL",

@@ -218,7 +218,7 @@ export default {
         downloadEpisodeErrorMessage:
           "Une erreur est survenue lors du téléchargement de l'épisode",
         newChannelTitle: "Ajouter une chaîne de podcast",
-        channelUrlPlaceholder: "URL du flux RSS du podcast",
+        channelUrlPlaceholder: "URL du flux RSS",
         newChannelSuccessMessage: "Chaîne de podcast ajoutée avec succès",
         newChannelErrorMessage:
           "Une erreur est survenue lors de l'ajout de la chaîne de podcast",
@@ -845,7 +845,7 @@ export default {
         addToFavoritesSuccessMessage: "Station de radio ajoutée aux favoris",
         removeFromFavoritesSuccessMessage:
           "Station de radio retirée des favoris",
-        newTitle: "Donnez un nom à votre station de radio en ligne",
+        newTitle: "Enregistrez votre station de radio en ligne",
         namePlaceholder: "Nom de la station",
         streamUrlPlaceholder: "URL du flux",
         homePageUrlPlaceholder: "URL de la page d'accueil",

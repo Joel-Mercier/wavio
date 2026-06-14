@@ -32,7 +32,7 @@ import { logError } from "@/utils/log";
 const newInternetRadioStationSchema = z.object({
   name: z.string().trim().min(1),
   streamUrl: z.url().trim(),
-  homePageUrl: z.url().trim().optional(),
+  homePageUrl: z.url().trim().or(z.literal("")).optional(),
 });
 export default function NewInternetRadioStationScreen() {
   const [gray300, gray400] = Uniwind.getCSSVariable([
@@ -133,13 +133,13 @@ export default function NewInternetRadioStationScreen() {
                 isRequired={false}
                 className="mb-6"
               >
-                <Input className="border-0 bg-primary-400 px-6 py-4">
+                <Input className="border border-primary-400 bg-primary-400 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 px-6 py-4">
                   <InputField
                     value={field.state.value}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
                     autoFocus
-                    className="text-3xl text-white text-center font-bold"
+                    className="text-2xl text-white font-bold"
                     placeholder={t("app.internetRadioStations.namePlaceholder")}
                     placeholderTextColor={gray400}
                   />
@@ -158,13 +158,12 @@ export default function NewInternetRadioStationScreen() {
                 isRequired={false}
                 className="mb-6"
               >
-                <Input className="border-0 bg-primary-400 px-6 py-4">
+                <Input className="border border-primary-400 bg-primary-400 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 px-6 py-4">
                   <UrlInputField
                     value={field.state.value}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
-                    autoFocus
-                    className="text-3xl text-white text-center font-bold"
+                    className="text-2xl text-white font-bold"
                     placeholderTextColor={gray400}
                     placeholder={t(
                       "app.internetRadioStations.streamUrlPlaceholder",
@@ -185,13 +184,12 @@ export default function NewInternetRadioStationScreen() {
                 isRequired={false}
                 className="mb-6"
               >
-                <Input className="border-0 bg-primary-400 px-6 py-4">
+                <Input className="border border-primary-400 bg-primary-400 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 px-6 py-4">
                   <UrlInputField
                     value={field.state.value ?? ""}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
-                    autoFocus
-                    className="text-3xl text-white text-center font-bold"
+                    className="text-2xl text-white font-bold"
                     placeholderTextColor={gray400}
                     placeholder={t(
                       "app.internetRadioStations.homePageUrlPlaceholder",

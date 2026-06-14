@@ -40,6 +40,7 @@ export default function UrlInputField({
           <Text className="text-white text-md">{protocol}</Text>
         </Pressable>
       </InputSlot>
+      {/* No keyboardType="url": its Android textUri inputType hides the text caret on some keyboards */}
       <InputField
         ref={fieldRef}
         value={host}
@@ -51,7 +52,7 @@ export default function UrlInputField({
         autoFocus={autoFocus}
         textContentType="URL"
         autoCapitalize="none"
-        keyboardType="url"
+        autoCorrect={false}
       />
     </>
   );
