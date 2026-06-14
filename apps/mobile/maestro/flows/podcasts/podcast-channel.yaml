@@ -1,0 +1,77 @@
+appId: com.jmercier.wavio
+name: podcast-channel
+# Critical path — Server podcast channel lifecycle (write path, self-cleaning).
+# Subscribes the server to a podcast by its RSS feed from the Library "+" sheet,
+# verifies the new channel surfaces under "Your podcasts" on the Podcasts screen,
+# opens it to the channel screen (Episodes list + About description), then deletes
+# it via the "…" menu so the run leaves no artifact on the shared demo server.
+#
+# Uses the public Acast "FloodCast" feed; the Navidrome demo fetches the channel
+# title + episodes synchronously enough that they appear right after creation.
+tags:
+  - podcasts
+---
+- runFlow: ../../subflows/login-demo.yaml
+
+# --- Create: Library "+" sheet -> Podcast channel -> RSS feed form -----------
+- tapOn: "Library"
+# "Recent" (the sort header) is a stable signal the Library tab mounted.
+- extendedWaitUntil:
+    visible: "Recent"
+    timeout: 8000
+- tapOn:
+    id: "library-create-button"
+# Target the option's unique description ("Podcast channel" alone is a substring
+# of other podcast UI), then fill the feed URL.
+- extendedWaitUntil:
+    visible: "Subscribe the server to a podcast by its RSS feed"
+    timeout: 8000
+- tapOn: "Subscribe the server to a podcast by its RSS feed"
+- extendedWaitUntil:
+    visible: "Add a podcast channel"
+    timeout: 8000
+- tapOn: "Podcast RSS feed URL"
+- inputText: "https://feeds.acast.com/public/shows/floodcast"
+- hideKeyboard
+- tapOn: "Create"
+
+# --- Verify: it lands on the Podcasts screen and the channel appears ----------
+# Creating a channel navigates to the Podcasts screen on success.
+- extendedWaitUntil:
+    visible: "Your podcasts"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "FloodCast"
+    timeout: 20000
+
+# --- Open the channel screen: Episodes list + About description --------------
+- tapOn: "FloodCast"
+# "Subscribe" (the header subscribe toggle) confirms the channel screen mounted.
+- extendedWaitUntil:
+    visible: "Subscribe"
+    timeout: 15000
+- assertVisible: "Episodes"
+- assertVisible: "About"
+# Episodes load on the default tab — the empty-state must NOT be present.
+- assertNotVisible: "No episodes available yet"
+# The About tab renders the channel description (not the empty placeholder).
+- tapOn: "About"
+- waitForAnimationToEnd
+- assertNotVisible: "No description available"
+
+# --- Delete (also cleanup) ---------------------------------------------------
+# The "…" menu's "Delete podcast channel" entry removes the channel + episodes.
+- tapOn:
+    id: "podcast-channel-menu-button"
+- extendedWaitUntil:
+    visible: "Delete podcast channel"
+    timeout: 5000
+- tapOn: "Delete podcast channel"
+- extendedWaitUntil:
+    visible: "Are you sure you want to delete this podcast channel?"
+    timeout: 5000
+- tapOn: "Delete"
+# Back on the Podcasts screen, the channel is gone.
+- extendedWaitUntil:
+    notVisible: "FloodCast"
+    timeout: 8000

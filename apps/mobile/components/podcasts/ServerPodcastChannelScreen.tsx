@@ -336,7 +336,10 @@ export default function ServerPodcastChannelScreen() {
                 : t("app.podcasts.subscribe")}
             </Text>
           </FadeOutScaleDown>
-          <FadeOutScaleDown onPress={handlePresentModalPress}>
+          <FadeOutScaleDown
+            testID="podcast-channel-menu-button"
+            onPress={handlePresentModalPress}
+          >
             <EllipsisVertical color={white} />
           </FadeOutScaleDown>
         </HStack>

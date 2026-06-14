@@ -35,4 +35,5 @@ executionOrder:
     - profile          # drawer "See profile" -> profile (+ edit profile)
     - playlists        # create -> open -> edit -> delete (write path, self-cleaning)
     - smart-playlist   # create -> open -> delete a smart playlist (write path, self-cleaning)
+    - podcast-channel  # subscribe by RSS -> channel screen (episodes + about) -> delete (write path, self-cleaning)
     - logout           # session teardown
