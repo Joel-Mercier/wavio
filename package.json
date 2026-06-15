@@ -23,7 +23,7 @@
 	},
 	"patchedDependencies": {
 		"expo-audio@56.0.12": "patches/expo-audio@56.0.12.patch",
-		"lucide-react-native@1.17.0": "patches/lucide-react-native@1.17.0.patch",
+		"lucide-react-native@1.18.0": "patches/lucide-react-native@1.18.0.patch",
 		"zod@4.4.3": "patches/zod@4.4.3.patch"
 	},
 	"dependencies": {
