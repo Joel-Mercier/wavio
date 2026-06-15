@@ -726,7 +726,7 @@ export default function PodcastsSearchScreen() {
         title={t("app.podcasts.search.languagesLabel")}
         options={languageEntries}
         selected={values.filterForLanguages}
-        labelFor={(value) => t(`app.shared.languages.${value}`, value)}
+        labelFor={(value) => value.replaceAll("_", " ")}
         onToggle={(value) =>
           toggleArrayValue(
             "filterForLanguages",

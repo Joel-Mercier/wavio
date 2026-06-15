@@ -16,10 +16,11 @@ const BROWSER_HEADERS = {
 function parseAttrs(tag: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   ATTR_REGEX.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = ATTR_REGEX.exec(tag)) !== null) {
+  let match = ATTR_REGEX.exec(tag);
+  while (match !== null) {
     const [, name, dq, sq, uq] = match;
     attrs[name.toLowerCase()] = dq ?? sq ?? uq ?? "";
+    match = ATTR_REGEX.exec(tag);
   }
   return attrs;
 }

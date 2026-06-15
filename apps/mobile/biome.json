@@ -8,7 +8,14 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!!**/android", "!!**/ios"]
+    "includes": [
+      "**",
+      "!!**/android",
+      "!!**/ios",
+      "!**/*.svg",
+      "!**/global.css",
+      "!**/uniwind-types.d.ts"
+    ]
   },
   "formatter": {
     "enabled": true,

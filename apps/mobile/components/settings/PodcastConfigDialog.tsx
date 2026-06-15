@@ -283,7 +283,7 @@ export default function PodcastConfigDialog({
                           keyExtractor={(item) => item as string}
                           renderItem={({ item }) => (
                             <SelectItem
-                              label={item as string}
+                              label={(item as string).replaceAll("_", " ")}
                               value={item as string}
                               textStyle={{
                                 className: "text-white",
@@ -340,7 +340,7 @@ export default function PodcastConfigDialog({
                           keyExtractor={(item) => item as string}
                           renderItem={({ item }) => (
                             <SelectItem
-                              label={item as string}
+                              label={(item as string).replaceAll("_", " ")}
                               value={item as string}
                               textStyle={{
                                 className: "text-white",
