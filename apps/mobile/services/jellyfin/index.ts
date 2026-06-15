@@ -1,7 +1,7 @@
 import axios from "axios";
+import { reportError } from "@/services/errorReporting";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { useAuthBase } from "@/stores/auth";
-import { logError } from "@/utils/log";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
@@ -38,10 +38,7 @@ jellyfinApiInstance.interceptors.request.use(
     }
     return request;
   },
-  (error) => {
-    logError(error);
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 jellyfinApiInstance.interceptors.response.use(
@@ -52,6 +49,14 @@ jellyfinApiInstance.interceptors.response.use(
       // to the login screen. Do not log out from offline-mode-induced errors.
       useAuthBase.getState().setJellyfinSession(null);
       useAuthBase.getState().logout();
+    } else {
+      // The classifier drops offline / unreachable / cancelled noise; a genuine
+      // 4xx/5xx (other than the 401 handled above) is a real failing endpoint.
+      reportError(error, {
+        area: "api",
+        backend: "jellyfin",
+        endpoint: axios.isAxiosError(error) ? error.config?.url : undefined,
+      });
     }
     return Promise.reject(error);
   },

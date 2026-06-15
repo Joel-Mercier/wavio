@@ -1,4 +1,4 @@
-import axios from "axios";
+import { reportError } from "@/services/errorReporting";
 import radioBrowserApiInstance from "@/services/radioBrowser/index";
 import type {
   RadioBrowserCountry,
@@ -36,9 +36,9 @@ const get = async <T>(
     });
     return rsp.data ?? [];
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
+    // The classifier drops offline / cancelled noise; a genuine failure from a
+    // mirror (4xx/5xx) is worth surfacing.
+    reportError(error, { area: "api", api: "radio-browser", endpoint: url });
     throw error;
   }
 };

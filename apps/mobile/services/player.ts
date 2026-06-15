@@ -9,6 +9,7 @@ import { Platform } from "react-native";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { streamUrl } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
+import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
   jukeboxGetCurrentTime,
   jukeboxIsPlaying,
@@ -112,6 +113,9 @@ let scrobbleStartedAt: number | null = null;
 // Tracks the last observed playing flag so the status listener can detect the
 // play→pause edge for playbackReport's "paused" report.
 let wasPlaying = false;
+// The last playback error string reported, so a non-null `status.error` that
+// repeats across status ticks is only sent to Sentry once.
+let lastReportedPlaybackError: string | null = null;
 
 function isScrobblable(track: QueueTrack): boolean {
   return track.source !== "podcast";
@@ -286,7 +290,13 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
     return;
   }
   isLoading = true;
-  const { url } = resolveTrackUrl(track);
+  const { url, isOffline } = resolveTrackUrl(track);
+  reportBreadcrumb("player", "load", {
+    trackId: track.id,
+    source: track.source,
+    isOffline,
+    isRadio: track.isRadio ?? false,
+  });
   p.replace({ uri: url });
   p.volume = getReplayGainFactor(track);
   if (slot === activeSlot) {
@@ -535,6 +545,25 @@ function handleNextTrackStarted() {
 function makeStatusListener(slot: Slot) {
   return (status: AudioStatus) => {
     if (slot !== activeSlot) return;
+    // A genuine engine-level playback failure (decode error, dead stream URL,
+    // unreadable offline file). expo-audio clears `error` on a fresh load /
+    // successful resume, so dedupe on the message to report each failure once.
+    if (status.error && status.error !== lastReportedPlaybackError) {
+      lastReportedPlaybackError = status.error;
+      const current = useQueue.getState().getCurrent();
+      reportError(new Error(status.error), {
+        area: "player",
+        endpoint: current?.source ?? "unknown",
+        extra: {
+          trackId: current?.id,
+          source: current?.source,
+          isRadio: current?.isRadio ?? false,
+          playbackState: status.playbackState,
+        },
+      });
+    } else if (!status.error) {
+      lastReportedPlaybackError = null;
+    }
     // Apply an armed resume seek as soon as the media reports a known duration
     // (i.e. it's loaded enough to seek). Only while still at the start, so a
     // user scrub isn't clobbered, and only once per arming.
@@ -694,11 +723,16 @@ function makeStatusListener(slot: Slot) {
             const c = useQueue.getState().getCurrent();
             if (c && c.id === previousId) loadAndPlay(c);
           })
-          .catch(() => {
+          .catch((error) => {
+            reportError(error, {
+              area: "player",
+              endpoint: "endlessRadio",
+              extra: { seedId: seed.id, source: seed.source },
+            });
             try {
               players[activeSlot].seekTo(0);
-            } catch (error) {
-              logSwallowed("rewind after failed endless fetch", error);
+            } catch (rewindError) {
+              logSwallowed("rewind after failed endless fetch", rewindError);
             }
           })
           .finally(() => {

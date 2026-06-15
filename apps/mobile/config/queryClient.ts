@@ -1,7 +1,9 @@
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import {
   defaultShouldDehydrateQuery,
+  MutationCache,
   type Query,
+  QueryCache,
   QueryClient,
 } from "@tanstack/react-query";
 import {
@@ -10,9 +12,43 @@ import {
   scopedQueryCacheKey,
   storage,
 } from "@/config/storage";
+import { type ReportBackend, reportError } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
 
+// Map the active server type to the reporting backend tag. Navidrome and
+// OpenSubsonic both speak Subsonic, so they share the `subsonic` tag.
+function activeBackend(): ReportBackend {
+  const { serverType } = useAuthBase.getState();
+  if (serverType === "jellyfin") return "jellyfin";
+  if (serverType === "local") return "local";
+  return "subsonic";
+}
+
 export const queryClient = new QueryClient({
+  // Safety net: any query/mutation failure not already reported at its service
+  // chokepoint is reported here, tagged by the active backend. The classifier
+  // (and reportError's dedupe) drop offline noise and already-reported errors,
+  // so this only fires for genuinely-unreported failures.
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      reportError(error, {
+        area: "api",
+        backend: activeBackend(),
+        endpoint: String(query.queryKey[0] ?? "query"),
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      reportError(error, {
+        area: "api",
+        backend: activeBackend(),
+        endpoint: mutation.options.mutationKey
+          ? String(mutation.options.mutationKey[0])
+          : "mutation",
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       // Stale after 5 min: persisted entries restore instantly but are

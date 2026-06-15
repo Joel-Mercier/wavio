@@ -1,0 +1,111 @@
+const mockCapture = jest.fn();
+const mockSetTag = jest.fn();
+const mockSetContext = jest.fn();
+const mockSetFingerprint = jest.fn();
+const mockAddBreadcrumb = jest.fn();
+
+jest.mock("@sentry/react-native", () => ({
+  captureException: (...args: unknown[]) => mockCapture(...args),
+  withScope: (cb: (scope: unknown) => void) =>
+    cb({
+      setTag: mockSetTag,
+      setContext: mockSetContext,
+      setFingerprint: mockSetFingerprint,
+    }),
+  addBreadcrumb: (...args: unknown[]) => mockAddBreadcrumb(...args),
+}));
+
+const mockNet = { online: true, reachable: true };
+jest.mock("@/services/network", () => ({
+  getIsOnline: () => mockNet.online,
+  getServerReachable: () => mockNet.reachable,
+}));
+
+import axios from "axios";
+import { reportError } from "@/services/errorReporting";
+
+const realDev = (global as { __DEV__?: boolean }).__DEV__;
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockNet.online = true;
+  mockNet.reachable = true;
+  // reportError logs to the console in dev; force the production path so we can
+  // assert on captureException.
+  (global as { __DEV__?: boolean }).__DEV__ = false;
+});
+
+afterAll(() => {
+  (global as { __DEV__?: boolean }).__DEV__ = realDev;
+});
+
+describe("reportError classifier", () => {
+  it("suppresses an API failure while the device is offline", () => {
+    mockNet.online = false;
+    reportError(new Error("boom"), { area: "api", backend: "subsonic" });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a connection-level axios error (no response)", () => {
+    const error = new axios.AxiosError("Network Error");
+    reportError(error, { area: "api", backend: "subsonic" });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a backend failure when the server is unreachable", () => {
+    mockNet.reachable = false;
+    const error = new axios.AxiosError("Request failed");
+    error.response = { status: 500 } as never;
+    reportError(error, { area: "api", backend: "subsonic" });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a 404 when notFoundIsExpected", () => {
+    const error = new axios.AxiosError("Not Found");
+    error.response = { status: 404 } as never;
+    reportError(error, {
+      area: "api",
+      api: "lrclib",
+      notFoundIsExpected: true,
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports a local-library failure while offline (no network needed)", () => {
+    mockNet.online = false;
+    reportError(new Error("scan failed"), { area: "local-library" });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("normalizes a Subsonic envelope error and tags/fingerprints it", () => {
+    reportError(
+      { code: 70, message: "Data not found" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getAlbum",
+        status: 70,
+      },
+    );
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+    const reported = mockCapture.mock.calls[0][0] as Error;
+    expect(reported).toBeInstanceOf(Error);
+    expect(reported.name).toBe("SubsonicError(70)");
+    expect(reported.message).toBe("Data not found");
+    expect(mockSetTag).toHaveBeenCalledWith("area", "api");
+    expect(mockSetTag).toHaveBeenCalledWith("backend", "subsonic");
+    expect(mockSetTag).toHaveBeenCalledWith("status", "70");
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "api",
+      "subsonic",
+      "/rest/getAlbum",
+    ]);
+  });
+
+  it("reports a given error object only once (dedupe)", () => {
+    const error = new Error("once");
+    reportError(error, { area: "player" });
+    reportError(error, { area: "player" });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+});

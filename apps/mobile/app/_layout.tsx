@@ -25,6 +25,7 @@ import {
 	QueryClientProvider,
 } from "@tanstack/react-query";
 import { persistQueryClientSubscribe } from "@tanstack/react-query-persist-client";
+import * as Application from "expo-application";
 import { getLocales } from "expo-localization";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -40,6 +41,7 @@ import i18n, {
 	type TSupportedLanguages,
 } from "@/config/i18n";
 import { persistOptions, queryClient } from "@/config/queryClient";
+import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
 import {
 	getIsEffectivelyOnline,
 	initConnectionType,
@@ -47,21 +49,47 @@ import {
 	subscribeEffectiveOnline,
 } from "@/services/network";
 import { configurePlayback } from "@/services/player";
+import { initSentryScope } from "@/services/sentryScope";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 
 sentryInit({
 	dsn: "https://fdd67c7590ff4b680308d9dae6640460@o4511401546285056.ingest.de.sentry.io/4511401549758544",
 
-	enabled: !__DEV__ && process.env.EXPO_PUBLIC_ENV === "production",
+	// Report from every non-dev build — preview and production — so issues are
+	// caught during QA, not only after release. Tagged by `environment` so the
+	// two can be filtered apart in Sentry.
+	enabled: !__DEV__ && process.env.EXPO_PUBLIC_ENV !== "development",
 	environment: process.env.EXPO_PUBLIC_ENV ?? "development",
+
+	// Tie events to the shipped binary so uploaded source maps / dSYMs resolve
+	// stack traces back to readable source.
+	release: `wavio@${Application.nativeApplicationVersion ?? "0.0.0"}`,
+	dist: Application.nativeBuildVersion ?? undefined,
 
 	// Adds more context data to events (IP address, cookies, user, etc.)
 	// For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
 	sendDefaultPii: true,
 
-	// Enable Logs
-	enableLogs: false,
+	// Enable structured logs (Sentry.logger.*) for diagnostic, non-Issue state.
+	enableLogs: true,
+
+	// Strip credentials Subsonic/Jellyfin/Taddy carry in request URLs and auth
+	// headers before any breadcrumb or event leaves the device (sendDefaultPii
+	// is on, so without this the password in the Subsonic query string leaks).
+	beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
+	beforeSend: (event) => scrubEvent(event),
+
+	// Backstop to the reportError classifier: never raise an Issue for transient
+	// connectivity failures.
+	ignoreErrors: [
+		"Network Error",
+		"timeout exceeded",
+		"Request aborted",
+		"AbortError",
+		/ECONNABORTED/,
+		/ERR_NETWORK/,
+	],
 
 	// uncomment the line below to enable Spotlight (https://spotlightjs.com)
 	// spotlight: __DEV__,
@@ -118,6 +146,7 @@ export default sentryWrap(function RootLayout() {
 			...persistOptions,
 		});
 		const unsubscribeConnectionType = initConnectionType();
+		const unsubscribeSentryScope = initSentryScope();
 		const idle =
 			typeof requestIdleCallback === "function"
 				? requestIdleCallback(() => {
@@ -137,6 +166,7 @@ export default sentryWrap(function RootLayout() {
 			}
 			subscription.remove();
 			unsubscribeConnectionType();
+			unsubscribeSentryScope();
 			unsubscribePersist();
 		};
 	}, []);

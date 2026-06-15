@@ -1,8 +1,8 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
+import { reportError } from "@/services/errorReporting";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
-import { logError } from "@/utils/log";
 
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
@@ -56,10 +56,7 @@ openSubsonicApiInstance.interceptors.request.use(
     request.baseURL = url || request.baseURL || "";
     return request;
   },
-  (error) => {
-    logError(error);
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 openSubsonicApiInstance.interceptors.response.use(
@@ -81,7 +78,13 @@ openSubsonicApiInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    logError(error);
+    // The classifier drops offline / unreachable-server / cancelled noise and
+    // reports only genuine HTTP failures (4xx/5xx with a response body).
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: error?.config?.url,
+    });
     return Promise.reject(error);
   },
 );
@@ -108,7 +111,19 @@ export function subsonicEnvelope<T>(
   rsp: AxiosResponse<OpenSubsonicResponse<T>>,
 ): OpenSubsonicResponse<T>["subsonic-response"] {
   if (rsp.data["subsonic-response"]?.status !== "ok") {
-    throw rsp.data["subsonic-response"].error;
+    const error = rsp.data["subsonic-response"].error;
+    // Application-level Subsonic failure (HTTP 200, status "failed"). Code 40 is
+    // wrong-credentials, already handled by the response interceptor's logout —
+    // don't double-report it. Everything else is a real failing endpoint.
+    if (error?.code !== 40) {
+      reportError(error, {
+        area: "api",
+        backend: "subsonic",
+        endpoint: rsp.config?.url,
+        status: error?.code,
+      });
+    }
+    throw error;
   }
   return rsp.data["subsonic-response"];
 }

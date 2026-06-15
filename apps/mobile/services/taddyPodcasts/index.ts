@@ -1,5 +1,6 @@
 import axios from "axios";
 import i18n from "@/config/i18n";
+import { reportError } from "@/services/errorReporting";
 import usePodcasts from "@/stores/podcasts";
 
 export type TaddyPodcastsResponse<T> = {
@@ -35,6 +36,30 @@ taddyPodcastsApiInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// Taddy is GraphQL: failures come back as HTTP 200 with a `data.errors` array,
+// not as an HTTP error. Inspect the success body for those, and report genuine
+// transport failures from the error path. Grouped by error code (via `status`)
+// so e.g. an invalid API key, a rate limit and a server error are distinct
+// Issues. The classifier drops offline / cancelled noise.
+taddyPodcastsApiInstance.interceptors.response.use(
+  (response) => {
+    const errors = response.data?.errors;
+    if (Array.isArray(errors) && errors.length > 0) {
+      reportError(errors[0], {
+        area: "api",
+        api: "taddy",
+        status: errors[0]?.code,
+        extra: { errors },
+      });
+    }
+    return response;
+  },
+  (error) => {
+    reportError(error, { area: "api", api: "taddy" });
     return Promise.reject(error);
   },
 );

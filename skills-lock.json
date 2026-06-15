@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "sentry-android-sdk": {
+      "source": "getsentry/sentry-for-ai",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-android-sdk/SKILL.md",
+      "computedHash": "ea55fe4506f115a0fdf3825ab232e2fe9d0a9df948dd195c89850ef344ecf686"
+    },
+    "sentry-feature-setup": {
+      "source": "getsentry/sentry-for-ai",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-feature-setup/SKILL.md",
+      "computedHash": "ac986f508d80d14077a8795b93c36ca0df15fdda4e1f8af03430a8dda602b6cb"
+    },
+    "sentry-instrumentation-guide": {
+      "source": "getsentry/sentry-for-ai",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-instrumentation-guide/SKILL.md",
+      "computedHash": "757bf2bf8453182517125a882b9b66b49e246e006170949a5a4310cd5a931efa"
+    },
+    "sentry-react-native-sdk": {
+      "source": "getsentry/sentry-for-ai",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-react-native-sdk/SKILL.md",
+      "computedHash": "d68edef22c9ca5c8e2d3e4cb0822e3898df20984d809ddba50dd349a3235df55"
+    },
+    "sentry-sdk-setup": {
+      "source": "getsentry/sentry-for-ai",
+      "sourceType": "github",
+      "skillPath": "skills/sentry-sdk-setup/SKILL.md",
+      "computedHash": "a471d03591daf5371c3dacc00532d957c14f7ae7f4120b7305ad3b148ccefbb2"
+    }
+  }
+}

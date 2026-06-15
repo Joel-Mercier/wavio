@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
+import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { logError } from "@/utils/log";
 import { getLocalLibraryDb } from "./db";
 import { albumKey, localTrackId, normalizeKey } from "./keys";
@@ -192,6 +193,10 @@ export async function scanLibrary(
   };
 
   let nextWorkIndex = 0;
+  // A handful of failing URIs to attach to the aggregated Sentry report below —
+  // enough to spot a pattern (one bad codec, one unreadable folder) without
+  // shipping the user's whole library path list.
+  const failedSamples: string[] = [];
   const worker = async () => {
     while (nextWorkIndex < work.length) {
       if (controller?.cancelled) {
@@ -215,7 +220,13 @@ export async function scanLibrary(
         if (batch.length >= WRITE_BATCH_SIZE) await flush();
       } catch (error) {
         result.failed++;
-        logError(`[localLibrary] Failed to index ${file.uri}`, error);
+        if (failedSamples.length < 10) failedSamples.push(file.uri);
+        // Per-file breadcrumb (not an Issue): a single bad file shouldn't page
+        // anyone, but the trail gives the aggregated report below its context.
+        reportBreadcrumb("local-library", "extract failed", {
+          uri: file.uri,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   };
@@ -225,6 +236,26 @@ export async function scanLibrary(
     ),
   );
   await flush();
+
+  // One aggregated Issue per scan when files failed to index — captures the
+  // metadata-extraction failure rate without spamming an event per file.
+  if (result.failed > 0) {
+    reportError(
+      new Error(
+        `Local library scan: ${result.failed}/${work.length} files failed to index`,
+      ),
+      {
+        area: "local-library",
+        endpoint: "scanLibrary",
+        extra: {
+          failed: result.failed,
+          indexed: result.indexed,
+          total: work.length,
+          sampleUris: failedSamples,
+        },
+      },
+    );
+  }
 
   // 4. Prune rows whose files are gone — but only after a *complete* scan, since
   //    a cancelled run hasn't observed the full folder set.
