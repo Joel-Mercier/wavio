@@ -1158,7 +1158,7 @@ export default {
         serverTypeNavidrome: "Navidrome",
         serverTypeOpenSubsonic: "OpenSubsonic",
         serverTypeJellyfin: "Jellyfin",
-        serverTypeLocal: "Local",
+        serverTypeLocal: "Local library",
         urlPlaceholder: "Enter server URL",
         usernamePlaceholder: "Enter username",
         passwordPlaceholder: "Enter user password",
@@ -1180,6 +1180,19 @@ export default {
         localPickFolder: "Pick a folder",
         localNoPaths: "Add at least one folder to continue",
         localRemovePath: "Remove folder",
+        localSetupHelp: "How does the local library work?",
+        localInfoTitle: "Local library",
+        localInfoFormatsTitle: "Supported formats",
+        localInfoFormats:
+          "Wavio scans the folders you select for MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA and AIFF files.",
+        localInfoMetadataTitle: "How metadata is read",
+        localInfoMetadata:
+          "Title, artist, album, track number, cover art and more are read from each file's embedded tags. Untagged files fall back to their filename, so well-tagged files give the best results.",
+        localInfoTaggingTitle: "Tagging your library",
+        localInfoTagging:
+          "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them.",
+        localInfoTaggingLink: "Get MusicBrainz Picard",
+        localInfoClose: "Got it",
       },
     },
     openSubsonic: {
