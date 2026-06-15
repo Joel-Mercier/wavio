@@ -1,7 +1,10 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
+import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
@@ -16,9 +19,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
+import { Box } from "@/components/ui/box";
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
-import { Input, InputField } from "@/components/ui/input";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import {
   Select,
   SelectBackdrop,
@@ -49,6 +53,51 @@ const podcastConfigSchema = z.object({
   country: z.enum(Country),
 });
 
+function SelectSearchInput({
+  onChangeText,
+}: {
+  onChangeText: (text: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [primary50] = Uniwind.getCSSVariable([
+    "--color-primary-50",
+  ]) as string[];
+  const form = useForm({ defaultValues: { query: "" } });
+  const query = useStore(form.store, (state) => state.values.query);
+
+  useEffect(() => {
+    onChangeText(query);
+  }, [query, onChangeText]);
+
+  return (
+    <Box className="px-2 pb-2">
+      <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 rounded-md px-4">
+        <form.Field name="query">
+          {(field) => (
+            <InputField
+              value={field.state.value}
+              onChangeText={field.handleChange}
+              className="text-md text-white"
+              placeholder={t("app.shared.search")}
+              placeholderTextColor={primary50}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+        </form.Field>
+        {query.length > 0 && (
+          <InputSlot
+            className="pl-2"
+            onPress={() => form.setFieldValue("query", "")}
+          >
+            <InputIcon as={X} />
+          </InputSlot>
+        )}
+      </Input>
+    </Box>
+  );
+}
+
 export default function PodcastConfigDialog({
   isOpen,
   onClose,
@@ -69,6 +118,19 @@ export default function PodcastConfigDialog({
   const taddyPodcastCountry = usePodcasts(
     (store) => store.taddyPodcastsCountry,
   );
+  const [countryQuery, setCountryQuery] = useState("");
+  const [languageQuery, setLanguageQuery] = useState("");
+
+  const countryOptions = useMemo(() => {
+    const q = countryQuery.trim().toLowerCase();
+    const all = Object.values(Country) as string[];
+    return q ? all.filter((c) => c.toLowerCase().includes(q)) : all;
+  }, [countryQuery]);
+  const languageOptions = useMemo(() => {
+    const q = languageQuery.trim().toLowerCase();
+    const all = Object.values(Language) as string[];
+    return q ? all.filter((l) => l.toLowerCase().includes(q)) : all;
+  }, [languageQuery]);
 
   const podcastConfigForm = useForm({
     defaultValues: {
@@ -215,8 +277,9 @@ export default function PodcastConfigDialog({
                         <SelectDragIndicatorWrapper>
                           <SelectDragIndicator />
                         </SelectDragIndicatorWrapper>
+                        <SelectSearchInput onChangeText={setCountryQuery} />
                         <SelectFlatList
-                          data={Object.values(Country)}
+                          data={countryOptions}
                           keyExtractor={(item) => item as string}
                           renderItem={({ item }) => (
                             <SelectItem
@@ -271,8 +334,9 @@ export default function PodcastConfigDialog({
                         <SelectDragIndicatorWrapper>
                           <SelectDragIndicator />
                         </SelectDragIndicatorWrapper>
+                        <SelectSearchInput onChangeText={setLanguageQuery} />
                         <SelectFlatList
-                          data={Object.values(Language)}
+                          data={languageOptions}
                           keyExtractor={(item) => item as string}
                           renderItem={({ item }) => (
                             <SelectItem

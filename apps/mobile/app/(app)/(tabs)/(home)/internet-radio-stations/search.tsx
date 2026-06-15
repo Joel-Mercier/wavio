@@ -3,7 +3,6 @@ import {
   BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
-  BottomSheetTextInput,
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -29,6 +28,7 @@ import InternetRadioStationListItem, {
   radioBrowserToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
+import SheetSearchInput from "@/components/SheetSearchInput";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -70,6 +70,7 @@ export default function InternetRadioStationsSearchScreen() {
   const debounce = useDebounce(300);
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagQuery, setTagQuery] = useState("");
   const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
   const [language, setLanguage] = useState<string | undefined>(undefined);
 
@@ -90,6 +91,13 @@ export default function InternetRadioStationsSearchScreen() {
   const { data: tagsData } = useRadioTags({ limit: 120 });
   const { data: countriesData } = useRadioCountries();
   const { data: languagesData } = useRadioLanguages();
+
+  const filteredTags = useMemo(() => {
+    const q = tagQuery.trim().toLowerCase();
+    const tags = tagsData ?? [];
+    if (!q) return tags;
+    return tags.filter((tag) => tag.name.toLowerCase().includes(q));
+  }, [tagQuery, tagsData]);
 
   const countryOptions = useMemo<SelectOption[]>(
     () =>
@@ -248,7 +256,6 @@ export default function InternetRadioStationsSearchScreen() {
       <BottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["75%"]}
-        enableDynamicSizing={false}
         onChange={handleFiltersSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
@@ -299,8 +306,9 @@ export default function InternetRadioStationsSearchScreen() {
               <Text className="text-white">
                 {t("app.internetRadioStations.search.tags")}
               </Text>
-              <HStack className="flex-wrap gap-2">
-                {(tagsData ?? []).map((tag) => {
+              <SheetSearchInput onChangeText={setTagQuery} />
+              <HStack className="flex-wrap gap-2 mt-2">
+                {filteredTags.map((tag) => {
                   const selected = selectedTags.includes(tag.name);
                   return (
                     <FadeOutScaleDown
@@ -349,7 +357,6 @@ export default function InternetRadioStationsSearchScreen() {
         onSheetPositionChange={handleCountrySheetPositionChange}
         title={t("app.internetRadioStations.search.country")}
         anyLabel={t("app.internetRadioStations.search.any")}
-        searchPlaceholder={t("app.internetRadioStations.search.searchCountry")}
         options={countryOptions}
         selectedValue={countryCode}
         onSelect={(value) => {
@@ -357,14 +364,12 @@ export default function InternetRadioStationsSearchScreen() {
           countrySheetRef.current?.dismiss();
         }}
         emerald={emerald500}
-        placeholderColor={primary50}
       />
       <SearchableSelectSheet
         ref={languageSheetRef}
         onSheetPositionChange={handleLanguageSheetPositionChange}
         title={t("app.internetRadioStations.search.language")}
         anyLabel={t("app.internetRadioStations.search.any")}
-        searchPlaceholder={t("app.internetRadioStations.search.searchLanguage")}
         options={languageOptions}
         selectedValue={language}
         onSelect={(value) => {
@@ -372,7 +377,6 @@ export default function InternetRadioStationsSearchScreen() {
           languageSheetRef.current?.dismiss();
         }}
         emerald={emerald500}
-        placeholderColor={primary50}
       />
     </Box>
   );
@@ -383,12 +387,10 @@ type SearchableSelectSheetProps = {
   onSheetPositionChange: NonNullable<BottomSheetModalProps["onChange"]>;
   title: string;
   anyLabel: string;
-  searchPlaceholder: string;
   options: SelectOption[];
   selectedValue: string | undefined;
   onSelect: (value: string) => void;
   emerald: string;
-  placeholderColor: string;
 };
 
 function SearchableSelectSheet({
@@ -396,12 +398,10 @@ function SearchableSelectSheet({
   onSheetPositionChange,
   title,
   anyLabel,
-  searchPlaceholder,
   options,
   selectedValue,
   onSelect,
   emerald,
-  placeholderColor,
 }: SearchableSelectSheetProps) {
   const [query, setQuery] = useState("");
   const renderScrollComponent = useBottomSheetScrollableCreator();
@@ -416,6 +416,7 @@ function SearchableSelectSheet({
       ref={ref}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
+      stackBehavior="push"
       onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
@@ -425,20 +426,7 @@ function SearchableSelectSheet({
         <Heading className="text-white mb-3" size="lg">
           {title}
         </Heading>
-        <BottomSheetTextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={searchPlaceholder}
-          placeholderTextColor={placeholderColor}
-          style={{
-            backgroundColor: "rgb(64, 64, 64)",
-            borderRadius: 8,
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            color: "white",
-            fontSize: 16,
-          }}
-        />
+        <SheetSearchInput onChangeText={setQuery} />
       </Box>
       <FlashList
         data={filtered}

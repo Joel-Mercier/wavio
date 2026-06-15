@@ -833,8 +833,6 @@ export default {
           any: "Tous",
           reset: "Réinitialiser",
           done: "Terminé",
-          searchCountry: "Rechercher un pays",
-          searchLanguage: "Rechercher une langue",
         },
         topVoted: "Les plus votées",
         popular: "Populaires",
@@ -1092,6 +1090,7 @@ export default {
         create: "Créer",
         delete: "Supprimer",
         clear: "Effacer",
+        search: "Rechercher",
         unknown: "Inconnu",
         offline: {
           saveForOfflineListening: "Enregistrer pour écoute hors ligne",

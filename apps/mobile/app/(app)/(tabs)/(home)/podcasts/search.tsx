@@ -15,7 +15,7 @@ import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -29,6 +29,7 @@ import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { handleFieldBlur, showFieldError } from "@/components/forms/FieldError";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
 import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
+import SheetSearchInput from "@/components/SheetSearchInput";
 import { Box } from "@/components/ui/box";
 import {
   FormControl,
@@ -93,12 +94,14 @@ const minutesToSeconds = (value: number | undefined) =>
     : undefined;
 
 export default function PodcastsSearchScreen() {
-  const [primary50, white, gray500, emerald500] = Uniwind.getCSSVariable([
-    "--color-primary-50",
-    "--color-white",
-    "--color-gray-500",
-    "--color-emerald-500",
-  ]) as string[];
+  const [primary50, primary100, white, gray500, emerald500] =
+    Uniwind.getCSSVariable([
+      "--color-primary-50",
+      "--color-primary-100",
+      "--color-white",
+      "--color-gray-500",
+      "--color-emerald-500",
+    ]) as string[];
   const filtersSheetRef = useRef<BottomSheetModal>(null);
   const languagesSheetRef = useRef<BottomSheetModal>(null);
   const countriesSheetRef = useRef<BottomSheetModal>(null);
@@ -266,7 +269,7 @@ export default function PodcastsSearchScreen() {
                   >
                     <InputIcon
                       as={Settings2}
-                      color={white}
+                      color={primary100}
                       width={38}
                       height={38}
                       size="xl"
@@ -786,29 +789,36 @@ function MultiSelectSheet<T extends string>({
   onToggle,
   emerald,
 }: MultiSelectSheetProps<T>) {
+  const [query, setQuery] = useState("");
   const selectedSet = new Set(selected ?? []);
   const renderScrollComponent = useBottomSheetScrollableCreator();
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((item) => labelFor(item).toLowerCase().includes(q));
+  }, [query, options, labelFor]);
+
   return (
     <BottomSheetModal
       ref={ref}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
+      stackBehavior="push"
       onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
+      <Box className="px-6 pt-2 pb-3">
+        <Heading className="text-white mb-3" size="lg">
+          {title}
+        </Heading>
+        <SheetSearchInput onChangeText={setQuery} />
+      </Box>
       <FlashList
-        data={options}
+        data={filtered}
         keyExtractor={(item) => item}
         renderScrollComponent={renderScrollComponent}
-        ListHeaderComponent={
-          <Box className="px-6 pt-2 pb-4">
-            <Heading className="text-white" size="lg">
-              {title}
-            </Heading>
-          </Box>
-        }
         renderItem={({ item }) => (
           <FadeOutScaleDown onPress={() => onToggle(item)}>
             <HStack className="items-center justify-between px-6 py-3">
