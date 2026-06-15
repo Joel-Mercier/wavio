@@ -34,11 +34,18 @@ Run from the **repo root** (delegate to a workspace via `--cwd`):
 
 Or run inside a workspace directly: `bun run --cwd apps/mobile <script>`, or `cd apps/mobile && bun run <script>`. Single mobile test: `cd apps/mobile && bunx jest __tests__/queue.store.test.ts`. APK build: `cd apps/mobile && eas build --profile preview --platform android` (profiles in `apps/mobile/eas.json`).
 
-`apps/mobile/.env` (gitignored) holds:
-- `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION` and `EXPO_PUBLIC_CLIENT_NAME` — injected into every Subsonic request.
-- `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID`, `EXPO_PUBLIC_TADDY_PODCASTS_API_KEY`, `EXPO_PUBLIC_TADDY_PODCASTS_API_LANGUAGE`, `EXPO_PUBLIC_TADDY_PODCASTS_API_COUNTRY` — optional dev defaults for the Taddy podcasts config. They seed the initial `stores/podcasts.ts` state (and `clearTaddyPodcastsConfig` resets back to them) so podcasts work without manually entering config; values set via the in-app settings override them and persist. Language/country must be valid `Language`/`Country` enum keys (e.g. `FRENCH`/`FRANCE`).
+### Environment variables
 
-`EXPO_PUBLIC_*` vars are inlined into the JS bundle at build time. Cloud EAS builds don't see `.env` (it's gitignored, so not uploaded — per-profile vars live in `apps/mobile/eas.json` instead), but **local** builds (`eas build --local`, local prebuild + gradle) do bake in whatever is in `.env`, so don't distribute a locally-built APK expecting the Taddy credentials to be stripped.
+Secrets are **not** committed to `eas.json`. They live in EAS server-side environment variables, scoped per environment (`development` / `preview` / `production`), created with `eas env:create`. Each `eas.json` build profile sets an `environment` so `eas build` (cloud **or** `--local`) pulls the matching bucket.
+
+Where each var belongs:
+- `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION`, `EXPO_PUBLIC_CLIENT_NAME`, `EXPO_PUBLIC_ENV` — non-secret; kept inline in each profile's `env` block in `apps/mobile/eas.json`.
+- `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID`, `EXPO_PUBLIC_TADDY_PODCASTS_API_KEY`, `EXPO_PUBLIC_TADDY_PODCASTS_API_LANGUAGE`, `EXPO_PUBLIC_TADDY_PODCASTS_API_COUNTRY` — EAS `development` environment only (`sensitive`/`plaintext` visibility; they're `EXPO_PUBLIC_` so they end up in the bundle anyway — `secret` would be misleading). They seed the initial `stores/podcasts.ts` state (and `clearTaddyPodcastsConfig` resets back to them) so podcasts work without manually entering config; values set via the in-app settings override them and persist. Language/country must be valid `Language`/`Country` enum keys (e.g. `FRENCH`/`FRANCE`). Absent in preview/production builds → the app falls back to in-app Taddy config.
+- `SENTRY_AUTH_TOKEN` — build-time only (sourcemap upload), **not** `EXPO_PUBLIC_`, so never in the bundle. EAS `preview` + `production` only. Use **`sensitive`, not `secret`**: `secret` values are not readable outside EAS servers, so a local build (`eas build --local`) can't receive them — `sensitive` can.
+
+`EXPO_PUBLIC_*` vars are inlined into the JS bundle at build time; `EXPO_PUBLIC_` values are extractable from a shipped APK, so EAS scoping protects them in git/logs but does not make a client-embedded key truly secret.
+
+The dev-server scripts (`start` / `android` / `ios` / `web` in `apps/mobile/package.json`) are wrapped with `eas env:exec development -- …` because `expo run:android` / `expo start` do **not** pull EAS env vars on their own (only `eas build` does). This injects the Taddy creds for daily dev without a `.env` file — so `.env` stays clean and secrets can't leak into a local `preview`/`production` build (`eas build --local`, which reads both `.env` and EAS). Trade-off: these scripts now require being logged into EAS and online. **Keep secrets out of `.env`**; if you do keep Taddy in a gitignored `.env` for offline convenience, strip it before any local `preview`/`production` build.
 
 TS path alias: `@/*` → `apps/mobile/` root.
 

@@ -59,16 +59,16 @@ A single `bun install` at the repo root installs both. Most scripts are exposed 
 2. Make sure you have Node v22+ installed
 3. Make sure you have bun installed
 4. Install dependencies with `bun install` (from the repo root)
-5. Set environment variables in `apps/mobile/.env` file (see `.env.example`)
+5. Set environment variables in EAS secrets (see `.env.example`)
 6. Prebuild the native development app with `bun run mobile:prebuild`
-7. Run the app with `bun run mobile:start`
+7. Run the app with `bun run mobile:start` and make sure you have a development build for the targetted platform (`bun run mobile:android` or `bun run mobile:ios`)
 
 ### Android
 
 1. Make sure you have the correct environnement for building on Android (Android Studio, SDK, Java, etc.)
 2. Make sure you are have the SENTRY_AUTH_TOKEN and are logged in to the sentry-cli with `sentry-cli login`
 3. Make sure you are logged in to Expo with `eas login` (check with `eas whoami`)
-4. Build the app with the desired profile `eas build --profile preview --platform android`
+4. Build the app with the desired profile `bun run mobile:build:android:<profile>`
 5. Install the app on your device with the generated APK file
 
 #### Android Auto
