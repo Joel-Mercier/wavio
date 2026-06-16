@@ -58,6 +58,10 @@ import { VStack } from "@/components/ui/vstack";
 import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
+import {
+  computeSubsonicToken,
+  generateSalt,
+} from "@/services/openSubsonic/auth";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, {
   type Server,
@@ -218,6 +222,11 @@ export default function LoginScreen() {
             },
           });
         } else {
+          const subsonicSalt = generateSalt();
+          const subsonicToken = await computeSubsonicToken(
+            trimmedPassword,
+            subsonicSalt,
+          );
           const rsp = await axios
             .create({
               baseURL: trimmedUrl,
@@ -226,7 +235,8 @@ export default function LoginScreen() {
             .get("/rest/ping", {
               params: {
                 u: trimmedUsername,
-                p: trimmedPassword,
+                t: subsonicToken,
+                s: subsonicSalt,
                 v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
                 c: process.env.EXPO_PUBLIC_CLIENT_NAME,
                 f: "json",
@@ -277,6 +287,8 @@ export default function LoginScreen() {
           login(trimmedUrl, trimmedUsername, trimmedPassword, {
             serverType,
             navidrome: navidromeSession,
+            subsonicSalt,
+            subsonicToken,
           });
         }
         toast.show({

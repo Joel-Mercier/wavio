@@ -28,6 +28,8 @@ const reset = () =>
       isAdmin: false,
       hasNavidromeNative: false,
       serverVersion: null,
+      subsonicSalt: null,
+      subsonicToken: null,
     },
     false,
   );
@@ -123,6 +125,28 @@ describe("auth store", () => {
     expect(s.userId).toBeNull();
     expect(s.isAdmin).toBe(false);
     expect(s.hasNavidromeNative).toBe(false);
+  });
+
+  it("login stores subsonic salt and token, and logout clears them", () => {
+    useAuthBase.getState().login("https://x", "u", "p", {
+      subsonicSalt: "abc123",
+      subsonicToken: "deadbeef",
+    });
+    const s = useAuthBase.getState();
+    expect(s.subsonicSalt).toBe("abc123");
+    expect(s.subsonicToken).toBe("deadbeef");
+    useAuthBase.getState().logout();
+    const after = useAuthBase.getState();
+    expect(after.subsonicSalt).toBeNull();
+    expect(after.subsonicToken).toBeNull();
+  });
+
+  it("login without subsonic options clears salt and token", () => {
+    useAuthBase.setState({ subsonicSalt: "old", subsonicToken: "old" });
+    useAuthBase.getState().login("https://x", "u", "p");
+    const s = useAuthBase.getState();
+    expect(s.subsonicSalt).toBeNull();
+    expect(s.subsonicToken).toBeNull();
   });
 
   it("setToken updates the token", () => {

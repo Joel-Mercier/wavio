@@ -38,28 +38,28 @@ export const hlsStreamUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinHlsStreamUrl(id);
-  const { url, username, password } = useAuthBase.getState();
+  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
-  return `${url}/rest/hls.m3u8?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
+  return `${url}/rest/hls.m3u8?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
 };
 
 export const streamUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id);
-  const { url, username, password } = useAuthBase.getState();
+  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
-  return `${url}/rest/stream?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
+  return `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
 };
 
 export const downloadUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
-  const { url, username, password } = useAuthBase.getState();
-  return `${url}/rest/download?id=${id}&u=${username}&p=${password}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
+  return `${url}/rest/download?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
 };

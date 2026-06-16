@@ -4,16 +4,16 @@ import { reportError } from "@/services/errorReporting";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
 
-const navidromeSubsonicApiVersion =
+const openSubsonicApiVersion =
   process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
-const navidromeClient = process.env.EXPO_PUBLIC_CLIENT_NAME || "";
+const clientName = process.env.EXPO_PUBLIC_CLIENT_NAME || "";
 
 if (__DEV__) {
   console.log(
-    "[app] Navidrome Subsonic API Version : ",
-    navidromeSubsonicApiVersion,
+    "[app] OpenSubsonic API Version : ",
+    openSubsonicApiVersion,
   );
-  console.log("[app] Navidrome Client : ", navidromeClient);
+  console.log("[app] Client : ", clientName);
 }
 
 export type OpenSubsonicResponse<T> = {
@@ -44,13 +44,15 @@ const openSubsonicApiInstance = axios.create({
 
 openSubsonicApiInstance.interceptors.request.use(
   (request) => {
-    const { url, username, password } = useAuthBase.getState();
+    const { url, username, subsonicSalt, subsonicToken } =
+      useAuthBase.getState();
     request.params = {
       ...(request.params ?? {}),
       u: username,
-      p: password,
-      v: navidromeSubsonicApiVersion,
-      c: navidromeClient,
+      t: subsonicToken,
+      s: subsonicSalt,
+      v: openSubsonicApiVersion,
+      c: clientName,
       f: "json",
     };
     request.baseURL = url || request.baseURL || "";

@@ -75,6 +75,8 @@ type AuthStore = {
   jellyfinAccessToken: string | null;
   jellyfinUserId: string | null;
   serverVersion: string | null;
+  subsonicSalt: string | null;
+  subsonicToken: string | null;
   login: (
     url: string,
     username: string,
@@ -83,6 +85,8 @@ type AuthStore = {
       serverType?: ServerType;
       navidrome?: NavidromeNativeSession | null;
       jellyfin?: JellyfinSession | null;
+      subsonicSalt?: string | null;
+      subsonicToken?: string | null;
     },
   ) => void;
   setNavidromeSession: (session: NavidromeNativeSession | null) => void;
@@ -109,6 +113,8 @@ export const useAuthBase = create<AuthStore>()(
       jellyfinAccessToken: null,
       jellyfinUserId: null,
       serverVersion: null,
+      subsonicSalt: null,
+      subsonicToken: null,
       login: (
         url: string,
         username: string,
@@ -117,6 +123,8 @@ export const useAuthBase = create<AuthStore>()(
           serverType?: ServerType;
           navidrome?: NavidromeNativeSession | null;
           jellyfin?: JellyfinSession | null;
+          subsonicSalt?: string | null;
+          subsonicToken?: string | null;
         },
       ) => {
         const serverType = options?.serverType ?? "navidrome";
@@ -134,6 +142,8 @@ export const useAuthBase = create<AuthStore>()(
           hasNavidromeNative: !!navidrome,
           jellyfinAccessToken: jellyfin?.accessToken ?? null,
           jellyfinUserId: jellyfin?.userId ?? null,
+          subsonicSalt: options?.subsonicSalt ?? null,
+          subsonicToken: options?.subsonicToken ?? null,
         });
       },
       setNavidromeSession: (session: NavidromeNativeSession | null) => {
@@ -178,6 +188,8 @@ export const useAuthBase = create<AuthStore>()(
           jellyfinAccessToken: null,
           jellyfinUserId: null,
           serverVersion: null,
+          subsonicSalt: null,
+          subsonicToken: null,
         });
         // Wipe every cached server response so reconnecting to a different
         // server (or user) never shows stale content that isn't backed by a
