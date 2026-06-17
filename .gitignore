@@ -24,6 +24,7 @@ android/.gradle/
 *.mobileprovision
 *.apk
 *.aab
+apps/mobile/google-service-account.json
 
 # Metro
 .metro-health-check*

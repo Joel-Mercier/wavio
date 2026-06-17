@@ -1,42 +1,51 @@
 {
-  "cli": {
-    "version": ">= 15.0.12",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "environment": "development",
-      "env": {
-        "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
-        "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "development"
-      }
-    },
-    "preview": {
-      "android": {
-        "buildType": "apk"
-      },
-      "distribution": "internal",
-      "environment": "preview",
-      "env": {
-        "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
-        "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "preview"
-      }
-    },
-    "production": {
-      "autoIncrement": true,
-      "environment": "production",
-      "env": {
-        "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
-        "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "production"
-      }
-    }
-  },
-  "submit": {
-    "production": {}
-  }
+	"cli": {
+		"version": ">= 20.1.0",
+		"appVersionSource": "remote"
+	},
+	"build": {
+		"development": {
+			"developmentClient": true,
+			"distribution": "internal",
+			"environment": "development",
+			"env": {
+				"EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
+				"EXPO_PUBLIC_CLIENT_NAME": "wavio",
+				"EXPO_PUBLIC_ENV": "development"
+			}
+		},
+		"preview": {
+			"android": {
+				"buildType": "apk"
+			},
+			"distribution": "internal",
+			"environment": "preview",
+			"env": {
+				"EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
+				"EXPO_PUBLIC_CLIENT_NAME": "wavio",
+				"EXPO_PUBLIC_ENV": "preview"
+			}
+		},
+		"production": {
+			"autoIncrement": true,
+			"environment": "production",
+			"env": {
+				"EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
+				"EXPO_PUBLIC_CLIENT_NAME": "wavio",
+				"EXPO_PUBLIC_ENV": "production"
+			}
+		}
+	},
+	"submit": {
+		"production": {
+			"android": {
+				"track": "production"
+			}
+		},
+		"closed": {
+			"android": {
+				"track": "alpha"
+			}
+		}
+	}
 }
