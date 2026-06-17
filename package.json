@@ -16,7 +16,9 @@
 		"mobile:lint:fix": "bun run --cwd apps/mobile lint:fix",
 		"mobile:typecheck": "bun run --cwd apps/mobile typecheck",
 		"mobile:prebuild": "bun run --cwd apps/mobile prebuild",
+		"mobile:build:android:development": "bun run --cwd apps/mobile build:android:development",
 		"mobile:build:android:preview": "bun run --cwd apps/mobile build:android:preview",
+		"mobile:build:android:production": "bun run --cwd apps/mobile build:android:production",
 		"landing:dev": "bun run --cwd apps/landing dev",
 		"landing:build": "bun run --cwd apps/landing build",
 		"landing:preview": "bun run --cwd apps/landing preview"

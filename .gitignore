@@ -23,6 +23,7 @@ android/.gradle/
 *.key
 *.mobileprovision
 *.apk
+*.aab
 
 # Metro
 .metro-health-check*

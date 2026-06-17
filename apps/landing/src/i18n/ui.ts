@@ -31,7 +31,7 @@ export const ui = {
         ['your', 'player,'],
       ],
       titleAccent: 'your way.',
-      lead: 'A Android player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home.',
+      lead: 'A Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home.',
     },
     cta: {
       getItOn: 'GET IT ON',
@@ -242,7 +242,7 @@ export const ui = {
         ['votre', 'lecteur,'],
       ],
       titleAccent: 'à votre façon.',
-      lead: "Un lecteur Android pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi.",
+      lead: "Un lecteur de musique Android pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi.",
     },
     cta: {
       getItOn: 'DISPONIBLE SUR',
