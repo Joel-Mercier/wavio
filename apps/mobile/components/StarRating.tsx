@@ -2,9 +2,9 @@ import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import { memo, useCallback, useMemo, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
+  usePanGesture,
 } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
@@ -118,36 +118,34 @@ export const StarRating = memo(function StarRating({
     [disabled, onChange, currentValue],
   );
 
-  const panGesture = useMemo(() => {
-    const gesture = Gesture.Pan()
-      .enabled(!disabled)
-      .onBegin((event) => {
-        // compute initial value on touch begin
-        const starWidth = size + spacing;
-        const starIndex = Math.floor(event.x / starWidth);
-        const newValue =
-          starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
-        scheduleOnRN(setCurrentValue, newValue);
-      })
-      .onUpdate((event) => {
-        // live update UI while swiping (no onChange yet)
-        const starWidth = size + spacing;
-        const starIndex = Math.floor(event.x / starWidth);
-        const newValue =
-          starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
-        scheduleOnRN(setCurrentValue, newValue);
-      })
-      .onEnd((event) => {
-        // finalize and trigger onChange ONCE
-        const starWidth = size + spacing;
-        const starIndex = Math.floor(event.x / starWidth);
-        const newValue =
-          starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
-        scheduleOnRN(setCurrentValue, newValue);
-        if (onChange) scheduleOnRN(onChange, newValue);
-      });
-    return gesture;
-  }, [disabled, size, spacing, max, onChange]);
+  const panGesture = usePanGesture({
+    enabled: !disabled,
+    onBegin: (event) => {
+      // compute initial value on touch begin
+      const starWidth = size + spacing;
+      const starIndex = Math.floor(event.x / starWidth);
+      const newValue =
+        starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
+      scheduleOnRN(setCurrentValue, newValue);
+    },
+    onUpdate: (event) => {
+      // live update UI while swiping (no onChange yet)
+      const starWidth = size + spacing;
+      const starIndex = Math.floor(event.x / starWidth);
+      const newValue =
+        starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
+      scheduleOnRN(setCurrentValue, newValue);
+    },
+    onDeactivate: (event) => {
+      // finalize and trigger onChange ONCE
+      const starWidth = size + spacing;
+      const starIndex = Math.floor(event.x / starWidth);
+      const newValue =
+        starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
+      scheduleOnRN(setCurrentValue, newValue);
+      if (onChange) scheduleOnRN(onChange, newValue);
+    },
+  });
 
   return (
     <GestureHandlerRootView>

@@ -1,11 +1,11 @@
 diff --git a/package.json b/package.json
+index cc560ebb6f526641ef1cffaa962eaae7105d4fbb..2b6dd66bac016bf4282f160a787ef59211fb86bb 100644
 --- a/package.json
 +++ b/package.json
-@@ -39,7 +39,15 @@
+@@ -39,6 +39,14 @@
        "import": "./dist/esm/icons/index.mjs",
        "browser": "./dist/esm/icons/index.mjs",
        "require": "./dist/cjs/icons/index.js"
--    }
 +    },
 +    "./dist/esm/icons/*.mjs": {
 +      "import": "./dist/esm/icons/*.mjs",
@@ -14,7 +14,6 @@ diff --git a/package.json b/package.json
 +    "./dist/cjs/icons/*.js": {
 +      "require": "./dist/cjs/icons/*.js",
 +      "default": "./dist/cjs/icons/*.js"
-+    }
+     }
    },
    "sideEffects": false,
-   "files": [

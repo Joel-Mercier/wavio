@@ -11,7 +11,7 @@ import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
 import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import { CastButton } from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
@@ -159,10 +159,10 @@ export default function PlayerScreen() {
     transform: [{ translateX: coverTranslateX.value }],
   }));
 
-  const coverPanGesture = Gesture.Pan()
-    .activeOffsetX([-15, 15])
-    .failOffsetY([-12, 12])
-    .onUpdate((e) => {
+  const coverPanGesture = usePanGesture({
+    activeOffsetX: [-15, 15],
+    failOffsetY: [-12, 12],
+    onUpdate: (e) => {
       let tx = e.translationX;
       if (tx > 0 && !canSkipPrevious) return;
       if (tx < 0 && !canSkipNext) return;
@@ -170,8 +170,8 @@ export default function PlayerScreen() {
       if (tx > max) tx = max;
       if (tx < -max) tx = -max;
       coverTranslateX.value = tx;
-    })
-    .onEnd((e) => {
+    },
+    onDeactivate: (e) => {
       if (e.translationX <= -COVER_SWIPE_THRESHOLD && canSkipNext) {
         coverTranslateX.value = withTiming(
           -coverArea.width,
@@ -197,7 +197,8 @@ export default function PlayerScreen() {
       } else {
         coverTranslateX.value = withTiming(0, { duration: 200 });
       }
-    });
+    },
+  });
 
   const castSession = useCastSync(playingTrack, isRadio);
 

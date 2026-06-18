@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import { useTranslation } from "react-i18next";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -268,6 +268,27 @@ export default function FloatingPlayer() {
         : 1 - Math.abs(translateX.value) / (SWIPE_THRESHOLD * 2.5),
   }));
 
+  const panGesture = usePanGesture({
+    activeOffsetX: [-15, 15],
+    failOffsetY: [-12, 12],
+    onUpdate: (e) => {
+      let tx = e.translationX;
+      if (tx > 0 && !canSkipPrevious) return;
+      if (tx < 0 && !canSkipNext) return;
+      if (tx > MAX_TRANSLATE) tx = MAX_TRANSLATE;
+      if (tx < -MAX_TRANSLATE) tx = -MAX_TRANSLATE;
+      translateX.value = tx;
+    },
+    onDeactivate: (e) => {
+      if (e.translationX <= -SWIPE_THRESHOLD && canSkipNext) {
+        scheduleOnRN(skipNext);
+      } else if (e.translationX >= SWIPE_THRESHOLD && canSkipPrevious) {
+        scheduleOnRN(skipPrevious, { force: true });
+      }
+      translateX.value = withTiming(0, { duration: 180 });
+    },
+  });
+
   if (
     !playingTrack ||
     pathname.startsWith("/player") ||
@@ -280,26 +301,6 @@ export default function FloatingPlayer() {
 
   const backgroundColor =
     (colors?.platform === "ios" ? colors.background : colors?.muted) || primary;
-
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-15, 15])
-    .failOffsetY([-12, 12])
-    .onUpdate((e) => {
-      let tx = e.translationX;
-      if (tx > 0 && !canSkipPrevious) return;
-      if (tx < 0 && !canSkipNext) return;
-      if (tx > MAX_TRANSLATE) tx = MAX_TRANSLATE;
-      if (tx < -MAX_TRANSLATE) tx = -MAX_TRANSLATE;
-      translateX.value = tx;
-    })
-    .onEnd((e) => {
-      if (e.translationX <= -SWIPE_THRESHOLD && canSkipNext) {
-        scheduleOnRN(skipNext);
-      } else if (e.translationX >= SWIPE_THRESHOLD && canSkipPrevious) {
-        scheduleOnRN(skipPrevious, { force: true });
-      }
-      translateX.value = withTiming(0, { duration: 180 });
-    });
 
   return (
     <GestureDetector gesture={panGesture}>

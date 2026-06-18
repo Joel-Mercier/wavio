@@ -2344,7 +2344,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNGestureHandler (2.31.2):
+  - RNGestureHandler (3.0.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2487,7 +2487,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (8.14.0):
+  - RNSentry (8.15.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2509,7 +2509,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - Sentry (= 9.16.1)
+    - Sentry (= 9.18.0)
     - Yoga
   - RNShare (12.3.1):
     - hermes-engine
@@ -2649,9 +2649,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - Sentry (9.16.1):
-    - Sentry/Core (= 9.16.1)
-  - Sentry/Core (9.16.1)
+  - Sentry (9.18.0):
+    - Sentry/Core (= 9.18.0)
+  - Sentry/Core (9.18.0)
   - SwiftDraw (0.27.0):
     - SwiftDrawDOM (~> 0.27.0)
   - SwiftDrawDOM (0.27.0)
@@ -3198,14 +3198,14 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: f6ca494496bf2ef2d3aed99053e37aeb3d816fa6
   RNCMaskedView: eb2b2e538afa907f05a5848a1a1ac26092e6fec9
   RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
-  RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
+  RNGestureHandler: ea542e5ad254ac2d234024168a8b87d723cf9463
   RNReanimated: d6e6865fa9d5ce60863a9e244de45de4f9890e46
   RNScreens: f94000b3cb1eb14cbb8d08dd6074fdd6ccf0e6b0
-  RNSentry: 4252d2ca893888e3531af9bf8b83a958e32e2944
+  RNSentry: 6d537b50f0b45b2190216d90f2e14b12a2ec19f2
   RNShare: 7344a3a7d4e5df58c356ad0f79e4a3ef1325c635
   RNSVG: 0e52210d4d43165e7e2cf9c890a9848b27e513ac
   RNWorklets: c2021cb3c1d80d3abd374fd33678757f483d3c4f
-  Sentry: e5d82a3c1f2d951f75c04c57215a0abb1facbd51
+  Sentry: 84407b02cd318a63ef0345ad51eaaee555028723
   SwiftDraw: c3fb77c08081f1255f33bcc0fd3c2e00fbc9bd46
   SwiftDrawDOM: 8e7d9812af1ef6e06230e72769e97838e6c7c765
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d

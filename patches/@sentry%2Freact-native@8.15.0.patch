@@ -1,5 +1,5 @@
 diff --git a/sentry.gradle.kts b/sentry.gradle.kts
-index 4888f58e842145f102da771ce2a1cdd01b705117..795715d558d330fed777058667edfc4c16bc57b2 100644
+index 4d8762ccd6343d1f71f55eea967f96af80b887eb..d018de002c3d92254a7f91c5e7332667fe9c114c 100644
 --- a/sentry.gradle.kts
 +++ b/sentry.gradle.kts
 @@ -266,6 +266,7 @@ fun extractBundleTaskArguments(

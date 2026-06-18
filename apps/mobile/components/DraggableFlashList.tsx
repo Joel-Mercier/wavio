@@ -16,9 +16,10 @@ import {
 } from "react";
 import { type LayoutChangeEvent, View, type ViewStyle } from "react-native";
 import {
-  Gesture,
   GestureDetector,
+  GestureStateManager,
   ScrollView,
+  usePanGesture,
 } from "react-native-gesture-handler";
 import Animated, {
   type SharedValue,
@@ -298,19 +299,19 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
     setLayout(evt.nativeEvent.layout);
   }, []);
 
-  const panGesture = Gesture.Pan()
-    .manualActivation(true)
-    .enabled(layout !== null)
-    .shouldCancelWhenOutside(false)
-    .onTouchesMove((_evt, stateManager) => {
+  const panGesture = usePanGesture({
+    manualActivation: true,
+    enabled: layout !== null,
+    shouldCancelWhenOutside: false,
+    onTouchesMove: (evt) => {
       "worklet";
       if (isDragging || activeIndexState >= 0 || activeIndex.value >= 0) {
-        stateManager.activate();
+        GestureStateManager.activate(evt.handlerTag);
       } else {
-        stateManager.end();
+        GestureStateManager.deactivate(evt.handlerTag);
       }
-    })
-    .onBegin((evt) => {
+    },
+    onBegin: (evt) => {
       "worklet";
       if (activeIndex.value >= 0) return;
       let panAbsValue = Math.max(itemHeight / 2, evt.y);
@@ -324,8 +325,8 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
         0,
         (scrollOffset.value + dragPosition.value) / itemHeight - 0.5,
       );
-    })
-    .onUpdate((evt) => {
+    },
+    onUpdate: (evt) => {
       "worklet";
       if (activeIndex.value < 0) return;
       let panAbsValue = Math.max(itemHeight / 2, evt.y);
@@ -351,14 +352,15 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
         autoScrollAcceleration.value = 0;
         autoScrollVelocity.value = 0;
       }
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
       "worklet";
       if (activeIndex.value < 0) return;
       const fromIndex = activeIndex.value;
       const toIndex = Math.round(insertIndex.value);
       scheduleOnRN(endDrag, fromIndex, toIndex);
-    });
+    },
+  });
 
   const extraData = useMemo(
     () => ({
