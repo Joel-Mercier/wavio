@@ -218,6 +218,7 @@ export const useTopSongs = (artist: string, params: { count?: number }) => {
     queryFn: () => {
       return getTopSongs(artist, params);
     },
+    enabled: !!artist,
   });
 
   return query;
