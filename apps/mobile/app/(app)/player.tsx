@@ -483,7 +483,10 @@ export default function PlayerScreen() {
                   }}
                 >
                   <Text className="text-primary-100 text-lg">
-                    {playingTrack?.artist}
+                    {playingTrack?.artist ||
+                      (!isPodcast && !isRadio
+                        ? t("app.shared.unknownArtist")
+                        : "")}
                   </Text>
                 </FadeOut>
               </VStack>

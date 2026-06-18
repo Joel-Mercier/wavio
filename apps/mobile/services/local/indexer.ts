@@ -3,6 +3,7 @@ import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { logError } from "@/utils/log";
 import { getLocalLibraryDb } from "./db";
+import { deriveTrackTags } from "./deriveTags";
 import { albumKey, localTrackId, normalizeKey } from "./keys";
 
 // The scanner. Walks the user-selected source folders, calls the native
@@ -379,8 +380,12 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
   const path = file.uri.replace(/^file:\/\//, "");
   const slash = path.lastIndexOf("/");
   const folder = slash > 0 ? path.slice(0, slash) : null;
-  const title = m.title ?? file.name.replace(/\.[^.]+$/, "");
-  const artist = m.artist ?? null;
+  // Recover title/artist/album/track from the filename + folder layout when the
+  // file's embedded tags don't supply them, so untagged files still group into
+  // navigable albums/artists instead of one hidden "Unknown" bucket.
+  const derived = deriveTrackTags(path, file.name, m);
+  const title = derived.title;
+  const artist = derived.artist ?? null;
   const albumArtist = m.albumArtist ?? null;
   return {
     id: localTrackId(file.uri),
@@ -391,12 +396,12 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
     mtime: file.mtime,
     title,
     artist,
-    album: m.album ?? null,
+    album: derived.album ?? null,
     album_artist: albumArtist,
     composer: m.composer ?? null,
     genre: m.genre ?? null,
     year: m.year ?? null,
-    track_number: m.trackNumber ?? null,
+    track_number: derived.trackNumber ?? null,
     track_total: m.trackTotal ?? null,
     disc_number: m.discNumber ?? null,
     disc_total: m.discTotal ?? null,
@@ -414,7 +419,7 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
     release_types_json: m.releaseTypes?.length
       ? JSON.stringify(m.releaseTypes)
       : null,
-    album_key: albumKey(m.album, albumArtist, artist),
+    album_key: albumKey(derived.album, albumArtist, artist),
     artist_key: normalizeKey(albumArtist || artist),
     indexed_at: Date.now(),
   };

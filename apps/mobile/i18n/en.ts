@@ -1062,6 +1062,15 @@ export default {
         clear: "Clear",
         search: "Search",
         unknown: "Unknown",
+        unknownAlbum: "Unknown album",
+        unknownArtist: "Unknown artist",
+        unknownEpisode: "Unknown episode",
+        errorBoundary: {
+          title: "Something went wrong",
+          message: "We hit an unexpected error.",
+          retry: "Try again",
+          home: "Go to home",
+        },
         offline: {
           saveForOfflineListening: "Save for offline listening",
           savingForOffline: "Saving for offline",

@@ -15,6 +15,7 @@ export const getArtist = dispatch(S.getArtist, J.getArtist, L.getArtist);
 export const getArtistAppearances = dispatch(
   S.getArtistAppearances,
   J.getArtistAppearances,
+  L.getArtistAppearances,
 );
 export const getArtistInfo = dispatch(S.getArtistInfo, J.getArtistInfo);
 export const getArtistInfo2 = dispatch(S.getArtistInfo2, J.getArtistInfo2);

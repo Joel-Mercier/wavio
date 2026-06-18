@@ -35,10 +35,12 @@ const trackToNowPlaying = (
   if (!track) return null;
   return {
     id: track.id,
-    title: track.title,
-    artist: track.artist,
-    album: track.album,
-    artworkUrl: track.artwork,
+    // Coerce empty strings (local files without tags/art) to undefined so the
+    // native car layer doesn't try to parse "" as an artwork URL.
+    title: track.title || undefined,
+    artist: track.artist || undefined,
+    album: track.album || undefined,
+    artworkUrl: track.artwork || undefined,
     durationMs: Math.round((track.duration ?? 0) * 1000),
   };
 };

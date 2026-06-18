@@ -1092,6 +1092,15 @@ export default {
         clear: "Effacer",
         search: "Rechercher",
         unknown: "Inconnu",
+        unknownAlbum: "Album inconnu",
+        unknownArtist: "Artiste inconnu",
+        unknownEpisode: "Épisode inconnu",
+        errorBoundary: {
+          title: "Une erreur est survenue",
+          message: "Nous avons rencontré une erreur inattendue.",
+          retry: "Réessayer",
+          home: "Retour à l'accueil",
+        },
         offline: {
           saveForOfflineListening: "Enregistrer pour écoute hors ligne",
           savingForOffline: "Enregistrement hors ligne",

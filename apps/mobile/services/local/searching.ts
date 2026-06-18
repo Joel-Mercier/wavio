@@ -1,5 +1,6 @@
 import type { TrackRow } from "@/services/local/db";
 import { localAlbumId, localArtistId } from "@/services/local/keys";
+import { unknownAlbumLabel, unknownArtistLabel } from "@/services/local/labels";
 import { mapRowToChild } from "@/services/local/mappers";
 import { searchTracks } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
@@ -32,7 +33,7 @@ function rollUp(rows: TrackRow[], opts: SearchOpts) {
     if (row.album_key?.trim() && !albums.has(row.album_key)) {
       albums.set(row.album_key, {
         id: localAlbumId(row.album_key),
-        name: row.album ?? "Unknown album",
+        name: row.album ?? unknownAlbumLabel(),
         artist: row.album_artist ?? row.artist ?? undefined,
         artistId: row.artist_key ? localArtistId(row.artist_key) : undefined,
         coverArt: row.artwork_path ?? undefined,
@@ -45,7 +46,7 @@ function rollUp(rows: TrackRow[], opts: SearchOpts) {
     if (row.artist_key && !artists.has(row.artist_key)) {
       artists.set(row.artist_key, {
         id: localArtistId(row.artist_key),
-        name: row.album_artist ?? row.artist ?? "Unknown artist",
+        name: row.album_artist ?? row.artist ?? unknownArtistLabel(),
         albumCount: 0,
         coverArt: row.artwork_path ?? undefined,
       });

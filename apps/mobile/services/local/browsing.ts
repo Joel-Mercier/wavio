@@ -3,6 +3,7 @@ import {
   parseLocalAlbumId,
   parseLocalArtistId,
 } from "@/services/local/keys";
+import { unknownArtistLabel } from "@/services/local/labels";
 import {
   buildArtistIndex,
   mapAggToAlbum,
@@ -25,6 +26,7 @@ import {
   localEnvelope,
 } from "@/services/local/unsupported";
 import type {
+  AlbumID3,
   AlbumWithSongsID3,
   ArtistWithAlbumsID3,
   Index,
@@ -73,7 +75,9 @@ export const getArtist = async (id: string) => {
   const artist: ArtistWithAlbumsID3 = {
     id,
     name:
-      albumRows[0]?.album_artist ?? albumRows[0]?.artist ?? "Unknown artist",
+      albumRows[0]?.album_artist ??
+      albumRows[0]?.artist ??
+      unknownArtistLabel(),
     albumCount: albums.length,
     coverArt: albumRows[0]?.cover ?? undefined,
     album: albums,
@@ -116,4 +120,15 @@ export const getTopSongs = async (
 export const getGenres = async () => {
   const rows = await queryGenres();
   return localEnvelope({ genres: { genre: rows.map(mapGenreRow) } });
+};
+
+// The on-device index has no notion of "appearances" (albums where an artist
+// features without being the album artist). Return an empty list so the Artist
+// screen simply omits the section instead of hitting localUnsupported().
+export const getArtistAppearances = async (
+  _id: string,
+  _opts: { name?: string; musicFolderId?: string } = {},
+) => {
+  const album: AlbumID3[] = [];
+  return localEnvelope({ artistAppearances: { album } });
 };

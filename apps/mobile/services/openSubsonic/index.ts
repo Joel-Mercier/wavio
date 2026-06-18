@@ -9,10 +9,7 @@ const openSubsonicApiVersion =
 const clientName = process.env.EXPO_PUBLIC_CLIENT_NAME || "";
 
 if (__DEV__) {
-  console.log(
-    "[app] OpenSubsonic API Version : ",
-    openSubsonicApiVersion,
-  );
+  console.log("[app] OpenSubsonic API Version : ", openSubsonicApiVersion);
   console.log("[app] Client : ", clientName);
 }
 

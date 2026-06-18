@@ -2,6 +2,7 @@ import { persistQueryClientRestore } from "@tanstack/react-query-persist-client"
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import { AppState, type AppStateStatus } from "react-native";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
@@ -153,25 +154,27 @@ export default function AppLayout() {
     console.log("[app] User is authenticated, rendering (app) layout");
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="playlists/new" />
-        <Stack.Screen name="playlists/new-smart" />
-        <Stack.Screen name="playlists/[id]/edit-rules" />
-        <Stack.Screen name="internet-radio-stations/new" />
-        <Stack.Screen name="podcast-channels/new" />
-        <Stack.Screen
-          name="player"
-          options={{
-            gestureEnabled: true,
-            fullScreenGestureEnabled: true,
-            gestureDirection: "vertical",
-            animationDuration: 300,
-            animation: "fade_from_bottom",
-            presentation: "formSheet",
-          }}
-        />
-      </Stack>
+      <AppErrorBoundary variant="inline">
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="playlists/new" />
+          <Stack.Screen name="playlists/new-smart" />
+          <Stack.Screen name="playlists/[id]/edit-rules" />
+          <Stack.Screen name="internet-radio-stations/new" />
+          <Stack.Screen name="podcast-channels/new" />
+          <Stack.Screen
+            name="player"
+            options={{
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
+              gestureDirection: "vertical",
+              animationDuration: 300,
+              animation: "fade_from_bottom",
+              presentation: "formSheet",
+            }}
+          />
+        </Stack>
+      </AppErrorBoundary>
       <FloatingPlayer />
       <OfflineStarredAutoSync />
       <ServerExtensionsSync />

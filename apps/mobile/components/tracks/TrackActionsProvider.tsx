@@ -664,7 +664,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     {track.title}
                   </Heading>
                   <Text numberOfLines={1} className="text-md text-primary-100">
-                    {track.artist} ⦁ {track.album}
+                    {track.artist || t("app.shared.unknownArtist")} ⦁{" "}
+                    {track.album || t("app.shared.unknownAlbum")}
                   </Text>
                 </VStack>
               </HStack>

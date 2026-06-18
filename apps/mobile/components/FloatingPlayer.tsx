@@ -342,7 +342,8 @@ export default function FloatingPlayer() {
             >
               <MovingText text={playingTrack.title || ""} />
               <Text numberOfLines={1} className="text-gray-300">
-                {playingTrack.artist}
+                {playingTrack.artist ||
+                  (!isRadio && !isPodcast ? t("app.shared.unknownArtist") : "")}
               </Text>
             </Animated.View>
           </HStack>

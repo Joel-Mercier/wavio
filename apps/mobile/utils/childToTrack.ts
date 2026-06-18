@@ -1,3 +1,4 @@
+import i18n from "@/config/i18n";
 import { streamUrl } from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
@@ -14,9 +15,11 @@ export function childToTrack(child: Child) {
     id: child.id,
     url,
     // type: TrackType.HLS,
-    title: child.title,
-    artist: child.artist,
-    album: child.album,
+    // Local files frequently lack tags; keep consumers (player UI, lock screen,
+    // car, widget) from receiving undefined for these display fields.
+    title: child.title ?? i18n.t("app.shared.unknown"),
+    artist: child.artist ?? "",
+    album: child.album ?? "",
     artwork: artworkUrl(child.coverArt),
     coverArt: child.coverArt,
     genre: child.genre,

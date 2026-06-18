@@ -222,21 +222,30 @@ function findNextPlayableIndex(startIndex: number): number | null {
 }
 
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
-  p.setActiveForLockScreen(
-    true,
-    {
-      title: track.title,
-      artist: track.artist,
-      albumTitle: track.album,
-      artworkUrl: track.artwork,
-    },
-    {
-      showSeekBackward: true,
-      showSeekForward: true,
-      showSkipPrevious: true,
-      showSkipNext: true,
-    },
-  );
+  // Empty/undefined fields must be passed as undefined, not "": the native
+  // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a
+  // "" (returned for local tracks without cover art) throws MalformedURLException
+  // and rejects the whole call. try/catch keeps a rejected metadata update from
+  // aborting playback.
+  try {
+    p.setActiveForLockScreen(
+      true,
+      {
+        title: track.title || undefined,
+        artist: track.artist || undefined,
+        albumTitle: track.album || undefined,
+        artworkUrl: track.artwork || undefined,
+      },
+      {
+        showSeekBackward: true,
+        showSeekForward: true,
+        showSkipPrevious: true,
+        showSkipNext: true,
+      },
+    );
+  } catch (error) {
+    logSwallowed("setActiveForLockScreen", error);
+  }
 }
 
 function clearLockScreen(p: AudioPlayer) {

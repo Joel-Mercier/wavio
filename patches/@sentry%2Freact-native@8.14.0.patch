@@ -1,0 +1,12 @@
+diff --git a/sentry.gradle.kts b/sentry.gradle.kts
+index 4888f58e842145f102da771ce2a1cdd01b705117..795715d558d330fed777058667edfc4c16bc57b2 100644
+--- a/sentry.gradle.kts
++++ b/sentry.gradle.kts
+@@ -266,6 +266,7 @@ fun extractBundleTaskArguments(
+     val intermediateSourcemapsDirFile =
+         when (jsIntermediateSourceMapsDir) {
+             is org.gradle.api.file.Directory -> jsIntermediateSourceMapsDir.asFile
++            is org.gradle.api.file.RegularFile -> jsIntermediateSourceMapsDir.asFile
+             else -> return BundleTaskArgs(null, null, null, null)
+         }
+ 

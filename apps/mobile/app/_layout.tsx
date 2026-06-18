@@ -11,7 +11,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import CarAutoSync from "@/components/CarAutoSync";
 import { PodcastEpisodeActionsProvider } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
@@ -52,6 +53,7 @@ import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
+import { useAuthBase } from "@/stores/auth";
 
 sentryInit({
   dsn: "https://fdd67c7590ff4b680308d9dae6640460@o4511401546285056.ingest.de.sentry.io/4511401549758544",
@@ -189,6 +191,20 @@ export default sentryWrap(function RootLayout() {
     applyZodLocale(next);
   }, [locale, setLocale]);
 
+  // Local-library display labels (e.g. "Unknown album") are localized at map
+  // time and cached by React Query, so a runtime locale switch wouldn't update
+  // them until the cache goes stale. Re-run the local queries on an actual
+  // change so the new locale shows immediately. Skips the initial mount and only
+  // touches local mode (remote names come from the server, not from i18n).
+  const prevLocale = useRef(locale);
+  useEffect(() => {
+    if (prevLocale.current === locale) return;
+    prevLocale.current = locale;
+    if (useAuthBase.getState().serverType === "local") {
+      queryClient.invalidateQueries();
+    }
+  }, [locale]);
+
   if (!loaded) {
     return null;
   }
@@ -204,15 +220,17 @@ export default sentryWrap(function RootLayout() {
               <BottomSheetModalProvider>
                 <TrackActionsProvider>
                   <PodcastEpisodeActionsProvider>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                      }}
-                    >
-                      <Stack.Screen name="(app)" />
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="+not-found" />
-                    </Stack>
+                    <AppErrorBoundary variant="fullscreen">
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                        }}
+                      >
+                        <Stack.Screen name="(app)" />
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="+not-found" />
+                      </Stack>
+                    </AppErrorBoundary>
                     <CarAutoSync />
                   </PodcastEpisodeActionsProvider>
                 </TrackActionsProvider>

@@ -3,6 +3,7 @@ import {
   parseLocalAlbumId,
   parseLocalArtistId,
 } from "@/services/local/keys";
+import { unknownAlbumLabel } from "@/services/local/labels";
 import {
   mapAggToAlbum,
   mapAggToArtist,
@@ -97,7 +98,7 @@ function aggToDirChild(row: AlbumAggRow): Child {
   return {
     id: localAlbumId(row.album_key),
     isDir: true,
-    title: row.name ?? "Unknown album",
+    title: row.name ?? unknownAlbumLabel(),
     album: row.name ?? undefined,
     artist: row.album_artist ?? row.artist ?? undefined,
     coverArt: row.cover ?? undefined,

@@ -625,7 +625,8 @@ export default function PlayerSheets({
                 </Heading>
                 {!isRadio && !isPodcast && (
                   <Text numberOfLines={1} className="text-md text-primary-100">
-                    {playingTrack?.artist} ⦁ {playingTrack?.album}
+                    {playingTrack?.artist || t("app.shared.unknownArtist")} ⦁{" "}
+                    {playingTrack?.album || t("app.shared.unknownAlbum")}
                   </Text>
                 )}
                 {isPodcast && (

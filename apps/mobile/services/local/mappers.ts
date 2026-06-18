@@ -5,6 +5,12 @@ import type {
   TrackRow,
 } from "@/services/local/db";
 import { localAlbumId, localArtistId } from "@/services/local/keys";
+import {
+  unknownAlbumLabel,
+  unknownArtistLabel,
+  unknownEpisodeLabel,
+  unknownTitle,
+} from "@/services/local/labels";
 import type {
   AlbumAggRow,
   ArtistAggRow,
@@ -54,7 +60,7 @@ export function mapRowToChild(row: TrackRow): Child {
     played: row.last_played_at ? new Date(row.last_played_at) : undefined,
     parent: row.album_key ? localAlbumId(row.album_key) : undefined,
     isDir: false,
-    title: row.title ?? "Unknown",
+    title: row.title ?? unknownTitle(),
     name: row.title ?? undefined,
     album: row.album ?? undefined,
     albumId: row.album_key ? localAlbumId(row.album_key) : undefined,
@@ -90,7 +96,7 @@ export function mapAggToAlbum(row: AlbumAggRow): AlbumID3 {
     userRating: ratingOf(id),
     playCount: row.play_count || undefined,
     played: row.last_played_at ? new Date(row.last_played_at) : undefined,
-    name: row.name ?? "Unknown album",
+    name: row.name ?? unknownAlbumLabel(),
     artist: row.album_artist ?? row.artist ?? undefined,
     artistId: row.artist_key ? localArtistId(row.artist_key) : undefined,
     coverArt: row.cover ?? undefined,
@@ -111,7 +117,7 @@ export function mapAggToArtist(row: ArtistAggRow): ArtistID3 {
     id,
     starred: starredAt(useLocalLibrary.getState().favoriteArtists, id),
     userRating: ratingOf(id),
-    name: row.name ?? "Unknown artist",
+    name: row.name ?? unknownArtistLabel(),
     albumCount: row.album_count,
     coverArt: row.cover ?? undefined,
   };
@@ -196,7 +202,7 @@ export function mapEpisodeRow(row: PodcastEpisodeRow): PodcastEpisode {
     streamId: row.id,
     status: "completed",
     isDir: false,
-    title: row.title ?? "Unknown episode",
+    title: row.title ?? unknownEpisodeLabel(),
     description: row.description ?? undefined,
     publishDate: row.publish_date ? new Date(row.publish_date) : undefined,
     duration: row.duration ?? undefined,
