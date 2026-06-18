@@ -42,6 +42,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - Navidrome smart playlists beta support
 - Navidrome/Opensubsonic jukebox mode support
 - Backup and restore
+- Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
 - French and English translations
 
 ## Development

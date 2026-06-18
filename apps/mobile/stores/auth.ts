@@ -7,6 +7,17 @@ import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import { type ServerType, serverTypeSchema } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
 
+// Side effects to run when the active session is torn down (logout / server
+// switch). Lets modules with no import-safe link to the auth store — notably
+// services/player.ts — hook into logout without creating an import cycle.
+let logoutHandlers: Array<() => void> = [];
+export function registerLogoutHandler(handler: () => void): () => void {
+  logoutHandlers.push(handler);
+  return () => {
+    logoutHandlers = logoutHandlers.filter((h) => h !== handler);
+  };
+}
+
 // `local` servers have no URL or credentials — only filesystem paths picked in
 // the UI — so those fields are validated only for remote server types. Errors
 // are forwarded at the field path with their locale-aware messages so the login
@@ -175,6 +186,14 @@ export const useAuthBase = create<AuthStore>()(
         set({ serverVersion: version });
       },
       logout: () => {
+        // Tear down playback (stop audio, clear the now-playing notification and
+        // the queue) before credentials and caches are wiped, so nothing keeps
+        // playing or tries to talk to the server we're leaving.
+        for (const handler of logoutHandlers) {
+          try {
+            handler();
+          } catch {}
+        }
         set({
           url: "",
           username: "",

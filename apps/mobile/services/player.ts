@@ -27,6 +27,7 @@ import {
   reportStarting,
   reportStopped,
 } from "@/services/playbackReport";
+import { stopPlayQueueSync } from "@/services/playQueueSync";
 import {
   armResume,
   clearResumePosition,
@@ -40,6 +41,7 @@ import {
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
+import { registerLogoutHandler } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
@@ -964,6 +966,31 @@ export function resetPlayerForScopeChange() {
     });
   }
 }
+
+// Fully stop and unload playback on logout: halt any crossfade, stop server
+// queue sync, silence both engine slots and clear their lock-screen / now-
+// playing controls, reset transient playback state, then empty the queue. The
+// engine instances themselves stay alive so a subsequent login can reuse them.
+export function stopPlayback() {
+  if (transition.kind !== "idle") abortTransition();
+  stopPlayQueueSync();
+  resetScrobbleState();
+  for (let slot = 0; slot < players.length; slot++) {
+    if (!players[slot]) continue;
+    try {
+      loadTrack(slot as Slot, null, false);
+    } catch (error) {
+      logSwallowed("stop playback", error);
+    }
+  }
+  playbackInitialized = false;
+  hasHydrated = false;
+  lastTrackId = null;
+  pendingResumeId = null;
+  useQueue.getState().clearQueue();
+}
+
+registerLogoutHandler(stopPlayback);
 
 export async function configurePlayback() {
   await setAudioModeAsync({

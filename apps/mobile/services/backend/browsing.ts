@@ -25,6 +25,7 @@ export const getIndexes = dispatch(S.getIndexes, J.getIndexes, L.getIndexes);
 export const getMusicDirectory = dispatch(
   S.getMusicDirectory,
   J.getMusicDirectory,
+  L.getMusicDirectory,
 );
 export const getPodcastEpisode = dispatch(
   S.getPodcastEpisode,

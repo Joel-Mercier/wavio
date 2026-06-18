@@ -3,7 +3,7 @@ import {
   parseLocalAlbumId,
   parseLocalArtistId,
 } from "@/services/local/keys";
-import { unknownArtistLabel } from "@/services/local/labels";
+import { unknownAlbumLabel, unknownArtistLabel } from "@/services/local/labels";
 import {
   buildArtistIndex,
   mapAggToAlbum,
@@ -16,6 +16,7 @@ import {
   queryAlbumByKey,
   queryAlbumTracksByKey,
   queryArtistAlbumsByKey,
+  queryArtistByKey,
   queryArtists,
   queryGenres,
   queryTopSongsByArtist,
@@ -29,6 +30,8 @@ import type {
   AlbumID3,
   AlbumWithSongsID3,
   ArtistWithAlbumsID3,
+  Child,
+  Directory,
   Index,
   Indexes,
   MusicFolder,
@@ -65,6 +68,61 @@ export const getIndexes = async (
     index,
   };
   return localEnvelope({ indexes });
+};
+
+// Folder-style browsing (FolderDetail) walks the same artist → album → song
+// hierarchy the rest of the local backend exposes, just shaped as nested
+// Directory/Child envelopes: an artist id resolves to its albums (as
+// subdirectories) and an album id to its songs. Without this, the on-device
+// library throws localUnsupported() the moment you tap into a folder entry.
+const albumToDirChild = (album: AlbumID3, parent: string): Child => ({
+  id: album.id,
+  parent,
+  isDir: true,
+  title: album.name,
+  name: album.name,
+  album: album.name,
+  albumId: album.id,
+  artist: album.artist,
+  artistId: album.artistId,
+  coverArt: album.coverArt,
+  duration: album.duration,
+  year: album.year,
+  created: album.created,
+  starred: album.starred,
+  userRating: album.userRating,
+  playCount: album.playCount,
+  played: album.played,
+});
+
+export const getMusicDirectory = async (id: string) => {
+  const artistKey = parseLocalArtistId(id);
+  if (artistKey != null) {
+    const [artistRow, albumRows] = await Promise.all([
+      queryArtistByKey(artistKey),
+      queryArtistAlbumsByKey(artistKey),
+    ]);
+    const directory: Directory = {
+      id,
+      name: artistRow?.name ?? unknownArtistLabel(),
+      child: albumRows.map((row) => albumToDirChild(mapAggToAlbum(row), id)),
+    };
+    return localEnvelope({ directory });
+  }
+  const albumKey = parseLocalAlbumId(id);
+  if (albumKey != null) {
+    const [aggregate, tracks] = await Promise.all([
+      queryAlbumByKey(albumKey),
+      queryAlbumTracksByKey(albumKey),
+    ]);
+    const directory: Directory = {
+      id,
+      name: aggregate?.name ?? unknownAlbumLabel(),
+      child: tracks.map(mapRowToChild),
+    };
+    return localEnvelope({ directory });
+  }
+  throw new LocalUnsupportedError(`directory id "${id}"`);
 };
 
 export const getArtist = async (id: string) => {

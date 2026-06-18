@@ -105,10 +105,7 @@ export default function TabLayout() {
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "(home)" }],
-              });
+              navigation.navigate("(home)", { screen: "index" });
             },
           })}
         />
@@ -123,10 +120,7 @@ export default function TabLayout() {
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "(search)" }],
-              });
+              navigation.navigate("(search)", { screen: "index" });
             },
           })}
         />
@@ -141,10 +135,7 @@ export default function TabLayout() {
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "(library)" }],
-              });
+              navigation.navigate("(library)", { screen: "index" });
             },
           })}
         />

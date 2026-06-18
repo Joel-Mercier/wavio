@@ -1,0 +1,26 @@
+diff --git a/src/NavigationBar.android.ts b/src/NavigationBar.android.ts
+index 1835c237e2ed6e80627936c33008c1b6ebacbe8c..9bd1e2d7c3260986f24ab1f25129313e72f56303 100644
+--- a/src/NavigationBar.android.ts
++++ b/src/NavigationBar.android.ts
+@@ -77,7 +77,11 @@ export function setStyle(style: NavigationBarStyle) {
+ 
+   if (resolvedStyle !== currentValues.style) {
+     currentValues.style = resolvedStyle;
+-    ExpoNavigationBar.setStyle(resolvedStyle);
++    // The native call rejects ("current activity is no longer available") when
++    // it fires while the Android activity is being recreated (e.g. resuming the
++    // app from the launcher). It's benign — the bar is reapplied once the
++    // activity returns — so swallow it instead of leaking an uncaught promise.
++    Promise.resolve(ExpoNavigationBar.setStyle(resolvedStyle)).catch(() => {});
+   }
+ }
+ 
+@@ -86,7 +90,7 @@ function setHidden(hidden: boolean) {
+ 
+   if (hidden !== currentValues.hidden) {
+     currentValues.hidden = hidden;
+-    ExpoNavigationBar.setHidden(hidden);
++    Promise.resolve(ExpoNavigationBar.setHidden(hidden)).catch(() => {});
+   }
+ }
+ 
