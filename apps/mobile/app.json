@@ -92,10 +92,12 @@
         {
           "url": "https://sentry.io/",
           "project": "wavio",
-          "organization": "joel-mercier"
+          "organization": "joel-mercier",
+          "experimental_android": {
+            "enableAndroidGradlePlugin": true
+          }
         }
       ],
-      "@sentry/react-native",
       [
         "expo-status-bar",
         {

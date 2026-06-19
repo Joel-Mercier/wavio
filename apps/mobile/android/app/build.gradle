@@ -1,9 +1,10 @@
-apply plugin: "com.android.application"
+apply plugin: "io.sentry.android.gradle"
 // @generated begin safeExtGet - expo prebuild (DO NOT MODIFY) sync-be4acad6508a6820102c74ab393bd7ab1093e6c0
 def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 // @generated end safeExtGet
+apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
@@ -191,3 +192,20 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+
+  sentry {
+      autoUploadProguardMapping = shouldSentryAutoUpload()
+      includeProguardMapping = true
+      dexguardEnabled = false
+      uploadNativeSymbols = shouldSentryAutoUpload()
+      autoUploadNativeSymbols = shouldSentryAutoUpload()
+      includeNativeSources = true
+      includeSourceContext = false
+      tracingInstrumentation {
+          enabled = false
+      }
+      autoInstallation {
+          enabled = false
+      }
+  }
