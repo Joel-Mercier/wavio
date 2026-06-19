@@ -34,6 +34,16 @@
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
         "EXPO_PUBLIC_ENV": "production"
       }
+    },
+    "production-apk": {
+      "extends": "production",
+      "autoIncrement": false,
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
     }
   },
   "submit": {

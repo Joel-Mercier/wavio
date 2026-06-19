@@ -1,0 +1,37 @@
+Application de streaming musical pour Android, compatible avec les serveurs Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale.
+
+Fonctionnalités :
+
+- Prise en charge des serveurs Navidrome, OpenSubsonic et Jellyfin ou d'une bibliothèque locale
+- Écran d'accueil avec raccourcis et sections écoutes récentes, ajouts récents, les plus écoutés, plus de l'artiste, les mieux notés, aléatoire et stations de radio en ligne
+- Écran artiste avec albums, morceaux, morceaux aimés et artistes similaires
+- Écran album avec morceaux et albums similaires
+- Écran playlist avec liste des morceaux et édition
+- Écran de recherche avec genres, artistes, albums et morceaux
+- Historique des recherches récentes
+- Écran bibliothèque avec favoris, playlists, albums et artistes
+- Écran des morceaux aimés
+- Écran lecteur avec contrôles audio et paroles synchronisées
+- Lecteur flottant pour accéder facilement au morceau en cours de lecture
+- Écran file d'attente avec prise en charge du vidage, de l'édition et de la réorganisation
+- Écran des morceaux similaires au morceau sélectionné
+- Écran podcasts avec recherche, séries et épisodes de podcasts (fourni par l'API Taddy, 500 requêtes gratuites par mois)
+- Stations de radio en ligne, écoute des flux radio, navigation et recherche (fournies par l'API Radio Browser, gratuite pour un usage non commercial)
+- Téléchargements hors ligne des morceaux favoris, écran de gestion des téléchargements
+- Découverte et filtrage des dossiers de musique (bibliothèques) sur l'accueil, la recherche et la bibliothèque
+- Écran d'activité avec les utilisateurs en cours d'écoute
+- Écran de partage avec liens partageables
+- Écran serveurs avec prise en charge de plusieurs serveurs
+- Écran de réglages avec analyse du serveur, téléchargements hors ligne, lecture, contenu, affichage et sauvegarde
+- Lecture sans blanc, fondu enchaîné, replay gain, égaliseur et minuterie de mise en veille
+- Écran de profil avec les playlists de l'utilisateur
+- Écran de modification du profil avec informations du compte et changement de mot de passe
+- Prise en charge des paroles synchronisées et récupération via lrclib.net
+- Prise en charge des signets. Accès facile aux passages favoris d'un morceau ou d'un podcast
+- Widgets d'écran d'accueil Android
+- Prise en charge d'Android Auto
+- Prise en charge bêta des smart playlists Navidrome
+- Prise en charge du mode jukebox Navidrome/OpenSubsonic
+- Sauvegarde et restauration
+- Extraction automatique des métadonnées des fichiers locaux : utilise les métadonnées intégrées si disponibles, sinon se rabat sur des heuristiques basées sur le système de fichiers et le nom de fichier
+- Traductions française et anglaise

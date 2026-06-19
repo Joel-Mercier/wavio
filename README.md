@@ -37,6 +37,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net
+- Bookmarks support. Easy access to a song or podcast favorite parts
 - Android homescreen widgets
 - Android Auto support
 - Navidrome smart playlists beta support
