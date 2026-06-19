@@ -34,18 +34,13 @@ import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import GestureSlider from "@/components/GestureSlider";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import LyricsDialog from "@/components/player/LyricsDialog";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import {
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-} from "@/components/ui/slider";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -339,7 +334,7 @@ export default function PlayerSheets({
   };
 
   const handleJukeboxGainChange = (value: number) => {
-    jukeboxSetGain(value / 100).catch(() => {});
+    jukeboxSetGain(value).catch(() => {});
   };
 
   const handleSleepPresetPress = (minutes: number) => {
@@ -1031,29 +1026,10 @@ export default function PlayerSheets({
                   <Text className="text-sm text-primary-100">
                     {t("app.player.jukeboxGain")}
                   </Text>
-                  <Slider
-                    defaultValue={Math.round(jukeboxGain * 100)}
-                    value={Math.round(jukeboxGain * 100)}
-                    step={1}
-                    minValue={0}
-                    maxValue={100}
-                    size="md"
-                    orientation="horizontal"
-                    isDisabled={false}
-                    isReversed={false}
-                    onChange={handleJukeboxGainChange}
-                  >
-                    <SliderTrack
-                      className="bg-primary-400"
-                      hitSlop={{ top: 20, bottom: 20, left: 8, right: 8 }}
-                    >
-                      <SliderFilledTrack className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white" />
-                    </SliderTrack>
-                    <SliderThumb
-                      className="bg-white data-[focus=true]:bg-white data-[active=true]:bg-white"
-                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                    />
-                  </Slider>
+                  <GestureSlider
+                    value={jukeboxGain}
+                    onScrub={handleJukeboxGainChange}
+                  />
                   {jukeboxStatus && (
                     <Text className="text-sm text-primary-100 mt-2">
                       {t("app.player.jukeboxStatus", {
