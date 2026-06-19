@@ -54,11 +54,13 @@ async function fetchItems(
 }
 
 export const getMusicFolders = async () => {
-  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
-    "/Library/MediaFolders",
-  );
+  // `/Library/MediaFolders` requires admin elevation (403 for normal users);
+  // `/UserViews` returns the libraries the current user can actually access.
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/UserViews", {
+    params: { UserId: userId() },
+  });
   const music = (rsp.data?.Items ?? []).filter(
-    (i) => i.Type === "CollectionFolder" || i.CollectionType === "music",
+    (i) => (i as { CollectionType?: string }).CollectionType === "music",
   ) as (BaseItemDto & { CollectionType?: string })[];
   const list: MusicFolders = {
     musicFolder: music.map((m, i) => mapMusicFolder(m, i + 1)),
@@ -221,13 +223,37 @@ export const getIndexes = async ({
 };
 
 export const getMusicDirectory = async (id: string) => {
-  const tracks = await fetchItems({ ParentId: id });
+  // Keep the browse hierarchy (artist -> albums -> tracks) navigable. Artists
+  // aren't the filesystem parent of their albums in Jellyfin, so ParentId
+  // browsing returns nothing for them — fetch albums by ArtistIds instead.
+  // Albums and physical folders do parent their children, so ParentId works.
+  const itemRsp = await jellyfinApiInstance.get<BaseItemDto>(
+    `/Users/${userId()}/Items/${id}`,
+    { params: { Fields: COMMON_FIELDS } },
+  );
+  const items =
+    itemRsp.data?.Type === "MusicArtist"
+      ? (
+          await fetchItems({
+            ArtistIds: id,
+            IncludeItemTypes: "MusicAlbum",
+            SortBy: "PremiereDate,ProductionYear,SortName",
+            SortOrder: "Descending",
+          })
+        ).Items
+      : (
+          await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+            params: { UserId: userId(), ParentId: id, Fields: COMMON_FIELDS },
+          })
+        ).data?.Items;
+  const child: Child[] = (items ?? []).map((item) => {
+    const mapped = mapBaseItemToChild(item);
+    return item.IsFolder
+      ? { ...mapped, isDir: true, title: item.Name ?? mapped.title }
+      : mapped;
+  });
   return fakeEnvelope({
-    directory: {
-      id,
-      name: "",
-      child: tracks.Items?.map(mapBaseItemToChild),
-    },
+    directory: { id, name: itemRsp.data?.Name ?? "", child },
   });
 };
 
