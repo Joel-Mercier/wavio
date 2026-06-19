@@ -1000,11 +1000,19 @@ export async function configurePlayback() {
   });
 }
 
-export function playTracks(tracks: QueueTrack[], startIndex = 0) {
+export function playTracks(
+  tracks: QueueTrack[],
+  startIndex = 0,
+  options?: { shuffleFromRandom?: boolean },
+) {
   if (tracks.length === 0) return;
   if (transition.kind !== "idle") abortTransition();
+  const index =
+    options?.shuffleFromRandom && useQueue.getState().shuffle
+      ? Math.floor(Math.random() * tracks.length)
+      : startIndex;
   const previousId = lastTrackId;
-  useQueue.getState().playNow(tracks, startIndex);
+  useQueue.getState().playNow(tracks, index);
   const current = useQueue.getState().getCurrent();
   if (current && current.id === previousId) {
     loadAndPlay(current);

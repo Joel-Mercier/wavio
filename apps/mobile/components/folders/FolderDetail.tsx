@@ -94,7 +94,7 @@ export default function FolderDetail() {
 
   const handlePlayAllPress = () => {
     if (tracks.length === 0) return;
-    playTracks(tracks.map(childToTrack), 0);
+    playTracks(tracks.map(childToTrack), 0, { shuffleFromRandom: true });
   };
 
   const handleTrackPress = useTrackListPress(tracks);

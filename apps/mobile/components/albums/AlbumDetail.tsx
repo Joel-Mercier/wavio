@@ -497,7 +497,7 @@ export default function AlbumDetail() {
       return;
     }
     if (!albumTracks || albumTracks.length === 0) return;
-    playTracks(albumTracks.map(childToTrack), 0);
+    playTracks(albumTracks.map(childToTrack), 0, { shuffleFromRandom: true });
     if (data?.album) {
       addRecentPlay({
         id,

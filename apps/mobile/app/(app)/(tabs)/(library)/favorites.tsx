@@ -190,7 +190,7 @@ export default function FavoritesScreen() {
       return;
     }
     if (!data || data.length === 0) return;
-    playTracks(data.map(childToTrack), 0);
+    playTracks(data.map(childToTrack), 0, { shuffleFromRandom: true });
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 

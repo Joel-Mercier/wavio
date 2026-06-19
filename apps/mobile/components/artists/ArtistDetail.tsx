@@ -302,7 +302,7 @@ export default function ArtistDetail() {
     }
     const topSongs = topSongsData?.topSongs?.song;
     if (topSongs && topSongs.length > 0) {
-      playTracks(topSongs.map(childToTrack), 0);
+      playTracks(topSongs.map(childToTrack), 0, { shuffleFromRandom: true });
     } else {
       const firstAlbumId = data?.artist?.album?.[0]?.id;
       if (!firstAlbumId) return;
@@ -313,7 +313,7 @@ export default function ArtistDetail() {
         });
         const songs = albumData?.album?.song;
         if (!songs || songs.length === 0) return;
-        playTracks(songs.map(childToTrack), 0);
+        playTracks(songs.map(childToTrack), 0, { shuffleFromRandom: true });
       } catch (e) {
         logError(e);
         return;

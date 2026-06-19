@@ -579,7 +579,7 @@ export default function PlaylistDetail() {
       return;
     }
     if (!data || data.length === 0) return;
-    playTracks(data.map(childToTrack), 0);
+    playTracks(data.map(childToTrack), 0, { shuffleFromRandom: true });
     if (playlistData?.playlist) {
       addRecentPlay({
         id,

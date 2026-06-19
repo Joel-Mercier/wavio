@@ -171,7 +171,7 @@ export default function LikedSongs() {
       return;
     }
     if (likedSongs.length === 0) return;
-    playTracks(likedSongs.map(childToTrack), 0);
+    playTracks(likedSongs.map(childToTrack), 0, { shuffleFromRandom: true });
     handleTrackPressCallback();
   };
 
