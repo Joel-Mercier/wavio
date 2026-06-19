@@ -427,6 +427,10 @@ function preloadNext() {
 }
 
 function startCrossfade(durationSeconds: number) {
+  // Drop any in-flight gapless preload/queue first so the active player's
+  // ExoPlayer timeline doesn't also auto-advance into the next track while the
+  // fade plays it on the other slot. No-op on the common idle entry.
+  if (transition.kind !== "idle") abortTransition();
   const next = peekNextTrack();
   if (!next) return;
   if (!isPlayableNow(next)) return;
@@ -619,12 +623,14 @@ function makeStatusListener(slot: Slot) {
     ) {
       const { crossfadeSeconds, gaplessEnabled } = useAppBase.getState();
       const remaining = status.duration - status.currentTime;
-      if (
-        crossfadeSeconds > 0 &&
-        remaining > 0 &&
-        remaining <= crossfadeSeconds
-      ) {
-        startCrossfade(crossfadeSeconds);
+      if (crossfadeSeconds > 0) {
+        // User-configured crossfade owns the boundary exclusively. Gapless
+        // preload is skipped here so the active player doesn't also queue the
+        // next track and hand off to it behind the fade (the two arm in the
+        // same window since crossfade maxes out below the 15s gapless lead).
+        if (remaining > 0 && remaining <= crossfadeSeconds) {
+          startCrossfade(crossfadeSeconds);
+        }
       } else if (gaplessEnabled && remaining > 0 && remaining <= 15) {
         if (transition.kind === "idle") {
           preloadNext();
