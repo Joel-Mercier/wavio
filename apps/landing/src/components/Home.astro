@@ -6,7 +6,7 @@ import Navidrome from "../assets/navidrome.svg";
 import OpenSubsonic from "../assets/opensubsonic.svg";
 import SmartPhone from "../assets/smartphone.svg";
 import widgets from "../assets/widgets.png";
-import { GITHUB_URL, PLAY_STORE_URL } from "../consts";
+import { GITHUB_URL, RELEASES_URL } from "../consts";
 import { useImages } from "../i18n/assets";
 import { type Lang, useTranslations } from "../i18n/utils";
 import Layout from "../layouts/Layout.astro";
@@ -88,17 +88,17 @@ const wordDelay = () =>
 				</p>
 				<div class="flex flex-wrap items-center gap-3.5 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.75s_backwards]">
 					<a
-						href={PLAY_STORE_URL}
+						href={RELEASES_URL}
 						target="_blank"
 						rel="noopener"
 						class="relative inline-flex items-center gap-3.5 rounded-[14px] bg-accent py-3.5 pl-[22px] pr-[26px] font-bold text-ink shadow-[0_12px_36px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]"
 					>
-						<svg class="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="M4 3.5v17c0 .9 1 1.4 1.7.9l13-8.5c.6-.4.6-1.4 0-1.8l-13-8.5C5 2.1 4 2.6 4 3.5z" fill="currentColor"/>
+						<svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/>
 						</svg>
 						<span class="flex flex-col items-start leading-[1.15]">
-							<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.getItOn}</span>
-							<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.googlePlay}</span>
+							<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.releaseMain}</span>
+							<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.releaseNote}</span>
 						</span>
 					</a>
 					<a
@@ -419,17 +419,17 @@ const wordDelay = () =>
 			<p class="mx-auto mb-10 max-w-[520px] text-[19px] text-text-2 text-pretty">{t.final.desc}</p>
 			<div class="flex flex-wrap items-center justify-center gap-3.5">
 				<a
-					href={PLAY_STORE_URL}
+					href={RELEASES_URL}
 					target="_blank"
 					rel="noopener"
 					class="relative inline-flex items-center gap-3.5 rounded-[14px] bg-accent py-3.5 pl-[22px] pr-[26px] font-bold text-ink shadow-[0_12px_36px_-8px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-150 hover:-translate-y-0.5"
 				>
-					<svg class="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-						<path d="M4 3.5v17c0 .9 1 1.4 1.7.9l13-8.5c.6-.4.6-1.4 0-1.8l-13-8.5C5 2.1 4 2.6 4 3.5z" fill="currentColor"/>
+					<svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/>
 					</svg>
 					<span class="flex flex-col items-start leading-[1.15]">
-						<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.getItOn}</span>
-						<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.googlePlay}</span>
+						<span class="text-[17px] font-extrabold tracking-[-0.01em]">{t.cta.releaseMain}</span>
+						<span class="text-[11px] font-semibold tracking-[0.04em] opacity-75">{t.cta.releaseNote}</span>
 					</span>
 				</a>
 				<a
