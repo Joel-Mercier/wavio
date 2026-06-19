@@ -10,6 +10,13 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 [Presentation website](https://wavio-app.vercel.app)
 
+## Table of contents
+
+- [Features](#features)
+- [Development](#development)
+- [Useful links](#useful-links)
+- [Gallery](#gallery)
+
 ## Features
 
 - Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library
@@ -133,3 +140,19 @@ Run from the repo root:
 - [Jellyfin documentation](https://jellyfin.org/docs/)
 - [Expo documentation](https://docs.expo.dev/)
 - [React Native documentation](https://reactnative.dev/)
+
+## Gallery
+
+<p align="center">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/login-en.jpg" alt="Login screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/home-en.jpg" alt="Home screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/artist-en.jpg" alt="Artist screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/album-en.jpg" alt="Album screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/player-en.jpg" alt="Player screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/queue-en.jpg" alt="Queue screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/library-en.jpg" alt="Library screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/smart-playlist-en.jpg" alt="Smart playlist screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/offline-1-en.jpg" alt="Offline downloads screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/settings-en.jpg" alt="Settings screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/android-auto-en.png" alt="Android Auto" width="200">
+</p>
