@@ -55,6 +55,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { reportError, scrubUrl } from "@/services/errorReporting";
 import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
@@ -304,6 +305,26 @@ export default function LoginScreen() {
           ),
         });
       } catch (error) {
+        // Login failures never reach the axios interceptors (auth uses its own
+        // bare client), so report them here — otherwise this whole class of bug
+        // is invisible in Sentry. Tagged `auth` (not `api`) and without a
+        // `backend` so the offline / server-unreachable gates in reportError
+        // don't suppress it: during a fresh login the reachability probe hasn't
+        // confirmed the not-yet-active server.
+        reportError(error, {
+          area: "auth",
+          endpoint: `${value.type} login`,
+          status: axios.isAxiosError(error)
+            ? error.response?.status
+            : undefined,
+          extra: {
+            serverType: value.type,
+            url: scrubUrl(value.url.trim()),
+            hasResponse: axios.isAxiosError(error)
+              ? !!error.response
+              : undefined,
+          },
+        });
         toast.show({
           placement: "top",
           duration: 3000,

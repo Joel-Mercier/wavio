@@ -30,7 +30,13 @@ function getServerReachable(): boolean {
 // entirely). Lives at the services root, not under a backend, because it is
 // backend-agnostic and reused by all of them.
 
-export type ReportArea = "api" | "player" | "local-library" | "metadata" | "ui";
+export type ReportArea =
+  | "api"
+  | "auth"
+  | "player"
+  | "local-library"
+  | "metadata"
+  | "ui";
 
 export type ReportBackend = "subsonic" | "jellyfin" | "local";
 
