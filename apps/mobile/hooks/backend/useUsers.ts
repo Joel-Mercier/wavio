@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   changePassword,
   getUser,
@@ -8,22 +9,28 @@ import {
 } from "@/services/backend/users";
 
 export const useUsers = (options?: { enabled?: boolean }) => {
+  // The users section (getUser/getUsers) has no on-device implementation, so the
+  // local backend throws LocalUnsupportedError. Gate the query off rather than
+  // letting it fail. `adminUsers` is the section's capability — true for every
+  // remote backend, false only for local.
+  const { adminUsers } = useCapabilities();
   return useQuery({
     queryKey: ["users"],
     queryFn: () => {
       return getUsers();
     },
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true) && adminUsers,
   });
 };
 
 export const useGetUser = (username: string) => {
+  const { adminUsers } = useCapabilities();
   return useQuery({
     queryKey: ["getUser", username],
     queryFn: () => {
       return getUser(username);
     },
-    enabled: !!username,
+    enabled: !!username && adminUsers,
   });
 };
 

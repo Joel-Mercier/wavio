@@ -78,6 +78,20 @@ export function isNetworkNoise(error: unknown): boolean {
 
 function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
   if (isNetworkNoise(error)) return true;
+  // By-design "this backend doesn't serve that" control flow: the on-device
+  // SQLite backend and Jellyfin throw a typed Unsupported error for sections/ids
+  // they can't provide (e.g. a profile screen running getUser under a local
+  // library). The dispatch layer and UI capability gates are meant to keep these
+  // off the screen, but a stray query still rejects — it's surfaced to the user
+  // as an empty/error state, not a bug. Matched by name to avoid importing the
+  // backend module graphs into this everywhere-imported module.
+  if (
+    error instanceof Error &&
+    (error.name === "LocalUnsupportedError" ||
+      error.name === "JellyfinUnsupportedError")
+  ) {
+    return true;
+  }
   // Device has no connectivity at all — a network/API failure is expected. Only
   // applies to `api`; the local library, player engine and metadata extraction
   // work offline, so a failure there is a real bug even with no connectivity.

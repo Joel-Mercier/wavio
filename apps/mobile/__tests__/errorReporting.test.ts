@@ -109,6 +109,24 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a by-design LocalUnsupportedError", () => {
+    const error = new Error("The local library doesn't support this operation");
+    error.name = "LocalUnsupportedError";
+    reportError(error, { area: "api", backend: "local", endpoint: "getUser" });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a by-design JellyfinUnsupportedError", () => {
+    const error = new Error("Jellyfin does not support jukebox");
+    error.name = "JellyfinUnsupportedError";
+    reportError(error, {
+      area: "api",
+      backend: "jellyfin",
+      endpoint: "jukebox",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("still reports a local-library failure while offline (no network needed)", () => {
     mockNet.online = false;
     reportError(new Error("scan failed"), { area: "local-library" });
