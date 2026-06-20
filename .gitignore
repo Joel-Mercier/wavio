@@ -56,3 +56,5 @@ app-example
 .astro/
 
 .env.local
+
+tmp
