@@ -1,5 +1,6 @@
 import { DarkTheme, ThemeProvider } from "expo-router/react-navigation";
 import "@/global.css";
+import "@/config/http";
 import {
   Inter_300Light,
   Inter_400Regular,
