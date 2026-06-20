@@ -47,7 +47,10 @@ export type ReportContext = {
   endpoint?: string;
   /** HTTP status or domain error code, when known. */
   status?: number | string;
-  /** When true, an HTTP 404 is an expected "not found", not a reportable bug. */
+  /**
+   * When true, a "not found" — HTTP 404 or Subsonic code 70 — is expected (e.g.
+   * an empty/stale music folder browse) and not a reportable bug.
+   */
   notFoundIsExpected?: boolean;
   /** Extra structured context attached to the Sentry event. */
   extra?: Record<string, unknown>;
@@ -88,10 +91,13 @@ function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
   ) {
     return true;
   }
+  // A "not found" the caller anticipates: HTTP 404, or Subsonic code 70 ("the
+  // requested data was not found") — e.g. browsing a music folder the server
+  // reports as empty or no longer maps to a library. A data state, not a bug.
   if (
     ctx.notFoundIsExpected &&
-    axios.isAxiosError(error) &&
-    error.response?.status === 404
+    ((axios.isAxiosError(error) && error.response?.status === 404) ||
+      ctx.status === 70)
   ) {
     return true;
   }

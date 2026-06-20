@@ -95,6 +95,20 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a Subsonic 'data not found' (code 70) when notFoundIsExpected", () => {
+    reportError(
+      { code: 70, message: "Library not found or empty" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getArtists",
+        status: 70,
+        notFoundIsExpected: true,
+      },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("still reports a local-library failure while offline (no network needed)", () => {
     mockNet.online = false;
     reportError(new Error("scan failed"), { area: "local-library" });

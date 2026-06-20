@@ -13,7 +13,7 @@ import {
   setCacheRestoring,
 } from "@/config/queryClient";
 import { getAuthScope } from "@/config/storage";
-import useJellyfinDefaultLibrary from "@/hooks/useJellyfinDefaultLibrary";
+import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { probeServer, resetServerReachable } from "@/services/network";
 import { resetPlayerForScopeChange } from "@/services/player";
 import {
@@ -44,7 +44,7 @@ export default function AppLayout() {
   const serverType = useAuthBase((s) => s.serverType);
   const localLibReady = useLocalLibrary((s) => s.ready);
   const lastScanAt = useLocalLibrary((s) => s.lastScanAt);
-  useJellyfinDefaultLibrary();
+  useMusicFolderSelection();
 
   useEffect(() => {
     if (!isAuthenticated) return;

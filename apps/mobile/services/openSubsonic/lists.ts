@@ -1,4 +1,7 @@
-import { subsonicRequest } from "@/services/openSubsonic/index";
+import {
+  folderScopedRequest,
+  subsonicRequest,
+} from "@/services/openSubsonic/index";
 import type {
   AlbumList,
   AlbumList2,
@@ -38,15 +41,11 @@ export const getAlbumList = async (
     musicFolderId?: string;
   },
 ) =>
-  subsonicRequest<{ albumList: AlbumList }>("/rest/getAlbumList", {
-    type,
-    size,
-    offset,
-    fromYear,
-    toYear,
-    genre,
-    musicFolderId,
-  });
+  folderScopedRequest<{ albumList: AlbumList }>(
+    "/rest/getAlbumList",
+    { type, size, offset, fromYear, toYear, genre, musicFolderId },
+    { albumList: {} },
+  );
 
 export const getAlbumList2 = async (
   type: AlbumListType,
@@ -66,15 +65,11 @@ export const getAlbumList2 = async (
     musicFolderId?: string;
   },
 ) =>
-  subsonicRequest<{ albumList2: AlbumList2 }>("/rest/getAlbumList2", {
-    type,
-    size,
-    offset,
-    fromYear,
-    toYear,
-    genre,
-    musicFolderId,
-  });
+  folderScopedRequest<{ albumList2: AlbumList2 }>(
+    "/rest/getAlbumList2",
+    { type, size, offset, fromYear, toYear, genre, musicFolderId },
+    { albumList2: {} },
+  );
 
 export const getNowPlaying = async () =>
   subsonicRequest<{ nowPlaying: NowPlaying }>("/rest/getNowPlaying");
@@ -92,13 +87,11 @@ export const getRandomSongs = async ({
   genre?: string;
   musicFolderId?: string;
 }) =>
-  subsonicRequest<{ songs: Songs }>("/rest/getRandomSongs", {
-    size,
-    fromYear,
-    toYear,
-    genre,
-    musicFolderId,
-  });
+  folderScopedRequest<{ songs: Songs }>(
+    "/rest/getRandomSongs",
+    { size, fromYear, toYear, genre, musicFolderId },
+    { songs: {} },
+  );
 
 export const getSongsByGenre = async (
   genre: string,
@@ -108,25 +101,30 @@ export const getSongsByGenre = async (
     musicFolderId,
   }: { count?: number; offset?: number; musicFolderId?: string },
 ) =>
-  subsonicRequest<{ songs: Songs }>("/rest/getSongsByGenre", {
-    genre,
-    count,
-    offset,
-    musicFolderId,
-  });
+  folderScopedRequest<{ songs: Songs }>(
+    "/rest/getSongsByGenre",
+    { genre, count, offset, musicFolderId },
+    { songs: {} },
+  );
 
 export const getStarred = async ({
   musicFolderId,
 }: {
   musicFolderId?: string;
 }) =>
-  subsonicRequest<{ starred: Starred }>("/rest/getStarred", { musicFolderId });
+  folderScopedRequest<{ starred: Starred }>(
+    "/rest/getStarred",
+    { musicFolderId },
+    { starred: {} },
+  );
 
 export const getStarred2 = async ({
   musicFolderId,
 }: {
   musicFolderId?: string;
 }) =>
-  subsonicRequest<{ starred2: Starred2 }>("/rest/getStarred2", {
-    musicFolderId,
-  });
+  folderScopedRequest<{ starred2: Starred2 }>(
+    "/rest/getStarred2",
+    { musicFolderId },
+    { starred2: {} },
+  );

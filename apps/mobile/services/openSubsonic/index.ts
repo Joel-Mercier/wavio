@@ -116,10 +116,42 @@ export const openSubsonicErrorCodes = new Proxy({} as Record<number, string>, {
 
 export type ApiType = typeof openSubsonicApiInstance;
 
+// Subsonic error code 70 = "the requested data was not found". For a browse
+// scoped to a music folder it means the folder is empty or no longer maps to a
+// library — a data state the caller can resolve to an empty result.
+export const SUBSONIC_DATA_NOT_FOUND = 70;
+
+export function isSubsonicDataNotFound(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    (error as { code?: number }).code === SUBSONIC_DATA_NOT_FOUND
+  );
+}
+
+// Wrap a payload in an "ok" subsonic-response envelope so a caller can resolve a
+// "not found" into an empty success, letting the UI show an empty state instead
+// of an error screen.
+export function okEnvelope<T>(
+  payload: T,
+): OpenSubsonicResponse<T>["subsonic-response"] {
+  return {
+    status: "ok" as const,
+    version: openSubsonicApiVersion,
+    type: "subsonic",
+    serverVersion: useAuthBase.getState().serverVersion ?? "",
+    openSubsonic: true,
+    ...payload,
+  };
+}
+
+export type SubsonicRequestOptions = { notFoundIsExpected?: boolean };
+
 // Validate a Subsonic envelope, throwing the envelope error on a "failed"
 // status. Used by subsonicRequest and the few non-GET endpoints.
 export function subsonicEnvelope<T>(
   rsp: AxiosResponse<OpenSubsonicResponse<T>>,
+  opts: SubsonicRequestOptions = {},
 ): OpenSubsonicResponse<T>["subsonic-response"] {
   if (rsp.data["subsonic-response"]?.status !== "ok") {
     const error = rsp.data["subsonic-response"].error;
@@ -132,6 +164,7 @@ export function subsonicEnvelope<T>(
         backend: "subsonic",
         endpoint: rsp.config?.url,
         status: error?.code,
+        notFoundIsExpected: opts.notFoundIsExpected,
       });
     }
     throw error;
@@ -145,13 +178,39 @@ export async function subsonicRequest<T>(
   path: string,
   params: Record<string, unknown> = {},
   config: Omit<AxiosRequestConfig, "params"> = {},
+  opts: SubsonicRequestOptions = {},
 ): Promise<OpenSubsonicResponse<T>["subsonic-response"]> {
   return subsonicEnvelope(
     await openSubsonicApiInstance.get<OpenSubsonicResponse<T>>(path, {
       ...config,
       params,
     }),
+    opts,
   );
+}
+
+// A music-folder-scoped browse: the selected folder may be empty or stale
+// (deleted/reindexed on the server → code 70). Resolve that "data not found" to
+// an empty payload so the UI shows an empty state instead of an error, and don't
+// report it as a bug.
+export async function folderScopedRequest<T>(
+  path: string,
+  params: Record<string, unknown>,
+  emptyPayload: T,
+): Promise<OpenSubsonicResponse<T>["subsonic-response"]> {
+  try {
+    return await subsonicRequest<T>(
+      path,
+      params,
+      {},
+      {
+        notFoundIsExpected: true,
+      },
+    );
+  } catch (error) {
+    if (isSubsonicDataNotFound(error)) return okEnvelope(emptyPayload);
+    throw error;
+  }
 }
 
 export default openSubsonicApiInstance;

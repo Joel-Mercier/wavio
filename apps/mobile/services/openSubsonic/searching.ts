@@ -1,4 +1,7 @@
-import { subsonicRequest } from "@/services/openSubsonic/index";
+import {
+  folderScopedRequest,
+  subsonicRequest,
+} from "@/services/openSubsonic/index";
 import type {
   SearchResult,
   SearchResult2,
@@ -52,16 +55,20 @@ export const search2 = async (
     musicFolderId?: string;
   },
 ) =>
-  subsonicRequest<{ searchResult2: SearchResult2 }>("/rest/search2", {
-    query,
-    artistCount,
-    artistOffset,
-    albumCount,
-    albumOffset,
-    songCount,
-    songOffset,
-    musicFolderId,
-  });
+  folderScopedRequest<{ searchResult2: SearchResult2 }>(
+    "/rest/search2",
+    {
+      query,
+      artistCount,
+      artistOffset,
+      albumCount,
+      albumOffset,
+      songCount,
+      songOffset,
+      musicFolderId,
+    },
+    { searchResult2: {} },
+  );
 
 export const search3 = async (
   query: string,
@@ -83,13 +90,17 @@ export const search3 = async (
     musicFolderId?: string;
   },
 ) =>
-  subsonicRequest<{ searchResult3: SearchResult3 }>("/rest/search3", {
-    query,
-    artistCount,
-    artistOffset,
-    albumCount,
-    albumOffset,
-    songCount,
-    songOffset,
-    musicFolderId,
-  });
+  folderScopedRequest<{ searchResult3: SearchResult3 }>(
+    "/rest/search3",
+    {
+      query,
+      artistCount,
+      artistOffset,
+      albumCount,
+      albumOffset,
+      songCount,
+      songOffset,
+      musicFolderId,
+    },
+    { searchResult3: {} },
+  );

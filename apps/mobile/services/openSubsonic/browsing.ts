@@ -1,4 +1,5 @@
 import openSubsonicApiInstance, {
+  folderScopedRequest,
   type OpenSubsonicResponse,
   subsonicRequest,
 } from "@/services/openSubsonic/index";
@@ -61,9 +62,11 @@ export const getArtists = async ({
 }: {
   musicFolderId?: string;
 }) =>
-  subsonicRequest<{ artists: ArtistsID3 }>("/rest/getArtists", {
-    musicFolderId,
-  });
+  folderScopedRequest<{ artists: ArtistsID3 }>(
+    "/rest/getArtists",
+    { musicFolderId },
+    { artists: { ignoredArticles: "", index: [] } },
+  );
 
 export const getGenres = async () =>
   subsonicRequest<{ genres: Genres }>("/rest/getGenres");
@@ -75,10 +78,11 @@ export const getIndexes = async ({
   musicFolderId?: string;
   ifModifiedSince?: number;
 }) =>
-  subsonicRequest<{ indexes: Indexes }>("/rest/getIndexes", {
-    musicFolderId,
-    ifModifiedSince,
-  });
+  folderScopedRequest<{ indexes: Indexes }>(
+    "/rest/getIndexes",
+    { musicFolderId, ifModifiedSince },
+    { indexes: { ignoredArticles: "", lastModified: 0, index: [] } },
+  );
 
 export const getMusicDirectory = async (id: string) =>
   subsonicRequest<{ directory: Directory }>("/rest/getMusicDirectory", { id });
