@@ -82,22 +82,31 @@ export function isNetworkNoise(error: unknown): boolean {
   return false;
 }
 
-function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
+// Failures that are expected from the error itself, independent of any request
+// context: network noise plus typed control-flow / user-input errors. Shared by
+// `reportError`'s classifier and `logError` so neither path reports them —
+// matched by name to avoid pulling the backend module graphs into this
+// everywhere-imported module.
+//
+// - LocalUnsupportedError / JellyfinUnsupportedError: by-design "this backend
+//   doesn't serve that" control flow. The dispatch layer and UI capability gates
+//   are meant to keep these off the screen, but a stray query still rejects — it
+//   surfaces as an empty/error state, not a bug.
+// - InvalidFeedError: a user-entered feed URL that doesn't resolve to a
+//   parseable RSS feed (e.g. an HTML page pasted into "add podcast"). Surfaced to
+//   the user via an error toast — a correctable input mistake, not a bug.
+export function isExpectedNoise(error: unknown): boolean {
   if (isNetworkNoise(error)) return true;
-  // By-design "this backend doesn't serve that" control flow: the on-device
-  // SQLite backend and Jellyfin throw a typed Unsupported error for sections/ids
-  // they can't provide (e.g. a profile screen running getUser under a local
-  // library). The dispatch layer and UI capability gates are meant to keep these
-  // off the screen, but a stray query still rejects — it's surfaced to the user
-  // as an empty/error state, not a bug. Matched by name to avoid importing the
-  // backend module graphs into this everywhere-imported module.
-  if (
+  return (
     error instanceof Error &&
     (error.name === "LocalUnsupportedError" ||
-      error.name === "JellyfinUnsupportedError")
-  ) {
-    return true;
-  }
+      error.name === "JellyfinUnsupportedError" ||
+      error.name === "InvalidFeedError")
+  );
+}
+
+function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
+  if (isExpectedNoise(error)) return true;
   // Device has no connectivity at all — a network/API failure is expected. Only
   // applies to `api`; the local library, player engine and metadata extraction
   // work offline, so a failure there is a real bug even with no connectivity.

@@ -219,6 +219,7 @@ export default {
         newChannelSuccessMessage: "Podcast channel successfully added",
         newChannelErrorMessage:
           "An error occurred while adding the podcast channel",
+        invalidFeedErrorMessage: "Not a valid RSS podcast feed",
         deleteChannel: "Delete podcast channel",
         deleteChannelSuccessMessage: "Podcast channel successfully deleted",
         deleteChannelErrorMessage:

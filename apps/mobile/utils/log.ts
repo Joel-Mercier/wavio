@@ -1,5 +1,5 @@
 import { captureException, captureMessage } from "@sentry/react-native";
-import { isNetworkNoise } from "@/services/errorReporting";
+import { isExpectedNoise } from "@/services/errorReporting";
 
 /**
  * Logs an error. In development it forwards to `console.error` so it shows up
@@ -9,10 +9,11 @@ import { isNetworkNoise } from "@/services/errorReporting";
  * Accepts the same loose argument shape as `console.error` — typically an
  * `Error` plus optional context strings, e.g. `logError("Failed to X:", err)`.
  *
- * Network noise (offline / unreachable / cancelled requests) is dropped in
- * production so transient connectivity failures don't bury real Issues. Use
- * `reportError` from `services/errorReporting` for tagged, grouped service-layer
- * reporting; `logError` remains the generic UI-layer logger.
+ * Expected noise (offline / unreachable / cancelled requests, plus typed
+ * control-flow / user-input errors like InvalidFeedError) is dropped in
+ * production so it doesn't bury real Issues. Use `reportError` from
+ * `services/errorReporting` for tagged, grouped service-layer reporting;
+ * `logError` remains the generic UI-layer logger.
  */
 export function logError(...args: unknown[]): void {
   if (__DEV__) {
@@ -23,7 +24,7 @@ export function logError(...args: unknown[]): void {
   const error = args.find((arg) => arg instanceof Error);
   const context = args.filter((arg) => arg !== error);
 
-  if (args.some(isNetworkNoise)) return;
+  if (args.some(isExpectedNoise)) return;
 
   if (error) {
     captureException(

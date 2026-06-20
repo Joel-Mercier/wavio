@@ -127,6 +127,17 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses an InvalidFeedError (user pasted a non-RSS URL)", () => {
+    const error = new Error("Not a valid RSS podcast feed");
+    error.name = "InvalidFeedError";
+    reportError(error, {
+      area: "local-library",
+      backend: "local",
+      endpoint: "podcasts/create",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("still reports a local-library failure while offline (no network needed)", () => {
     mockNet.online = false;
     reportError(new Error("scan failed"), { area: "local-library" });

@@ -1,3 +1,4 @@
+import { reportError } from "@/services/errorReporting";
 import type { PodcastEpisodeRow } from "@/services/local/db";
 import {
   localPodcastEpisodeId,
@@ -27,7 +28,6 @@ import type {
   PodcastEpisode,
 } from "@/services/openSubsonic/types";
 import { fetchAndParseFeed, type ParsedFeed } from "@/services/podcastFeed";
-import { logError } from "@/utils/log";
 
 // On-device podcasts, backed by the per-(server,user) SQLite database (see db.ts)
 // and the backend-agnostic RSS parser (services/podcastFeed.ts). Mirrors
@@ -149,7 +149,11 @@ export const getPodcasts = async (
       try {
         await refreshChannel(id, row.url, now);
       } catch (error) {
-        logError("[localLibrary] Failed to refresh podcast channel", error);
+        reportError(error, {
+          area: "local-library",
+          backend: "local",
+          endpoint: "podcasts/refresh",
+        });
       }
     }
     const channel = await channelWithEpisodes(id, includeEpisodes);
@@ -192,28 +196,45 @@ export const getPodcastEpisode = async (id: string) => {
 export const createPodcastChannel = async (url: string) => {
   const now = Date.now();
   // Re-adding an existing feed refreshes it in place rather than failing on the
-  // url UNIQUE constraint or creating a duplicate channel.
+  // url UNIQUE constraint or creating a duplicate channel. A failed refresh here
+  // keeps the previously cached metadata/episodes, so a transient blip doesn't
+  // blank out a working channel — we swallow it and report.
   const existing = await queryPodcastChannelByUrl(url);
-  const channelId = existing?.id ?? newLocalPodcastChannelId();
-  if (!existing) {
-    await insertPodcastChannel({
-      id: channelId,
-      url,
-      title: null,
-      description: null,
-      author: null,
-      original_image_url: null,
-      status: "new",
-      error_message: null,
-      created_at: now,
-      updated_at: now,
+  if (existing) {
+    await refreshChannel(existing.id, url, now).catch((error) => {
+      reportError(error, {
+        area: "local-library",
+        backend: "local",
+        endpoint: "podcasts/create",
+      });
     });
+    return localEnvelope({});
   }
-  // The channel row exists now, so a parse failure leaves it in the list marked
-  // "error" (Subsonic-like) rather than throwing the whole create away.
-  await refreshChannel(channelId, url, now).catch((error) => {
-    logError("[localLibrary] Failed to parse podcast feed", error);
+
+  // A brand-new feed: unlike server-hosted Subsonic podcasts (where the server
+  // validates the URL asynchronously), we fetch + parse on-device right here, so
+  // we can reject an invalid/unreachable feed up front. Roll back the row and
+  // rethrow so the caller shows an error toast instead of leaving an empty,
+  // title-less channel in the list.
+  const channelId = newLocalPodcastChannelId();
+  await insertPodcastChannel({
+    id: channelId,
+    url,
+    title: null,
+    description: null,
+    author: null,
+    original_image_url: null,
+    status: "new",
+    error_message: null,
+    created_at: now,
+    updated_at: now,
   });
+  try {
+    await refreshChannel(channelId, url, now);
+  } catch (error) {
+    await deletePodcastChannelRow(channelId);
+    throw error;
+  }
   return localEnvelope({});
 };
 

@@ -222,6 +222,7 @@ export default {
         newChannelSuccessMessage: "Chaîne de podcast ajoutée avec succès",
         newChannelErrorMessage:
           "Une erreur est survenue lors de l'ajout de la chaîne de podcast",
+        invalidFeedErrorMessage: "Flux RSS de podcast invalide",
         deleteChannel: "Supprimer la chaîne de podcast",
         deleteChannelSuccessMessage: "Chaîne de podcast supprimée avec succès",
         deleteChannelErrorMessage:

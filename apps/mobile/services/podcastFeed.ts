@@ -33,6 +33,17 @@ export type ParsedFeed = {
   items: ParsedFeedItem[];
 };
 
+// Thrown when a fetched document isn't a parseable RSS podcast feed — typically
+// a user pasting an HTML page (a podcast's web landing page) instead of its feed
+// URL. A correctable input mistake, not a bug, so errorReporting treats it as an
+// expected failure (matched by name) and keeps it out of Sentry.
+export class InvalidFeedError extends Error {
+  constructor(message = "Not a valid RSS podcast feed") {
+    super(message);
+    this.name = "InvalidFeedError";
+  }
+}
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
@@ -59,7 +70,7 @@ export function parseFeed(xml: string): ParsedFeed {
   const root = parser.parse(xml);
   const channel = root?.rss?.channel ?? root?.channel;
   if (!channel) {
-    throw new Error("Not a valid RSS podcast feed");
+    throw new InvalidFeedError();
   }
 
   const items = toArray(channel.item)

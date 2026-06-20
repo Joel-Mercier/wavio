@@ -1,4 +1,4 @@
-import { parseFeed } from "@/services/podcastFeed";
+import { InvalidFeedError, parseFeed } from "@/services/podcastFeed";
 
 const FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
@@ -82,7 +82,9 @@ describe("podcastFeed parseFeed", () => {
     expect(parseFeed(rss).imageUrl).toBe("https://example.com/plain.png");
   });
 
-  it("throws on non-RSS input", () => {
-    expect(() => parseFeed("<html><body>nope</body></html>")).toThrow();
+  it("throws InvalidFeedError on non-RSS input", () => {
+    expect(() => parseFeed("<html><body>nope</body></html>")).toThrow(
+      InvalidFeedError,
+    );
   });
 });
