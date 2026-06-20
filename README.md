@@ -11,11 +11,20 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [Presentation website](https://wavio-app.vercel.app)
 
 ## Table of contents
-
+- [How to install](#how-to-install)
 - [Features](#features)
 - [Development](#development)
 - [Useful links](#useful-links)
 - [Gallery](#gallery)
+
+## How to install
+
+For now you can only install the app from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
+
+You can also apply for the closed testing beta on the Google Play Store in order for the app to be published.
+To do that I need your email address, so I can send you the link to the beta testing page.
+
+I'm also currently working on a [F-Droid](https://f-droid.org/) package.
 
 ## Features
 
