@@ -21,6 +21,11 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
+  getIsOnline,
+  getServerReachable,
+  probeServer,
+} from "@/services/network";
+import {
   playbackReportEnabled,
   reportPaused,
   reportProgress,
@@ -557,6 +562,17 @@ function handleNextTrackStarted() {
   useQueue.getState().next();
 }
 
+// A streamed source failed. Tell a genuine bad stream from a transient
+// connectivity drop: if the device is offline the loss is environmental;
+// otherwise probe the server and treat it as a real failure only when the server
+// answers. The probe also accelerates the unreachable-server detection in
+// services/network.ts when the server really is gone.
+async function confirmServerReachable(): Promise<boolean> {
+  if (!getIsOnline()) return false;
+  await probeServer();
+  return getServerReachable();
+}
+
 function makeStatusListener(slot: Slot) {
   return (status: AudioStatus) => {
     if (slot !== activeSlot) return;
@@ -568,21 +584,19 @@ function makeStatusListener(slot: Slot) {
       const current = useQueue.getState().getCurrent();
       const resolved = current ? resolveTrackUrl(current) : null;
       const needsNetwork = resolved ? !resolved.isOffline : true;
-      // A streamed/radio source failing while we're effectively offline (device
-      // offline or server unreachable) is the same connectivity loss the offline
-      // UI already surfaces — environmental, not an engine bug. Offline-file
-      // failures (corrupt/missing download) need no network and are always real.
-      if (!(needsNetwork && !onlineManager.isOnline())) {
-        // `source` is a category discriminator, not the URL — group on what the
-        // load actually was so offline-file bugs split from transient streams.
-        const kind = resolved
-          ? resolved.isOffline
-            ? "offline-file"
-            : current?.isRadio
-              ? "radio"
-              : "stream"
-          : "unknown";
-        reportError(new Error(status.error), {
+      // `source` is a category discriminator, not the URL — group on what the
+      // load actually was so offline-file bugs split from transient streams.
+      const kind = resolved
+        ? resolved.isOffline
+          ? "offline-file"
+          : current?.isRadio
+            ? "radio"
+            : "stream"
+        : "unknown";
+      const errorMessage = status.error;
+      const playbackState = status.playbackState;
+      const report = () =>
+        reportError(new Error(errorMessage), {
           area: "player",
           endpoint: kind,
           extra: {
@@ -591,8 +605,20 @@ function makeStatusListener(slot: Slot) {
             isOffline: resolved?.isOffline ?? null,
             isRadio: current?.isRadio ?? false,
             source: current?.source,
-            playbackState: status.playbackState,
+            playbackState,
           },
+        });
+      // Offline-file failures (corrupt/missing download) need no network and are
+      // always real. A streamed/radio source, though, throws the same engine
+      // "Source error" when the server merely blips mid-track as when the stream
+      // is genuinely bad — and effective-online lags a real drop by ~24s, so
+      // trusting it here over-reports transient losses the offline UI already
+      // covers. Confirm the server actually answers before blaming the engine.
+      if (!needsNetwork) {
+        report();
+      } else {
+        void confirmServerReachable().then((reachable) => {
+          if (reachable) report();
         });
       }
     } else if (!status.error) {
