@@ -566,16 +566,35 @@ function makeStatusListener(slot: Slot) {
     if (status.error && status.error !== lastReportedPlaybackError) {
       lastReportedPlaybackError = status.error;
       const current = useQueue.getState().getCurrent();
-      reportError(new Error(status.error), {
-        area: "player",
-        endpoint: current?.source ?? "unknown",
-        extra: {
-          trackId: current?.id,
-          source: current?.source,
-          isRadio: current?.isRadio ?? false,
-          playbackState: status.playbackState,
-        },
-      });
+      const resolved = current ? resolveTrackUrl(current) : null;
+      const needsNetwork = resolved ? !resolved.isOffline : true;
+      // A streamed/radio source failing while we're effectively offline (device
+      // offline or server unreachable) is the same connectivity loss the offline
+      // UI already surfaces — environmental, not an engine bug. Offline-file
+      // failures (corrupt/missing download) need no network and are always real.
+      if (!(needsNetwork && !onlineManager.isOnline())) {
+        // `source` is a category discriminator, not the URL — group on what the
+        // load actually was so offline-file bugs split from transient streams.
+        const kind = resolved
+          ? resolved.isOffline
+            ? "offline-file"
+            : current?.isRadio
+              ? "radio"
+              : "stream"
+          : "unknown";
+        reportError(new Error(status.error), {
+          area: "player",
+          endpoint: kind,
+          extra: {
+            trackId: current?.id,
+            kind,
+            isOffline: resolved?.isOffline ?? null,
+            isRadio: current?.isRadio ?? false,
+            source: current?.source,
+            playbackState: status.playbackState,
+          },
+        });
+      }
     } else if (!status.error) {
       lastReportedPlaybackError = null;
     }

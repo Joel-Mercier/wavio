@@ -87,7 +87,8 @@ In order to test Android Auto, you need to :
 2. Make sure to enable the developer mode in your devices Android Auto settings by tapping the version number 10 times.
 3. Run the head unit server in the Android Auto settings
 4. On your development machine, run `adb forward tcp:5277 tcp:5277` and start the emulator with `~/Library/Android/sdk/extras/google/auto/desktop-head-unit`
-5. You can check the logs related to the android auto service with `adb logcat -c && adb logcat ReactNativeJS:V CarAuto:V "*:S"`
+5. Enable `Unknown sources` in Android Auto's developer settings (⋮ menu > Developer settings > Unknown sources) if the app doesn't show up in the emulator
+6. You can check the logs related to the android auto service with `adb logcat -c && adb logcat ReactNativeJS:V CarAuto:V "*:S"`
 
 ### iOS
 

@@ -15,8 +15,15 @@ import { useAuthBase } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import type { BrowseNode, BrowseTree } from "./types";
 import { ROOT_ID } from "./types";
+
+// Cap how many detail requests the browse-tree prefetch keeps in flight at once.
+// An unbounded Promise.all over every starred/recent id opens dozens of parallel
+// requests and trips server rate limits (HTTP 429); 4 keeps the tree fast while
+// staying under typical Navidrome / reverse-proxy limits.
+const TREE_PREFETCH_CONCURRENCY = 4;
 
 // In-memory snapshots used by play.ts to resolve leaf mediaIds without
 // refetching. Refreshed every time buildBrowseTree() runs.
@@ -327,8 +334,10 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
 
   // === Prefetch playlist detail (tracklists) ===
   const playlistsToFetch = userPlaylists.map((p) => p.id);
-  await Promise.all(
-    playlistsToFetch.map(async (id) => {
+  await mapWithConcurrency(
+    playlistsToFetch,
+    TREE_PREFETCH_CONCURRENCY,
+    async (id) => {
       try {
         const rsp = await getPlaylist(id);
         const pl = rsp.playlist;
@@ -341,12 +350,14 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
       } catch {
         tree[`playlist:${id}`] = [];
       }
-    }),
+    },
   );
 
   // === Prefetch album detail ===
-  await Promise.all(
-    Array.from(albumIdsToFetch).map(async (id) => {
+  await mapWithConcurrency(
+    Array.from(albumIdsToFetch),
+    TREE_PREFETCH_CONCURRENCY,
+    async (id) => {
       try {
         const rsp = await getAlbum(id);
         const album = rsp.album;
@@ -359,12 +370,14 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
       } catch {
         tree[`album:${id}`] = [];
       }
-    }),
+    },
   );
 
   // === Prefetch artist detail (top songs + albums) ===
-  await Promise.all(
-    Array.from(artistIdsToFetch).map(async (id) => {
+  await mapWithConcurrency(
+    Array.from(artistIdsToFetch),
+    TREE_PREFETCH_CONCURRENCY,
+    async (id) => {
       try {
         const artistRsp = await getArtist(id);
         const artist = artistRsp.artist;
@@ -406,7 +419,7 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
       } catch {
         tree[`artist:${id}`] = [];
       }
-    }),
+    },
   );
 
   return tree;

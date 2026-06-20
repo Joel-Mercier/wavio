@@ -95,6 +95,18 @@ function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
   ) {
     return true;
   }
+  // 501 = the server doesn't implement (or has disabled) this endpoint. It's a
+  // server-capability signal, not an app bug — the capability layer flips the
+  // feature off on the first 501 so the UI stops calling it.
+  if (axios.isAxiosError(error) && error.response?.status === 501) {
+    return true;
+  }
+  // Subsonic error code 50 = "user is not authorized for the given operation"
+  // (e.g. sharing is enabled server-wide but this account lacks the share
+  // permission). A permission denial surfaced to the user via a toast, not a bug.
+  if (ctx.status === 50) {
+    return true;
+  }
   return false;
 }
 

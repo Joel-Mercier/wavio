@@ -1,8 +1,10 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
+import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
+import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
 
 const openSubsonicApiVersion =
   process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
@@ -77,8 +79,18 @@ openSubsonicApiInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // The classifier drops offline / unreachable-server / cancelled noise and
-    // reports only genuine HTTP failures (4xx/5xx with a response body).
+    // A 501 means the server doesn't implement (or has disabled) this endpoint —
+    // Navidrome ships sharing/jukebox off by default and not every OpenSubsonic
+    // server hosts podcasts. Flip the matching capability off (persisted per
+    // server+user) so the UI stops offering the feature instead of failing again.
+    if (error?.response?.status === 501) {
+      const capability = DYNAMIC_CAPABILITY_ENDPOINTS[error?.config?.url ?? ""];
+      if (capability) {
+        useCapabilityOverridesBase.getState().disableCapability(capability);
+      }
+    }
+    // The classifier drops offline / unreachable-server / cancelled / 501 noise
+    // and reports only genuine HTTP failures (4xx/5xx with a response body).
     reportError(error, {
       area: "api",
       backend: "subsonic",

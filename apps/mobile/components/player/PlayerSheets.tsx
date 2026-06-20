@@ -468,8 +468,7 @@ export default function PlayerSheets({
             ),
           });
         },
-        onError: (error) => {
-          logError(error);
+        onError: () => {
           toast.show({
             placement: "top",
             duration: 3000,

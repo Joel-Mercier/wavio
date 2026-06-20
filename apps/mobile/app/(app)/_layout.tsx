@@ -25,6 +25,7 @@ import { loadResumePositions } from "@/services/resumePositions";
 import useActivity from "@/stores/activity";
 import useAuth, { useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
+import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import usePlaylists from "@/stores/playlists";
@@ -71,6 +72,7 @@ export default function AppLayout() {
       useOffline.getState().__reset();
       useLocalLibrary.getState().__reset();
       useBookmarks.getState().__reset();
+      useCapabilityOverrides.getState().__reset();
       useServerExtensionsBase.getState().reset();
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
@@ -102,6 +104,7 @@ export default function AppLayout() {
     useQueue.persist.rehydrate();
     useOffline.persist.rehydrate();
     useBookmarks.persist.rehydrate();
+    useCapabilityOverrides.persist.rehydrate();
     // Flag the local-library store ready once its saved scan summary is back, so
     // the first-login indexing gate below can trust `lastScanAt`.
     void Promise.resolve(useLocalLibrary.persist.rehydrate()).then(() => {

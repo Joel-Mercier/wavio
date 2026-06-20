@@ -127,6 +127,31 @@ const LOCAL: BackendCapabilities = {
   extendedMetadata: false,
 };
 
+// A few capabilities depend on per-server *config*, not just the server type:
+// Navidrome ships sharing and the jukebox disabled by default (returning HTTP
+// 501 for their endpoints), and not every OpenSubsonic server hosts podcasts.
+// The static matrix above is optimistic for these. The response interceptor
+// (services/openSubsonic/index.ts) maps a 501'ing endpoint to the capability it
+// gates and flips it off — persisted per (server, user) in
+// stores/capabilityOverrides — so the UI stops offering a feature the server
+// can't honour.
+export const DYNAMIC_CAPABILITY_ENDPOINTS: Record<
+  string,
+  keyof BackendCapabilities
+> = {
+  "/rest/getShares": "sharing",
+  "/rest/createShare": "sharing",
+  "/rest/updateShare": "sharing",
+  "/rest/deleteShare": "sharing",
+  "/rest/jukeboxControl": "jukebox",
+  "/rest/getPodcasts": "podcasts",
+  "/rest/getPodcastEpisode": "podcasts",
+  "/rest/createPodcastChannel": "podcasts",
+  "/rest/deletePodcastChannel": "podcasts",
+  "/rest/deletePodcastEpisode": "podcasts",
+  "/rest/downloadPodcastEpisode": "podcasts",
+};
+
 export function getCapabilities(serverType: ServerType): BackendCapabilities {
   switch (serverType) {
     case "jellyfin":

@@ -71,6 +71,30 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a 501 (server doesn't implement the endpoint)", () => {
+    const error = new axios.AxiosError("Not Implemented");
+    error.response = { status: 501 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "/rest/getShares",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a Subsonic 'not authorized' (code 50) denial", () => {
+    reportError(
+      { code: 50, message: "user not authorized" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/createShare",
+        status: 50,
+      },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("still reports a local-library failure while offline (no network needed)", () => {
     mockNet.online = false;
     reportError(new Error("scan failed"), { area: "local-library" });
