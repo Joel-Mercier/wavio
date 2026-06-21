@@ -33,7 +33,7 @@ import {
   useDownloadedTracksList,
   useOfflineDownloads,
   useTotalDownloadSize,
-} from "@/hooks/useOfflineDownloads";
+} from "@/hooks/offline";
 import { niceBytes } from "@/utils/fileSize";
 import { goBackOrHome } from "@/utils/navigation";
 

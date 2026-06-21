@@ -57,15 +57,15 @@ import {
   useDeletePodcastEpisode,
   useGetPodcasts,
 } from "@/hooks/backend/usePodcasts";
+import {
+  useDownloadProgress,
+  useIsTrackAvailableOffline,
+} from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
-import {
-  useDownloadProgress,
-  useIsTrackDownloaded,
-} from "@/hooks/useOfflineDownloads";
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
-import { offlineDownloadService } from "@/services/offlineDownloadService";
+import { offlineDownloadService } from "@/services/offline";
 import type {
   PodcastChannel,
   PodcastEpisode,
@@ -642,7 +642,7 @@ function PodcastEpisodeRow({
   const downloadable =
     episode.streamId != null &&
     parseLocalPodcastEpisodeId(episode.streamId) != null;
-  const isDownloaded = useIsTrackDownloaded(episode.id);
+  const isDownloaded = useIsTrackAvailableOffline(episode.id);
   const progress = useDownloadProgress(episode.id);
   const isDownloading =
     progress?.status === "downloading" || progress?.status === "pending";

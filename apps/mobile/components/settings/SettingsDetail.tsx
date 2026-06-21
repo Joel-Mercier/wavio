@@ -44,15 +44,15 @@ import {
   useGetScanStatus,
   useStartScan,
 } from "@/hooks/backend/useMediaLibraryScanning";
-import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   useDownloadedTracksCount,
   useDownloadedTracksList,
   useOfflineDownloads,
   useTotalDownloadSize,
-} from "@/hooks/useOfflineDownloads";
+} from "@/hooks/offline";
+import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
+import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { exportBackup, pickBackupFile, restoreBackup } from "@/services/backup";
 import {
   isEqualizerAvailable,

@@ -9,8 +9,10 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
-import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
+import {
+  useIsCollectionAvailableOffline,
+  useIsDetailCached,
+} from "@/hooks/offline";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -31,12 +33,12 @@ function AlbumListItem({
   className = "",
 }: AlbumListItemProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
-  const isReachableOffline = useIsCachedOffline(["album", album.id]);
-  const isDownloaded = useIsCollectionDownloaded("album", album.id);
+  const isDetailCached = useIsDetailCached(["album", album.id]);
+  const isDownloaded = useIsCollectionAvailableOffline("album", album.id);
   return (
     <FadeOutScaleDown
       href={`/albums/${album.id}`}
-      disabled={!isReachableOffline}
+      disabled={!isDetailCached && !isDownloaded}
       className={cn(className, {
         "mt-0": layout === "vertical" && index === 0,
         "pt-4": layout === "vertical" && index !== 0,

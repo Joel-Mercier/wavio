@@ -8,7 +8,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
+import { useIsDetailCached } from "@/hooks/offline";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -28,7 +28,7 @@ function ArtistListItem({
 }: ArtistListItemProps) {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
-  const isReachableOffline = useIsCachedOffline(["artist", artist.id]);
+  const isReachableOffline = useIsDetailCached(["artist", artist.id]);
   return (
     <FadeOutScaleDown
       href={`/artists/${artist.id}`}

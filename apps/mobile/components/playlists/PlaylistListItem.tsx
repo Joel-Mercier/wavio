@@ -10,8 +10,10 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
-import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
+import {
+  useIsCollectionAvailableOffline,
+  useIsDetailCached,
+} from "@/hooks/offline";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -31,12 +33,12 @@ function PlaylistListItem({
 }: PlaylistListItemProps) {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
-  const isReachableOffline = useIsCachedOffline(["playlist", playlist.id]);
-  const isDownloaded = useIsCollectionDownloaded("playlist", playlist.id);
+  const isDetailCached = useIsDetailCached(["playlist", playlist.id]);
+  const isDownloaded = useIsCollectionAvailableOffline("playlist", playlist.id);
   return (
     <FadeOutScaleDown
       href={`/playlists/${playlist.id}`}
-      disabled={!isReachableOffline}
+      disabled={!isDetailCached && !isDownloaded}
       className={cn(className, {
         "mt-0": layout === "vertical" && index === 0,
         "pt-4": layout === "vertical" && index !== 0,

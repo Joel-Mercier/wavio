@@ -9,7 +9,7 @@ import useOffline, {
   type OfflineTrack,
 } from "@/stores/offline";
 import { logError } from "@/utils/log";
-import type { Child } from "./openSubsonic/types";
+import type { Child } from "../openSubsonic/types";
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
 
@@ -265,6 +265,32 @@ export class OfflineDownloadService {
       logError(`Error removing track ${trackId}:`, error);
       throw error;
     }
+  }
+
+  // Removes a saved collection (playlist/album) and its tracks, but keeps any
+  // track still referenced by another saved collection so removing one playlist
+  // doesn't delete songs shared with another.
+  removeCollection(collectionId: string, trackIds: string[]): void {
+    const offlineStore = useOffline.getState();
+    const referencedElsewhere = new Set(
+      Object.values(offlineStore.downloadedCollections)
+        .filter((collection) => collection.id !== collectionId)
+        .flatMap((collection) => collection.trackIds),
+    );
+
+    for (const trackId of trackIds) {
+      if (referencedElsewhere.has(trackId)) continue;
+      try {
+        this.removeDownloadedTrack(trackId);
+      } catch (error) {
+        logError(
+          `Download Manager: Error removing track ${trackId} for collection ${collectionId}:`,
+          error,
+        );
+      }
+    }
+
+    offlineStore.removeDownloadedCollection(collectionId);
   }
 
   // Clears downloads for the currently active server only. The offline store

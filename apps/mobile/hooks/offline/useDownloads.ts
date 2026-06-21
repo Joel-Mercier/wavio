@@ -1,20 +1,21 @@
-import { useCallback } from "react";
-import { offlineDownloadService } from "@/services/offlineDownloadService";
+import { useCallback, useMemo } from "react";
+import { offlineDownloadService } from "@/services/offline";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
 import { logError } from "@/utils/log";
 
-// Narrow selectors only. Subscribing to the entire store would re-render every
-// consumer on each `setDownloadProgress` tick, and this hook is called from
-// list items (TrackListItem / LibraryListItem) where that fans out to hundreds
-// of components during an active download.
+// Download state + actions for the active (server, user) scope. The store is
+// scoped per scope via createDynamicScopedStorage, so everything here belongs to
+// the signed-in server.
 //
-// The progress / queue records are only subscribed where they're actually
-// rendered — see useDownloadProgress / useDownloadQueue below.
-//
-// The store itself is scoped per (server, user) via createDynamicScopedStorage,
-// so the data here naturally belongs to the active server.
+// Prefer the narrow selector hooks below in list items — subscribing to the
+// whole store (e.g. via the aggregate useOfflineDownloads) re-renders every
+// consumer on each setDownloadProgress tick, which fans out to hundreds of rows
+// during an active download.
+
+// Aggregate manager hook for screens/providers that need several actions at
+// once (settings + track lookups + download/remove actions). NOT for list items.
 export const useOfflineDownloads = () => {
   const offlineModeEnabled = useOffline((s) => s.offlineModeEnabled);
   const setOfflineModeEnabled = useOffline((s) => s.setOfflineModeEnabled);
@@ -70,9 +71,9 @@ export const useOfflineDownloads = () => {
     useOffline.getState().clearFailedDownloads();
   }, []);
 
-  // These read live state via the service (which reads from useOffline.getState).
-  // They are NOT reactive — callers that need to re-render on progress changes
-  // should use useDownloadProgress(trackId) instead.
+  // Read live state via the service (which reads useOffline.getState). NOT
+  // reactive — callers that need to re-render on progress changes should use
+  // useDownloadProgress(trackId) instead.
   const getDownloadProgress = useCallback((trackId: string) => {
     return offlineDownloadService.getDownloadProgress(trackId);
   }, []);
@@ -82,20 +83,13 @@ export const useOfflineDownloads = () => {
   }, []);
 
   return {
-    // Settings
     offlineModeEnabled,
     setOfflineModeEnabled,
-
-    // Downloaded tracks
     downloadedTracks,
     isTrackDownloaded,
     getDownloadedTrack,
-
-    // Download progress (non-reactive helpers; subscribe via the hooks below)
     getDownloadProgress,
     isTrackDownloading,
-
-    // Actions
     downloadTrack,
     downloadTracks,
     removeDownloadedTrack,
@@ -104,22 +98,13 @@ export const useOfflineDownloads = () => {
   };
 };
 
-// Narrow boolean subscription for the offline-mode toggle. Use this in list
-// items instead of useOfflineDownloads() so a row doesn't also subscribe to the
-// downloadedTracks map (which re-renders every row on any add/remove).
+// Narrow boolean subscription for the offline-mode toggle — use this in list
+// items so a row doesn't also subscribe to downloadedTracks.
 export const useOfflineModeEnabled = () =>
   useOffline((s) => s.offlineModeEnabled);
 
-// Per-id reactive downloaded check. The selector returns a boolean, so a row
-// re-renders only when ITS OWN track's download status flips — not when any
-// other track is added or removed. Prefer this over
-// useOfflineDownloads().isTrackDownloaded in list items, which subscribes to the
-// whole downloadedTracks map.
-export const useIsTrackDownloaded = (trackId: string) =>
-  useOffline((s) => trackId in s.downloadedTracks);
-
-// Reactive view of the downloaded-tracks list for the active server. Subscribes
-// to downloadedTracks only (changes on add/remove/clear — not progress ticks).
+// Reactive view of the downloaded-tracks list (changes on add/remove/clear —
+// not progress ticks).
 export const useDownloadedTracksList = () => {
   const downloadedTracks = useOffline((s) => s.downloadedTracks);
   return Object.values(downloadedTracks);
@@ -128,17 +113,23 @@ export const useDownloadedTracksList = () => {
 export const useDownloadedTracksCount = () =>
   useOffline((s) => Object.keys(s.downloadedTracks).length);
 
+// Reactive view of saved offline collections (playlists/albums). Selects the
+// map (stable ref) and derives the list in the hook body so it only changes
+// when a collection is added/removed.
+export const useDownloadedCollections = () => {
+  const downloadedCollections = useOffline((s) => s.downloadedCollections);
+  return useMemo(
+    () => Object.values(downloadedCollections),
+    [downloadedCollections],
+  );
+};
+
 export const useTotalDownloadSize = () =>
   useOffline((s) =>
     Object.values(s.downloadedTracks).reduce((sum, t) => sum + t.size, 0),
   );
 
-// Reactive subscriptions for progress UIs. Scope progress access to a single
-// trackId so a row only re-renders when its own progress changes.
+// Per-id reactive progress — scoped to one trackId so a row only re-renders when
+// its own progress changes.
 export const useDownloadProgress = (trackId: string) =>
   useOffline((s) => s.downloadProgress[trackId] ?? null);
-
-export const useAllDownloadProgress = () =>
-  useOffline((s) => s.downloadProgress);
-
-export const useDownloadQueue = () => useOffline((s) => s.downloadQueue);

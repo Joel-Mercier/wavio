@@ -44,8 +44,10 @@ import { VStack } from "@/components/ui/vstack";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import { useDownloadedCollections } from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import {
   useScopedPodcastFavorites,
   useSyncServerPodcastFavorites,
@@ -122,6 +124,8 @@ export default function LibraryScreen() {
   const { handleSheetPositionChange: handleSheetPositionChangeSort } =
     useBottomSheetBackHandler(bottomSheetModalSortRef);
   const musicFolderId = useCurrentMusicFolderId();
+  const isOnline = useIsOnline();
+  const downloadedCollections = useDownloadedCollections();
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -196,41 +200,75 @@ export default function LibraryScreen() {
   };
 
   const data = useMemo(() => {
-    if (
-      !starredData ||
-      !starredData?.starred2 ||
-      !playlistsData ||
-      !playlistsData?.playlists
-    ) {
+    const hasServerData = Boolean(
+      starredData?.starred2 || playlistsData?.playlists,
+    );
+    // Online with nothing loaded yet → null so the skeleton placeholders show.
+    // Offline we keep going so saved collections (and podcasts/radio from local
+    // stores) still render even without a cached server list.
+    if (!hasServerData && isOnline) {
       return null;
     }
+
+    const favoritesItem = {
+      id: "favorites",
+      name: "Favorites",
+      isFavorites: true,
+      songCount: starredData?.starred2?.song?.length || 0,
+    };
+
+    // Offline only: merge saved collections into their bucket so downloaded
+    // playlists/albums appear even when the server list query isn't cached.
+    // Deduped by id (server entry wins, since it carries richer metadata).
+    const mergeOffline = <T extends { id: string }>(
+      serverItems: T[],
+      kind: "playlist" | "album",
+    ): T[] => {
+      if (isOnline) return serverItems;
+      const ids = new Set(serverItems.map((item) => item.id));
+      const offlineItems = downloadedCollections
+        .filter((c) => c.kind === kind && !ids.has(c.id))
+        .map((c) =>
+          kind === "playlist"
+            ? {
+                id: c.id,
+                name: c.name,
+                songCount: c.songCount,
+                coverArt: c.coverArt,
+                owner: c.owner,
+                created: c.savedAt,
+              }
+            : {
+                id: c.id,
+                name: c.name,
+                songCount: c.songCount,
+                coverArt: c.coverArt,
+                artist: c.artist,
+                artistId: c.artistId,
+                year: c.year,
+                created: c.savedAt,
+              },
+        ) as unknown as T[];
+      return [...serverItems, ...offlineItems];
+    };
+
     let data = [];
-    if (!filter) {
-      data.push({
-        id: "favorites",
-        name: "Favorites",
-        isFavorites: true,
-        songCount: starredData?.starred2.song?.length || 0,
-      });
+    if (!filter && hasServerData) {
+      data.push(favoritesItem);
     }
-    if ((!filter || filter === "artists") && starredData.starred2.artist) {
+    if ((!filter || filter === "artists") && starredData?.starred2?.artist) {
       data.push(starredData.starred2.artist);
     }
-    if ((!filter || filter === "albums") && starredData.starred2.album) {
-      data.push(starredData.starred2.album);
+    if (!filter || filter === "albums") {
+      data.push(mergeOffline(starredData?.starred2?.album ?? [], "album"));
     }
     if (!filter || filter === "playlists") {
-      if (filter === "playlists") {
-        data.push({
-          id: "favorites",
-          name: "Favorites",
-          isFavorites: true,
-          songCount: starredData?.starred2.song?.length || 0,
-        });
+      if (filter === "playlists" && hasServerData) {
+        data.push(favoritesItem);
       }
-      if (playlistsData.playlists.playlist) {
-        data.push(playlistsData.playlists.playlist);
-      }
+      data.push(
+        mergeOffline(playlistsData?.playlists?.playlist ?? [], "playlist"),
+      );
     }
     if (showPodcasts && (!filter || filter === "podcasts")) {
       data.push(
@@ -309,6 +347,8 @@ export default function LibraryScreen() {
     favoritePodcasts,
     favoriteRadioStations,
     musicFoldersData,
+    isOnline,
+    downloadedCollections,
   ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
@@ -495,7 +535,7 @@ export default function LibraryScreen() {
           ref={listRef}
           key={`library-${layout}`}
           data={
-            (data || loadingData(16)) as Array<
+            (isLoading ? loadingData(16) : (data ?? [])) as Array<
               Playlist &
                 AlbumID3 &
                 ArtistID3 &

@@ -86,10 +86,14 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import {
+  type DownloadCollectionMeta,
+  useCollectionDownload,
+  useOfflineAlbum,
+} from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useCollectionDownload } from "@/hooks/useCollectionDownload";
 import useImageColors from "@/hooks/useImageColors";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -138,7 +142,12 @@ export default function AlbumDetail() {
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
   const toast = useToast();
-  const { data, isLoading, error } = useAlbum(id);
+  const { data: serverData, isLoading, error } = useAlbum(id);
+  const offlineAlbumData = useOfflineAlbum(id);
+  // Offline (or before the server query resolves) fall back to the downloaded
+  // collection so a saved album stays browsable after a logout clears the React
+  // Query cache.
+  const data = serverData ?? offlineAlbumData;
   const {
     data: discoverMoreData,
     isLoading: discoverMoreIsLoading,
@@ -419,7 +428,22 @@ export default function AlbumDetail() {
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
   const handleTrackPress = useTrackListPress(albumTracks);
-  const albumDownload = useCollectionDownload(albumTracks);
+  const albumMeta = useMemo<DownloadCollectionMeta | undefined>(
+    () =>
+      data?.album
+        ? {
+            id,
+            kind: "album",
+            name: data.album.name,
+            coverArt: data.album.coverArt,
+            artist: data.album.artist,
+            artistId: data.album.artistId,
+            year: data.album.year,
+          }
+        : undefined,
+    [id, data?.album],
+  );
+  const albumDownload = useCollectionDownload(albumTracks, albumMeta);
 
   const handleSaveOfflinePress = async () => {
     bottomSheetModalRef.current?.dismiss();

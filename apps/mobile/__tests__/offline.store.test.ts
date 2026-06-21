@@ -25,7 +25,10 @@ jest.mock("@/stores/auth", () => ({
 }));
 
 import type { Child } from "@/services/openSubsonic/types";
-import useOffline, { type OfflineTrack } from "@/stores/offline";
+import useOffline, {
+  type OfflineCollection,
+  type OfflineTrack,
+} from "@/stores/offline";
 
 const get = () => useOffline.getState();
 
@@ -52,12 +55,26 @@ const makeChild = (id: string, overrides: Partial<Child> = {}): Child => ({
   ...overrides,
 });
 
+const makeCollection = (
+  id: string,
+  overrides: Partial<OfflineCollection> = {},
+): OfflineCollection => ({
+  id,
+  kind: "playlist",
+  name: `Collection ${id}`,
+  songCount: 2,
+  trackIds: ["a", "b"],
+  savedAt: new Date().toISOString(),
+  ...overrides,
+});
+
 beforeEach(() => {
   mockMem.clear();
   useOffline.setState(
     {
       offlineModeEnabled: false,
       downloadedTracks: {},
+      downloadedCollections: {},
       downloadProgress: {},
       downloadQueue: [],
     },
@@ -123,6 +140,36 @@ describe("offline store - downloaded tracks", () => {
     expect(get().getDownloadedTracksCount()).toBe(0);
     expect(get().downloadProgress).toEqual({});
     expect(get().downloadQueue).toEqual([]);
+  });
+});
+
+describe("offline store - downloaded collections", () => {
+  it("adds and lists a collection", () => {
+    const c = makeCollection("p1");
+    get().addDownloadedCollection(c);
+    expect(get().downloadedCollections.p1).toEqual(c);
+    expect(get().getDownloadedCollections()).toEqual([c]);
+  });
+
+  it("overwrites a collection with the same id", () => {
+    get().addDownloadedCollection(makeCollection("p1", { songCount: 2 }));
+    get().addDownloadedCollection(makeCollection("p1", { songCount: 5 }));
+    expect(get().downloadedCollections.p1.songCount).toBe(5);
+    expect(get().getDownloadedCollections()).toHaveLength(1);
+  });
+
+  it("removes a collection by id without touching others", () => {
+    get().addDownloadedCollection(makeCollection("p1"));
+    get().addDownloadedCollection(makeCollection("a1", { kind: "album" }));
+    get().removeDownloadedCollection("p1");
+    expect(get().downloadedCollections.p1).toBeUndefined();
+    expect(get().downloadedCollections.a1?.kind).toBe("album");
+  });
+
+  it("clearAllDownloads wipes collections too", () => {
+    get().addDownloadedCollection(makeCollection("p1"));
+    get().clearAllDownloads();
+    expect(get().getDownloadedCollections()).toEqual([]);
   });
 });
 
@@ -224,6 +271,7 @@ describe("offline store - persistence", () => {
         state: {
           offlineModeEnabled: true,
           downloadedTracks: { x: makeTrack("x") },
+          downloadedCollections: { p1: makeCollection("p1") },
           downloadQueue: [child],
           downloadProgress: {
             a: { trackId: "a", status: "failed", progress: 0, error: "boom" },
@@ -238,6 +286,7 @@ describe("offline store - persistence", () => {
 
     expect(state.offlineModeEnabled).toBe(true);
     expect(state.downloadedTracks.x?.id).toBe("x");
+    expect(state.downloadedCollections.p1?.name).toBe("Collection p1");
     expect(state.downloadQueue).toEqual([child]);
     expect(state.downloadProgress.a?.status).toBe("failed");
   });

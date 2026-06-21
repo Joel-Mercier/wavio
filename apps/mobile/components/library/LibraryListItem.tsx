@@ -20,9 +20,11 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useIsCachedOffline } from "@/hooks/useIsCachedOffline";
-import { useIsCollectionDownloaded } from "@/hooks/useIsCollectionDownloaded";
-import { useOfflineModeEnabled } from "@/hooks/useOfflineDownloads";
+import {
+  useIsCollectionAvailableOffline,
+  useIsDetailCached,
+  useOfflineModeEnabled,
+} from "@/hooks/offline";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
@@ -270,16 +272,18 @@ export default function LibraryListItem({
         return null;
     }
   }, [type.id, item.id]);
-  const isReachableOffline = useIsCachedOffline(detailKey);
+  const isDetailCached = useIsDetailCached(detailKey);
 
-  // Downloaded badge: albums/playlists show it when every track is on disk;
+  // Downloaded badge: albums/playlists show it when the collection is available
+  // offline (explicitly saved, or detail cached + every track on disk);
   // favorites mirror the auto-download toggle.
-  const isCollectionDownloaded = useIsCollectionDownloaded(
+  const isCollectionAvailableOffline = useIsCollectionAvailableOffline(
     type.id === "playlist" ? "playlist" : "album",
     type.id === "album" || type.id === "playlist" ? item.id : undefined,
   );
   const showDownloadedBadge =
-    isCollectionDownloaded || (type.id === "favorites" && offlineModeEnabled);
+    isCollectionAvailableOffline ||
+    (type.id === "favorites" && offlineModeEnabled);
 
   const gridColumn = index % 3;
   const gridMarginClass = useMemo(() => {
@@ -292,7 +296,7 @@ export default function LibraryListItem({
   return (
     <FadeOutScaleDown
       href={href}
-      disabled={!isReachableOffline}
+      disabled={!isDetailCached && !isCollectionAvailableOffline}
       className={cn("mb-4", gridMarginClass)}
     >
       <HStack
@@ -375,12 +379,12 @@ export default function LibraryListItem({
                     ? `${type.label} ⦁ ${item.tags}`
                     : type.label
                   : type.id === "artist"
-                    ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
+                    ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`
                     : type.id === "folder"
                       ? type.label
                       : type.id === "playlist"
-                        ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
-                        : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount })}`}
+                        ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
+                        : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}`}
             </Text>
           </HStack>
         </VStack>

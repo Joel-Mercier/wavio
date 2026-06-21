@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import { offlineDownloadService } from "@/services/offlineDownloadService";
+import { offlineDownloadService } from "@/services/offline";
 import useOffline from "@/stores/offline";
 import { logError } from "@/utils/log";
 

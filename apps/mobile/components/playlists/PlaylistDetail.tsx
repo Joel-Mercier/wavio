@@ -73,10 +73,14 @@ import {
 } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
+import {
+  type DownloadCollectionMeta,
+  useCollectionDownload,
+  useOfflinePlaylist,
+} from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useCollectionDownload } from "@/hooks/useCollectionDownload";
 import useImageColors from "@/hooks/useImageColors";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -138,7 +142,12 @@ export default function PlaylistDetail() {
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleSortSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetSortModalRef);
-  const { data: playlistData, isLoading, error } = usePlaylist(id);
+  const { data: serverPlaylistData, isLoading, error } = usePlaylist(id);
+  const offlinePlaylistData = useOfflinePlaylist(id);
+  // Offline (or before the server query resolves) fall back to the downloaded
+  // collection so a saved playlist stays browsable after a logout clears the
+  // React Query cache.
+  const playlistData = serverPlaylistData ?? offlinePlaylistData;
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
   const { data: ndPlaylist } = useSmartPlaylist(hasNavidromeNative ? id : null);
   const isSmartPlaylist = !!ndPlaylist?.rules;
@@ -485,7 +494,23 @@ export default function PlaylistDetail() {
 
   const isLoadingRows = !playlistData;
   const handleTrackPress = useTrackListPress(data);
-  const playlistDownload = useCollectionDownload(playlistData?.playlist?.entry);
+  const playlistMeta = useMemo<DownloadCollectionMeta | undefined>(
+    () =>
+      playlistData?.playlist
+        ? {
+            id,
+            kind: "playlist",
+            name: playlistData.playlist.name,
+            coverArt: playlistData.playlist.coverArt,
+            owner: playlistData.playlist.owner,
+          }
+        : undefined,
+    [id, playlistData?.playlist],
+  );
+  const playlistDownload = useCollectionDownload(
+    playlistData?.playlist?.entry,
+    playlistMeta,
+  );
 
   const handleSaveOfflinePress = async () => {
     bottomSheetModalRef.current?.dismiss();

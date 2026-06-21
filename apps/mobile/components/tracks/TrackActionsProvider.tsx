@@ -67,9 +67,9 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useSetRating, useStar } from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useOfflineDownloads } from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { downloadUrl } from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
 import useQueue from "@/stores/queue";

@@ -18,6 +18,20 @@ export type OfflineTrack = {
   metadata?: Record<string, unknown>;
 };
 
+export type OfflineCollection = {
+  id: string;
+  kind: "playlist" | "album";
+  name: string;
+  songCount: number;
+  trackIds: string[];
+  coverArt?: string;
+  owner?: string;
+  artist?: string;
+  artistId?: string;
+  year?: number;
+  savedAt: string;
+};
+
 export type DownloadStatus =
   | "pending"
   | "downloading"
@@ -41,6 +55,11 @@ interface OfflineStore {
   removeDownloadedTrack: (trackId: string) => void;
   clearAllDownloads: () => void;
 
+  downloadedCollections: Record<string, OfflineCollection>;
+  addDownloadedCollection: (collection: OfflineCollection) => void;
+  removeDownloadedCollection: (collectionId: string) => void;
+  getDownloadedCollections: () => OfflineCollection[];
+
   downloadProgress: Record<string, DownloadProgress>;
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
   removeDownloadProgress: (trackId: string) => void;
@@ -62,6 +81,7 @@ interface OfflineStore {
 const initialOfflineState = {
   offlineModeEnabled: false,
   downloadedTracks: {} as Record<string, OfflineTrack>,
+  downloadedCollections: {} as Record<string, OfflineCollection>,
   downloadProgress: {} as Record<string, DownloadProgress>,
   downloadQueue: [] as Child[],
 };
@@ -101,9 +121,32 @@ const useOfflineBase = create<OfflineStore>()(
       clearAllDownloads: () => {
         set({
           downloadedTracks: {},
+          downloadedCollections: {},
           downloadProgress: {},
           downloadQueue: [],
         });
+      },
+
+      addDownloadedCollection: (collection) => {
+        set((state) => ({
+          downloadedCollections: {
+            ...state.downloadedCollections,
+            [collection.id]: collection,
+          },
+        }));
+      },
+
+      removeDownloadedCollection: (collectionId) => {
+        set((state) => {
+          const { [collectionId]: _removed, ...remaining } =
+            state.downloadedCollections;
+          return { downloadedCollections: remaining };
+        });
+      },
+
+      getDownloadedCollections: () => {
+        const { downloadedCollections } = get();
+        return Object.values(downloadedCollections);
       },
 
       setDownloadProgress: (trackId, progress) => {
@@ -198,6 +241,7 @@ const useOfflineBase = create<OfflineStore>()(
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,
         downloadedTracks: state.downloadedTracks,
+        downloadedCollections: state.downloadedCollections,
         downloadQueue: state.downloadQueue,
         downloadProgress: state.downloadProgress,
       }),

@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useUnstar } from "@/hooks/backend/useMediaAnnotation";
+import { useIsTrackAvailableOffline } from "@/hooks/offline";
 import { useIsCurrentTrack } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import { useIsTrackDownloaded } from "@/hooks/useOfflineDownloads";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { artworkUrl } from "@/utils/artwork";
@@ -62,7 +62,7 @@ function TrackListItem({
   const isCurrentTrack = useIsCurrentTrack(track.id);
   const doUnfavorite = useUnstar();
   const toast = useToast();
-  const isTrackDownloaded = useIsTrackDownloaded(track.id);
+  const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
   const { open } = useTrackActions();

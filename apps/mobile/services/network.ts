@@ -136,9 +136,22 @@ export async function probeServer(): Promise<void> {
 
   probeInFlight = true;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  const abortTimer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  // Hard deadline independent of the request. If a ping never settles — e.g. a
+  // socket wedged by a network change that ignores the abort — `await ping`
+  // could hang forever, leaving probeInFlight stuck true so every later probe
+  // (including the recovery poll) no-ops and the offline banner freezes on
+  // "server unreachable" with no failure count and no logout. The race
+  // guarantees probeServer always settles and resets probeInFlight.
+  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    deadlineTimer = setTimeout(
+      () => reject(new Error("probe deadline exceeded")),
+      PROBE_TIMEOUT_MS + 1000,
+    );
+  });
   try {
-    await ping({ signal: controller.signal });
+    await Promise.race([ping({ signal: controller.signal }), deadline]);
     consecutiveProbeFailures = 0;
     setServerReachable(true);
   } catch {
@@ -148,7 +161,8 @@ export async function probeServer(): Promise<void> {
       disconnectUnreachable();
     }
   } finally {
-    clearTimeout(timer);
+    clearTimeout(abortTimer);
+    clearTimeout(deadlineTimer);
     probeInFlight = false;
   }
 }
@@ -189,7 +203,15 @@ function applyState(state: NetInfoState) {
     isOnline = nextOnline;
     for (const cb of onlineListeners) cb();
     if (nextOnline) {
-      // Regained device connectivity — confirm the server is actually reachable.
+      // Regained device connectivity. Optimistically clear any stale unreachable
+      // state carried over from before we dropped offline so the banner doesn't
+      // flash "server unreachable" on reconnect, then re-probe to confirm — the
+      // probe flips it back to false only if the server genuinely doesn't answer.
+      consecutiveProbeFailures = 0;
+      if (!serverReachable) {
+        serverReachable = true;
+        for (const cb of reachableListeners) cb();
+      }
       void probeServer();
     } else {
       // Device offline: effective-online is already false, so stop wasting a

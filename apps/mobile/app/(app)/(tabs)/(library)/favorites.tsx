@@ -38,9 +38,9 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
+import { useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -81,7 +81,7 @@ export default function FavoritesScreen() {
     error,
   } = useStarred2({ musicFolderId });
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const { offlineModeEnabled } = useOfflineDownloads();
+  const offlineModeEnabled = useOfflineModeEnabled();
   const sort = useApp((store) => store.favoritesSort);
   const setFavoritesSort = useApp((store) => store.setFavoritesSort);
   const offsetY = useSharedValue(0);

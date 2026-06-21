@@ -6,8 +6,8 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getPersistedCacheSize } from "@/config/queryClient";
+import { useTotalDownloadSize } from "@/hooks/offline";
 import { useLocalLibrarySize } from "@/hooks/useLocalLibrarySize";
-import { useTotalDownloadSize } from "@/hooks/useOfflineDownloads";
 import { useAuthBase } from "@/stores/auth";
 import { niceBytes } from "@/utils/fileSize";
 
