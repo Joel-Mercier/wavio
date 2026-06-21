@@ -21,11 +21,17 @@ let serverReachable = true;
 const PROBE_TIMEOUT_MS = 4000;
 // While the server is unreachable, re-probe on this cadence to detect recovery.
 const RECOVERY_POLL_MS = 12000;
+// A single failed probe right after reconnecting (or a brief server hiccup) is
+// usually just the network not being routable yet, not the server being gone.
+// Stay optimistically reachable and re-probe quickly after the first failure;
+// only surface "unreachable" once this many consecutive probes have failed, so
+// effective-online (and the offline banner) don't flicker on reconnect.
+const FAILURES_BEFORE_UNREACHABLE = 2;
+const QUICK_RETRY_MS = 2000;
 // Consecutive failed probes (device online the whole time) before we conclude
-// the server is genuinely gone and log the user out. Tolerates transient blips
-// (server restart, brief network change) — at RECOVERY_POLL_MS cadence this is
-// ~24s. A failure here always means "device online but server unreachable"
-// (probeServer no-ops while offline), so it's distinct from being offline.
+// the server is genuinely gone and log the user out. A failure here always means
+// "device online but server unreachable" (probeServer no-ops while offline), so
+// it's distinct from being offline.
 const DISCONNECT_AFTER_FAILURES = 3;
 
 const typeListeners = new Set<(type: NetInfoStateType) => void>();
@@ -33,6 +39,7 @@ const onlineListeners = new Set<() => void>();
 const reachableListeners = new Set<() => void>();
 
 let recoveryTimer: ReturnType<typeof setInterval> | null = null;
+let quickRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
 
@@ -119,6 +126,24 @@ function stopRecoveryPoll() {
   }
 }
 
+// One-shot fast re-probe used during the grace window (after the first failure,
+// before we've concluded the server is unreachable) so a real outage is still
+// confirmed within a couple of seconds rather than waiting a full recovery poll.
+function scheduleQuickReprobe() {
+  if (quickRetryTimer) return;
+  quickRetryTimer = setTimeout(() => {
+    quickRetryTimer = null;
+    void probeServer();
+  }, QUICK_RETRY_MS);
+}
+
+function cancelQuickReprobe() {
+  if (quickRetryTimer) {
+    clearTimeout(quickRetryTimer);
+    quickRetryTimer = null;
+  }
+}
+
 // Pings the active server with a short deadline and updates serverReachable.
 // No-ops when the device is offline (device connectivity dominates) or when no
 // server is signed in. Safe to call repeatedly — overlapping probes are ignored.
@@ -153,10 +178,21 @@ export async function probeServer(): Promise<void> {
   try {
     await Promise.race([ping({ signal: controller.signal }), deadline]);
     consecutiveProbeFailures = 0;
+    cancelQuickReprobe();
     setServerReachable(true);
   } catch {
     consecutiveProbeFailures += 1;
-    setServerReachable(false);
+    if (consecutiveProbeFailures >= FAILURES_BEFORE_UNREACHABLE) {
+      // Confirmed: flip to unreachable (surfaces the banner, starts the
+      // recovery poll). The recovery poll now owns re-probing.
+      cancelQuickReprobe();
+      setServerReachable(false);
+    } else {
+      // First failure — likely the network isn't routable yet right after a
+      // reconnect. Stay optimistically reachable and re-probe quickly to confirm
+      // before flipping the UI to "unreachable".
+      scheduleQuickReprobe();
+    }
     if (consecutiveProbeFailures >= DISCONNECT_AFTER_FAILURES) {
       disconnectUnreachable();
     }
@@ -173,6 +209,7 @@ export async function probeServer(): Promise<void> {
 // first so the next session starts optimistic.
 function disconnectUnreachable() {
   stopRecoveryPoll();
+  cancelQuickReprobe();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
     serverReachable = true;
@@ -186,6 +223,7 @@ function disconnectUnreachable() {
 // probe should be kicked by the caller after the new credentials are in place.
 export function resetServerReachable(): void {
   stopRecoveryPoll();
+  cancelQuickReprobe();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
     serverReachable = true;
@@ -219,6 +257,7 @@ function applyState(state: NetInfoState) {
       // count so a brief offline spell doesn't carry over and trigger an
       // immediate logout once connectivity returns.
       stopRecoveryPoll();
+      cancelQuickReprobe();
       consecutiveProbeFailures = 0;
     }
   }

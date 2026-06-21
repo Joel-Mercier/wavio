@@ -142,12 +142,17 @@ describe("connection type subscription", () => {
 });
 
 describe("server reachability probe", () => {
-  it("marks the server unreachable when the probe fails", async () => {
+  it("tolerates the first failed probe, then marks unreachable on the second", async () => {
     await setDeviceOnline(true);
-    mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
     await probeServer();
+    // First failure is within the grace window (likely a not-yet-routable
+    // network right after reconnect) — stay optimistically reachable.
+    expect(getServerReachable()).toBe(true);
+    expect(getIsEffectivelyOnline()).toBe(true);
+    await probeServer();
+    // Second consecutive failure confirms the server is unreachable.
     expect(getServerReachable()).toBe(false);
-    // Device is online but the server isn't reachable → not effectively online.
     expect(getIsEffectivelyOnline()).toBe(false);
   });
 
@@ -155,9 +160,29 @@ describe("server reachability probe", () => {
     await setDeviceOnline(true);
     mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
     await probeServer();
+    mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
+    await probeServer();
     expect(getServerReachable()).toBe(false);
     mockPing.mockResolvedValueOnce({});
     await probeServer();
+    expect(getServerReachable()).toBe(true);
+    expect(getIsEffectivelyOnline()).toBe(true);
+  });
+
+  it("does not flicker to unreachable on reconnect when the first probe fails", async () => {
+    const listener = await setDeviceOnline(true);
+    // Toggle airplane mode: drop offline, then back online.
+    listener?.({ type: "wifi", isConnected: false });
+    expect(getIsEffectivelyOnline()).toBe(false);
+    // The probe fired right after reconnect fails because the network isn't
+    // routable yet.
+    mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
+    listener?.({ type: "wifi", isConnected: true });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    // Effective-online stays true through the grace window — no flicker to
+    // "server unreachable" while the network settles.
     expect(getServerReachable()).toBe(true);
     expect(getIsEffectivelyOnline()).toBe(true);
   });
@@ -199,7 +224,8 @@ describe("server reachability probe", () => {
 
   it("resetServerReachable returns to the optimistic default", async () => {
     await setDeviceOnline(true);
-    mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
     await probeServer();
     expect(getServerReachable()).toBe(false);
     resetServerReachable();
