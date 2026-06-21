@@ -190,6 +190,8 @@ export default function ArtistDetail() {
   }, []);
 
   const handleFavoritePress = () => {
+    if (!data?.artist?.id) return;
+    const artistId = data.artist.id;
     queryClient.setQueryData(["artist", id], {
       ...data,
       artist: {
@@ -198,7 +200,7 @@ export default function ArtistDetail() {
       },
     });
     doFavorite.mutate(
-      { id: data?.artist.id, artistId: data?.artist.id },
+      { id: artistId, artistId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
@@ -241,6 +243,8 @@ export default function ArtistDetail() {
   };
 
   const handleUnfavoritePress = () => {
+    if (!data?.artist?.id) return;
+    const artistId = data.artist.id;
     queryClient.setQueryData(["artist", id], {
       ...data,
       artist: {
@@ -249,7 +253,7 @@ export default function ArtistDetail() {
       },
     });
     doUnfavorite.mutate(
-      { id: data?.artist.id, artistId: data?.artist.id },
+      { id: artistId, artistId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });

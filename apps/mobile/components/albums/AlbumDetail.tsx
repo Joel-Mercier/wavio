@@ -196,6 +196,8 @@ export default function AlbumDetail() {
   };
 
   const handleFavoritePress = () => {
+    if (!data?.album?.id) return;
+    const albumId = data.album.id;
     queryClient.setQueryData(["album", id], {
       ...data,
       album: {
@@ -204,7 +206,7 @@ export default function AlbumDetail() {
       },
     });
     doFavorite.mutate(
-      { id: data?.album.id, albumId: data?.album.id },
+      { id: albumId, albumId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
@@ -247,6 +249,8 @@ export default function AlbumDetail() {
   };
 
   const handleUnfavoritePress = () => {
+    if (!data?.album?.id) return;
+    const albumId = data.album.id;
     queryClient.setQueryData(["album", id], {
       ...data,
       album: {
@@ -255,7 +259,7 @@ export default function AlbumDetail() {
       },
     });
     doUnfavorite.mutate(
-      { id: data?.album.id, albumId: data?.album.id },
+      { id: albumId, albumId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
