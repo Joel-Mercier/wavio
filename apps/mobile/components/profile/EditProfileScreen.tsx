@@ -23,6 +23,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import {
@@ -311,7 +312,10 @@ export default function EditProfileScreen() {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const [isDirty, isSubmitting] = useStore(form.store, (state) => [
+    state.isDirty,
+    state.isSubmitting,
+  ]);
 
   return (
     <Box className="h-full flex-1 bg-black">
@@ -335,14 +339,21 @@ export default function EditProfileScreen() {
             {t("app.editProfile.title")}
           </Heading>
           <Box className="flex-1 items-end">
-            <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
-              <Text
-                className={cn("text-emerald-500 font-bold text-lg", {
-                  "opacity-50": !isDirty,
-                })}
-              >
-                {t("app.shared.save")}
-              </Text>
+            <FadeOutScaleDown
+              onPress={form.handleSubmit}
+              disabled={!isDirty || isSubmitting}
+            >
+              {isSubmitting ? (
+                <Spinner color={emerald500} />
+              ) : (
+                <Text
+                  className={cn("text-emerald-500 font-bold text-lg", {
+                    "opacity-50": !isDirty,
+                  })}
+                >
+                  {t("app.shared.save")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </Box>
         </HStack>

@@ -19,6 +19,7 @@ import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
@@ -47,12 +48,14 @@ const metadataSchema = z.object({
 });
 
 export default function NewSmartPlaylistScreen() {
-  const [white, gray400, gray600, emerald500] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-gray-400",
-    "--color-gray-600",
-    "--color-emerald-500",
-  ]) as string[];
+  const [white, gray400, gray600, emerald500, primary800] =
+    Uniwind.getCSSVariable([
+      "--color-white",
+      "--color-gray-400",
+      "--color-gray-600",
+      "--color-emerald-500",
+      "--color-primary-800",
+    ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const toast = useToast();
@@ -258,11 +261,16 @@ export default function NewSmartPlaylistScreen() {
       >
         <FadeOutScaleDown
           onPress={form.handleSubmit}
+          disabled={doCreate.isPending}
           className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
         >
-          <Text className="text-primary-800 font-bold text-lg">
-            {t("app.shared.create")}
-          </Text>
+          {doCreate.isPending ? (
+            <Spinner color={primary800} />
+          ) : (
+            <Text className="text-primary-800 font-bold text-lg">
+              {t("app.shared.create")}
+            </Text>
+          )}
         </FadeOutScaleDown>
       </LinearGradient>
     </Box>

@@ -45,6 +45,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { CalendarDaysIcon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import {
@@ -67,12 +68,14 @@ const updateShareSchema = z.object({
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
-  const [white, gray300, emerald500, gray200] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-gray-300",
-    "--color-emerald-500",
-    "--color-gray-200",
-  ]) as string[];
+  const [white, gray300, emerald500, gray200, primary800] =
+    Uniwind.getCSSVariable([
+      "--color-white",
+      "--color-gray-300",
+      "--color-emerald-500",
+      "--color-gray-200",
+      "--color-primary-800",
+    ]) as string[];
   const { t } = useTranslation();
   const [clipoardCopyDone, setClipoardCopyDone] = useState<boolean>(false);
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
@@ -488,12 +491,17 @@ export default function ShareListItem({ share }: { share: Share }) {
                 </Text>
               </FadeOutScaleDown>
               <FadeOutScaleDown
-                onPress={isDirty ? form.handleSubmit : undefined}
+                onPress={form.handleSubmit}
+                disabled={!isDirty || doUpdateShare.isPending}
                 className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
               >
-                <Text className="text-primary-800 font-bold text-lg">
-                  {t("app.shared.save")}
-                </Text>
+                {doUpdateShare.isPending ? (
+                  <Spinner color={primary800} />
+                ) : (
+                  <Text className="text-primary-800 font-bold text-lg">
+                    {t("app.shared.save")}
+                  </Text>
+                )}
               </FadeOutScaleDown>
             </AlertDialogFooter>
           </AlertDialogContent>

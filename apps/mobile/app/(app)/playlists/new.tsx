@@ -17,6 +17,7 @@ import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -34,9 +35,10 @@ const newPlaylistSchema = z.object({
 });
 
 export default function NewPlaylistScreen() {
-  const [gray300, gray400] = Uniwind.getCSSVariable([
+  const [gray300, gray400, primary800] = Uniwind.getCSSVariable([
     "--color-gray-300",
     "--color-gray-400",
+    "--color-primary-800",
   ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -151,6 +153,7 @@ export default function NewPlaylistScreen() {
           <HStack className="mt-6 items-center justify-center">
             <FadeOutScaleDown
               onPress={handleCancelPress}
+              disabled={doCreatePlaylist.isPending}
               className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
             >
               <Text className="text-white font-bold text-lg">
@@ -159,11 +162,16 @@ export default function NewPlaylistScreen() {
             </FadeOutScaleDown>
             <FadeOutScaleDown
               onPress={form.handleSubmit}
+              disabled={doCreatePlaylist.isPending}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.create")}
-              </Text>
+              {doCreatePlaylist.isPending ? (
+                <Spinner color={primary800} />
+              ) : (
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.create")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </HStack>
         </VStack>

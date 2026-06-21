@@ -135,14 +135,21 @@ export default function EditPlaylistScreen() {
             {t("app.editPlaylist.title")}
           </Heading>
           <Box className="flex-1 items-end">
-            <FadeOutScaleDown onPress={isDirty ? form.handleSubmit : undefined}>
-              <Text
-                className={cn("text-emerald-500 font-bold text-lg", {
-                  "opacity-50": !isDirty,
-                })}
-              >
-                {t("app.shared.save")}
-              </Text>
+            <FadeOutScaleDown
+              onPress={form.handleSubmit}
+              disabled={!isDirty || doUpdatePlaylist.isPending}
+            >
+              {doUpdatePlaylist.isPending ? (
+                <Spinner color={emerald500} />
+              ) : (
+                <Text
+                  className={cn("text-emerald-500 font-bold text-lg", {
+                    "opacity-50": !isDirty,
+                  })}
+                >
+                  {t("app.shared.save")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </Box>
         </HStack>

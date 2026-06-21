@@ -148,8 +148,10 @@ export default function PlaylistDetailSearch() {
         </Box>
       </Box>
       <FlashList
-        data={data || loadingData(6)}
-        keyExtractor={(item) => item.item?.id}
+        data={isLoading ? loadingData(6) : (data ?? [])}
+        keyExtractor={(item, index) =>
+          isLoading ? `skeleton-${index}` : item.item.id
+        }
         renderItem={({
           item,
           index,

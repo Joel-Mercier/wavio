@@ -20,6 +20,7 @@ import {
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { Input, InputField } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -45,7 +46,10 @@ export default function CreatePlaylistFromQueueDialog({
   onClose,
   trackIds,
 }: CreatePlaylistFromQueueDialogProps) {
-  const [gray400] = Uniwind.getCSSVariable(["--color-gray-400"]) as string[];
+  const [gray400, primary800] = Uniwind.getCSSVariable([
+    "--color-gray-400",
+    "--color-primary-800",
+  ]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -156,9 +160,13 @@ export default function CreatePlaylistFromQueueDialog({
                   disabledOpacity={0.5}
                   className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
                 >
-                  <Text className="text-primary-800 font-bold text-lg">
-                    {t("app.shared.create")}
-                  </Text>
+                  {isSubmitting || doCreatePlaylist.isPending ? (
+                    <Spinner color={primary800} />
+                  ) : (
+                    <Text className="text-primary-800 font-bold text-lg">
+                      {t("app.shared.create")}
+                    </Text>
+                  )}
                 </FadeOutScaleDown>
               );
             }}

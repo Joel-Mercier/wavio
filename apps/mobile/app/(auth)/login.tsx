@@ -47,6 +47,7 @@ import {
   SelectScrollView,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -118,7 +119,10 @@ function ServerSelectRow({
 }
 
 export default function LoginScreen() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const [white, primary800] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-primary-800",
+  ]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
   const params = useLocalSearchParams<{
@@ -608,20 +612,30 @@ export default function LoginScreen() {
               )
             }
           </form.Subscribe>
-          <FadeOutScaleDown
-            onPress={() => {
-              // Local logins have no credentials to edit and the saved folders
-              // pre-fill `paths`, so the form is never dirty on re-login; gate
-              // them on type instead. Remote servers keep the dirty guard.
-              const { isDirty, values } = form.state;
-              if (isDirty || values.type === "local") form.handleSubmit();
-            }}
-            className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 mt-4"
-          >
-            <Text className="text-primary-800 font-bold text-lg">
-              {t("auth.login.login")}
-            </Text>
-          </FadeOutScaleDown>
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <FadeOutScaleDown
+                onPress={() => {
+                  // Local logins have no credentials to edit and the saved
+                  // folders pre-fill `paths`, so the form is never dirty on
+                  // re-login; gate them on type instead. Remote servers keep
+                  // the dirty guard.
+                  const { isDirty, values } = form.state;
+                  if (isDirty || values.type === "local") form.handleSubmit();
+                }}
+                disabled={isSubmitting}
+                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 mt-4"
+              >
+                {isSubmitting ? (
+                  <Spinner color={primary800} />
+                ) : (
+                  <Text className="text-primary-800 font-bold text-lg">
+                    {t("auth.login.login")}
+                  </Text>
+                )}
+              </FadeOutScaleDown>
+            )}
+          </form.Subscribe>
           <form.Subscribe selector={(state) => state.values.type}>
             {(type) => {
               if (type === "navidrome")

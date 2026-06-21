@@ -27,6 +27,7 @@ import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -70,9 +71,10 @@ export default function InternetRadioStationActions({
   onActionStart,
   onDeleted,
 }: Props) {
-  const [gray200, emerald500] = Uniwind.getCSSVariable([
+  const [gray200, emerald500, primary800] = Uniwind.getCSSVariable([
     "--color-gray-200",
     "--color-emerald-500",
+    "--color-primary-800",
   ]) as string[];
   const { t } = useTranslation();
   const toast = useToast();
@@ -397,12 +399,21 @@ export default function InternetRadioStationActions({
               </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
-              onPress={isDirty && !isSubmitting ? form.handleSubmit : undefined}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 opacity-65"
+              onPress={form.handleSubmit}
+              disabled={
+                !isDirty ||
+                isSubmitting ||
+                doUpdateInternetRadioStation.isPending
+              }
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.save")}
-              </Text>
+              {doUpdateInternetRadioStation.isPending ? (
+                <Spinner color={primary800} />
+              ) : (
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.save")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

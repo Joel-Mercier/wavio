@@ -16,6 +16,7 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -32,7 +33,10 @@ import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const [white, emerald500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<Child[]>([]);
@@ -245,14 +249,21 @@ export default function ReorderPlaylistScreen() {
             {t("app.editPlaylist.title")}
           </Heading>
           <Box className="flex-1 items-end">
-            <FadeOutScaleDown onPress={canSave ? form.handleSubmit : undefined}>
-              <Text
-                className={cn("text-emerald-500 font-bold text-lg", {
-                  "opacity-75": !canSave,
-                })}
-              >
-                {t("app.shared.save")}
-              </Text>
+            <FadeOutScaleDown
+              onPress={form.handleSubmit}
+              disabled={!canSave || doUpdatePlaylist.isPending}
+            >
+              {doUpdatePlaylist.isPending ? (
+                <Spinner color={emerald500} />
+              ) : (
+                <Text
+                  className={cn("text-emerald-500 font-bold text-lg", {
+                    "opacity-75": !canSave,
+                  })}
+                >
+                  {t("app.shared.save")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </Box>
         </HStack>
