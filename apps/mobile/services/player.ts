@@ -1095,7 +1095,10 @@ export function restoreServerQueue(
 // Take over playback locally from a (now stopped) jukebox session: load the
 // current queue track and resume it at the position the server reached. Arms the
 // pending-resume seek so it re-applies once the media is ready.
-export function takeOverFromJukebox(positionSeconds: number, shouldPlay = true) {
+export function takeOverFromJukebox(
+  positionSeconds: number,
+  shouldPlay = true,
+) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (transition.kind !== "idle") abortTransition();

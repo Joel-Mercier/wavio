@@ -290,14 +290,39 @@ export const getSimilarSongs2 = async (
   return fakeEnvelope({ similarSongs2: sim2 });
 };
 
-// Jellyfin never advertises the sonicSimilarity OpenSubsonic extension, so the
-// client's fetchSimilarSongs helper never routes here — return an empty match
-// list for type-completeness of the dispatch layer.
+type AudioMuseSimilarTrack = {
+  item_id: string;
+  title?: string;
+  author?: string;
+  distance?: number;
+};
+
+// Audio-similarity matches from the AudioMuse-AI plugin's /AudioMuseAI endpoint.
+// Reached only when the active Jellyfin server advertises the synthesized
+// `sonicSimilarity` extension (see services/jellyfin/system.ts), so this is a
+// no-op cost on plugin-less servers. AudioMuse returns just id/title/artist/
+// distance, ranked nearest-first, so we hydrate the full BaseItems to build
+// proper Child entries (artwork, duration, album) and preserve that ranking.
 export const getSonicSimilarTracks = async (
-  _id: string,
-  _opts: { count?: number },
+  id: string,
+  { count }: { count?: number },
 ) => {
-  const sonicSimilarTracks: SonicSimilarTracks = { sonicMatch: [] };
+  const rsp = await jellyfinApiInstance.get<AudioMuseSimilarTrack[]>(
+    "/AudioMuseAI/similar_tracks",
+    { params: { item_id: id, n: count ?? 20 } },
+  );
+  const ids = (rsp.data ?? []).map((t) => t.item_id).filter(Boolean);
+  if (ids.length === 0) {
+    const sonicSimilarTracks: SonicSimilarTracks = { sonicMatch: [] };
+    return fakeEnvelope({ sonicSimilarTracks });
+  }
+  const items = await fetchItems({ Ids: ids.join(",") });
+  const byId = new Map((items.Items ?? []).map((item) => [item.Id, item]));
+  const sonicMatch = ids
+    .map((tid) => byId.get(tid))
+    .filter((item): item is BaseItemDto => !!item)
+    .map((item) => ({ entry: mapBaseItemToChild(item) }));
+  const sonicSimilarTracks: SonicSimilarTracks = { sonicMatch };
   return fakeEnvelope({ sonicSimilarTracks });
 };
 
