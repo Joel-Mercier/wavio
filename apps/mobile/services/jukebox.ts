@@ -34,7 +34,18 @@ async function refreshStatus() {
     const status = (rsp as { jukeboxStatus?: unknown }).jukeboxStatus as
       | import("@/services/openSubsonic/types").JukeboxStatus
       | undefined;
-    if (status) useJukebox.getState().setStatus(status);
+    if (status) {
+      useJukebox.getState().setStatus(status);
+      // The server auto-advances through the playlist on its own; reconcile the
+      // local queue index to the server's so the UI doesn't show a stale track.
+      const local = useQueue.getState().currentIndex ?? 0;
+      if (
+        typeof status.currentIndex === "number" &&
+        status.currentIndex !== local
+      ) {
+        useQueue.getState().setCurrentIndex(status.currentIndex);
+      }
+    }
   } catch {
     // Transient errors should not bounce the user out of jukebox mode.
   }
