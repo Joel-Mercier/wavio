@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useTranslation } from "react-i18next";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, {
@@ -15,6 +16,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
@@ -28,10 +30,12 @@ import {
 } from "@/components/ui/toast";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
+import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
@@ -52,10 +56,13 @@ export default function FloatingPlayer() {
   const toast = useToast();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-  const [white, primary] = Uniwind.getCSSVariable([
+  const [white, primary, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-primary-500",
+    "--color-emerald-500",
   ]) as string[];
+  const capabilities = useCapabilities();
+  const jukeboxActive = useJukebox((s) => s.active);
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
@@ -349,6 +356,17 @@ export default function FloatingPlayer() {
             </Animated.View>
           </HStack>
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
+            {capabilities.jukebox && !isRadio && !isPodcast && (
+              <Pressable
+                hitSlop={12}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  openJukeboxSheet();
+                }}
+              >
+                <Speaker size={24} color={jukeboxActive ? emerald500 : white} />
+              </Pressable>
+            )}
             {!playingTrack.isRadio && isPodcast && podcastSeries && (
               <AnimatedHeart
                 hitSlop={12}

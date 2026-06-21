@@ -105,7 +105,12 @@ export async function initPlayQueueSync(): Promise<void> {
   if (started) return;
   started = true;
 
-  if (useAppBase.getState().queueSyncPriority === "server") {
+  // Jukebox owns the queue server-side; restoring the saved play queue here
+  // would overwrite the live jukebox playlist (sourced via getJukebox instead).
+  if (
+    useAppBase.getState().queueSyncPriority === "server" &&
+    !useJukebox.getState().active
+  ) {
     await restorePlayQueueFromServer();
   }
 

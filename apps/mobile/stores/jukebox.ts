@@ -9,18 +9,23 @@ type State = {
   active: boolean;
   status: JukeboxStatus | null;
   gain: number;
+  // True when a jukebox session was found still playing on the server at app
+  // launch and we're prompting the user to resume control. Never persisted.
+  pendingResume: boolean;
 };
 
 type Actions = {
   setActive: (active: boolean) => void;
   setStatus: (status: JukeboxStatus | null) => void;
   setGain: (gain: number) => void;
+  setPendingResume: (pendingResume: boolean) => void;
 };
 
 const initialState: State = {
   active: false,
   status: null,
   gain: 0.5,
+  pendingResume: false,
 };
 
 const useJukeboxBase = create<State & Actions>()(
@@ -30,6 +35,7 @@ const useJukeboxBase = create<State & Actions>()(
       setActive: (active) => set({ active }),
       setStatus: (status) => set({ status }),
       setGain: (gain) => set({ gain }),
+      setPendingResume: (pendingResume) => set({ pendingResume }),
     }),
     {
       name: "jukeboxStore",

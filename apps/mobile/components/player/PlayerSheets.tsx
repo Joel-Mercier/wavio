@@ -24,7 +24,6 @@ import PodcastIcon from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { type RefObject, useEffect, useRef, useState } from "react";
@@ -34,7 +33,6 @@ import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import GestureSlider from "@/components/GestureSlider";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import LyricsDialog from "@/components/player/LyricsDialog";
@@ -54,22 +52,10 @@ import { usePlaybackProgress } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { downloadUrl } from "@/services/backend/streaming";
-import {
-  activate as activateJukebox,
-  deactivate as deactivateJukebox,
-  jukeboxSetGain,
-} from "@/services/jukebox";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
-import {
-  getCurrentTime,
-  isPlaying as isLocalPlaying,
-  pause as pauseLocal,
-  play as playLocal,
-  seekTo as seekLocal,
-} from "@/services/player";
+import { getCurrentTime } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useBookmarks from "@/stores/bookmarks";
-import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatSeconds } from "@/utils/date";
@@ -89,19 +75,18 @@ function SetBookmarkLabel() {
   );
 }
 
-// The player screen's five bottom sheets (track actions, sleep timer, artist
-// picker, share link, jukebox) and the lyrics dialog. The parent owns the
-// actions/jukebox sheet refs since their triggers live in the player chrome.
+// The player screen's bottom sheets (track actions, sleep timer, artist picker,
+// share link) and the lyrics dialog. The parent owns the actions sheet ref since
+// its trigger lives in the player chrome. The jukebox sheet lives app-wide (see
+// JukeboxSheet in app/(app)/_layout).
 export default function PlayerSheets({
   actionsSheetRef,
-  jukeboxSheetRef,
   playingTrack,
   lyrics,
   onAddFavoritePodcast,
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
-  jukeboxSheetRef: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   lyrics: StructuredLyrics | null;
   onAddFavoritePodcast: () => void;
@@ -131,12 +116,6 @@ export default function PlayerSheets({
     useBottomSheetBackHandler(bottomSheetArtistsModalRef);
   const { handleSheetPositionChange: handleShareSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetShareModalRef);
-  const { handleSheetPositionChange: handleJukeboxSheetPositionChange } =
-    useBottomSheetBackHandler(jukeboxSheetRef);
-  const jukeboxActive = useJukebox((s) => s.active);
-  const jukeboxGain = useJukebox((s) => s.gain);
-  const jukeboxStatus = useJukebox((s) => s.status);
-  const queueLength = useQueue((store) => store.queue.length);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -297,44 +276,6 @@ export default function PlayerSheets({
   const handleSleepTimerPress = () => {
     actionsSheetRef.current?.dismiss();
     sleepTimerSheetRef.current?.present();
-  };
-
-  const handleJukeboxToggle = async () => {
-    if (jukeboxActive) {
-      try {
-        const { position } = await deactivateJukebox();
-        if (position > 0) seekLocal(position);
-      } catch (e) {
-        logError(e);
-      }
-      jukeboxSheetRef.current?.dismiss();
-      return;
-    }
-    const position = getCurrentTime();
-    const wasPlaying = isLocalPlaying();
-    pauseLocal();
-    try {
-      await activateJukebox({ position, autoplay: wasPlaying });
-    } catch (error) {
-      logError(error);
-      if (wasPlaying) playLocal();
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.player.jukeboxErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
-  const handleJukeboxGainChange = (value: number) => {
-    jukeboxSetGain(value).catch(() => {});
   };
 
   const handleSleepPresetPress = (minutes: number) => {
@@ -981,68 +922,6 @@ export default function PlayerSheets({
                 </Text>
               </FadeOutScaleDown>
             </HStack>
-          </Box>
-        </BottomSheetView>
-      </BottomSheetModalComponent>
-      <BottomSheetModalComponent
-        ref={jukeboxSheetRef}
-        onChange={handleJukeboxSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center mb-6">
-              <Speaker size={24} color={jukeboxActive ? emerald500 : gray200} />
-              <Heading
-                className="ml-4 text-white font-normal"
-                size="lg"
-                numberOfLines={1}
-              >
-                {t("app.player.jukebox")}
-              </Heading>
-            </HStack>
-            <VStack className="gap-y-6">
-              <FadeOutScaleDown onPress={handleJukeboxToggle}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: jukeboxActive ? emerald500 : gray200,
-                  }}
-                >
-                  {jukeboxActive
-                    ? t("app.player.jukeboxOn")
-                    : t("app.player.jukeboxOff")}
-                </Text>
-              </FadeOutScaleDown>
-              {jukeboxActive && (
-                <VStack className="gap-y-2">
-                  <Text className="text-sm text-primary-100">
-                    {t("app.player.jukeboxGain")}
-                  </Text>
-                  <GestureSlider
-                    value={jukeboxGain}
-                    onScrub={handleJukeboxGainChange}
-                  />
-                  {jukeboxStatus && (
-                    <Text className="text-sm text-primary-100 mt-2">
-                      {t("app.player.jukeboxStatus", {
-                        state: jukeboxStatus.playing
-                          ? t("app.player.jukeboxStatePlaying")
-                          : t("app.player.jukeboxStatePaused"),
-                        index: (jukeboxStatus.currentIndex ?? 0) + 1,
-                        total: queueLength,
-                      })}
-                    </Text>
-                  )}
-                </VStack>
-              )}
-            </VStack>
           </Box>
         </BottomSheetView>
       </BottomSheetModalComponent>

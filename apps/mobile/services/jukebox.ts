@@ -1,6 +1,7 @@
 import {
   addJukebox,
   clearJukebox,
+  getJukebox,
   setGainJukebox,
   setJukebox,
   skipJukebox,
@@ -8,8 +9,15 @@ import {
   statusJukebox,
   stopJukebox,
 } from "@/services/backend/jukebox";
+import type {
+  JukeboxPlaylist,
+  JukeboxStatus,
+} from "@/services/openSubsonic/types";
+import { restoreServerQueue, takeOverFromJukebox } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
+import { childToTrack } from "@/utils/childToTrack";
+import { logError } from "@/utils/log";
 
 type ActivateOptions = {
   position: number;
@@ -28,12 +36,15 @@ function currentIndex(): number {
   return useQueue.getState().currentIndex ?? 0;
 }
 
+function clampIndex(index: number | undefined, length: number): number {
+  if (typeof index !== "number" || length === 0) return 0;
+  return Math.max(0, Math.min(index, length - 1));
+}
+
 async function refreshStatus() {
   try {
     const rsp = await statusJukebox();
-    const status = (rsp as { jukeboxStatus?: unknown }).jukeboxStatus as
-      | import("@/services/openSubsonic/types").JukeboxStatus
-      | undefined;
+    const status = (rsp as { jukeboxStatus?: JukeboxStatus }).jukeboxStatus;
     if (status) {
       useJukebox.getState().setStatus(status);
       // The server auto-advances through the playlist on its own; reconcile the
@@ -51,9 +62,69 @@ async function refreshStatus() {
   }
 }
 
+// Pull the authoritative playlist from the server (another device may have
+// added/reordered tracks) and mirror it locally. Cheap when nothing changed:
+// only rebuilds the queue when the server's id list differs from ours.
+async function reconcileFromServer() {
+  let playlist: JukeboxPlaylist | undefined;
+  try {
+    const rsp = await getJukebox();
+    playlist = (rsp as { jukeboxPlaylist?: JukeboxPlaylist }).jukeboxPlaylist;
+  } catch {
+    return;
+  }
+  if (!playlist) return;
+  try {
+    applyServerPlaylist(playlist);
+  } catch (error) {
+    logError(error);
+  }
+}
+
+function applyServerPlaylist(playlist: JukeboxPlaylist) {
+  useJukebox.getState().setStatus({
+    currentIndex: playlist.currentIndex,
+    gain: playlist.gain,
+    playing: playlist.playing,
+    position: playlist.position,
+  });
+
+  const serverIds = (playlist.entry ?? []).map((e) => e.id);
+  const localIds = readQueueIds();
+  const sameOrder =
+    serverIds.length === localIds.length &&
+    serverIds.every((id, i) => id === localIds[i]);
+
+  if (sameOrder) {
+    const local = useQueue.getState().currentIndex ?? 0;
+    if (
+      typeof playlist.currentIndex === "number" &&
+      playlist.currentIndex !== local
+    ) {
+      useQueue.getState().setCurrentIndex(playlist.currentIndex);
+    }
+    return;
+  }
+
+  if (serverIds.length === 0) {
+    // Track our snapshot first so the queue subscription doesn't echo the clear
+    // back to the server.
+    lastKnownQueueIds = [];
+    useQueue.getState().clearQueue();
+    return;
+  }
+
+  const tracks = (playlist.entry ?? []).map((entry) => childToTrack(entry));
+  const idx = clampIndex(playlist.currentIndex, tracks.length);
+  // Set before mutating the queue so subscribeQueue sees no change and skips
+  // pushing the just-pulled playlist straight back to the server.
+  lastKnownQueueIds = serverIds;
+  restoreServerQueue(tracks, idx, playlist.position ?? 0);
+}
+
 function startPolling(intervalMs: number) {
   stopPolling();
-  pollHandle = setInterval(refreshStatus, intervalMs);
+  pollHandle = setInterval(reconcileFromServer, intervalMs);
 }
 
 function stopPolling() {
@@ -105,6 +176,63 @@ export async function activate(opts: ActivateOptions): Promise<void> {
   startPolling(3000);
 }
 
+// Re-establish a jukebox session after an app restart: the server keeps playing
+// while `active` was persisted true, but polling and the queue subscription
+// only live for the lifetime of the JS runtime. Pulls the live playlist and
+// resumes observation without re-issuing `set` (which would reset the server).
+export async function reattach(): Promise<void> {
+  if (!useJukebox.getState().active) return;
+  await reconcileFromServer();
+  subscribeQueue();
+  startPolling(3000);
+}
+
+// Stop the server session and resume playback on this device from where the
+// jukebox left off. The local queue is expected to already mirror the server
+// (reconciled on launch / when the resume prompt was raised).
+export async function takeOverLocally(): Promise<void> {
+  // Carry over the jukebox's play/paused state so transferring to this device
+  // doesn't silently stop (or unexpectedly start) playback.
+  const wasPlaying = useJukebox.getState().status?.playing ?? true;
+  const { position } = await deactivate();
+  takeOverFromJukebox(position, wasPlaying);
+}
+
+// On app launch, if a jukebox session was persisted active, check whether the
+// server is still hosting it. If so, mirror the live playlist and raise the
+// resume prompt; if the playlist is gone, drop the stale local flag.
+export async function initJukeboxOnLaunch(): Promise<void> {
+  if (!useJukebox.getState().active) return;
+  let playlist: JukeboxPlaylist | undefined;
+  try {
+    const rsp = await getJukebox();
+    playlist = (rsp as { jukeboxPlaylist?: JukeboxPlaylist }).jukeboxPlaylist;
+  } catch {
+    // Server unreachable at launch — keep the session for a later retry rather
+    // than tearing it down on a transient error.
+    return;
+  }
+  const entries = playlist?.entry ?? [];
+  if (!playlist || entries.length === 0) {
+    await deactivate();
+    return;
+  }
+  // Raise the resume prompt before mirroring the queue so a rebuild hiccup can
+  // never suppress the dialog.
+  useJukebox.getState().setStatus({
+    currentIndex: playlist.currentIndex,
+    gain: playlist.gain,
+    playing: playlist.playing,
+    position: playlist.position,
+  });
+  useJukebox.getState().setPendingResume(true);
+  try {
+    applyServerPlaylist(playlist);
+  } catch (error) {
+    logError(error);
+  }
+}
+
 export async function deactivate(): Promise<{ position: number }> {
   const lastPosition = useJukebox.getState().status?.position ?? 0;
   try {
@@ -141,17 +269,15 @@ export async function jukeboxTogglePlayPause() {
 }
 
 export async function jukeboxSkipNext() {
-  const q = useQueue.getState();
-  q.next();
-  const idx = q.currentIndex ?? 0;
+  useQueue.getState().next();
+  const idx = useQueue.getState().currentIndex ?? 0;
   await skipJukebox(idx, 0);
   await refreshStatus();
 }
 
 export async function jukeboxSkipPrevious() {
-  const q = useQueue.getState();
-  q.previous();
-  const idx = q.currentIndex ?? 0;
+  useQueue.getState().previous();
+  const idx = useQueue.getState().currentIndex ?? 0;
   await skipJukebox(idx, 0);
   await refreshStatus();
 }
@@ -183,4 +309,7 @@ export async function jukeboxAdd(ids: string[]) {
   await refreshStatus();
 }
 
-export { refreshStatus as jukeboxRefreshStatus };
+export {
+  reconcileFromServer as jukeboxReconcileFromServer,
+  refreshStatus as jukeboxRefreshStatus,
+};

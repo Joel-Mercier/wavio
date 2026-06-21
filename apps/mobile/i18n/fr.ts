@@ -1020,12 +1020,18 @@ export default {
         jukebox: "Jukebox",
         jukeboxOn: "Activé",
         jukeboxOff: "Désactivé",
+        jukeboxDeviceThis: "Cet appareil",
         jukeboxGain: "Volume",
         jukeboxStatus: "{{state}} · {{index}}/{{total}}",
         jukeboxStatePlaying: "Lecture",
         jukeboxStatePaused: "En pause",
         jukeboxErrorMessage:
           "Impossible de se connecter au jukebox du serveur. Vérifiez vos permissions.",
+        jukeboxResumeTitle: "Reprendre le jukebox ?",
+        jukeboxResumeMessage:
+          "Une session jukebox est toujours en lecture sur le serveur. Reprendre le contrôle ou lire sur cet appareil ?",
+        jukeboxResumeResume: "Reprendre le contrôle",
+        jukeboxResumePlayHere: "Lire ici",
       },
       shares: {
         title: "Partages",

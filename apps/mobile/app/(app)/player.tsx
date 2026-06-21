@@ -27,6 +27,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
+import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
 import PlayerSheets from "@/components/player/PlayerSheets";
@@ -101,7 +102,6 @@ export default function PlayerScreen() {
   const router = useRouter();
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
-  const jukeboxSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
@@ -207,7 +207,7 @@ export default function PlayerScreen() {
   }, []);
 
   const handleJukeboxPress = () => {
-    jukeboxSheetRef.current?.present();
+    openJukeboxSheet();
   };
 
   const handlePlayPausePress = () => {
@@ -601,7 +601,6 @@ export default function PlayerScreen() {
       </VStack>
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
-        jukeboxSheetRef={jukeboxSheetRef}
         playingTrack={playingTrack ?? null}
         lyrics={lyrics}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}

@@ -993,12 +993,18 @@ export default {
         jukebox: "Jukebox",
         jukeboxOn: "On",
         jukeboxOff: "Off",
+        jukeboxDeviceThis: "This device",
         jukeboxGain: "Volume",
         jukeboxStatus: "{{state}} · {{index}}/{{total}}",
         jukeboxStatePlaying: "Playing",
         jukeboxStatePaused: "Paused",
         jukeboxErrorMessage:
           "Could not connect to the server's jukebox. Check your permissions.",
+        jukeboxResumeTitle: "Resume jukebox?",
+        jukeboxResumeMessage:
+          "A jukebox session is still playing on the server. Resume control or play on this device?",
+        jukeboxResumeResume: "Resume control",
+        jukeboxResumePlayHere: "Play here",
       },
       shares: {
         title: "Shares",

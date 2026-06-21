@@ -1092,6 +1092,30 @@ export function restoreServerQueue(
   }
 }
 
+// Take over playback locally from a (now stopped) jukebox session: load the
+// current queue track and resume it at the position the server reached. Arms the
+// pending-resume seek so it re-applies once the media is ready.
+export function takeOverFromJukebox(positionSeconds: number, shouldPlay = true) {
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  if (transition.kind !== "idle") abortTransition();
+  if (shouldPlay) {
+    loadAndPlay(current);
+  } else {
+    loadTrack(activeSlot, current, false);
+  }
+  const pos = Math.max(0, Math.floor(positionSeconds));
+  if (pos > 0) {
+    pendingResumeId = current.id;
+    pendingResumeAt = pos;
+    try {
+      players[activeSlot].seekTo(pos);
+    } catch (error) {
+      logSwallowed("seek to jukebox takeover position", error);
+    }
+  }
+}
+
 export function togglePlayPause() {
   if (useJukebox.getState().active) {
     jukeboxTogglePlayPause().catch(() => {});

@@ -6,6 +6,8 @@ import AppErrorBoundary from "@/components/AppErrorBoundary";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
+import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
+import JukeboxSheet from "@/components/player/JukeboxSheet";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import {
   persistOptions,
@@ -14,6 +16,7 @@ import {
 } from "@/config/queryClient";
 import { getAuthScope } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
+import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
 import { resetPlayerForScopeChange } from "@/services/player";
 import {
@@ -116,6 +119,9 @@ export default function AppLayout() {
     useQueue.persist.onFinishHydration(() => {
       void initPlayQueueSync();
       void loadResumePositions();
+      // If a jukebox session was playing when the app was last closed, re-check
+      // the server and prompt the user to resume control.
+      void initJukeboxOnLaunch();
     });
 
     // Confirm the active server is reachable (covers cold start and server
@@ -181,6 +187,8 @@ export default function AppLayout() {
       <FloatingPlayer />
       <OfflineStarredAutoSync />
       <ServerExtensionsSync />
+      <JukeboxResumeDialog />
+      <JukeboxSheet />
     </>
   );
 }
