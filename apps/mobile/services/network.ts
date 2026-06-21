@@ -21,6 +21,11 @@ let serverReachable = true;
 const PROBE_TIMEOUT_MS = 4000;
 // While the server is unreachable, re-probe on this cadence to detect recovery.
 const RECOVERY_POLL_MS = 12000;
+// While the server *is* reachable, probe on this (slower) cadence so a server
+// that dies while the app sits open and foregrounded — no offline→online
+// transition, no foreground event, no stream to fail — is still noticed instead
+// of leaving the UI optimistically "online" until the next user action.
+const HEARTBEAT_MS = 30000;
 // A single failed probe right after reconnecting (or a brief server hiccup) is
 // usually just the network not being routable yet, not the server being gone.
 // Stay optimistically reachable and re-probe quickly after the first failure;
@@ -39,6 +44,7 @@ const onlineListeners = new Set<() => void>();
 const reachableListeners = new Set<() => void>();
 
 let recoveryTimer: ReturnType<typeof setInterval> | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let quickRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
@@ -108,6 +114,9 @@ function setServerReachable(value: boolean) {
   if (value) {
     stopRecoveryPoll();
   } else {
+    // Unreachable now owns the polling: hand off from the heartbeat to the
+    // faster recovery poll so we don't run two timers probing the same server.
+    stopHeartbeat();
     startRecoveryPoll();
   }
 }
@@ -123,6 +132,24 @@ function stopRecoveryPoll() {
   if (recoveryTimer) {
     clearInterval(recoveryTimer);
     recoveryTimer = null;
+  }
+}
+
+// Steady-state poll while the server is reachable, so a server that goes away
+// while the app is idle and foregrounded gets caught. Started from a successful
+// probe; stopped once the server is confirmed unreachable (recovery poll takes
+// over), when the device drops offline, or on logout / server switch.
+function startHeartbeat() {
+  if (heartbeatTimer) return;
+  heartbeatTimer = setInterval(() => {
+    void probeServer();
+  }, HEARTBEAT_MS);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
   }
 }
 
@@ -180,6 +207,10 @@ export async function probeServer(): Promise<void> {
     consecutiveProbeFailures = 0;
     cancelQuickReprobe();
     setServerReachable(true);
+    // Keep probing on the slow heartbeat cadence so a later outage is noticed
+    // even with no foreground / connectivity event to trigger a probe.
+    // Idempotent, so repeated successful probes don't stack timers.
+    startHeartbeat();
   } catch {
     consecutiveProbeFailures += 1;
     if (consecutiveProbeFailures >= FAILURES_BEFORE_UNREACHABLE) {
@@ -209,6 +240,7 @@ export async function probeServer(): Promise<void> {
 // first so the next session starts optimistic.
 function disconnectUnreachable() {
   stopRecoveryPoll();
+  stopHeartbeat();
   cancelQuickReprobe();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
@@ -223,6 +255,7 @@ function disconnectUnreachable() {
 // probe should be kicked by the caller after the new credentials are in place.
 export function resetServerReachable(): void {
   stopRecoveryPoll();
+  stopHeartbeat();
   cancelQuickReprobe();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
@@ -257,6 +290,7 @@ function applyState(state: NetInfoState) {
       // count so a brief offline spell doesn't carry over and trigger an
       // immediate logout once connectivity returns.
       stopRecoveryPoll();
+      stopHeartbeat();
       cancelQuickReprobe();
       consecutiveProbeFailures = 0;
     }
