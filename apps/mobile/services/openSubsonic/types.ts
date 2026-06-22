@@ -164,6 +164,7 @@ export interface Child {
   year?: number;
   mediaType?: string;
   channelCount?: number;
+  samplingRate?: number;
   played?: Date;
   genres?: { name: string }[];
   replayGain?: {

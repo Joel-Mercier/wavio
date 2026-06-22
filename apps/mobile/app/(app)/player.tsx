@@ -53,6 +53,7 @@ import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { formatAudioQuality } from "@/utils/audioQuality";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -126,6 +127,7 @@ export default function PlayerScreen() {
   );
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const audioQuality = formatAudioQuality(playingTrack ?? null);
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
@@ -366,9 +368,19 @@ export default function PlayerScreen() {
           >
             <ChevronDown size={24} color="white" />
           </FadeOutScaleDown>
-          <Text className="text-white font-bold uppercase tracking-wider">
-            {t("app.player.title")}
-          </Text>
+          <VStack className="items-center flex-1 mx-2">
+            <Text className="text-white font-bold uppercase tracking-wider">
+              {t("app.player.title")}
+            </Text>
+            {audioQuality && (
+              <Text
+                className="text-primary-200 text-xs tracking-wide mt-0.5"
+                numberOfLines={1}
+              >
+                {audioQuality}
+              </Text>
+            )}
+          </VStack>
           <FadeOutScaleDown
             testID="player-menu-button"
             onPress={handlePresentModalPress}

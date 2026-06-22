@@ -76,6 +76,7 @@ export function mapRowToChild(row: TrackRow): Child {
     duration:
       row.duration_ms != null ? Math.round(row.duration_ms / 1000) : undefined,
     bitRate: row.bitrate != null ? Math.round(row.bitrate / 1000) : undefined,
+    samplingRate: row.sample_rate ?? undefined,
     path: row.path ?? undefined,
     discNumber: row.disc_number ?? undefined,
     created: new Date(row.indexed_at),

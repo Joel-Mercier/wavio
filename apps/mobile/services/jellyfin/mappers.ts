@@ -59,6 +59,7 @@ export function mapBaseItemToChild(item: BaseItemDto): Child {
     year: item.ProductionYear,
     suffix: (source?.Container ?? item.Container)?.split(",")[0]?.trim(),
     bitRate: bitRateBps ? Math.round(bitRateBps / 1000) : undefined,
+    samplingRate: audioStream?.SampleRate,
     channelCount: audioStream?.Channels,
     size: source?.Size,
     path: source?.Path ?? item.Path,
