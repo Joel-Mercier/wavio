@@ -82,6 +82,17 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a Cloudflare 530 (origin unreachable) even while the server still reads as reachable", () => {
+    const error = new axios.AxiosError("Request failed with status code 530");
+    error.response = { status: 530 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "/rest/getAlbumList2",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("suppresses a Subsonic 'not authorized' (code 50) denial", () => {
     reportError(
       { code: 50, message: "user not authorized" },

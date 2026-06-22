@@ -73,12 +73,20 @@ export type ReportContext = {
 //   and the reachability probe in services/network.ts. Real *application*
 //   failures come back with an HTTP status (4xx/5xx) or a domain error envelope,
 //   and those are reported.
+// - HTTP 530: a non-standard, Cloudflare-emitted status meaning the edge is up
+//   but couldn't reach the origin (Argo/Tunnel down, origin DNS error). For the
+//   self-hosted servers behind Cloudflare this app talks to, it's the same class
+//   as a connection error — the box is unreachable, not buggy — but it arrives
+//   *with* a response so the `!error.response` check above misses it. Suppress it
+//   directly instead of waiting for the reachability probe to flip, which would
+//   otherwise let every concurrent request to a downed origin report its own 530.
 //
 // Scoped to the error object itself (no device-online check) so `logError` can
 // reuse it without dropping every log while offline.
 export function isNetworkNoise(error: unknown): boolean {
   if (axios.isCancel(error)) return true;
   if (axios.isAxiosError(error) && !error.response) return true;
+  if (axios.isAxiosError(error) && error.response?.status === 530) return true;
   return false;
 }
 
