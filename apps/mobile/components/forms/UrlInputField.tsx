@@ -1,6 +1,7 @@
 import { InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
+import { ChevronsUpDown } from "lucide-react-native";
 
 interface UrlInputFieldProps {
   value: string;
@@ -36,8 +37,12 @@ export default function UrlInputField({
   return (
     <>
       <InputSlot>
-        <Pressable onPress={toggleProtocol} className="pr-2 justify-center">
+        <Pressable
+          onPress={toggleProtocol}
+          className="pr-2 flex-row items-center gap-0.5"
+        >
           <Text className="text-white text-md">{protocol}</Text>
+          <ChevronsUpDown size={13} color="white" style={{ opacity: 0.8 }} />
         </Pressable>
       </InputSlot>
       {/* No keyboardType="url": its Android textUri inputType hides the text caret on some keyboards */}
