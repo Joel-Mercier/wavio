@@ -175,4 +175,25 @@ describe("reportError classifier", () => {
     reportError(error, { area: "player" });
     expect(mockCapture).toHaveBeenCalledTimes(1);
   });
+
+  it("does not re-report an expected failure when it later reaches a context-poor reporter", () => {
+    const error = { code: 50, message: "User is not authorized" };
+    // Service chokepoint: full context → classified as expected (code 50) and
+    // suppressed, but marked on first sight.
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "/rest/startScan",
+      status: 50,
+    });
+    // React Query cache safety net: only a query key, no status → can no longer
+    // tell it was expected, but the first-sight mark makes it skip rather than
+    // re-capture the noise.
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "startScan",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
 });

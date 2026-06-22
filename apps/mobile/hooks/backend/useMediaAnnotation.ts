@@ -84,6 +84,9 @@ export const useStar = () => {
       albumId?: string;
       artistId?: string;
     }) => {
+      if (!params.id && !params.albumId && !params.artistId) {
+        throw new Error("star requires an id, albumId or artistId");
+      }
       return star(params);
     },
     onSuccess: (_data, params) => {
@@ -107,6 +110,9 @@ export const useUnstar = () => {
       albumId?: string;
       artistId?: string;
     }) => {
+      if (!params.id && !params.albumId && !params.artistId) {
+        throw new Error("unstar requires an id, albumId or artistId");
+      }
       return unstar(params);
     },
     onSuccess: (_data, params) => {

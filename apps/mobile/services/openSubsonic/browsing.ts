@@ -30,7 +30,12 @@ export const getMusicFolders = async () =>
   subsonicRequest<{ musicFolders: MusicFolders }>("/rest/getMusicFolders");
 
 export const getAlbum = async (id: string) =>
-  subsonicRequest<{ album: AlbumWithSongsID3 }>("/rest/getAlbum", { id });
+  subsonicRequest<{ album: AlbumWithSongsID3 }>(
+    "/rest/getAlbum",
+    { id },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getAlbumInfo = async (id: string) =>
   subsonicRequest<{ albumInfo: AlbumInfo }>("/rest/getAlbumInfo", { id });
@@ -39,7 +44,12 @@ export const getAlbumInfo2 = async (id: string) =>
   subsonicRequest<{ albumInfo: AlbumInfo }>("/rest/getAlbumInfo2", { id });
 
 export const getArtist = async (id: string) =>
-  subsonicRequest<{ artist: ArtistWithAlbumsID3 }>("/rest/getArtist", { id });
+  subsonicRequest<{ artist: ArtistWithAlbumsID3 }>(
+    "/rest/getArtist",
+    { id },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getArtistInfo = async (id: string) =>
   subsonicRequest<{ artistInfo: ArtistInfo }>("/rest/getArtistInfo", { id });
