@@ -57,7 +57,10 @@ export default function CreatePlaylistFromQueueDialog({
 
   const form = useForm({
     defaultValues: { name: "" },
-    validators: { onChange: createPlaylistSchema },
+    validators: {
+      onMount: createPlaylistSchema,
+      onChange: createPlaylistSchema,
+    },
     onSubmit: async ({ value }) => {
       doCreatePlaylist.mutate(
         { name: value.name.trim(), songId: trackIds },
@@ -148,11 +151,20 @@ export default function CreatePlaylistFromQueueDialog({
             </Text>
           </FadeOutScaleDown>
           <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting] as const}
+            selector={(state) =>
+              [
+                state.canSubmit,
+                state.isSubmitting,
+                state.values.name.trim().length > 0,
+              ] as const
+            }
           >
-            {([canSubmit, isSubmitting]) => {
+            {([canSubmit, isSubmitting, hasName]) => {
               const disabled =
-                !canSubmit || isSubmitting || doCreatePlaylist.isPending;
+                !canSubmit ||
+                !hasName ||
+                isSubmitting ||
+                doCreatePlaylist.isPending;
               return (
                 <FadeOutScaleDown
                   onPress={disabled ? undefined : () => form.handleSubmit()}

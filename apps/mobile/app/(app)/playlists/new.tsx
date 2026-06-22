@@ -52,6 +52,7 @@ export default function NewPlaylistScreen() {
       name: "",
     },
     validators: {
+      onMount: newPlaylistSchema,
       onChange: newPlaylistSchema,
     },
     onSubmit: async ({ value }) => {
@@ -160,19 +161,39 @@ export default function NewPlaylistScreen() {
                 {t("app.shared.cancel")}
               </Text>
             </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={form.handleSubmit}
-              disabled={doCreatePlaylist.isPending}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            <form.Subscribe
+              selector={(state) =>
+                [
+                  state.canSubmit,
+                  state.isSubmitting,
+                  state.values.name.trim().length > 0,
+                ] as const
+              }
             >
-              {doCreatePlaylist.isPending ? (
-                <Spinner color={primary800} />
-              ) : (
-                <Text className="text-primary-800 font-bold text-lg">
-                  {t("app.shared.create")}
-                </Text>
-              )}
-            </FadeOutScaleDown>
+              {([canSubmit, isSubmitting, hasName]) => {
+                const disabled =
+                  !canSubmit ||
+                  !hasName ||
+                  isSubmitting ||
+                  doCreatePlaylist.isPending;
+                return (
+                  <FadeOutScaleDown
+                    onPress={disabled ? undefined : () => form.handleSubmit()}
+                    disabled={disabled}
+                    disabledOpacity={0.5}
+                    className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+                  >
+                    {isSubmitting || doCreatePlaylist.isPending ? (
+                      <Spinner color={primary800} />
+                    ) : (
+                      <Text className="text-primary-800 font-bold text-lg">
+                        {t("app.shared.create")}
+                      </Text>
+                    )}
+                  </FadeOutScaleDown>
+                );
+              }}
+            </form.Subscribe>
           </HStack>
         </VStack>
       </KeyboardAvoidingView>
