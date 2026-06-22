@@ -7,6 +7,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
+import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
@@ -31,8 +32,9 @@ export default function PlaylistEditSongListItem({
     "--color-white",
   ]) as string[];
   return (
-    <HStack
-      className={cn("items-center justify-between px-6 py-4", {
+    <Pressable
+      onLongPress={beginDrag}
+      className={cn("flex-row items-center justify-between px-6 py-4", {
         "bg-primary-600": isActive,
       })}
     >
@@ -69,6 +71,6 @@ export default function PlaylistEditSongListItem({
       <FadeOutScaleDown onPress={beginDrag}>
         <Menu size={24} color={gray400} />
       </FadeOutScaleDown>
-    </HStack>
+    </Pressable>
   );
 }

@@ -7,6 +7,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
+import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { QueueTrack } from "@/stores/queue";
@@ -32,8 +33,9 @@ export default function QueueEditTrackItem({
     "--color-white",
   ]) as string[];
   return (
-    <HStack
-      className={cn("items-center justify-between py-2", {
+    <Pressable
+      onLongPress={beginDrag}
+      className={cn("flex-row items-center justify-between py-2", {
         "bg-primary-600": isActive,
       })}
       style={{ height: 70 }}
@@ -71,6 +73,6 @@ export default function QueueEditTrackItem({
       <FadeOutScaleDown onPress={beginDrag}>
         <Menu size={24} color={gray400} />
       </FadeOutScaleDown>
-    </HStack>
+    </Pressable>
   );
 }
