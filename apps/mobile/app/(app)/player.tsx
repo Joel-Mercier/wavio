@@ -49,6 +49,7 @@ import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
@@ -100,6 +101,7 @@ export default function PlayerScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const router = useRouter();
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
@@ -518,6 +520,7 @@ export default function PlayerScreen() {
                 <AnimatedHeart
                   testID="player-favorite-button"
                   filled={!!playingTrack?.starred}
+                  disabled={!isOnline}
                   hitSlop={ICON_HIT_SLOP}
                   onPress={
                     playingTrack?.starred
@@ -588,7 +591,11 @@ export default function PlayerScreen() {
                 style={{ width: 24, height: 24, tintColor: "white" }}
               />
               {capabilities.jukebox && !isRadio && !castSession && (
-                <FadeOut hitSlop={ICON_HIT_SLOP} onPress={handleJukeboxPress}>
+                <FadeOut
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={handleJukeboxPress}
+                  disabled={!isOnline}
+                >
                   <Speaker
                     size={24}
                     color={jukeboxActive ? emerald500 : "white"}

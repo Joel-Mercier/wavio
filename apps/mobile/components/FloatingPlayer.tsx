@@ -359,6 +359,8 @@ export default function FloatingPlayer() {
             {capabilities.jukebox && !isRadio && !isPodcast && (
               <Pressable
                 hitSlop={12}
+                disabled={!isOnline}
+                style={{ opacity: isOnline ? 1 : 0.6 }}
                 onPress={(e) => {
                   e.stopPropagation?.();
                   openJukeboxSheet();
@@ -382,6 +384,7 @@ export default function FloatingPlayer() {
               <AnimatedHeart
                 hitSlop={12}
                 filled={!!playingTrack.starred}
+                disabled={!isOnline}
                 onPress={
                   playingTrack.starred
                     ? handleUnfavoritePress

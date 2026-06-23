@@ -1,5 +1,5 @@
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
-import { type ComponentProps, memo, useCallback } from "react";
+import { type ComponentProps, memo, useCallback, useEffect } from "react";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -42,8 +42,14 @@ export const AnimatedHeart = memo(function AnimatedHeart({
   const filledColor = filledColorProp ?? emerald500;
   const emptyColor = emptyColorProp ?? white;
 
+  // Dim to a greyed resting state when disabled, mirroring FadeOutScaleDown.
+  const restingOpacity = disabled ? 0.6 : 1;
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
+  const opacity = useSharedValue(restingOpacity);
+
+  useEffect(() => {
+    opacity.value = withTiming(restingOpacity, { duration: 100 });
+  }, [restingOpacity, opacity]);
 
   const handlePress = useCallback(() => {
     if (disabled) return;
@@ -60,8 +66,8 @@ export const AnimatedHeart = memo(function AnimatedHeart({
   }, [opacity]);
 
   const handlePressOut = useCallback(() => {
-    opacity.value = withTiming(1, { duration: 100 });
-  }, [opacity]);
+    opacity.value = withTiming(restingOpacity, { duration: 100 });
+  }, [opacity, restingOpacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

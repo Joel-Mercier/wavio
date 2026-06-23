@@ -82,6 +82,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -148,6 +149,7 @@ export default function ArtistDetail() {
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
@@ -528,6 +530,7 @@ export default function ArtistDetail() {
                 <HStack className="items-center gap-x-4">
                   <AnimatedHeart
                     filled={!!data?.artist?.starred}
+                    disabled={!isOnline}
                     onPress={
                       data?.artist?.starred
                         ? handleUnfavoritePress
@@ -858,7 +861,10 @@ export default function ArtistDetail() {
             </HStack>
             <VStack className="mt-6 gap-y-8">
               {capabilities.setRating && (
-                <FadeOutScaleDown onPress={handleRatingPress}>
+                <FadeOutScaleDown
+                  onPress={handleRatingPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center justify-between">
                     <HStack className="items-center">
                       <Star size={24} color={gray200} />
@@ -877,7 +883,10 @@ export default function ArtistDetail() {
                 </FadeOutScaleDown>
               )}
               {data?.artist?.musicBrainzId && (
-                <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                <FadeOutScaleDown
+                  onPress={handleMusicBrainzPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <MusicBrainz width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -887,7 +896,10 @@ export default function ArtistDetail() {
                 </FadeOutScaleDown>
               )}
               {data?.artist?.name && (
-                <FadeOutScaleDown onPress={handleLastFMPress}>
+                <FadeOutScaleDown
+                  onPress={handleLastFMPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <LastFM width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">

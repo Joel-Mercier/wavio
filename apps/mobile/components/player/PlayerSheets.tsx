@@ -48,9 +48,14 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import {
+  useIsCollectionAvailableOffline,
+  useIsDetailCached,
+} from "@/hooks/offline";
 import { usePlaybackProgress } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
@@ -99,6 +104,7 @@ export default function PlayerSheets({
   ]) as string[];
   const { t } = useTranslation();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -156,6 +162,18 @@ export default function PlayerSheets({
       ? [{ id: playingTrack.artistId, name: playingTrack.artist ?? "" }]
       : [];
   const hasMultipleArtists = trackArtists.length > 1;
+  const primaryArtistId = trackArtists[0]?.id ?? playingTrack?.artistId;
+  const albumDetailCached = useIsDetailCached(
+    playingTrack?.albumId ? ["album", playingTrack.albumId] : null,
+  );
+  const albumDownloaded = useIsCollectionAvailableOffline(
+    "album",
+    playingTrack?.albumId,
+  );
+  const albumReachable = albumDetailCached || albumDownloaded;
+  const artistReachable = useIsDetailCached(
+    primaryArtistId ? ["artist", primaryArtistId] : null,
+  );
 
   useEffect(() => {
     if (clipoardCopyDone) {
@@ -645,7 +663,10 @@ export default function PlayerSheets({
               </VStack>
             ) : (
               <VStack className="mt-6 gap-y-8">
-                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
+                <FadeOutScaleDown
+                  onPress={handleAddToPlaylistPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <PlusCircle size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -653,7 +674,10 @@ export default function PlayerSheets({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleGoToArtistPress}>
+                <FadeOutScaleDown
+                  onPress={handleGoToArtistPress}
+                  disabled={!artistReachable}
+                >
                   <HStack className="items-center">
                     <User size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -664,7 +688,10 @@ export default function PlayerSheets({
                   </HStack>
                 </FadeOutScaleDown>
                 {playingTrack?.albumId && (
-                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
+                  <FadeOutScaleDown
+                    onPress={handleGoToAlbumPress}
+                    disabled={!albumReachable}
+                  >
                     <HStack className="items-center">
                       <Disc3 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -704,7 +731,10 @@ export default function PlayerSheets({
                   </HStack>
                 </FadeOutScaleDown>
                 {capabilities.similarSongs && (
-                  <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                  <FadeOutScaleDown
+                    onPress={handleSimilarSongsPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <Sparkles size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -714,7 +744,10 @@ export default function PlayerSheets({
                   </FadeOutScaleDown>
                 )}
                 {capabilities.sharing && (
-                  <FadeOutScaleDown onPress={handleSharePress}>
+                  <FadeOutScaleDown
+                    onPress={handleSharePress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <Share2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -723,7 +756,10 @@ export default function PlayerSheets({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown onPress={handleDownloadPress}>
+                <FadeOutScaleDown
+                  onPress={handleDownloadPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Download size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -752,7 +788,10 @@ export default function PlayerSheets({
                   </HStack>
                 </FadeOutScaleDown>
                 {playingTrack?.musicBrainzId && (
-                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                  <FadeOutScaleDown
+                    onPress={handleMusicBrainzPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <MusicBrainz width={24} height={24} fill={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">

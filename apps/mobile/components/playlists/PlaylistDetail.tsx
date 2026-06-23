@@ -82,6 +82,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -155,6 +156,7 @@ export default function PlaylistDetail() {
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
@@ -914,7 +916,10 @@ export default function PlaylistDetail() {
             </HStack>
             <VStack className="mt-6 gap-y-8">
               {!isSmartPlaylist && (
-                <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
+                <FadeOutScaleDown
+                  onPress={handlePlaylistReorderPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <ListOrdered size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -924,7 +929,10 @@ export default function PlaylistDetail() {
                 </FadeOutScaleDown>
               )}
               {isSmartPlaylist && (
-                <FadeOutScaleDown onPress={handleEditRulesPress}>
+                <FadeOutScaleDown
+                  onPress={handleEditRulesPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Wand2 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -967,7 +975,10 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               ) : (
-                <FadeOutScaleDown onPress={handleSaveOfflinePress}>
+                <FadeOutScaleDown
+                  onPress={handleSaveOfflinePress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
                       <ArrowDown size={20} color={black} />
@@ -978,7 +989,10 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
+              <FadeOutScaleDown
+                onPress={handlePlaylistUpdatePress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <Pencil size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -987,7 +1001,10 @@ export default function PlaylistDetail() {
                 </HStack>
               </FadeOutScaleDown>
               {capabilities.sharing && (
-                <FadeOutScaleDown onPress={handleSharePress}>
+                <FadeOutScaleDown
+                  onPress={handleSharePress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Share2 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -1001,6 +1018,7 @@ export default function PlaylistDetail() {
                   bottomSheetModalRef.current?.dismiss();
                   setShowAlertDialog(true);
                 }}
+                disabled={!isOnline}
               >
                 <HStack className="items-center">
                   <X size={24} color={red500} />

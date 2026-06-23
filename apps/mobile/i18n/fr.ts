@@ -1186,6 +1186,7 @@ export default {
           seeProfile: "Voir le profil",
           privacyPolicy: "Politique de confidentialité",
           bugReport: "Signaler un bug",
+          changelog: "Changelog",
         },
         languages: {
           en: "English",
