@@ -1,7 +1,7 @@
+import { ChevronsUpDown } from "lucide-react-native";
 import { InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
-import { ChevronsUpDown } from "lucide-react-native";
 
 interface UrlInputFieldProps {
   value: string;

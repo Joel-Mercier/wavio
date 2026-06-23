@@ -4,6 +4,10 @@ import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
 
+// "raw" streams the source file untouched (bit-perfect); the others ask the
+// server to transcode to that codec via the Subsonic `format=` param.
+export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
+
 interface AppStore {
   locale: TSupportedLanguages | null;
   setLocale: (locale: TSupportedLanguages) => void;
@@ -65,6 +69,8 @@ interface AppStore {
   setMaxBitRate: (maxBitRate: number | null) => void;
   cellularMaxBitRate: number | null;
   setCellularMaxBitRate: (cellularMaxBitRate: number | null) => void;
+  streamingFormat: StreamFormat;
+  setStreamingFormat: (streamingFormat: StreamFormat) => void;
   downloadsWifiOnly: boolean;
   setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
   replayGainMode: "off" | "track" | "album";
@@ -143,6 +149,10 @@ export const useAppBase = create<AppStore>()(
       cellularMaxBitRate: null,
       setCellularMaxBitRate: (cellularMaxBitRate: number | null) => {
         set({ cellularMaxBitRate });
+      },
+      streamingFormat: "raw",
+      setStreamingFormat: (streamingFormat: StreamFormat) => {
+        set({ streamingFormat });
       },
       downloadsWifiOnly: false,
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {

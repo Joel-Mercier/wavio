@@ -34,6 +34,11 @@ export type BackendCapabilities = {
   // bios, images and similar artists. The on-device library has no such data
   // source, so these queries are skipped (rather than erroring) for local.
   extendedMetadata: boolean;
+  // Client-chosen server-side transcoding format. Subsonic/Navidrome honour a
+  // `format=` param on /stream (transcoding to the named profile); Jellyfin
+  // negotiates its own stream profile and the local library plays files off
+  // disk, so neither exposes a client-pickable output format.
+  streamFormatSelection: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -55,6 +60,7 @@ const SUBSONIC: BackendCapabilities = {
   similarSongs: true,
   offlineDownload: true,
   extendedMetadata: true,
+  streamFormatSelection: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -93,6 +99,7 @@ const JELLYFIN: BackendCapabilities = {
   similarSongs: true,
   offlineDownload: true,
   extendedMetadata: true,
+  streamFormatSelection: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -125,6 +132,7 @@ const LOCAL: BackendCapabilities = {
   similarSongs: false,
   offlineDownload: false,
   extendedMetadata: false,
+  streamFormatSelection: false,
 };
 
 // A few capabilities depend on per-server *config*, not just the server type:

@@ -701,6 +701,16 @@ export default {
           cellularAudioQualityLabel: "Audio quality (cellular)",
           cellularAudioQualityDescription:
             "Cap the bitrate when on cellular to save data. The lower of this and the Wi-Fi cap is used.",
+          streamingFormatLabel: "Streaming format",
+          streamingFormatDescription:
+            "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play (e.g. ALAC).",
+          streamingFormatOptions: {
+            raw: "Original",
+            flac: "FLAC (lossless)",
+            opus: "Opus",
+            mp3: "MP3",
+            aac: "AAC",
+          },
           replayGainLabel: "Volume normalization",
           replayGainDescription:
             "Use ReplayGain tags to even out loudness across tracks.",

@@ -46,7 +46,7 @@ import {
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
-import { registerLogoutHandler } from "@/stores/auth";
+import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
@@ -184,6 +184,25 @@ function inactiveSlot(): Slot {
   return (1 - activeSlot) as Slot;
 }
 
+// Track ids whose raw stream failed to decode on this device and have since
+// been re-armed to stream through a forced server transcode. Bounded by the
+// queue, and one retry per track keeps a genuinely broken source from looping.
+const transcodeRetriedIds = new Set<string>();
+
+// Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
+// on. Jellyfin negotiates its own profile and local files play off disk, so a
+// retry there would just reload the identical URL.
+function canTranscodeFallback(): boolean {
+  const type = useAuthBase.getState().serverType;
+  return type === "opensubsonic" || type === "navidrome";
+}
+
+// Distinguish a device codec/decoder failure (recoverable by transcoding) from
+// a transient stream/network blip (which transcoding wouldn't fix).
+function isDecodeError(message: string): boolean {
+  return /mediacodec|decoder|decode/i.test(message);
+}
+
 // Resolve the freshest source for a track. Queue entries can become stale —
 // a track enqueued before it was downloaded still holds its streamUrl, and
 // vice versa. Always re-check the offline registry at load time.
@@ -198,7 +217,12 @@ function resolveTrackUrl(track: QueueTrack): {
   if (downloaded) return { url: downloaded.path, isOffline: true };
   if (track.source === "podcast" && track.url)
     return { url: track.url, isOffline: false };
-  return { url: streamUrl(track.id), isOffline: false };
+  return {
+    url: streamUrl(track.id, {
+      forceTranscode: transcodeRetriedIds.has(track.id),
+    }),
+    isOffline: false,
+  };
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
@@ -584,6 +608,27 @@ function makeStatusListener(slot: Slot) {
       const current = useQueue.getState().getCurrent();
       const resolved = current ? resolveTrackUrl(current) : null;
       const needsNetwork = resolved ? !resolved.isOffline : true;
+      // A device that can't decode the raw source (e.g. ALAC ExoPlayer
+      // advertises but fails to decode) — re-arm this track to stream through a
+      // server transcode and reload it once, before treating it as a failure.
+      if (
+        current &&
+        resolved &&
+        !resolved.isOffline &&
+        !current.isRadio &&
+        current.source !== "podcast" &&
+        isDecodeError(status.error) &&
+        canTranscodeFallback() &&
+        !transcodeRetriedIds.has(current.id)
+      ) {
+        transcodeRetriedIds.add(current.id);
+        reportBreadcrumb("player", "transcode-fallback", {
+          trackId: current.id,
+          error: status.error,
+        });
+        loadTrack(activeSlot, current, true);
+        return;
+      }
       // `source` is a category discriminator, not the URL — group on what the
       // load actually was so offline-file bugs split from transient streams.
       const kind = resolved
