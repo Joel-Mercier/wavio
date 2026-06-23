@@ -252,39 +252,51 @@ function findNextPlayableIndex(startIndex: number): number | null {
   return null;
 }
 
-function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
+// Which slot currently owns the OS lock-screen / media-notification controls,
+// or null when no slot does. Lets applyLockScreen pick the cheap metadata-only
+// update over a full (re)activation when the same player already owns them.
+let lockScreenSlot: Slot | null = null;
+
+function applyLockScreen(p: AudioPlayer, track: QueueTrack, slot: Slot) {
   // Empty/undefined fields must be passed as undefined, not "": the native
   // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a
   // "" (returned for local tracks without cover art) throws MalformedURLException
   // and rejects the whole call. try/catch keeps a rejected metadata update from
   // aborting playback.
+  const metadata = {
+    title: track.title || undefined,
+    artist: track.artist || undefined,
+    albumTitle: track.album || undefined,
+    artworkUrl: track.artwork || undefined,
+  };
   try {
-    p.setActiveForLockScreen(
-      true,
-      {
-        title: track.title || undefined,
-        artist: track.artist || undefined,
-        albumTitle: track.album || undefined,
-        artworkUrl: track.artwork || undefined,
-      },
-      {
+    if (lockScreenSlot === slot) {
+      // This player already owns the controls — refresh metadata in place.
+      // setActiveForLockScreen would tear down and rebuild the native
+      // MediaSession (notification flicker / vanish on every track change);
+      // updateLockScreenMetadata does not.
+      p.updateLockScreenMetadata(metadata);
+    } else {
+      p.setActiveForLockScreen(true, metadata, {
         showSeekBackward: true,
         showSeekForward: true,
         showSkipPrevious: true,
         showSkipNext: true,
-      },
-    );
+      });
+      lockScreenSlot = slot;
+    }
   } catch (error) {
-    logSwallowed("setActiveForLockScreen", error);
+    logSwallowed("applyLockScreen", error);
   }
 }
 
-function clearLockScreen(p: AudioPlayer) {
+function clearLockScreen(p: AudioPlayer, slot: Slot) {
   try {
     p.clearLockScreenControls();
   } catch (error) {
     logSwallowed("clearLockScreenControls", error);
   }
+  if (lockScreenSlot === slot) lockScreenSlot = null;
 }
 
 type Transition =
@@ -325,7 +337,7 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   const p = players[slot];
   if (!track) {
     p.pause();
-    clearLockScreen(p);
+    clearLockScreen(p, slot);
     loadedTrackIds[slot] = null;
     return;
   }
@@ -340,7 +352,7 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   p.replace({ uri: url });
   p.volume = getReplayGainFactor(track);
   if (slot === activeSlot) {
-    applyLockScreen(p, track);
+    applyLockScreen(p, track, slot);
     // Moving the active track off the launch track disarms resume so returning
     // to it later starts at 0 rather than its stale bookmark.
     notePlaybackTrack(track.id);
@@ -384,7 +396,7 @@ function loadAndPlay(track: QueueTrack | null) {
     }
     // Nothing playable in the queue right now.
     players[activeSlot].pause();
-    clearLockScreen(players[activeSlot]);
+    clearLockScreen(players[activeSlot], activeSlot);
     loadedTrackIds[activeSlot] = null;
     return;
   }
@@ -480,9 +492,11 @@ function startCrossfade(durationSeconds: number) {
   incoming.play();
   reportNowPlaying(next);
   // Move lock-screen ownership to the incoming track immediately so that
-  // notification metadata reflects what's becoming dominant.
-  clearLockScreen(outgoing);
-  applyLockScreen(incoming, next);
+  // notification metadata reflects what's becoming dominant. Activating the
+  // incoming slot transfers ownership natively (deactivating the outgoing
+  // player); an explicit clear here would only force a STOP_FOREGROUND_REMOVE
+  // teardown of the notification.
+  applyLockScreen(incoming, next, inSlot);
   // Promote active early so external consumers (status hooks, controls) start
   // tracking the incoming track.
   activeSlot = inSlot;
@@ -576,7 +590,7 @@ function handleNextTrackStarted() {
   resetScrobbleState();
   reportNowPlaying(next);
   players[activeSlot].volume = getReplayGainFactor(next);
-  applyLockScreen(players[activeSlot], next);
+  applyLockScreen(players[activeSlot], next, activeSlot);
   loadedTrackIds[activeSlot] = next.id;
   // The queue subscription will see the new currentIndex from useQueue.next()
   // below — tell it to ignore that change since the player is already playing
@@ -768,12 +782,11 @@ function makeStatusListener(slot: Slot) {
         const slot = inactiveSlot();
         const next = peekNextTrack();
         if (next && loadedTrackIds[slot] === next.id) {
-          clearLockScreen(players[activeSlot]);
           activeSlot = slot;
           notifySlotChange();
           const factor = getReplayGainFactor(next);
           players[activeSlot].volume = factor;
-          applyLockScreen(players[activeSlot], next);
+          applyLockScreen(players[activeSlot], next, activeSlot);
           players[activeSlot].play();
           resetScrobbleState();
           reportNowPlaying(next);
@@ -852,7 +865,7 @@ function makeStatusListener(slot: Slot) {
       const c = useQueue.getState().getCurrent();
       if (!c) {
         players[activeSlot].pause();
-        clearLockScreen(players[activeSlot]);
+        clearLockScreen(players[activeSlot], activeSlot);
         return;
       }
       if (c.id === previousId) {
