@@ -61,6 +61,7 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
+import { safeFileName } from "@/utils/safeFileName";
 
 // Live label for the "set bookmark at" action. Isolated in its own component so
 // only this row re-renders on the ~4 Hz progress tick (it's only mounted while
@@ -475,11 +476,15 @@ export default function PlayerSheets({
         idempotent: true,
         intermediates: true,
       });
-      const output = await File.downloadFileAsync(url, destination, {
+      const file = new File(
+        destination,
+        safeFileName(playingTrack.title, playingTrack.suffix, playingTrack.id),
+      );
+      const output = await File.downloadFileAsync(url, file, {
         idempotent: true,
       });
       if (output.exists) {
-        await MediaLibrary.saveToLibraryAsync(output.uri);
+        await MediaLibrary.Asset.create(output.uri);
         output.delete();
         toast.show({
           placement: "top",
@@ -495,6 +500,7 @@ export default function PlayerSheets({
         });
       }
     } catch (error) {
+      logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
         duration: 3000,

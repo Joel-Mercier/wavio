@@ -78,6 +78,7 @@ import { childToTrack } from "@/utils/childToTrack";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 import { logError } from "@/utils/log";
+import { safeFileName } from "@/utils/safeFileName";
 
 export interface TrackActionsContextValue {
   index?: number;
@@ -358,11 +359,15 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         idempotent: true,
         intermediates: true,
       });
-      const output = await File.downloadFileAsync(url, destination, {
+      const file = new File(
+        destination,
+        safeFileName(track.title, track.suffix, track.id),
+      );
+      const output = await File.downloadFileAsync(url, file, {
         idempotent: true,
       });
       if (output.exists) {
-        await MediaLibrary.saveToLibraryAsync(output.uri);
+        await MediaLibrary.Asset.create(output.uri);
         output.delete();
         toast.show({
           placement: "top",
@@ -377,7 +382,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           ),
         });
       }
-    } catch (_error) {
+    } catch (error) {
+      logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
         duration: 3000,
