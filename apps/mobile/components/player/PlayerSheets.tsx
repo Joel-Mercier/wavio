@@ -6,7 +6,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
-import { Directory, File, Paths } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
@@ -51,9 +51,9 @@ import { useCreateShare } from "@/hooks/backend/useSharing";
 import { usePlaybackProgress } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { downloadUrl } from "@/services/backend/streaming";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { getCurrentTime } from "@/services/player";
+import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useBookmarks from "@/stores/bookmarks";
 import usePodcasts from "@/stores/podcasts";
@@ -61,7 +61,6 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
-import { safeFileName } from "@/utils/safeFileName";
 
 // Live label for the "set bookmark at" action. Isolated in its own component so
 // only this row re-renders on the ~4 Hz progress tick (it's only mounted while
@@ -469,36 +468,20 @@ export default function PlayerSheets({
     if (permissionResponse?.status !== "granted") {
       await requestPermission();
     }
-    const url = downloadUrl(playingTrack.id);
-    const destination = new Directory(Paths.cache, "Downloads");
     try {
-      destination.create({
-        idempotent: true,
-        intermediates: true,
+      await saveTrackToDevice(playingTrack);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.downloadSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
       });
-      const file = new File(
-        destination,
-        safeFileName(playingTrack.title, playingTrack.suffix, playingTrack.id),
-      );
-      const output = await File.downloadFileAsync(url, file, {
-        idempotent: true,
-      });
-      if (output.exists) {
-        await MediaLibrary.Asset.create(output.uri);
-        output.delete();
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.tracks.downloadSuccessMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
     } catch (error) {
       logError("Error downloading track to device:", error);
       toast.show({

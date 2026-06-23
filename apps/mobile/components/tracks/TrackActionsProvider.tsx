@@ -6,7 +6,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import * as Clipboard from "expo-clipboard";
-import { Directory, File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -70,15 +69,14 @@ import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useOfflineDownloads } from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { downloadUrl } from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
+import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 import { logError } from "@/utils/log";
-import { safeFileName } from "@/utils/safeFileName";
 
 export interface TrackActionsContextValue {
   index?: number;
@@ -352,36 +350,20 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (permissionResponse?.status !== "granted") {
       await requestPermission();
     }
-    const url = downloadUrl(track.id);
-    const destination = new Directory(Paths.cache, "Downloads");
     try {
-      destination.create({
-        idempotent: true,
-        intermediates: true,
+      await saveTrackToDevice(track);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.downloadSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
       });
-      const file = new File(
-        destination,
-        safeFileName(track.title, track.suffix, track.id),
-      );
-      const output = await File.downloadFileAsync(url, file, {
-        idempotent: true,
-      });
-      if (output.exists) {
-        await MediaLibrary.Asset.create(output.uri);
-        output.delete();
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.tracks.downloadSuccessMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
     } catch (error) {
       logError("Error downloading track to device:", error);
       toast.show({
