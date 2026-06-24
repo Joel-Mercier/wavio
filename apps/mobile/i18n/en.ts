@@ -1146,6 +1146,7 @@ export default {
           bugReport: "Report a bug",
         },
         languages: {
+          cn: "简体中文",
           en: "English",
           fr: "Français",
         },
