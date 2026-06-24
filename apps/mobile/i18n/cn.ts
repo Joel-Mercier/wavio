@@ -1,5 +1,3 @@
-import { cn } from "@/utils/tailwind";
-
 export default {
   translation: {
     app: {
@@ -703,6 +701,16 @@ export default {
           cellularAudioQualityLabel: "音质（移动网络）",
           cellularAudioQualityDescription:
             "限制移动网络下的比特率以节省流量。实际使用 Wi-Fi 和移动网络两者中的较低值。",
+          streamingFormatLabel: "流媒体格式",
+          streamingFormatDescription:
+            "请求服务器将音频流转码为此格式。选择“原始”以获得无损原音；如果部分文件（如 ALAC）无法播放，可选择其他格式。",
+          streamingFormatOptions: {
+            raw: "原始",
+            flac: "FLAC（无损）",
+            opus: "Opus",
+            mp3: "MP3",
+            aac: "AAC",
+          },
           replayGainLabel: "音量均衡",
           replayGainDescription:
             "根据 ReplayGain 标签信息自动调节不同曲目间的音量。",
@@ -1053,6 +1061,8 @@ export default {
           "确认删除该服务器？",
         deleteServerConfirmDescription:
           "删除后该服务器不可恢复，确定继续？",
+        deleteCurrentServerConfirmWarning:
+          "您当前正在连接此服务器，删除后将断开连接。",
         defaultServer: "默认服务器",
         manageUsers: "管理用户",
         users: "用户",
@@ -1074,6 +1084,14 @@ export default {
         unknownAlbum: "未知专辑",
         unknownArtist: "未知艺人",
         unknownEpisode: "未知单集",
+        duration: {
+          day_one: "{{count}}天",
+          day_other: "{{count}}天",
+          hour_one: "{{count}}小时",
+          hour_other: "{{count}}小时",
+          minute_one: "{{count}}分钟",
+          minute_other: "{{count}}分钟",
+        },
         errorBoundary: {
           title: "出了点问题",
           message: "我们遇到了一个意外错误。",
@@ -1146,6 +1164,7 @@ export default {
           seeProfile: "查看个人资料",
           privacyPolicy: "隐私政策",
           bugReport: "报告问题",
+          changelog: "更新日志",
         },
         languages: {
           cn: "简体中文",
@@ -1168,6 +1187,15 @@ export default {
         retry: "重试",
         continue: "继续",
       },
+      serverSwitch: {
+        title: "切换服务器",
+        subtitle: "正在登录...",
+        errorTitle: "无法切换服务器",
+        errorDescription:
+          "使用已保存的凭证登录失败，服务器上的凭证可能已变更。",
+        retry: "重试",
+        enterManually: "手动输入密码",
+      },
     },
     auth: {
       login: {
@@ -1188,6 +1216,7 @@ export default {
         serverAlreadyExists: "该服务器已存在",
         showPassword: "显示密码",
         hidePassword: "隐藏密码",
+        saveCredentials: "保存登录信息",
         demo: "演示模式",
         navidromeSetupHelp: "设置 Navidrome 服务器",
         jellyfinSetupHelp: "设置 Jellyfin 服务器",
