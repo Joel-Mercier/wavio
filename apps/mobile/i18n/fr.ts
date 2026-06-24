@@ -1114,6 +1114,14 @@ export default {
         unknownAlbum: "Album inconnu",
         unknownArtist: "Artiste inconnu",
         unknownEpisode: "Épisode inconnu",
+        duration: {
+          day_one: "{{count}} jour",
+          day_other: "{{count}} jours",
+          hour_one: "{{count}} heure",
+          hour_other: "{{count}} heures",
+          minute_one: "{{count}} minute",
+          minute_other: "{{count}} minutes",
+        },
         errorBoundary: {
           title: "Une erreur est survenue",
           message: "Nous avons rencontré une erreur inattendue.",

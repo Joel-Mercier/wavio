@@ -105,7 +105,7 @@ import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
-import { format } from "@/utils/date";
+import { format, formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -928,7 +928,7 @@ export default function AlbumDetail() {
           <VStack className="my-6">
             <Text className="text-white font-bold px-6">
               {`${t("app.shared.songCount", { count: data?.album?.songCount ?? 0 })} `}{" "}
-              ⦁ {Math.round((data?.album?.duration || 0) / 60)} min
+              ⦁ {formatDuration(data?.album?.duration || 0)}
             </Text>
             {data?.album?.recordLabels?.map((recordLabel) => (
               <Text

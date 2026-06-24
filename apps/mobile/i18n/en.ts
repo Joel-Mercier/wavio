@@ -1084,6 +1084,14 @@ export default {
         unknownAlbum: "Unknown album",
         unknownArtist: "Unknown artist",
         unknownEpisode: "Unknown episode",
+        duration: {
+          day_one: "{{count}} day",
+          day_other: "{{count}} days",
+          hour_one: "{{count}} hour",
+          hour_other: "{{count}} hours",
+          minute_one: "{{count}} minute",
+          minute_other: "{{count}} minutes",
+        },
         errorBoundary: {
           title: "Something went wrong",
           message: "We hit an unexpected error.",
