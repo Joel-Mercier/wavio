@@ -140,23 +140,27 @@ export const useSongsByGenre = (
   });
 };
 
-export const useStarred = (params: { musicFolderId?: string }) => {
+// Favorites aren't folder-scoped (see services/openSubsonic/lists.ts), so the
+// query key stays constant — switching libraries no longer spawns a redundant
+// per-folder favorites cache entry. musicFolderId is kept in the signature for
+// caller compatibility but ignored.
+export const useStarred = (_params: { musicFolderId?: string } = {}) => {
   return useQuery({
-    queryKey: ["starred", params],
+    queryKey: ["starred"],
     queryFn: () => {
-      return getStarred(params);
+      return getStarred();
     },
   });
 };
 
 export const useStarred2 = (
-  params: { musicFolderId?: string },
+  _params: { musicFolderId?: string } = {},
   options?: { enabled?: boolean },
 ) => {
   return useQuery({
-    queryKey: ["starred2", params],
+    queryKey: ["starred2"],
     queryFn: () => {
-      return getStarred2(params);
+      return getStarred2();
     },
     enabled: options?.enabled,
   });
