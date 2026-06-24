@@ -1178,6 +1178,15 @@ export default {
         retry: "Retry",
         continue: "Continue anyway",
       },
+      serverSwitch: {
+        title: "Switching server",
+        subtitle: "Signing you in…",
+        errorTitle: "Couldn't switch server",
+        errorDescription:
+          "We couldn't sign in with your saved credentials. They may have changed on the server.",
+        retry: "Retry",
+        enterManually: "Enter password manually",
+      },
     },
     auth: {
       login: {
@@ -1198,6 +1207,7 @@ export default {
         serverAlreadyExists: "Server already exists",
         showPassword: "Show password",
         hidePassword: "Hide password",
+        saveCredentials: "Save credentials",
         demo: "Demo mode",
         navidromeSetupHelp: "Setup your Navidrome server",
         jellyfinSetupHelp: "Setup your Jellyfin server",

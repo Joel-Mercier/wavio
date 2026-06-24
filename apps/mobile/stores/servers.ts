@@ -75,6 +75,9 @@ export const editServerFormSchema = z
 export const serverUserSchema = z.object({
   serverId: z.string().min(1),
   username: z.string().trim().min(1),
+  // Opt-in saved password for silent server switching (see utils/switchServer).
+  // Stored in plaintext like the active session's password in stores/auth.ts.
+  password: z.string().optional(),
 });
 
 export type Server = {
@@ -92,6 +95,9 @@ export type Server = {
 export type ServerUser = {
   serverId: string;
   username: string;
+  // Opt-in saved password enabling silent re-auth on server switch. Absent when
+  // the user chose not to save credentials.
+  password?: string;
 };
 
 interface ServersStore {
@@ -204,6 +210,7 @@ const useServersBase = create<ServersStore>()(
         const trimmed: ServerUser = {
           serverId: user.serverId,
           username: user.username.trim(),
+          ...(user.password !== undefined ? { password: user.password } : {}),
         };
         set((state) => {
           const exists = state.users.some(
@@ -211,8 +218,16 @@ const useServersBase = create<ServersStore>()(
               u.serverId === trimmed.serverId &&
               u.username === trimmed.username,
           );
-          if (exists) return state;
-          return { users: [...state.users, trimmed] };
+          if (!exists) return { users: [...state.users, trimmed] };
+          // Existing user: overwrite the saved password with the passed value,
+          // including clearing it when `password` is omitted (unchecked box).
+          return {
+            users: state.users.map((u) =>
+              u.serverId === trimmed.serverId && u.username === trimmed.username
+                ? { ...u, password: user.password }
+                : u,
+            ),
+          };
         });
       },
       removeUser: (serverId, username) => {
@@ -226,12 +241,28 @@ const useServersBase = create<ServersStore>()(
         const unique = Array.from(
           new Set(usernames.map((u) => u.trim()).filter(Boolean)),
         );
-        set((state) => ({
-          users: [
-            ...state.users.filter((u) => u.serverId !== serverId),
-            ...unique.map((username) => ({ serverId, username })),
-          ],
-        }));
+        set((state) => {
+          // Preserve any saved password for usernames that survive the sync so
+          // refreshing the server's user list doesn't wipe stored credentials.
+          const existingByName = new Map(
+            state.users
+              .filter((u) => u.serverId === serverId)
+              .map((u) => [u.username, u]),
+          );
+          return {
+            users: [
+              ...state.users.filter((u) => u.serverId !== serverId),
+              ...unique.map((username) => {
+                const saved = existingByName.get(username)?.password;
+                return {
+                  serverId,
+                  username,
+                  ...(saved !== undefined ? { password: saved } : {}),
+                };
+              }),
+            ],
+          };
+        });
       },
     }),
     {
