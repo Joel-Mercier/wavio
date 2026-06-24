@@ -89,12 +89,14 @@ import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
   type DownloadCollectionMeta,
   useCollectionDownload,
+  useIsDetailCached,
   useOfflineAlbum,
 } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -103,7 +105,7 @@ import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
-import { format } from "@/utils/date";
+import { format, formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -141,6 +143,7 @@ export default function AlbumDetail() {
   const doShare = useCreateShare();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const toast = useToast();
   const { data: serverData, isLoading, error } = useAlbum(id);
   const offlineAlbumData = useOfflineAlbum(id);
@@ -148,6 +151,9 @@ export default function AlbumDetail() {
   // collection so a saved album stays browsable after a logout clears the React
   // Query cache.
   const data = serverData ?? offlineAlbumData;
+  const artistReachable = useIsDetailCached(
+    data?.album?.artistId ? ["artist", data.album.artistId] : null,
+  );
   const {
     data: discoverMoreData,
     isLoading: discoverMoreIsLoading,
@@ -823,9 +829,13 @@ export default function AlbumDetail() {
                   {((data?.album?.artists?.length || 0) > 1 &&
                     data?.album?.artists?.map((artist) => (
                       <React.Fragment key={artist.id}>
-                        <Link href={`/artists/${artist.id}`}>
-                          {artist.name}
-                        </Link>
+                        {artistReachable ? (
+                          <Link href={`/artists/${artist.id}`}>
+                            {artist.name}
+                          </Link>
+                        ) : (
+                          <Text>{artist.name}</Text>
+                        )}
                         {artist.id ===
                         data?.album?.artists?.[
                           (data?.album?.artists?.length ?? 0) - 1
@@ -833,15 +843,16 @@ export default function AlbumDetail() {
                           <Text>, </Text>
                         )}
                       </React.Fragment>
-                    ))) || (
+                    ))) ||
+                    (artistReachable ? (
                       <Link href={`/artists/${data?.album?.artistId}`}>
-                        {data?.album?.displayArtist}
+                        {data?.album?.displayArtist || data?.album?.artist}
                       </Link>
-                    ) || (
-                      <Link href={`/artists/${data?.album?.artistId}`}>
-                        {data?.album?.artist}
-                      </Link>
-                    )}
+                    ) : (
+                      <Text>
+                        {data?.album?.displayArtist || data?.album?.artist}
+                      </Text>
+                    ))}
                 </Text>
               </HStack>
               <HStack className="mt-2 items-center gap-x-2">
@@ -879,6 +890,7 @@ export default function AlbumDetail() {
                 <HStack className="items-center gap-x-4">
                   <AnimatedHeart
                     filled={!!data?.album?.starred}
+                    disabled={!isOnline}
                     onPress={
                       data?.album?.starred
                         ? handleUnfavoritePress
@@ -916,7 +928,7 @@ export default function AlbumDetail() {
           <VStack className="my-6">
             <Text className="text-white font-bold px-6">
               {`${t("app.shared.songCount", { count: data?.album?.songCount ?? 0 })} `}{" "}
-              ⦁ {Math.round((data?.album?.duration || 0) / 60)} min
+              ⦁ {formatDuration(data?.album?.duration || 0)}
             </Text>
             {data?.album?.recordLabels?.map((recordLabel) => (
               <Text
@@ -1087,7 +1099,10 @@ export default function AlbumDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={handleAddAllToFavoritesPress}>
+              <FadeOutScaleDown
+                onPress={handleAddAllToFavoritesPress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <Heart size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1095,7 +1110,10 @@ export default function AlbumDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
+              <FadeOutScaleDown
+                onPress={handleAddToPlaylistPress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <PlusCircle size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1121,7 +1139,10 @@ export default function AlbumDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               ) : (
-                <FadeOutScaleDown onPress={handleSaveOfflinePress}>
+                <FadeOutScaleDown
+                  onPress={handleSaveOfflinePress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
                       <ArrowDown size={20} color={black} />
@@ -1132,7 +1153,10 @@ export default function AlbumDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              <FadeOutScaleDown onPress={handleGoToArtistPress}>
+              <FadeOutScaleDown
+                onPress={handleGoToArtistPress}
+                disabled={!artistReachable}
+              >
                 <HStack className="items-center">
                   <User size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1157,7 +1181,10 @@ export default function AlbumDetail() {
                 </HStack>
               </FadeOutScaleDown>
               {capabilities.setRating && (
-                <FadeOutScaleDown onPress={handleRatingPress}>
+                <FadeOutScaleDown
+                  onPress={handleRatingPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center justify-between">
                     <HStack className="items-center">
                       <Star size={24} color={gray200} />
@@ -1176,7 +1203,10 @@ export default function AlbumDetail() {
                 </FadeOutScaleDown>
               )}
               {capabilities.sharing && (
-                <FadeOutScaleDown onPress={handleSharePress}>
+                <FadeOutScaleDown
+                  onPress={handleSharePress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Share2 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -1186,7 +1216,10 @@ export default function AlbumDetail() {
                 </FadeOutScaleDown>
               )}
               {data?.album?.musicBrainzId && (
-                <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                <FadeOutScaleDown
+                  onPress={handleMusicBrainzPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <MusicBrainz width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -1196,7 +1229,10 @@ export default function AlbumDetail() {
                 </FadeOutScaleDown>
               )}
               {data?.album?.name && data?.album?.artist && (
-                <FadeOutScaleDown onPress={handleLastFMPress}>
+                <FadeOutScaleDown
+                  onPress={handleLastFMPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <LastFM width={24} height={24} fill={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">

@@ -18,6 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import useAuth from "@/stores/auth";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 
@@ -28,6 +29,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
   const serverVersion = useAuth((s) => s.serverVersion);
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const showSmartPlaylist =
     capabilities.smartPlaylists &&
     hasNavidromeNative &&
@@ -74,7 +76,10 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
       <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">
           <VStack className="mt-6 gap-y-8">
-            <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
+            <FadeOutScaleDown
+              onPress={handleCreatePlaylistPress}
+              disabled={!isOnline}
+            >
               <HStack className="items-center">
                 <ListMusic size={32} color={gray200} />
                 <VStack className="ml-4 flex-1">
@@ -88,7 +93,10 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
               </HStack>
             </FadeOutScaleDown>
             {showSmartPlaylist && (
-              <FadeOutScaleDown onPress={handleCreateSmartPlaylistPress}>
+              <FadeOutScaleDown
+                onPress={handleCreateSmartPlaylistPress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <Wand2 size={32} color={gray200} />
                   <VStack className="ml-4 flex-1">
@@ -103,7 +111,10 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
               </FadeOutScaleDown>
             )}
             {capabilities.internetRadio && (
-              <FadeOutScaleDown onPress={handleCreateInternetRadioStationPress}>
+              <FadeOutScaleDown
+                onPress={handleCreateInternetRadioStationPress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <Radio size={32} color={gray200} />
                   <VStack className="ml-4 flex-1">
@@ -118,7 +129,10 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
               </FadeOutScaleDown>
             )}
             {capabilities.podcasts && (
-              <FadeOutScaleDown onPress={handleCreatePodcastChannelPress}>
+              <FadeOutScaleDown
+                onPress={handleCreatePodcastChannelPress}
+                disabled={!isOnline}
+              >
                 <HStack className="items-center">
                   <Podcast size={32} color={gray200} />
                   <VStack className="ml-4 flex-1">

@@ -29,10 +29,16 @@ import {
 } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
+import {
+  Checkbox,
+  CheckboxIcon,
+  CheckboxIndicator,
+  CheckboxLabel,
+} from "@/components/ui/checkbox";
 import { FormControl } from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { ChevronDownIcon } from "@/components/ui/icon";
+import { CheckIcon, ChevronDownIcon } from "@/components/ui/icon";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
 import {
@@ -56,14 +62,8 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { authenticateRemote } from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
-import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
-import { nativeLogin } from "@/services/navidrome/auth";
-import { openSubsonicErrorCodes } from "@/services/openSubsonic";
-import {
-  computeSubsonicToken,
-  generateSalt,
-} from "@/services/openSubsonic/auth";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, {
   type Server,
@@ -151,6 +151,18 @@ export default function LoginScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showLocalInfo, setShowLocalInfo] = useState(false);
+  // Pre-check when this server+user already has a saved password (e.g. an avatar
+  // re-login). Initial value only; the user can toggle it freely afterwards.
+  const [saveCredentials, setSaveCredentials] = useState(() =>
+    preselectedServer && params.username
+      ? allUsers.some(
+          (u) =>
+            u.serverId === preselectedServer.id &&
+            u.username === params.username &&
+            !!u.password,
+        )
+      : false,
+  );
 
   const form = useForm({
     defaultValues: {
@@ -200,8 +212,9 @@ export default function LoginScreen() {
           });
           setCurrentServer(server.id);
           login("local", "local", "", { serverType: "local" });
-        } else if (serverType === "jellyfin") {
-          const payload = await jellyfinAuthenticate(
+        } else {
+          const options = await authenticateRemote(
+            serverType,
             trimmedUrl,
             trimmedUsername,
             trimmedPassword,
@@ -211,90 +224,17 @@ export default function LoginScreen() {
           const server = addServer({
             name: existing?.name ?? fallbackName,
             url: trimmedUrl,
-            type: "jellyfin",
-          });
-          addOrUpdateUser({
-            serverId: server.id,
-            username: trimmedUsername,
-          });
-          setCurrentServer(server.id);
-          login(trimmedUrl, trimmedUsername, trimmedPassword, {
-            serverType: "jellyfin",
-            jellyfin: {
-              accessToken: payload.AccessToken,
-              userId: payload.User.Id,
-              isAdmin: !!payload.User.Policy?.IsAdministrator,
-            },
-          });
-        } else {
-          const subsonicSalt = generateSalt();
-          const subsonicToken = await computeSubsonicToken(
-            trimmedPassword,
-            subsonicSalt,
-          );
-          const rsp = await axios
-            .create({
-              baseURL: trimmedUrl,
-              headers: { "Content-Type": "application/json" },
-            })
-            .get("/rest/ping", {
-              params: {
-                u: trimmedUsername,
-                t: subsonicToken,
-                s: subsonicSalt,
-                v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
-                c: process.env.EXPO_PUBLIC_CLIENT_NAME,
-                f: "json",
-              },
-            });
-          if (rsp.data["subsonic-response"]?.status !== "ok") {
-            throw new Error(
-              openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
-            );
-          }
-
-          const existing = servers.find((s) => s.url === trimmedUrl);
-          const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
-          const server = addServer({
-            name: existing?.name ?? fallbackName,
-            url: trimmedUrl,
             type: serverType,
           });
+          // Persist the password only when the user opted in; passing undefined
+          // clears any previously saved password for this server+user.
           addOrUpdateUser({
             serverId: server.id,
             username: trimmedUsername,
+            password: saveCredentials ? trimmedPassword : undefined,
           });
           setCurrentServer(server.id);
-
-          let navidromeSession = null;
-          if (serverType === "navidrome") {
-            try {
-              const payload = await nativeLogin(
-                trimmedUrl,
-                trimmedUsername,
-                trimmedPassword,
-              );
-              if (payload?.token && payload?.id) {
-                navidromeSession = {
-                  token: payload.token,
-                  userId: payload.id,
-                  isAdmin: !!payload.isAdmin,
-                };
-              }
-            } catch (err) {
-              console.warn(
-                "[auth] Navidrome native /auth/login unavailable, falling back to Subsonic-only mode",
-                err,
-              );
-            }
-          }
-
-          login(trimmedUrl, trimmedUsername, trimmedPassword, {
-            serverType,
-            navidrome: navidromeSession,
-            subsonicSalt,
-            subsonicToken,
-          });
+          login(trimmedUrl, trimmedUsername, trimmedPassword, options);
         }
         toast.show({
           placement: "top",
@@ -608,6 +548,19 @@ export default function LoginScreen() {
                       </FormControl>
                     )}
                   </form.Field>
+                  <Checkbox
+                    value="save-credentials"
+                    isChecked={saveCredentials}
+                    onChange={setSaveCredentials}
+                    className="my-2"
+                  >
+                    <CheckboxIndicator className="border-primary-100 data-[checked=true]:bg-emerald-500 data-[checked=true]:border-emerald-500">
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel className="text-primary-100">
+                      {t("auth.login.saveCredentials")}
+                    </CheckboxLabel>
+                  </Checkbox>
                 </>
               )
             }

@@ -1061,6 +1061,8 @@ export default {
           "Are you sure you want to delete this server?",
         deleteServerConfirmDescription:
           "Deleting the server will remove it permanently. Please confirm if you want to proceed.",
+        deleteCurrentServerConfirmWarning:
+          "This is the server you're currently connected to. Deleting it will disconnect you.",
         defaultServer: "Default server",
         manageUsers: "Manage users",
         users: "Users",
@@ -1082,6 +1084,14 @@ export default {
         unknownAlbum: "Unknown album",
         unknownArtist: "Unknown artist",
         unknownEpisode: "Unknown episode",
+        duration: {
+          day_one: "{{count}} day",
+          day_other: "{{count}} days",
+          hour_one: "{{count}} hour",
+          hour_other: "{{count}} hours",
+          minute_one: "{{count}} minute",
+          minute_other: "{{count}} minutes",
+        },
         errorBoundary: {
           title: "Something went wrong",
           message: "We hit an unexpected error.",
@@ -1154,6 +1164,7 @@ export default {
           seeProfile: "See profile",
           privacyPolicy: "Privacy policy",
           bugReport: "Report a bug",
+          changelog: "Changelog",
         },
         languages: {
           cn: "简体中文",
@@ -1176,6 +1187,15 @@ export default {
         retry: "Retry",
         continue: "Continue anyway",
       },
+      serverSwitch: {
+        title: "Switching server",
+        subtitle: "Signing you in…",
+        errorTitle: "Couldn't switch server",
+        errorDescription:
+          "We couldn't sign in with your saved credentials. They may have changed on the server.",
+        retry: "Retry",
+        enterManually: "Enter password manually",
+      },
     },
     auth: {
       login: {
@@ -1196,6 +1216,7 @@ export default {
         serverAlreadyExists: "Server already exists",
         showPassword: "Show password",
         hidePassword: "Hide password",
+        saveCredentials: "Save credentials",
         demo: "Demo mode",
         navidromeSetupHelp: "Setup your Navidrome server",
         jellyfinSetupHelp: "Setup your Jellyfin server",

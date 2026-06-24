@@ -18,6 +18,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LocalPathsField from "@/components/forms/LocalPathsField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
   AlertDialog,
@@ -47,7 +48,10 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useAuthBase } from "@/stores/auth";
-import useServers, { type Server, serverFormSchema } from "@/stores/servers";
+import useServers, {
+  editServerFormSchema,
+  type Server,
+} from "@/stores/servers";
 import { switchToServer } from "@/utils/switchServer";
 import { cn } from "@/utils/tailwind";
 
@@ -89,16 +93,21 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       name: server.name,
       url: server.url,
       type: server.type,
+      paths: server.paths ?? [],
     },
     validators: {
-      onChange: serverFormSchema,
+      onChange: editServerFormSchema,
     },
     onSubmit: async ({ value }) => {
-      editServer(server.id, {
-        name: value.name,
-        url: value.url,
-        type: value.type,
-      });
+      if (value.type === "local") {
+        editServer(server.id, { paths: value.paths });
+      } else {
+        editServer(server.id, {
+          name: value.name,
+          url: value.url,
+          type: value.type,
+        });
+      }
       form.reset();
       toast.show({
         placement: "top",
@@ -155,7 +164,12 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const overflowCount = users.length - visibleUsers.length;
 
   return (
-    <FadeOutScaleDown className="mb-4" onPress={handleCardPress}>
+    <FadeOutScaleDown
+      className="mb-4"
+      onPress={handleCardPress}
+      disabled={server.current}
+      disabledOpacity={1}
+    >
       <VStack
         className={cn(
           "bg-primary-600 p-4 w-full rounded-md border border-primary-600",
@@ -232,19 +246,21 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() => {
-                  bottomSheetModalRef.current?.dismiss();
-                  setShowManageUsersDialog(true);
-                }}
-              >
-                <HStack className="items-center">
-                  <UsersIcon size={24} color={gray200} />
-                  <Text className="ml-4 text-lg text-gray-200">
-                    {t("app.servers.manageUsers")}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
+              {server.type !== "local" && (
+                <FadeOutScaleDown
+                  onPress={() => {
+                    bottomSheetModalRef.current?.dismiss();
+                    setShowManageUsersDialog(true);
+                  }}
+                >
+                  <HStack className="items-center">
+                    <UsersIcon size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.servers.manageUsers")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown
                 onPress={() => {
                   bottomSheetModalRef.current?.dismiss();
@@ -315,6 +331,11 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             <Text className="text-primary-50" size="sm">
               {t("app.servers.deleteServerConfirmDescription")}
             </Text>
+            {server.current && (
+              <Text className="text-red-400 mt-3" size="sm">
+                {t("app.servers.deleteCurrentServerConfirmWarning")}
+              </Text>
+            )}
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
             <FadeOutScaleDown
@@ -415,54 +436,67 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               </Heading>
             </AlertDialogHeader>
             <AlertDialogBody className="mt-3 mb-4">
-              <form.Field name="name">
-                {(field) => (
-                  <FormControl
-                    isInvalid={showFieldError(field)}
-                    size="md"
-                    isDisabled={false}
-                    isReadOnly={false}
-                    isRequired={false}
-                    className="my-4"
-                  >
-                    <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                      <InputField
-                        value={field.state.value}
-                        onChangeText={field.handleChange}
-                        onBlur={() => handleFieldBlur(field)}
-                        className="text-md text-white"
-                        placeholder={t("app.servers.namePlaceholder")}
-                      />
-                    </Input>
-                    <FieldError field={field} />
-                  </FormControl>
-                )}
-              </form.Field>
-              <form.Field name="url">
-                {(field) => (
-                  <FormControl
-                    isInvalid={showFieldError(field)}
-                    size="md"
-                    isDisabled={false}
-                    isReadOnly={false}
-                    isRequired={false}
-                    className="my-4"
-                  >
-                    <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                      <InputField
-                        value={field.state.value}
-                        onChangeText={field.handleChange}
-                        onBlur={() => handleFieldBlur(field)}
-                        className="text-md text-white"
-                        placeholder={t("app.servers.urlPlaceholder")}
-                        autoCapitalize="none"
-                        textContentType="URL"
-                      />
-                    </Input>
-                    <FieldError field={field} />
-                  </FormControl>
-                )}
-              </form.Field>
+              {server.type === "local" ? (
+                <form.Field name="paths">
+                  {(field) => (
+                    <LocalPathsField
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                    />
+                  )}
+                </form.Field>
+              ) : (
+                <>
+                  <form.Field name="name">
+                    {(field) => (
+                      <FormControl
+                        isInvalid={showFieldError(field)}
+                        size="md"
+                        isDisabled={false}
+                        isReadOnly={false}
+                        isRequired={false}
+                        className="my-4"
+                      >
+                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                          <InputField
+                            value={field.state.value}
+                            onChangeText={field.handleChange}
+                            onBlur={() => handleFieldBlur(field)}
+                            className="text-md text-white"
+                            placeholder={t("app.servers.namePlaceholder")}
+                          />
+                        </Input>
+                        <FieldError field={field} />
+                      </FormControl>
+                    )}
+                  </form.Field>
+                  <form.Field name="url">
+                    {(field) => (
+                      <FormControl
+                        isInvalid={showFieldError(field)}
+                        size="md"
+                        isDisabled={false}
+                        isReadOnly={false}
+                        isRequired={false}
+                        className="my-4"
+                      >
+                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                          <InputField
+                            value={field.state.value}
+                            onChangeText={field.handleChange}
+                            onBlur={() => handleFieldBlur(field)}
+                            className="text-md text-white"
+                            placeholder={t("app.servers.urlPlaceholder")}
+                            autoCapitalize="none"
+                            textContentType="URL"
+                          />
+                        </Input>
+                        <FieldError field={field} />
+                      </FormControl>
+                    )}
+                  </form.Field>
+                </>
+              )}
             </AlertDialogBody>
             <AlertDialogFooter className="items-center justify-center">
               <FadeOutScaleDown

@@ -1,5 +1,5 @@
 import { type Link, useRouter } from "expo-router";
-import React, { type ComponentProps } from "react";
+import React, { type ComponentProps, useEffect } from "react";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
 import { Pressable } from "@/components/ui/pressable";
 
@@ -20,7 +20,14 @@ const FadeOut = React.forwardRef<
   FadeOutProps
 >(({ children, className, href, hitSlop, onPress, disabled, testID }, ref) => {
   const router = useRouter();
-  const opacity = useSharedValue(1);
+  const restingOpacity = disabled ? 0.6 : 1;
+  const opacity = useSharedValue(restingOpacity);
+
+  useEffect(() => {
+    opacity.value = withSpring(restingOpacity, {
+      duration: 100,
+    });
+  }, [restingOpacity, opacity]);
 
   const handlePressIn = () => {
     opacity.value = withSpring(0.5, {
@@ -29,7 +36,7 @@ const FadeOut = React.forwardRef<
   };
 
   const handlePressOut = () => {
-    opacity.value = withSpring(1, {
+    opacity.value = withSpring(restingOpacity, {
       duration: 100,
     });
   };

@@ -19,9 +19,65 @@ export const serverFormSchema = z.object({
   type: serverTypeSchema,
 });
 
+// Add-server form variant: `local` servers have no name/URL (auto-named, fixed
+// sentinel URL) and only carry filesystem `paths`, so name/url are validated for
+// remote types only. Mirrors `loginSchema` so the form highlights the right
+// input for remote servers while letting local through.
+export const addServerFormSchema = z
+  .object({
+    name: z.string().trim(),
+    url: z.string().trim(),
+    type: serverTypeSchema,
+    paths: z.array(z.string()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "local") return;
+    const name = z.string().min(1).trim().safeParse(data.name);
+    if (!name.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["name"],
+        message: name.error.issues[0]?.message,
+      });
+    }
+    const url = z.url().min(1).trim().safeParse(data.url);
+    if (!url.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: url.error.issues[0]?.message,
+      });
+    }
+  });
+
+// Edit-server form variant: name is always required (editable for every type,
+// including the local library), but the URL is validated for remote types only
+// since `local` servers carry folders instead.
+export const editServerFormSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    url: z.string().trim(),
+    type: serverTypeSchema,
+    paths: z.array(z.string()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "local") return;
+    const url = z.url().min(1).trim().safeParse(data.url);
+    if (!url.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: url.error.issues[0]?.message,
+      });
+    }
+  });
+
 export const serverUserSchema = z.object({
   serverId: z.string().min(1),
   username: z.string().trim().min(1),
+  // Opt-in saved password for silent server switching (see utils/switchServer).
+  // Stored in plaintext like the active session's password in stores/auth.ts.
+  password: z.string().optional(),
 });
 
 export type Server = {
@@ -39,6 +95,9 @@ export type Server = {
 export type ServerUser = {
   serverId: string;
   username: string;
+  // Opt-in saved password enabling silent re-auth on server switch. Absent when
+  // the user chose not to save credentials.
+  password?: string;
 };
 
 interface ServersStore {
@@ -151,6 +210,7 @@ const useServersBase = create<ServersStore>()(
         const trimmed: ServerUser = {
           serverId: user.serverId,
           username: user.username.trim(),
+          ...(user.password !== undefined ? { password: user.password } : {}),
         };
         set((state) => {
           const exists = state.users.some(
@@ -158,8 +218,16 @@ const useServersBase = create<ServersStore>()(
               u.serverId === trimmed.serverId &&
               u.username === trimmed.username,
           );
-          if (exists) return state;
-          return { users: [...state.users, trimmed] };
+          if (!exists) return { users: [...state.users, trimmed] };
+          // Existing user: overwrite the saved password with the passed value,
+          // including clearing it when `password` is omitted (unchecked box).
+          return {
+            users: state.users.map((u) =>
+              u.serverId === trimmed.serverId && u.username === trimmed.username
+                ? { ...u, password: user.password }
+                : u,
+            ),
+          };
         });
       },
       removeUser: (serverId, username) => {
@@ -173,12 +241,28 @@ const useServersBase = create<ServersStore>()(
         const unique = Array.from(
           new Set(usernames.map((u) => u.trim()).filter(Boolean)),
         );
-        set((state) => ({
-          users: [
-            ...state.users.filter((u) => u.serverId !== serverId),
-            ...unique.map((username) => ({ serverId, username })),
-          ],
-        }));
+        set((state) => {
+          // Preserve any saved password for usernames that survive the sync so
+          // refreshing the server's user list doesn't wipe stored credentials.
+          const existingByName = new Map(
+            state.users
+              .filter((u) => u.serverId === serverId)
+              .map((u) => [u.username, u]),
+          );
+          return {
+            users: [
+              ...state.users.filter((u) => u.serverId !== serverId),
+              ...unique.map((username) => {
+                const saved = existingByName.get(username)?.password;
+                return {
+                  serverId,
+                  username,
+                  ...(saved !== undefined ? { password: saved } : {}),
+                };
+              }),
+            ],
+          };
+        });
       },
     }),
     {

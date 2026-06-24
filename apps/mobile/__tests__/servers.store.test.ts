@@ -87,6 +87,42 @@ describe("servers store actions", () => {
     expect(users[0].username).toBe("u");
   });
 
+  it("addOrUpdateUser stores a saved password and clears it when omitted", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "u", password: "secret" });
+    expect(useServersBase.getState().getUsersForServer(s.id)[0].password).toBe(
+      "secret",
+    );
+    // Re-running without a password clears the previously saved one.
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "u" });
+    const users = useServersBase.getState().getUsersForServer(s.id);
+    expect(users).toHaveLength(1);
+    expect(users[0].password).toBeUndefined();
+  });
+
+  it("syncServerUsers preserves saved passwords for surviving users", () => {
+    const s = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "keep", password: "pw" });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "drop", password: "gone" });
+    useServersBase.getState().syncServerUsers(s.id, ["keep", "new"]);
+    const users = useServersBase.getState().getUsersForServer(s.id);
+    expect(users.find((u) => u.username === "keep")?.password).toBe("pw");
+    expect(users.find((u) => u.username === "new")?.password).toBeUndefined();
+    expect(users.find((u) => u.username === "drop")).toBeUndefined();
+  });
+
   it("removeServer cascades to users", () => {
     const s = useServersBase
       .getState()

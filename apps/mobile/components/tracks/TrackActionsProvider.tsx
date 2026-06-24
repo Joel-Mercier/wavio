@@ -6,7 +6,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import * as Clipboard from "expo-clipboard";
-import { Directory, File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -67,11 +66,16 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useSetRating, useStar } from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
-import { useOfflineDownloads } from "@/hooks/offline";
+import {
+  useIsCollectionAvailableOffline,
+  useIsDetailCached,
+  useOfflineDownloads,
+} from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { downloadUrl } from "@/services/backend/streaming";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
+import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -116,6 +120,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const {
     isTrackDownloaded,
@@ -163,6 +168,18 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       : [];
   const hasMultipleArtists = trackArtists.length > 1;
   const inPlaylistContext = !!ctx.handleRemoveFromPlaylist;
+  const primaryArtistId = trackArtists[0]?.id ?? track?.artistId;
+  const albumDetailCached = useIsDetailCached(
+    track?.albumId ? ["album", track.albumId] : null,
+  );
+  const albumDownloaded = useIsCollectionAvailableOffline(
+    "album",
+    track?.albumId,
+  );
+  const albumReachable = albumDetailCached || albumDownloaded;
+  const artistReachable = useIsDetailCached(
+    primaryArtistId ? ["artist", primaryArtistId] : null,
+  );
 
   const handleGoToArtistPress = () => {
     bottomSheetModalRef.current?.dismiss();
@@ -351,33 +368,22 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (permissionResponse?.status !== "granted") {
       await requestPermission();
     }
-    const url = downloadUrl(track.id);
-    const destination = new Directory(Paths.cache, "Downloads");
     try {
-      destination.create({
-        idempotent: true,
-        intermediates: true,
+      await saveTrackToDevice(track);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.downloadSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
       });
-      const output = await File.downloadFileAsync(url, destination, {
-        idempotent: true,
-      });
-      if (output.exists) {
-        await MediaLibrary.saveToLibraryAsync(output.uri);
-        output.delete();
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.tracks.downloadSuccessMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
-    } catch (_error) {
+    } catch (error) {
+      logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
         duration: 3000,
@@ -670,7 +676,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               </HStack>
               <VStack className="mt-6 gap-y-8">
                 {!track.starred && (
-                  <FadeOutScaleDown onPress={handleFavoritePress}>
+                  <FadeOutScaleDown
+                    onPress={handleFavoritePress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <Heart size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -679,7 +688,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
+                <FadeOutScaleDown
+                  onPress={handleAddToPlaylistPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <PlusCircle size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -690,7 +702,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {inPlaylistContext && (
-                  <FadeOutScaleDown onPress={handleRemoveFromPlaylistPress}>
+                  <FadeOutScaleDown
+                    onPress={handleRemoveFromPlaylistPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <CircleX size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -699,7 +714,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown onPress={handleGoToArtistPress}>
+                <FadeOutScaleDown
+                  onPress={handleGoToArtistPress}
+                  disabled={!artistReachable}
+                >
                   <HStack className="items-center">
                     <User size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -710,7 +728,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {track.albumId && (
-                  <FadeOutScaleDown onPress={handleGoToAlbumPress}>
+                  <FadeOutScaleDown
+                    onPress={handleGoToAlbumPress}
+                    disabled={!albumReachable}
+                  >
                     <HStack className="items-center">
                       <Disc3 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -736,7 +757,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {capabilities.setRating && (
-                  <FadeOutScaleDown onPress={handleRatingPress}>
+                  <FadeOutScaleDown
+                    onPress={handleRatingPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center justify-between">
                       <HStack className="items-center">
                         <Star size={24} color={gray200} />
@@ -755,7 +779,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </FadeOutScaleDown>
                 )}
                 {capabilities.similarSongs && (
-                  <FadeOutScaleDown onPress={handleSimilarSongsPress}>
+                  <FadeOutScaleDown
+                    onPress={handleSimilarSongsPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <Sparkles size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -765,7 +792,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </FadeOutScaleDown>
                 )}
                 {capabilities.sharing && (
-                  <FadeOutScaleDown onPress={handleSharePress}>
+                  <FadeOutScaleDown
+                    onPress={handleSharePress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <Share2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -782,7 +812,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleDownloadPress}>
+                <FadeOutScaleDown
+                  onPress={handleDownloadPress}
+                  disabled={!isOnline}
+                >
                   <HStack className="items-center">
                     <Download size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -793,7 +826,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                 {capabilities.offlineDownload &&
                   !isTrackDownloading(track.id) &&
                   !isTrackDownloaded(track.id) && (
-                    <FadeOutScaleDown onPress={handleOfflineDownloadPress}>
+                    <FadeOutScaleDown
+                      onPress={handleOfflineDownloadPress}
+                      disabled={!isOnline}
+                    >
                       <HStack className="items-center">
                         <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
                           <ArrowDown size={20} color={black} />
@@ -838,7 +874,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </FadeOutScaleDown>
                 )}
                 {track?.musicBrainzId && (
-                  <FadeOutScaleDown onPress={handleMusicBrainzPress}>
+                  <FadeOutScaleDown
+                    onPress={handleMusicBrainzPress}
+                    disabled={!isOnline}
+                  >
                     <HStack className="items-center">
                       <MusicBrainz width={24} height={24} fill={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">

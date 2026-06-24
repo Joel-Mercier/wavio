@@ -1,6 +1,7 @@
 import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
+import { ClipboardClock } from "lucide-react-native";
 import ArrowLeftRight from "lucide-react-native/dist/esm/icons/arrow-left-right.mjs";
 import Bug from "lucide-react-native/dist/esm/icons/bug.mjs";
 import History from "lucide-react-native/dist/esm/icons/history.mjs";
@@ -140,6 +141,10 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
 
   const handleBugReportPress = () => {
     Linking.openURL("https://github.com/Joel-Mercier/wavio/issues");
+  };
+
+  const handleChangelogPress = () => {
+    Linking.openURL("https://github.com/Joel-Mercier/wavio/releases");
   };
 
   const handleSwitchUser = (nextUsername: string) => {
@@ -309,6 +314,15 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 <Bug size={20} color={white} />
                 <Text className="text-white">
                   {t("app.shared.sidebar.bugReport")}
+                </Text>
+              </Pressable>
+              <Pressable
+                className="flex-row items-center m-1 p-3 gap-x-3 rounded-md active:bg-primary-800"
+                onPress={handleChangelogPress}
+              >
+                <ClipboardClock size={20} color={white} />
+                <Text className="text-white">
+                  {t("app.shared.sidebar.changelog")}
                 </Text>
               </Pressable>
               <Text className="mt-2 ml-4 text-primary-100">

@@ -1091,6 +1091,8 @@ export default {
           "Êtes-vous sûr de vouloir supprimer ce serveur ?",
         deleteServerConfirmDescription:
           "Supprimer le serveur le supprimera définitivement. Êtes-vous sûr de vouloir continuer ?",
+        deleteCurrentServerConfirmWarning:
+          "Il s'agit du serveur auquel vous êtes actuellement connecté. Le supprimer vous déconnectera.",
         defaultServer: "Serveur par défaut",
         manageUsers: "Gérer les utilisateurs",
         users: "Utilisateurs",
@@ -1112,6 +1114,14 @@ export default {
         unknownAlbum: "Album inconnu",
         unknownArtist: "Artiste inconnu",
         unknownEpisode: "Épisode inconnu",
+        duration: {
+          day_one: "{{count}} jour",
+          day_other: "{{count}} jours",
+          hour_one: "{{count}} heure",
+          hour_other: "{{count}} heures",
+          minute_one: "{{count}} minute",
+          minute_other: "{{count}} minutes",
+        },
         errorBoundary: {
           title: "Une erreur est survenue",
           message: "Nous avons rencontré une erreur inattendue.",
@@ -1186,6 +1196,7 @@ export default {
           seeProfile: "Voir le profil",
           privacyPolicy: "Politique de confidentialité",
           bugReport: "Signaler un bug",
+          changelog: "Changelog",
         },
         languages: {
           cn: "简体中文",
@@ -1209,6 +1220,15 @@ export default {
         retry: "Réessayer",
         continue: "Continuer quand même",
       },
+      serverSwitch: {
+        title: "Changement de serveur",
+        subtitle: "Connexion en cours…",
+        errorTitle: "Impossible de changer de serveur",
+        errorDescription:
+          "Impossible de se connecter avec vos identifiants enregistrés. Ils ont peut-être changé sur le serveur.",
+        retry: "Réessayer",
+        enterManually: "Saisir le mot de passe manuellement",
+      },
     },
     auth: {
       login: {
@@ -1229,6 +1249,7 @@ export default {
         serverAlreadyExists: "Ce serveur existe déjà",
         showPassword: "Afficher le mot de passe",
         hidePassword: "Masquer le mot de passe",
+        saveCredentials: "Enregistrer les identifiants",
         demo: "Mode démo",
         navidromeSetupHelp: "Installer un serveur Navidrome",
         jellyfinSetupHelp: "Installer un serveur Jellyfin",
