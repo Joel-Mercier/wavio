@@ -1091,6 +1091,8 @@ export default {
           "Êtes-vous sûr de vouloir supprimer ce serveur ?",
         deleteServerConfirmDescription:
           "Supprimer le serveur le supprimera définitivement. Êtes-vous sûr de vouloir continuer ?",
+        deleteCurrentServerConfirmWarning:
+          "Il s'agit du serveur auquel vous êtes actuellement connecté. Le supprimer vous déconnectera.",
         defaultServer: "Serveur par défaut",
         manageUsers: "Gérer les utilisateurs",
         users: "Utilisateurs",

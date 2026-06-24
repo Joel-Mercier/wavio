@@ -19,6 +19,59 @@ export const serverFormSchema = z.object({
   type: serverTypeSchema,
 });
 
+// Add-server form variant: `local` servers have no name/URL (auto-named, fixed
+// sentinel URL) and only carry filesystem `paths`, so name/url are validated for
+// remote types only. Mirrors `loginSchema` so the form highlights the right
+// input for remote servers while letting local through.
+export const addServerFormSchema = z
+  .object({
+    name: z.string().trim(),
+    url: z.string().trim(),
+    type: serverTypeSchema,
+    paths: z.array(z.string()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "local") return;
+    const name = z.string().min(1).trim().safeParse(data.name);
+    if (!name.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["name"],
+        message: name.error.issues[0]?.message,
+      });
+    }
+    const url = z.url().min(1).trim().safeParse(data.url);
+    if (!url.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: url.error.issues[0]?.message,
+      });
+    }
+  });
+
+// Edit-server form variant: name is always required (editable for every type,
+// including the local library), but the URL is validated for remote types only
+// since `local` servers carry folders instead.
+export const editServerFormSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    url: z.string().trim(),
+    type: serverTypeSchema,
+    paths: z.array(z.string()),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "local") return;
+    const url = z.url().min(1).trim().safeParse(data.url);
+    if (!url.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: url.error.issues[0]?.message,
+      });
+    }
+  });
+
 export const serverUserSchema = z.object({
   serverId: z.string().min(1),
   username: z.string().trim().min(1),

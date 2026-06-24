@@ -1061,6 +1061,8 @@ export default {
           "Are you sure you want to delete this server?",
         deleteServerConfirmDescription:
           "Deleting the server will remove it permanently. Please confirm if you want to proceed.",
+        deleteCurrentServerConfirmWarning:
+          "This is the server you're currently connected to. Deleting it will disconnect you.",
         defaultServer: "Default server",
         manageUsers: "Manage users",
         users: "Users",
