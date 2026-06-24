@@ -1,6 +1,7 @@
 import axios from "axios";
 import taddyPodcastsApiInstance, {
   type TaddyPodcastsResponse,
+  toTaddyError,
 } from "@/services/taddyPodcasts/index";
 import type {
   Country,
@@ -92,10 +93,7 @@ export const getPodcastSeries = async ({
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -145,10 +143,7 @@ export const getLatestPodcastEpisodes = async ({
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -180,10 +175,7 @@ export const getMultiplePodcastSeries = async (uuids: string[]) => {
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -223,10 +215,7 @@ export const getMultiplePodcastEpisodes = async (uuids: string[]) => {
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -299,10 +288,7 @@ export const getTopChartsByCountry = async ({
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -378,10 +364,7 @@ export const getTopChartsByGenres = async ({
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -439,9 +422,8 @@ export const getPopularContent = async ({
         error.response?.status,
         JSON.stringify(error.response?.data, null, 2),
       );
-      throw error;
     }
-    throw error;
+    throw toTaddyError(error);
   }
 };
 
@@ -579,9 +561,6 @@ export const search = async ({
     }
     return rsp.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw error;
-    }
-    throw error;
+    throw toTaddyError(error);
   }
 };
