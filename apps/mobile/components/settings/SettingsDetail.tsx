@@ -59,7 +59,7 @@ import {
   openSystemEqualizer,
 } from "@/services/equalizer";
 import useActivity from "@/stores/activity";
-import useApp from "@/stores/app";
+import useApp, { type StreamFormat } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useLocalLibrary from "@/stores/localLibrary";
 import usePodcasts from "@/stores/podcasts";
@@ -104,6 +104,10 @@ export default function SettingsDetail() {
   const {
     handleSheetPositionChange: handleCellularBitRateSheetPositionChange,
   } = useBottomSheetBackHandler(bottomSheetCellularBitRateModalRef);
+  const bottomSheetStreamingFormatModalRef = useRef<BottomSheetModal>(null);
+  const {
+    handleSheetPositionChange: handleStreamingFormatSheetPositionChange,
+  } = useBottomSheetBackHandler(bottomSheetStreamingFormatModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
@@ -130,6 +134,8 @@ export default function SettingsDetail() {
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
   const cellularMaxBitRate = useApp((store) => store.cellularMaxBitRate);
   const setCellularMaxBitRate = useApp((store) => store.setCellularMaxBitRate);
+  const streamingFormat = useApp((store) => store.streamingFormat);
+  const setStreamingFormat = useApp((store) => store.setStreamingFormat);
   const downloadsWifiOnly = useApp((store) => store.downloadsWifiOnly);
   const setDownloadsWifiOnly = useApp((store) => store.setDownloadsWifiOnly);
   const replayGainMode = useApp((store) => store.replayGainMode);
@@ -227,6 +233,14 @@ export default function SettingsDetail() {
   };
 
   const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
+
+  const streamingFormatOptions: StreamFormat[] = [
+    "raw",
+    "flac",
+    "opus",
+    "mp3",
+    "aac",
+  ];
 
   const formatBitRate = (value: number | null) =>
     value === null
@@ -733,6 +747,20 @@ export default function SettingsDetail() {
                 />
               </>
             )}
+            {capabilities.streamFormatSelection && (
+              <SettingsSelectRow
+                label={t("app.settings.streamingSettings.streamingFormatLabel")}
+                description={t(
+                  "app.settings.streamingSettings.streamingFormatDescription",
+                )}
+                badgeText={t(
+                  `app.settings.streamingSettings.streamingFormatOptions.${streamingFormat}`,
+                )}
+                onPress={() =>
+                  bottomSheetStreamingFormatModalRef.current?.present()
+                }
+              />
+            )}
             {capabilities.replayGain && (
               <SettingsSelectRow
                 label={t("app.settings.streamingSettings.replayGainLabel")}
@@ -847,6 +875,23 @@ export default function SettingsDetail() {
         }))}
         selectedValue={cellularMaxBitRate}
         onSelect={setCellularMaxBitRate}
+      />
+      <OptionsBottomSheetModal
+        modalRef={bottomSheetStreamingFormatModalRef}
+        onChange={handleStreamingFormatSheetPositionChange}
+        header={t("app.settings.streamingSettings.streamingFormatLabel")}
+        headerDescription={t(
+          "app.settings.streamingSettings.streamingFormatDescription",
+        )}
+        options={streamingFormatOptions.map((option) => ({
+          value: option,
+          label: t(
+            `app.settings.streamingSettings.streamingFormatOptions.${option}`,
+          ),
+        }))}
+        selectedValue={streamingFormat}
+        onSelect={setStreamingFormat}
+        dismissOnSelect
       />
       <OptionsBottomSheetModal
         modalRef={bottomSheetReplayGainModalRef}

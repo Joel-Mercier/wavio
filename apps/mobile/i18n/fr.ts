@@ -722,6 +722,16 @@ export default {
           cellularAudioQualityLabel: "Qualité audio (données mobiles)",
           cellularAudioQualityDescription:
             "Limite le débit en données mobiles pour économiser. La valeur la plus basse entre celle-ci et celle du Wi-Fi est utilisée.",
+          streamingFormatLabel: "Format de streaming",
+          streamingFormatDescription:
+            "Demande au serveur de transcoder les flux dans ce format. Gardez Original pour une lecture sans perte ; choisissez un format si certains fichiers ne se lisent pas (par ex. ALAC).",
+          streamingFormatOptions: {
+            raw: "Original",
+            flac: "FLAC (sans perte)",
+            opus: "Opus",
+            mp3: "MP3",
+            aac: "AAC",
+          },
           replayGainLabel: "Normalisation du volume",
           replayGainDescription:
             "Utilise les tags ReplayGain pour égaliser le volume entre les morceaux",

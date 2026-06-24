@@ -19,6 +19,26 @@ function isJellyfin(): boolean {
   return useAuthBase.getState().serverType === "jellyfin";
 }
 
+// Codec the decode-error fallback transcodes to: native on every modern
+// Android, best quality-per-bitrate, and shipped by default in Navidrome's
+// transcoding config.
+const FALLBACK_TRANSCODE_FORMAT = "opus";
+
+// Subsonic transcoding query (`&format=…&maxBitRate=…`) shared by the stream
+// endpoints. `format=raw` is omitted entirely so the server streams the source
+// untouched. `forceTranscode` overrides a "raw" preference with a known-good
+// codec — used to recover from a device that can't decode the source.
+function transcodeParams(forceTranscode: boolean): string {
+  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
+    useAppBase.getState();
+  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
+  const format = forceTranscode ? FALLBACK_TRANSCODE_FORMAT : streamingFormat;
+  const parts: string[] = [];
+  if (format && format !== "raw") parts.push(`format=${format}`);
+  if (effective) parts.push(`maxBitRate=${effective}`);
+  return parts.length ? `&${parts.join("&")}` : "";
+}
+
 // Local media plays straight from a URL the id encodes: a track id decodes to a
 // `file://` URI on disk, a self-hosted podcast episode id decodes to its remote
 // enclosure URL. Either way expo-audio gets the URL directly (no /stream
@@ -45,15 +65,13 @@ export const hlsStreamUrl = (id: string) => {
   return `${url}/rest/hls.m3u8?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
 };
 
-export const streamUrl = (id: string) => {
+export const streamUrl = (id: string, opts?: { forceTranscode?: boolean }) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id);
   const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
-  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
-  const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
-  const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
-  return `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
+  const params = transcodeParams(opts?.forceTranscode ?? false);
+  return `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}`;
 };
 
 export const downloadUrl = (id: string) => {

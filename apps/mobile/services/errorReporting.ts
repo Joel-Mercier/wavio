@@ -73,12 +73,20 @@ export type ReportContext = {
 //   and the reachability probe in services/network.ts. Real *application*
 //   failures come back with an HTTP status (4xx/5xx) or a domain error envelope,
 //   and those are reported.
+// - HTTP 530: a non-standard, Cloudflare-emitted status meaning the edge is up
+//   but couldn't reach the origin (Argo/Tunnel down, origin DNS error). For the
+//   self-hosted servers behind Cloudflare this app talks to, it's the same class
+//   as a connection error — the box is unreachable, not buggy — but it arrives
+//   *with* a response so the `!error.response` check above misses it. Suppress it
+//   directly instead of waiting for the reachability probe to flip, which would
+//   otherwise let every concurrent request to a downed origin report its own 530.
 //
 // Scoped to the error object itself (no device-online check) so `logError` can
 // reuse it without dropping every log while offline.
 export function isNetworkNoise(error: unknown): boolean {
   if (axios.isCancel(error)) return true;
   if (axios.isAxiosError(error) && !error.response) return true;
+  if (axios.isAxiosError(error) && error.response?.status === 530) return true;
   return false;
 }
 
@@ -178,10 +186,15 @@ function toError(error: unknown, ctx: ReportContext): Error {
 const REPORTED = "__wavioReported";
 
 export function reportError(error: unknown, ctx: ReportContext): void {
-  if (isExpectedFailure(error, ctx)) return;
-  // Dedupe: the same error object often passes through more than one chokepoint
-  // (e.g. an axios error reported by an interceptor, then again by the React
-  // Query cache safety net). Mark it once so it becomes a single Issue.
+  // Dedupe across chokepoints, BEFORE classifying. The same error object often
+  // passes through more than one reporter (e.g. a service interceptor with full
+  // context, then the React Query cache safety net with only a query key). Mark
+  // it on first sight — whether we go on to capture OR suppress it — so the
+  // first, most-specific classification wins. Marking suppressed-as-expected
+  // errors too is the point: otherwise the context-poor safety net re-reports a
+  // failure the chokepoint already knew was expected (e.g. an opted-in 404/code
+  // 70, or a code-50 permission denial), stripped of the `status` /
+  // `notFoundIsExpected` that would have dropped it — re-capturing the noise.
   if (error && typeof error === "object") {
     if ((error as Record<string, unknown>)[REPORTED]) return;
     try {
@@ -193,6 +206,7 @@ export function reportError(error: unknown, ctx: ReportContext): void {
       // Frozen/sealed error object — fall through and report (worst case a dup).
     }
   }
+  if (isExpectedFailure(error, ctx)) return;
   if (__DEV__) {
     console.error(`[${ctx.area}]`, ctx.endpoint ?? "", error);
     return;

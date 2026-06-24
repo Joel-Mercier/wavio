@@ -16,7 +16,12 @@ export const deletePlaylist = async (id: string) =>
   subsonicRequest<Record<string, never>>("/rest/deletePlaylist", { id });
 
 export const getPlaylist = async (id: string) =>
-  subsonicRequest<{ playlist: PlaylistWithSongs }>("/rest/getPlaylist", { id });
+  subsonicRequest<{ playlist: PlaylistWithSongs }>(
+    "/rest/getPlaylist",
+    { id },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getPlaylists = async ({ username }: { username?: string }) =>
   subsonicRequest<{ playlists: Playlists }>("/rest/getPlaylists", { username });

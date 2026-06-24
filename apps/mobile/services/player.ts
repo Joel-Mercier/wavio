@@ -46,7 +46,7 @@ import {
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import { useAppBase } from "@/stores/app";
-import { registerLogoutHandler } from "@/stores/auth";
+import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
@@ -184,6 +184,25 @@ function inactiveSlot(): Slot {
   return (1 - activeSlot) as Slot;
 }
 
+// Track ids whose raw stream failed to decode on this device and have since
+// been re-armed to stream through a forced server transcode. Bounded by the
+// queue, and one retry per track keeps a genuinely broken source from looping.
+const transcodeRetriedIds = new Set<string>();
+
+// Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
+// on. Jellyfin negotiates its own profile and local files play off disk, so a
+// retry there would just reload the identical URL.
+function canTranscodeFallback(): boolean {
+  const type = useAuthBase.getState().serverType;
+  return type === "opensubsonic" || type === "navidrome";
+}
+
+// Distinguish a device codec/decoder failure (recoverable by transcoding) from
+// a transient stream/network blip (which transcoding wouldn't fix).
+function isDecodeError(message: string): boolean {
+  return /mediacodec|decoder|decode/i.test(message);
+}
+
 // Resolve the freshest source for a track. Queue entries can become stale —
 // a track enqueued before it was downloaded still holds its streamUrl, and
 // vice versa. Always re-check the offline registry at load time.
@@ -198,7 +217,12 @@ function resolveTrackUrl(track: QueueTrack): {
   if (downloaded) return { url: downloaded.path, isOffline: true };
   if (track.source === "podcast" && track.url)
     return { url: track.url, isOffline: false };
-  return { url: streamUrl(track.id), isOffline: false };
+  return {
+    url: streamUrl(track.id, {
+      forceTranscode: transcodeRetriedIds.has(track.id),
+    }),
+    isOffline: false,
+  };
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
@@ -228,39 +252,51 @@ function findNextPlayableIndex(startIndex: number): number | null {
   return null;
 }
 
-function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
+// Which slot currently owns the OS lock-screen / media-notification controls,
+// or null when no slot does. Lets applyLockScreen pick the cheap metadata-only
+// update over a full (re)activation when the same player already owns them.
+let lockScreenSlot: Slot | null = null;
+
+function applyLockScreen(p: AudioPlayer, track: QueueTrack, slot: Slot) {
   // Empty/undefined fields must be passed as undefined, not "": the native
   // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a
   // "" (returned for local tracks without cover art) throws MalformedURLException
   // and rejects the whole call. try/catch keeps a rejected metadata update from
   // aborting playback.
+  const metadata = {
+    title: track.title || undefined,
+    artist: track.artist || undefined,
+    albumTitle: track.album || undefined,
+    artworkUrl: track.artwork || undefined,
+  };
   try {
-    p.setActiveForLockScreen(
-      true,
-      {
-        title: track.title || undefined,
-        artist: track.artist || undefined,
-        albumTitle: track.album || undefined,
-        artworkUrl: track.artwork || undefined,
-      },
-      {
+    if (lockScreenSlot === slot) {
+      // This player already owns the controls — refresh metadata in place.
+      // setActiveForLockScreen would tear down and rebuild the native
+      // MediaSession (notification flicker / vanish on every track change);
+      // updateLockScreenMetadata does not.
+      p.updateLockScreenMetadata(metadata);
+    } else {
+      p.setActiveForLockScreen(true, metadata, {
         showSeekBackward: true,
         showSeekForward: true,
         showSkipPrevious: true,
         showSkipNext: true,
-      },
-    );
+      });
+      lockScreenSlot = slot;
+    }
   } catch (error) {
-    logSwallowed("setActiveForLockScreen", error);
+    logSwallowed("applyLockScreen", error);
   }
 }
 
-function clearLockScreen(p: AudioPlayer) {
+function clearLockScreen(p: AudioPlayer, slot: Slot) {
   try {
     p.clearLockScreenControls();
   } catch (error) {
     logSwallowed("clearLockScreenControls", error);
   }
+  if (lockScreenSlot === slot) lockScreenSlot = null;
 }
 
 type Transition =
@@ -301,7 +337,7 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   const p = players[slot];
   if (!track) {
     p.pause();
-    clearLockScreen(p);
+    clearLockScreen(p, slot);
     loadedTrackIds[slot] = null;
     return;
   }
@@ -316,7 +352,7 @@ function loadTrack(slot: Slot, track: QueueTrack | null, autoplay: boolean) {
   p.replace({ uri: url });
   p.volume = getReplayGainFactor(track);
   if (slot === activeSlot) {
-    applyLockScreen(p, track);
+    applyLockScreen(p, track, slot);
     // Moving the active track off the launch track disarms resume so returning
     // to it later starts at 0 rather than its stale bookmark.
     notePlaybackTrack(track.id);
@@ -360,7 +396,7 @@ function loadAndPlay(track: QueueTrack | null) {
     }
     // Nothing playable in the queue right now.
     players[activeSlot].pause();
-    clearLockScreen(players[activeSlot]);
+    clearLockScreen(players[activeSlot], activeSlot);
     loadedTrackIds[activeSlot] = null;
     return;
   }
@@ -456,9 +492,11 @@ function startCrossfade(durationSeconds: number) {
   incoming.play();
   reportNowPlaying(next);
   // Move lock-screen ownership to the incoming track immediately so that
-  // notification metadata reflects what's becoming dominant.
-  clearLockScreen(outgoing);
-  applyLockScreen(incoming, next);
+  // notification metadata reflects what's becoming dominant. Activating the
+  // incoming slot transfers ownership natively (deactivating the outgoing
+  // player); an explicit clear here would only force a STOP_FOREGROUND_REMOVE
+  // teardown of the notification.
+  applyLockScreen(incoming, next, inSlot);
   // Promote active early so external consumers (status hooks, controls) start
   // tracking the incoming track.
   activeSlot = inSlot;
@@ -552,7 +590,7 @@ function handleNextTrackStarted() {
   resetScrobbleState();
   reportNowPlaying(next);
   players[activeSlot].volume = getReplayGainFactor(next);
-  applyLockScreen(players[activeSlot], next);
+  applyLockScreen(players[activeSlot], next, activeSlot);
   loadedTrackIds[activeSlot] = next.id;
   // The queue subscription will see the new currentIndex from useQueue.next()
   // below — tell it to ignore that change since the player is already playing
@@ -584,6 +622,27 @@ function makeStatusListener(slot: Slot) {
       const current = useQueue.getState().getCurrent();
       const resolved = current ? resolveTrackUrl(current) : null;
       const needsNetwork = resolved ? !resolved.isOffline : true;
+      // A device that can't decode the raw source (e.g. ALAC ExoPlayer
+      // advertises but fails to decode) — re-arm this track to stream through a
+      // server transcode and reload it once, before treating it as a failure.
+      if (
+        current &&
+        resolved &&
+        !resolved.isOffline &&
+        !current.isRadio &&
+        current.source !== "podcast" &&
+        isDecodeError(status.error) &&
+        canTranscodeFallback() &&
+        !transcodeRetriedIds.has(current.id)
+      ) {
+        transcodeRetriedIds.add(current.id);
+        reportBreadcrumb("player", "transcode-fallback", {
+          trackId: current.id,
+          error: status.error,
+        });
+        loadTrack(activeSlot, current, true);
+        return;
+      }
       // `source` is a category discriminator, not the URL — group on what the
       // load actually was so offline-file bugs split from transient streams.
       const kind = resolved
@@ -723,12 +782,11 @@ function makeStatusListener(slot: Slot) {
         const slot = inactiveSlot();
         const next = peekNextTrack();
         if (next && loadedTrackIds[slot] === next.id) {
-          clearLockScreen(players[activeSlot]);
           activeSlot = slot;
           notifySlotChange();
           const factor = getReplayGainFactor(next);
           players[activeSlot].volume = factor;
-          applyLockScreen(players[activeSlot], next);
+          applyLockScreen(players[activeSlot], next, activeSlot);
           players[activeSlot].play();
           resetScrobbleState();
           reportNowPlaying(next);
@@ -807,7 +865,7 @@ function makeStatusListener(slot: Slot) {
       const c = useQueue.getState().getCurrent();
       if (!c) {
         players[activeSlot].pause();
-        clearLockScreen(players[activeSlot]);
+        clearLockScreen(players[activeSlot], activeSlot);
         return;
       }
       if (c.id === previousId) {
