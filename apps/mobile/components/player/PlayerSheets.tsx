@@ -88,12 +88,18 @@ export default function PlayerSheets({
   actionsSheetRef,
   playingTrack,
   lyrics,
+  showLyricsDialog,
+  onShowLyrics,
+  onCloseLyrics,
   onAddFavoritePodcast,
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   lyrics: StructuredLyrics | null;
+  showLyricsDialog: boolean;
+  onShowLyrics: () => void;
+  onCloseLyrics: () => void;
   onAddFavoritePodcast: () => void;
   onRemoveFavoritePodcast: () => void;
 }) {
@@ -110,7 +116,6 @@ export default function PlayerSheets({
   const toast = useToast();
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
-  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
@@ -243,7 +248,7 @@ export default function PlayerSheets({
 
   const handleShowLyricsPress = () => {
     actionsSheetRef.current?.dismiss();
-    setShowLyricsDialog(true);
+    onShowLyrics();
   };
 
   const handleSimilarSongsPress = () => {
@@ -955,7 +960,7 @@ export default function PlayerSheets({
       </BottomSheetModalComponent>
       <LyricsDialog
         isOpen={showLyricsDialog}
-        onClose={() => setShowLyricsDialog(false)}
+        onClose={onCloseLyrics}
         lyrics={lyrics}
       />
     </>

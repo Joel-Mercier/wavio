@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import FadeOut from "@/components/FadeOut";
 import { Box } from "@/components/ui/box";
 import {
   getPlaybackSnapshot,
@@ -12,10 +13,14 @@ import {
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { findCurrentLineIndex } from "@/utils/lyrics";
 
+const HIT_SLOP = { top: 12, bottom: 12, left: 16, right: 16 };
+
 export default function CurrentLyricLine({
   lyrics,
+  onPress,
 }: {
   lyrics: StructuredLyrics | null;
+  onPress?: () => void;
 }) {
   // Subscribe to the raw progress channel and only re-render when the active
   // line *index* changes — not on every ~4 Hz tick. findCurrentLineIndex still
@@ -60,17 +65,29 @@ export default function CurrentLyricLine({
       ? lyrics.line[currentIndex]?.value?.trim()
       : undefined;
 
+  if (!value) {
+    return <Box className="px-6 h-12 items-center justify-center" />;
+  }
+
+  const line = (
+    <Animated.Text
+      numberOfLines={2}
+      style={animatedStyle}
+      className="text-white text-center font-bold text-base"
+    >
+      {value}
+    </Animated.Text>
+  );
+
   return (
     <Box className="px-6 h-12 items-center justify-center">
-      {value ? (
-        <Animated.Text
-          numberOfLines={2}
-          style={animatedStyle}
-          className="text-white text-center font-bold text-base"
-        >
-          {value}
-        </Animated.Text>
-      ) : null}
+      {onPress ? (
+        <FadeOut onPress={onPress} hitSlop={HIT_SLOP}>
+          {line}
+        </FadeOut>
+      ) : (
+        line
+      )}
     </Box>
   );
 }

@@ -31,8 +31,7 @@
 		"expo-audio@56.0.12": "patches/expo-audio@56.0.12.patch",
 		"zod@4.4.3": "patches/zod@4.4.3.patch",
 		"expo-navigation-bar@56.0.3": "patches/expo-navigation-bar@56.0.3.patch",
-		"lucide-react-native@1.21.0": "patches/lucide-react-native@1.21.0.patch",
-		"@sentry/react-native@8.15.0": "patches/@sentry%2Freact-native@8.15.0.patch"
+		"lucide-react-native@1.21.0": "patches/lucide-react-native@1.21.0.patch"
 	},
 	"dependencies": {
 		"eas-cli": "^20.2.0",
