@@ -64,6 +64,47 @@ taddyPodcastsApiInstance.interceptors.response.use(
   },
 );
 
+export class TaddyError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "TaddyError";
+    this.code = code;
+  }
+}
+
+// Taddy surfaces failures two ways: a GraphQL `errors` array on an HTTP 200
+// body, or an HTTP error (e.g. a 500 for invalid credentials) whose body still
+// carries that same array. Both collapse here into a TaddyError holding the
+// friendly, localized message + code so screens (via ErrorDisplay) show
+// something meaningful instead of axios' "Request failed with status code 500".
+export const toTaddyError = (error: unknown): TaddyError => {
+  const firstEntry = (
+    errors: unknown,
+  ): { code?: string; message?: string } | undefined =>
+    Array.isArray(errors) && errors.length > 0 ? errors[0] : undefined;
+
+  const entry =
+    firstEntry(error) ??
+    (axios.isAxiosError(error)
+      ? firstEntry(error.response?.data?.errors)
+      : undefined);
+
+  if (entry?.code) {
+    return new TaddyError(
+      taddyPodcastsErrorCodes[entry.code] ?? entry.message ?? entry.code,
+      entry.code,
+    );
+  }
+  if (entry?.message) {
+    return new TaddyError(entry.message);
+  }
+  if (error instanceof Error) {
+    return new TaddyError(error.message);
+  }
+  return new TaddyError(String(error));
+};
+
 export const taddyPodcastsErrorCodes: Record<string, string> = {
   API_KEY_INVALID: i18n.t("taddyPodcasts.errorCodes.API_KEY_INVALID"),
   API_RATE_LIMIT_EXCEEDED: i18n.t(

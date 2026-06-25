@@ -90,6 +90,24 @@ export function isNetworkNoise(error: unknown): boolean {
   return false;
 }
 
+// A Navidrome plugin (e.g. AudioMuse-AI, which takes over getSimilarSongs2 /
+// getSonicSimilarTracks to compute audio similarity on demand) whose own upstream
+// call timed out: the server returns a generic Subsonic code-0 "Internal Server
+// Error" carrying Go's "context deadline exceeded". That's a transient
+// server-side timeout — the same environmental class as a socket timeout
+// (isNetworkNoise), one layer up inside the server — not an app bug, so don't
+// report it. Matched narrowly on the timeout idiom so other code-0 internal
+// errors (and non-timeout plugin failures) still surface.
+function isPluginTimeout(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { code, message } = error as { code?: number; message?: string };
+  return (
+    code === 0 &&
+    typeof message === "string" &&
+    message.includes("context deadline exceeded")
+  );
+}
+
 // Failures that are expected from the error itself, independent of any request
 // context: network noise plus typed control-flow / user-input errors. Shared by
 // `reportError`'s classifier and `logError` so neither path reports them —
@@ -105,6 +123,7 @@ export function isNetworkNoise(error: unknown): boolean {
 //   the user via an error toast — a correctable input mistake, not a bug.
 export function isExpectedNoise(error: unknown): boolean {
   if (isNetworkNoise(error)) return true;
+  if (isPluginTimeout(error)) return true;
   return (
     error instanceof Error &&
     (error.name === "LocalUnsupportedError" ||

@@ -107,24 +107,13 @@ export const getSongsByGenre = async (
     { songs: {} },
   );
 
-export const getStarred = async ({
-  musicFolderId,
-}: {
-  musicFolderId?: string;
-}) =>
-  folderScopedRequest<{ starred: Starred }>(
-    "/rest/getStarred",
-    { musicFolderId },
-    { starred: {} },
-  );
+// Favorites are a user-level, server-wide concept — not folder-scoped (mirrors
+// Jellyfin/local, which ignore the folder too, and the playlists endpoint).
+// Scoping starred items by music folder meant a selected library holding none of
+// them silently blanked the Library view (folderScopedRequest swallows Subsonic
+// code 70), so musicFolderId is accepted for signature parity but unused.
+export const getStarred = async (_params: { musicFolderId?: string } = {}) =>
+  subsonicRequest<{ starred: Starred }>("/rest/getStarred");
 
-export const getStarred2 = async ({
-  musicFolderId,
-}: {
-  musicFolderId?: string;
-}) =>
-  folderScopedRequest<{ starred2: Starred2 }>(
-    "/rest/getStarred2",
-    { musicFolderId },
-    { starred2: {} },
-  );
+export const getStarred2 = async (_params: { musicFolderId?: string } = {}) =>
+  subsonicRequest<{ starred2: Starred2 }>("/rest/getStarred2");

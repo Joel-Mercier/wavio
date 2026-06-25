@@ -36,6 +36,7 @@ import {
   SelectPortal,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -43,6 +44,8 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { TaddyError } from "@/services/taddyPodcasts/index";
+import { validateTaddyCredentials } from "@/services/taddyPodcasts/system";
 import { Country, Language } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 
@@ -142,7 +145,28 @@ export default function PodcastConfigDialog({
     validators: {
       onChange: podcastConfigSchema,
     },
-    onSubmit: ({ value }) => {
+    onSubmit: async ({ value }) => {
+      try {
+        await validateTaddyCredentials(value.apiKey, value.userId);
+      } catch (error) {
+        toast.show({
+          placement: "top",
+          duration: 4000,
+          render: () => (
+            <Toast action="error">
+              <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+              <ToastDescription>
+                {error instanceof TaddyError
+                  ? error.message
+                  : t(
+                      "app.settings.podcastSettings.configurePodcastsErrorMessage",
+                    )}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+        return;
+      }
       setTaddyPodcastsConfig(value);
       onClose();
       toast.show({
@@ -165,6 +189,10 @@ export default function PodcastConfigDialog({
   const isPodcastConfigDirty = useStore(
     podcastConfigForm.store,
     (state) => state.isDirty,
+  );
+  const isValidating = useStore(
+    podcastConfigForm.store,
+    (state) => state.isSubmitting,
   );
 
   return (
@@ -366,14 +394,20 @@ export default function PodcastConfigDialog({
               </Text>
             </FadeOutScaleDown>
             <FadeOutScaleDown
+              disabled={isValidating}
               onPress={() => {
-                if (isPodcastConfigDirty) podcastConfigForm.handleSubmit();
+                if (isPodcastConfigDirty && !isValidating)
+                  podcastConfigForm.handleSubmit();
               }}
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.save")}
-              </Text>
+              {isValidating ? (
+                <Spinner color="rgb(41, 41, 41)" />
+              ) : (
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.save")}
+                </Text>
+              )}
             </FadeOutScaleDown>
           </AlertDialogFooter>
         </AlertDialogContent>

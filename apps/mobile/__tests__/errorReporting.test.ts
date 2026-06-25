@@ -120,6 +120,36 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a Navidrome plugin timeout (code 0 'context deadline exceeded')", () => {
+    reportError(
+      {
+        code: 0,
+        message:
+          'Internal Server Error: plugin call failed: AudioMuse-AI HTTP request failed: Get "http://192.168.3.203:8000/api/similar_tracks": context deadline exceeded',
+      },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getSimilarSongs2",
+        status: 0,
+      },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports a non-timeout Subsonic code-0 internal error", () => {
+    reportError(
+      { code: 0, message: "Internal Server Error" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getSimilarSongs2",
+        status: 0,
+      },
+    );
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
   it("suppresses a by-design LocalUnsupportedError", () => {
     const error = new Error("The local library doesn't support this operation");
     error.name = "LocalUnsupportedError";

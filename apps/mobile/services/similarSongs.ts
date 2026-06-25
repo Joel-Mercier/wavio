@@ -34,6 +34,14 @@ export async function fetchSimilarSongs(
     }
   }
 
-  const rsp = await getSimilarSongs2(id, { count });
-  return rsp.similarSongs2?.song ?? [];
+  try {
+    const rsp = await getSimilarSongs2(id, { count });
+    return rsp.similarSongs2?.song ?? [];
+  } catch {
+    // Best-effort feature: the plugin backing getSimilarSongs2 (AudioMuse-AI on
+    // Navidrome) can time out or be unavailable. Degrade to an empty list so the
+    // UI shows an empty state instead of an error screen. Genuine failures are
+    // still reported at the service chokepoint (subsonicEnvelope).
+    return [];
+  }
 }
