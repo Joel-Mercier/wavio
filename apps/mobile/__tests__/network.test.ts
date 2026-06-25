@@ -36,12 +36,17 @@ import {
   getConnectionType,
   getEffectiveMaxBitRate,
   getIsEffectivelyOnline,
+  getIsOnline,
   getServerReachable,
   initConnectionType,
   probeServer,
   resetServerReachable,
   subscribeConnectionType,
 } from "@/services/network";
+
+// Mirror of OFFLINE_GRACE_MS in services/network.ts: the device-offline
+// transition is debounced so a network handoff doesn't flash the offline UI.
+const OFFLINE_GRACE_MS = 2500;
 
 const setCurrentType = async (
   type: "wifi" | "cellular" | "unknown" | "none",
@@ -63,6 +68,11 @@ const setCurrentType = async (
 };
 
 beforeEach(() => {
+  // Fake timers so the debounced offline transition (OFFLINE_GRACE_MS) is
+  // controllable. Promise microtasks (await Promise.resolve()) still flush
+  // normally, and the probe's internal abort/deadline timers never fire because
+  // the mocked ping settles synchronously.
+  jest.useFakeTimers();
   mockFetch.mockReset();
   mockAddEventListener.mockReset();
   mockPing.mockReset();
@@ -70,9 +80,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // Stop any recovery poll and return reachability to the optimistic default so
-  // module-level state doesn't bleed between tests.
+  // Stop any recovery poll / pending offline timer and return reachability to
+  // the optimistic default so module-level state doesn't bleed between tests.
   resetServerReachable();
+  jest.clearAllTimers();
+  jest.useRealTimers();
 });
 
 // Drives the connectivity singleton to a known device-online state and returns
@@ -94,6 +106,11 @@ const setDeviceOnline = async (isConnected: boolean) => {
     | null;
   // Force the desired state regardless of prior module state.
   l?.({ type: "wifi", isConnected });
+  // Going offline is debounced — advance past the grace window so callers that
+  // want a committed device-offline state get one.
+  if (!isConnected) {
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS);
+  }
   return l;
 };
 
@@ -171,8 +188,9 @@ describe("server reachability probe", () => {
 
   it("does not flicker to unreachable on reconnect when the first probe fails", async () => {
     const listener = await setDeviceOnline(true);
-    // Toggle airplane mode: drop offline, then back online.
+    // Toggle airplane mode: drop offline (past the grace window), then back online.
     listener?.({ type: "wifi", isConnected: false });
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS);
     expect(getIsEffectivelyOnline()).toBe(false);
     // The probe fired right after reconnect fails because the network isn't
     // routable yet.
@@ -231,5 +249,65 @@ describe("server reachability probe", () => {
     resetServerReachable();
     expect(getServerReachable()).toBe(true);
     expect(getIsEffectivelyOnline()).toBe(true);
+  });
+});
+
+describe("network handoff grace period", () => {
+  it("does not flash offline when connectivity returns within the grace window", async () => {
+    const listener = await setDeviceOnline(true);
+    // Transport handoff briefly reports disconnected before the new transport
+    // attaches.
+    listener?.({ type: "wifi", isConnected: false });
+    // Still optimistically online partway through the grace window.
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS - 500);
+    expect(getIsOnline()).toBe(true);
+    // New transport (cellular) comes up before the window elapses.
+    mockPing.mockResolvedValueOnce({});
+    listener?.({ type: "cellular", isConnected: true });
+    await Promise.resolve();
+    await Promise.resolve();
+    // Advancing past the original window must not commit offline — the pending
+    // flip was cancelled when connectivity returned.
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS);
+    expect(getIsOnline()).toBe(true);
+    expect(getIsEffectivelyOnline()).toBe(true);
+  });
+
+  it("commits offline if the device stays disconnected past the grace window", async () => {
+    const listener = await setDeviceOnline(true);
+    listener?.({ type: "none", isConnected: false });
+    // Optimistically online during the grace window.
+    expect(getIsOnline()).toBe(true);
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS);
+    expect(getIsOnline()).toBe(false);
+    expect(getIsEffectivelyOnline()).toBe(false);
+  });
+
+  it("re-probes the server on a transport change while online", async () => {
+    const listener = await setDeviceOnline(true);
+    expect(getConnectionType()).toBe("wifi");
+    mockPing.mockClear();
+    mockPing.mockResolvedValue({});
+    listener?.({ type: "cellular", isConnected: true });
+    // The handoff revalidates reachability immediately rather than waiting for
+    // the heartbeat.
+    expect(mockPing).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not re-probe on a type change while the device is offline", async () => {
+    const listener = await setDeviceOnline(false);
+    mockPing.mockClear();
+    listener?.({ type: "cellular", isConnected: false });
+    expect(mockPing).not.toHaveBeenCalled();
+  });
+
+  it("resetServerReachable cancels a pending offline flip", async () => {
+    const listener = await setDeviceOnline(true);
+    listener?.({ type: "wifi", isConnected: false });
+    // Switch servers (or log out) mid-grace.
+    resetServerReachable();
+    jest.advanceTimersByTime(OFFLINE_GRACE_MS);
+    // The pending flip was cancelled, so we never committed offline.
+    expect(getIsOnline()).toBe(true);
   });
 });
