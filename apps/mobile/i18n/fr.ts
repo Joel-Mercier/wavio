@@ -1199,6 +1199,7 @@ export default {
           changelog: "Changelog",
         },
         languages: {
+          cn: "简体中文",
           en: "English",
           fr: "Français",
         },
