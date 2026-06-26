@@ -38,6 +38,11 @@ const QUICK_RETRY_MS = 2000;
 // "device online but server unreachable" (probeServer no-ops while offline), so
 // it's distinct from being offline.
 const DISCONNECT_AFTER_FAILURES = 3;
+// A transport handoff (WiFi↔cellular/roaming) briefly reports isConnected=false
+// before the new transport attaches. Don't flip the UI to offline on that first
+// sample — wait out this grace window and only commit "offline" if the device is
+// still disconnected, so a network switch doesn't flash the offline banner.
+const OFFLINE_GRACE_MS = 2500;
 
 const typeListeners = new Set<(type: NetInfoStateType) => void>();
 const onlineListeners = new Set<() => void>();
@@ -46,6 +51,7 @@ const reachableListeners = new Set<() => void>();
 let recoveryTimer: ReturnType<typeof setInterval> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let quickRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingOfflineTimer: ReturnType<typeof setTimeout> | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
 
@@ -171,6 +177,29 @@ function cancelQuickReprobe() {
   }
 }
 
+function cancelPendingOffline() {
+  if (pendingOfflineTimer) {
+    clearTimeout(pendingOfflineTimer);
+    pendingOfflineTimer = null;
+  }
+}
+
+// Commit the device-offline transition once the grace window elapses with the
+// device still disconnected. Effective-online is already false, so stop wasting
+// a timer probing a server we definitely can't reach, and reset the failure
+// count so a brief offline spell doesn't carry over and trigger an immediate
+// logout once connectivity returns.
+function commitOffline() {
+  pendingOfflineTimer = null;
+  if (!isOnline) return;
+  isOnline = false;
+  for (const cb of onlineListeners) cb();
+  stopRecoveryPoll();
+  stopHeartbeat();
+  cancelQuickReprobe();
+  consecutiveProbeFailures = 0;
+}
+
 // Pings the active server with a short deadline and updates serverReachable.
 // No-ops when the device is offline (device connectivity dominates) or when no
 // server is signed in. Safe to call repeatedly — overlapping probes are ignored.
@@ -242,6 +271,7 @@ function disconnectUnreachable() {
   stopRecoveryPoll();
   stopHeartbeat();
   cancelQuickReprobe();
+  cancelPendingOffline();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
     serverReachable = true;
@@ -257,6 +287,7 @@ export function resetServerReachable(): void {
   stopRecoveryPoll();
   stopHeartbeat();
   cancelQuickReprobe();
+  cancelPendingOffline();
   consecutiveProbeFailures = 0;
   if (!serverReachable) {
     serverReachable = true;
@@ -265,15 +296,32 @@ export function resetServerReachable(): void {
 }
 
 function applyState(state: NetInfoState) {
+  const nextOnline = !!state.isConnected;
   if (state.type !== currentType) {
+    const prevType = currentType;
     currentType = state.type;
     for (const cb of typeListeners) cb(currentType);
+    // Transport handoff while staying online (e.g. WiFi→cellular): revalidate the
+    // server on the new network now instead of waiting up to HEARTBEAT_MS. The
+    // FAILURES_BEFORE_UNREACHABLE grace window absorbs a transient miss for a
+    // remote server reachable on both transports; a LAN server that's genuinely
+    // gone is caught promptly. Skip the very first event after cold start
+    // (prevType "unknown") — auth/cache restore already kicks a probe there.
+    if (
+      nextOnline &&
+      isOnline &&
+      prevType !== ("unknown" as NetInfoStateType)
+    ) {
+      void probeServer();
+    }
   }
-  const nextOnline = !!state.isConnected;
-  if (nextOnline !== isOnline) {
-    isOnline = nextOnline;
-    for (const cb of onlineListeners) cb();
-    if (nextOnline) {
+  if (nextOnline) {
+    // Connectivity is present: cancel any pending offline flip from a transient
+    // drop during the handoff so the offline banner never flashes.
+    cancelPendingOffline();
+    if (!isOnline) {
+      isOnline = true;
+      for (const cb of onlineListeners) cb();
       // Regained device connectivity. Optimistically clear any stale unreachable
       // state carried over from before we dropped offline so the banner doesn't
       // flash "server unreachable" on reconnect, then re-probe to confirm — the
@@ -284,16 +332,13 @@ function applyState(state: NetInfoState) {
         for (const cb of reachableListeners) cb();
       }
       void probeServer();
-    } else {
-      // Device offline: effective-online is already false, so stop wasting a
-      // timer probing a server we definitely can't reach. Reset the failure
-      // count so a brief offline spell doesn't carry over and trigger an
-      // immediate logout once connectivity returns.
-      stopRecoveryPoll();
-      stopHeartbeat();
-      cancelQuickReprobe();
-      consecutiveProbeFailures = 0;
     }
+  } else if (isOnline && !pendingOfflineTimer) {
+    // NetInfo reports the device disconnected, but a transport handoff briefly
+    // looks identical to going offline. Wait out the grace window before
+    // committing — if connectivity returns first, cancelPendingOffline() above
+    // means the UI never flickered offline.
+    pendingOfflineTimer = setTimeout(commitOffline, OFFLINE_GRACE_MS);
   }
 }
 
