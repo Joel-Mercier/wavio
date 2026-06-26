@@ -64,14 +64,11 @@ export default {
         playlistTitle: "歌单",
         playlistDescription: "创建歌单",
         smartPlaylistTitle: "智能歌单",
-        smartPlaylistDescription:
-          "创建按规则自动更新的歌单",
+        smartPlaylistDescription: "创建按规则自动更新的歌单",
         internetRadioStationTitle: "网络电台",
-        internetRadioStationDescription:
-          "创建可在本应用播放的网络电台",
+        internetRadioStationDescription: "创建可在本应用播放的网络电台",
         podcastChannelTitle: "播客频道",
-        podcastChannelDescription:
-          "通过RSS订阅播客",
+        podcastChannelDescription: "通过RSS订阅播客",
       },
       carAuto: {
         home: "首页",
@@ -99,20 +96,16 @@ export default {
         lastFM: "在 Last.fm 中打开",
         moreFromArtist: "更多 {{artist}} 的作品",
         favoriteSuccessMessage: "专辑已收藏",
-        favoriteErrorMessage:
-          "收藏专辑时发生错误",
+        favoriteErrorMessage: "收藏专辑时发生错误",
         unfavoriteSuccessMessage: "专辑已取消收藏",
-        unfavoriteErrorMessage:
-          "取消收藏专辑时发生错误",
+        unfavoriteErrorMessage: "取消收藏专辑时发生错误",
         shareSuccessMessage: "专辑已分享",
         shareErrorMessage: "分享专辑时发生错误",
         rateModalTitle: "专辑评分",
         seeAll: "查看全部",
         addAllToFavorites: "全部收藏",
-        addAllToFavoritesSuccessMessage:
-          "已全部收藏",
-        addAllToFavoritesErrorMessage:
-          "全部收藏时发生错误",
+        addAllToFavoritesSuccessMessage: "已全部收藏",
+        addAllToFavoritesErrorMessage: "全部收藏时发生错误",
       },
       artists: {
         label: "艺人",
@@ -130,11 +123,9 @@ export default {
         albumCount_one: "{{count}} 张专辑",
         albumCount_other: "{{count}} 张专辑",
         favoriteSuccessMessage: "艺人已收藏",
-        favoriteErrorMessage:
-          "收藏艺人时发生错误",
+        favoriteErrorMessage: "收藏艺人时发生错误",
         unfavoriteSuccessMessage: "艺人已取消收藏",
-        unfavoriteErrorMessage:
-          "取消收藏艺人时发生错误",
+        unfavoriteErrorMessage: "取消收藏艺人时发生错误",
       },
       favorites: {
         title: "收藏",
@@ -149,32 +140,25 @@ export default {
         share: "分享",
         playNext: "下一首播放",
         addToQueue: "加入播放队列",
-        deletePlaylistConfirmTitle:
-          "确认删除该歌单？",
+        deletePlaylistConfirmTitle: "确认删除该歌单？",
         deletePlaylistConfirmDescription:
           "删除后该歌单将被永久移除，此操作不可撤销。",
         deletePlaylistSuccessMessage: "歌单已删除",
-        deletePlaylistErrorMessage:
-          "删除歌单时发生错误",
+        deletePlaylistErrorMessage: "删除歌单时发生错误",
         sharePlaylistSuccessMessage: "歌单已分享",
-        sharePlaylistErrorMessage:
-          "分享歌单时发生错误",
+        sharePlaylistErrorMessage: "分享歌单时发生错误",
         removeTrackSuccessMessage: "曲目已从歌单移除",
-        removeTrackErrorMessage:
-          "曲目从歌单移除时发生错误",
+        removeTrackErrorMessage: "曲目从歌单移除时发生错误",
         addToPlaylistTitle: "加入歌单",
         newPlaylist: "新建歌单",
         finished: "完成",
         addTrackSuccessMessage_one: "已加入歌单",
         addTrackSuccessMessage_other: "已全部加入歌单",
-        addTrackErrorMessage_one:
-          "加入歌单时发生错误",
-        addTrackErrorMessage_other:
-          "全部加入歌单时发生错误",
+        addTrackErrorMessage_one: "加入歌单时发生错误",
+        addTrackErrorMessage_other: "全部加入歌单时发生错误",
         duplicateTitle: "已在歌单中",
         addAnyway: "仍要加入",
-        duplicateDescription_one:
-          "{{playlists}} 中已包含该歌曲，仍要加入吗？",
+        duplicateDescription_one: "{{playlists}} 中已包含该歌曲，仍要加入吗？",
         duplicateDescription_other:
           "{{playlists}} 中已包含其中部分歌曲，仍要加入吗？",
         empty: "歌单是空的",
@@ -197,43 +181,34 @@ export default {
         aboutEmpty: "暂无简介",
         searchPlaceholder: "搜索播客",
         dailyTopChartsByCountry: "{{country, titlecase}} 今日热门播客",
-        dailyTopChartsByGenre:
-          "$t(app.podcasts.genres.{{genre}}) 今日热门播客",
+        dailyTopChartsByGenre: "$t(app.podcasts.genres.{{genre}}) 今日热门播客",
         popularInLanguage: "{{language, titlecase}} 热门播客",
         seeAllEpisodes: "查看全部单集",
         publishedAt: "{{distance}} 前",
         configureTaddyPodcasts: "在设置中配置",
         taddyPodcastsNotConfigured: "播客访问权未配置",
         yourPodcasts: "我的播客",
-        noServerPodcasts:
-          "你还没有添加任何播客。点击 + 通过 RSS 订阅源添加。",
-        taddyDiscoveryHint:
-          "想发现和搜索播客？在设置中配置播客访问权。",
+        noServerPodcasts: "你还没有添加任何播客。点击 + 通过 RSS 订阅源添加。",
+        taddyDiscoveryHint: "想发现和搜索播客？在设置中配置播客访问权。",
         noEpisodes: "暂无单集",
         downloadEpisode: "下载单集",
         removeDownload: "移除下载",
-        downloadEpisodeErrorMessage:
-          "下载单集时发生错误",
+        downloadEpisodeErrorMessage: "下载单集时发生错误",
         newChannelTitle: "添加播客频道",
         channelUrlPlaceholder: "播客 RSS 订阅源地址",
         newChannelSuccessMessage: "播客频道已添加",
-        newChannelErrorMessage:
-          "添加播客频道时发生错误",
+        newChannelErrorMessage: "添加播客频道时发生错误",
         invalidFeedErrorMessage: "无效的 RSS 播客订阅源",
         deleteChannel: "删除播客频道",
         deleteChannelSuccessMessage: "播客频道已删除",
-        deleteChannelErrorMessage:
-          "删除播客频道时发生错误",
-        deleteChannelConfirmTitle:
-          "确认删除该播客频道？",
+        deleteChannelErrorMessage: "删除播客频道时发生错误",
+        deleteChannelConfirmTitle: "确认删除该播客频道？",
         deleteChannelConfirmDescription:
           "删除后该频道及其单集将从服务器中永久移除，确认继续？",
         deleteEpisode: "删除单集",
         deleteEpisodeSuccessMessage: "单集已删除",
-        deleteEpisodeErrorMessage:
-          "删除单集时发生错误",
-        deleteEpisodeConfirmTitle:
-          "确认删除该单集？",
+        deleteEpisodeErrorMessage: "删除单集时发生错误",
+        deleteEpisodeConfirmTitle: "确认删除该单集？",
         deleteEpisodeConfirmDescription:
           "删除该单集后，已下载的媒体文件将从服务器中移除，确认继续？",
         episodeStatus: {
@@ -292,8 +267,7 @@ export default {
           PODCASTSERIES_ARTS_VISUAL_ARTS: "艺术 - 视觉艺术",
           PODCASTSERIES_BUSINESS: "商业",
           PODCASTSERIES_BUSINESS_CAREERS: "商业 - 职业发展",
-          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP:
-            "商业 - 创业",
+          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP: "商业 - 创业",
           PODCASTSERIES_BUSINESS_INVESTING: "商业 - 投资",
           PODCASTSERIES_BUSINESS_MANAGEMENT: "商业 - 管理",
           PODCASTSERIES_BUSINESS_MARKETING: "商业 - 市场营销",
@@ -305,10 +279,8 @@ export default {
           PODCASTSERIES_EDUCATION: "教育",
           PODCASTSERIES_EDUCATION_COURSES: "教育 - 课程",
           PODCASTSERIES_EDUCATION_HOW_TO: "教育 - 指南",
-          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING:
-            "教育 - 语言学习",
-          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT:
-            "教育 - 自我提升",
+          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING: "教育 - 语言学习",
+          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT: "教育 - 自我提升",
           PODCASTSERIES_FICTION: "小说",
           PODCASTSERIES_FICTION_COMEDY_FICTION: "小说 - 喜剧",
           PODCASTSERIES_FICTION_DRAMA: "小说 - 剧情",
@@ -318,28 +290,19 @@ export default {
           PODCASTSERIES_HEALTH_AND_FITNESS: "健康与健身",
           PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH:
             "健康与健身 - 另类健康",
-          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS:
-            "健康与健身 - 健身",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE:
-            "健康与健身 - 医学",
+          PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS: "健康与健身 - 健身",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE: "健康与健身 - 医学",
           PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH:
             "健康与健身 - 心理健康",
-          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION:
-            "健康与健身 - 营养",
-          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY:
-            "健康与健身 - 性健康",
+          PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION: "健康与健身 - 营养",
+          PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY: "健康与健身 - 性健康",
           PODCASTSERIES_KIDS_AND_FAMILY: "亲子",
-          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS:
-            "亲子 - 儿童教育",
-          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING:
-            "亲子 - 育儿",
-          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS:
-            "亲子 - 宠物与动物",
-          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS:
-            "亲子 - 儿童故事",
+          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS: "亲子 - 儿童教育",
+          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING: "亲子 - 育儿",
+          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS: "亲子 - 宠物与动物",
+          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS: "亲子 - 儿童故事",
           PODCASTSERIES_LEISURE: "休闲",
-          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA:
-            "休闲 - 动漫",
+          PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA: "休闲 - 动漫",
           PODCASTSERIES_LEISURE_AUTOMOTIVE: "休闲 - 汽车",
           PODCASTSERIES_LEISURE_AVIATION: "休闲 - 航空",
           PODCASTSERIES_LEISURE_CRAFTS: "休闲 - 手工",
@@ -360,8 +323,7 @@ export default {
           PODCASTSERIES_NEWS_SPORTS: "新闻 - 体育",
           PODCASTSERIES_NEWS_TECH: "新闻 - 科技",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY: "宗教与灵性",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM:
-            "宗教与灵性 - 佛教",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM: "宗教与灵性 - 佛教",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY:
             "宗教与灵性 - 基督教",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM:
@@ -370,8 +332,7 @@ export default {
             "宗教与灵性 - 伊斯兰教",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM:
             "宗教与灵性 - 犹太教",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION:
-            "宗教与灵性 - 宗教",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION: "宗教与灵性 - 宗教",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY:
             "宗教与灵性 - 灵性",
           PODCASTSERIES_SCIENCE: "科学",
@@ -385,12 +346,10 @@ export default {
           PODCASTSERIES_SCIENCE_PHYSICS: "科学 - 物理学",
           PODCASTSERIES_SCIENCE_SOCIAL_SCIENCES: "科学 - 社会科学",
           PODCASTSERIES_SOCIETY_AND_CULTURE: "社会与文化",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY:
-            "社会与文化 - 纪录片",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY: "社会与文化 - 纪录片",
           PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS:
             "社会与文化 - 个人日记",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY:
-            "社会与文化 - 哲学",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY: "社会与文化 - 哲学",
           PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL:
             "社会与文化 - 人文旅行",
           PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS:
@@ -429,8 +388,7 @@ export default {
       newPlaylist: {
         title: "给歌单取个名字",
         newPlaylistSuccessMessage: "歌单已创建",
-        newPlaylistErrorMessage:
-          "创建歌单时发生错误",
+        newPlaylistErrorMessage: "创建歌单时发生错误",
         namePlaceholder: "我的宝藏歌单",
       },
       profile: {
@@ -468,7 +426,7 @@ export default {
           podcast: "播客",
           share: "分享",
           videoConversion: "视频转码",
-          scrobbling: "Scrobbling",  //Proper nouns are not translated.
+          scrobbling: "Scrobbling", //Proper nouns are not translated.
         },
         roleDescriptions: {
           admin: "可管理用户、服务器、设置等",
@@ -580,29 +538,23 @@ export default {
         publicLabel: "公开歌单",
         publicDescription: "该服务器上的其他用户可查看此歌单",
         editPlaylistSuccessMessage: "歌单已更新",
-        editPlaylistErrorMessage:
-          "更新歌单时发生错误",
+        editPlaylistErrorMessage: "更新歌单时发生错误",
       },
       settings: {
         title: "设置",
         offlineSettings: {
           title: "离线模式",
           offlineModeLabel: "启用离线模式",
-          offlineModeDescription:
-            "下载收藏的曲目以便离线收听",
-          downloadedTracksCount:
-            "已下载 {{count}}/{{total}} 首 ({{size}})",
+          offlineModeDescription: "下载收藏的曲目以便离线收听",
+          downloadedTracksCount: "已下载 {{count}}/{{total}} 首 ({{size}})",
           clearDownloadsLabel: "清除下载",
           clearDownloadsDescription: "从设备中移除所有已下载的曲目",
           clearDownloadsSuccessMessage: "已清除所有下载",
           clearDownloadsErrorMessage: "清除下载时发生错误",
-          clearDownloadsConfirmTitle:
-            "确认删除所有已下载的曲目？",
-          clearDownloadsConfirmDescription:
-            "删除后无法恢复，确认继续？",
+          clearDownloadsConfirmTitle: "确认删除所有已下载的曲目？",
+          clearDownloadsConfirmDescription: "删除后无法恢复，确认继续？",
           manageDownloadsLabel: "管理下载",
-          manageDownloadsDescription:
-            "查看已下载的曲目并释放空间",
+          manageDownloadsDescription: "查看已下载的曲目并释放空间",
           manageDownloadsAction: "管理",
           downloadsWifiOnlyLabel: "仅通过 Wi-Fi 下载",
           downloadsWifiOnlyDescription:
@@ -629,15 +581,12 @@ export default {
         musicLibrarySettings: {
           title: "音乐库设置",
           scanMusicLibraryLabel: "扫描音乐库",
-          scanMusicLibraryDescription:
-            "重新扫描服务器上的媒体库",
+          scanMusicLibraryDescription: "重新扫描服务器上的媒体库",
           scanMusicLibraryAction: "扫描",
           scanMusicLibrarySuccessDescription: "扫描已启动",
-          scanMusicLibraryErrorDescription:
-            "启动扫描时发生错误",
+          scanMusicLibraryErrorDescription: "启动扫描时发生错误",
           scanStatusLabel: "扫描状态",
-          scanStatusDescription:
-            "显示音乐库的扫描状态",
+          scanStatusDescription: "显示音乐库的扫描状态",
           scanStatusLastScan: "上次扫描：{{lastScan}} 前",
           scanStatuses: {
             idle: "空闲",
@@ -651,11 +600,21 @@ export default {
           createTabLabel: "创建标签页",
           createTabDescription: "在底部导航栏中显示“创建”标签页",
         },
+        internetRadioStationsSettings: {
+          title: "网络电台",
+          countryLabel: "国家/地区",
+          countryDescription:
+            "选择“按国家/地区”电台行的国家/地区。默认使用设备所在地区。",
+          countryAutomatic: "自动",
+          tagsLabel: "流派分类行",
+          tagsDescription: "选择在电台页面上显示的流派分类行。",
+          tagsCount: "已选 {{count}} 项",
+          tagsSheetTitle: "流派分类行",
+        },
         playbackSettings: {
           title: "播放设置",
           gaplessLabel: "无缝播放",
-          gaplessDescription:
-            "预加载下一首，消除曲目之间的静音间隙。",
+          gaplessDescription: "预加载下一首，消除曲目之间的静音间隙。",
           endlessPlaybackLabel: "无限播放",
           endlessPlaybackDescription:
             "队列播完后自动添加相似曲目，保持音乐持续播放。",
@@ -665,11 +624,9 @@ export default {
           crossfadeOff: "关闭",
           crossfadeSeconds: "{{seconds}}秒",
           equalizerLabel: "均衡器",
-          equalizerDescription:
-            "打开系统均衡器，调节当前播放的音效。",
+          equalizerDescription: "打开系统均衡器，调节当前播放的音效。",
           equalizerAction: "打开",
-          equalizerErrorMessage:
-            "该设备上无可用系统均衡器。",
+          equalizerErrorMessage: "该设备上无可用系统均衡器。",
           queueSyncLabel: "播放队列同步",
           queueSyncDescription:
             "将播放队列保存到服务器，以便在其他设备上继续播放。",
@@ -686,8 +643,7 @@ export default {
             },
             off: {
               label: "关闭",
-              description:
-                "不同步。队列仅保留在本设备，不会上传至服务器。",
+              description: "不同步。队列仅保留在本设备，不会上传至服务器。",
             },
           },
         },
@@ -728,26 +684,18 @@ export default {
           title: "内容设置",
           recentSearchesLabel: "搜索历史",
           recentSearchesDescription: "删除搜索历史",
-          recentSearchesConfirmTitle:
-            "确认删除搜索历史？",
-          recentSearchesConfirmDescription:
-            "删除后不可恢复，确认继续？",
+          recentSearchesConfirmTitle: "确认删除搜索历史？",
+          recentSearchesConfirmDescription: "删除后不可恢复，确认继续？",
           recentSearchesSuccessMessage: "搜索历史已删除",
           recentPlaysLabel: "最近播放",
-          recentPlaysDescription:
-            "删除首页顶部的最近播放快捷入口",
-          recentPlaysConfirmTitle:
-            "确认删除最近播放快捷入口？",
-          recentPlaysConfirmDescription:
-            "删除后不可恢复，确认继续？",
+          recentPlaysDescription: "删除首页顶部的最近播放快捷入口",
+          recentPlaysConfirmTitle: "确认删除最近播放快捷入口？",
+          recentPlaysConfirmDescription: "删除后不可恢复，确认继续？",
           recentPlaysSuccessMessage: "最近播放已删除",
           activityLabel: "播放记录",
-          activityDescription:
-            "删除专辑、艺人和歌单的播放历史记录",
-          activityConfirmTitle:
-            "确认删除播放历史记录?",
-          activityConfirmDescription:
-            "删除后不可恢复，确认继续？",
+          activityDescription: "删除专辑、艺人和歌单的播放历史记录",
+          activityConfirmTitle: "确认删除播放历史记录?",
+          activityConfirmDescription: "删除后不可恢复，确认继续？",
           activitySuccessMessage: "播放历史记录已删除",
         },
         backupSettings: {
@@ -765,8 +713,7 @@ export default {
           restoreConfirmTitle: "替换所有数据？",
           restoreConfirmDescription:
             "恢复将清除您当前的服务器、偏好设置和音乐库数据，并用备份文件替换。此操作不可撤销。",
-          restoreInvalidFileMessage:
-            "所选文件不是有效的 Wavio 备份文件",
+          restoreInvalidFileMessage: "所选文件不是有效的 Wavio 备份文件",
           restoreErrorMessage: "恢复备份失败",
           restartRequiredTitle: "备份已恢复",
           restartRequiredDescription:
@@ -776,15 +723,12 @@ export default {
         podcastSettings: {
           title: "播客设置",
           configurePodcastsLabel: "配置播客",
-          configurePodcastsDescription:
-            "配置播客以便在应用中播放",
+          configurePodcastsDescription: "配置播客以便在应用中播放",
           configurePodcastsAction: "配置",
           configurePodcastsSuccessMessage: "播客已配置",
-          configurePodcastsErrorMessage:
-            "配置播客时发生错误",
+          configurePodcastsErrorMessage: "配置播客时发生错误",
           podcastConfigFormTitle: "配置播客",
-          podcastConfigFormDescription:
-            "输入 User ID 和 API Key 以配置播客",
+          podcastConfigFormDescription: "输入 User ID 和 API Key 以配置播客",
           userId: "User ID",
           userIdPlaceholder: "请输入 User ID",
           apiKey: "API key",
@@ -829,8 +773,7 @@ export default {
         addToFavorites: "加入收藏",
         removeFromFavorites: "从收藏中移除",
         addToFavoritesSuccessMessage: "电台已收藏",
-        removeFromFavoritesSuccessMessage:
-          "电台已取消收藏",
+        removeFromFavoritesSuccessMessage: "电台已取消收藏",
         newTitle: "添加网络电台",
         namePlaceholder: "电台名称",
         streamUrlPlaceholder: "流媒体地址",
@@ -838,29 +781,22 @@ export default {
         edit: "编辑网络电台",
         delete: "删除网络电台",
         newSuccessMessage: "网络电台已创建",
-        newErrorMessage:
-          "创建网络电台时发生错误",
+        newErrorMessage: "创建网络电台时发生错误",
         visitHomePage: "访问主页",
         editInternetRadioStation: "编辑网络电台",
         deleteInternetRadioStation: "删除网络电台",
-        deleteInternetRadioStationSuccessMessage:
-          "网络电台已删除",
-        deleteInternetRadioStationErrorMessage:
-          "删除网络电台时发生错误",
-        deleteInternetRadioStationConfirmTitle:
-          "确认删除该网络电台？",
+        deleteInternetRadioStationSuccessMessage: "网络电台已删除",
+        deleteInternetRadioStationErrorMessage: "删除网络电台时发生错误",
+        deleteInternetRadioStationConfirmTitle: "确认删除该网络电台？",
         deleteInternetRadioStationConfirmDescription:
           "删除后该网络电台不可恢复，确认继续？",
         editInternetRadioStationModalTitle: "编辑网络电台",
-        editInternetRadioStationSuccessMessage:
-          "网络电台已更新",
-        editInternetRadioStationErrorMessage:
-          "更新网络电台时发生错误",
+        editInternetRadioStationSuccessMessage: "网络电台已更新",
+        editInternetRadioStationErrorMessage: "更新网络电台时发生错误",
       },
       activity: {
         title: "播放记录",
-        empty:
-          "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
+        empty: "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
         playedAt: "{{distance}} 前",
         sections: {
           today: "今天",
@@ -892,16 +828,14 @@ export default {
         createPlaylistAction: "创建歌单",
         clear: "清空队列",
         clearConfirmTitle: "清空队列？",
-        clearConfirmMessage:
-          "将移除队列中所有曲目并停止播放。",
+        clearConfirmMessage: "将移除队列中所有曲目并停止播放。",
         clearedMessage: "队列已清空",
         removeFromQueue: "从队列中移除",
         createPlaylist: "从队列中创建歌单",
         createPlaylistTitle: "从队列新建歌单",
         createPlaylistNamePlaceholder: "我的队列歌单",
         createPlaylistSuccessMessage: "已从队列创建歌单",
-        createPlaylistErrorMessage:
-          "从队列创建歌单时发生错误",
+        createPlaylistErrorMessage: "从队列创建歌单时发生错误",
         sleepTimer: "睡眠定时",
       },
       tracks: {
@@ -931,11 +865,9 @@ export default {
           composer: "作曲",
         },
         favoriteSuccessMessage: "已收藏",
-        favoriteErrorMessage:
-          "收藏曲目时发生错误",
+        favoriteErrorMessage: "收藏曲目时发生错误",
         unfavoriteSuccessMessage: "已取消收藏",
-        unfavoriteErrorMessage:
-          "取消收藏时发生错误",
+        unfavoriteErrorMessage: "取消收藏时发生错误",
         shareSuccessMessage: "已分享",
         shareErrorMessage: "分享时发生错误",
         downloadSuccessMessage: "已下载",
@@ -943,14 +875,10 @@ export default {
         downloadForOffline: "保存到离线",
         downloadingForOffline: "正在下载到离线",
         removeOfflineDownload: "移除离线下载",
-        offlineDownloadSuccessMessage:
-          "已保存到离线",
-        offlineDownloadErrorMessage:
-          "保存到离线时发生错误",
-        removeOfflineDownloadSuccessMessage:
-          "已移除离线下载",
-        removeOfflineDownloadErrorMessage:
-          "移除离线下载时发生错误",
+        offlineDownloadSuccessMessage: "已保存到离线",
+        offlineDownloadErrorMessage: "保存到离线时发生错误",
+        removeOfflineDownloadSuccessMessage: "已移除离线下载",
+        removeOfflineDownloadErrorMessage: "移除离线下载时发生错误",
         rateSuccessMessage: "已评分",
         rateErrorMessage: "评分时发生错误",
         infoModal: {
@@ -1008,8 +936,7 @@ export default {
         jukeboxStatus: "{{state}} · {{index}}/{{total}}",
         jukeboxStatePlaying: "播放中",
         jukeboxStatePaused: "已暂停",
-        jukeboxErrorMessage:
-          "无法连接到服务器点唱机，请检查权限。",
+        jukeboxErrorMessage: "无法连接到服务器点唱机，请检查权限。",
         jukeboxResumeTitle: "恢复点唱机控制",
         jukeboxResumeMessage:
           "服务器上有点唱机会话正在播放。恢复控制还是在此设备播放？",
@@ -1057,10 +984,8 @@ export default {
         deleteServer: "删除服务器",
         createServerSuccessMessage: "服务器已添加",
         editServerSuccessMessage: "服务器已更新",
-        deleteServerConfirmTitle:
-          "确认删除该服务器？",
-        deleteServerConfirmDescription:
-          "删除后该服务器不可恢复，确定继续？",
+        deleteServerConfirmTitle: "确认删除该服务器？",
+        deleteServerConfirmDescription: "删除后该服务器不可恢复，确定继续？",
         deleteCurrentServerConfirmWarning:
           "您当前正在连接此服务器，删除后将断开连接。",
         defaultServer: "默认服务器",
@@ -1069,8 +994,7 @@ export default {
         noUsers: "该服务器暂无用户。",
         removeUser: "移除用户",
         switchServerConfirmTitle: "切换服务器？",
-        switchServerConfirmDescription:
-          "您将退出登录并跳转至登录页面。",
+        switchServerConfirmDescription: "您将退出登录并跳转至登录页面。",
         switchConfirm: "切换",
       },
       shared: {
@@ -1103,11 +1027,9 @@ export default {
           savingForOffline: "正在保存到离线",
           removeOfflineDownloads: "移除离线下载",
           saveSuccessMessage: "已保存到离线收听",
-          saveErrorMessage:
-            "保存到离线收听时发生错误",
+          saveErrorMessage: "保存到离线收听时发生错误",
           removeSuccessMessage: "已移除离线下载",
-          removeErrorMessage:
-            "移除离线下载时发生错误",
+          removeErrorMessage: "移除离线下载时发生错误",
         },
         favorites: "收藏",
         album_one: "专辑",
@@ -1142,8 +1064,7 @@ export default {
         rateSuccessMessage: "已评分",
         rateErrorMessage: "评分时发生错误",
         shareUrlCopiedMessage: "分享链接已复制到剪贴板",
-        shareUrlErrorMessage:
-          "复制分享链接时发生错误",
+        shareUrlErrorMessage: "复制分享链接时发生错误",
         tabs: {
           home: "首页",
           search: "搜索",
@@ -1211,8 +1132,7 @@ export default {
         choice: "或手动输入服务器信息",
         login: "登录",
         loginSuccessMessage: "登录成功",
-        loginErrorMessage:
-          "无法连接到服务器，请检查服务器信息后重试。",
+        loginErrorMessage: "无法连接到服务器，请检查服务器信息后重试。",
         serverAlreadyExists: "该服务器已存在",
         showPassword: "显示密码",
         hidePassword: "隐藏密码",
@@ -1222,8 +1142,7 @@ export default {
         jellyfinSetupHelp: "设置 Jellyfin 服务器",
         localLibraryName: "本地音乐库",
         localFoldersLabel: "来源文件夹",
-        localFoldersHelp:
-          "添加此设备上的一个或多个文件夹以扫描音乐。",
+        localFoldersHelp: "添加此设备上的一个或多个文件夹以扫描音乐。",
         localPickFolder: "选择文件夹",
         localNoPaths: "请至少添加一个文件夹以继续",
         localRemovePath: "移除文件夹",
@@ -1259,20 +1178,15 @@ export default {
     },
     taddyPodcasts: {
       errorCodes: {
-        API_KEY_INVALID:
-          "请求 header 中的 API Key 或 User ID 无效。",
-        API_RATE_LIMIT_EXCEEDED:
-          "已超出本月 API 请求配额。",
+        API_KEY_INVALID: "请求 header 中的 API Key 或 User ID 无效。",
+        API_RATE_LIMIT_EXCEEDED: "已超出本月 API 请求配额。",
         INVALID_QUERY_OR_SYNTAX:
           "查询过于复杂，或存在拼写或语法错误。请根据返回的提示信息进行修正。",
-        BAD_USER_INPUT:
-          "传入的参数无效，请查看返回的详细信息。",
+        BAD_USER_INPUT: "传入的参数无效，请查看返回的详细信息。",
         QUERY_TOO_COMPLEX:
           "查询过于复杂，请简化查询条件（比如移除部分查询项）。",
-        REQUIRES_USER_AUTHENTICATION:
-          "该请求需要先登录。",
-        ACCESS_NOT_ALLOWED:
-          "您无权访问该查询或变更操作。",
+        REQUIRES_USER_AUTHENTICATION: "该请求需要先登录。",
+        ACCESS_NOT_ALLOWED: "您无权访问该查询或变更操作。",
         TADDY_SERVER_ERROR:
           "服务器内部错误。如持续遇到此问题，请联系 danny@taddy.org",
       },

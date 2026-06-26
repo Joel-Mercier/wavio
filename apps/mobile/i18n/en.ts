@@ -651,6 +651,18 @@ export default {
           createTabLabel: "Create tab",
           createTabDescription: "Show the 'create' tab in the bottom tab bar",
         },
+        internetRadioStationsSettings: {
+          title: "Internet radio stations",
+          countryLabel: "Country",
+          countryDescription:
+            "Pick the country for the 'By country' stations row. Defaults to your device's region.",
+          countryAutomatic: "Automatic",
+          tagsLabel: "Genre rows",
+          tagsDescription:
+            "Choose which genre rows appear on the radio stations screen.",
+          tagsCount: "{{count}} selected",
+          tagsSheetTitle: "Genre rows",
+        },
         playbackSettings: {
           title: "Playback",
           gaplessLabel: "Gapless playback",

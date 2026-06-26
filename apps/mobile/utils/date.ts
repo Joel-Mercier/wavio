@@ -9,7 +9,7 @@ import i18n from "@/config/i18n";
 const locales: Record<string, Locale> = {
   en,
   fr,
-  cn
+  cn,
 };
 
 export const formatDistanceToNow = (date: Date) => {
