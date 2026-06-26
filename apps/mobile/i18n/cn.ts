@@ -184,7 +184,7 @@ export default {
         dailyTopChartsByGenre: "$t(app.podcasts.genres.{{genre}}) 今日热门播客",
         popularInLanguage: "{{language, titlecase}} 热门播客",
         seeAllEpisodes: "查看全部单集",
-        publishedAt: "{{distance}} 前",
+        publishedAt: "{{distance}}前",
         configureTaddyPodcasts: "在设置中配置",
         taddyPodcastsNotConfigured: "播客访问权未配置",
         yourPodcasts: "我的播客",
@@ -586,8 +586,9 @@ export default {
           scanMusicLibrarySuccessDescription: "扫描已启动",
           scanMusicLibraryErrorDescription: "启动扫描时发生错误",
           scanStatusLabel: "扫描状态",
-          scanStatusDescription: "显示音乐库的扫描状态",
-          scanStatusLastScan: "上次扫描：{{lastScan}} 前",
+          scanStatusDescription:
+            "显示音乐库的扫描状态",
+          scanStatusLastScan: "上次扫描：{{lastScan}}前",
           scanStatuses: {
             idle: "空闲",
             scanning: "扫描中",
@@ -796,8 +797,9 @@ export default {
       },
       activity: {
         title: "播放记录",
-        empty: "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
-        playedAt: "{{distance}} 前",
+        empty:
+          "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
+        playedAt: "{{distance}}前",
         sections: {
           today: "今天",
           yesterday: "昨天",
@@ -905,7 +907,7 @@ export default {
           trackPeak: "单曲回放峰值",
           unknownDuration: "未知",
           neverPlayed: "从未",
-          lastPlayedDistance: "{{distance}} 前",
+          lastPlayedDistance: "{{distance}}前",
         },
       },
       player: {
