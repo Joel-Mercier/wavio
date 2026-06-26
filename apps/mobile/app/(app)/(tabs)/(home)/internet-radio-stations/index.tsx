@@ -32,8 +32,7 @@ import {
   useScopedRadioFavorites,
   useSyncServerRadioFavorites,
 } from "@/hooks/useRadioFavorites";
-
-const POPULAR_TAGS = ["jazz", "rock", "news"];
+import useApp from "@/stores/app";
 
 export default function InternetRadioStationsScreen() {
   const { t } = useTranslation();
@@ -41,10 +40,13 @@ export default function InternetRadioStationsScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
-  const countryCode = useMemo(
+  const configuredCountry = useApp((store) => store.internetRadioCountryCode);
+  const feedTags = useApp((store) => store.internetRadioFeedTags);
+  const localeCountry = useMemo(
     () => getLocales()[0]?.regionCode ?? undefined,
     [],
   );
+  const countryCode = configuredCountry ?? localeCountry;
 
   useSyncServerRadioFavorites();
 
@@ -185,7 +187,7 @@ export default function InternetRadioStationsScreen() {
             skeletonKey="by-country"
           />
         )}
-        {POPULAR_TAGS.map((tag) => (
+        {feedTags.map((tag) => (
           <TagRow key={tag} tag={tag} />
         ))}
       </ScrollView>

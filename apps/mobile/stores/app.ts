@@ -8,6 +8,10 @@ import createSelectors from "@/utils/createSelectors";
 // server to transcode to that codec via the Subsonic `format=` param.
 export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 
+// Genre tag rows shown on the internet radio stations home screen, used when
+// the user hasn't customized them.
+export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
+
 interface AppStore {
   locale: TSupportedLanguages | null;
   setLocale: (locale: TSupportedLanguages) => void;
@@ -86,6 +90,11 @@ interface AppStore {
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
+  // null = derive the "by country" feed from the device locale's region.
+  internetRadioCountryCode: string | null;
+  setInternetRadioCountryCode: (countryCode: string | null) => void;
+  internetRadioFeedTags: string[];
+  setInternetRadioFeedTags: (tags: string[]) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -181,6 +190,16 @@ export const useAppBase = create<AppStore>()(
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {
         set({ queueSyncPriority });
+      },
+      internetRadioCountryCode: null,
+      setInternetRadioCountryCode: (
+        internetRadioCountryCode: string | null,
+      ) => {
+        set({ internetRadioCountryCode });
+      },
+      internetRadioFeedTags: DEFAULT_INTERNET_RADIO_FEED_TAGS,
+      setInternetRadioFeedTags: (internetRadioFeedTags: string[]) => {
+        set({ internetRadioFeedTags });
       },
     }),
     {

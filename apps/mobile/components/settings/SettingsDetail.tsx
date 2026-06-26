@@ -5,13 +5,16 @@ import * as Application from "expo-application";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type LayoutChangeEvent, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import RadioFeedTagsSheet from "@/components/internetRadioStations/RadioFeedTagsSheet";
+import SearchableSelectSheet from "@/components/internetRadioStations/SearchableSelectSheet";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import PodcastConfigDialog from "@/components/settings/PodcastConfigDialog";
@@ -50,6 +53,7 @@ import {
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
+import { useRadioCountries } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -114,6 +118,12 @@ export default function SettingsDetail() {
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleQueueSyncSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetQueueSyncModalRef);
+  const bottomSheetRadioCountryModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleRadioCountrySheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetRadioCountryModalRef);
+  const bottomSheetRadioTagsModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleRadioTagsSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetRadioTagsModalRef);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -154,6 +164,13 @@ export default function SettingsDetail() {
   );
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
+  const internetRadioCountryCode = useApp(
+    (store) => store.internetRadioCountryCode,
+  );
+  const setInternetRadioCountryCode = useApp(
+    (store) => store.setInternetRadioCountryCode,
+  );
+  const internetRadioFeedTags = useApp((store) => store.internetRadioFeedTags);
   const clearTaddyPodcastsConfig = usePodcasts(
     (store) => store.clearTaddyPodcastsConfig,
   );
@@ -176,6 +193,27 @@ export default function SettingsDetail() {
   const downloadedTracksList = useDownloadedTracksList();
   const { data: starredTracksData } = useStarred2({});
   const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
+
+  const [emerald500] = Uniwind.getCSSVariable([
+    "--color-emerald-500",
+  ]) as string[];
+  const { data: radioCountriesData } = useRadioCountries();
+  const radioCountryOptions = useMemo(
+    () =>
+      (radioCountriesData ?? [])
+        .filter((c) => c.iso_3166_1 && c.name)
+        .map((c) => ({ label: c.name, value: c.iso_3166_1 })),
+    [radioCountriesData],
+  );
+  const radioCountryBadgeText = useMemo(() => {
+    if (!internetRadioCountryCode) {
+      return t("app.settings.internetRadioStationsSettings.countryAutomatic");
+    }
+    return (
+      radioCountryOptions.find((o) => o.value === internetRadioCountryCode)
+        ?.label ?? internetRadioCountryCode
+    );
+  }, [internetRadioCountryCode, radioCountryOptions, t]);
 
   const showSuccessToast = (description: string) => {
     toast.show({
@@ -637,6 +675,31 @@ export default function SettingsDetail() {
             </HStack>
             <Divider className="bg-primary-400" />
             <SettingsSectionTitle
+              title={t("app.settings.internetRadioStationsSettings.title")}
+            />
+            <SettingsSelectRow
+              label={t(
+                "app.settings.internetRadioStationsSettings.countryLabel",
+              )}
+              description={t(
+                "app.settings.internetRadioStationsSettings.countryDescription",
+              )}
+              badgeText={radioCountryBadgeText}
+              onPress={() => bottomSheetRadioCountryModalRef.current?.present()}
+            />
+            <SettingsSelectRow
+              label={t("app.settings.internetRadioStationsSettings.tagsLabel")}
+              description={t(
+                "app.settings.internetRadioStationsSettings.tagsDescription",
+              )}
+              badgeText={t(
+                "app.settings.internetRadioStationsSettings.tagsCount",
+                { count: internetRadioFeedTags.length },
+              )}
+              onPress={() => bottomSheetRadioTagsModalRef.current?.present()}
+            />
+            <Divider className="bg-primary-400" />
+            <SettingsSectionTitle
               title={t("app.settings.displaySettings.title")}
             />
             <FadeOutScaleDown
@@ -846,6 +909,25 @@ export default function SettingsDetail() {
           </VStack>
         </ScrollView>
       </Box>
+      <SearchableSelectSheet
+        ref={bottomSheetRadioCountryModalRef}
+        onSheetPositionChange={handleRadioCountrySheetPositionChange}
+        title={t("app.settings.internetRadioStationsSettings.countryLabel")}
+        anyLabel={t(
+          "app.settings.internetRadioStationsSettings.countryAutomatic",
+        )}
+        options={radioCountryOptions}
+        selectedValue={internetRadioCountryCode ?? undefined}
+        onSelect={(value) => {
+          setInternetRadioCountryCode(value || null);
+          bottomSheetRadioCountryModalRef.current?.dismiss();
+        }}
+        emerald={emerald500}
+      />
+      <RadioFeedTagsSheet
+        modalRef={bottomSheetRadioTagsModalRef}
+        onChange={handleRadioTagsSheetPositionChange}
+      />
       <OptionsBottomSheetModal
         modalRef={bottomSheetLanguageModalRef}
         onChange={handleSheetPositionChange}

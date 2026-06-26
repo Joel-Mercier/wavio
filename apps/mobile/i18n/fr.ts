@@ -672,6 +672,18 @@ export default {
           createTabDescription:
             "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
         },
+        internetRadioStationsSettings: {
+          title: "Stations de radio",
+          countryLabel: "Pays",
+          countryDescription:
+            "Choisissez le pays de la rangée « Par pays ». Par défaut, la région de votre appareil.",
+          countryAutomatic: "Automatique",
+          tagsLabel: "Rangées de genres",
+          tagsDescription:
+            "Choisissez les rangées de genres affichées sur l'écran des stations de radio.",
+          tagsCount: "{{count}} sélectionné(s)",
+          tagsSheetTitle: "Rangées de genres",
+        },
         playbackSettings: {
           title: "Lecture",
           gaplessLabel: "Lecture sans coupure",

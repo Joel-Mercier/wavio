@@ -1,16 +1,13 @@
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
-  useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -28,6 +25,9 @@ import InternetRadioStationListItem, {
   radioBrowserToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
+import SearchableSelectSheet, {
+  type SelectOption,
+} from "@/components/internetRadioStations/SearchableSelectSheet";
 import SheetSearchInput from "@/components/SheetSearchInput";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -48,11 +48,6 @@ import type { RadioBrowserStation } from "@/services/radioBrowser/types";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
-
-interface SelectOption {
-  label: string;
-  value: string;
-}
 
 export default function InternetRadioStationsSearchScreen() {
   const [primary50, white, emerald500] = Uniwind.getCSSVariable([
@@ -379,80 +374,5 @@ export default function InternetRadioStationsSearchScreen() {
         emerald={emerald500}
       />
     </Box>
-  );
-}
-
-type SearchableSelectSheetProps = {
-  ref: React.RefObject<BottomSheetModal | null>;
-  onSheetPositionChange: NonNullable<BottomSheetModalProps["onChange"]>;
-  title: string;
-  anyLabel: string;
-  options: SelectOption[];
-  selectedValue: string | undefined;
-  onSelect: (value: string) => void;
-  emerald: string;
-};
-
-function SearchableSelectSheet({
-  ref,
-  onSheetPositionChange,
-  title,
-  anyLabel,
-  options,
-  selectedValue,
-  onSelect,
-  emerald,
-}: SearchableSelectSheetProps) {
-  const [query, setQuery] = useState("");
-  const renderScrollComponent = useBottomSheetScrollableCreator();
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((o) => o.label.toLowerCase().includes(q));
-  }, [query, options]);
-
-  return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={["75%"]}
-      enableDynamicSizing={false}
-      stackBehavior="push"
-      onChange={onSheetPositionChange}
-      backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
-      handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-    >
-      <Box className="px-6 pt-2 pb-3">
-        <Heading className="text-white mb-3" size="lg">
-          {title}
-        </Heading>
-        <SheetSearchInput onChangeText={setQuery} />
-      </Box>
-      <FlashList
-        data={filtered}
-        keyExtractor={(item) => item.value}
-        renderScrollComponent={renderScrollComponent}
-        ListHeaderComponent={
-          <FadeOutScaleDown onPress={() => onSelect("")}>
-            <HStack className="items-center justify-between px-6 py-3">
-              <Text className="text-md text-white flex-1 pr-4">{anyLabel}</Text>
-              {!selectedValue && <Check size={20} color={emerald} />}
-            </HStack>
-          </FadeOutScaleDown>
-        }
-        renderItem={({ item }) => (
-          <FadeOutScaleDown onPress={() => onSelect(item.value)}>
-            <HStack className="items-center justify-between px-6 py-3">
-              <Text className="text-md text-white flex-1 pr-4">
-                {item.label}
-              </Text>
-              {selectedValue === item.value && (
-                <Check size={20} color={emerald} />
-              )}
-            </HStack>
-          </FadeOutScaleDown>
-        )}
-      />
-    </BottomSheetModal>
   );
 }

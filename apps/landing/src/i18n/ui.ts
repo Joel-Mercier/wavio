@@ -2,6 +2,7 @@ import { GITHUB_URL } from '../consts'
 
 export const languages = {
   cn: '简体中文',
+  cn: '简体中文',
   en: 'English',
   fr: 'Français',
 } as const
