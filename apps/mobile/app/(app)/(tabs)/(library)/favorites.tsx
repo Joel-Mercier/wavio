@@ -46,7 +46,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -184,13 +184,20 @@ export default function FavoritesScreen() {
 
   const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const favoritesSource = useMemo<QueueSource>(
+    () => ({ type: "likedSongs", name: t("app.favorites.title") }),
+    [t],
+  );
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
       return;
     }
     if (!data || data.length === 0) return;
-    playTracks(data.map(childToTrack), 0, { shuffleFromRandom: true });
+    playTracks(data.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: favoritesSource,
+    });
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
@@ -205,7 +212,7 @@ export default function FavoritesScreen() {
     [],
   );
   const isLoadingRows = !starredData;
-  const handleTrackPress = useTrackListPress(data);
+  const handleTrackPress = useTrackListPress(data, favoritesSource);
   const renderRow = useCallback(
     ({ item, index }: { item: Child; index: number }) =>
       isLoadingRows ? (

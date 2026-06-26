@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
@@ -9,7 +9,7 @@ import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
 import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import { CastButton } from "react-native-google-cast";
@@ -117,6 +117,7 @@ export default function PlayerScreen() {
   const setShuffle = useQueue((store) => store.setShuffle);
   const currentIndex = useQueue((store) => store.currentIndex);
   const queueLength = useQueue((store) => store.queue.length);
+  const source = useQueue((store) => store.source);
   const prevTrack = useQueue((store) =>
     store.currentIndex != null && store.currentIndex > 0
       ? store.queue[store.currentIndex - 1]
@@ -131,6 +132,30 @@ export default function PlayerScreen() {
   const isPodcast = playingTrack?.source === "podcast";
   const audioQuality = formatAudioQuality(playingTrack ?? null);
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
+  const showSource = !!source && !isPodcast && !isRadio;
+  const sourceHref = useMemo<Href | null>(() => {
+    if (!source?.id) return null;
+    switch (source.type) {
+      case "album":
+        return `/albums/${source.id}`;
+      case "playlist":
+        return `/playlists/${source.id}`;
+      case "artist":
+        return `/artists/${source.id}`;
+      case "folder":
+        return {
+          pathname: "/folders/[id]",
+          params: { id: source.id, name: source.name },
+        };
+      default:
+        return null;
+    }
+  }, [source]);
+  const headerTextShadow = {
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  } as const;
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
@@ -361,7 +386,7 @@ export default function PlayerScreen() {
         className="flex-1"
         style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
       >
-        <HStack className="items-center justify-between mt-6 px-6">
+        <HStack className="items-center justify-between mt-6 mb-4 px-6">
           <FadeOutScaleDown
             onPress={() => {
               if (router.canGoBack()) router.back();
@@ -372,27 +397,36 @@ export default function PlayerScreen() {
             <ChevronDown size={24} color="white" />
           </FadeOutScaleDown>
           <VStack className="items-center flex-1 mx-2">
-            <Text
-              className="text-white font-bold uppercase tracking-wider"
-              style={{
-                textShadowColor: "rgba(0,0,0,0.4)",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 2,
-              }}
-            >
-              {t("app.player.title")}
-            </Text>
-            {audioQuality && (
+            {showSource && source ? (
+              <>
+                <Text
+                  className="text-white/70 text-[11px] font-medium uppercase tracking-wider"
+                  numberOfLines={1}
+                  style={headerTextShadow}
+                >
+                  {t(`app.player.playingFrom.${source.type}`)}
+                </Text>
+                <FadeOut
+                  onPress={() => {
+                    if (sourceHref) router.replace(sourceHref);
+                  }}
+                  className="flex-1"
+                >
+                  <Text
+                    className="text-white font-bold tracking-wide"
+                    numberOfLines={1}
+                    style={headerTextShadow}
+                  >
+                    {source.name}
+                  </Text>
+                </FadeOut>
+              </>
+            ) : (
               <Text
-                className="text-white/80 text-xs font-medium tracking-wide mt-1 px-2 py-0.5 rounded-full bg-black/20"
-                numberOfLines={1}
-                style={{
-                  textShadowColor: "rgba(0,0,0,0.4)",
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 2,
-                }}
+                className="text-white font-bold uppercase tracking-wider"
+                style={headerTextShadow}
               >
-                {audioQuality}
+                {t("app.player.title")}
               </Text>
             )}
           </VStack>
@@ -459,7 +493,7 @@ export default function PlayerScreen() {
           />
           <VStack className="px-6">
             <HStack className="items-center justify-between gap-x-4">
-              <VStack className="mb-6 flex-1">
+              <VStack className="mb-2 flex-1">
                 <FadeOut
                   onPress={() => {
                     if (isPodcast) {
@@ -546,6 +580,14 @@ export default function PlayerScreen() {
                 />
               )}
             </HStack>
+            {!isRadio && audioQuality && (
+              <Text
+                className="text-primary-100 text-xs font-medium tracking-wide mb-4"
+                numberOfLines={1}
+              >
+                {audioQuality}
+              </Text>
+            )}
             {!isRadio && <PlaybackSlider />}
             {isRadio && <Box className="mb-6" />}
             <HStack

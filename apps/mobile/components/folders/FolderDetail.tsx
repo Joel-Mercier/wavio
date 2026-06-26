@@ -23,6 +23,7 @@ import { useIndexes, useMusicDirectory } from "@/hooks/backend/useBrowsing";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
+import type { QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -92,12 +93,19 @@ export default function FolderDetail() {
     [dirs, tracks],
   );
 
+  const folderSource = useMemo<QueueSource>(
+    () => ({ type: "folder", name: headerName, id }),
+    [headerName, id],
+  );
   const handlePlayAllPress = () => {
     if (tracks.length === 0) return;
-    playTracks(tracks.map(childToTrack), 0, { shuffleFromRandom: true });
+    playTracks(tracks.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: folderSource,
+    });
   };
 
-  const handleTrackPress = useTrackListPress(tracks);
+  const handleTrackPress = useTrackListPress(tracks, folderSource);
 
   return (
     <Box className="h-full w-full">

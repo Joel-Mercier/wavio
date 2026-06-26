@@ -994,6 +994,14 @@ export default {
       },
       player: {
         title: "Playing now",
+        playingFrom: {
+          album: "Playing from album",
+          playlist: "Playing from playlist",
+          artist: "Playing from artist",
+          likedSongs: "Playing from liked songs",
+          folder: "Playing from folder",
+          similar: "Playing from similar songs",
+        },
         addToPlaylist: "Add to playlist",
         playNext: "Play next",
         addToQueue: "Add to queue",

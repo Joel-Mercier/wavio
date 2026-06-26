@@ -46,6 +46,7 @@ beforeEach(() => {
     shuffle: false,
     shuffleOrderIds: null,
     shuffleCursor: null,
+    source: null,
   });
 });
 
@@ -92,6 +93,45 @@ describe("queue store - basic state setters", () => {
     expect(get().contextIds).toEqual(["t2"]);
     get().removeByIds(["t2"]);
     expect(get().contextIds).toBeNull();
+  });
+});
+
+describe("queue store - playback source", () => {
+  const albumSource = {
+    type: "album" as const,
+    name: "My Album",
+    id: "a1",
+  };
+
+  test("setQueue stores the source", () => {
+    get().setQueue(makeTracks(3), 0, albumSource);
+    expect(get().source).toEqual(albumSource);
+  });
+
+  test("playNow stores the source", () => {
+    get().playNow(makeTracks(2), 0, albumSource);
+    expect(get().source).toEqual(albumSource);
+  });
+
+  test("source defaults to null when none is provided", () => {
+    get().setQueue(makeTracks(2), 0, albumSource);
+    get().playNow(makeTracks(2), 0); // no source argument
+    expect(get().source).toBeNull();
+  });
+
+  test("clearQueue clears the source", () => {
+    get().setQueue(makeTracks(2), 0, albumSource);
+    get().clearQueue();
+    expect(get().source).toBeNull();
+  });
+
+  test("skipping tracks preserves the source", () => {
+    get().setRemovePlayed(false);
+    get().setQueue(makeTracks(3), 0, albumSource);
+    get().next();
+    get().next();
+    get().previous();
+    expect(get().source).toEqual(albumSource);
   });
 });
 

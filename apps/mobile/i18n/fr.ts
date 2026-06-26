@@ -1020,6 +1020,14 @@ export default {
       },
       player: {
         title: "En cours de lecture",
+        playingFrom: {
+          album: "Lecture depuis l'album",
+          playlist: "Lecture depuis la playlist",
+          artist: "Lecture depuis l'artiste",
+          likedSongs: "Lecture depuis les titres aimés",
+          folder: "Lecture depuis le dossier",
+          similar: "Lecture depuis les titres similaires",
+        },
         addToPlaylist: "Ajouter à la playlist",
         playNext: "Ajouter à la file d'attente",
         addToQueue: "Ajouter à la fin de la file d'attente",

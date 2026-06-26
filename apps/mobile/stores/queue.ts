@@ -3,6 +3,13 @@ import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
 import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
+export type QueueSource = {
+  type: "album" | "playlist" | "artist" | "likedSongs" | "folder" | "similar";
+  name: string;
+  // Present for navigable sources (album/playlist/artist/folder)
+  id?: string;
+} | null;
+
 export type QueueTrack = {
   id: string;
   url: string;
@@ -30,7 +37,13 @@ interface QueueStore {
   shuffleOrderIds: string[] | null;
   // Cursor within shuffleOrderIds that points to the current track id
   shuffleCursor: number | null;
-  setQueue: (tracks: QueueTrack[], startIndex?: number | null) => void;
+  // Where the current queue was played from (Spotify-style "Playing from …")
+  source: QueueSource;
+  setQueue: (
+    tracks: QueueTrack[],
+    startIndex?: number | null,
+    source?: QueueSource,
+  ) => void;
   clearQueue: () => void;
   setCurrentIndex: (index: number | null) => void;
   setRemovePlayed: (remove: boolean) => void;
@@ -40,7 +53,11 @@ interface QueueStore {
 
   enqueueNext: (track: QueueTrack | QueueTrack[]) => void;
   enqueueEnd: (track: QueueTrack | QueueTrack[]) => void;
-  playNow: (tracks: QueueTrack[] | QueueTrack, startIndex?: number) => void;
+  playNow: (
+    tracks: QueueTrack[] | QueueTrack,
+    startIndex?: number,
+    source?: QueueSource,
+  ) => void;
 
   updateTrack: (id: string, patch: Partial<QueueTrack>) => void;
   removeByIds: (ids: string[]) => void;
@@ -63,6 +80,7 @@ const initialQueueState = {
   shuffle: false,
   shuffleOrderIds: null as string[] | null,
   shuffleCursor: null as number | null,
+  source: null as QueueSource,
 };
 
 const useQueueBase = create<QueueStore>()((set, get) => ({
@@ -111,7 +129,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
     return { orderIds: order, cursor };
   },
 
-  setQueue: (tracks, startIndex = 0) => {
+  setQueue: (tracks, startIndex = 0, source = null) => {
     set((state) => {
       // When replacing the queue, drop context if it no longer applies
       const newIds = new Set(tracks.map((t) => t.id));
@@ -127,6 +145,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
               ? Math.max(0, Math.min(startIndex, tracks.length - 1))
               : 0,
         contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
+        source,
       };
       if (state.shuffle) {
         const built = (
@@ -162,6 +181,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         contextIds: null,
         shuffleOrderIds: null,
         shuffleCursor: null,
+        source: null,
       };
     });
   },
@@ -339,7 +359,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
     });
   },
 
-  playNow: (tracks, startIndex = 0) => {
+  playNow: (tracks, startIndex = 0, source = null) => {
     const items = Array.isArray(tracks) ? tracks : [tracks];
     set((state) => {
       const newIds = new Set(items.map((t) => t.id));
@@ -353,6 +373,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
             ? null
             : Math.max(0, Math.min(startIndex, items.length - 1)),
         contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
+        source,
       };
       if (state.shuffle) {
         const built = (
@@ -837,6 +858,7 @@ type CursorBlob = {
   contextIds: string[] | null;
   shuffle: boolean;
   shuffleCursor: number | null;
+  source: QueueSource;
 };
 
 const keyQueue = `${QUEUE_STORAGE_NAME}:queue`;
@@ -880,7 +902,8 @@ useQueueBase.subscribe((next, prev) => {
     next.repeatMode !== prev.repeatMode ||
     next.contextIds !== prev.contextIds ||
     next.shuffle !== prev.shuffle ||
-    next.shuffleCursor !== prev.shuffleCursor
+    next.shuffleCursor !== prev.shuffleCursor ||
+    next.source !== prev.source
   ) {
     writeCursor({
       currentIndex: next.currentIndex,
@@ -888,6 +911,7 @@ useQueueBase.subscribe((next, prev) => {
       contextIds: next.contextIds,
       shuffle: next.shuffle,
       shuffleCursor: next.shuffleCursor,
+      source: next.source,
     });
   }
 });
@@ -912,6 +936,7 @@ const rehydrate = (): Promise<void> => {
       patch.contextIds = cursor.contextIds;
       patch.shuffle = cursor.shuffle;
       patch.shuffleCursor = cursor.shuffleCursor;
+      patch.source = cursor.source ?? null;
     }
     if (Object.keys(patch).length > 0) {
       useQueueBase.setState(patch);

@@ -101,7 +101,7 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -437,7 +437,14 @@ export default function AlbumDetail() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
-  const handleTrackPress = useTrackListPress(albumTracks);
+  const albumSource = useMemo<QueueSource>(
+    () =>
+      data?.album
+        ? { type: "album", name: data.album.name, id: data.album.id }
+        : null,
+    [data?.album],
+  );
+  const handleTrackPress = useTrackListPress(albumTracks, albumSource);
   const albumMeta = useMemo<DownloadCollectionMeta | undefined>(
     () =>
       data?.album
@@ -531,7 +538,10 @@ export default function AlbumDetail() {
       return;
     }
     if (!albumTracks || albumTracks.length === 0) return;
-    playTracks(albumTracks.map(childToTrack), 0, { shuffleFromRandom: true });
+    playTracks(albumTracks.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: albumSource,
+    });
     if (data?.album) {
       addRecentPlay({
         id,

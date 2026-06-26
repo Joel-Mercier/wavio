@@ -73,7 +73,7 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -167,13 +167,23 @@ export default function LikedSongs() {
     }
   };
 
+  const likedSongsSource = useMemo<QueueSource>(
+    () =>
+      data?.artist
+        ? { type: "likedSongs", name: data.artist.name }
+        : { type: "likedSongs", name: "" },
+    [data?.artist],
+  );
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
       return;
     }
     if (likedSongs.length === 0) return;
-    playTracks(likedSongs.map(childToTrack), 0, { shuffleFromRandom: true });
+    playTracks(likedSongs.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: likedSongsSource,
+    });
     handleTrackPressCallback();
   };
 
@@ -183,7 +193,7 @@ export default function LikedSongs() {
     setShuffle(!shuffle);
   };
 
-  const handleTrackPress = useTrackListPress(likedSongs);
+  const handleTrackPress = useTrackListPress(likedSongs, likedSongsSource);
 
   const handleFavoritePress = () => {
     queryClient.setQueryData(["artist", id], {
