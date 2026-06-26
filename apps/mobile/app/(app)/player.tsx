@@ -157,6 +157,7 @@ export default function PlayerScreen() {
   );
   const { lyrics } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
+  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const coverTranslateX = useSharedValue(0);
 
   const coverRowStyle = useAnimatedStyle(() => ({
@@ -440,7 +441,10 @@ export default function PlayerScreen() {
               </GestureDetector>
             )}
           </Box>
-          <CurrentLyricLine lyrics={hasSyncedLyrics ? lyrics : null} />
+          <CurrentLyricLine
+            lyrics={hasSyncedLyrics ? lyrics : null}
+            onPress={() => setShowLyricsDialog(true)}
+          />
           <VStack className="px-6">
             <HStack className="items-center justify-between gap-x-4">
               <VStack className="my-6 flex-1">
@@ -622,6 +626,9 @@ export default function PlayerScreen() {
         actionsSheetRef={actionsSheetRef}
         playingTrack={playingTrack ?? null}
         lyrics={lyrics}
+        showLyricsDialog={showLyricsDialog}
+        onShowLyrics={() => setShowLyricsDialog(true)}
+        onCloseLyrics={() => setShowLyricsDialog(false)}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}
         onRemoveFavoritePodcast={handleRemoveFavoritePodcastPress}
       />
