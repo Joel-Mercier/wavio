@@ -44,24 +44,45 @@ const langLinks = (Object.keys(languages) as Lang[]).map((code) => ({
 					</>
 				)
 			}
-			<div class="flex items-center gap-1 text-[13px] font-semibold" aria-label="Language">
-				{
-					langLinks.map((l, i) => (
-						<>
-							{i > 0 && <span class="text-text-3">/</span>}
-							<a
-								href={l.href}
-								hreflang={l.code}
-								aria-current={l.current ? 'true' : undefined}
-								class:list={[
-									'uppercase transition-colors hover:text-text',
-									l.current ? 'text-accent' : 'text-text-3',
-								]}
-							>{l.code}</a>
-						</>
-					))
-				}
-			</div>
+			<details class="lang-switcher group relative text-[13px] font-semibold">
+				<summary
+					class="flex cursor-pointer list-none items-center gap-1.5 text-text-2 transition-colors hover:text-text [&::-webkit-details-marker]:hidden"
+					aria-label="Language"
+				>
+					{languages[lang]}
+					<svg
+						width="12"
+						height="12"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+						class="transition-transform duration-150 group-open:rotate-180"
+					>
+						<path d="m6 9 6 6 6-6" />
+					</svg>
+				</summary>
+				<ul class="absolute right-0 top-full mt-2 min-w-[140px] overflow-hidden rounded-xl border border-white/10 bg-bg/95 py-1 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+					{
+						langLinks.map((l) => (
+							<li>
+								<a
+									href={l.href}
+									hreflang={l.code}
+									aria-current={l.current ? 'true' : undefined}
+									class:list={[
+										'block px-4 py-2 transition-colors hover:bg-white/5 hover:text-text',
+										l.current ? 'text-accent' : 'text-text-2',
+									]}
+								>{languages[l.code]}</a>
+							</li>
+						))
+					}
+				</ul>
+			</details>
 			<a
 				href={`${home}#download`}
 				class="rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-ink transition-all duration-150 hover:-translate-y-px hover:shadow-[0_8px_24px_-6px_rgba(16,185,129,0.35)]"
@@ -69,3 +90,11 @@ const langLinks = (Object.keys(languages) as Lang[]).map((code) => ({
 		</div>
 	</div>
 </nav>
+
+<script>
+	document.addEventListener('click', (e) => {
+		for (const details of document.querySelectorAll<HTMLDetailsElement>('details.lang-switcher[open]')) {
+			if (!details.contains(e.target as Node)) details.removeAttribute('open');
+		}
+	});
+</script>
