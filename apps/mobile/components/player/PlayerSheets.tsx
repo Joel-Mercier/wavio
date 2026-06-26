@@ -17,6 +17,7 @@ import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
 import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
@@ -36,6 +37,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import LyricsDialog from "@/components/player/LyricsDialog";
+import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -116,6 +118,7 @@ export default function PlayerSheets({
   const toast = useToast();
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
@@ -250,6 +253,13 @@ export default function PlayerSheets({
     actionsSheetRef.current?.dismiss();
     onShowLyrics();
   };
+
+  const handleInfoPress = () => {
+    actionsSheetRef.current?.dismiss();
+    setShowInfoModal(true);
+  };
+
+  const handleCloseInfoModal = () => setShowInfoModal(false);
 
   const handleSimilarSongsPress = () => {
     if (!playingTrack) return;
@@ -761,6 +771,14 @@ export default function PlayerSheets({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                <FadeOutScaleDown onPress={handleInfoPress}>
+                  <HStack className="items-center">
+                    <Info size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.getInfo")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
                 <FadeOutScaleDown
                   onPress={handleDownloadPress}
                   disabled={!isOnline}
@@ -962,6 +980,11 @@ export default function PlayerSheets({
         isOpen={showLyricsDialog}
         onClose={onCloseLyrics}
         lyrics={lyrics}
+      />
+      <TrackInfoModal
+        isOpen={showInfoModal}
+        onClose={handleCloseInfoModal}
+        track={playingTrack}
       />
     </>
   );
