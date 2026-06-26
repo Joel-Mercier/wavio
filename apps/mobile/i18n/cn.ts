@@ -604,13 +604,12 @@ export default {
         internetRadioStationsSettings: {
           title: "网络电台",
           countryLabel: "国家/地区",
-          countryDescription:
-            "选择“按国家/地区”电台行的国家/地区。默认使用设备所在地区。",
+          countryDescription: "选择“按国家/地区”分类的电台栏所对应的国家。默认使用设备所在地区。",
           countryAutomatic: "自动",
-          tagsLabel: "流派分类行",
-          tagsDescription: "选择在电台页面上显示的流派分类行。",
+          tagsLabel: "流派栏",
+          tagsDescription: "选择在电台界面中显示哪些流派栏。",
           tagsCount: "已选 {{count}} 项",
-          tagsSheetTitle: "流派分类行",
+          tagsSheetTitle: "流派栏",
         },
         playbackSettings: {
           title: "播放设置",
