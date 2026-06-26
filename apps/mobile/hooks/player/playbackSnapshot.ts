@@ -13,12 +13,19 @@ export type PlaybackSnapshot = {
   duration: number;
 };
 
+// Transcoded streams (a streaming format that differs from the source file)
+// are served without a known length, so the player reports duration 0. Fall
+// back to the current queue track's metadata duration so seek/progress UI works.
+function currentTrackDuration(): number {
+  return useQueue.getState().getCurrent()?.duration ?? 0;
+}
+
 function readLocalSnapshot(): PlaybackSnapshot {
   const p = getActivePlayer();
   return {
     playing: p.playing,
     currentTime: p.currentTime ?? 0,
-    duration: p.duration ?? 0,
+    duration: p.duration || currentTrackDuration(),
   };
 }
 
@@ -70,7 +77,7 @@ function attachToActive() {
     pushSnapshot({
       playing: status.playing,
       currentTime: status.currentTime ?? 0,
-      duration: status.duration ?? 0,
+      duration: status.duration || currentTrackDuration(),
     });
   });
 }
