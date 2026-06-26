@@ -14,17 +14,19 @@ function pickSyncedLyrics(
 export function useSyncedLyrics(track: QueueTrack | undefined | null) {
   const trackId = track?.id;
   const isRadio = !!track?.isRadio;
+  const isPodcast = track?.source === "podcast";
+  const lyricsEligible = !!trackId && !isRadio && !isPodcast;
   const backend = useGetLyricsBySongId(
     trackId ?? "",
     { enhanced: true },
-    !!trackId && !isRadio,
+    lyricsEligible,
   );
   const backendLyrics = useMemo(
     () => pickSyncedLyrics(backend.data?.lyricsList?.structuredLyrics),
     [backend.data],
   );
 
-  const backendSettled = !!trackId && !isRadio && !backend.isLoading;
+  const backendSettled = lyricsEligible && !backend.isLoading;
   const lrclib = useLrclibLyrics({
     trackName: track?.title,
     artistName: track?.artist,

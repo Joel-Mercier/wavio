@@ -33,7 +33,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -64,7 +64,11 @@ export default function SimilarSongsScreen() {
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const { data: songs, isLoading, error } = useSimilarTracks(id, { count: 50 });
   const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
-  const handleTrackPress = useTrackListPress(songs);
+  const similarSource = useMemo<QueueSource>(
+    () => ({ type: "similar", name: title ?? "" }),
+    [title],
+  );
+  const handleTrackPress = useTrackListPress(songs, similarSource);
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
@@ -77,14 +81,14 @@ export default function SimilarSongsScreen() {
     }
     if (!songs || songs.length === 0) return;
     useQueue.getState().setShuffle(false);
-    playTracks(songs.map(childToTrack), 0);
+    playTracks(songs.map(childToTrack), 0, { source: similarSource });
   };
 
   const handleShufflePress = () => {
     if (!songs || songs.length === 0) return;
     useQueue.getState().setShuffle(true);
     const startIndex = Math.floor(Math.random() * songs.length);
-    playTracks(songs.map(childToTrack), startIndex);
+    playTracks(songs.map(childToTrack), startIndex, { source: similarSource });
   };
 
   return (

@@ -15,7 +15,7 @@ import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView } from "react-native";
 import Animated, {
@@ -89,7 +89,7 @@ import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -300,7 +300,17 @@ export default function ArtistDetail() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isPlayingFromArtist = playingTrack?.artistId === id;
-  const handleTopSongPress = useTrackListPress(topSongsData?.topSongs.song);
+  const artistSource = useMemo<QueueSource>(
+    () =>
+      data?.artist
+        ? { type: "artist", name: data.artist.name, id: data.artist.id }
+        : null,
+    [data?.artist],
+  );
+  const handleTopSongPress = useTrackListPress(
+    topSongsData?.topSongs.song,
+    artistSource,
+  );
   const handlePlayPress = async () => {
     if (isPlayingFromArtist) {
       togglePlayPause();
@@ -308,7 +318,10 @@ export default function ArtistDetail() {
     }
     const topSongs = topSongsData?.topSongs?.song;
     if (topSongs && topSongs.length > 0) {
-      playTracks(topSongs.map(childToTrack), 0, { shuffleFromRandom: true });
+      playTracks(topSongs.map(childToTrack), 0, {
+        shuffleFromRandom: true,
+        source: artistSource,
+      });
     } else {
       const firstAlbumId = data?.artist?.album?.[0]?.id;
       if (!firstAlbumId) return;
@@ -319,7 +332,10 @@ export default function ArtistDetail() {
         });
         const songs = albumData?.album?.song;
         if (!songs || songs.length === 0) return;
-        playTracks(songs.map(childToTrack), 0, { shuffleFromRandom: true });
+        playTracks(songs.map(childToTrack), 0, {
+          shuffleFromRandom: true,
+          source: artistSource,
+        });
       } catch (e) {
         logError(e);
         return;

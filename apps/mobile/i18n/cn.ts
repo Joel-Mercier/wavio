@@ -910,6 +910,14 @@ export default {
       },
       player: {
         title: "正在播放",
+        playingFrom: {
+          album: "播放自专辑",
+          playlist: "播放自歌单",
+          artist: "播放自艺人",
+          likedSongs: "播放自喜欢的歌曲",
+          folder: "播放自文件夹",
+          similar: "播放自相似歌曲",
+        },
         addToPlaylist: "加入歌单",
         playNext: "下一首播放",
         addToQueue: "加入播放队列",

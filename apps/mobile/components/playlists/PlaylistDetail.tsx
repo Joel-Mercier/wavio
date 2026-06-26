@@ -89,7 +89,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -496,7 +496,18 @@ export default function PlaylistDetail() {
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
 
   const isLoadingRows = !playlistData;
-  const handleTrackPress = useTrackListPress(data);
+  const playlistSource = useMemo<QueueSource>(
+    () =>
+      playlistData?.playlist
+        ? {
+            type: "playlist",
+            name: playlistData.playlist.name,
+            id: playlistData.playlist.id,
+          }
+        : null,
+    [playlistData?.playlist],
+  );
+  const handleTrackPress = useTrackListPress(data, playlistSource);
   const playlistMeta = useMemo<DownloadCollectionMeta | undefined>(
     () =>
       playlistData?.playlist
@@ -607,7 +618,10 @@ export default function PlaylistDetail() {
       return;
     }
     if (!data || data.length === 0) return;
-    playTracks(data.map(childToTrack), 0, { shuffleFromRandom: true });
+    playTracks(data.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: playlistSource,
+    });
     if (playlistData?.playlist) {
       addRecentPlay({
         id,

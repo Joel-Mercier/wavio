@@ -49,7 +49,11 @@ import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
-import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
+import useQueue, {
+  peekNextTrack,
+  type QueueSource,
+  type QueueTrack,
+} from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 type Slot = 0 | 1;
@@ -1112,7 +1116,7 @@ export async function configurePlayback() {
 export function playTracks(
   tracks: QueueTrack[],
   startIndex = 0,
-  options?: { shuffleFromRandom?: boolean },
+  options?: { shuffleFromRandom?: boolean; source?: QueueSource },
 ) {
   if (tracks.length === 0) return;
   if (transition.kind !== "idle") abortTransition();
@@ -1121,7 +1125,7 @@ export function playTracks(
       ? Math.floor(Math.random() * tracks.length)
       : startIndex;
   const previousId = lastTrackId;
-  useQueue.getState().playNow(tracks, index);
+  useQueue.getState().playNow(tracks, index, options?.source ?? null);
   const current = useQueue.getState().getCurrent();
   if (current && current.id === previousId) {
     loadAndPlay(current);
