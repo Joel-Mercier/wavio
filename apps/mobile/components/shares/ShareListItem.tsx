@@ -153,7 +153,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       { id: share.id },
       {
         onSuccess: () => {
-          bottomSheetModalRef.current?.dismiss();
+          setShowAlertDialog(false);
           toast.show({
             placement: "top",
             duration: 3000,
