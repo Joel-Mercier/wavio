@@ -486,7 +486,7 @@ export const ui = {
       },
       audiophile: {
         label: '高保真',
-        title: '调声，而非调响。。',
+        title: '调声，而非调响。',
         desc: '无缝播放、平滑过渡、回放增益、均衡器。',
       },
       offline: { label: '离线模式', title: '离线，不受限。' },
@@ -561,7 +561,7 @@ export const ui = {
       titlePre: '隐私政策，',
       titleEm: '平平无奇的那种。',
       updated: '最后更新于 2026年5月27日',
-      readTime: '阅读约需5分钟',
+      readTime: '阅读约需 5分钟',
       summaryLabel: '省流总结',
       summary:
         "Wavio 完全运行于你的设备本地，仅与你配置的音乐服务器通信。我们不会收集、出售或分享你的数据——因为我们根本没有这些数据。",
