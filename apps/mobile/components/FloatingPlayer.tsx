@@ -348,7 +348,11 @@ export default function FloatingPlayer() {
               style={[textStyle, { zIndex: 1 }]}
               className="ml-4 flex-1"
             >
-              <MovingText text={playingTrack.title || ""} />
+              <MovingText>
+                <Text className="text-white font-bold text-md">
+                  {playingTrack.title || ""}
+                </Text>
+              </MovingText>
               <Text numberOfLines={1} className="text-gray-300">
                 {playingTrack.artist ||
                   (!isRadio && !isPodcast ? t("app.shared.unknownArtist") : "")}

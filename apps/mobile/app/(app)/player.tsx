@@ -25,6 +25,7 @@ import AnimatedHeart from "@/components/AnimatedHeart";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import MovingText from "@/components/MovingText";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
 import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
@@ -34,7 +35,6 @@ import PlayerSheets from "@/components/player/PlayerSheets";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import {
@@ -156,6 +156,9 @@ export default function PlayerScreen() {
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   } as const;
+  const topColor =
+    (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
+    blue500;
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
@@ -374,11 +377,7 @@ export default function PlayerScreen() {
 
   return (
     <LinearGradient
-      colors={[
-        (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
-          blue500,
-        "#191A1F",
-      ]}
+      colors={[topColor, "#191A1F"]}
       locations={[0, 0.7]}
       style={{ flex: 1 }}
     >
@@ -412,13 +411,14 @@ export default function PlayerScreen() {
                   }}
                   className="flex-1"
                 >
-                  <Text
-                    className="text-white font-bold tracking-wide"
-                    numberOfLines={1}
-                    style={headerTextShadow}
-                  >
-                    {source.name}
-                  </Text>
+                  <MovingText>
+                    <Text
+                      className="text-white font-bold tracking-wide"
+                      style={headerTextShadow}
+                    >
+                      {source.name}
+                    </Text>
+                  </MovingText>
                 </FadeOut>
               </>
             ) : (
@@ -521,9 +521,11 @@ export default function PlayerScreen() {
                     router.replace(`/albums/${playingTrack.albumId}`);
                   }}
                 >
-                  <Heading className="text-white" size="xl" numberOfLines={2}>
-                    {playingTrack?.title}
-                  </Heading>
+                  <MovingText>
+                    <Text className="text-white text-2xl font-bold font-heading tracking-sm">
+                      {playingTrack?.title}
+                    </Text>
+                  </MovingText>
                 </FadeOut>
                 <FadeOut
                   onPress={() => {
