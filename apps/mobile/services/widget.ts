@@ -8,7 +8,12 @@ import {
 } from "@/hooks/player/playbackSnapshot";
 import { getAlbumList2 } from "@/services/backend/lists";
 import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
-import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import {
+  skipNext,
+  skipPrevious,
+  startWidgetPlayback,
+  togglePlayPause,
+} from "@/services/player";
 import { useAuthBase } from "@/stores/auth";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
@@ -199,7 +204,14 @@ export function initWidget(queryClient: QueryClient) {
   DeviceEventEmitter.addListener("WavioWidgetControl", (action: string) => {
     switch (action) {
       case "play_pause":
-        togglePlayPause();
+        if (
+          !getPlaybackSnapshot().playing &&
+          !useQueue.getState().getCurrent()
+        ) {
+          void startWidgetPlayback();
+        } else {
+          togglePlayPause();
+        }
         break;
       case "next":
         skipNext();

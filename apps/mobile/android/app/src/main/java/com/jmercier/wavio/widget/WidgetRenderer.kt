@@ -39,6 +39,18 @@ object WidgetRenderer {
         )
     }
 
+    private fun playButtonIntent(ctx: Context): PendingIntent {
+        val intent = Intent(ctx, WidgetPlayTrampolineActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return PendingIntent.getActivity(
+            ctx,
+            "play_pause".hashCode(),
+            intent,
+            piFlags()
+        )
+    }
+
     private fun openAppIntent(ctx: Context, uri: String): PendingIntent {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
             setPackage(ctx.packageName)
@@ -68,7 +80,7 @@ object WidgetRenderer {
             if (np.isPlaying) R.drawable.ic_widget_pause else R.drawable.ic_widget_play
         )
         views.setOnClickPendingIntent(R.id.btn_prev, controlIntent(ctx, "prev"))
-        views.setOnClickPendingIntent(R.id.btn_play_pause, controlIntent(ctx, "play_pause"))
+        views.setOnClickPendingIntent(R.id.btn_play_pause, playButtonIntent(ctx))
         views.setOnClickPendingIntent(R.id.btn_next, controlIntent(ctx, "next"))
         val tapTarget = if (np.title.isNullOrEmpty()) "wavio://" else "wavio://player"
         views.setOnClickPendingIntent(R.id.top_strip, openAppIntent(ctx, tapTarget))

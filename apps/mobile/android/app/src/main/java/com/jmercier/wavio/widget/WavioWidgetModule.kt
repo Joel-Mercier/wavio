@@ -67,11 +67,12 @@ class WavioWidgetModule(reactCtx: ReactApplicationContext) : ReactContextBaseJav
         @Volatile
         private var ctxRef: ReactApplicationContext? = null
 
-        fun emitControl(action: String) {
-            val ctx = ctxRef ?: return
-            if (!ctx.hasActiveReactInstance()) return
+        fun emitControl(action: String): Boolean {
+            val ctx = ctxRef ?: return false
+            if (!ctx.hasActiveReactInstance()) return false
             ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                 .emit("WavioWidgetControl", action)
+            return true
         }
     }
 }

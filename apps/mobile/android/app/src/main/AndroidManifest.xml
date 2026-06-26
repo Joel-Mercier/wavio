@@ -43,6 +43,7 @@
         <data android:scheme="exp+wavio"/>
       </intent-filter>
     </activity>
+    <activity android:name="com.jmercier.wavio.widget.WidgetPlayTrampolineActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true" android:taskAffinity=""/>
     <receiver android:name="com.jmercier.wavio.widget.NowPlayingWidgetProvider" android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>

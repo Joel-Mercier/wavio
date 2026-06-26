@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { Platform } from "react-native";
+import { getRandomSongs } from "@/services/backend/lists";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { streamUrl } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
@@ -50,6 +51,7 @@ import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { peekNextTrack, type QueueTrack } from "@/stores/queue";
+import { childToTrack } from "@/utils/childToTrack";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 type Slot = 0 | 1;
@@ -1125,6 +1127,29 @@ export function playTracks(
   const current = useQueue.getState().getCurrent();
   if (current && current.id === previousId) {
     loadAndPlay(current);
+  }
+}
+
+// Entry point for the widget play button when nothing is playing (warm or cold
+// start). Resumes the persisted last queue if one was restored; otherwise starts
+// a fresh random mix so the button always plays something. Waits for the queue
+// store to finish (re)hydrating first so a cold launch sees the restored queue
+// rather than an empty one.
+export async function startWidgetPlayback() {
+  if (!useAuthBase.getState().isAuthenticated) return;
+  await new Promise<void>((resolve) =>
+    useQueue.persist.onFinishHydration(resolve),
+  );
+  if (useQueue.getState().getCurrent()) {
+    togglePlayPause();
+    return;
+  }
+  try {
+    const res = await getRandomSongs({ size: 50 });
+    const tracks = (res.songs?.song ?? []).map(childToTrack);
+    if (tracks.length > 0) playTracks(tracks, 0);
+  } catch (error) {
+    logSwallowed("start widget playback", error);
   }
 }
 

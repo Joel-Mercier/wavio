@@ -465,6 +465,18 @@ object WidgetRenderer {
         )
     }
 
+    private fun playButtonIntent(ctx: Context): PendingIntent {
+        val intent = Intent(ctx, WidgetPlayTrampolineActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        return PendingIntent.getActivity(
+            ctx,
+            "play_pause".hashCode(),
+            intent,
+            piFlags()
+        )
+    }
+
     private fun openAppIntent(ctx: Context, uri: String): PendingIntent {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
             setPackage(ctx.packageName)
@@ -494,7 +506,7 @@ object WidgetRenderer {
             if (np.isPlaying) R.drawable.ic_widget_pause else R.drawable.ic_widget_play
         )
         views.setOnClickPendingIntent(R.id.btn_prev, controlIntent(ctx, "prev"))
-        views.setOnClickPendingIntent(R.id.btn_play_pause, controlIntent(ctx, "play_pause"))
+        views.setOnClickPendingIntent(R.id.btn_play_pause, playButtonIntent(ctx))
         views.setOnClickPendingIntent(R.id.btn_next, controlIntent(ctx, "next"))
         val tapTarget = if (np.title.isNullOrEmpty()) "wavio://" else "wavio://player"
         views.setOnClickPendingIntent(R.id.top_strip, openAppIntent(ctx, tapTarget))
@@ -656,6 +668,34 @@ class WidgetActionReceiver : BroadcastReceiver() {
 }
 `;
 
+const KT_PLAY_TRAMPOLINE = `package ${PACKAGE}.widget
+
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+
+// Invisible (translucent, finishes immediately) target of the widget play
+// button. Activity launches are always permitted from a widget click, unlike
+// background activity starts from a BroadcastReceiver (blocked on Android 14+).
+// When the JS runtime is alive we just toggle in place; when the app is dead we
+// deep-link into it so it boots and starts playback.
+class WidgetPlayTrampolineActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val emitted = WavioWidgetModule.emitControl("play_pause")
+        if (!emitted) {
+            val launch = Intent(Intent.ACTION_VIEW, Uri.parse("wavio://play")).apply {
+                setPackage(packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            startActivity(launch)
+        }
+        finish()
+    }
+}
+`;
+
 const KT_MODULE = `package ${PACKAGE}.widget
 
 import android.appwidget.AppWidgetManager
@@ -725,11 +765,12 @@ class WavioWidgetModule(reactCtx: ReactApplicationContext) : ReactContextBaseJav
         @Volatile
         private var ctxRef: ReactApplicationContext? = null
 
-        fun emitControl(action: String) {
-            val ctx = ctxRef ?: return
-            if (!ctx.hasActiveReactInstance()) return
+        fun emitControl(action: String): Boolean {
+            val ctx = ctxRef ?: return false
+            if (!ctx.hasActiveReactInstance()) return false
             ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                 .emit("WavioWidgetControl", action)
+            return true
         }
     }
 }
@@ -842,6 +883,11 @@ const withWidgetResources = (config) =>
       );
       writeFile(javaRoot, "RecentPlaysWidgetProvider.kt", KT_RECENT_PROVIDER);
       writeFile(javaRoot, "WidgetActionReceiver.kt", KT_ACTION_RECEIVER);
+      writeFile(
+        javaRoot,
+        "WidgetPlayTrampolineActivity.kt",
+        KT_PLAY_TRAMPOLINE,
+      );
       writeFile(javaRoot, "WavioWidgetModule.kt", KT_MODULE);
       writeFile(javaRoot, "WavioWidgetPackage.kt", KT_PACKAGE);
 
@@ -908,6 +954,20 @@ const withWidgetManifest = (config) =>
       true,
     );
     upsertReceiver(`${PACKAGE}.widget.WidgetActionReceiver`, null, false);
+
+    app.activity = app.activity ?? [];
+    const trampolineName = `${PACKAGE}.widget.WidgetPlayTrampolineActivity`;
+    if (!app.activity.find((a) => a.$["android:name"] === trampolineName)) {
+      app.activity.push({
+        $: {
+          "android:name": trampolineName,
+          "android:exported": "false",
+          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          "android:excludeFromRecents": "true",
+          "android:taskAffinity": "",
+        },
+      });
+    }
 
     return cfg;
   });

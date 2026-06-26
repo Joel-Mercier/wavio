@@ -166,6 +166,7 @@ export default function AppLayout() {
       <AppErrorBoundary variant="inline">
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="play" />
           <Stack.Screen name="playlists/new" />
           <Stack.Screen name="playlists/new-smart" />
           <Stack.Screen name="playlists/[id]/edit-rules" />
