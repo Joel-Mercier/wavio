@@ -140,9 +140,9 @@
 }
 
 @theme inline {
-  --font-light: 'Inter-300Light';
-  --font-normal: 'Inter-400Regular';
-  --font-bold: 'Inter-700Bold';
+  --font-light: 'Inter_300Light';
+  --font-normal: 'Inter_400Regular';
+  --font-bold: 'Inter_700Bold';
   --color-primary-0: rgb(var(--primary-0));
   --color-primary-50: rgb(var(--primary-50));
   --color-primary-100: rgb(var(--primary-100));
