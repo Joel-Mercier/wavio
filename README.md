@@ -61,7 +61,7 @@ I'm also currently working on a [F-Droid](https://f-droid.org/) package.
 - Navidrome/Opensubsonic jukebox mode support
 - Backup and restore
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
-- French and English translations
+- English, French and Chinese translations
 
 ## Development
 
