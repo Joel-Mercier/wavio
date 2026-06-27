@@ -1,7 +1,6 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetModal as BottomSheetModalComponent,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,6 +32,7 @@ import { Linking } from "react-native";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
+import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";

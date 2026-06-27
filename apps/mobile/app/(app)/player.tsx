@@ -51,10 +51,12 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatAudioQuality } from "@/utils/audioQuality";
+import { cn } from "@/utils/tailwind";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -100,6 +102,7 @@ export default function PlayerScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const isLandscape = useApp((s) => s.isLandscape);
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const router = useRouter();
@@ -383,9 +386,19 @@ export default function PlayerScreen() {
     >
       <VStack
         className="flex-1"
-        style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+        style={{
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
       >
-        <HStack className="items-center justify-between mt-6 mb-4 px-6">
+        <HStack
+          className={cn(
+            "items-center justify-between mb-4 px-6",
+            !isLandscape && "mt-6",
+          )}
+        >
           <FadeOutScaleDown
             onPress={() => {
               if (router.canGoBack()) router.back();
@@ -438,243 +451,260 @@ export default function PlayerScreen() {
             <EllipsisVertical size={24} color="white" />
           </FadeOutScaleDown>
         </HStack>
-        <VStack className="flex-1">
-          <Box
-            className="w-full flex-1 mb-4 overflow-hidden"
-            onLayout={(e) =>
-              setCoverArea({
-                width: e.nativeEvent.layout.width,
-                height: e.nativeEvent.layout.height,
-              })
-            }
-          >
-            {coverSize > 0 && (
-              <GestureDetector gesture={coverPanGesture}>
-                <Animated.View
-                  style={[
-                    { width: coverArea.width, height: coverArea.height },
-                    coverRowStyle,
-                  ]}
-                >
-                  <Box
-                    style={{
-                      position: "absolute",
-                      top: (coverArea.height - coverSize) / 2,
-                      left: (coverArea.width - coverSize) / 2,
-                    }}
-                  >
-                    <CoverSlot track={playingTrack ?? null} size={coverSize} />
-                  </Box>
-                  <Box
-                    style={{
-                      position: "absolute",
-                      top: (coverArea.height - coverSize) / 2,
-                      left: (coverArea.width - coverSize) / 2 - coverArea.width,
-                    }}
-                  >
-                    <CoverSlot track={prevTrack} size={coverSize} />
-                  </Box>
-                  <Box
-                    style={{
-                      position: "absolute",
-                      top: (coverArea.height - coverSize) / 2,
-                      left: (coverArea.width - coverSize) / 2 + coverArea.width,
-                    }}
-                  >
-                    <CoverSlot track={nextTrack} size={coverSize} />
-                  </Box>
-                </Animated.View>
-              </GestureDetector>
-            )}
-          </Box>
-          <CurrentLyricLine
-            lyrics={hasSyncedLyrics ? lyrics : null}
-            onPress={() => setShowLyricsDialog(true)}
-          />
-          <VStack className="px-6">
-            <HStack className="items-center justify-between gap-x-4">
-              <VStack className="mb-2 flex-1">
-                <FadeOut
-                  onPress={() => {
-                    if (isPodcast) {
-                      if (!playingTrack?.id) return;
-                      router.replace({
-                        pathname: "/podcasts/[id]",
-                        params: {
-                          id: playingTrack.id,
-                          uuid: playingTrack.id,
-                          name: playingTrack.title,
-                          description: playingTrack.description,
-                          imageUrl: playingTrack.artwork,
-                          datePublished: playingTrack.datePublished,
-                          duration: playingTrack.duration,
-                          audioUrl: playingTrack.url,
-                          websiteUrl: playingTrack.websiteUrl,
-                          podcastSeries: JSON.stringify(
-                            playingTrack.podcastSeries,
-                          ),
-                        },
-                      });
-                      return;
-                    }
-                    if (!playingTrack?.albumId) return;
-                    router.replace(`/albums/${playingTrack.albumId}`);
-                  }}
-                >
-                  <MovingText>
-                    <Text className="text-white text-2xl font-bold font-heading">
-                      {playingTrack?.title}
-                    </Text>
-                  </MovingText>
-                </FadeOut>
-                <FadeOut
-                  onPress={() => {
-                    if (isPodcast) {
-                      if (!podcastSeries?.uuid) return;
-                      router.replace({
-                        pathname: "/podcast-series/[id]",
-                        params: {
-                          id: podcastSeries.uuid,
-                          uuid: podcastSeries.uuid,
-                          name: podcastSeries.name,
-                          description: podcastSeries.description,
-                          imageUrl: podcastSeries.imageUrl,
-                          authorName: podcastSeries.authorName,
-                          genres: podcastSeries.genres?.join(","),
-                        },
-                      });
-                      return;
-                    }
-                    if (!playingTrack?.artistId) return;
-                    router.replace(`/artists/${playingTrack.artistId}`);
-                  }}
-                >
-                  <Text className="text-primary-100 text-lg">
-                    {playingTrack?.artist ||
-                      (!isPodcast && !isRadio
-                        ? t("app.shared.unknownArtist")
-                        : "")}
-                  </Text>
-                </FadeOut>
-              </VStack>
-              {!isRadio && isPodcast && podcastSeries && (
-                <AnimatedHeart
-                  filled={isPodcastFavorite}
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={
-                    isPodcastFavorite
-                      ? handleRemoveFavoritePodcastPress
-                      : handleAddFavoritePodcastPress
-                  }
-                />
-              )}
-              {!isRadio && !isPodcast && (
-                <AnimatedHeart
-                  testID="player-favorite-button"
-                  filled={!!playingTrack?.starred}
-                  disabled={!isOnline}
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={
-                    playingTrack?.starred
-                      ? handleUnfavoritePress
-                      : handleFavoritePress
-                  }
-                />
-              )}
-            </HStack>
-            {!isRadio && audioQuality && (
-              <Text
-                className="text-primary-100 text-xs font-medium tracking-wide mb-4"
-                numberOfLines={1}
-              >
-                {audioQuality}
-              </Text>
-            )}
-            {!isRadio && <PlaybackSlider />}
-            {isRadio && <Box className="mb-6" />}
-            <HStack
-              className={
-                isRadio
-                  ? "items-center justify-center"
-                  : "items-center justify-between"
+        <VStack className={cn("flex-1", isLandscape && "flex-row")}>
+          <VStack className={cn("flex-1", isLandscape && "mr-4")}>
+            <Box
+              className="flex-1 overflow-hidden mb-4"
+              onLayout={(e) =>
+                setCoverArea({
+                  width: e.nativeEvent.layout.width,
+                  height: e.nativeEvent.layout.height,
+                })
               }
             >
-              {!isRadio && (
-                <ShuffleToggle
-                  active={shuffle}
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={() => handleShufflePress(!shuffle)}
-                />
-              )}
-              {!isRadio && (
-                <FadeOut
-                  testID="player-previous-button"
-                  onPress={handlePreviousPress}
-                >
-                  <SkipBack size={36} color="white" fill="white" />
-                </FadeOut>
-              )}
-              <PlayPauseButton
-                testID="player-play-pause-button"
-                isPlaying={isPlaying}
-                onPress={handlePlayPausePress}
-                size={64}
-                iconSize={24}
-                color={gray800}
-                className="bg-white"
-              />
-              {!isRadio && (
-                <FadeOut testID="player-next-button" onPress={handleNextPress}>
-                  <SkipForward size={36} color="white" fill="white" />
-                </FadeOut>
-              )}
-              {!isRadio && (
-                <RepeatToggle
-                  mode={repeatMode}
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={() =>
-                    handleRepeatModePress(
-                      repeatMode === "off"
-                        ? "all"
-                        : repeatMode === "all"
-                          ? "one"
-                          : "off",
-                    )
-                  }
-                />
-              )}
-            </HStack>
-            {!isRadio && <PlayerBookmarks />}
-            <HStack className="items-center justify-between mt-4 mb-6">
-              <CastButton
-                hitSlop={ICON_HIT_SLOP}
-                style={{ width: 24, height: 24, tintColor: "white" }}
-              />
-              {capabilities.jukebox && !isRadio && !castSession && (
-                <FadeOut
-                  hitSlop={ICON_HIT_SLOP}
-                  onPress={handleJukeboxPress}
-                  disabled={!isOnline}
-                >
-                  <Speaker
-                    size={24}
-                    color={jukeboxActive ? emerald500 : "white"}
-                  />
-                  {jukeboxActive && (
-                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                      <Box className="bg-emerald-500 rounded-full size-1" />
+              {coverSize > 0 && (
+                <GestureDetector gesture={coverPanGesture}>
+                  <Animated.View
+                    style={[
+                      { width: coverArea.width, height: coverArea.height },
+                      coverRowStyle,
+                    ]}
+                  >
+                    <Box
+                      style={{
+                        position: "absolute",
+                        top: (coverArea.height - coverSize) / 2,
+                        left: (coverArea.width - coverSize) / 2,
+                      }}
+                    >
+                      <CoverSlot
+                        track={playingTrack ?? null}
+                        size={coverSize}
+                      />
                     </Box>
-                  )}
-                </FadeOut>
+                    <Box
+                      style={{
+                        position: "absolute",
+                        top: (coverArea.height - coverSize) / 2,
+                        left:
+                          (coverArea.width - coverSize) / 2 - coverArea.width,
+                      }}
+                    >
+                      <CoverSlot track={prevTrack} size={coverSize} />
+                    </Box>
+                    <Box
+                      style={{
+                        position: "absolute",
+                        top: (coverArea.height - coverSize) / 2,
+                        left:
+                          (coverArea.width - coverSize) / 2 + coverArea.width,
+                      }}
+                    >
+                      <CoverSlot track={nextTrack} size={coverSize} />
+                    </Box>
+                  </Animated.View>
+                </GestureDetector>
               )}
-              <FadeOut
-                testID="player-queue-button"
-                hitSlop={ICON_HIT_SLOP}
-                onPress={() => router.replace("/queue")}
+            </Box>
+            <CurrentLyricLine
+              lyrics={hasSyncedLyrics ? lyrics : null}
+              onPress={() => setShowLyricsDialog(true)}
+            />
+          </VStack>
+          <VStack className={cn(isLandscape && "flex-1 justify-center")}>
+            <VStack className="px-6">
+              <HStack className="items-center justify-between gap-x-4">
+                <VStack className="mb-2 flex-1">
+                  <FadeOut
+                    onPress={() => {
+                      if (isPodcast) {
+                        if (!playingTrack?.id) return;
+                        router.replace({
+                          pathname: "/podcasts/[id]",
+                          params: {
+                            id: playingTrack.id,
+                            uuid: playingTrack.id,
+                            name: playingTrack.title,
+                            description: playingTrack.description,
+                            imageUrl: playingTrack.artwork,
+                            datePublished: playingTrack.datePublished,
+                            duration: playingTrack.duration,
+                            audioUrl: playingTrack.url,
+                            websiteUrl: playingTrack.websiteUrl,
+                            podcastSeries: JSON.stringify(
+                              playingTrack.podcastSeries,
+                            ),
+                          },
+                        });
+                        return;
+                      }
+                      if (!playingTrack?.albumId) return;
+                      router.replace(`/albums/${playingTrack.albumId}`);
+                    }}
+                  >
+                    <MovingText>
+                      <Text className="text-white text-2xl font-bold font-heading">
+                        {playingTrack?.title}
+                      </Text>
+                    </MovingText>
+                  </FadeOut>
+                  <FadeOut
+                    onPress={() => {
+                      if (isPodcast) {
+                        if (!podcastSeries?.uuid) return;
+                        router.replace({
+                          pathname: "/podcast-series/[id]",
+                          params: {
+                            id: podcastSeries.uuid,
+                            uuid: podcastSeries.uuid,
+                            name: podcastSeries.name,
+                            description: podcastSeries.description,
+                            imageUrl: podcastSeries.imageUrl,
+                            authorName: podcastSeries.authorName,
+                            genres: podcastSeries.genres?.join(","),
+                          },
+                        });
+                        return;
+                      }
+                      if (!playingTrack?.artistId) return;
+                      router.replace(`/artists/${playingTrack.artistId}`);
+                    }}
+                  >
+                    <Text className="text-primary-100 text-lg">
+                      {playingTrack?.artist ||
+                        (!isPodcast && !isRadio
+                          ? t("app.shared.unknownArtist")
+                          : "")}
+                    </Text>
+                  </FadeOut>
+                </VStack>
+                {!isRadio && isPodcast && podcastSeries && (
+                  <AnimatedHeart
+                    filled={isPodcastFavorite}
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={
+                      isPodcastFavorite
+                        ? handleRemoveFavoritePodcastPress
+                        : handleAddFavoritePodcastPress
+                    }
+                  />
+                )}
+                {!isRadio && !isPodcast && (
+                  <AnimatedHeart
+                    testID="player-favorite-button"
+                    filled={!!playingTrack?.starred}
+                    disabled={!isOnline}
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={
+                      playingTrack?.starred
+                        ? handleUnfavoritePress
+                        : handleFavoritePress
+                    }
+                  />
+                )}
+              </HStack>
+              {!isRadio && audioQuality && (
+                <Text
+                  className="text-primary-100 text-xs font-medium tracking-wide mb-4"
+                  numberOfLines={1}
+                >
+                  {audioQuality}
+                </Text>
+              )}
+              {!isRadio && <PlaybackSlider />}
+              {isRadio && <Box className="mb-6" />}
+              <HStack
+                className={
+                  isRadio
+                    ? "items-center justify-center"
+                    : "items-center justify-between"
+                }
               >
-                <ListMusic size={24} color="white" />
-              </FadeOut>
-            </HStack>
+                {!isRadio && (
+                  <ShuffleToggle
+                    active={shuffle}
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={() => handleShufflePress(!shuffle)}
+                  />
+                )}
+                {!isRadio && (
+                  <FadeOut
+                    testID="player-previous-button"
+                    onPress={handlePreviousPress}
+                  >
+                    <SkipBack size={36} color="white" fill="white" />
+                  </FadeOut>
+                )}
+                <PlayPauseButton
+                  testID="player-play-pause-button"
+                  isPlaying={isPlaying}
+                  onPress={handlePlayPausePress}
+                  size={64}
+                  iconSize={24}
+                  color={gray800}
+                  className="bg-white"
+                />
+                {!isRadio && (
+                  <FadeOut
+                    testID="player-next-button"
+                    onPress={handleNextPress}
+                  >
+                    <SkipForward size={36} color="white" fill="white" />
+                  </FadeOut>
+                )}
+                {!isRadio && (
+                  <RepeatToggle
+                    mode={repeatMode}
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={() =>
+                      handleRepeatModePress(
+                        repeatMode === "off"
+                          ? "all"
+                          : repeatMode === "all"
+                            ? "one"
+                            : "off",
+                      )
+                    }
+                  />
+                )}
+              </HStack>
+              {!isRadio && <PlayerBookmarks />}
+              <HStack
+                className={cn(
+                  "items-center justify-between",
+                  isLandscape ? "mt-2 mb-2" : "mt-4 mb-6",
+                )}
+              >
+                <CastButton
+                  hitSlop={ICON_HIT_SLOP}
+                  style={{ width: 24, height: 24, tintColor: "white" }}
+                />
+                {capabilities.jukebox && !isRadio && !castSession && (
+                  <FadeOut
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={handleJukeboxPress}
+                    disabled={!isOnline}
+                  >
+                    <Speaker
+                      size={24}
+                      color={jukeboxActive ? emerald500 : "white"}
+                    />
+                    {jukeboxActive && (
+                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                        <Box className="bg-emerald-500 rounded-full size-1" />
+                      </Box>
+                    )}
+                  </FadeOut>
+                )}
+                <FadeOut
+                  testID="player-queue-button"
+                  hitSlop={ICON_HIT_SLOP}
+                  onPress={() => router.replace("/queue")}
+                >
+                  <ListMusic size={24} color="white" />
+                </FadeOut>
+              </HStack>
+            </VStack>
           </VStack>
         </VStack>
       </VStack>

@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoriteRadioStationListItem from "@/components/internetRadioStations/FavoriteRadioStationListItem";
 import {
@@ -28,6 +27,7 @@ import {
   useTopVotedStations,
 } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   useScopedRadioFavorites,
   useSyncServerRadioFavorites,
@@ -38,6 +38,7 @@ export default function InternetRadioStationsScreen() {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
   const configuredCountry = useApp((store) => store.internetRadioCountryCode);
@@ -86,8 +87,7 @@ export default function InternetRadioStationsScreen() {
       <HomeTabsNav active="internetRadioStations" />
       <ScrollView
         contentContainerStyle={{
-          paddingBottom:
-            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2,
+          paddingBottom: tabBarHeight + floatingPlayerInset + insets.bottom * 2,
         }}
         showsVerticalScrollIndicator={false}
       >

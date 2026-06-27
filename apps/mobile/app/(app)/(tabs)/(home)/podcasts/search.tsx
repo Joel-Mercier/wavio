@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
   useBottomSheetScrollableCreator,
@@ -22,10 +22,10 @@ import { KeyboardController } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { handleFieldBlur, showFieldError } from "@/components/forms/FieldError";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
 import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
@@ -57,6 +57,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   Country,
   Genre,
@@ -117,6 +118,7 @@ export default function PodcastsSearchScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const queryClient = useQueryClient();
   const router = useRouter();
   const form = useForm({
@@ -309,12 +311,12 @@ export default function PodcastsSearchScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />
 
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["85%"]}
         onChange={handleFiltersSheetPositionChange}
@@ -718,7 +720,7 @@ export default function PodcastsSearchScreen() {
             </HStack>
           </Box>
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
 
       <MultiSelectSheet
         ref={languagesSheetRef}
@@ -799,7 +801,7 @@ function MultiSelectSheet<T extends string>({
   }, [query, options, labelFor]);
 
   return (
-    <BottomSheetModal
+    <CenteredBottomSheetModal
       ref={ref}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
@@ -830,6 +832,6 @@ function MultiSelectSheet<T extends string>({
           </FadeOutScaleDown>
         )}
       />
-    </BottomSheetModal>
+    </CenteredBottomSheetModal>
   );
 }

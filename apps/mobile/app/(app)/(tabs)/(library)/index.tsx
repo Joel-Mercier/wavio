@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
@@ -22,10 +22,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
   type LibraryFolder,
@@ -47,6 +47,7 @@ import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useDownloadedCollections } from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import {
   useScopedPodcastFavorites,
@@ -104,6 +105,7 @@ export default function LibraryScreen() {
   useSyncServerRadioFavorites();
   useSyncServerPodcastFavorites();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
@@ -571,13 +573,12 @@ export default function LibraryScreen() {
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
             paddingHorizontal: 24,
-            paddingBottom:
-              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
         />
       )}
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -659,8 +660,8 @@ export default function LibraryScreen() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetModalSortRef}
         onChange={handleSheetPositionChangeSort}
         backgroundStyle={{
@@ -726,7 +727,7 @@ export default function LibraryScreen() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
     </Box>
   );
 }

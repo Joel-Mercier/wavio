@@ -3,7 +3,7 @@
     "name": "Wavio",
     "slug": "wavio",
     "version": "1.0.5",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/splash-icon-dark.png",
     "scheme": "wavio",
     "userInterfaceStyle": "automatic",
@@ -108,7 +108,13 @@
       ],
       "expo-asset",
       "@react-native-community/datetimepicker",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "DEFAULT"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

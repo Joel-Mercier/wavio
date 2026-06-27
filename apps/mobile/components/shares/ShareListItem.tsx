@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useForm, useStore } from "@tanstack/react-form";
@@ -19,6 +19,7 @@ import { Platform } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
   handleFieldBlur,
@@ -290,7 +291,7 @@ export default function ShareListItem({ share }: { share: Share }) {
           </FadeOutScaleDown>
         </HStack>
       </Card>
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -357,7 +358,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showAlertDialog}
         onClose={handleCloseAlertDialog}

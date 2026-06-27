@@ -1,12 +1,13 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import type { RefObject } from "react";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -46,7 +47,7 @@ export default function OptionsBottomSheetModal<
     "--color-emerald-500",
   ]) as string[];
   return (
-    <BottomSheetModal
+    <CenteredBottomSheetModal
       ref={modalRef}
       onChange={onChange}
       backgroundStyle={{
@@ -115,6 +116,6 @@ export default function OptionsBottomSheetModal<
           </VStack>
         </Box>
       </BottomSheetView>
-    </BottomSheetModal>
+    </CenteredBottomSheetModal>
   );
 }

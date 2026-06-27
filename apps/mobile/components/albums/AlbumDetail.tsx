@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -48,6 +48,7 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AnimatedHeart from "@/components/AnimatedHeart";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DownloadedBadge from "@/components/DownloadedBadge";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -1022,7 +1023,7 @@ export default function AlbumDetail() {
         // contentContainerStyle={{ paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
       />
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
         onChange={handleShareSheetPositionChange}
         backgroundStyle={{
@@ -1061,8 +1062,8 @@ export default function AlbumDetail() {
             </HStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -1254,7 +1255,7 @@ export default function AlbumDetail() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}

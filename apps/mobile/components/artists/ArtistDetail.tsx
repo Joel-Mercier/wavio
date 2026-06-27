@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -34,10 +34,10 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AnimatedHeart from "@/components/AnimatedHeart";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import StarRating from "@/components/StarRating";
@@ -81,6 +81,7 @@ import {
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
@@ -121,6 +122,7 @@ export default function ArtistDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -831,11 +833,11 @@ export default function ArtistDetail() {
         }
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -927,7 +929,7 @@ export default function ArtistDetail() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}

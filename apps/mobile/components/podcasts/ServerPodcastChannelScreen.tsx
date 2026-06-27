@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -25,11 +25,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import CollapsibleTabs, {
   type CollapsibleSceneProps,
 } from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import RichText from "@/components/RichText";
@@ -63,6 +63,7 @@ import {
 } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
 import { offlineDownloadService } from "@/services/offline";
@@ -96,6 +97,7 @@ export default function ServerPodcastChannelScreen() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const params = useLocalSearchParams<{
     id: string;
     title?: string;
@@ -379,8 +381,7 @@ export default function ServerPodcastChannelScreen() {
       }
       contentContainerStyle={{
         paddingTop: contentTopInset,
-        paddingBottom:
-          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
       showsVerticalScrollIndicator={false}
@@ -399,8 +400,7 @@ export default function ServerPodcastChannelScreen() {
       contentContainerStyle={{
         paddingTop: contentTopInset + 24,
         paddingHorizontal: 24,
-        paddingBottom:
-          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         minHeight: contentTopInset + 600,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
@@ -479,7 +479,7 @@ export default function ServerPodcastChannelScreen() {
           </FadeOutScaleDown>
         </Box>
       </Box>
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -527,7 +527,7 @@ export default function ServerPodcastChannelScreen() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}

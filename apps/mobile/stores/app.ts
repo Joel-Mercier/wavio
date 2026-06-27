@@ -1,8 +1,13 @@
+import { Orientation } from "expo-screen-orientation";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
+
+const isLandscapeOrientation = (orientation: Orientation) =>
+  orientation === Orientation.LANDSCAPE_LEFT ||
+  orientation === Orientation.LANDSCAPE_RIGHT;
 
 // "raw" streams the source file untouched (bit-perfect); the others ask the
 // server to transcode to that codec via the Subsonic `format=` param.
@@ -95,6 +100,12 @@ interface AppStore {
   setInternetRadioCountryCode: (countryCode: string | null) => void;
   internetRadioFeedTags: string[];
   setInternetRadioFeedTags: (tags: string[]) => void;
+  // Live device orientation, kept in sync by services/orientation.ts. Transient
+  // device state (not persisted) — exposed here so any screen can branch its
+  // layout on `isLandscape` without each one subscribing to the listener.
+  orientation: Orientation;
+  isLandscape: boolean;
+  setOrientation: (orientation: Orientation) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -201,6 +212,11 @@ export const useAppBase = create<AppStore>()(
       setInternetRadioFeedTags: (internetRadioFeedTags: string[]) => {
         set({ internetRadioFeedTags });
       },
+      orientation: Orientation.PORTRAIT_UP,
+      isLandscape: false,
+      setOrientation: (orientation: Orientation) => {
+        set({ orientation, isLandscape: isLandscapeOrientation(orientation) });
+      },
     }),
     {
       name: "app",
@@ -208,7 +224,8 @@ export const useAppBase = create<AppStore>()(
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(
-            ([key]) => !["showDrawer"].includes(key),
+            ([key]) =>
+              !["showDrawer", "orientation", "isLandscape"].includes(key),
           ),
         ),
     },

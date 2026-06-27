@@ -4,23 +4,27 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useArtist } from "@/hooks/backend/useBrowsing";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import FadeOutScaleDown from "../FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 
 export default function ArtistDiscography() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isLandscape = useApp((s) => s.isLandscape);
+  const floatingPlayerInset = useFloatingPlayerInset();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { data, isLoading, error } = useArtist(id);
   return (
-    <Box className="mt-6 pb-6 h-full">
+    <Box className={cn("pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
       <HStack
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
@@ -46,7 +50,7 @@ export default function ArtistDiscography() {
         }
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />

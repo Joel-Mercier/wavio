@@ -7,23 +7,27 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import EmptyDisplay from "../EmptyDisplay";
 import ErrorDisplay from "../ErrorDisplay";
 import FadeOutScaleDown from "../FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 
 export default function HomeSectionDetail() {
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: AlbumListType }>();
@@ -45,7 +49,7 @@ export default function HomeSectionDetail() {
     [data],
   );
   return (
-    <Box className="mt-6 pb-6 h-full">
+    <Box className={cn("pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
       <HStack
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
@@ -75,7 +79,7 @@ export default function HomeSectionDetail() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
           onEndReached={() => {

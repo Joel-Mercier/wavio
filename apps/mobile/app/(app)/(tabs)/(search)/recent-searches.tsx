@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import RecentSearchListItem from "@/components/search/RecentSearchListItem";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
 import { Box } from "@/components/ui/box";
@@ -20,6 +19,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useSearch3 } from "@/hooks/backend/useSearching";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
@@ -33,6 +33,7 @@ export default function RecentSearchesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const recentSearches = useRecentSearches((store) => store.recentSearches);
   const clearRecentSearches = useRecentSearches(
@@ -195,7 +196,7 @@ export default function RecentSearchesScreen() {
         }
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

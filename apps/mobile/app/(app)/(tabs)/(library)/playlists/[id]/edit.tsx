@@ -11,7 +11,6 @@ import { Uniwind } from "uniwind";
 import * as z from "zod";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -35,6 +34,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -58,6 +58,7 @@ export default function EditPlaylistScreen() {
   const router = useRouter();
   const toast = useToast();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
@@ -166,8 +167,7 @@ export default function EditPlaylistScreen() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
-            paddingBottom:
-              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
         >

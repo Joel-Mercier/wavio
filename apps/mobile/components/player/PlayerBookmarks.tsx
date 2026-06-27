@@ -8,8 +8,10 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { usePlayingTrack } from "@/hooks/player";
 import { useTrackBookmarks } from "@/hooks/useTrackBookmarks";
 import { seekTo } from "@/services/player";
+import useApp from "@/stores/app";
 import useBookmarks from "@/stores/bookmarks";
 import { formatSeconds } from "@/utils/date";
+import { cn } from "@/utils/tailwind";
 
 // Matches the player background gradient's bottom color so the edge fades blend
 // into it (the player bg ends at #191A1F).
@@ -22,6 +24,7 @@ const BOOKMARK_ROW_HEIGHT = 32;
 
 export default function PlayerBookmarks() {
   const track = usePlayingTrack();
+  const isLandscape = useApp((s) => s.isLandscape);
   const bookmarks = useTrackBookmarks(track?.id);
   const hasBookmarks = !!track?.id && bookmarks.length > 0;
 
@@ -31,7 +34,7 @@ export default function PlayerBookmarks() {
 
   return (
     <Box
-      className="relative -mx-6 mt-6"
+      className={cn("relative -mx-6", isLandscape ? "mt-2" : "mt-6")}
       style={{ height: BOOKMARK_ROW_HEIGHT }}
     >
       {hasBookmarks && (

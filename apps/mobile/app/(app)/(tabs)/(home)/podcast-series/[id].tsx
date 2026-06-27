@@ -18,7 +18,6 @@ import CollapsibleTabs, {
   type CollapsibleSceneProps,
 } from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
@@ -39,6 +38,7 @@ import {
   useInfinitePodcastSeries,
   usePopularContent,
 } from "@/hooks/taddyPodcasts/usePodcasts";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import type {
   Genre,
@@ -96,6 +96,7 @@ export default function PodcastSeriesScreen() {
   const toast = useToast();
   const scrollY = useSharedValue(0);
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
@@ -263,8 +264,7 @@ export default function PodcastSeriesScreen() {
       contentContainerStyle={{
         paddingTop: contentTopInset + 24,
         paddingHorizontal: 24,
-        paddingBottom:
-          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         minHeight: contentTopInset + 600,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
@@ -306,8 +306,7 @@ export default function PodcastSeriesScreen() {
       }
       contentContainerStyle={{
         paddingTop: contentTopInset,
-        paddingBottom:
-          insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
       showsVerticalScrollIndicator={false}

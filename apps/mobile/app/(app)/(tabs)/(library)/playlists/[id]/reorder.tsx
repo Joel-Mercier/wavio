@@ -10,7 +10,6 @@ import { Uniwind } from "uniwind";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PlaylistEditSongListItem from "@/components/playlists/PlaylistEditSongListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -25,6 +24,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
@@ -43,6 +43,7 @@ export default function ReorderPlaylistScreen() {
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const toast = useToast();
@@ -286,7 +287,7 @@ export default function ReorderPlaylistScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
         />
       )}

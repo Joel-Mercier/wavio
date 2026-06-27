@@ -1,12 +1,13 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   type BottomSheetModalProps,
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import { useMemo, useState } from "react";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import SheetSearchInput from "@/components/SheetSearchInput";
 import { Box } from "@/components/ui/box";
@@ -50,7 +51,7 @@ export default function SearchableSelectSheet({
   }, [query, options]);
 
   return (
-    <BottomSheetModal
+    <CenteredBottomSheetModal
       ref={ref}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
@@ -91,6 +92,6 @@ export default function SearchableSelectSheet({
           </FadeOutScaleDown>
         )}
       />
-    </BottomSheetModal>
+    </CenteredBottomSheetModal>
   );
 }

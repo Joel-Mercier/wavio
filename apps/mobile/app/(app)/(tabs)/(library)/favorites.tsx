@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -23,10 +23,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -41,6 +41,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -71,6 +72,7 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleSortSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetSortModalRef);
@@ -358,11 +360,11 @@ export default function FavoritesScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
         onChange={handleSortSheetPositionChange}
         backgroundStyle={{
@@ -470,7 +472,7 @@ export default function FavoritesScreen() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
     </Box>
   );
 }

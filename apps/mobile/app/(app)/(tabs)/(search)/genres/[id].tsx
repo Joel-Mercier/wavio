@@ -18,13 +18,13 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -43,6 +43,7 @@ export default function GenreScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -147,7 +148,7 @@ export default function GenreScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {

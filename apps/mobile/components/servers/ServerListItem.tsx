@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useForm, useStore } from "@tanstack/react-form";
@@ -13,6 +13,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
   handleFieldBlur,
@@ -214,7 +215,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           </FadeOutScaleDown>
         </HStack>
       </VStack>
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -277,7 +278,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={pendingSwitch !== null}
         onClose={handleCancelSwitch}

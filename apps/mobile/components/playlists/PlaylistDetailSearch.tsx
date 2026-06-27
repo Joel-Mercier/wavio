@@ -12,13 +12,13 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { usePlaylist } from "@/hooks/backend/usePlaylists";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
@@ -41,6 +41,7 @@ export default function PlaylistDetailSearch() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const { data: playlistData, isLoading, error } = usePlaylist(id);
   const form = useForm({
     defaultValues: {
@@ -174,7 +175,7 @@ export default function PlaylistDetailSearch() {
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={error && <ErrorDisplay error={error} />}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />

@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
@@ -17,6 +16,7 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { useInfiniteLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   useScopedPodcastFavorites,
   useSyncServerPodcastFavorites,
@@ -44,6 +44,7 @@ export default function FavoritePodcastsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const capabilities = useCapabilities();
   const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -127,8 +128,7 @@ export default function FavoritePodcastsScreen() {
             </>
           }
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyDisplay />}
@@ -138,8 +138,7 @@ export default function FavoritePodcastsScreen() {
         // discovery as a small, non-dominating hint rather than a full CTA.
         <ScrollView
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
         >

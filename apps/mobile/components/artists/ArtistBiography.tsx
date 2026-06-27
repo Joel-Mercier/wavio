@@ -12,12 +12,16 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import useApp from "@/stores/app";
 import { goBackOrHome } from "@/utils/navigation";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
+import { cn } from "@/utils/tailwind";
 
 export default function ArtistBiography() {
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
     name: string;
     biography: string;
@@ -50,7 +54,7 @@ export default function ArtistBiography() {
   };
 
   return (
-    <Box className="px-6 mt-6 pb-6 h-full">
+    <Box className={cn("px-6 pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
       <HStack
         className="items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
@@ -67,7 +71,7 @@ export default function ArtistBiography() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
       >
         <Text className="text-white mt-6">{biography}</Text>

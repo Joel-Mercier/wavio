@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -17,10 +17,10 @@ import { ActivityIndicator } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import InternetRadioStationListItem, {
   radioBrowserToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
@@ -44,6 +44,7 @@ import {
 } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { RadioBrowserStation } from "@/services/radioBrowser/types";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -59,6 +60,7 @@ export default function InternetRadioStationsSearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useStore(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -243,12 +245,12 @@ export default function InternetRadioStationsSearchScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />
 
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["75%"]}
         onChange={handleFiltersSheetPositionChange}
@@ -345,7 +347,7 @@ export default function InternetRadioStationsSearchScreen() {
             </HStack>
           </Box>
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
 
       <SearchableSelectSheet
         ref={countrySheetRef}

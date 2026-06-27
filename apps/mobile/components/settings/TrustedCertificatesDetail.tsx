@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -20,6 +19,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   clearAllTrustedCertificates,
   getTrustedCertificates,
@@ -27,8 +27,10 @@ import {
   type TrustedCert,
 } from "@/modules/ssl-trust";
 import { syncSslProxy } from "@/services/sslTrust";
+import useApp from "@/stores/app";
 import { formatDistanceToNow } from "@/utils/date";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 
 export default function TrustedCertificatesDetail() {
   const { t } = useTranslation();
@@ -36,6 +38,8 @@ export default function TrustedCertificatesDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
 
   const [certs, setCerts] = useState<TrustedCert[]>([]);
   const [removeTarget, setRemoveTarget] = useState<TrustedCert | null>(null);
@@ -84,7 +88,7 @@ export default function TrustedCertificatesDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6 flex-1">
+      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center justify-between mb-6"
           style={{ paddingTop: insets.top }}
@@ -101,7 +105,7 @@ export default function TrustedCertificatesDetail() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
         >
           {isEmpty ? (

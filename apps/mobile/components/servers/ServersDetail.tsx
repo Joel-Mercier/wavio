@@ -10,7 +10,6 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -42,12 +41,15 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useServers, {
   addServerFormSchema,
   type ServerType,
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 
 export default function ServersDetail() {
   const { t } = useTranslation();
@@ -56,6 +58,8 @@ export default function ServersDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const servers = useServers((store) => store.servers);
   const addServer = useServers((store) => store.addServer);
   const syncServerUsers = useServers((store) => store.syncServerUsers);
@@ -184,7 +188,7 @@ export default function ServersDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6 flex-1">
+      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-6 justify-between"
           style={{ paddingTop: insets.top }}
@@ -206,7 +210,7 @@ export default function ServersDetail() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
           ListEmptyComponent={() => <EmptyDisplay />}
         />

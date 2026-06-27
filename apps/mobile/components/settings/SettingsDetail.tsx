@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import RadioFeedTagsSheet from "@/components/internetRadioStations/RadioFeedTagsSheet";
 import SearchableSelectSheet from "@/components/internetRadioStations/SearchableSelectSheet";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
@@ -57,6 +56,7 @@ import { useRadioCountries } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { exportBackup, pickBackupFile, restoreBackup } from "@/services/backup";
 import {
   isEqualizerAvailable,
@@ -127,6 +127,8 @@ export default function SettingsDetail() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
@@ -418,7 +420,7 @@ export default function SettingsDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6 flex-1">
+      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center justify-between mb-6"
           style={{ paddingTop: insets.top }}
@@ -436,7 +438,7 @@ export default function SettingsDetail() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
         >
           <VStack className="mb-6 gap-y-4">

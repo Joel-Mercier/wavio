@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,7 @@ import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import StarRating from "@/components/StarRating";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
@@ -573,7 +574,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   return (
     <TrackActionsContext.Provider value={{ open }}>
       {children}
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetArtistsModalRef}
         onChange={handleArtistsSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -602,8 +603,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
         onChange={handleShareSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -634,8 +635,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             </HStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -887,7 +888,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
             </Box>
           )}
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}

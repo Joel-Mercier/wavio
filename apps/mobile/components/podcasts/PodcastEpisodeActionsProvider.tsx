@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
@@ -17,6 +17,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -152,7 +153,7 @@ export function PodcastEpisodeActionsProvider({
   return (
     <PodcastEpisodeActionsContext.Provider value={{ open }}>
       {children}
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -229,7 +230,7 @@ export function PodcastEpisodeActionsProvider({
             </Box>
           )}
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
     </PodcastEpisodeActionsContext.Provider>
   );
 }

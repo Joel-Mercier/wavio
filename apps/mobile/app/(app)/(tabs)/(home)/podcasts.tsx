@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoritePodcastListItem from "@/components/podcasts/FavoritePodcastListItem";
 import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
@@ -25,6 +24,7 @@ import {
   useTopChartsByGenres,
 } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useSyncServerPodcastFavorites } from "@/hooks/usePodcastFavorites";
 import type { Genre } from "@/services/taddyPodcasts/types";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
@@ -34,6 +34,7 @@ export default function PodcastsScreen() {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const capabilities = useCapabilities();
   const scope = useCurrentAuthScope();
   const favorites = usePodcasts((store) => store.favoritePodcasts);
@@ -99,8 +100,7 @@ export default function PodcastsScreen() {
       <HomeTabsNav active="podcasts" />
       <ScrollView
         contentContainerStyle={{
-          paddingBottom:
-            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2,
+          paddingBottom: tabBarHeight + floatingPlayerInset + insets.bottom * 2,
         }}
         showsVerticalScrollIndicator={false}
       >

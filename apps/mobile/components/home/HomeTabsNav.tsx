@@ -15,6 +15,7 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { cn } from "@/utils/tailwind";
 
 type ActiveTab =
   | "music"
@@ -34,6 +35,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isLandscape = useApp((store) => store.isLandscape);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const scrollRef = useRef<RNScrollView>(null);
@@ -50,7 +52,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
 
   return (
     <HStack
-      className="pl-6 gap-x-4 my-6 items-center"
+      className={cn("pl-6 gap-x-4 items-center", isLandscape ? "mb-6" : "my-6")}
       style={{ paddingTop: insets.top }}
     >
       <FadeOutScaleDown

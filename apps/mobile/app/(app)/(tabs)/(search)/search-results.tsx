@@ -11,7 +11,6 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import SearchResultListItem from "@/components/search/SearchResultListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Badge, BadgeText } from "@/components/ui/badge";
@@ -20,6 +19,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { useSearch3 } from "@/hooks/backend/useSearching";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -36,6 +36,7 @@ export default function SearchResultsScreen() {
     "artists" | "albums" | "playlists" | "songs" | null
   >(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSearch3(query, {
@@ -186,7 +187,7 @@ export default function SearchResultsScreen() {
           ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
         />

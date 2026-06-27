@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -42,6 +41,7 @@ import {
   useGetUser as useGetNavidromeUser,
   useUpdateUser as useUpdateNavidromeUser,
 } from "@/hooks/navidrome/useUsers";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -135,6 +135,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const toast = useToast();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -364,7 +365,7 @@ export default function EditProfileScreen() {
           paddingHorizontal: 24,
           paddingTop: 8,
           paddingBottom:
-            insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT + 24,
+            insets.bottom + tabBarHeight + floatingPlayerInset + 24,
         }}
         showsVerticalScrollIndicator={false}
       >

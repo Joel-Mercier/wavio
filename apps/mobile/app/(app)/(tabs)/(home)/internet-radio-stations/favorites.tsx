@@ -3,13 +3,13 @@ import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import InternetRadioStationListItem, {
   favoriteToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   useScopedRadioFavorites,
   useSyncServerRadioFavorites,
@@ -20,6 +20,7 @@ export default function FavoriteInternetRadioStationsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const favoriteRadioStations = useScopedRadioFavorites();
 
   useSyncServerRadioFavorites();
@@ -54,7 +55,7 @@ export default function FavoriteInternetRadioStationsScreen() {
         contentContainerStyle={{
           paddingTop: 8,
           paddingBottom:
-            tabBarHeight + FLOATING_PLAYER_HEIGHT + insets.bottom * 2 + 16,
+            tabBarHeight + floatingPlayerInset + insets.bottom * 2 + 16,
         }}
         ListEmptyComponent={<EmptyDisplay />}
       />

@@ -17,7 +17,6 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -30,6 +29,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSimilarTracks } from "@/hooks/backend/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -52,6 +52,7 @@ export default function SimilarSongsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -195,7 +196,7 @@ export default function SimilarSongsScreen() {
         ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />

@@ -1,12 +1,13 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import type { RefObject } from "react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import SheetSearchInput from "@/components/SheetSearchInput";
 import { Badge, BadgeText } from "@/components/ui/badge";
@@ -52,7 +53,7 @@ export default function RadioFeedTagsSheet({
   };
 
   return (
-    <BottomSheetModal
+    <CenteredBottomSheetModal
       ref={modalRef}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
@@ -95,6 +96,6 @@ export default function RadioFeedTagsSheet({
           </VStack>
         </Box>
       </BottomSheetScrollView>
-    </BottomSheetModal>
+    </CenteredBottomSheetModal>
   );
 }

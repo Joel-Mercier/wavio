@@ -17,7 +17,6 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -32,6 +31,7 @@ import {
   useGetUser as useGetNavidromeUser,
   useUsers as useNavidromeUsers,
 } from "@/hooks/navidrome/useUsers";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
@@ -79,6 +79,7 @@ export default function ProfileScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -243,7 +244,7 @@ export default function ProfileScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />

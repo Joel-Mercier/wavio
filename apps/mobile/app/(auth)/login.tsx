@@ -375,7 +375,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Box className="px-6">
+        <Box className="px-6 w-full max-w-[480px] self-center">
           <Center className="mb-4 ">
             <Logo width={64} height={64} />
           </Center>

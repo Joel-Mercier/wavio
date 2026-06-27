@@ -29,6 +29,7 @@ import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { getPlaylist } from "@/services/backend/playlists";
+import useApp from "@/stores/app";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 
@@ -49,6 +50,7 @@ export default function AddToPlaylistDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
+  const isLandscape = useApp((s) => s.isLandscape);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
 
@@ -174,9 +176,11 @@ export default function AddToPlaylistDetail() {
     }
   };
 
-  // FloatingPlayer sits at bottom: 96 and is FLOATING_PLAYER_HEIGHT tall,
+  // In landscape the player docks into the left sidebar, so content on the right
+  // needs no bottom clearance. Portrait: FloatingPlayer sits at bottom: 96 and is
+  // FLOATING_PLAYER_HEIGHT tall,
   // so its top edge is this far from the bottom of the screen.
-  const floatingPlayerTop = 96 + FLOATING_PLAYER_HEIGHT;
+  const floatingPlayerTop = isLandscape ? 0 : 96 + FLOATING_PLAYER_HEIGHT;
 
   const playlists = data?.playlists.playlist;
 

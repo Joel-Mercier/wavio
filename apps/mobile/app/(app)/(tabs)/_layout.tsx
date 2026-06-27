@@ -8,11 +8,12 @@ import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import type React from "react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
 import DrawerMenu from "@/components/DrawerMenu";
+import { SIDEBAR_WIDTH } from "@/components/FloatingPlayer";
 import OfflineBanner, {
   OFFLINE_BANNER_HEIGHT,
 } from "@/components/OfflineBanner";
@@ -32,7 +33,11 @@ export default function TabLayout() {
   const addBottomSheetRef = useRef<BottomSheetModal>(null);
   const emerald = useCSSVariable("--color-emerald-500") as string | undefined;
   const gray = useCSSVariable("--color-gray-200") as string | undefined;
+  const primary600 = useCSSVariable("--color-primary-600") as
+    | string
+    | undefined;
   const isOnline = useIsOnline();
+  const isLandscape = useApp((store) => store.isLandscape);
   const insets = useSafeAreaInsets();
 
   const handleClose = () => {
@@ -51,47 +56,72 @@ export default function TabLayout() {
           tabBarLabelStyle: {
             fontFamily: "Inter_700Bold",
           },
-          tabBarStyle: {
-            position: "absolute",
-            borderTopWidth: 0,
-            elevation: 0,
-            shadowOpacity: 0,
-            // While offline, grow the tab bar so the offline banner sits inside
-            // the gradient just below the icons (icons stay put via paddingBottom).
-            ...(isOnline
-              ? {}
-              : {
-                  height:
-                    TAB_BAR_CONTENT_HEIGHT +
-                    insets.bottom +
-                    OFFLINE_BANNER_HEIGHT,
-                  paddingBottom: insets.bottom + OFFLINE_BANNER_HEIGHT,
-                }),
-            // backgroundColor: "transparent",
-          },
+          // In landscape, dock the tab bar to the left as a solid sidebar column;
+          // react-navigation lays the screens out to its right automatically and
+          // reports useBottomTabBarHeight() === 0.
+          tabBarPosition: isLandscape ? "left" : "bottom",
+          tabBarStyle: isLandscape
+            ? {
+                position: "relative",
+                // Pin all three: the sidebar applies its own `minWidth`
+                // (getDefaultSidebarWidth) which would otherwise override `width`.
+                width: SIDEBAR_WIDTH,
+                minWidth: SIDEBAR_WIDTH,
+                maxWidth: SIDEBAR_WIDTH,
+                backgroundColor: primary600,
+                borderTopWidth: 0,
+                elevation: 0,
+                shadowOpacity: 0,
+              }
+            : {
+                position: "absolute",
+                borderTopWidth: 0,
+                elevation: 0,
+                shadowOpacity: 0,
+                // While offline, grow the tab bar so the offline banner sits inside
+                // the gradient just below the icons (icons stay put via paddingBottom).
+                ...(isOnline
+                  ? {}
+                  : {
+                      height:
+                        TAB_BAR_CONTENT_HEIGHT +
+                        insets.bottom +
+                        OFFLINE_BANNER_HEIGHT,
+                      paddingBottom: insets.bottom + OFFLINE_BANNER_HEIGHT,
+                    }),
+                // backgroundColor: "transparent",
+              },
           tabBarButton: (props) => (
             <Pressable
               {...(props as React.ComponentProps<typeof Pressable>)}
               android_ripple={{ color: "transparent" }}
             />
           ),
-          tabBarBackground: () => (
-            <LinearGradient
-              colors={[
-                "rgba(0,0,0, 0)",
-                "rgba(0,0,0, 0.4)",
-                "rgba(0,0,0, 0.6)",
-                "rgba(0,0,0, 0.85)",
-                "rgb(0,0,0, 0.9)",
-              ]}
-              style={{ height: "100%" }}
-              locations={[0, 0.1, 0.2, 0.5, 1]}
-            >
-              <OfflineBanner />
-            </LinearGradient>
-          ),
+          tabBarBackground: () =>
+            isLandscape ? (
+              <View style={{ flex: 1, backgroundColor: primary600 }}>
+                <OfflineBanner />
+              </View>
+            ) : (
+              <LinearGradient
+                colors={[
+                  "rgba(0,0,0, 0)",
+                  "rgba(0,0,0, 0.4)",
+                  "rgba(0,0,0, 0.6)",
+                  "rgba(0,0,0, 0.85)",
+                  "rgb(0,0,0, 0.9)",
+                ]}
+                style={{ height: "100%" }}
+                locations={[0, 0.1, 0.2, 0.5, 1]}
+              >
+                <OfflineBanner />
+              </LinearGradient>
+            ),
           tabBarActiveTintColor: emerald,
           tabBarInactiveTintColor: gray,
+          // The sidebar (uikit, horizontal) draws a rounded accent pill behind
+          // the active item; make it transparent so only the tint color marks it.
+          tabBarActiveBackgroundColor: isLandscape ? "transparent" : undefined,
         }}
       >
         <Tabs.Screen

@@ -50,6 +50,7 @@ import {
   probeServer,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { initOrientation } from "@/services/orientation";
 import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
 import { initSslTrust, refreshSslProxyOnForeground } from "@/services/sslTrust";
@@ -158,6 +159,7 @@ export default sentryWrap(function RootLayout() {
     });
     const unsubscribeConnectionType = initConnectionType();
     const unsubscribeSentryScope = initSentryScope();
+    const unsubscribeOrientation = initOrientation();
     const idle =
       typeof requestIdleCallback === "function"
         ? requestIdleCallback(() => {
@@ -178,6 +180,7 @@ export default sentryWrap(function RootLayout() {
       subscription.remove();
       unsubscribeConnectionType();
       unsubscribeSentryScope();
+      unsubscribeOrientation();
       unsubscribePersist();
     };
   }, []);

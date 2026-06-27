@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -17,9 +17,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditTrackItem from "@/components/queue/QueueEditTrackItem";
 import QueuePodcastListItem from "@/components/queue/QueuePodcastListItem";
@@ -44,12 +44,15 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
+import useApp from "@/stores/app";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
@@ -82,6 +85,8 @@ export default function QueueDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const queue = useQueue((state) => state.queue);
   const currentIndex = useQueue((state) => state.currentIndex);
   const setQueue = useQueue((state) => state.setQueue);
@@ -191,7 +196,7 @@ export default function QueueDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="mt-6 pb-6 flex-1">
+      <Box className={cn("pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}
@@ -320,7 +325,7 @@ export default function QueueDetail() {
               onSort={handleListSort}
               contentContainerStyle={{
                 paddingBottom:
-                  insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
               }}
               showsVerticalScrollIndicator={false}
               renderItem={(item, _index, isActive, beginDrag) => (
@@ -340,7 +345,7 @@ export default function QueueDetail() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom:
-                  insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
               }}
               renderItem={({ item, index }) =>
                 item.source === "podcast" ? (
@@ -403,7 +408,7 @@ export default function QueueDetail() {
         onClose={() => setShowCreatePlaylist(false)}
         trackIds={queue.map((q) => q.id)}
       />
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={sleepTimerSheetRef}
         onChange={handleSleepSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -467,7 +472,7 @@ export default function QueueDetail() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
     </Box>
   );
 }

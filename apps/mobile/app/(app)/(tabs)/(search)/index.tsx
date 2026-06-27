@@ -8,7 +8,6 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import GenreListItem from "@/components/search/GenreListItem";
 import GenreListItemSkeleton from "@/components/search/GenreListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -17,6 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { useGenres } from "@/hooks/backend/useBrowsing";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -30,6 +30,7 @@ export default function SearchScreen() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const { data, isLoading, error } = useGenres();
   const insets = useSafeAreaInsets();
   const handleSearchPress = () => {
@@ -92,7 +93,7 @@ export default function SearchScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingBottom: insets.bottom + tabBarHeight + FLOATING_PLAYER_HEIGHT,
+          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />

@@ -14,7 +14,7 @@ import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { Linking, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -42,8 +42,10 @@ import {
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useServers, { type ServerUser } from "@/stores/servers";
+import { cn } from "@/utils/tailwind";
 
 interface DrawerMenuProps {
   showDrawer: boolean;
@@ -85,6 +87,8 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   ]) as string[];
   const { t, i18n } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isLandscape = useApp((store) => store.isLandscape);
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
   const username = useAuth((store) => store.username);
@@ -167,6 +171,9 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
           paddingBottom: bottom,
           paddingLeft: left,
           paddingRight: right,
+          // The lg drawer is 3/4 of the screen — far too wide in landscape;
+          // roughly halve it there.
+          ...(isLandscape ? { width: width * 0.4 } : {}),
         }}
       >
         <DrawerHeader>
@@ -228,8 +235,8 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
             )}
           </HStack>
         </DrawerHeader>
-        <DrawerBody>
-          <VStack className="justify-between h-full">
+        <DrawerBody style={isLandscape ? { flex: 1 } : undefined}>
+          <VStack className={cn(!isLandscape && "justify-between h-full")}>
             <VStack>
               <Pressable
                 className="flex-row items-center m-1 p-4 border-primary-500 gap-x-4 rounded-md active:bg-primary-800"

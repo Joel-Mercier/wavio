@@ -8,14 +8,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryRow from "@/components/libraries/LibraryRow";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { MusicFolder } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import {
   useCurrentAuthScope,
@@ -24,6 +25,7 @@ import {
 } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 
 const FOLDER_QUERY_PREFIXES = [
   "albumList2",
@@ -43,6 +45,8 @@ export default function LibrariesDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useMusicFoldersQuery();
   const scope = useCurrentAuthScope();
@@ -62,7 +66,7 @@ export default function LibrariesDetail() {
   };
 
   return (
-    <Box className="px-6 mt-6 pb-6 h-full">
+    <Box className={cn("px-6 pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
       <HStack
         className="items-center justify-between mb-6"
         style={{ paddingTop: insets.top }}
@@ -113,7 +117,7 @@ export default function LibrariesDetail() {
           }
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
         />

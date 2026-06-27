@@ -11,7 +11,9 @@ import {
 } from "@/hooks/player";
 import { useTrackBookmarks } from "@/hooks/useTrackBookmarks";
 import { seekTo } from "@/services/player";
+import useApp from "@/stores/app";
 import { formatSeconds } from "@/utils/date";
+import { cn } from "@/utils/tailwind";
 
 // Hold a released seek position until live playback lands within this many
 // seconds of it (converted to a fraction for the slider's settle logic).
@@ -19,6 +21,7 @@ const SEEK_SETTLE_THRESHOLD = 1.5;
 
 export default function PlaybackSlider() {
   const { currentTime, duration } = usePlaybackProgress();
+  const isLandscape = useApp((s) => s.isLandscape);
   const hasDuration = duration > 0;
   // Live position as a 0..1 shared value, updated on the UI thread (~4 Hz) with
   // no React re-render, so a progress tick can never fight the drag gesture.
@@ -44,7 +47,7 @@ export default function PlaybackSlider() {
   };
 
   return (
-    <VStack className="mb-6">
+    <VStack className={cn(isLandscape ? "mb-2" : "mb-6")}>
       <GestureSlider
         progress={liveProgress}
         disabled={!hasDuration}

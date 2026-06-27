@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import OfflineDownloadItem from "@/components/offline/OfflineDownloadItem";
 import {
   AlertDialog,
@@ -34,8 +33,11 @@ import {
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import useApp from "@/stores/app";
 import { niceBytes } from "@/utils/fileSize";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 
 export default function OfflineDownloadsDetail() {
   const [gray500, white] = Uniwind.getCSSVariable([
@@ -47,6 +49,8 @@ export default function OfflineDownloadsDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
   const downloadedTracksList = useDownloadedTracksList();
   const totalDownloadSize = useTotalDownloadSize();
@@ -123,7 +127,7 @@ export default function OfflineDownloadsDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="mt-6 pb-6 flex-1">
+      <Box className={cn("pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}
@@ -181,7 +185,7 @@ export default function OfflineDownloadsDetail() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom:
-                  insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
               }}
               renderItem={({ item }) => (
                 <OfflineDownloadItem

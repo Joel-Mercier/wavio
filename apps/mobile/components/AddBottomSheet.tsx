@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
@@ -11,6 +11,7 @@ import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -62,7 +63,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   };
 
   return (
-    <BottomSheetModal
+    <CenteredBottomSheetModal
       ref={ref}
       enablePanDownToClose={true}
       backgroundStyle={{
@@ -149,7 +150,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
           </VStack>
         </Box>
       </BottomSheetView>
-    </BottomSheetModal>
+    </CenteredBottomSheetModal>
   );
 });
 

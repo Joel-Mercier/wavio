@@ -14,17 +14,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import ActivityListItem from "@/components/activity/ActivityListItem";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useActivity, {
   type ActivityEntry,
   type ActivityType,
 } from "@/stores/activity";
+import useApp from "@/stores/app";
 import { goBackOrHome } from "@/utils/navigation";
+import { cn } from "@/utils/tailwind";
 
 type SectionKey = "today" | "yesterday" | "thisWeek" | "older";
 
@@ -66,6 +68,8 @@ export default function ActivityDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const activity = useActivity((store) => store.activity);
 
   const sections = useMemo(() => groupEntries(activity), [activity]);
@@ -76,7 +80,7 @@ export default function ActivityDetail() {
 
   return (
     <Box className="h-full">
-      <Box className="px-6 mt-6 pb-6 flex-1">
+      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-6"
           style={{ paddingTop: insets.top }}
@@ -103,7 +107,7 @@ export default function ActivityDetail() {
             stickySectionHeadersEnabled={false}
             contentContainerStyle={{
               paddingBottom:
-                insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+                insets.bottom + bottomTabBarHeight + floatingPlayerInset,
             }}
             renderSectionHeader={({ section }) => (
               <Heading className="text-white mt-6 mb-2" size="md">

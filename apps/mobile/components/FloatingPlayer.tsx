@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
 import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useTranslation } from "react-i18next";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
@@ -9,6 +10,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
 import AnimatedHeart from "@/components/AnimatedHeart";
@@ -28,6 +30,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -35,12 +38,15 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
+import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
+// Width of the landscape left tab bar column; the player docks to its bottom.
+export const SIDEBAR_WIDTH = 240;
 
 const SWIPE_THRESHOLD = 80;
 const MAX_TRANSLATE = 140;
@@ -50,6 +56,8 @@ export default function FloatingPlayer() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isOnline = useIsOnline();
+  const insets = useSafeAreaInsets();
+  const isLandscape = useApp((s) => s.isLandscape);
   const router = useRouter();
   const pathname = usePathname();
   const colors = useImageColors(playingTrack?.artwork);
@@ -309,14 +317,132 @@ export default function FloatingPlayer() {
   const backgroundColor =
     (colors?.platform === "ios" ? colors.background : colors?.muted) || primary;
 
+  if (isLandscape) {
+    return (
+      <Pressable
+        testID="floating-player"
+        className="absolute left-0 bottom-0"
+        style={{
+          width: SIDEBAR_WIDTH,
+          // Match the sidebar's own start padding so the player clears a
+          // landscape left cutout (what is the top inset in portrait).
+          paddingLeft: insets.left,
+          bottom: insets.bottom + 12 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
+        }}
+        onPress={handlePress}
+      >
+        <VStack className="relative mx-2 px-2 pt-3 pb-2 gap-y-3">
+          <PlaybackProgressBar position="top" />
+          <HStack className="items-center gap-x-2">
+            <ImageWithFallback
+              source={
+                playingTrack.artwork ? { uri: playingTrack.artwork } : undefined
+              }
+              className="w-10 h-10 rounded aspect-square"
+              alt="Track cover"
+              contentFit={playingTrack.isRadio ? "contain" : "cover"}
+              fallback={
+                <Box className="w-10 h-10 rounded bg-primary-600 items-center justify-center">
+                  <AudioLines size={20} color={white} />
+                </Box>
+              }
+            />
+            <VStack className="flex-1">
+              <MovingText>
+                <Text className="text-white font-bold text-sm">
+                  {playingTrack.title || ""}
+                </Text>
+              </MovingText>
+              <Text numberOfLines={1} className="text-gray-300 text-xs">
+                {playingTrack.artist ||
+                  (!isRadio && !isPodcast ? t("app.shared.unknownArtist") : "")}
+              </Text>
+            </VStack>
+            {!isRadio && isPodcast && podcastSeries && (
+              <AnimatedHeart
+                hitSlop={8}
+                filled={isPodcastSeriesFavorite}
+                onPress={
+                  isPodcastSeriesFavorite
+                    ? handleRemovePodcastFavoritePress
+                    : handleAddPodcastFavoritePress
+                }
+              />
+            )}
+            {!isRadio && !isPodcast && (
+              <AnimatedHeart
+                hitSlop={8}
+                filled={!!playingTrack.starred}
+                disabled={!isOnline}
+                onPress={
+                  playingTrack.starred
+                    ? handleUnfavoritePress
+                    : handleFavoritePress
+                }
+              />
+            )}
+          </HStack>
+          <HStack className="items-center justify-between">
+            {capabilities.jukebox && !isRadio && !isPodcast ? (
+              <Pressable
+                hitSlop={8}
+                disabled={!isOnline}
+                style={{ opacity: isOnline ? 1 : 0.6 }}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  openJukeboxSheet();
+                }}
+              >
+                <Speaker size={20} color={jukeboxActive ? emerald500 : white} />
+              </Pressable>
+            ) : (
+              <Box className="w-5" />
+            )}
+            <PlayPauseButton
+              testID="floating-player-play-pause"
+              isPlaying={isPlaying}
+              onPress={handlePlayPausePress}
+              size={40}
+              iconSize={20}
+              className="bg-white"
+              hitSlop={8}
+            />
+            {!isRadio ? (
+              <Pressable
+                hitSlop={8}
+                disabled={!canSkipNext}
+                style={{ opacity: canSkipNext ? 1 : 0.4 }}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  skipNext();
+                }}
+              >
+                <SkipForward size={20} color={white} fill={white} />
+              </Pressable>
+            ) : (
+              <Box className="w-5" />
+            )}
+          </HStack>
+        </VStack>
+      </Pressable>
+    );
+  }
+
   return (
     <GestureDetector gesture={panGesture}>
       <Pressable
         testID="floating-player"
-        className="absolute right-0 left-0"
-        style={{
-          bottom: 96 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
-        }}
+        className={
+          isLandscape ? "absolute left-0 bottom-0" : "absolute right-0 left-0"
+        }
+        style={
+          isLandscape
+            ? {
+                width: SIDEBAR_WIDTH,
+                bottom: insets.bottom + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
+              }
+            : { bottom: 96 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT) }
+        }
         onPress={handlePress}
       >
         <HStack

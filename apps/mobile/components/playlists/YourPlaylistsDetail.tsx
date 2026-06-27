@@ -7,14 +7,16 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Playlist } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { shuffleWithSeed } from "@/utils/shuffle";
+import { cn } from "@/utils/tailwind";
 import EmptyDisplay from "../EmptyDisplay";
 import ErrorDisplay from "../ErrorDisplay";
 import FadeOutScaleDown from "../FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
 import PlaylistListItem from "./PlaylistListItem";
@@ -23,6 +25,8 @@ import PlaylistListItemSkeleton from "./PlaylistListItemSkeleton";
 export default function YourPlaylistsDetail() {
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
+  const isLandscape = useApp((s) => s.isLandscape);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seed] = useState(() => Date.now());
@@ -32,7 +36,7 @@ export default function YourPlaylistsDetail() {
     return shuffleWithSeed(all, seed);
   }, [data, seed]);
   return (
-    <Box className="mt-6 pb-6 h-full">
+    <Box className={cn("pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
       <HStack
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}
@@ -66,7 +70,7 @@ export default function YourPlaylistsDetail() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
           showsVerticalScrollIndicator={false}
         />

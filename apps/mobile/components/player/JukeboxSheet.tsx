@@ -1,7 +1,6 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetModal as BottomSheetModalComponent,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
@@ -10,6 +9,7 @@ import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
+import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import GestureSlider from "@/components/GestureSlider";
 import { setJukeboxSheetRef } from "@/components/player/jukeboxSheetController";

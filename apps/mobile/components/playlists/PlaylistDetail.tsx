@@ -1,6 +1,6 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetModal,
+  type BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -38,6 +38,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DownloadedBadge from "@/components/DownloadedBadge";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -81,6 +82,7 @@ import {
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
@@ -97,7 +99,6 @@ import { formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
-import { FLOATING_PLAYER_HEIGHT } from "../FloatingPlayer";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -135,6 +136,7 @@ export default function PlaylistDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -842,11 +844,11 @@ export default function PlaylistDetail() {
           paddingLeft: insets.left,
           paddingRight: insets.right,
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
         showsVerticalScrollIndicator={false}
       />
-      <BottomSheetModal
+      <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
         onChange={handleShareSheetPositionChange}
         backgroundStyle={{
@@ -885,8 +887,8 @@ export default function PlaylistDetail() {
             </HStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
         backgroundStyle={{
@@ -1045,8 +1047,8 @@ export default function PlaylistDetail() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
-      <BottomSheetModal
+      </CenteredBottomSheetModal>
+      <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
         onChange={handleSortSheetPositionChange}
         backgroundStyle={{
@@ -1112,7 +1114,7 @@ export default function PlaylistDetail() {
             </VStack>
           </Box>
         </BottomSheetView>
-      </BottomSheetModal>
+      </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showAlertDialog}
         onClose={handleCloseAlertDialog}

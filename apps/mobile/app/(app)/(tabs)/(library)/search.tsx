@@ -13,7 +13,6 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import LibraryListItem, {
   type Favorites,
   type LibraryFolder,
@@ -29,6 +28,7 @@ import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import useDebounce from "@/hooks/useDebounce";
+import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useScopedRadioFavorites } from "@/hooks/useRadioFavorites";
 import type {
   AlbumID3,
@@ -56,6 +56,7 @@ export default function LibrarySearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const floatingPlayerInset = useFloatingPlayerInset();
   const form = useForm({
     defaultValues: {
       query: "",
@@ -366,7 +367,7 @@ export default function LibrarySearchScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom:
-              insets.bottom + bottomTabBarHeight + FLOATING_PLAYER_HEIGHT,
+              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
           }}
         />
       )}
