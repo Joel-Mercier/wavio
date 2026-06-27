@@ -45,16 +45,28 @@ class CustomOkHttpClientFactory(
   /**
    * Accepts trusted hosts even when the certificate CN/SAN doesn't match the
    * hostname (common for self-signed certs accessed by IP / LAN name).
+   *
+   * The explicitly-trusted-host check runs FIRST: a self-signed cert's CN/SAN
+   * usually doesn't list the name it's reached by, so the platform default
+   * verifier returns false — or throws, which (if called first) would propagate
+   * out and fail the connection even though TLS trust already passed. So once a
+   * host is trusted we short-circuit to accept, and any default-verifier
+   * exception is swallowed rather than aborting the request.
    */
   class CustomHostnameVerifier : HostnameVerifier {
     private val default = HttpsURLConnection.getDefaultHostnameVerifier()
 
     override fun verify(hostname: String, session: SSLSession): Boolean {
-      if (default.verify(hostname, session)) return true
+      if (SslTrustStore.isCertificateTrusted(hostname)) return true
+      val def = try {
+        default.verify(hostname, session)
+      } catch (e: Exception) {
+        false
+      }
+      if (def) return true
       return try {
         val cert = session.peerCertificates.firstOrNull() as? X509Certificate
-          ?: return false
-        SslTrustStore.isCertificateTrusted(hostname) ||
+        cert != null &&
           SslTrustStore.isFingerprintTrusted(SslTrustStore.getFingerprint(cert))
       } catch (e: Exception) {
         false

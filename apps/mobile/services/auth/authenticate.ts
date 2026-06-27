@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   getCertificateInfo,
+  isCertificateTrusted,
   isSSLError,
   isSslTrustAvailable,
 } from "@/modules/ssl-trust";
@@ -86,7 +87,14 @@ async function withSslDetection<T>(
     ) {
       try {
         const info = await getCertificateInfo(url);
-        if (!info.systemTrusted) throw new SslUntrustedError(url);
+        // If we've already trusted this host's cert and the request STILL
+        // fails, re-prompting is futile — the real problem is elsewhere (an
+        // unreachable upstream, a dead endpoint behind the cert, etc.). Surface
+        // the original error instead of looping the trust prompt.
+        const alreadyTrusted = await isCertificateTrusted(info.hostname);
+        if (!info.systemTrusted && !alreadyTrusted) {
+          throw new SslUntrustedError(url);
+        }
       } catch (probeErr) {
         if (probeErr instanceof SslUntrustedError) throw probeErr;
         // Inspection itself failed (genuinely unreachable): fall through to the

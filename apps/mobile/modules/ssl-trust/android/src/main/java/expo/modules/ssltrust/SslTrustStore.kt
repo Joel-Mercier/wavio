@@ -177,17 +177,36 @@ object SslTrustStore {
         .getMethod("setOkHttpClientFactory", factoryInterface)
         .invoke(null, proxy)
 
-      // RN caches a singleton client lazily; null it so the next request
-      // rebuilds through our factory (no-op if it hasn't been created yet).
-      try {
-        val field = providerClass.getDeclaredField("sClient")
-        field.isAccessible = true
-        field.set(null, null)
-      } catch (_: Exception) {
-        // Field name/visibility varies by RN version; ignore.
-      }
+      // RN caches a singleton client lazily; null it so any later
+      // getOkHttpClient() rebuilds through our factory. Installed from
+      // Application.onCreate (SslTrustPackage) this is normally a no-op (the
+      // client isn't built yet), but it keeps a JS-triggered re-init honest.
+      clearCachedClient(providerClass)
     } catch (e: Exception) {
       Log.w(TAG, "OkHttp factory install failed (non-fatal): ${e.message}")
+    }
+  }
+
+  /**
+   * Null the cached client in RN's `OkHttpClientProvider`. It's a Kotlin `object`,
+   * so the `client` field lives on the `INSTANCE`, not as a static. The field was
+   * `sClient` in older (Java) RN, so fall back to that name. Best-effort.
+   */
+  private fun clearCachedClient(providerClass: Class<*>) {
+    val instance = try {
+      providerClass.getDeclaredField("INSTANCE").get(null)
+    } catch (_: Exception) {
+      null
+    }
+    for (name in listOf("client", "sClient")) {
+      try {
+        val field = providerClass.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(instance, null)
+        return
+      } catch (_: Exception) {
+        // Try the next known field name.
+      }
     }
   }
 

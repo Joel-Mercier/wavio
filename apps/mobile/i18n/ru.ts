@@ -70,8 +70,7 @@ export default {
         internetRadioStationDescription:
           "Добавь радиостанцию, которую можно слушать прямо из приложения",
         podcastChannelTitle: "Подкаст",
-        podcastChannelDescription:
-          "Подпиши сервер на подкаст через RSS-ленту",
+        podcastChannelDescription: "Подпиши сервер на подкаст через RSS-ленту",
       },
       carAuto: {
         home: "Главная",
@@ -99,20 +98,17 @@ export default {
         lastFM: "Открыть в Last.fm",
         moreFromArtist: "Ещё от {{artist}}",
         favoriteSuccessMessage: "Альбом добавлен в медиатеку",
-        favoriteErrorMessage:
-          "Не удалось добавить альбом в медиатеку",
+        favoriteErrorMessage: "Не удалось добавить альбом в медиатеку",
         unfavoriteSuccessMessage: "Альбом удален из медиатеки",
-        unfavoriteErrorMessage:
-          "Не удалить удалить альбом из медиатеки",
+        unfavoriteErrorMessage: "Не удалить удалить альбом из медиатеки",
         shareSuccessMessage: "Трек успешно добавлен в общий доступ",
-        shareErrorMessage: "Произошла ошибка при добавлении трека в общий доступ",
+        shareErrorMessage:
+          "Произошла ошибка при добавлении трека в общий доступ",
         rateModalTitle: "Оценка альбома",
         seeAll: "Показать все",
         addAllToFavorites: "Добавить всё в избранное",
-        addAllToFavoritesSuccessMessage:
-          "Все песни добавлены в избранное",
-        addAllToFavoritesErrorMessage:
-          "Не удалось добавить песни в избранное",
+        addAllToFavoritesSuccessMessage: "Все песни добавлены в избранное",
+        addAllToFavoritesErrorMessage: "Не удалось добавить песни в избранное",
       },
       artists: {
         label: "Исполнитель",
@@ -130,11 +126,9 @@ export default {
         albumCount_one: "{{count}} релиз",
         albumCount_other: "{{count}} релизов",
         favoriteSuccessMessage: "Исполнитель добавлен в медиатеку",
-        favoriteErrorMessage:
-          "Не удалось добавить исполнителя в медиатеку",
+        favoriteErrorMessage: "Не удалось добавить исполнителя в медиатеку",
         unfavoriteSuccessMessage: "Исполнитель удален из медиатеки",
-        unfavoriteErrorMessage:
-          "Не удалось удалить исполнителя из медиатеки",
+        unfavoriteErrorMessage: "Не удалось удалить исполнителя из медиатеки",
       },
       favorites: {
         title: "Любимые треки",
@@ -149,27 +143,23 @@ export default {
         share: "Поделиться",
         playNext: "Включить следующим",
         addToQueue: "Добавить в очередь",
-        deletePlaylistConfirmTitle:
-          "Удалить плейлист",
+        deletePlaylistConfirmTitle: "Удалить плейлист",
         deletePlaylistConfirmDescription:
           "Ты точно хочешь удалить плейлист? Плейлист будет удален навсегда, это действие нельзя отменить.",
         deletePlaylistSuccessMessage: "Плейлист удален",
-        deletePlaylistErrorMessage:
-          "Не удалось удалить плейлист",
+        deletePlaylistErrorMessage: "Не удалось удалить плейлист",
         shareSuccessMessage: "Трек успешно добавлен в общий доступ",
-        shareErrorMessage: "Произошла ошибка при добавлении трека в общий доступ",
+        shareErrorMessage:
+          "Произошла ошибка при добавлении трека в общий доступ",
         removeTrackSuccessMessage: "Трек удален из плейлиста",
-        removeTrackErrorMessage:
-          "Не удалось удалить трек из плейлиста",
+        removeTrackErrorMessage: "Не удалось удалить трек из плейлиста",
         addToPlaylistTitle: "Добавить в плейлист",
         newPlaylist: "Новый плейлист",
         finished: "Готово",
         addTrackSuccessMessage_one: "Добавлено в плейлист",
         addTrackSuccessMessage_other: "Добавлены в плейлист",
-        addTrackErrorMessage_one:
-          "Не удалось добавить трек",
-        addTrackErrorMessage_other:
-          "Не удалось добавить треки",
+        addTrackErrorMessage_one: "Не удалось добавить трек",
+        addTrackErrorMessage_other: "Не удалось добавить треки",
         duplicateTitle: "Уже есть в плейлисте",
         addAnyway: "Всё равно добавить",
         duplicateDescription_one:
@@ -196,15 +186,18 @@ export default {
         aboutEmpty: "Описание отсутствует",
         searchPlaceholder: "Поиск подкастов",
         dailyTopChartsByCountry: "Топ подкастов в {{country}} сегодня",
-        dailyTopChartsByGenre: "Топ подкастов в категории $t(app.podcasts.genres.{{genre}}) сегодня",
+        dailyTopChartsByGenre:
+          "Топ подкастов в категории $t(app.podcasts.genres.{{genre}}) сегодня",
         popularInLanguage: "Популярное на языке: {{language}}",
         seeAllEpisodes: "Все эпизоды",
         publishedAt: "{{distance}} назад",
         configureTaddyPodcasts: "Настроить в параметрах",
         taddyPodcastsNotConfigured: "Доступ к подкастам не настроен",
         yourPodcasts: "Ваши подкасты",
-        noServerPodcasts: "Вы еще не добавили подкасты. Нажмите +, чтобы добавить подкаст по RSS-ссылке.",
-        taddyDiscoveryHint: "Хотите искать новые подкасты? Настройте доступ в параметрах.",
+        noServerPodcasts:
+          "Вы еще не добавили подкасты. Нажмите +, чтобы добавить подкаст по RSS-ссылке.",
+        taddyDiscoveryHint:
+          "Хотите искать новые подкасты? Настройте доступ в параметрах.",
         noEpisodes: "Эпизодов пока нет",
         downloadEpisode: "Скачать эпизод",
         removeDownload: "Удалить загрузку",
@@ -218,12 +211,14 @@ export default {
         deleteChannelSuccessMessage: "Подкаст удален",
         deleteChannelErrorMessage: "Не удалось удалить подкаст",
         deleteChannelConfirmTitle: "Удалить этот подкаст?",
-        deleteChannelConfirmDescription: "Подкаст и все его эпизоды будут навсегда удалены с сервера. Вы уверены?",
+        deleteChannelConfirmDescription:
+          "Подкаст и все его эпизоды будут навсегда удалены с сервера. Вы уверены?",
         deleteEpisode: "Удалить эпизод",
         deleteEpisodeSuccessMessage: "Эпизод удален",
         deleteEpisodeErrorMessage: "Не удалось удалить эпизод",
         deleteEpisodeConfirmTitle: "Удалить этот эпизод?",
-        deleteEpisodeConfirmDescription: "Эпизод и загруженный файл будут удалены с сервера. Вы уверены?",
+        deleteEpisodeConfirmDescription:
+          "Эпизод и загруженный файл будут удалены с сервера. Вы уверены?",
         episodeStatus: {
           new: "Не загружен",
           downloading: "Загрузка…",
@@ -276,11 +271,13 @@ export default {
           PODCASTSERIES_ARTS_DESIGN: "Искусство - Дизайн",
           PODCASTSERIES_ARTS_FASHION_AND_BEAUTY: "Искусство - Мода и красота",
           PODCASTSERIES_ARTS_FOOD: "Искусство - Кулинария",
-          PODCASTSERIES_ARTS_PERFORMING_ARTS: "Искусство - Исполнительское искусство",
+          PODCASTSERIES_ARTS_PERFORMING_ARTS:
+            "Искусство - Исполнительское искусство",
           PODCASTSERIES_ARTS_VISUAL_ARTS: "Искусство - Визуальное искусство",
           PODCASTSERIES_BUSINESS: "Бизнес",
           PODCASTSERIES_BUSINESS_CAREERS: "Бизнес - Карьера",
-          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP: "Бизнес - Предпринимательство",
+          PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP:
+            "Бизнес - Предпринимательство",
           PODCASTSERIES_BUSINESS_INVESTING: "Бизнес - Инвестиции",
           PODCASTSERIES_BUSINESS_MANAGEMENT: "Бизнес - Менеджмент",
           PODCASTSERIES_BUSINESS_MARKETING: "Бизнес - Маркетинг",
@@ -292,8 +289,10 @@ export default {
           PODCASTSERIES_EDUCATION: "Образование",
           PODCASTSERIES_EDUCATION_COURSES: "Образование - Курсы",
           PODCASTSERIES_EDUCATION_HOW_TO: "Образование - Обучающие",
-          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING: "Образование - Изучение языков",
-          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT: "Образование - Саморазвитие",
+          PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING:
+            "Образование - Изучение языков",
+          PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT:
+            "Образование - Саморазвитие",
           PODCASTSERIES_FICTION: "Художественная литература",
           PODCASTSERIES_FICTION_COMEDY_FICTION: "Художественная - Комедия",
           PODCASTSERIES_FICTION_DRAMA: "Художественная - Драма",
@@ -301,17 +300,23 @@ export default {
           PODCASTSERIES_GOVERNMENT: "Государство",
           PODCASTSERIES_HISTORY: "История",
           PODCASTSERIES_HEALTH_AND_FITNESS: "Здоровье и фитнес",
-          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH: "Здоровье - Альтернативная медицина",
+          PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH:
+            "Здоровье - Альтернативная медицина",
           PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS: "Здоровье - Фитнес",
           PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE: "Здоровье - Медицина",
-          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH: "Здоровье - Психическое здоровье",
+          PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH:
+            "Здоровье - Психическое здоровье",
           PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION: "Здоровье - Питание",
           PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY: "Здоровье - Сексология",
           PODCASTSERIES_KIDS_AND_FAMILY: "Дети и семья",
-          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS: "Дети и семья - Образование",
-          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING: "Дети и семья - Родительство",
-          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS: "Дети и семья - Животные",
-          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS: "Дети и семья - Сказки",
+          PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS:
+            "Дети и семья - Образование",
+          PODCASTSERIES_KIDS_AND_FAMILY_PARENTING:
+            "Дети и семья - Родительство",
+          PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS:
+            "Дети и семья - Животные",
+          PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS:
+            "Дети и семья - Сказки",
           PODCASTSERIES_LEISURE: "Досуг",
           PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA: "Досуг - Аниме и манга",
           PODCASTSERIES_LEISURE_AUTOMOTIVE: "Досуг - Автомобили",
@@ -335,12 +340,14 @@ export default {
           PODCASTSERIES_NEWS_TECH: "Новости - Технологии",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY: "Религия и духовность",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM: "Религия - Буддизм",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY: "Религия - Христианство",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY:
+            "Религия - Христианство",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM: "Религия - Индуизм",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM: "Религия - Ислам",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM: "Религия - Иудаизм",
           PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION: "Религия - Религия",
-          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY: "Религия - Духовность",
+          PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY:
+            "Религия - Духовность",
           PODCASTSERIES_SCIENCE: "Наука",
           PODCASTSERIES_SCIENCE_ASTRONOMY: "Наука - Астрономия",
           PODCASTSERIES_SCIENCE_CHEMISTRY: "Наука - Химия",
@@ -352,11 +359,15 @@ export default {
           PODCASTSERIES_SCIENCE_PHYSICS: "Наука - Физика",
           PODCASTSERIES_SCIENCE_SOCIAL_SCIENCES: "Наука - Социология",
           PODCASTSERIES_SOCIETY_AND_CULTURE: "Общество и культура",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY: "Общество - Документальные",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS: "Общество - Личные блоги",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY:
+            "Общество - Документальные",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS:
+            "Общество - Личные блоги",
           PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY: "Общество - Философия",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL: "Общество - Путешествия",
-          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS: "Общество - Отношения",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL:
+            "Общество - Путешествия",
+          PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS:
+            "Общество - Отношения",
           PODCASTSERIES_SPORTS: "Спорт",
           PODCASTSERIES_SPORTS_BASEBALL: "Спорт - Бейсбол",
           PODCASTSERIES_SPORTS_BASKETBALL: "Спорт - Баскетбол",
@@ -391,8 +402,7 @@ export default {
       newPlaylist: {
         title: "Придумай название плейлиста",
         newPlaylistSuccessMessage: "Плейлист создан",
-        newPlaylistErrorMessage:
-          "Не удалось создать плейлист",
+        newPlaylistErrorMessage: "Не удалось создать плейлист",
         namePlaceholder: "Мой плейлист № 23",
       },
       profile: {
@@ -542,8 +552,7 @@ export default {
         publicLabel: "Сделать плейлист публичным",
         publicDescription: "Его смогут видеть все на сервере",
         editPlaylistSuccessMessage: "Плейлист отредактирован",
-        editPlaylistErrorMessage:
-          "Не удалось применить изменения",
+        editPlaylistErrorMessage: "Не удалось применить изменения",
       },
       settings: {
         title: "Настройки",
@@ -555,11 +564,11 @@ export default {
           downloadedTracksCount:
             "{{count}}/{{total}} треков скачано ({{size}})",
           clearDownloadsLabel: "Очистить загрузки",
-          clearDownloadsDescription: "Удалить все скачанные треки с этого устройства",
+          clearDownloadsDescription:
+            "Удалить все скачанные треки с этого устройства",
           clearDownloadsSuccessMessage: "Загрузки успешно удалены",
           clearDownloadsErrorMessage: "Не удалось очистить загрузки",
-          clearDownloadsConfirmTitle:
-            "Удалить весь скачанный контент?",
+          clearDownloadsConfirmTitle: "Удалить весь скачанный контент?",
           clearDownloadsConfirmDescription:
             "Ты больше не сможешь слушать эти треки офлайн.",
           manageDownloadsLabel: "Управление загрузками",
@@ -584,8 +593,7 @@ export default {
             "Очисти его, чтобы освободить место. Скачанный контент не удалится",
           clearAction: "Очистить",
           confirmTitle: "Очистить кэш?",
-          confirmDescription:
-            "Скачанный контент удален не будет.",
+          confirmDescription: "Скачанный контент удален не будет.",
           successMessage: "Кэш очищен",
         },
         musicLibrarySettings: {
@@ -595,8 +603,7 @@ export default {
             "Запуск повторного сканирования медиатеки на сервере",
           scanMusicLibraryAction: "Сканировать",
           scanMusicLibrarySuccessDescription: "Сканирование запущено",
-          scanMusicLibraryErrorDescription:
-            "Не удалось запустить сканирование",
+          scanMusicLibraryErrorDescription: "Не удалось запустить сканирование",
           scanStatusLabel: "Статус сканирования",
           scanStatusDescription:
             "Отображает текущее состояние сканирования вашей медиатеки",
@@ -611,15 +618,18 @@ export default {
           languageLabel: "Язык приложения",
           languageDescription: "Выбери язык по умолчанию для приложения Wavio",
           createTabLabel: "Кнопка «Создать»",
-          createTabDescription: "Показывать кнопку «Создать» на главной панели навигации",
+          createTabDescription:
+            "Показывать кнопку «Создать» на главной панели навигации",
         },
         internetRadioStationsSettings: {
           title: "Интернет-радио",
           countryLabel: "Страна",
-          countryDescription: "Выберите страну для раздела «По странам». По умолчанию используется регион вашего устройства.",
+          countryDescription:
+            "Выберите страну для раздела «По странам». По умолчанию используется регион вашего устройства.",
           countryAutomatic: "Автоматически",
           tagsLabel: "Жанровые категории",
-          tagsDescription: "Выберите, какие жанровые категории отображать на странице радиостанций.",
+          tagsDescription:
+            "Выберите, какие жанровые категории отображать на странице радиостанций.",
           tagsCount: "{{count}} выбрано",
           tagsSheetTitle: "Жанровые категории",
         },
@@ -628,29 +638,36 @@ export default {
           gaplessLabel: "Без пауз",
           gaplessDescription: "Удалять перерывы между треками.",
           endlessPlaybackLabel: "Музыка нон-стоп",
-          endlessPlaybackDescription: "Включать что-нибудь похожее, когда контент заканчивается.",
+          endlessPlaybackDescription:
+            "Включать что-нибудь похожее, когда контент заканчивается.",
           crossfadeLabel: "Плавный переход между треками",
-          crossfadeDescription: "Изменить время затухания и наложения отрывков.",
+          crossfadeDescription:
+            "Изменить время затухания и наложения отрывков.",
           crossfadeOff: "0 сек.",
           crossfadeSeconds: "{{seconds}} сек.",
           equalizerLabel: "Эквалайзер",
           equalizerDescription: "Настроить частоты и улучшить звучание.",
           equalizerAction: "Открыть",
-          equalizerErrorMessage: "На этом устройстве нет системного эквалайзера.",
+          equalizerErrorMessage:
+            "На этом устройстве нет системного эквалайзера.",
           queueSyncLabel: "Синхронизация очереди",
-          queueSyncDescription: "Сохраняйте очередь воспроизведения на сервере, чтобы продолжить прослушивание на другом устройстве.",
+          queueSyncDescription:
+            "Сохраняйте очередь воспроизведения на сервере, чтобы продолжить прослушивание на другом устройстве.",
           queueSyncOptions: {
             server: {
               label: "Приоритет сервера",
-              description: "При запуске восстанавливать очередь с сервера. Ваша очередь также загружается на сервер, чтобы другие устройства могли ее синхронизировать.",
+              description:
+                "При запуске восстанавливать очередь с сервера. Ваша очередь также загружается на сервер, чтобы другие устройства могли ее синхронизировать.",
             },
             local: {
               label: "Приоритет этого устройства",
-              description: "При запуске использовать очередь этого устройства. Она также загружается на сервер, чтобы другие устройства могли ее восстановить.",
+              description:
+                "При запуске использовать очередь этого устройства. Она также загружается на сервер, чтобы другие устройства могли ее восстановить.",
             },
             off: {
               label: "Выкл.",
-              description: "Без синхронизации. Очередь хранится только на этом устройстве и не отправляется на сервер.",
+              description:
+                "Без синхронизации. Очередь хранится только на этом устройстве и не отправляется на сервер.",
             },
           },
         },
@@ -662,9 +679,11 @@ export default {
           audioQualityOriginal: "Оригинал (без ограничений)",
           audioQualityKbps: "{{bitrate}} кбит/c",
           cellularAudioQualityLabel: "Стриминг по сотовой сети",
-          cellularAudioQualityDescription: "Ограничение битрейта при использовании мобильной сети для экономии трафика. Используется наименьшее из этого значения и ограничения для Wi-Fi.",
+          cellularAudioQualityDescription:
+            "Ограничение битрейта при использовании мобильной сети для экономии трафика. Используется наименьшее из этого значения и ограничения для Wi-Fi.",
           streamingFormatLabel: "Формат потока",
-          streamingFormatDescription: "Запрос серверу на транскодирование потоков в этот формат. Оставьте «Оригинал» для побитового воспроизведения; выберите формат, если некоторые файлы не воспроизводятся (например, ALAC).",
+          streamingFormatDescription:
+            "Запрос серверу на транскодирование потоков в этот формат. Оставьте «Оригинал» для побитового воспроизведения; выберите формат, если некоторые файлы не воспроизводятся (например, ALAC).",
           streamingFormatOptions: {
             raw: "Оригинал",
             flac: "FLAC (lossless)",
@@ -673,61 +692,103 @@ export default {
             aac: "AAC",
           },
           replayGainLabel: "Нормализация громкости",
-          replayGainDescription: "Использовать теги ReplayGain для выравнивания громкости между треками.",
+          replayGainDescription:
+            "Использовать теги ReplayGain для выравнивания громкости между треками.",
           replayGainModes: {
             off: "Выкл.",
             track: "По трекам",
             album: "По альбомам",
           },
           replayGainPreampLabel: "Предусиление",
-          replayGainPreampDescription: "Увеличение или уменьшение общей громкости в дБ. Полезно, если нормализованные треки звучат слишком тихо.",
+          replayGainPreampDescription:
+            "Увеличение или уменьшение общей громкости в дБ. Полезно, если нормализованные треки звучат слишком тихо.",
           replayGainPreampValue: "{{db}} дБ",
         },
         contentSettings: {
           title: "Настройки контента",
           recentSearchesLabel: "История поиска",
-          recentSearchesDescription: "Удалить историю недавних поисковых запросов",
+          recentSearchesDescription:
+            "Удалить историю недавних поисковых запросов",
           recentSearchesConfirmTitle: "Очистить историю поиска?",
-          recentSearchesConfirmDescription: "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+          recentSearchesConfirmDescription:
+            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
           recentSearchesSuccessMessage: "История поиска успешно удалена",
           recentPlaysLabel: "«Недавние» (треки)",
-          recentPlaysDescription: "Очистить категорию «Недавние» с главной страницы",
-          recentPlaysConfirmTitle: "Вы уверены, что хотите очистить «Недавние»?",
-          recentPlaysConfirmDescription: "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
-          recentPlaysSuccessMessage: "История недавнего прослушивания успешно удалена",
+          recentPlaysDescription:
+            "Очистить категорию «Недавние» с главной страницы",
+          recentPlaysConfirmTitle:
+            "Вы уверены, что хотите очистить «Недавние»?",
+          recentPlaysConfirmDescription:
+            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+          recentPlaysSuccessMessage:
+            "История недавнего прослушивания успешно удалена",
           activityLabel: "Активность",
-          activityDescription: "Удалить историю прослушанных альбомов, артистов и плейлистов",
-          activityConfirmTitle: "Вы уверены, что хотите удалить историю активности?",
-          activityConfirmDescription: "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+          activityDescription:
+            "Удалить историю прослушанных альбомов, артистов и плейлистов",
+          activityConfirmTitle:
+            "Вы уверены, что хотите удалить историю активности?",
+          activityConfirmDescription:
+            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
           activitySuccessMessage: "История активности успешно удалена",
         },
         backupSettings: {
           title: "Резервное копирование и восстановление",
           exportLabel: "Экспорт резервной копии",
-          exportDescription: "Сохранение серверов, настроек и данных медиатеки в один файл, которым можно поделиться или перенести на другое устройство.",
+          exportDescription:
+            "Сохранение серверов, настроек и данных медиатеки в один файл, которым можно поделиться или перенести на другое устройство.",
           exportAction: "Экспорт",
           exportSuccessMessage: "Резервная копия экспортирована",
           exportErrorMessage: "Не удалось экспортировать резервную копию",
           restoreLabel: "Восстановление из копии",
-          restoreDescription: "Замена всех серверов, настроек и данных медиатеки содержимым файла резервной копии. Скачанные аудиофайлы не восстанавливаются.",
+          restoreDescription:
+            "Замена всех серверов, настроек и данных медиатеки содержимым файла резервной копии. Скачанные аудиофайлы не восстанавливаются.",
           restoreAction: "Восстановить",
           restoreConfirmTitle: "Заменить все данные?",
-          restoreConfirmDescription: "Восстановление удалит текущие серверы, настройки и данные медиатеки, заменив их данными из копии. Это действие нельзя отменить.",
-          restoreInvalidFileMessage: "Выбранный файл не является корректной резервной копией Wavio",
+          restoreConfirmDescription:
+            "Восстановление удалит текущие серверы, настройки и данные медиатеки, заменив их данными из копии. Это действие нельзя отменить.",
+          restoreInvalidFileMessage:
+            "Выбранный файл не является корректной резервной копией Wavio",
           restoreErrorMessage: "Не удалось восстановить резервную копию",
           restartRequiredTitle: "Восстановление завершено",
-          restartRequiredDescription: "Данные восстановлены. Войдите на свой сервер, чтобы завершить процесс.",
+          restartRequiredDescription:
+            "Данные восстановлены. Войдите на свой сервер, чтобы завершить процесс.",
           restartRequiredAction: "Продолжить",
+        },
+        securitySettings: {
+          title: "Безопасность",
+          trustedCertificatesLabel: "Доверенные сертификаты",
+          trustedCertificatesDescription:
+            "Самоподписанные сертификаты серверов, которым вы решили доверять на этом устройстве.",
+          trustedCertificatesAction: "Управление",
+          trustedCertificatesTitle: "Доверенные сертификаты",
+          empty: "Пока нет доверенных сертификатов.",
+          emptyHint:
+            "Когда вы подключаетесь к серверу с самоподписанным сертификатом, вы можете доверять ему. Доверенные сертификаты появятся здесь.",
+          fingerprint: "SHA-256: {{fingerprint}}",
+          acceptedAt: "Доверен {{date}}",
+          remove: "Удалить",
+          removeConfirmTitle: "Удалить доверенный сертификат?",
+          removeConfirmDescription:
+            "Подключения к {{hostname}} снова будут отклоняться, пока вы заново не доверитесь его сертификату.",
+          removeSuccessMessage: "Сертификат удалён",
+          clearAll: "Удалить все",
+          clearAllConfirmTitle: "Удалить все доверенные сертификаты?",
+          clearAllConfirmDescription:
+            "Каждому серверу с самоподписанным сертификатом потребуется доверие заново.",
+          clearAllSuccessMessage: "Все доверенные сертификаты удалены",
         },
         podcastSettings: {
           title: "Настройки подкастов",
           configurePodcastsLabel: "Настроить подкасты",
-          configurePodcastsDescription: "Настройте подкасты для прослушивания через приложение",
+          configurePodcastsDescription:
+            "Настройте подкасты для прослушивания через приложение",
           configurePodcastsAction: "Настроить",
           configurePodcastsSuccessMessage: "Подкасты успешно настроены",
-          configurePodcastsErrorMessage: "Произошла ошибка при настройке подкастов",
+          configurePodcastsErrorMessage:
+            "Произошла ошибка при настройке подкастов",
           podcastConfigFormTitle: "Настройка подкастов",
-          podcastConfigFormDescription: "Введите ваш ID пользователя и API-ключ для настройки подкастов",
+          podcastConfigFormDescription:
+            "Введите ваш ID пользователя и API-ключ для настройки подкастов",
           userId: "ID пользователя",
           userIdPlaceholder: "Введите ваш ID пользователя",
           apiKey: "API-ключ",
@@ -742,10 +803,12 @@ export default {
           },
           remainingApiRequests: "Осталось API-запросов: {{count}}/{{total}}",
           removePodcastConfigConfirmLabel: "Удалить конфигурацию подкастов",
-          removePodcastConfigConfirmDescription: "Удаление конфигурации приведет к потере доступа к подкастам. Пожалуйста, подтвердите удаление.",
+          removePodcastConfigConfirmDescription:
+            "Удаление конфигурации приведет к потере доступа к подкастам. Пожалуйста, подтвердите удаление.",
           removePodcastConfigSuccessMessage: "Конфигурация подкастов удалена",
           getApiKeyLabel: "Получить API-ключ Taddy",
-          getApiKeyDescription: "Зарегистрируйтесь на taddy.org, чтобы получить ID пользователя и API-ключ, необходимые для настройки подкастов.",
+          getApiKeyDescription:
+            "Зарегистрируйтесь на taddy.org, чтобы получить ID пользователя и API-ключ, необходимые для настройки подкастов.",
           getApiKeyAction: "taddy.org/developers/podcast-api",
         },
         internetRadioStations: {
@@ -768,7 +831,8 @@ export default {
           byTag: "{{tag}}",
           addToFavorites: "Добавить в медиатеку",
           removeFromFavorites: "Убрать из медиатеки",
-          addToFavoritesSuccessMessage: "Радиостанция была добавлена в медиатеку",
+          addToFavoritesSuccessMessage:
+            "Радиостанция была добавлена в медиатеку",
           removeFromFavoritesSuccessMessage:
             "Радиостанция удалена из медиатеки",
           newTitle: "Добавить интернет-радио",
@@ -778,17 +842,25 @@ export default {
           edit: "Редактировать радиостанцию",
           delete: "Удалить радиостанцию",
           newSuccessMessage: "Интернет-радиостанция успешно добавлена",
-          newErrorMessage: "Произошла ошибка при добавлении интернет-радиостанции",
+          newErrorMessage:
+            "Произошла ошибка при добавлении интернет-радиостанции",
           visitHomePage: "Перейти на сайт",
           editInternetRadioStation: "Редактировать интернет-радиостанцию",
           deleteInternetRadioStation: "Удалить интернет-радиостанцию",
-          deleteInternetRadioStationSuccessMessage: "Интернет-радиостанция успешно удалена",
-          deleteInternetRadioStationErrorMessage: "Произошла ошибка при удалении интернет-радиостанции.",
-          deleteInternetRadioStationConfirmTitle: "Вы уверены, что хотите удалить эту интернет-радиостанцию?",
-          deleteInternetRadioStationConfirmDescription: "Удаление радиостанции необратимо. Подтвердите, чтобы продолжить.",
-          editInternetRadioStationModalTitle: "Редактирование интернет-радиостанции",
-          editInternetRadioStationSuccessMessage: "Интернет-радиостанция успешно обновлена.",
-          editInternetRadioStationErrorMessage: "Произошла ошибка при обновлении интернет-радиостанции.",
+          deleteInternetRadioStationSuccessMessage:
+            "Интернет-радиостанция успешно удалена",
+          deleteInternetRadioStationErrorMessage:
+            "Произошла ошибка при удалении интернет-радиостанции.",
+          deleteInternetRadioStationConfirmTitle:
+            "Вы уверены, что хотите удалить эту интернет-радиостанцию?",
+          deleteInternetRadioStationConfirmDescription:
+            "Удаление радиостанции необратимо. Подтвердите, чтобы продолжить.",
+          editInternetRadioStationModalTitle:
+            "Редактирование интернет-радиостанции",
+          editInternetRadioStationSuccessMessage:
+            "Интернет-радиостанция успешно обновлена.",
+          editInternetRadioStationErrorMessage:
+            "Произошла ошибка при обновлении интернет-радиостанции.",
         },
         activity: {
           title: "Недавние",
@@ -863,20 +935,27 @@ export default {
             composer: "Композитр",
           },
           favoriteSuccessMessage: "Трек добавлен в избранное",
-          favoriteErrorMessage: "Произошла ошибка при добавлении трека в избранное",
+          favoriteErrorMessage:
+            "Произошла ошибка при добавлении трека в избранное",
           unfavoriteSuccessMessage: "Трек успешно удален из избранного",
-          unfavoriteErrorMessage: "Произошла ошибка при удалении трека из избранного",
+          unfavoriteErrorMessage:
+            "Произошла ошибка при удалении трека из избранного",
           shareSuccessMessage: "Трек успешно добавлен в общий доступ",
-          shareErrorMessage: "Произошла ошибка при добавлении трека в общий доступ",
+          shareErrorMessage:
+            "Произошла ошибка при добавлении трека в общий доступ",
           downloadSuccessMessage: "Трек успешно скачан",
           downloadErrorMessage: "Произошла ошибка при скачивании трека",
           downloadForOffline: "Сохранить для офлайн-прослушивания",
           downloadingForOffline: "Скачивание для офлайн-режима",
           removeOfflineDownload: "Удалить офлайн-загрузку",
-          offlineDownloadSuccessMessage: "Трек успешно скачан для офлайн-прослушивания",
-          offlineDownloadErrorMessage: "Произошла ошибка при скачивании трека для офлайн-прослушивания",
-          removeOfflineDownloadSuccessMessage: "Трек успешно удален из офлайн-загрузок",
-          removeOfflineDownloadErrorMessage: "Произошла ошибка при удалении трека из офлайн-загрузок",
+          offlineDownloadSuccessMessage:
+            "Трек успешно скачан для офлайн-прослушивания",
+          offlineDownloadErrorMessage:
+            "Произошла ошибка при скачивании трека для офлайн-прослушивания",
+          removeOfflineDownloadSuccessMessage:
+            "Трек успешно удален из офлайн-загрузок",
+          removeOfflineDownloadErrorMessage:
+            "Произошла ошибка при удалении трека из офлайн-загрузок",
           rateSuccessMessage: "Оценка установлена",
           rateErrorMessage: "Произошла ошибка при установке оценки",
           infoModal: {
@@ -942,9 +1021,11 @@ export default {
           jukeboxStatus: "{{state}} · {{index}}/{{total}}",
           jukeboxStatePlaying: "Воспроизведение",
           jukeboxStatePaused: "Пауза",
-          jukeboxErrorMessage: "Не удалось подключиться к Jukebox на сервере. Проверьте права доступа.",
+          jukeboxErrorMessage:
+            "Не удалось подключиться к Jukebox на сервере. Проверьте права доступа.",
           jukeboxResumeTitle: "Возобновить работу Jukebox?",
-          jukeboxResumeMessage: "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
+          jukeboxResumeMessage:
+            "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
           jukeboxResumeResume: "Возобновить управление",
           jukeboxResumePlayHere: "Воспроизвести здесь",
         },
@@ -960,7 +1041,8 @@ export default {
           deleteShareErrorMessage: "Произошла ошибка при удалении ссылки",
           noDescription: "Без описания",
           deleteShareConfirmTitle: "Вы уверены, что хотите удалить эту ссылку?",
-          deleteShareConfirmDescription: "Удаление ссылки приведет к её безвозвратному удалению и ограничит другим пользователям доступ к этим аудиофайлам. Пожалуйста, подтвердите удаление.",
+          deleteShareConfirmDescription:
+            "Удаление ссылки приведет к её безвозвратному удалению и ограничит другим пользователям доступ к этим аудиофайлам. Пожалуйста, подтвердите удаление.",
           editShareModalTitle: "Редактирование ссылки",
           descriptionPlaceholder: "Описание (отображается в превью ссылки)",
           expiresPlaceholder: "Срок действия до",
@@ -990,15 +1072,18 @@ export default {
         createServerSuccessMessage: "Сервер успешно добавлен",
         editServerSuccessMessage: "Сервер успешно обновлен",
         deleteServerConfirmTitle: "Вы уверены, что хотите удалить этот сервер?",
-        deleteServerConfirmDescription: "Сервер будет удален безвозвратно. Пожалуйста, подтвердите действие, чтобы продолжить.",
-        deleteCurrentServerConfirmWarning: "Это сервер, к которому вы сейчас подключены. Если вы удалите его, произойдет отключение.",
+        deleteServerConfirmDescription:
+          "Сервер будет удален безвозвратно. Пожалуйста, подтвердите действие, чтобы продолжить.",
+        deleteCurrentServerConfirmWarning:
+          "Это сервер, к которому вы сейчас подключены. Если вы удалите его, произойдет отключение.",
         defaultServer: "Сервер по умолчанию",
         manageUsers: "Управление пользователями",
         users: "Пользователи",
         noUsers: "Для этого сервера пока нет пользователей.",
         removeUser: "Удалить пользователя",
         switchServerConfirmTitle: "Сменить сервер?",
-        switchServerConfirmDescription: "Вы будете выведены из системы и перенаправлены на экран входа.",
+        switchServerConfirmDescription:
+          "Вы будете выведены из системы и перенаправлены на экран входа.",
         switchConfirm: "Сменить",
       },
       shared: {
@@ -1031,7 +1116,8 @@ export default {
           savingForOffline: "Сохранение для офлайн-прослушивания",
           removeOfflineDownloads: "Удалить загрузки",
           saveSuccessMessage: "Сохранено для офлайн-прослушивания",
-          saveErrorMessage: "Произошла ошибка при сохранении для офлайн-прослушивания",
+          saveErrorMessage:
+            "Произошла ошибка при сохранении для офлайн-прослушивания",
           removeSuccessMessage: "Удалено из загрузок",
           removeErrorMessage: "Произошла ошибка при удалении загрузок",
         },
@@ -1063,12 +1149,15 @@ export default {
         toastErrorTitle: "Ошибка",
         addedToQueueMessage_one: "Добавлена 1 песня в очередь",
         addedToQueueMessage_other: "Добавлено {{count}} песен в очередь",
-        addedToPlayNextMessage_one: "Добавлена 1 песня для воспроизведения следующей",
-        addedToPlayNextMessage_other: "Добавлено {{count}} песен для воспроизведения следующими",
+        addedToPlayNextMessage_one:
+          "Добавлена 1 песня для воспроизведения следующей",
+        addedToPlayNextMessage_other:
+          "Добавлено {{count}} песен для воспроизведения следующими",
         rateSuccessMessage: "Оценка успешно установлена",
         rateErrorMessage: "Произошла ошибка при установке оценки",
         shareUrlCopiedMessage: "Ссылка скопирована в буфер обмена",
-        shareUrlErrorMessage: "Произошла ошибка при копировании ссылки в буфер обмена",
+        shareUrlErrorMessage:
+          "Произошла ошибка при копировании ссылки в буфер обмена",
         tabs: {
           home: "Главная",
           search: "Поиск",
@@ -1117,7 +1206,8 @@ export default {
         title: "Смена сервера",
         subtitle: "Вход в систему…",
         errorTitle: "Не удалось сменить сервер",
-        errorDescription: "Не удалось войти с использованием сохраненных учетных данных. Возможно, они изменились на сервере.",
+        errorDescription:
+          "Не удалось войти с использованием сохраненных учетных данных. Возможно, они изменились на сервере.",
         retry: "Повторить",
         enterManually: "Ввести пароль вручную",
       },
@@ -1136,7 +1226,8 @@ export default {
         choice: "Или введите данные сервера вручную",
         login: "Продолжить",
         loginSuccessMessage: "Успешный вход",
-        loginErrorMessage: "Не удалось подключиться к серверу. Проверьте данные сервера и попробуйте снова.",
+        loginErrorMessage:
+          "Не удалось подключиться к серверу. Проверьте данные сервера и попробуйте снова.",
         serverAlreadyExists: "Сервер уже добавлен",
         showPassword: "Показать пароль",
         hidePassword: "Скрыть пароль",
@@ -1146,20 +1237,44 @@ export default {
         jellyfinSetupHelp: "Как настроить сервер Jellyfin",
         localLibraryName: "Локальная медиатека",
         localFoldersLabel: "Исходные папки",
-        localFoldersHelp: "Добавьте одну или несколько папок на этом устройстве для сканирования музыки.",
+        localFoldersHelp:
+          "Добавьте одну или несколько папок на этом устройстве для сканирования музыки.",
         localPickFolder: "Выбрать папку",
         localNoPaths: "Для продолжения добавьте хотя бы одну папку",
         localRemovePath: "Удалить папку",
         localSetupHelp: "Как работает локальная медиатека?",
         localInfoTitle: "Локальная медиатека",
         localInfoFormatsTitle: "Поддерживаемые форматы",
-        localInfoFormats: "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",
+        localInfoFormats:
+          "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",
         localInfoMetadataTitle: "Как считываются метаданные",
-        localInfoMetadata: "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из встроенных тегов файла. Если теги отсутствуют, используется имя файла, поэтому для лучшего результата рекомендуем иметь хорошо размеченные файлы.",
+        localInfoMetadata:
+          "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из встроенных тегов файла. Если теги отсутствуют, используется имя файла, поэтому для лучшего результата рекомендуем иметь хорошо размеченные файлы.",
         localInfoTaggingTitle: "Разметка медиатеки",
-        localInfoTagging: "Для чистоты и единообразия вашей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
+        localInfoTagging:
+          "Для чистоты и единообразия вашей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
         localInfoTaggingLink: "Скачать MusicBrainz Picard",
         localInfoClose: "Понял",
+      },
+      certificateTrust: {
+        title: "Недоверенный сертификат",
+        intro:
+          "Этот сервер использует сертификат, которому ваше устройство не доверяет (обычно самоподписанный). Просмотрите его ниже и решите, доверять ли ему.",
+        loading: "Получение сертификата…",
+        loadError: "Не удалось прочитать сертификат сервера.",
+        hostname: "Хост",
+        subject: "Субъект",
+        issuer: "Издатель",
+        fingerprint: "Отпечаток SHA-256",
+        validity: "Действителен",
+        validityRange: "{{from}} → {{to}}",
+        selfSigned: "Самоподписанный",
+        notSystemTrusted: "Не доверен системой",
+        warning:
+          "Доверяйте этому сертификату, только если вы узнаёте этот сервер. Доверие неизвестному сертификату может раскрыть ваш трафик.",
+        trust: "Доверять и продолжить",
+        cancel: "Отмена",
+        trustedMessage: "Сертификат добавлен в доверенные",
       },
     },
     openSubsonic: {
@@ -1179,14 +1294,21 @@ export default {
     },
     taddyPodcasts: {
       errorCodes: {
-        API_KEY_INVALID: "Используемый API-ключ или ID пользователя в заголовках недействителен.",
+        API_KEY_INVALID:
+          "Используемый API-ключ или ID пользователя в заголовках недействителен.",
         API_RATE_LIMIT_EXCEEDED: "Вы превысили месячную квоту запросов к API.",
-        INVALID_QUERY_OR_SYNTAX: "Ваш запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используйте сообщение в качестве подсказки для исправления.",
-        BAD_USER_INPUT: "Один из передаваемых аргументов недействителен. Используйте сообщение для получения подробной информации о том, что именно не так.",
-        QUERY_TOO_COMPLEX: "Ваш запрос слишком сложен. Пожалуйста, упростите его (удалив лишние элементы).",
-        REQUIRES_USER_AUTHENTICATION: "Для выполнения этого запроса необходимо войти в систему.",
-        ACCESS_NOT_ALLOWED: "У вас нет прав доступа к этому запросу или мутации.",
-        TADDY_SERVER_ERROR: "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но вы также можете написать на danny@taddy.org, если эта ошибка повторяется.",
+        INVALID_QUERY_OR_SYNTAX:
+          "Ваш запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используйте сообщение в качестве подсказки для исправления.",
+        BAD_USER_INPUT:
+          "Один из передаваемых аргументов недействителен. Используйте сообщение для получения подробной информации о том, что именно не так.",
+        QUERY_TOO_COMPLEX:
+          "Ваш запрос слишком сложен. Пожалуйста, упростите его (удалив лишние элементы).",
+        REQUIRES_USER_AUTHENTICATION:
+          "Для выполнения этого запроса необходимо войти в систему.",
+        ACCESS_NOT_ALLOWED:
+          "У вас нет прав доступа к этому запросу или мутации.",
+        TADDY_SERVER_ERROR:
+          "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но вы также можете написать на danny@taddy.org, если эта ошибка повторяется.",
       },
     },
   },
