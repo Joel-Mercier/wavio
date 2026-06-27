@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.ssltrust'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.ssltrust"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // OkHttp is provided by React Native at runtime; compileOnly avoids bundling a
+  // second copy and keeps the reflection-based OkHttpClientProvider hook honest.
+  // No version pin: React Native enforces a strict OkHttp version via consistent
+  // resolution, so let the version be inherited from the runtime classpath
+  // (pinning a different version fails the build).
+  compileOnly 'com.squareup.okhttp3:okhttp'
+}

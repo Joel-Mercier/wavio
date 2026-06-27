@@ -586,8 +586,7 @@ export default {
           scanMusicLibrarySuccessDescription: "扫描已启动",
           scanMusicLibraryErrorDescription: "启动扫描时发生错误",
           scanStatusLabel: "扫描状态",
-          scanStatusDescription:
-            "显示音乐库的扫描状态",
+          scanStatusDescription: "显示音乐库的扫描状态",
           scanStatusLastScan: "上次扫描：{{lastScan}}前",
           scanStatuses: {
             idle: "空闲",
@@ -604,7 +603,8 @@ export default {
         internetRadioStationsSettings: {
           title: "网络电台",
           countryLabel: "国家/地区",
-          countryDescription: "选择“按国家/地区”分类的电台栏所对应的国家。默认使用设备所在地区。",
+          countryDescription:
+            "选择“按国家/地区”分类的电台栏所对应的国家。默认使用设备所在地区。",
           countryAutomatic: "自动",
           tagsLabel: "流派栏",
           tagsDescription: "选择在电台界面中显示哪些流派栏。",
@@ -720,6 +720,29 @@ export default {
             "数据已恢复。请登录您的服务器以完成操作。",
           restartRequiredAction: "继续",
         },
+        securitySettings: {
+          title: "安全",
+          trustedCertificatesLabel: "受信任的证书",
+          trustedCertificatesDescription:
+            "您选择在此设备上信任的自签名服务器证书。",
+          trustedCertificatesAction: "管理",
+          trustedCertificatesTitle: "受信任的证书",
+          empty: "尚无受信任的证书。",
+          emptyHint:
+            "当您连接到使用自签名证书的服务器时，可以选择信任它。受信任的证书会显示在此处。",
+          fingerprint: "SHA-256：{{fingerprint}}",
+          acceptedAt: "信任于 {{date}}",
+          remove: "删除",
+          removeConfirmTitle: "删除受信任的证书？",
+          removeConfirmDescription:
+            "在您重新信任 {{hostname}} 的证书之前，与其的连接将再次被拒绝。",
+          removeSuccessMessage: "证书已删除",
+          clearAll: "全部删除",
+          clearAllConfirmTitle: "删除所有受信任的证书？",
+          clearAllConfirmDescription:
+            "每个使用自签名证书的服务器都需要重新信任。",
+          clearAllSuccessMessage: "已删除所有受信任的证书",
+        },
         podcastSettings: {
           title: "播客设置",
           configurePodcastsLabel: "配置播客",
@@ -796,8 +819,7 @@ export default {
       },
       activity: {
         title: "播放记录",
-        empty:
-          "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
+        empty: "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
         playedAt: "{{distance}}前",
         sections: {
           today: "今天",
@@ -1168,6 +1190,26 @@ export default {
           "为使音乐库整洁一致，我们建议在添加文件前使用 MusicBrainz Picard 为文件标记标签。",
         localInfoTaggingLink: "获取 MusicBrainz Picard",
         localInfoClose: "我知道了",
+      },
+      certificateTrust: {
+        title: "不受信任的证书",
+        intro:
+          "此服务器使用的证书未被您的设备信任（通常是自签名证书）。请在下方查看并决定是否信任它。",
+        loading: "正在获取证书…",
+        loadError: "无法读取服务器的证书。",
+        hostname: "主机",
+        subject: "主题",
+        issuer: "颁发者",
+        fingerprint: "SHA-256 指纹",
+        validity: "有效期",
+        validityRange: "{{from}} → {{to}}",
+        selfSigned: "自签名",
+        notSystemTrusted: "系统不信任",
+        warning:
+          "只有在您认识此服务器时才信任此证书。信任未知证书可能会使您的流量暴露。",
+        trust: "信任并继续",
+        cancel: "取消",
+        trustedMessage: "证书已信任",
       },
     },
     openSubsonic: {

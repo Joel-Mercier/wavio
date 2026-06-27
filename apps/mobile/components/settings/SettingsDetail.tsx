@@ -2,7 +2,7 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo, useRef, useState } from "react";
@@ -905,6 +905,24 @@ export default function SettingsDetail() {
               description={t("app.settings.backupSettings.restoreDescription")}
               actionLabel={t("app.settings.backupSettings.restoreAction")}
               onPress={() => setShowRestoreConfirmAlertDialog(true)}
+            />
+            <Divider className="bg-primary-400" />
+            <SettingsSectionTitle
+              title={t("app.settings.securitySettings.title")}
+            />
+            <SettingsActionRow
+              label={t(
+                "app.settings.securitySettings.trustedCertificatesLabel",
+              )}
+              description={t(
+                "app.settings.securitySettings.trustedCertificatesDescription",
+              )}
+              actionLabel={t(
+                "app.settings.securitySettings.trustedCertificatesAction",
+              )}
+              // Cast until expo-router regenerates typed routes for the new
+              // screen on the next dev-server/prebuild run.
+              onPress={() => router.navigate("/trusted-certificates" as Href)}
             />
           </VStack>
         </ScrollView>

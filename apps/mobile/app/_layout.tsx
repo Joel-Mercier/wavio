@@ -52,6 +52,7 @@ import {
 } from "@/services/network";
 import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
+import { initSslTrust, refreshSslProxyOnForeground } from "@/services/sslTrust";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -109,6 +110,9 @@ function onAppStateChange(status: AppStateStatus) {
     // Re-check server reachability on foreground: the network (and thus the
     // server's reachability) may have changed while backgrounded.
     void probeServer();
+    // The iOS loopback proxy may have been torn down while backgrounded; make
+    // sure the cached proxy info is current before streaming resumes.
+    void refreshSslProxyOnForeground();
   }
 }
 
@@ -132,6 +136,10 @@ export default sentryWrap(function RootLayout() {
       level: ReanimatedLogLevel.warn,
       strict: false, // Reanimated runs in strict mode by default
     });
+    // Install the custom SSL trust manager before any network request so
+    // already-trusted self-signed servers connect on cold start (Android is
+    // global; iOS also (re)starts the loopback proxy for trusted upstreams).
+    void initSslTrust();
     // Drive React Query's online state off effective connectivity (device
     // online AND server reachable) so it pauses refetches and serves cache when
     // the server is unreachable, instead of hammering it with failing requests.

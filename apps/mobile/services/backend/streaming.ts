@@ -1,3 +1,4 @@
+import { resolveServerBase } from "@/modules/ssl-trust";
 import {
   downloadUrl as jellyfinDownloadUrl,
   hlsStreamUrl as jellyfinHlsStreamUrl,
@@ -62,7 +63,11 @@ export const hlsStreamUrl = (id: string) => {
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
-  return `${url}/rest/hls.m3u8?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`;
+  // resolveServerBase reroutes trusted self-signed hosts through the iOS
+  // loopback proxy so AVPlayer can stream them (no-op on Android / untrusted).
+  return resolveServerBase(
+    `${url}/rest/hls.m3u8?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`,
+  );
 };
 
 export const streamUrl = (id: string, opts?: { forceTranscode?: boolean }) => {
@@ -71,7 +76,9 @@ export const streamUrl = (id: string, opts?: { forceTranscode?: boolean }) => {
   if (isJellyfin()) return jellyfinStreamUrl(id);
   const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
   const params = transcodeParams(opts?.forceTranscode ?? false);
-  return `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}`;
+  return resolveServerBase(
+    `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}`,
+  );
 };
 
 export const downloadUrl = (id: string) => {

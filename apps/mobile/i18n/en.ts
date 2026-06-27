@@ -785,6 +785,29 @@ export default {
             "Your data has been restored. Sign in to your server to finish.",
           restartRequiredAction: "Continue",
         },
+        securitySettings: {
+          title: "Security",
+          trustedCertificatesLabel: "Trusted certificates",
+          trustedCertificatesDescription:
+            "Self-signed server certificates you've chosen to trust on this device.",
+          trustedCertificatesAction: "Manage",
+          trustedCertificatesTitle: "Trusted certificates",
+          empty: "No trusted certificates yet.",
+          emptyHint:
+            "When you connect to a server with a self-signed certificate, you can choose to trust it. Trusted certificates appear here.",
+          fingerprint: "SHA-256: {{fingerprint}}",
+          acceptedAt: "Trusted {{date}}",
+          remove: "Remove",
+          removeConfirmTitle: "Remove trusted certificate?",
+          removeConfirmDescription:
+            "Connections to {{hostname}} will be rejected again until you trust its certificate anew.",
+          removeSuccessMessage: "Certificate removed",
+          clearAll: "Remove all",
+          clearAllConfirmTitle: "Remove all trusted certificates?",
+          clearAllConfirmDescription:
+            "Every server with a self-signed certificate will need to be trusted again.",
+          clearAllSuccessMessage: "All trusted certificates removed",
+        },
         podcastSettings: {
           title: "Podcast settings",
           configurePodcastsLabel: "Configure podcasts",
@@ -1260,6 +1283,26 @@ export default {
           "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them.",
         localInfoTaggingLink: "Get MusicBrainz Picard",
         localInfoClose: "Got it",
+      },
+      certificateTrust: {
+        title: "Untrusted certificate",
+        intro:
+          "This server uses a certificate that isn't trusted by your device (typically self-signed). Review it below and choose whether to trust it.",
+        loading: "Fetching certificate…",
+        loadError: "Couldn't read the server's certificate.",
+        hostname: "Host",
+        subject: "Subject",
+        issuer: "Issuer",
+        fingerprint: "SHA-256 fingerprint",
+        validity: "Valid",
+        validityRange: "{{from}} → {{to}}",
+        selfSigned: "Self-signed",
+        notSystemTrusted: "Not trusted by system",
+        warning:
+          "Only trust this certificate if you recognize this server. Trusting an unknown certificate can expose your traffic.",
+        trust: "Trust and continue",
+        cancel: "Cancel",
+        trustedMessage: "Certificate trusted",
       },
     },
     openSubsonic: {

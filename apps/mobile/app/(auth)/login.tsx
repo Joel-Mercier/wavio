@@ -12,6 +12,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import Logo from "@/assets/images/logo.svg";
+import CertificateTrustDialog from "@/components/auth/CertificateTrustDialog";
 import LocalLibraryInfoDialog from "@/components/auth/LocalLibraryInfoDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
@@ -62,8 +63,13 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { authenticateRemote } from "@/services/auth/authenticate";
+import { trustCertificate } from "@/modules/ssl-trust";
+import {
+  authenticateRemote,
+  SslUntrustedError,
+} from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
+import { syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, {
   type Server,
@@ -151,6 +157,10 @@ export default function LoginScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showLocalInfo, setShowLocalInfo] = useState(false);
+  // URL whose certificate the user is being asked to trust (TOFU). Set when a
+  // login attempt fails with an untrusted TLS certificate; cleared on
+  // cancel/trust.
+  const [sslPromptUrl, setSslPromptUrl] = useState<string | null>(null);
   // Pre-check when this server+user already has a saved password (e.g. an avatar
   // re-login). Initial value only; the user can toggle it freely afterwards.
   const [saveCredentials, setSaveCredentials] = useState(() =>
@@ -249,6 +259,14 @@ export default function LoginScreen() {
           ),
         });
       } catch (error) {
+        // Untrusted TLS certificate: offer Trust-On-First-Use instead of a
+        // generic error, so the user can inspect and accept a self-signed cert
+        // and retry. Not reported to Sentry — it's an expected, recoverable
+        // state for self-hosted servers.
+        if (error instanceof SslUntrustedError) {
+          setSslPromptUrl(error.url);
+          return;
+        }
         // Login failures never reach the axios interceptors (auth uses its own
         // bare client), so report them here — otherwise this whole class of bug
         // is invisible in Sentry. Tagged `auth` (not `api`) and without a
@@ -642,6 +660,20 @@ export default function LoginScreen() {
       <LocalLibraryInfoDialog
         isOpen={showLocalInfo}
         onClose={() => setShowLocalInfo(false)}
+      />
+      <CertificateTrustDialog
+        isOpen={sslPromptUrl != null}
+        url={sslPromptUrl}
+        onClose={() => setSslPromptUrl(null)}
+        onTrusted={async (hostname, fingerprint) => {
+          await trustCertificate(hostname, fingerprint);
+          // iOS: (re)start the loopback proxy so AVPlayer can reach the now
+          // trusted host. No-op on Android, where trust is global.
+          await syncSslProxy();
+          setSslPromptUrl(null);
+          // Retry the login now that the certificate is trusted.
+          form.handleSubmit();
+        }}
       />
     </Box>
   );

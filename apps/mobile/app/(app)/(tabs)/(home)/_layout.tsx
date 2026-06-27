@@ -20,6 +20,7 @@ export default function HomeLayout() {
       <Stack.Screen name="internet-radio-stations/search" />
       <Stack.Screen name="internet-radio-stations/[id]" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="trusted-certificates" />
       <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />

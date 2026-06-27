@@ -522,7 +522,7 @@ export default function PlayerScreen() {
 									}}
 								>
 									<MovingText>
-										<Text className="text-white text-2xl font-bold font-heading tracking-sm">
+										<Text className="text-white text-2xl font-bold font-heading">
 											{playingTrack?.title}
 										</Text>
 									</MovingText>

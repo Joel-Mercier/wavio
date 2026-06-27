@@ -806,6 +806,30 @@ export default {
             "Vos données ont été restaurées. Connectez-vous à votre serveur pour terminer.",
           restartRequiredAction: "Continuer",
         },
+        securitySettings: {
+          title: "Sécurité",
+          trustedCertificatesLabel: "Certificats approuvés",
+          trustedCertificatesDescription:
+            "Certificats auto-signés de serveurs que vous avez choisi d'approuver sur cet appareil.",
+          trustedCertificatesAction: "Gérer",
+          trustedCertificatesTitle: "Certificats approuvés",
+          empty: "Aucun certificat approuvé pour l'instant.",
+          emptyHint:
+            "Lorsque vous vous connectez à un serveur avec un certificat auto-signé, vous pouvez choisir de l'approuver. Les certificats approuvés apparaissent ici.",
+          fingerprint: "SHA-256 : {{fingerprint}}",
+          acceptedAt: "Approuvé {{date}}",
+          remove: "Supprimer",
+          removeConfirmTitle: "Supprimer le certificat approuvé ?",
+          removeConfirmDescription:
+            "Les connexions à {{hostname}} seront de nouveau rejetées jusqu'à ce que vous approuviez son certificat à nouveau.",
+          removeSuccessMessage: "Certificat supprimé",
+          clearAll: "Tout supprimer",
+          clearAllConfirmTitle: "Supprimer tous les certificats approuvés ?",
+          clearAllConfirmDescription:
+            "Chaque serveur avec un certificat auto-signé devra être approuvé à nouveau.",
+          clearAllSuccessMessage:
+            "Tous les certificats approuvés ont été supprimés",
+        },
         podcastSettings: {
           title: "Paramètres des podcasts",
           configurePodcastsLabel: "Configurer les podcasts",
@@ -1293,6 +1317,26 @@ export default {
           "Pour une bibliothèque propre et cohérente, nous vous recommandons de taguer vos fichiers avec MusicBrainz Picard avant de les ajouter.",
         localInfoTaggingLink: "Obtenir MusicBrainz Picard",
         localInfoClose: "J'ai compris",
+      },
+      certificateTrust: {
+        title: "Certificat non approuvé",
+        intro:
+          "Ce serveur utilise un certificat qui n'est pas approuvé par votre appareil (souvent auto-signé). Vérifiez-le ci-dessous et choisissez de l'approuver ou non.",
+        loading: "Récupération du certificat…",
+        loadError: "Impossible de lire le certificat du serveur.",
+        hostname: "Hôte",
+        subject: "Sujet",
+        issuer: "Émetteur",
+        fingerprint: "Empreinte SHA-256",
+        validity: "Validité",
+        validityRange: "{{from}} → {{to}}",
+        selfSigned: "Auto-signé",
+        notSystemTrusted: "Non approuvé par le système",
+        warning:
+          "N'approuvez ce certificat que si vous reconnaissez ce serveur. Approuver un certificat inconnu peut exposer votre trafic.",
+        trust: "Approuver et continuer",
+        cancel: "Annuler",
+        trustedMessage: "Certificat approuvé",
       },
     },
     openSubsonic: {

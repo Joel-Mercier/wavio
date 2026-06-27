@@ -1,3 +1,4 @@
+import { resolveServerBase } from "@/modules/ssl-trust";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { useAppBase } from "@/stores/app";
@@ -22,16 +23,22 @@ export function streamUrl(id: string): string {
   const userId = useAuthBase.getState().jellyfinUserId ?? "";
   const bitrate = effective ? `&MaxStreamingBitrate=${effective * 1000}` : "";
   // /Audio/{id}/universal handles direct play / transcode negotiation.
-  return `${baseUrl()}/Audio/${id}/universal?UserId=${encodeURIComponent(
-    userId,
-  )}${bitrate}&Container=mp3,aac,flac,ogg,opus,wav&TranscodingContainer=ts&AudioCodec=aac&${authParam()}`;
+  // resolveServerBase reroutes trusted self-signed hosts through the iOS
+  // loopback proxy so AVPlayer can stream them (no-op on Android / untrusted).
+  return resolveServerBase(
+    `${baseUrl()}/Audio/${id}/universal?UserId=${encodeURIComponent(
+      userId,
+    )}${bitrate}&Container=mp3,aac,flac,ogg,opus,wav&TranscodingContainer=ts&AudioCodec=aac&${authParam()}`,
+  );
 }
 
 export function hlsStreamUrl(id: string): string {
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitrate = effective ? `&MaxStreamingBitrate=${effective * 1000}` : "";
-  return `${baseUrl()}/Audio/${id}/main.m3u8?${authParam()}${bitrate}`;
+  return resolveServerBase(
+    `${baseUrl()}/Audio/${id}/main.m3u8?${authParam()}${bitrate}`,
+  );
 }
 
 export function downloadUrl(id: string): string {

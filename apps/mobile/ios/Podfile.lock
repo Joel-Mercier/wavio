@@ -2630,6 +2630,8 @@ PODS:
   - Sentry (9.18.0):
     - Sentry/Core (= 9.18.0)
   - Sentry/Core (9.18.0)
+  - SslTrust (0.0.1):
+    - ExpoModulesCore
   - SwiftDraw (0.27.0):
     - SwiftDrawDOM (~> 0.27.0)
   - SwiftDrawDOM (0.27.0)
@@ -2768,6 +2770,7 @@ DEPENDENCIES:
   - RNShare (from `../../../node_modules/react-native-share`)
   - RNSVG (from `../../../node_modules/react-native-svg`)
   - RNWorklets (from `../../../node_modules/react-native-worklets`)
+  - SslTrust (from `../modules/ssl-trust/ios`)
   - Yoga (from `../../../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -3042,6 +3045,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-svg"
   RNWorklets:
     :path: "../../../node_modules/react-native-worklets"
+  SslTrust:
+    :path: "../modules/ssl-trust/ios"
   Yoga:
     :path: "../../../node_modules/react-native/ReactCommon/yoga"
 
@@ -3180,6 +3185,7 @@ SPEC CHECKSUMS:
   RNSVG: 0e52210d4d43165e7e2cf9c890a9848b27e513ac
   RNWorklets: c2021cb3c1d80d3abd374fd33678757f483d3c4f
   Sentry: 84407b02cd318a63ef0345ad51eaaee555028723
+  SslTrust: 84c13e8532988fc561b2c90154618cf7c3651802
   SwiftDraw: c3fb77c08081f1255f33bcc0fd3c2e00fbc9bd46
   SwiftDrawDOM: 8e7d9812af1ef6e06230e72769e97838e6c7c765
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
