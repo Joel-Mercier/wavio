@@ -36,6 +36,8 @@ interface AppStore {
   setShowDrawer: (showDrawer: boolean) => void;
   showAddTab: boolean;
   setShowAddTab: (showAddTab: boolean) => void;
+  showEmptyHomeSections: boolean;
+  setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => void;
   librarySort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -139,6 +141,10 @@ export const useAppBase = create<AppStore>()(
       showAddTab: false,
       setShowAddTab: (showAddTab: boolean) => {
         set({ showAddTab });
+      },
+      showEmptyHomeSections: true,
+      setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => {
+        set({ showEmptyHomeSections });
       },
       librarySort: "addedAtAsc",
       setLibrarySort: (

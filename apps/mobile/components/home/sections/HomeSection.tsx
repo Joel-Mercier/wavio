@@ -10,6 +10,7 @@ import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import type { OpenSubsonicErrorResponse } from "@/services/openSubsonic";
+import useApp from "@/stores/app";
 
 interface HomeSectionProps {
   title: string;
@@ -31,6 +32,12 @@ export default function HomeSection({
   children,
 }: HomeSectionProps) {
   const { t } = useTranslation();
+  const showEmptyHomeSections = useApp((s) => s.showEmptyHomeSections);
+
+  if (!isLoading && !error && isEmpty && !showEmptyHomeSections) {
+    return null;
+  }
+
   return (
     <Box>
       <Box className="px-6 mt-4 mb-4">

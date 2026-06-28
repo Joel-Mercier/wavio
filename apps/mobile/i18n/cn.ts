@@ -599,6 +599,9 @@ export default {
           languageDescription: "设置 Wavio 应用的默认语言",
           createTabLabel: "创建标签页",
           createTabDescription: "在底部导航栏中显示“创建”标签页",
+          showEmptyHomeSectionsLabel: "显示空白板块",
+          showEmptyHomeSectionsDescription:
+            "显示没有内容的主页板块，而不是将其隐藏",
         },
         internetRadioStationsSettings: {
           title: "网络电台",

@@ -620,6 +620,9 @@ export default {
           createTabLabel: "Кнопка «Создать»",
           createTabDescription:
             "Показывать кнопку «Создать» на главной панели навигации",
+          showEmptyHomeSectionsLabel: "Показывать пустые разделы",
+          showEmptyHomeSectionsDescription:
+            "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их",
         },
         internetRadioStationsSettings: {
           title: "Интернет-радио",

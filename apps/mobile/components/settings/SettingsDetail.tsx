@@ -142,6 +142,10 @@ export default function SettingsDetail() {
   const setLocale = useApp((store) => store.setLocale);
   const showAddTab = useApp((store) => store.showAddTab);
   const setShowAddTab = useApp((store) => store.setShowAddTab);
+  const showEmptyHomeSections = useApp((store) => store.showEmptyHomeSections);
+  const setShowEmptyHomeSections = useApp(
+    (store) => store.setShowEmptyHomeSections,
+  );
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
   const cellularMaxBitRate = useApp((store) => store.cellularMaxBitRate);
@@ -725,6 +729,16 @@ export default function SettingsDetail() {
               )}
               value={showAddTab}
               onToggle={(value) => setShowAddTab(value)}
+            />
+            <SettingsToggleRow
+              label={t(
+                "app.settings.displaySettings.showEmptyHomeSectionsLabel",
+              )}
+              description={t(
+                "app.settings.displaySettings.showEmptyHomeSectionsDescription",
+              )}
+              value={showEmptyHomeSections}
+              onToggle={(value) => setShowEmptyHomeSections(value)}
             />
             <Divider className="bg-primary-400" />
             <SettingsSectionTitle

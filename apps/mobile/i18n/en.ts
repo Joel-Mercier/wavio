@@ -650,6 +650,9 @@ export default {
           languageDescription: "Set your default language for the Wavio app",
           createTabLabel: "Create tab",
           createTabDescription: "Show the 'create' tab in the bottom tab bar",
+          showEmptyHomeSectionsLabel: "Show empty sections",
+          showEmptyHomeSectionsDescription:
+            "Show home sections that have no content instead of hiding them",
         },
         internetRadioStationsSettings: {
           title: "Internet radio stations",

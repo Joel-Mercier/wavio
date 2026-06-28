@@ -671,6 +671,9 @@ export default {
           createTabLabel: "Onglet 'créer'",
           createTabDescription:
             "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
+          showEmptyHomeSectionsLabel: "Afficher les sections vides",
+          showEmptyHomeSectionsDescription:
+            "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
         },
         internetRadioStationsSettings: {
           title: "Stations de radio",
