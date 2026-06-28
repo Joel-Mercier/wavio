@@ -134,7 +134,7 @@ export default function AlbumDetail() {
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -731,7 +731,7 @@ export default function AlbumDetail() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
+            style={{ paddingTop: insets.top + (isWideLayout ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -798,7 +798,7 @@ export default function AlbumDetail() {
               <AnimatedBox
                 style={artworkStyle}
                 className={
-                  isLandscape
+                  isWideLayout
                     ? "w-[45%] aspect-square"
                     : "w-[70%] aspect-square"
                 }

@@ -18,7 +18,7 @@ const CenteredBottomSheetModal = forwardRef<
   // In landscape a dynamically-sized sheet can grow tall enough that its drag
   // handle reaches the top edge and fights the OS notification-tray pull. Cap
   // the content height at ~80% of the screen there. Portrait is left untouched.
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   // `width:100%`+`maxWidth` constrains the sheet (and is needed for its content
   // to measure/render). gorhom pins it with left:0/right:0 *after* our style, so
   // it sits flush-left; symmetric horizontal margins then shift it to center.
@@ -27,7 +27,7 @@ const CenteredBottomSheetModal = forwardRef<
   return (
     <BottomSheetModal
       ref={ref}
-      maxDynamicContentSize={isLandscape ? height * 0.8 : undefined}
+      maxDynamicContentSize={isWideLayout ? height * 0.8 : undefined}
       style={[
         { width: "100%", maxWidth, marginLeft: margin, marginRight: margin },
         style,

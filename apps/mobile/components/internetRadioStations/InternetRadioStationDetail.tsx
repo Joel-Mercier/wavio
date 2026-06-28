@@ -123,7 +123,7 @@ export default function InternetRadioStationDetail() {
   );
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const isPlaying = useIsPlaying();
   // Only server stations need homepage scraping for cover art — Radio-Browser
   // (api) stations already provide an image, so skip the network round-trip.
@@ -245,7 +245,7 @@ export default function InternetRadioStationDetail() {
       <ScrollView
         contentContainerStyle={{
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + (isLandscape ? 48 : 0),
+            insets.bottom + bottomTabBarHeight + (isWideLayout ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -269,14 +269,14 @@ export default function InternetRadioStationDetail() {
             <ImageWithFallback
               source={image ? { uri: image } : undefined}
               className={`${
-                isLandscape ? "w-[45%]" : "w-[70%]"
+                isWideLayout ? "w-[45%]" : "w-[70%]"
               } aspect-square rounded-md bg-primary-600 items-center justify-center`}
               alt="Internet radio station cover"
               contentFit="contain"
               fallback={
                 <Box
                   className={`${
-                    isLandscape ? "w-[45%]" : "w-[70%]"
+                    isWideLayout ? "w-[45%]" : "w-[70%]"
                   } aspect-square rounded-md bg-primary-600 items-center justify-center`}
                 >
                   <Radio size={48} color={white} />

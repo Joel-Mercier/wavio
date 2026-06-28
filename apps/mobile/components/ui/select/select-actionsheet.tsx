@@ -18,11 +18,13 @@ import {
   ScrollView,
   SectionList,
   Text,
+  useWindowDimensions,
   View,
   type ViewStyle,
   VirtualizedList,
 } from "react-native";
 import { withUniwind } from "uniwind";
+import { WIDE_LAYOUT_BREAKPOINT } from "@/stores/app";
 
 type IAnimatedPressableProps = React.ComponentProps<typeof Pressable> &
   MotionComponentProps<typeof Pressable, ViewStyle, unknown, unknown, unknown>;
@@ -278,13 +280,31 @@ const Actionsheet = React.forwardRef<
 const ActionsheetContent = React.forwardRef<
   React.ComponentRef<typeof UIActionsheet.Content>,
   IActionsheetContentProps & { className?: string }
->(function ActionsheetContent({ className, ...props }, ref) {
+>(function ActionsheetContent({ className, style, ...props }, ref) {
+  const { width, height } = useWindowDimensions();
+  // Mirror CenteredBottomSheetModal: constrain the sheet to the portrait width
+  // and center it (a no-op in portrait, where maxWidth === width / margin === 0;
+  // it stops the sheet stretching edge-to-edge in landscape / on large screens).
+  // The height cap keeps the content from overflowing past the top edge now that
+  // call sites no longer pass a fixed `snapPoints` height.
+  const isWideLayout = width >= WIDE_LAYOUT_BREAKPOINT || width > height;
+  const maxWidth = Math.min(width, height);
+  const margin = Math.max(0, (width - maxWidth) / 2);
   return (
     <UIActionsheet.Content
       className={actionsheetContentStyle({
         class: className,
       })}
       ref={ref}
+      style={[
+        {
+          maxWidth,
+          marginLeft: margin,
+          marginRight: margin,
+          maxHeight: height * (isWideLayout ? 0.8 : 0.85),
+        },
+        style,
+      ]}
       {...props}
     />
   );

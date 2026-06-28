@@ -80,7 +80,7 @@ export default function SortEditor({
                 />
                 <SelectIcon as={ChevronDownIcon} />
               </SelectTrigger>
-              <SelectPortal snapPoints={[60]}>
+              <SelectPortal>
                 <SelectBackdrop />
                 <SelectContent className="bg-primary-700">
                   <SelectDragIndicatorWrapper>
@@ -115,7 +115,7 @@ export default function SortEditor({
                 />
                 <SelectIcon as={ChevronDownIcon} />
               </SelectTrigger>
-              <SelectPortal snapPoints={[30]}>
+              <SelectPortal>
                 <SelectBackdrop />
                 <SelectContent className="bg-primary-700">
                   <SelectDragIndicatorWrapper>

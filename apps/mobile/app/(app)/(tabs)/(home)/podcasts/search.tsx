@@ -366,7 +366,7 @@ export default function PodcastsSearchScreen() {
                       />
                       <SelectIcon className="mr-3" as={ChevronDownIcon} />
                     </SelectTrigger>
-                    <SelectPortal snapPoints={[50]}>
+                    <SelectPortal>
                       <SelectBackdrop />
                       <SelectContent
                         style={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -430,7 +430,7 @@ export default function PodcastsSearchScreen() {
                       />
                       <SelectIcon className="mr-3" as={ChevronDownIcon} />
                     </SelectTrigger>
-                    <SelectPortal snapPoints={[50]}>
+                    <SelectPortal>
                       <SelectBackdrop />
                       <SelectContent
                         style={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -490,7 +490,7 @@ export default function PodcastsSearchScreen() {
                         />
                         <SelectIcon className="mr-3" as={ChevronDownIcon} />
                       </SelectTrigger>
-                      <SelectPortal snapPoints={[40]}>
+                      <SelectPortal>
                         <SelectBackdrop />
                         <SelectContent
                           style={{ backgroundColor: "rgb(41, 41, 41)" }}

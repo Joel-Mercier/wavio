@@ -36,6 +36,7 @@ import useRadioStations, {
   type RadioStationSource,
 } from "@/stores/radioStations";
 import { artworkUrl } from "@/utils/artwork";
+import { gridCellMarginClass } from "@/utils/grid";
 import { cn } from "@/utils/tailwind";
 
 export type Favorites = {
@@ -75,6 +76,7 @@ interface LibraryListItemProps {
     LibraryRadioStation;
   layout: LibraryLayout;
   index: number;
+  numColumns?: number;
 }
 
 function LibraryListItemIcon({ type }: { type: string }) {
@@ -104,6 +106,7 @@ export default function LibraryListItem({
   item,
   layout,
   index,
+  numColumns = 3,
 }: LibraryListItemProps) {
   const [blue500, emerald500] = Uniwind.getCSSVariable([
     "--color-blue-500",
@@ -285,13 +288,10 @@ export default function LibraryListItem({
     isCollectionAvailableOffline ||
     (type.id === "favorites" && offlineModeEnabled);
 
-  const gridColumn = index % 3;
   const gridMarginClass = useMemo(() => {
     if (layout !== "grid") return "";
-    if (gridColumn === 0) return "mr-2 ml-0";
-    if (gridColumn === 1) return "mx-2";
-    return "ml-2 mr-0";
-  }, [layout, gridColumn]);
+    return gridCellMarginClass(index % numColumns, numColumns);
+  }, [layout, index, numColumns]);
 
   return (
     <FadeOutScaleDown
@@ -321,6 +321,10 @@ export default function LibraryListItem({
           // InternetRadioStationListItem does — otherwise they render
           // invisibly on the dark background.
           contentFit={type.id === "radioStation" ? "contain" : undefined}
+          // size="none" so the Image's default md size (h-20 w-20) isn't injected;
+          // in grid the class only sets w-full, and a stray h-20 would make cover
+          // art shorter than the square fallback boxes (favorites/folders).
+          size="none"
           className={cn("rounded-md aspect-square", {
             "w-full": layout === "grid",
             "w-20 h-20": layout === "list",

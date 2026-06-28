@@ -27,7 +27,7 @@ export default function RandomArtistsDetail() {
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const musicFolderId = useCurrentMusicFolderId();
@@ -39,7 +39,7 @@ export default function RandomArtistsDetail() {
     return shuffleWithSeed(all, seed);
   }, [data, seed]);
   return (
-    <Box className={cn("pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
+    <Box className={cn("pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}

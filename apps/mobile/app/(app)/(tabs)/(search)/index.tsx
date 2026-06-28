@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import { useTranslation } from "react-i18next";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -20,6 +21,7 @@ import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { gridCellMarginClass, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
 
@@ -28,11 +30,18 @@ export default function SearchScreen() {
   const { t } = useTranslation();
   const username = useAuth((store) => store.username);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
+  const isWideLayout = useApp((store) => store.isWideLayout);
   const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const { data, isLoading, error } = useGenres();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const numColumns = gridColumnCount(width, {
+    minItemWidth: 220,
+    minColumns: 2,
+    maxColumns: 4,
+  });
   const handleSearchPress = () => {
     router.navigate("/(app)/(tabs)/(search)/recent-searches");
   };
@@ -40,7 +49,10 @@ export default function SearchScreen() {
   return (
     <Box className="h-full">
       <HStack
-        className="px-6 gap-x-4 my-6 items-center"
+        className={cn("px-6 gap-x-4 items-center", {
+          "my-6": !isWideLayout,
+          "mb-6": isWideLayout,
+        })}
         style={{ paddingTop: insets.top }}
       >
         <FadeOutScaleDown
@@ -66,13 +78,14 @@ export default function SearchScreen() {
         </HStack>
       </FadeOutScaleDown>
       <FlashList
+        key={`genres-${numColumns}`}
         data={data?.genres.genre || loadingData(16)}
         renderItem={({ item, index }: { item: Genre; index: number }) => (
           <Box
-            className={cn("flex-1 w-full mb-4", {
-              "mr-2": index % 2 === 0,
-              "ml-2": index % 2 !== 0,
-            })}
+            className={cn(
+              "flex-1 mb-4",
+              gridCellMarginClass(index % numColumns, numColumns),
+            )}
           >
             {isLoading ? (
               <GenreListItemSkeleton />
@@ -81,7 +94,7 @@ export default function SearchScreen() {
             )}
           </Box>
         )}
-        numColumns={2}
+        numColumns={numColumns}
         ListHeaderComponent={
           <>
             <Heading size="lg" className="text-white mb-4">

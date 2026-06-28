@@ -394,7 +394,7 @@ export default function LoginScreen() {
                   />
                   <SelectIcon as={ChevronDownIcon} />
                 </SelectTrigger>
-                <SelectPortal snapPoints={[50]}>
+                <SelectPortal>
                   <SelectBackdrop />
                   <SelectContent className="bg-primary-600">
                     <SelectDragIndicatorWrapper className="mb-6">
@@ -504,6 +504,7 @@ export default function LoginScreen() {
                       >
                         <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                           <InputField
+                            disableFullscreenUI
                             ref={usernameRef}
                             value={field.state.value}
                             onChangeText={field.handleChange}
@@ -532,6 +533,7 @@ export default function LoginScreen() {
                       >
                         <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                           <InputField
+                            disableFullscreenUI
                             ref={passwordRef}
                             value={field.state.value}
                             onChangeText={field.handleChange}

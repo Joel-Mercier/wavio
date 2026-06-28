@@ -20,6 +20,7 @@ import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
@@ -66,6 +67,7 @@ import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
+import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 import { cn } from "@/utils/tailwind";
@@ -83,6 +85,7 @@ export default function LibraryScreen() {
   const username = useAuth((store) => store.username);
   const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
   const serverVersion = useAuth((store) => store.serverVersion);
+  const isWideLayout = useApp((store) => store.isWideLayout);
   const capabilities = useCapabilities();
   const showSmartPlaylist =
     capabilities.smartPlaylists &&
@@ -107,6 +110,15 @@ export default function LibraryScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const gridColumns =
+    layout === "grid"
+      ? gridColumnCount(width, {
+          minItemWidth: 160,
+          minColumns: 3,
+          maxColumns: 5,
+        })
+      : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
   const listRef =
@@ -367,7 +379,11 @@ export default function LibraryScreen() {
     <Box className="h-full">
       <>
         <Box className="px-6" style={{ paddingTop: insets.top }}>
-          <HStack className="mt-6 items-center justify-between">
+          <HStack
+            className={cn("items-center justify-between", {
+              "mt-6": !isWideLayout,
+            })}
+          >
             <HStack className="items-center gap-x-4">
               <FadeOutScaleDown
                 testID="open-drawer-button"
@@ -535,7 +551,7 @@ export default function LibraryScreen() {
       {!error && (
         <FlashList
           ref={listRef}
-          key={`library-${layout}`}
+          key={`library-${layout}-${gridColumns}`}
           data={
             (isLoading ? loadingData(16) : (data ?? [])) as Array<
               Playlist &
@@ -548,7 +564,7 @@ export default function LibraryScreen() {
             >
           }
           keyExtractor={(item) => item.id}
-          numColumns={layout === "grid" ? 3 : 1}
+          numColumns={gridColumns}
           onRefresh={() => {
             refetchPlaylists();
             refetchStarred();
@@ -559,17 +575,22 @@ export default function LibraryScreen() {
               layout: LibraryLayout;
             };
             return isLoading ? (
-              <LibraryListItemSkeleton layout={itemLayout} index={index} />
+              <LibraryListItemSkeleton
+                layout={itemLayout}
+                index={index}
+                numColumns={gridColumns}
+              />
             ) : (
               <LibraryListItem
                 item={item}
                 layout={itemLayout}
                 key={item.id}
                 index={index}
+                numColumns={gridColumns}
               />
             );
           }}
-          extraData={{ layout }}
+          extraData={{ layout, gridColumns }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
             paddingHorizontal: 24,

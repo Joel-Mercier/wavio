@@ -19,12 +19,12 @@ import { HStack } from "../ui/hstack";
 export default function ArtistDiscography() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const floatingPlayerInset = useFloatingPlayerInset();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { data, isLoading, error } = useArtist(id);
   return (
-    <Box className={cn("pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
+    <Box className={cn("pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack
         className="px-6 items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}

@@ -37,7 +37,7 @@ export default function TabLayout() {
     | string
     | undefined;
   const isOnline = useIsOnline();
-  const isLandscape = useApp((store) => store.isLandscape);
+  const isWideLayout = useApp((store) => store.isWideLayout);
   const insets = useSafeAreaInsets();
 
   const handleClose = () => {
@@ -59,8 +59,8 @@ export default function TabLayout() {
           // In landscape, dock the tab bar to the left as a solid sidebar column;
           // react-navigation lays the screens out to its right automatically and
           // reports useBottomTabBarHeight() === 0.
-          tabBarPosition: isLandscape ? "left" : "bottom",
-          tabBarStyle: isLandscape
+          tabBarPosition: isWideLayout ? "left" : "bottom",
+          tabBarStyle: isWideLayout
             ? {
                 position: "relative",
                 // Pin all three: the sidebar applies its own `minWidth`
@@ -98,7 +98,7 @@ export default function TabLayout() {
             />
           ),
           tabBarBackground: () =>
-            isLandscape ? (
+            isWideLayout ? (
               <View style={{ flex: 1, backgroundColor: primary600 }}>
                 <OfflineBanner />
               </View>
@@ -121,7 +121,7 @@ export default function TabLayout() {
           tabBarInactiveTintColor: gray,
           // The sidebar (uikit, horizontal) draws a rounded accent pill behind
           // the active item; make it transparent so only the tint color marks it.
-          tabBarActiveBackgroundColor: isLandscape ? "transparent" : undefined,
+          tabBarActiveBackgroundColor: isWideLayout ? "transparent" : undefined,
         }}
       >
         <Tabs.Screen

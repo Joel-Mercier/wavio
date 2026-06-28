@@ -118,7 +118,7 @@ export default function ArtistDetail() {
   const [topSongsExpanded, setTopSongsExpanded] = useState<boolean>(false);
   const [topSongsContentHeight, setTopSongsContentHeight] = useState<number>(0);
   const TOP_SONGS_COLLAPSED_HEIGHT = 450;
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const topSongsHeight = useSharedValue<number>(TOP_SONGS_COLLAPSED_HEIGHT);
   const topSongsOverlayOpacity = useSharedValue<number>(1);
   const toast = useToast();
@@ -172,7 +172,7 @@ export default function ArtistDetail() {
       pointerEvents: opacity > 0.5 ? "auto" : "none",
     };
   });
-  const headerImageHeight = isLandscape ? 224 : 384;
+  const headerImageHeight = isWideLayout ? 224 : 384;
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
@@ -483,7 +483,7 @@ export default function ArtistDetail() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
+            style={{ paddingTop: insets.top + (isWideLayout ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">

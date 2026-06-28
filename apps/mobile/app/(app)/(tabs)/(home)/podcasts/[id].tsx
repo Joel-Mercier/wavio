@@ -76,7 +76,7 @@ export default function PodcastScreen() {
   podcast.podcastSeries = JSON.parse(podcast.podcastSeries as never as string);
   const colors = useImageColors(podcast.imageUrl);
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const toast = useToast();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
@@ -315,7 +315,7 @@ export default function PodcastScreen() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
+            style={{ paddingTop: insets.top + (isWideLayout ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -341,7 +341,7 @@ export default function PodcastScreen() {
             insets.bottom +
             bottomTabBarHeight +
             floatingPlayerInset +
-            (isLandscape ? 48 : 0),
+            (isWideLayout ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
@@ -356,14 +356,14 @@ export default function PodcastScreen() {
                 style={artworkStyle}
                 source={{ uri: podcast.imageUrl }}
                 className={`${
-                  isLandscape ? "w-[45%]" : "w-[70%]"
+                  isWideLayout ? "w-[45%]" : "w-[70%]"
                 } aspect-square rounded-md`}
                 alt="Playlist cover"
               />
             ) : (
               <Box
                 className={`${
-                  isLandscape ? "w-[45%]" : "w-[70%]"
+                  isWideLayout ? "w-[45%]" : "w-[70%]"
                 } aspect-square rounded-md bg-primary-600 items-center justify-center`}
               >
                 <ListMusic size={48} color={white} />

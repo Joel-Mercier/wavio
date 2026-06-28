@@ -46,7 +46,7 @@ export default function LibrariesDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useMusicFoldersQuery();
   const scope = useCurrentAuthScope();
@@ -66,7 +66,7 @@ export default function LibrariesDetail() {
   };
 
   return (
-    <Box className={cn("px-6 pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
+    <Box className={cn("px-6 pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack
         className="items-center justify-between mb-6"
         style={{ paddingTop: insets.top }}

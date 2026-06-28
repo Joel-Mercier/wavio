@@ -43,7 +43,7 @@ export default function ReorderPlaylistScreen() {
   const [order, setOrder] = useState<Child[]>([]);
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
@@ -235,7 +235,7 @@ export default function ReorderPlaylistScreen() {
       <Box className="px-6 pb-6 bg-black">
         <HStack
           className="items-center"
-          style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
+          style={{ paddingTop: insets.top + (isWideLayout ? 0 : 16) }}
         >
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>

@@ -59,7 +59,7 @@ export default function ServersDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const servers = useServers((store) => store.servers);
   const addServer = useServers((store) => store.addServer);
   const syncServerUsers = useServers((store) => store.syncServerUsers);
@@ -188,7 +188,7 @@ export default function ServersDetail() {
 
   return (
     <Box className="h-full">
-      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
+      <Box className={cn("px-6 pb-6 flex-1", isWideLayout ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-6 justify-between"
           style={{ paddingTop: insets.top }}

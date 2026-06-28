@@ -21,7 +21,7 @@ const SEEK_SETTLE_THRESHOLD = 1.5;
 
 export default function PlaybackSlider() {
   const { currentTime, duration } = usePlaybackProgress();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const hasDuration = duration > 0;
   // Live position as a 0..1 shared value, updated on the UI thread (~4 Hz) with
   // no React re-render, so a progress tick can never fight the drag gesture.
@@ -47,7 +47,7 @@ export default function PlaybackSlider() {
   };
 
   return (
-    <VStack className={cn(isLandscape ? "mb-2" : "mb-6")}>
+    <VStack className={cn(isWideLayout ? "mb-2" : "mb-6")}>
       <GestureSlider
         progress={liveProgress}
         disabled={!hasDuration}

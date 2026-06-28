@@ -57,7 +57,7 @@ export default function FloatingPlayer() {
   const playingTrack = usePlayingTrack();
   const isOnline = useIsOnline();
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const pathname = usePathname();
   const colors = useImageColors(playingTrack?.artwork);
@@ -317,7 +317,7 @@ export default function FloatingPlayer() {
   const backgroundColor =
     (colors?.platform === "ios" ? colors.background : colors?.muted) || primary;
 
-  if (isLandscape) {
+  if (isWideLayout) {
     return (
       <Pressable
         testID="floating-player"
@@ -433,10 +433,10 @@ export default function FloatingPlayer() {
       <Pressable
         testID="floating-player"
         className={
-          isLandscape ? "absolute left-0 bottom-0" : "absolute right-0 left-0"
+          isWideLayout ? "absolute left-0 bottom-0" : "absolute right-0 left-0"
         }
         style={
-          isLandscape
+          isWideLayout
             ? {
                 width: SIDEBAR_WIDTH,
                 bottom: insets.bottom + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),

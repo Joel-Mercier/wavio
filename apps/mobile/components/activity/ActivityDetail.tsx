@@ -69,7 +69,7 @@ export default function ActivityDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const activity = useActivity((store) => store.activity);
 
   const sections = useMemo(() => groupEntries(activity), [activity]);
@@ -80,7 +80,7 @@ export default function ActivityDetail() {
 
   return (
     <Box className="h-full">
-      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
+      <Box className={cn("px-6 pb-6 flex-1", isWideLayout ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-6"
           style={{ paddingTop: insets.top }}

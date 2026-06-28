@@ -88,7 +88,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   const { t, i18n } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isLandscape = useApp((store) => store.isLandscape);
+  const isWideLayout = useApp((store) => store.isWideLayout);
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
   const username = useAuth((store) => store.username);
@@ -173,14 +173,14 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
           paddingRight: right,
           // The lg drawer is 3/4 of the screen — far too wide in landscape;
           // roughly halve it there.
-          ...(isLandscape ? { width: width * 0.4 } : {}),
+          ...(isWideLayout ? { width: width * 0.4 } : {}),
         }}
       >
-        <DrawerHeader className={cn(isLandscape && "pb-1")}>
+        <DrawerHeader className={cn(isWideLayout && "pb-1")}>
           <HStack
             className={cn(
               "flex-1 items-center m-1 border-b-2 border-primary-500",
-              isLandscape ? "px-4 py-2" : "p-4",
+              isWideLayout ? "px-4 py-2" : "p-4",
             )}
           >
             <Pressable
@@ -217,7 +217,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 >
                   <ArrowLeftRight size={22} color={white} />
                 </SelectTrigger>
-                <SelectPortal snapPoints={[50]}>
+                <SelectPortal>
                   <SelectBackdrop />
                   <SelectContent className="bg-primary-600">
                     <SelectDragIndicatorWrapper className="mb-4">
@@ -241,15 +241,15 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
           </HStack>
         </DrawerHeader>
         <DrawerBody
-          className={cn(isLandscape && "mt-2")}
-          style={isLandscape ? { flex: 1 } : undefined}
+          className={cn(isWideLayout && "mt-2")}
+          style={isWideLayout ? { flex: 1 } : undefined}
         >
-          <VStack className={cn(!isLandscape && "justify-between h-full")}>
+          <VStack className={cn(!isWideLayout && "justify-between h-full")}>
             <VStack>
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleActivityPress}
               >
@@ -261,7 +261,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleQueuePress}
               >
@@ -273,7 +273,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleLibrariesPress}
               >
@@ -285,7 +285,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleServersPress}
               >
@@ -298,7 +298,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
                 <Pressable
                   className={cn(
                     "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                    isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                    isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                   )}
                   onPress={handleSharesPress}
                 >
@@ -311,7 +311,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleSettingsPress}
               >
@@ -323,7 +323,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
                 )}
                 onPress={handleLogoutPress}
               >
@@ -336,13 +336,13 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
             <VStack
               className={cn(
                 "border-t-2 border-primary-500",
-                isLandscape ? "mt-2 pt-3" : "mt-4 pt-4",
+                isWideLayout ? "mt-2 pt-3" : "mt-4 pt-4",
               )}
             >
               <Pressable
                 className={cn(
                   "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
                 )}
                 onPress={handlePrivacyPolicyPress}
               >
@@ -354,7 +354,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
                 )}
                 onPress={handleBugReportPress}
               >
@@ -366,7 +366,7 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
               <Pressable
                 className={cn(
                   "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isLandscape ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
                 )}
                 onPress={handleChangelogPress}
               >

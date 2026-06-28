@@ -24,7 +24,7 @@ const BOOKMARK_ROW_HEIGHT = 32;
 
 export default function PlayerBookmarks() {
   const track = usePlayingTrack();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const bookmarks = useTrackBookmarks(track?.id);
   const hasBookmarks = !!track?.id && bookmarks.length > 0;
 
@@ -34,7 +34,7 @@ export default function PlayerBookmarks() {
 
   return (
     <Box
-      className={cn("relative -mx-6", isLandscape ? "mt-2" : "mt-6")}
+      className={cn("relative -mx-6", isWideLayout ? "mt-2" : "mt-6")}
       style={{ height: BOOKMARK_ROW_HEIGHT }}
     >
       {hasBookmarks && (

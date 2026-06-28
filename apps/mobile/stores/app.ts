@@ -1,4 +1,5 @@
 import { Orientation } from "expo-screen-orientation";
+import { Dimensions } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
@@ -8,6 +9,17 @@ import createSelectors from "@/utils/createSelectors";
 const isLandscapeOrientation = (orientation: Orientation) =>
   orientation === Orientation.LANDSCAPE_LEFT ||
   orientation === Orientation.LANDSCAPE_RIGHT;
+
+// Width (dp) at or above which the app switches to its "wide" layout: left
+// sidebar nav, docked player, two-column player, larger grids. Matches Android's
+// sw600dp "tablet" breakpoint so a tablet/foldable in portrait — not just a phone
+// in landscape — gets the wide layout. Phones stay below this in portrait.
+export const WIDE_LAYOUT_BREAKPOINT = 600;
+
+// The wide layout applies when the device is physically landscape OR the window
+// is wide enough on its own (tablet, foldable, large-screen portrait).
+const isWideLayout = (orientation: Orientation, windowWidth: number) =>
+  isLandscapeOrientation(orientation) || windowWidth >= WIDE_LAYOUT_BREAKPOINT;
 
 // "raw" streams the source file untouched (bit-perfect); the others ask the
 // server to transcode to that codec via the Subsonic `format=` param.
@@ -100,12 +112,15 @@ interface AppStore {
   setInternetRadioCountryCode: (countryCode: string | null) => void;
   internetRadioFeedTags: string[];
   setInternetRadioFeedTags: (tags: string[]) => void;
-  // Live device orientation, kept in sync by services/orientation.ts. Transient
-  // device state (not persisted) — exposed here so any screen can branch its
-  // layout on `isLandscape` without each one subscribing to the listener.
+  // Live device orientation + window width, kept in sync by
+  // services/orientation.ts. Transient device state (not persisted) — exposed
+  // here so any screen can branch its layout on `isWideLayout` without each one
+  // subscribing to the dimension/orientation listeners.
   orientation: Orientation;
-  isLandscape: boolean;
+  windowWidth: number;
+  isWideLayout: boolean;
   setOrientation: (orientation: Orientation) => void;
+  setWindowWidth: (windowWidth: number) => void;
 }
 
 export const useAppBase = create<AppStore>()(
@@ -213,9 +228,22 @@ export const useAppBase = create<AppStore>()(
         set({ internetRadioFeedTags });
       },
       orientation: Orientation.PORTRAIT_UP,
-      isLandscape: false,
+      windowWidth: Dimensions.get("window").width,
+      isWideLayout: isWideLayout(
+        Orientation.PORTRAIT_UP,
+        Dimensions.get("window").width,
+      ),
       setOrientation: (orientation: Orientation) => {
-        set({ orientation, isLandscape: isLandscapeOrientation(orientation) });
+        set((state) => ({
+          orientation,
+          isWideLayout: isWideLayout(orientation, state.windowWidth),
+        }));
+      },
+      setWindowWidth: (windowWidth: number) => {
+        set((state) => ({
+          windowWidth,
+          isWideLayout: isWideLayout(state.orientation, windowWidth),
+        }));
       },
     }),
     {
@@ -225,7 +253,12 @@ export const useAppBase = create<AppStore>()(
         Object.fromEntries(
           Object.entries(state).filter(
             ([key]) =>
-              !["showDrawer", "orientation", "isLandscape"].includes(key),
+              ![
+                "showDrawer",
+                "orientation",
+                "windowWidth",
+                "isWideLayout",
+              ].includes(key),
           ),
         ),
     },

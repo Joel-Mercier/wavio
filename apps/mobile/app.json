@@ -10,6 +10,8 @@
     "backgroundColor": "#000000",
     "ios": {
       "bundleIdentifier": "com.jmercier.wavio",
+      "supportsTablet": true,
+      "requireFullScreen": true,
       "infoPlist": {
         "UIBackgroundModes": ["audio"]
       },

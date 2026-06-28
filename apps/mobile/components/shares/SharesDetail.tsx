@@ -26,10 +26,10 @@ export default function SharesDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const { data, isLoading, error } = useGetShares();
   return (
-    <Box className={cn("px-6 pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
+    <Box className={cn("px-6 pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack
         className="items-center justify-between mb-6"
         style={{ paddingTop: insets.top }}

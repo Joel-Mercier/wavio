@@ -102,7 +102,7 @@ export default function PlayerScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const router = useRouter();
@@ -396,7 +396,7 @@ export default function PlayerScreen() {
         <HStack
           className={cn(
             "items-center justify-between mb-4 px-6",
-            !isLandscape && "mt-6",
+            !isWideLayout && "mt-6",
           )}
         >
           <FadeOutScaleDown
@@ -451,8 +451,8 @@ export default function PlayerScreen() {
             <EllipsisVertical size={24} color="white" />
           </FadeOutScaleDown>
         </HStack>
-        <VStack className={cn("flex-1", isLandscape && "flex-row")}>
-          <VStack className={cn("flex-1", isLandscape && "mr-4")}>
+        <VStack className={cn("flex-1", isWideLayout && "flex-row")}>
+          <VStack className={cn("flex-1", isWideLayout && "mr-4")}>
             <Box
               className="flex-1 overflow-hidden mb-4"
               onLayout={(e) =>
@@ -511,7 +511,7 @@ export default function PlayerScreen() {
               onPress={() => setShowLyricsDialog(true)}
             />
           </VStack>
-          <VStack className={cn(isLandscape && "flex-1 justify-center")}>
+          <VStack className={cn(isWideLayout && "flex-1 justify-center")}>
             <VStack className="px-6">
               <HStack className="items-center justify-between gap-x-4">
                 <VStack className="mb-2 flex-1">
@@ -672,7 +672,7 @@ export default function PlayerScreen() {
               <HStack
                 className={cn(
                   "items-center justify-between",
-                  isLandscape ? "mt-2 mb-2" : "mt-4 mb-6",
+                  isWideLayout ? "mt-2 mb-2" : "mt-4 mb-6",
                 )}
               >
                 <CastButton

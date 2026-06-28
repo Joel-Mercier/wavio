@@ -86,7 +86,7 @@ export default function QueueDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const queue = useQueue((state) => state.queue);
   const currentIndex = useQueue((state) => state.currentIndex);
   const setQueue = useQueue((state) => state.setQueue);
@@ -196,7 +196,7 @@ export default function QueueDetail() {
 
   return (
     <Box className="h-full">
-      <Box className={cn("pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
+      <Box className={cn("pb-6 flex-1", isWideLayout ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}

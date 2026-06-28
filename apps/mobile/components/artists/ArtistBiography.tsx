@@ -21,7 +21,7 @@ export default function ArtistBiography() {
   const { t } = useTranslation();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
     name: string;
     biography: string;
@@ -54,7 +54,7 @@ export default function ArtistBiography() {
   };
 
   return (
-    <Box className={cn("px-6 pb-6 h-full", isLandscape ? "mb-6" : "mt-6")}>
+    <Box className={cn("px-6 pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack
         className="items-center mb-6 justify-between"
         style={{ paddingTop: insets.top }}

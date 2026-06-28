@@ -50,7 +50,7 @@ export default function OfflineDownloadsDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
   const downloadedTracksList = useDownloadedTracksList();
   const totalDownloadSize = useTotalDownloadSize();
@@ -127,7 +127,7 @@ export default function OfflineDownloadsDetail() {
 
   return (
     <Box className="h-full">
-      <Box className={cn("pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
+      <Box className={cn("pb-6 flex-1", isWideLayout ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center mb-4 px-6"
           style={{ paddingTop: insets.top }}

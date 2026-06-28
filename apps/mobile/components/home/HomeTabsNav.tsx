@@ -35,7 +35,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((store) => store.isLandscape);
+  const isWideLayout = useApp((store) => store.isWideLayout);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const scrollRef = useRef<RNScrollView>(null);
@@ -52,7 +52,10 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
 
   return (
     <HStack
-      className={cn("pl-6 gap-x-4 items-center", isLandscape ? "mb-6" : "my-6")}
+      className={cn(
+        "pl-6 gap-x-4 items-center",
+        isWideLayout ? "mb-6" : "my-6",
+      )}
       style={{ paddingTop: insets.top }}
     >
       <FadeOutScaleDown

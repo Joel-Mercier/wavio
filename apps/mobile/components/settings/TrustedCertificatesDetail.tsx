@@ -39,7 +39,7 @@ export default function TrustedCertificatesDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
 
   const [certs, setCerts] = useState<TrustedCert[]>([]);
   const [removeTarget, setRemoveTarget] = useState<TrustedCert | null>(null);
@@ -88,7 +88,7 @@ export default function TrustedCertificatesDetail() {
 
   return (
     <Box className="h-full">
-      <Box className={cn("px-6 pb-6 flex-1", isLandscape ? "mb-6" : "mt-6")}>
+      <Box className={cn("px-6 pb-6 flex-1", isWideLayout ? "mb-6" : "mt-6")}>
         <HStack
           className="items-center justify-between mb-6"
           style={{ paddingTop: insets.top }}

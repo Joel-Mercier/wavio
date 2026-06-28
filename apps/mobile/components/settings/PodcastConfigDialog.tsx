@@ -297,7 +297,7 @@ export default function PodcastConfigDialog({
                       />
                       <SelectIcon className="mr-3" as={ChevronDownIcon} />
                     </SelectTrigger>
-                    <SelectPortal snapPoints={[75]}>
+                    <SelectPortal>
                       <SelectBackdrop />
                       <SelectContent
                         style={{ backgroundColor: "rgb(41, 41, 41)" }}
@@ -354,7 +354,7 @@ export default function PodcastConfigDialog({
                       />
                       <SelectIcon className="mr-3" as={ChevronDownIcon} />
                     </SelectTrigger>
-                    <SelectPortal snapPoints={[75]}>
+                    <SelectPortal>
                       <SelectBackdrop />
                       <SelectContent
                         style={{ backgroundColor: "rgb(41, 41, 41)" }}

@@ -50,7 +50,7 @@ export default function AddToPlaylistDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
 
@@ -180,7 +180,7 @@ export default function AddToPlaylistDetail() {
   // needs no bottom clearance. Portrait: FloatingPlayer sits at bottom: 96 and is
   // FLOATING_PLAYER_HEIGHT tall,
   // so its top edge is this far from the bottom of the screen.
-  const floatingPlayerTop = isLandscape ? 0 : 96 + FLOATING_PLAYER_HEIGHT;
+  const floatingPlayerTop = isWideLayout ? 0 : 96 + FLOATING_PLAYER_HEIGHT;
 
   const playlists = data?.playlists.playlist;
 

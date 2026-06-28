@@ -58,7 +58,7 @@ export default function EditPlaylistScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
-  const isLandscape = useApp((s) => s.isLandscape);
+  const isWideLayout = useApp((s) => s.isWideLayout);
   const tabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
@@ -121,7 +121,7 @@ export default function EditPlaylistScreen() {
       <Box className="px-6 pb-6 bg-black">
         <HStack
           className="items-center"
-          style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
+          style={{ paddingTop: insets.top + (isWideLayout ? 0 : 16) }}
         >
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
@@ -173,7 +173,7 @@ export default function EditPlaylistScreen() {
               insets.bottom +
               tabBarHeight +
               floatingPlayerInset +
-              (isLandscape ? 48 : 0),
+              (isWideLayout ? 48 : 0),
           }}
           showsVerticalScrollIndicator={false}
         >
