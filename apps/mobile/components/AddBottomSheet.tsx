@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -74,7 +74,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
       }}
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
-      <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+      <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">
           <VStack className="mt-6 gap-y-8">
             <FadeOutScaleDown
@@ -149,7 +149,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
             )}
           </VStack>
         </Box>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </CenteredBottomSheetModal>
   );
 });

@@ -143,7 +143,10 @@ export default function NewSmartPlaylistScreen() {
   });
 
   return (
-    <Box className="h-full flex-1 bg-black">
+    <Box
+      className="h-full flex-1 bg-black"
+      style={{ paddingLeft: insets.left, paddingRight: insets.right }}
+    >
       <Box className="px-6 pb-4 bg-black">
         <HStack
           className="items-center"
@@ -183,6 +186,7 @@ export default function NewSmartPlaylistScreen() {
               >
                 <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-4 py-2">
                   <InputField
+                    disableFullscreenUI
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={() => handleFieldBlur(field)}
@@ -200,6 +204,7 @@ export default function NewSmartPlaylistScreen() {
               <FormControl size="md">
                 <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 rounded-md px-4 py-2">
                   <TextareaInput
+                    disableFullscreenUI
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     className="text-md font-normal text-white"

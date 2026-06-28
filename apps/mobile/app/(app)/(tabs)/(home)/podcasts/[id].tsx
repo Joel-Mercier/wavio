@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { fromUnixTime } from "date-fns/fromUnixTime";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
@@ -53,6 +53,7 @@ import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
+import useApp from "@/stores/app";
 import usePodcasts from "@/stores/podcasts";
 import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
@@ -75,6 +76,7 @@ export default function PodcastScreen() {
   podcast.podcastSeries = JSON.parse(podcast.podcastSeries as never as string);
   const colors = useImageColors(podcast.imageUrl);
   const insets = useSafeAreaInsets();
+  const isLandscape = useApp((s) => s.isLandscape);
   const toast = useToast();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
@@ -313,7 +315,7 @@ export default function PodcastScreen() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + 16 }}
+            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -336,7 +338,10 @@ export default function PodcastScreen() {
           paddingHorizontal: 24,
           paddingTop: insets.top,
           paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            insets.bottom +
+            bottomTabBarHeight +
+            floatingPlayerInset +
+            (isLandscape ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
@@ -350,11 +355,17 @@ export default function PodcastScreen() {
               <AnimatedImage
                 style={artworkStyle}
                 source={{ uri: podcast.imageUrl }}
-                className="w-[70%] aspect-square rounded-md"
+                className={`${
+                  isLandscape ? "w-[45%]" : "w-[70%]"
+                } aspect-square rounded-md`}
                 alt="Playlist cover"
               />
             ) : (
-              <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
+              <Box
+                className={`${
+                  isLandscape ? "w-[45%]" : "w-[70%]"
+                } aspect-square rounded-md bg-primary-600 items-center justify-center`}
+              >
                 <ListMusic size={48} color={white} />
               </Box>
             )}
@@ -446,12 +457,7 @@ export default function PodcastScreen() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {podcast.imageUrl ? (
@@ -508,7 +514,7 @@ export default function PodcastScreen() {
               )}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
     </Box>
   );

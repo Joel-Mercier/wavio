@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
@@ -589,12 +589,7 @@ export default function LibraryScreen() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
@@ -659,7 +654,7 @@ export default function LibraryScreen() {
               )}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalSortRef}
@@ -672,12 +667,7 @@ export default function LibraryScreen() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
@@ -726,7 +716,7 @@ export default function LibraryScreen() {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
     </Box>
   );

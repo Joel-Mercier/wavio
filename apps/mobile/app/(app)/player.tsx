@@ -570,7 +570,7 @@ export default function PlayerScreen() {
                       router.replace(`/artists/${playingTrack.artistId}`);
                     }}
                   >
-                    <Text className="text-primary-100 text-lg">
+                    <Text className="text-white/80 text-lg">
                       {playingTrack?.artist ||
                         (!isPodcast && !isRadio
                           ? t("app.shared.unknownArtist")
@@ -605,7 +605,7 @@ export default function PlayerScreen() {
               </HStack>
               {!isRadio && audioQuality && (
                 <Text
-                  className="text-primary-100 text-xs font-medium tracking-wide mb-4"
+                  className="text-white/70 text-xs font-medium tracking-wide mb-4"
                   numberOfLines={1}
                 >
                   {audioQuality}

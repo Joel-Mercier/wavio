@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -109,16 +109,17 @@ export default function NewInternetRadioStationScreen() {
       className="h-full"
       style={{ height: "100%" }}
     >
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{
-          flex: 1,
+      <KeyboardAwareScrollView
+        bottomOffset={60}
+        contentContainerStyle={{
+          flexGrow: 1,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
           justifyContent: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
         <VStack className="w-full px-6">
           <Center>
@@ -138,6 +139,7 @@ export default function NewInternetRadioStationScreen() {
               >
                 <Input className="border border-primary-400 bg-primary-400 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 px-6 py-4">
                   <InputField
+                    disableFullscreenUI
                     value={field.state.value}
                     onBlur={() => handleFieldBlur(field)}
                     onChangeText={field.handleChange}
@@ -228,7 +230,7 @@ export default function NewInternetRadioStationScreen() {
             </FadeOutScaleDown>
           </HStack>
         </VStack>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </LinearGradient>
   );
 }

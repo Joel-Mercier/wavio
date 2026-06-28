@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
@@ -556,12 +556,7 @@ export default function LikedSongs() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
@@ -636,7 +631,7 @@ export default function LikedSongs() {
               )}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}

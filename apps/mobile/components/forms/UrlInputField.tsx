@@ -47,6 +47,7 @@ export default function UrlInputField({
       </InputSlot>
       {/* No keyboardType="url": its Android textUri inputType hides the text caret on some keyboards */}
       <InputField
+        disableFullscreenUI
         ref={fieldRef}
         value={host}
         onChangeText={handleHostChange}

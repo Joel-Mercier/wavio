@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -545,12 +545,7 @@ export default function PlayerSheets({
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
@@ -826,7 +821,7 @@ export default function PlayerSheets({
               </VStack>
             )}
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={sleepTimerSheetRef}
@@ -839,7 +834,7 @@ export default function PlayerSheets({
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center mb-6">
               <Timer size={24} color={gray200} />
@@ -895,7 +890,7 @@ export default function PlayerSheets({
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={bottomSheetArtistsModalRef}
@@ -908,12 +903,7 @@ export default function PlayerSheets({
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="gap-y-6">
               {trackArtists.map((artist) => (
@@ -934,7 +924,7 @@ export default function PlayerSheets({
               ))}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={bottomSheetShareModalRef}
@@ -947,12 +937,7 @@ export default function PlayerSheets({
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
@@ -974,7 +959,7 @@ export default function PlayerSheets({
               </FadeOutScaleDown>
             </HStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <LyricsDialog
         isOpen={showLyricsDialog}

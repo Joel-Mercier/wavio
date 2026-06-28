@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
@@ -415,7 +415,7 @@ export default function QueueDetail() {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center mb-6">
               <Timer size={24} color={gray200} />
@@ -471,7 +471,7 @@ export default function QueueDetail() {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
     </Box>
   );

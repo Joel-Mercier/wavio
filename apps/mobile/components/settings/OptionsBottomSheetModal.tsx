@@ -2,7 +2,7 @@ import {
   BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import type { RefObject } from "react";
@@ -58,12 +58,7 @@ export default function OptionsBottomSheetModal<
       }}
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
-      <BottomSheetView
-        style={{
-          flex: 1,
-          alignItems: "center",
-        }}
-      >
+      <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">
           {header && (
             <VStack className="gap-y-2">
@@ -115,7 +110,7 @@ export default function OptionsBottomSheetModal<
             ))}
           </VStack>
         </Box>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </CenteredBottomSheetModal>
   );
 }

@@ -100,6 +100,7 @@ export default function SearchResultsScreen() {
             {(field) => (
               <Input className="flex-1 border-0">
                 <InputField
+                  disableFullscreenUI
                   className="text-white text-xl"
                   placeholder={t("app.search.inputPlaceholder")}
                   placeholderTextColor={primary50}

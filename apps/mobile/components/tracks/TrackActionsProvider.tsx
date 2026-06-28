@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -581,7 +581,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="gap-y-6">
               {trackArtists.map((artist) => (
@@ -602,7 +602,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               ))}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
@@ -611,7 +611,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
@@ -634,7 +634,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               </FadeOutScaleDown>
             </HStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
@@ -643,7 +643,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           {track && (
             <Box className="p-6 w-full mb-12">
               <HStack className="items-center">
@@ -887,7 +887,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               </VStack>
             </Box>
           )}
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}

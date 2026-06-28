@@ -35,6 +35,7 @@ import { VStack } from "@/components/ui/vstack";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import useApp from "@/stores/app";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -57,6 +58,7 @@ export default function EditPlaylistScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const toast = useToast();
+  const isLandscape = useApp((s) => s.isLandscape);
   const tabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
@@ -119,7 +121,7 @@ export default function EditPlaylistScreen() {
       <Box className="px-6 pb-6 bg-black">
         <HStack
           className="items-center"
-          style={{ paddingTop: insets.top + 16 }}
+          style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
         >
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
@@ -167,7 +169,11 @@ export default function EditPlaylistScreen() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
-            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+            paddingBottom:
+              insets.bottom +
+              tabBarHeight +
+              floatingPlayerInset +
+              (isLandscape ? 48 : 0),
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -196,6 +202,7 @@ export default function EditPlaylistScreen() {
               >
                 <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                   <InputField
+                    disableFullscreenUI
                     value={field.state.value}
                     onChangeText={field.handleChange}
                     onBlur={() => handleFieldBlur(field)}
@@ -221,6 +228,7 @@ export default function EditPlaylistScreen() {
                 >
                   <Textarea className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
                     <TextareaInput
+                      disableFullscreenUI
                       value={field.state.value}
                       onChangeText={field.handleChange}
                       onBlur={() => handleFieldBlur(field)}

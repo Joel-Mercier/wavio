@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
@@ -160,7 +160,7 @@ export function PodcastEpisodeActionsProvider({
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           {episode && (
             <Box className="p-6 w-full mb-12">
               <HStack className="items-center">
@@ -229,7 +229,7 @@ export function PodcastEpisodeActionsProvider({
               </VStack>
             </Box>
           )}
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
     </PodcastEpisodeActionsContext.Provider>
   );

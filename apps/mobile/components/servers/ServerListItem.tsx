@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
@@ -226,12 +226,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
@@ -277,7 +272,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={pendingSwitch !== null}

@@ -26,6 +26,7 @@ import {
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import type { Child } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
@@ -42,6 +43,7 @@ export default function ReorderPlaylistScreen() {
   const [order, setOrder] = useState<Child[]>([]);
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const isLandscape = useApp((s) => s.isLandscape);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
@@ -233,7 +235,7 @@ export default function ReorderPlaylistScreen() {
       <Box className="px-6 pb-6 bg-black">
         <HStack
           className="items-center"
-          style={{ paddingTop: insets.top + 16 }}
+          style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
         >
           <Box className="flex-1 items-start">
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>

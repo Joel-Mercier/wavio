@@ -112,6 +112,7 @@ export default function FavoritesSearch() {
               {(field) => (
                 <Input className="flex-1 border-0">
                   <InputField
+                    disableFullscreenUI
                     className="text-white text-xl"
                     placeholder={t("app.favorites.searchPlaceholder")}
                     placeholderTextColor={primary50}

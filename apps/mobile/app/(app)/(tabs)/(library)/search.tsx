@@ -196,6 +196,7 @@ export default function LibrarySearchScreen() {
             {(field) => (
               <Input className="flex-1 border-0">
                 <InputField
+                  disableFullscreenUI
                   className="text-white text-xl"
                   placeholder={t("app.library.search.inputPlaceholder")}
                   placeholderTextColor={primary50}

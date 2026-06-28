@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import Smartphone from "lucide-react-native/dist/esm/icons/smartphone.mjs";
@@ -128,7 +128,7 @@ export default function JukeboxSheet() {
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
-      <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+      <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">
           <HStack className="items-center mb-6">
             <Speaker size={24} color={jukeboxActive ? emerald500 : gray200} />
@@ -199,7 +199,7 @@ export default function JukeboxSheet() {
             )}
           </VStack>
         </Box>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModalComponent>
   );
 }

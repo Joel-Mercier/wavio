@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useForm, useStore } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
@@ -302,12 +302,7 @@ export default function ShareListItem({ share }: { share: Share }) {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
@@ -357,7 +352,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showAlertDialog}

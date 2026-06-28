@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
@@ -89,6 +89,7 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
+import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
 import useQueue, { type QueueSource } from "@/stores/queue";
@@ -132,6 +133,7 @@ export default function PlaylistDetail() {
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
+  const isLandscape = useApp((s) => s.isLandscape);
   const toast = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -165,13 +167,17 @@ export default function PlaylistDetail() {
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      offsetY.value,
+      [0, 220],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    // While the bar is (near-)invisible it must not intercept touches, else it
+    // sits on top of the static back button in the list header and swallows it.
     return {
-      opacity: interpolate(
-        offsetY.value,
-        [0, 220],
-        [0, 1],
-        Extrapolation.CLAMP,
-      ),
+      opacity,
+      pointerEvents: opacity > 0.5 ? "auto" : "none",
     };
   });
   const artworkStyle = useAnimatedStyle(() => {
@@ -663,7 +669,7 @@ export default function PlaylistDetail() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + 16 }}
+            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -709,7 +715,11 @@ export default function PlaylistDetail() {
               {/* https://github.com/navidrome/navidrome/issues/406 */}
               <AnimatedBox
                 style={artworkStyle}
-                className="w-[70%] aspect-square"
+                className={
+                  isLandscape
+                    ? "w-[45%] aspect-square"
+                    : "w-[70%] aspect-square"
+                }
               >
                 <ImageWithFallback
                   source={
@@ -841,8 +851,6 @@ export default function PlaylistDetail() {
           </VStack>
         }
         contentContainerStyle={{
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
           paddingBottom:
             insets.bottom + bottomTabBarHeight + floatingPlayerInset,
         }}
@@ -859,12 +867,7 @@ export default function PlaylistDetail() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
@@ -886,7 +889,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
             </HStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
@@ -899,12 +902,7 @@ export default function PlaylistDetail() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
@@ -1046,7 +1044,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
@@ -1059,12 +1057,7 @@ export default function PlaylistDetail() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <VStack className="mt-6 gap-y-8">
               <FadeOutScaleDown
@@ -1113,7 +1106,7 @@ export default function PlaylistDetail() {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showAlertDialog}

@@ -252,6 +252,7 @@ export default function PodcastsSearchScreen() {
               {(field) => (
                 <Input className="flex-1 border-0">
                   <InputField
+                    disableFullscreenUI
                     className="text-white text-xl"
                     placeholder={t("app.podcasts.search.inputPlaceholder")}
                     placeholderTextColor={primary50}
@@ -603,6 +604,7 @@ export default function PodcastsSearchScreen() {
                   {(field) => (
                     <Input className="flex-1 border border-primary-600 bg-primary-600 rounded-md px-4 py-2">
                       <InputField
+                        disableFullscreenUI
                         className="text-md text-white"
                         placeholder={t(
                           "app.podcasts.search.durationMinPlaceholder",
@@ -628,6 +630,7 @@ export default function PodcastsSearchScreen() {
                   {(field) => (
                     <Input className="flex-1 border border-primary-600 bg-primary-600 rounded-md px-4 py-2">
                       <InputField
+                        disableFullscreenUI
                         className="text-md text-white"
                         placeholder={t(
                           "app.podcasts.search.durationMaxPlaceholder",

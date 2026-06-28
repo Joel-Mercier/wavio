@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
@@ -89,6 +89,7 @@ import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -117,6 +118,7 @@ export default function ArtistDetail() {
   const [topSongsExpanded, setTopSongsExpanded] = useState<boolean>(false);
   const [topSongsContentHeight, setTopSongsContentHeight] = useState<number>(0);
   const TOP_SONGS_COLLAPSED_HEIGHT = 450;
+  const isLandscape = useApp((s) => s.isLandscape);
   const topSongsHeight = useSharedValue<number>(TOP_SONGS_COLLAPSED_HEIGHT);
   const topSongsOverlayOpacity = useSharedValue<number>(1);
   const toast = useToast();
@@ -157,15 +159,20 @@ export default function ArtistDetail() {
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      offsetY.value,
+      [0, 204],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    // While the bar is (near-)invisible it must not intercept touches, else it
+    // sits on top of the static back button in the list header and swallows it.
     return {
-      opacity: interpolate(
-        offsetY.value,
-        [0, 204],
-        [0, 1],
-        Extrapolation.CLAMP,
-      ),
+      opacity,
+      pointerEvents: opacity > 0.5 ? "auto" : "none",
     };
   });
+  const headerImageHeight = isLandscape ? 224 : 384;
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
@@ -476,7 +483,7 @@ export default function ArtistDetail() {
         >
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + 16 }}
+            style={{ paddingTop: insets.top + (isLandscape ? 0 : 16) }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -497,7 +504,8 @@ export default function ArtistDetail() {
       <ImageBackground
         source={{ uri: artworkUrl(data?.artist?.coverArt) }}
         alt="Artist cover"
-        className="h-96 absolute top-0 left-0 right-0"
+        className="absolute top-0 left-0 right-0"
+        style={{ height: headerImageHeight }}
         contentFit="cover"
       />
 
@@ -523,8 +531,7 @@ export default function ArtistDetail() {
             <LinearGradient
               colors={["transparent", "#000000"]}
               locations={[0, 0.9]}
-              className="h-96"
-              style={{ height: 384 }}
+              style={{ height: headerImageHeight }}
             >
               <Box className="flex-1 " style={{ paddingTop: insets.top }}>
                 <VStack className="mt-6 px-6 items-start justify-between h-full">
@@ -848,12 +855,7 @@ export default function ArtistDetail() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
@@ -928,7 +930,7 @@ export default function ArtistDetail() {
               )}
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <Modal
         isOpen={showRatingModal}

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
@@ -107,16 +107,17 @@ export default function NewPodcastChannelScreen() {
       className="h-full"
       style={{ height: "100%" }}
     >
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{
-          flex: 1,
+      <KeyboardAwareScrollView
+        bottomOffset={60}
+        contentContainerStyle={{
+          flexGrow: 1,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
           justifyContent: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
         <VStack className="w-full px-6">
           <Center>
@@ -174,7 +175,7 @@ export default function NewPodcastChannelScreen() {
             </FadeOutScaleDown>
           </HStack>
         </VStack>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </LinearGradient>
   );
 }

@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,7 +15,7 @@ import SquareArrowOutUpRight from "lucide-react-native/dist/esm/icons/square-arr
 import Tag from "lucide-react-native/dist/esm/icons/tag.mjs";
 import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { Linking, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import AnimatedHeart from "@/components/AnimatedHeart";
@@ -42,6 +42,7 @@ import useImageColors from "@/hooks/useImageColors";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import { pause as pausePlayback, playTracks } from "@/services/player";
 import { registerStationClick } from "@/services/radioBrowser/stations";
+import useApp from "@/stores/app";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
 import useRadioStations, {
   radioFavoritesForScope,
@@ -122,6 +123,7 @@ export default function InternetRadioStationDetail() {
   );
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const isLandscape = useApp((s) => s.isLandscape);
   const isPlaying = useIsPlaying();
   // Only server stations need homepage scraping for cover art — Radio-Browser
   // (api) stations already provide an image, so skip the network round-trip.
@@ -239,115 +241,123 @@ export default function InternetRadioStationDetail() {
   };
 
   return (
-    <Box
-      className="h-full w-full"
-      style={{
-        paddingBottom: insets.bottom + bottomTabBarHeight,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }}
-    >
-      <LinearGradient
-        colors={[
-          (colors?.platform === "ios" ? colors.primary : colors?.lightMuted) ||
-            blue500,
-          "#000000",
-        ]}
-        className="px-6"
-        style={{ paddingTop: insets.top, paddingHorizontal: 24 }}
+    <Box className="h-full w-full">
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom:
+            insets.bottom + bottomTabBarHeight + (isLandscape ? 48 : 0),
+        }}
+        showsVerticalScrollIndicator={false}
       >
-        <HStack className="mt-6 items-start justify-between">
-          <FadeOutScaleDown
-            onPress={() => goBackOrHome(router)}
-            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-          >
-            <ArrowLeft size={24} color={white} />
-          </FadeOutScaleDown>
-          <ImageWithFallback
-            source={image ? { uri: image } : undefined}
-            className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center"
-            alt="Internet radio station cover"
-            contentFit="contain"
-            fallback={
-              <Box className="w-[70%] aspect-square rounded-md bg-primary-600 items-center justify-center">
-                <Radio size={48} color={white} />
-              </Box>
-            }
-          />
-          <Box className="w-10" />
-        </HStack>
-        <VStack>
-          <HStack className="mt-5 items-center justify-between">
-            <Heading numberOfLines={1} className="text-white" size="2xl">
-              {name}
-            </Heading>
-          </HStack>
-          <HStack className="mt-4 items-center justify-between">
-            <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown onPress={handlePresentModalPress}>
-                <EllipsisVertical color={white} />
-              </FadeOutScaleDown>
-              <AnimatedHeart
-                filled={isFavorite}
-                onPress={handleToggleFavoritePress}
-              />
-            </HStack>
-            <HStack className="items-center gap-x-4">
-              <PlayPauseButton
-                isPlaying={isPlaying}
-                onPress={handlePlayPausePress}
-                size={48}
-                iconSize={24}
-                color={white}
-                className="bg-emerald-500"
-              />
-            </HStack>
-          </HStack>
-        </VStack>
-      </LinearGradient>
-      <VStack>
-        {hasRadioBrowserInfo && (
-          <VStack className="px-6 mt-6 gap-y-3">
-            {!!tagList && (
-              <HStack className="items-center gap-x-3">
-                <Tag size={18} color={primary100} />
-                <Text className="flex-1 text-md text-primary-100">
-                  {tagList}
-                </Text>
-              </HStack>
-            )}
-            {!!locationList && (
-              <HStack className="items-center gap-x-3">
-                <MapPin size={18} color={primary100} />
-                <Text className="flex-1 text-md text-primary-100">
-                  {locationList}
-                </Text>
-              </HStack>
-            )}
-            {!!languageList && (
-              <HStack className="items-center gap-x-3">
-                <Languages size={18} color={primary100} />
-                <Text className="flex-1 text-md text-primary-100">
-                  {languageList}
-                </Text>
-              </HStack>
-            )}
-          </VStack>
-        )}
-        {homePageUrl && (
-          <Center className="mt-6">
+        <LinearGradient
+          colors={[
+            (colors?.platform === "ios"
+              ? colors.primary
+              : colors?.lightMuted) || blue500,
+            "#000000",
+          ]}
+          className="px-6"
+          style={{ paddingTop: insets.top, paddingHorizontal: 24 }}
+        >
+          <HStack className="mt-6 items-start justify-between">
             <FadeOutScaleDown
-              className="flex flex-row gap-x-2 items-center justify-center py-3 px-8 border border-white bg-white rounded-full ml-4 mt-4"
-              onPress={handleVisitHomePagePress}
+              onPress={() => goBackOrHome(router)}
+              className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
             >
-              <SquareArrowOutUpRight size={20} color={gray800} />
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.internetRadioStations.visitHomePage")}
-              </Text>
+              <ArrowLeft size={24} color={white} />
             </FadeOutScaleDown>
-          </Center>
-        )}
-      </VStack>
+            <ImageWithFallback
+              source={image ? { uri: image } : undefined}
+              className={`${
+                isLandscape ? "w-[45%]" : "w-[70%]"
+              } aspect-square rounded-md bg-primary-600 items-center justify-center`}
+              alt="Internet radio station cover"
+              contentFit="contain"
+              fallback={
+                <Box
+                  className={`${
+                    isLandscape ? "w-[45%]" : "w-[70%]"
+                  } aspect-square rounded-md bg-primary-600 items-center justify-center`}
+                >
+                  <Radio size={48} color={white} />
+                </Box>
+              }
+            />
+            <Box className="w-10" />
+          </HStack>
+          <VStack>
+            <HStack className="mt-5 items-center justify-between">
+              <Heading numberOfLines={1} className="text-white" size="2xl">
+                {name}
+              </Heading>
+            </HStack>
+            <HStack className="mt-4 items-center justify-between">
+              <HStack className="items-center gap-x-4">
+                <FadeOutScaleDown onPress={handlePresentModalPress}>
+                  <EllipsisVertical color={white} />
+                </FadeOutScaleDown>
+                <AnimatedHeart
+                  filled={isFavorite}
+                  onPress={handleToggleFavoritePress}
+                />
+              </HStack>
+              <HStack className="items-center gap-x-4">
+                <PlayPauseButton
+                  isPlaying={isPlaying}
+                  onPress={handlePlayPausePress}
+                  size={48}
+                  iconSize={24}
+                  color={white}
+                  className="bg-emerald-500"
+                />
+              </HStack>
+            </HStack>
+          </VStack>
+        </LinearGradient>
+        <VStack>
+          {hasRadioBrowserInfo && (
+            <VStack className="px-6 mt-6 gap-y-3">
+              {!!tagList && (
+                <HStack className="items-center gap-x-3">
+                  <Tag size={18} color={primary100} />
+                  <Text className="flex-1 text-md text-primary-100">
+                    {tagList}
+                  </Text>
+                </HStack>
+              )}
+              {!!locationList && (
+                <HStack className="items-center gap-x-3">
+                  <MapPin size={18} color={primary100} />
+                  <Text className="flex-1 text-md text-primary-100">
+                    {locationList}
+                  </Text>
+                </HStack>
+              )}
+              {!!languageList && (
+                <HStack className="items-center gap-x-3">
+                  <Languages size={18} color={primary100} />
+                  <Text className="flex-1 text-md text-primary-100">
+                    {languageList}
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
+          )}
+          {homePageUrl && (
+            <Center className="mt-6">
+              <FadeOutScaleDown
+                className="flex flex-row gap-x-2 items-center justify-center py-3 px-8 border border-white bg-white rounded-full ml-4 mt-4"
+                onPress={handleVisitHomePagePress}
+              >
+                <SquareArrowOutUpRight size={20} color={gray800} />
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.internetRadioStations.visitHomePage")}
+                </Text>
+              </FadeOutScaleDown>
+            </Center>
+          )}
+        </VStack>
+      </ScrollView>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
@@ -359,12 +369,7 @@ export default function InternetRadioStationDetail() {
         }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView
-          style={{
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
@@ -403,7 +408,7 @@ export default function InternetRadioStationDetail() {
               onDeleted={() => goBackOrHome(router)}
             />
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
     </Box>
   );

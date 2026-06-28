@@ -1,7 +1,7 @@
 import {
   BottomSheetBackdrop,
   type BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
@@ -486,7 +486,7 @@ export default function ServerPodcastChannelScreen() {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
         backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
-        <BottomSheetView style={{ flex: 1, alignItems: "center" }}>
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
@@ -526,7 +526,7 @@ export default function ServerPodcastChannelScreen() {
               </FadeOutScaleDown>
             </VStack>
           </Box>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </CenteredBottomSheetModal>
       <AlertDialog
         isOpen={showDeleteDialog}
