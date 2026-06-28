@@ -470,7 +470,7 @@ export const ui = {
       'Sans pistage, sans télémétrie',
       'Fonctionne entièrement hors ligne',
       'Compatible Android Auto',
-      'Navidrome, Jellyfin et OpenSubsonic',
+      'Navidrome, Jellyfin, OpenSubsonic ou une bibliothèque locale',
     ],
     features: {
       headingPre: 'Un lecteur qui',
