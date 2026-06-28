@@ -55,6 +55,7 @@ I'm also currently working on a [F-Droid](https://f-droid.org/) package.
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net
 - Bookmarks support. Easy access to a song or podcast favorite parts
+- Landscape mode support
 - Android homescreen widgets
 - Android Auto support
 - Navidrome smart playlists beta support
