@@ -934,6 +934,8 @@ export default {
         clearConfirmMessage:
           "All tracks will be removed from the queue and playback will stop.",
         clearedMessage: "Queue cleared",
+        nowPlaying: "Now playing",
+        nextInQueue: "Next in queue",
         removeFromQueue: "Remove from queue",
         createPlaylist: "Create playlist from queue",
         createPlaylistTitle: "New playlist from queue",

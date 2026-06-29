@@ -857,6 +857,8 @@ export default {
         clearConfirmTitle: "清空队列？",
         clearConfirmMessage: "将移除队列中所有曲目并停止播放。",
         clearedMessage: "队列已清空",
+        nowPlaying: "正在播放",
+        nextInQueue: "即将播放",
         removeFromQueue: "从队列中移除",
         createPlaylist: "从队列中创建歌单",
         createPlaylistTitle: "从队列新建歌单",

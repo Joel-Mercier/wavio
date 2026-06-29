@@ -906,6 +906,8 @@ export default {
         clearConfirmMessage:
           "Все треки будут убраны из очереди и воспроизведение остановится.",
         clearedMessage: "Очередь очищена",
+        nowPlaying: "Сейчас играет",
+        nextInQueue: "Далее в очереди",
         removeFromQueue: "Удалить из очереди",
         createPlaylist: "Создать плейлист из очереди",
         createPlaylistTitle: "Новый плейлист из очереди",

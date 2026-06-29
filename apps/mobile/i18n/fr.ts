@@ -959,6 +959,8 @@ export default {
         clearConfirmMessage:
           "Tous les morceaux seront retirés de la file et la lecture s'arrêtera",
         clearedMessage: "File vidée",
+        nowPlaying: "En cours de lecture",
+        nextInQueue: "À suivre",
         removeFromQueue: "Retirer de la file",
         createPlaylist: "Créer une playlist depuis la file",
         createPlaylistTitle: "Nouvelle playlist depuis la file",

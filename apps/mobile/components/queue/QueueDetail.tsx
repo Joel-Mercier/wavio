@@ -57,6 +57,10 @@ import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
+type QueueRow =
+  | { kind: "header"; key: string; label: string }
+  | { kind: "track"; key: string; track: QueueTrack; index: number };
+
 const queueTrackToChild = (track: QueueTrack): Child =>
   ({
     id: track.id,
@@ -113,8 +117,35 @@ export default function QueueDetail() {
     useQueue.getState().setCurrentIndex(index);
     playLocal();
   };
-  const playingTrackId =
-    currentIndex != null ? queue[currentIndex]?.id : undefined;
+  const hasCurrent =
+    currentIndex != null && currentIndex >= 0 && currentIndex < queue.length;
+  const playingTrackId = hasCurrent ? queue[currentIndex]?.id : undefined;
+  const currentTrack = hasCurrent ? queue[currentIndex] : undefined;
+
+  // Tracks already played (before the current index) are hidden from the queue.
+  const queueRows = useMemo<QueueRow[]>(() => {
+    const rows: QueueRow[] = [];
+    const start = hasCurrent ? currentIndex : 0;
+    for (let index = start; index < queue.length; index++) {
+      const track = queue[index];
+      if (index === currentIndex) {
+        rows.push({
+          kind: "header",
+          key: "header-now-playing",
+          label: t("app.queue.nowPlaying"),
+        });
+      }
+      rows.push({ kind: "track", key: `${track.id}:${index}`, track, index });
+      if (index === currentIndex && index < queue.length - 1) {
+        rows.push({
+          kind: "header",
+          key: "header-next-in-queue",
+          label: t("app.queue.nextInQueue"),
+        });
+      }
+    }
+    return rows;
+  }, [queue, currentIndex, hasCurrent, t]);
 
   // Auto-exit edit mode when queue empties.
   useEffect(() => {
@@ -124,22 +155,22 @@ export default function QueueDetail() {
     }
   }, [queue.length, editMode]);
 
+  // Only the tracks after the current one are reorderable; the played history
+  // and the currently playing track keep their position.
   const handleEnterEdit = () => {
-    setLocalOrder(queue.slice());
+    setLocalOrder(queue.slice(hasCurrent ? currentIndex + 1 : 0));
     setEditMode(true);
   };
 
   const handleExitEdit = () => {
+    const before = hasCurrent ? queue.slice(0, currentIndex) : [];
+    const head = currentTrack ? [currentTrack] : [];
+    const nextQueue = [...before, ...head, ...localOrder];
     const orderChanged =
-      localOrder.length !== queue.length ||
-      localOrder.some((t, i) => t.id !== queue[i]?.id);
+      nextQueue.length !== queue.length ||
+      nextQueue.some((t, i) => t.id !== queue[i]?.id);
     if (orderChanged) {
-      let nextIndex = currentIndex;
-      if (playingTrackId) {
-        const newIdx = localOrder.findIndex((t) => t.id === playingTrackId);
-        nextIndex = newIdx >= 0 ? newIdx : 0;
-      }
-      setQueue(localOrder, nextIndex ?? 0);
+      setQueue(nextQueue, hasCurrent ? currentIndex : (currentIndex ?? 0));
     }
     setEditMode(false);
     setLocalOrder([]);
@@ -318,50 +349,93 @@ export default function QueueDetail() {
               </Text>
             </VStack>
           ) : editMode ? (
-            <DraggableFlashList
-              data={localOrder}
-              keyExtractor={(item, index) => `${item.id}:${index}`}
-              itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
-              onSort={handleListSort}
-              contentContainerStyle={{
-                paddingBottom:
-                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
-              }}
-              showsVerticalScrollIndicator={false}
-              renderItem={(item, _index, isActive, beginDrag) => (
-                <QueueEditTrackItem
-                  item={item}
-                  beginDrag={beginDrag}
-                  isActive={isActive}
-                  isPlaying={item.id === playingTrackId}
-                  onRemovePress={() => handleRemoveFromQueue(item.id)}
-                />
+            <VStack className="flex-1">
+              {currentTrack && (
+                <>
+                  <Heading
+                    size="sm"
+                    className="text-gray-300 mt-6 mb-2"
+                    numberOfLines={1}
+                  >
+                    {t("app.queue.nowPlaying")}
+                  </Heading>
+                  <QueueEditTrackItem
+                    item={currentTrack}
+                    beginDrag={() => {}}
+                    isActive={false}
+                    isPlaying
+                    onRemovePress={() => {}}
+                    pinned
+                  />
+                  {localOrder.length > 0 && (
+                    <Heading
+                      size="sm"
+                      className="text-gray-300 mt-6 mb-2"
+                      numberOfLines={1}
+                    >
+                      {t("app.queue.nextInQueue")}
+                    </Heading>
+                  )}
+                </>
               )}
-            />
+              <DraggableFlashList
+                data={localOrder}
+                keyExtractor={(item, index) => `${item.id}:${index}`}
+                itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
+                onSort={handleListSort}
+                contentContainerStyle={{
+                  paddingBottom:
+                    insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+                }}
+                showsVerticalScrollIndicator={false}
+                renderItem={(item, _index, isActive, beginDrag) => (
+                  <QueueEditTrackItem
+                    item={item}
+                    beginDrag={beginDrag}
+                    isActive={isActive}
+                    isPlaying={item.id === playingTrackId}
+                    onRemovePress={() => handleRemoveFromQueue(item.id)}
+                  />
+                )}
+              />
+            </VStack>
           ) : (
             <FlashList
-              data={queue}
-              keyExtractor={(item, index) => `${item.id}:${index}`}
+              data={queueRows}
+              keyExtractor={(item) => item.key}
+              getItemType={(item) => item.kind}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom:
                   insets.bottom + bottomTabBarHeight + floatingPlayerInset,
               }}
-              renderItem={({ item, index }) =>
-                item.source === "podcast" ? (
+              renderItem={({ item }) => {
+                if (item.kind === "header") {
+                  return (
+                    <Heading
+                      size="sm"
+                      className="text-gray-300 mt-6 mb-2"
+                      numberOfLines={1}
+                    >
+                      {item.label}
+                    </Heading>
+                  );
+                }
+                return item.track.source === "podcast" ? (
                   <QueuePodcastListItem
-                    track={item}
-                    index={index}
+                    track={item.track}
+                    index={item.index}
                     onPress={handlePodcastPress}
                   />
                 ) : (
                   <TrackListItem
-                    track={tracks[index]}
-                    index={index}
+                    track={tracks[item.index]}
+                    index={item.index}
                     onPress={handleTrackPress}
+                    disableFirstItemMargin={item.index === currentIndex}
                   />
-                )
-              }
+                );
+              }}
             />
           )}
         </Box>
