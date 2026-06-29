@@ -24,6 +24,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { orderPlaylistEntries } from "@/utils/playlistOrder";
 
 export default function PlaylistDetailSearch() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -34,8 +35,8 @@ export default function PlaylistDetailSearch() {
   }>();
   const playlistSorts = usePlaylists((store) => store.playlistSorts);
   const sort = playlistSorts[id] ?? "addedAtAsc";
-  const getPlaylistTrackPositions = usePlaylists(
-    (store) => store.getPlaylistTrackPositions,
+  const getPlaylistTrackOrder = usePlaylists(
+    (store) => store.getPlaylistTrackOrder,
   );
   const { t } = useTranslation();
   const router = useRouter();
@@ -62,23 +63,11 @@ export default function PlaylistDetailSearch() {
       return null;
     }
     let newData = [...playlistData.playlist.entry];
-    const storedPositions = getPlaylistTrackPositions(id);
+    const storedOrder = getPlaylistTrackOrder(id);
 
-    // If we have stored positions and sort is "addedAtAsc", use stored order
-    if (storedPositions && sort === "addedAtAsc") {
-      newData = newData.sort((a, b) => {
-        const posA = storedPositions[a.id];
-        const posB = storedPositions[b.id];
-        // If both have positions, sort by position
-        if (posA !== undefined && posB !== undefined) {
-          return posA - posB;
-        }
-        // If only one has position, prioritize it
-        if (posA !== undefined) return -1;
-        if (posB !== undefined) return 1;
-        // If neither has position, maintain original order
-        return 0;
-      });
+    // If we have a stored custom order and sort is "addedAtAsc", use it
+    if (storedOrder && sort === "addedAtAsc") {
+      newData = orderPlaylistEntries(newData, storedOrder);
     } else if (sort === "addedAtDesc") {
       newData = newData.reverse();
     } else if (sort === "alphabeticalAsc") {
@@ -109,7 +98,7 @@ export default function PlaylistDetailSearch() {
     const fuse = new Fuse<Child>(newData, options);
     const result = fuse.search(query);
     return result;
-  }, [playlistData, sort, query, id, getPlaylistTrackPositions]);
+  }, [playlistData, sort, query, id, getPlaylistTrackOrder]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);
   const handleTrackPress = useTrackListPress(trackList);
@@ -152,7 +141,7 @@ export default function PlaylistDetailSearch() {
       <FlashList
         data={isLoading ? loadingData(6) : (data ?? [])}
         keyExtractor={(item, index) =>
-          isLoading ? `skeleton-${index}` : item.item.id
+          isLoading ? `skeleton-${index}` : `${item.item.id}-${index}`
         }
         renderItem={({
           item,

@@ -14,21 +14,10 @@ interface PlaylistsStore {
   playlistSorts: Record<string, PlaylistSortType>;
   getPlaylistSort: (playlistId: string) => PlaylistSortType;
   setPlaylistSort: (playlistId: string, sort: PlaylistSortType) => void;
-  playlistTrackPositions: Record<string, Record<string, number>>;
-  getPlaylistTrackPositions: (
-    playlistId: string,
-  ) => Record<string, number> | undefined;
-  setPlaylistTrackPositions: (
-    playlistId: string,
-    positions: Record<string, number>,
-  ) => void;
-  getTrackPosition: (playlistId: string, trackId: string) => number | undefined;
-  setTrackPosition: (
-    playlistId: string,
-    trackId: string,
-    position: number,
-  ) => void;
-  clearPlaylistTrackPositions: (playlistId: string) => void;
+  playlistTrackOrders: Record<string, string[]>;
+  getPlaylistTrackOrder: (playlistId: string) => string[] | undefined;
+  setPlaylistTrackOrder: (playlistId: string, order: string[]) => void;
+  clearPlaylistTrackOrder: (playlistId: string) => void;
 }
 
 const usePlaylistsBase = create<PlaylistsStore>()(
@@ -47,56 +36,31 @@ const usePlaylistsBase = create<PlaylistsStore>()(
           },
         }));
       },
-      playlistTrackPositions: {},
-      getPlaylistTrackPositions: (playlistId: string) => {
+      playlistTrackOrders: {},
+      getPlaylistTrackOrder: (playlistId: string) => {
         const state = get();
-        return state.playlistTrackPositions[playlistId];
+        return state.playlistTrackOrders[playlistId];
       },
-      setPlaylistTrackPositions: (
-        playlistId: string,
-        positions: Record<string, number>,
-      ) => {
+      setPlaylistTrackOrder: (playlistId: string, order: string[]) => {
         set((state) => ({
-          playlistTrackPositions: {
-            ...state.playlistTrackPositions,
-            [playlistId]: positions,
+          playlistTrackOrders: {
+            ...state.playlistTrackOrders,
+            [playlistId]: order,
           },
         }));
       },
-      getTrackPosition: (playlistId: string, trackId: string) => {
-        const state = get();
-        return state.playlistTrackPositions[playlistId]?.[trackId];
-      },
-      setTrackPosition: (
-        playlistId: string,
-        trackId: string,
-        position: number,
-      ) => {
+      clearPlaylistTrackOrder: (playlistId: string) => {
         set((state) => {
-          const currentPositions =
-            state.playlistTrackPositions[playlistId] || {};
+          const { [playlistId]: _, ...rest } = state.playlistTrackOrders;
           return {
-            playlistTrackPositions: {
-              ...state.playlistTrackPositions,
-              [playlistId]: {
-                ...currentPositions,
-                [trackId]: position,
-              },
-            },
-          };
-        });
-      },
-      clearPlaylistTrackPositions: (playlistId: string) => {
-        set((state) => {
-          const { [playlistId]: _, ...rest } = state.playlistTrackPositions;
-          return {
-            playlistTrackPositions: rest,
+            playlistTrackOrders: rest,
           };
         });
       },
     }),
     {
       name: "playlists",
+      version: 1,
       storage: createJSONStorage(() =>
         createDynamicScopedStorage(() => {
           const { url, username } = useAuthBase.getState();
@@ -104,6 +68,27 @@ const usePlaylistsBase = create<PlaylistsStore>()(
         }),
       ),
       skipHydration: true,
+      // v0 persisted custom order as a per-track position map
+      // (`playlistTrackPositions: Record<trackId, number>`). Rebuild the ordered
+      // id list by sorting each playlist's tracks by their saved position.
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<PlaylistsStore> & {
+          playlistTrackPositions?: Record<string, Record<string, number>>;
+        };
+        if (version < 1 && state.playlistTrackPositions) {
+          const orders: Record<string, string[]> = {};
+          for (const [playlistId, positions] of Object.entries(
+            state.playlistTrackPositions,
+          )) {
+            orders[playlistId] = Object.entries(positions)
+              .sort((a, b) => a[1] - b[1])
+              .map(([trackId]) => trackId);
+          }
+          state.playlistTrackOrders = orders;
+          state.playlistTrackPositions = undefined;
+        }
+        return state as PlaylistsStore;
+      },
     },
   ),
 );

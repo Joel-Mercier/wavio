@@ -31,6 +31,7 @@ import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { orderPlaylistEntries } from "@/utils/playlistOrder";
 import { cn } from "@/utils/tailwind";
 
 export default function ReorderPlaylistScreen() {
@@ -42,7 +43,7 @@ export default function ReorderPlaylistScreen() {
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<Child[]>([]);
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
-  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const [removedItems, setRemovedItems] = useState<Set<Child>>(new Set());
   const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const floatingPlayerInset = useFloatingPlayerInset();
@@ -52,11 +53,11 @@ export default function ReorderPlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const playlistSorts = usePlaylists((store) => store.playlistSorts);
   const sort = playlistSorts[id] ?? "addedAtAsc";
-  const getPlaylistTrackPositions = usePlaylists(
-    (store) => store.getPlaylistTrackPositions,
+  const getPlaylistTrackOrder = usePlaylists(
+    (store) => store.getPlaylistTrackOrder,
   );
-  const setPlaylistTrackPositions = usePlaylists(
-    (store) => store.setPlaylistTrackPositions,
+  const setPlaylistTrackOrder = usePlaylists(
+    (store) => store.setPlaylistTrackOrder,
   );
   const { data: playlistData, isLoading, error } = usePlaylist(id);
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -64,18 +65,15 @@ export default function ReorderPlaylistScreen() {
     defaultValues: {},
     onSubmit: async () => {
       if (order.length > 0) {
-        const positions: Record<string, number> = {};
-        order.forEach((item, index) => {
-          positions[item.id] = index;
-        });
-        setPlaylistTrackPositions(id, positions);
+        setPlaylistTrackOrder(
+          id,
+          order.map((item) => item.id),
+        );
       }
 
       const serverEntries = playlistData?.playlist?.entry || [];
       const songIndexToRemove = serverEntries
-        .map((entry, index) =>
-          removedIds.has(entry.id) ? String(index) : null,
-        )
+        .map((entry, index) => (removedItems.has(entry) ? String(index) : null))
         .filter((value): value is string => value !== null);
 
       doUpdatePlaylist.mutate(
@@ -129,7 +127,7 @@ export default function ReorderPlaylistScreen() {
         beginDrag={beginDrag}
         isActive={isActive}
         handleRemoveFromPlaylistPress={() =>
-          handleRemoveFromPlaylistPress(item.id)
+          handleRemoveFromPlaylistPress(item)
         }
       />
     );
@@ -144,31 +142,22 @@ export default function ReorderPlaylistScreen() {
     setOrder(copy);
   };
 
-  const handleRemoveFromPlaylistPress = (trackId: string) => {
-    setRemovedIds((prev) => {
+  const handleRemoveFromPlaylistPress = (track: Child) => {
+    setRemovedItems((prev) => {
       const next = new Set(prev);
-      next.add(trackId);
+      next.add(track);
       return next;
     });
-    setOrder((prev) => prev.filter((item) => item.id !== trackId));
+    setOrder((prev) => prev.filter((item) => item !== track));
   };
 
   useEffect(() => {
     if (playlistData?.playlist) {
       const entries = playlistData.playlist.entry || [];
-      const storedPositions = getPlaylistTrackPositions(id);
+      const storedOrder = getPlaylistTrackOrder(id);
 
-      if (storedPositions && sort === "addedAtAsc") {
-        const sorted = [...entries].sort((a, b) => {
-          const posA = storedPositions[a.id];
-          const posB = storedPositions[b.id];
-          if (posA !== undefined && posB !== undefined) {
-            return posA - posB;
-          }
-          if (posA !== undefined) return -1;
-          if (posB !== undefined) return 1;
-          return 0;
-        });
+      if (storedOrder && sort === "addedAtAsc") {
+        const sorted = orderPlaylistEntries(entries, storedOrder);
         setOrder(sorted);
         setInitialOrder(sorted);
       } else {
@@ -176,7 +165,7 @@ export default function ReorderPlaylistScreen() {
         setInitialOrder(entries);
       }
     }
-  }, [playlistData, id, sort, getPlaylistTrackPositions]);
+  }, [playlistData, id, sort, getPlaylistTrackOrder]);
 
   const data = useMemo(() => {
     if (
@@ -187,22 +176,10 @@ export default function ReorderPlaylistScreen() {
       return null;
     }
     const newData = [...playlistData.playlist.entry];
-    const storedPositions = getPlaylistTrackPositions(id);
+    const storedOrder = getPlaylistTrackOrder(id);
 
-    if (storedPositions && sort === "addedAtAsc") {
-      return newData.sort((a, b) => {
-        const posA = storedPositions[a.id];
-        const posB = storedPositions[b.id];
-        // If both have positions, sort by position
-        if (posA !== undefined && posB !== undefined) {
-          return posA - posB;
-        }
-        // If only one has position, prioritize it
-        if (posA !== undefined) return -1;
-        if (posB !== undefined) return 1;
-        // If neither has position, maintain original order
-        return 0;
-      });
+    if (storedOrder && sort === "addedAtAsc") {
+      return orderPlaylistEntries(newData, storedOrder);
     }
 
     if (sort === "addedAtAsc") {
@@ -221,14 +198,14 @@ export default function ReorderPlaylistScreen() {
         return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
       });
     }
-  }, [playlistData, sort, id, getPlaylistTrackPositions]);
+  }, [playlistData, sort, id, getPlaylistTrackOrder]);
 
   const hasOrderChanged = useMemo(() => {
     if (order.length !== initialOrder.length) return true;
     return order.some((item, index) => item.id !== initialOrder[index]?.id);
   }, [order, initialOrder]);
 
-  const canSave = hasOrderChanged || removedIds.size > 0;
+  const canSave = hasOrderChanged || removedItems.size > 0;
 
   return (
     <Box className="h-full flex-1">
@@ -282,7 +259,7 @@ export default function ReorderPlaylistScreen() {
       {!error && (!isLoading || playlistData) && (
         <DraggableFlashList
           data={order.length > 0 ? order : data || []}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={renderItem}
           itemHeight={70}
           onSort={handleListSort}

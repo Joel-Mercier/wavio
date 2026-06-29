@@ -27,10 +27,7 @@ import usePlaylists from "@/stores/playlists";
 const get = () => usePlaylists.getState();
 
 beforeEach(() => {
-  usePlaylists.setState(
-    { playlistSorts: {}, playlistTrackPositions: {} },
-    false,
-  );
+  usePlaylists.setState({ playlistSorts: {}, playlistTrackOrders: {} }, false);
 });
 
 describe("playlists store - sort", () => {
@@ -46,40 +43,28 @@ describe("playlists store - sort", () => {
   });
 });
 
-describe("playlists store - track positions", () => {
-  it("setPlaylistTrackPositions replaces the whole map for the playlist", () => {
-    get().setPlaylistTrackPositions("p1", { t1: 10, t2: 20 });
-    expect(get().getPlaylistTrackPositions("p1")).toEqual({ t1: 10, t2: 20 });
-    get().setPlaylistTrackPositions("p1", { t3: 30 });
-    expect(get().getPlaylistTrackPositions("p1")).toEqual({ t3: 30 });
+describe("playlists store - track order", () => {
+  it("setPlaylistTrackOrder replaces the order for the playlist", () => {
+    get().setPlaylistTrackOrder("p1", ["t1", "t2"]);
+    expect(get().getPlaylistTrackOrder("p1")).toEqual(["t1", "t2"]);
+    get().setPlaylistTrackOrder("p1", ["t3"]);
+    expect(get().getPlaylistTrackOrder("p1")).toEqual(["t3"]);
   });
 
-  it("setTrackPosition merges into existing positions", () => {
-    get().setTrackPosition("p1", "t1", 10);
-    get().setTrackPosition("p1", "t2", 20);
-    expect(get().getTrackPosition("p1", "t1")).toBe(10);
-    expect(get().getTrackPosition("p1", "t2")).toBe(20);
+  it("preserves duplicate track ids in the saved order", () => {
+    get().setPlaylistTrackOrder("p1", ["t1", "t2", "t1"]);
+    expect(get().getPlaylistTrackOrder("p1")).toEqual(["t1", "t2", "t1"]);
   });
 
-  it("setTrackPosition updates an existing track without affecting others", () => {
-    get().setTrackPosition("p1", "t1", 10);
-    get().setTrackPosition("p1", "t2", 20);
-    get().setTrackPosition("p1", "t1", 99);
-    expect(get().getTrackPosition("p1", "t1")).toBe(99);
-    expect(get().getTrackPosition("p1", "t2")).toBe(20);
+  it("getPlaylistTrackOrder returns undefined for an unknown playlist", () => {
+    expect(get().getPlaylistTrackOrder("missing")).toBeUndefined();
   });
 
-  it("getTrackPosition returns undefined for unknown playlist or track", () => {
-    expect(get().getTrackPosition("p1", "missing")).toBeUndefined();
-    get().setTrackPosition("p1", "t1", 10);
-    expect(get().getTrackPosition("p2", "t1")).toBeUndefined();
-  });
-
-  it("clearPlaylistTrackPositions only removes the targeted playlist", () => {
-    get().setTrackPosition("p1", "t1", 10);
-    get().setTrackPosition("p2", "t2", 20);
-    get().clearPlaylistTrackPositions("p1");
-    expect(get().getPlaylistTrackPositions("p1")).toBeUndefined();
-    expect(get().getPlaylistTrackPositions("p2")).toEqual({ t2: 20 });
+  it("clearPlaylistTrackOrder only removes the targeted playlist", () => {
+    get().setPlaylistTrackOrder("p1", ["t1"]);
+    get().setPlaylistTrackOrder("p2", ["t2"]);
+    get().clearPlaylistTrackOrder("p1");
+    expect(get().getPlaylistTrackOrder("p1")).toBeUndefined();
+    expect(get().getPlaylistTrackOrder("p2")).toEqual(["t2"]);
   });
 });

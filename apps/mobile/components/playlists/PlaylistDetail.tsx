@@ -100,6 +100,7 @@ import { formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { orderPlaylistEntries } from "@/utils/playlistOrder";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -109,7 +110,10 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 const SKELETON_DATA = loadingData(16);
 const EMPTY_DATA: Child[] = [];
-const keyExtractor = (item: Child, index: number) => item.id ?? String(index);
+// A playlist can contain the same track more than once, so the track id alone
+// isn't unique — pair it with the row index to keep FlashList keys distinct.
+const keyExtractor = (item: Child, index: number) =>
+  `${item.id ?? "row"}-${index}`;
 
 export default function PlaylistDetail() {
   const [white, emerald500, gray200, red500, black, gray400] =
@@ -127,8 +131,8 @@ export default function PlaylistDetail() {
   const setPlaylistSort = usePlaylists((store) => store.setPlaylistSort);
   const playlistSorts = usePlaylists((store) => store.playlistSorts);
   const sort = playlistSorts[id] ?? "addedAtAsc";
-  const getPlaylistTrackPositions = usePlaylists(
-    (store) => store.getPlaylistTrackPositions,
+  const getPlaylistTrackOrder = usePlaylists(
+    (store) => store.getPlaylistTrackOrder,
   );
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
@@ -339,48 +343,6 @@ export default function PlaylistDetail() {
     );
   };
 
-  const handleDeleteFromPlaylistPress = useCallback(
-    (index: string) => {
-      doUpdatePlaylist.mutate(
-        { id, songIndexToRemove: [index] },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["playlist", id] });
-            queryClient.invalidateQueries({ queryKey: ["playlists"] });
-            toast.show({
-              placement: "top",
-              duration: 3000,
-              render: () => (
-                <Toast action="success">
-                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                  <ToastDescription>
-                    {t("app.playlists.removeTrackSuccessMessage")}
-                  </ToastDescription>
-                </Toast>
-              ),
-            });
-          },
-          onError: (error) => {
-            logError(error);
-            toast.show({
-              placement: "top",
-              duration: 3000,
-              render: () => (
-                <Toast action="error">
-                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                  <ToastDescription>
-                    {t("app.playlists.removeTrackErrorMessage")}
-                  </ToastDescription>
-                </Toast>
-              ),
-            });
-          },
-        },
-      );
-    },
-    [doUpdatePlaylist.mutate, id, queryClient, toast, t],
-  );
-
   const isPlaying = useIsPlaying();
 
   const handleTrackPressCallback = useCallback(() => {
@@ -466,19 +428,10 @@ export default function PlaylistDetail() {
       return null;
     }
     const newData = [...playlistData.playlist.entry];
-    const storedPositions = getPlaylistTrackPositions(id);
+    const storedOrder = getPlaylistTrackOrder(id);
 
-    if (storedPositions && sort === "addedAtAsc") {
-      return newData.sort((a, b) => {
-        const posA = storedPositions[a.id];
-        const posB = storedPositions[b.id];
-        if (posA !== undefined && posB !== undefined) {
-          return posA - posB;
-        }
-        if (posA !== undefined) return -1;
-        if (posB !== undefined) return 1;
-        return 0;
-      });
+    if (storedOrder && sort === "addedAtAsc") {
+      return orderPlaylistEntries(newData, storedOrder);
     }
 
     if (sort === "addedAtAsc") {
@@ -497,7 +450,61 @@ export default function PlaylistDetail() {
         return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
       });
     }
-  }, [playlistData, sort, id, getPlaylistTrackPositions]);
+  }, [playlistData, sort, id, getPlaylistTrackOrder]);
+
+  const handleDeleteFromPlaylistPress = useCallback(
+    (displayIndex: string) => {
+      const entries = playlistData?.playlist?.entry ?? [];
+      const item = data?.[Number(displayIndex)];
+      const serverIndex = item ? entries.indexOf(item) : -1;
+      if (serverIndex < 0) return;
+      doUpdatePlaylist.mutate(
+        { id, songIndexToRemove: [String(serverIndex)] },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["playlist", id] });
+            queryClient.invalidateQueries({ queryKey: ["playlists"] });
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.playlists.removeTrackSuccessMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: (error) => {
+            logError(error);
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.playlists.removeTrackErrorMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+        },
+      );
+    },
+    [
+      data,
+      playlistData?.playlist?.entry,
+      doUpdatePlaylist.mutate,
+      id,
+      queryClient,
+      toast,
+      t,
+    ],
+  );
 
   const queueSource = useQueue((store) => store.source);
   const isActiveSource =

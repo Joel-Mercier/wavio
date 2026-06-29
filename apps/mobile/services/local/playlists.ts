@@ -19,7 +19,7 @@ import type { PlaylistWithSongs } from "@/services/openSubsonic/types";
 // On-device playlists, backed by the per-(server,user) SQLite database (see
 // db.ts). Mirrors services/openSubsonic/playlists.ts so the dispatch layer and
 // hooks consume identical shapes. Reordering isn't handled here — it's a
-// client-side overlay (stores/playlists.ts `setPlaylistTrackPositions`) layered
+// client-side overlay (stores/playlists.ts `setPlaylistTrackOrder`) layered
 // on top of every backend — so updatePlaylist only does rename / add / remove,
 // exactly like Subsonic's `updatePlaylist`.
 
