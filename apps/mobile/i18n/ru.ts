@@ -13,12 +13,12 @@ export default {
         recentlyAdded: "Новые",
         mostPlayed: "Популярные",
         topRated: "Лучшие",
-        random: "Рандом",
+        random: "Вперемешку",
         randomSongs: "Случайные треки",
         artists: "Исполнители",
-        yourPlaylists: "Ваши плейлисты",
-        starred: "Ваше избранное",
-        songsByGenre: "{{genre}} песни",
+        yourPlaylists: "Твои плейлисты",
+        starred: "Твое избранное",
+        songsByGenre: "{{genre}} треки",
         albumsByGenre: "{{genre}} альбомы",
         albumsByDecade: "Альбомы из {{decade}}-х",
         moreFromArtist: "Ещё от {{artist}}",
@@ -37,7 +37,7 @@ export default {
           newest: "Новые",
           highest: "Лучшие",
           frequent: "Популярные",
-          random: "Рандом",
+          random: "Вперемешку",
           nowPlaying: "Сейчас играет",
         },
       },
@@ -78,7 +78,7 @@ export default {
         recentlyAdded: "Новые",
         mostPlayed: "Популярные",
         topRated: "Лучшие",
-        random: "Рандом",
+        random: "Вперемешку",
         library: "Моя медиатека",
         playlists: "Плейлисты",
         albums: "Альбомы",
@@ -149,7 +149,7 @@ export default {
         addToQueue: "Добавить в очередь",
         deletePlaylistConfirmTitle: "Удалить плейлист",
         deletePlaylistConfirmDescription:
-          "Ты точно хочешь удалить плейлист? Плейлист будет удален навсегда, это действие нельзя отменить.",
+          "Точно хочешь удалить плейлист? Он будет удален навсегда, это действие нельзя отменить.",
         deletePlaylistSuccessMessage: "Плейлист удален",
         deletePlaylistErrorMessage: "Не удалось удалить плейлист",
         shareSuccessMessage: "Трек успешно добавлен в общий доступ",
@@ -197,11 +197,11 @@ export default {
         publishedAt: "{{distance}} назад",
         configureTaddyPodcasts: "Настроить в параметрах",
         taddyPodcastsNotConfigured: "Доступ к подкастам не настроен",
-        yourPodcasts: "Ваши подкасты",
+        yourPodcasts: "Твои подкасты",
         noServerPodcasts:
           "У тебя еще нет подкастов. Нажми +, чтобы добавить подкаст по RSS-ссылке",
         taddyDiscoveryHint:
-          "Хотите искать новые подкасты? Настройте доступ в параметрах.",
+          "Хочешь искать новые подкасты? Настрой доступ в параметрах.",
         noEpisodes: "Эпизодов пока нет",
         downloadEpisode: "Скачать эпизод",
         removeDownload: "Удалить загрузку",
@@ -401,7 +401,7 @@ export default {
       favoritePodcasts: {
         title: "Недавние эпизоды",
         noServerFavorites:
-          "У вас пока нет избранных подкастов. Откройте любой подкаст и нажмите на сердечко, чтобы добавить его сюда.",
+          "У тебя пока нет избранных подкастов. Открой любой подкаст и нажми на сердечко, чтобы добавить его сюда.",
       },
       newPlaylist: {
         title: "Придумай название плейлиста",
@@ -422,9 +422,9 @@ export default {
         streamingSection: "Стриминг",
         rolesSection: "Роли",
         usernameLabel: "Имя",
-        emailPlaceholder: "Введите почту",
+        emailPlaceholder: "Введи почту",
         newPasswordPlaceholder: "Новый пароль",
-        confirmPasswordPlaceholder: "Подтвердите новый пароль",
+        confirmPasswordPlaceholder: "Подтверди новый пароль",
         currentPasswordPlaceholder: "Текущий пароль",
         maxBitRatePlaceholder: "Максимальный битрейт (кбит/с)",
         musicFolderIdPlaceholder: "ID музыкальных папок (через запятую)",
@@ -555,7 +555,7 @@ export default {
         descriptionPlaceholder: "Добавь описание",
         publicLabel: "Сделать плейлист публичным",
         publicDescription: "Его смогут видеть все на сервере",
-        editPlaylistSuccessMessage: "Плейлист отредактирован",
+        editPlaylistSuccessMessage: "Плейлист обновлен",
         editPlaylistErrorMessage: "Не удалось применить изменения",
       },
       settings: {
@@ -564,7 +564,7 @@ export default {
           title: "Офлайн-режим",
           offlineModeLabel: "Офлайн-режим",
           offlineModeDescription:
-            "Автоматически скачивать песни из Любимых треков",
+            "Автоматически скачивать треки из Избранных",
           downloadedTracksCount:
             "{{count}}/{{total}} треков скачано ({{size}})",
           clearDownloadsLabel: "Очистить загрузки",
@@ -610,7 +610,7 @@ export default {
           scanMusicLibraryErrorDescription: "Не удалось запустить сканирование",
           scanStatusLabel: "Статус сканирования",
           scanStatusDescription:
-            "Отображает текущее состояние сканирования вашей медиатеки",
+            "Отображает текущее состояние сканирования твоей медиатеки",
           scanStatusLastScan: "Последнее сканирование: {{lastScan}} назад",
           scanStatuses: {
             idle: "Ожидание",
@@ -636,7 +636,7 @@ export default {
           countryAutomatic: "Автоматически",
           tagsLabel: "Жанровые категории",
           tagsDescription:
-            "Выберите, какие жанровые категории отображать на странице радиостанций.",
+            "Выбери, какие жанровые категории отображать на странице радиостанций.",
           tagsCount: "{{count}} выбрано",
           tagsSheetTitle: "Жанровые категории",
         },
@@ -659,12 +659,12 @@ export default {
             "На этом устройстве нет системного эквалайзера.",
           queueSyncLabel: "Синхронизация очереди",
           queueSyncDescription:
-            "Сохраняйте очередь воспроизведения на сервере, чтобы продолжить прослушивание на другом устройстве.",
+            "Сохраняй очередь воспроизведения на сервере, чтобы продолжить прослушивание на другом устройстве.",
           queueSyncOptions: {
             server: {
               label: "Приоритет сервера",
               description:
-                "При запуске восстанавливать очередь с сервера. Ваша очередь также загружается на сервер, чтобы другие устройства могли ее синхронизировать.",
+                "При запуске восстанавливать очередь с сервера. Твоя очередь также загружается на сервер, чтобы другие устройства могли ее синхронизировать.",
             },
             local: {
               label: "Приоритет этого устройства",
@@ -716,26 +716,26 @@ export default {
           recentSearchesLabel: "История поиска",
           recentSearchesDescription:
             "Удалить историю недавних поисковых запросов",
-          recentSearchesConfirmTitle: "Очистить историю поиска?",
+          recentSearchesConfirmTitle: "Точно очистить историю поиска?",
           recentSearchesConfirmDescription:
-            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+            "Это действие нельзя отменить. Подтверди действие, чтобы продолжить.",
           recentSearchesSuccessMessage: "История поиска успешно удалена",
           recentPlaysLabel: "«Недавние» (треки)",
           recentPlaysDescription:
             "Очистить категорию «Недавние» с главной страницы",
           recentPlaysConfirmTitle:
-            "Вы уверены, что хотите очистить «Недавние»?",
+            "Точно хочешь очистить «Недавние»?",
           recentPlaysConfirmDescription:
-            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+            "Это действие нельзя отменить. Подтверди, чтобы продолжить.",
           recentPlaysSuccessMessage:
             "История недавнего прослушивания успешно удалена",
           activityLabel: "Активность",
           activityDescription:
             "Удалить историю прослушанных альбомов, артистов и плейлистов",
           activityConfirmTitle:
-            "Вы уверены, что хотите удалить историю активности?",
+            "Точно хочешь удалить историю активности?",
           activityConfirmDescription:
-            "Это действие нельзя отменить. Подтвердите, чтобы продолжить.",
+            "Это действие нельзя отменить. ПодтвердиW, чтобы продолжить.",
           activitySuccessMessage: "История активности успешно удалена",
         },
         backupSettings: {
@@ -765,7 +765,7 @@ export default {
           title: "Безопасность",
           trustedCertificatesLabel: "Доверенные сертификаты",
           trustedCertificatesDescription:
-            "Самоподписанные сертификаты серверов, которым вы решили доверять на этом устройстве.",
+            "Самоподписанные сертификаты серверов, которым ты решил доверять на этом устройстве.",
           trustedCertificatesAction: "Управление",
           trustedCertificatesTitle: "Доверенные сертификаты",
           empty: "Пока нет доверенных сертификатов.",
@@ -776,7 +776,7 @@ export default {
           remove: "Удалить",
           removeConfirmTitle: "Удалить доверенный сертификат?",
           removeConfirmDescription:
-            "Подключения к {{hostname}} снова будут отклоняться, пока вы заново не доверитесь его сертификату.",
+            "Подключения к {{hostname}} снова будут отклоняться, пока ты заново не доверишься его сертификату.",
           removeSuccessMessage: "Сертификат удалён",
           clearAll: "Удалить все",
           clearAllConfirmTitle: "Удалить все доверенные сертификаты?",
@@ -795,15 +795,15 @@ export default {
             "Произошла ошибка при настройке подкастов",
           podcastConfigFormTitle: "Настройка подкастов",
           podcastConfigFormDescription:
-            "Введите ваш ID пользователя и API-ключ для настройки подкастов",
+            "Введи свой ID пользователя и API-ключ для настройки подкастов",
           userId: "ID пользователя",
-          userIdPlaceholder: "Введите ваш ID пользователя",
+          userIdPlaceholder: "ID пользователя",
           apiKey: "API-ключ",
-          apiKeyPlaceholder: "Введите ваш API-ключ",
-          languagePlaceholder: "Выберите язык",
-          countryPlaceholder: "Выберите страну",
+          apiKeyPlaceholder: "API-ключ",
+          languagePlaceholder: "Выбери язык",
+          countryPlaceholder: "Выбери страну",
           apiStatusLabel: "Статус API",
-          apiStatusDescription: "Отображает статус API для ваших подкастов",
+          apiStatusDescription: "Отображает статус API для твоих подкастов",
           statuses: {
             active: "Активен",
             inactive: "Неактивен",
@@ -811,11 +811,11 @@ export default {
           remainingApiRequests: "Осталось API-запросов: {{count}}/{{total}}",
           removePodcastConfigConfirmLabel: "Удалить конфигурацию подкастов",
           removePodcastConfigConfirmDescription:
-            "Удаление конфигурации приведет к потере доступа к подкастам. Пожалуйста, подтвердите удаление.",
+            "Удаление конфигурации приведет к потере доступа к подкастам. Подтверди действие, чтобы продолжить.",
           removePodcastConfigSuccessMessage: "Конфигурация подкастов удалена",
           getApiKeyLabel: "Получить API-ключ Taddy",
           getApiKeyDescription:
-            "Зарегистрируйтесь на taddy.org, чтобы получить ID пользователя и API-ключ, необходимые для настройки подкастов.",
+            "Зарегистрируйся на taddy.org, чтобы получить ID пользователя и API-ключ, необходимые для настройки подкастов.",
           getApiKeyAction: "taddy.org/developers/podcast-api",
         },
         internetRadioStations: {
@@ -834,7 +834,7 @@ export default {
           },
           topVoted: "Топ рейтинга",
           popular: "Популярные",
-          byCountry: "Из вашей страны",
+          byCountry: "Из твоей страны",
           byTag: "{{tag}}",
           addToFavorites: "Добавить в медиатеку",
           removeFromFavorites: "Убрать из медиатеки",
@@ -859,9 +859,9 @@ export default {
           deleteInternetRadioStationErrorMessage:
             "Произошла ошибка при удалении интернет-радиостанции.",
           deleteInternetRadioStationConfirmTitle:
-            "Вы уверены, что хотите удалить эту интернет-радиостанцию?",
+            "Точно хочешь удалить эту интернет-радиостанцию?",
           deleteInternetRadioStationConfirmDescription:
-            "Удаление радиостанции необратимо. Подтвердите, чтобы продолжить.",
+            "Удаление радиостанции необратимо. Подтверди действие, чтобы продолжить.",
           editInternetRadioStationModalTitle:
             "Редактирование интернет-радиостанции",
           editInternetRadioStationSuccessMessage:
@@ -872,7 +872,7 @@ export default {
         activity: {
           title: "Недавние",
           empty:
-            "Здесь пока ничего нет. Альбомы, исполнители и плейлисты появятся тут когда вы начнете воспроизведение",
+            "Здесь пока ничего нет. Альбомы, исполнители и плейлисты появятся тут, когда ты начнешь воспроизведение",
           playedAt: "{{distance}} назад",
           sections: {
             today: "Сегодня",
@@ -934,8 +934,8 @@ export default {
           download: "Скачать",
           musicBrainz: "Открыть в MusicBrainz",
           showCredits: "Посмотреть сведения о треке",
-          similarSongs: "Похожие песни",
-          similarSongsTitle: "Похожие песни: {{title}}",
+          similarSongs: "Похожие треки",
+          similarSongsTitle: "Похожие треки: {{title}}",
           trackInfoModalTitle: "Информация о треке",
           rateModalTitle: "Оценить трек",
           creditsModalTitle: "Сведения о треке",
@@ -1050,9 +1050,9 @@ export default {
           deleteShareSuccessMessage: "Ссылка успешно удалена",
           deleteShareErrorMessage: "Произошла ошибка при удалении ссылки",
           noDescription: "Без описания",
-          deleteShareConfirmTitle: "Вы уверены, что хотите удалить эту ссылку?",
+          deleteShareConfirmTitle: "Точно хочешь удалить эту ссылку?",
           deleteShareConfirmDescription:
-            "Удаление ссылки приведет к её безвозвратному удалению и ограничит другим пользователям доступ к этим аудиофайлам. Пожалуйста, подтвердите удаление.",
+            "Удаление ссылки приведет к её безвозвратному удалению и ограничит другим пользователям доступ к этим аудиофайлам. Подтверди действие, чтобы продолжить.",
           editShareModalTitle: "Редактирование ссылки",
           descriptionPlaceholder: "Описание (отображается в превью ссылки)",
           expiresPlaceholder: "Срок действия до",
@@ -1073,19 +1073,19 @@ export default {
       servers: {
         title: "Серверы",
         addServer: "Добавить сервер",
-        namePlaceholder: "Введите название сервера",
-        urlPlaceholder: "Введите URL сервера",
-        usernamePlaceholder: "Введите имя пользователя",
-        passwordPlaceholder: "Введите пароль",
+        namePlaceholder: "Название сервера",
+        urlPlaceholder: "URL сервера",
+        usernamePlaceholder: "Имя пользователя",
+        passwordPlaceholder: "Пароль",
         editServer: "Редактировать сервер",
         deleteServer: "Удалить сервер",
         createServerSuccessMessage: "Сервер успешно добавлен",
         editServerSuccessMessage: "Сервер успешно обновлен",
-        deleteServerConfirmTitle: "Вы уверены, что хотите удалить этот сервер?",
+        deleteServerConfirmTitle: "Точно хочешь удалить этот сервер?",
         deleteServerConfirmDescription:
-          "Сервер будет удален безвозвратно. Пожалуйста, подтвердите действие, чтобы продолжить.",
+          "Сервер будет удален безвозвратно. Подтверди действие, чтобы продолжить.",
         deleteCurrentServerConfirmWarning:
-          "Это сервер, к которому вы сейчас подключены. Если вы удалите его, произойдет отключение.",
+          "Это сервер, к которому ты сейчас подключен. Если ты удалишь его, произойдет отключение.",
         defaultServer: "Сервер по умолчанию",
         manageUsers: "Управление пользователями",
         users: "Пользователи",
@@ -1264,9 +1264,9 @@ export default {
         serverTypeOpenSubsonic: "OpenSubsonic",
         serverTypeJellyfin: "Jellyfin",
         serverTypeLocal: "Локальная медиатека",
-        urlPlaceholder: "Введите URL сервера",
-        usernamePlaceholder: "Введите имя пользователя",
-        passwordPlaceholder: "Введите пароль",
+        urlPlaceholder: "URL сервера",
+        usernamePlaceholder: "Имя пользователя",
+        passwordPlaceholder: "Пароль",
         choice: "Или введите данные сервера вручную",
         login: "Продолжить",
         loginSuccessMessage: "Успешный вход",
@@ -1282,9 +1282,9 @@ export default {
         localLibraryName: "Локальная медиатека",
         localFoldersLabel: "Исходные папки",
         localFoldersHelp:
-          "Добавьте одну или несколько папок на этом устройстве для сканирования музыки.",
+          "Добавь одну или несколько папок на этом устройстве для сканирования музыки.",
         localPickFolder: "Выбрать папку",
-        localNoPaths: "Для продолжения добавьте хотя бы одну папку",
+        localNoPaths: "Для продолжения добавь хотя бы одну папку",
         localRemovePath: "Удалить папку",
         localSetupHelp: "Как работает локальная медиатека?",
         localInfoTitle: "Локальная медиатека",
@@ -1296,7 +1296,7 @@ export default {
           "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из встроенных тегов файла. Если теги отсутствуют, используется имя файла, поэтому для лучшего результата рекомендуем иметь хорошо размеченные файлы.",
         localInfoTaggingTitle: "Разметка медиатеки",
         localInfoTagging:
-          "Для чистоты и единообразия вашей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
+          "Для чистоты и единообразия твоей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
         localInfoTaggingLink: "Скачать MusicBrainz Picard",
         localInfoClose: "Понял",
       },
@@ -1315,7 +1315,7 @@ export default {
         selfSigned: "Самоподписанный",
         notSystemTrusted: "Не доверен системой",
         warning:
-          "Доверяйте этому сертификату, только если вы узнаёте этот сервер. Доверие неизвестному сертификату может раскрыть ваш трафик.",
+          "Доверяй этому сертификату, только если узнаёшь этот сервер. Доверие неизвестному сертификату может раскрыть твой трафик.",
         trust: "Доверять и продолжить",
         cancel: "Отмена",
         trustedMessage: "Сертификат добавлен в доверенные",
@@ -1342,17 +1342,17 @@ export default {
           "Используемый API-ключ или ID пользователя в заголовках недействителен.",
         API_RATE_LIMIT_EXCEEDED: "Ты превысил месячный лимит запросов к API.",
         INVALID_QUERY_OR_SYNTAX:
-          "Ваш запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используйте сообщение в качестве подсказки для исправления.",
+          "Твой запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используй сообщение в качестве подсказки для исправления.",
         BAD_USER_INPUT:
-          "Один из передаваемых аргументов недействителен. Используйте сообщение для получения подробной информации о том, что именно не так.",
+          "Один из передаваемых аргументов недействителен. Используй сообщение для получения подробной информации о том, что именно не так.",
         QUERY_TOO_COMPLEX:
-          "Ваш запрос слишком сложен. Пожалуйста, упростите его (удалив лишние элементы).",
+          "Твой запрос слишком сложен. Пожалуйста, упрости его (удалив лишние элементы).",
         REQUIRES_USER_AUTHENTICATION:
           "Для выполнения этого запроса необходимо войти в систему.",
         ACCESS_NOT_ALLOWED:
           "У тебя нет прав доступа.",
         TADDY_SERVER_ERROR:
-          "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но вы также можете написать на danny@taddy.org, если эта ошибка повторяется.",
+          "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но ты также можешь написать на danny@taddy.org, если эта ошибка повторяется.",
       },
     },
   },
