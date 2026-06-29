@@ -93,7 +93,7 @@ import {
   useIsDetailCached,
   useOfflineAlbum,
 } from "@/hooks/offline";
-import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
@@ -443,7 +443,6 @@ export default function AlbumDetail() {
   };
 
   const isPlaying = useIsPlaying();
-  const playingTrack = usePlayingTrack();
   const albumTracks = data?.album?.song;
   const albumSource = useMemo<QueueSource>(
     () =>
@@ -539,13 +538,10 @@ export default function AlbumDetail() {
       });
     }
   };
-  const trackIdSet = useMemo(
-    () => new Set(albumTracks?.map((t) => t.id)),
-    [albumTracks],
-  );
-  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const queueSource = useQueue((store) => store.source);
+  const isActiveSource = queueSource?.type === "album" && queueSource.id === id;
   const handlePlayPress = () => {
-    if (isPlayingFromList) {
+    if (isActiveSource) {
       togglePlayPause();
       return;
     }
@@ -958,7 +954,7 @@ export default function AlbumDetail() {
                     onPress={handleShufflePress}
                   />
                   <PlayPauseButton
-                    isPlaying={isPlayingFromList && isPlaying}
+                    isPlaying={isActiveSource && isPlaying}
                     onPress={handlePlayPress}
                     size={48}
                     iconSize={24}

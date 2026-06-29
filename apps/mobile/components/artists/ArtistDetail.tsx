@@ -78,7 +78,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
-import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
@@ -307,8 +307,9 @@ export default function ArtistDetail() {
   };
 
   const isPlaying = useIsPlaying();
-  const playingTrack = usePlayingTrack();
-  const isPlayingFromArtist = playingTrack?.artistId === id;
+  const queueSource = useQueue((store) => store.source);
+  const isActiveSource =
+    queueSource?.type === "artist" && queueSource.id === id;
   const artistSource = useMemo<QueueSource>(
     () =>
       data?.artist
@@ -321,7 +322,7 @@ export default function ArtistDetail() {
     artistSource,
   );
   const handlePlayPress = async () => {
-    if (isPlayingFromArtist) {
+    if (isActiveSource) {
       togglePlayPause();
       return;
     }
@@ -572,7 +573,7 @@ export default function ArtistDetail() {
                     onPress={handleShufflePress}
                   />
                   <PlayPauseButton
-                    isPlaying={isPlayingFromArtist && isPlaying}
+                    isPlaying={isActiveSource && isPlaying}
                     onPress={handlePlayPress}
                     size={48}
                     iconSize={24}

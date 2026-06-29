@@ -79,7 +79,7 @@ import {
   useCollectionDownload,
   useOfflinePlaylist,
 } from "@/hooks/offline";
-import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
@@ -382,7 +382,6 @@ export default function PlaylistDetail() {
   );
 
   const isPlaying = useIsPlaying();
-  const playingTrack = usePlayingTrack();
 
   const handleTrackPressCallback = useCallback(() => {
     if (playlistData?.playlist) {
@@ -500,8 +499,9 @@ export default function PlaylistDetail() {
     }
   }, [playlistData, sort, id, getPlaylistTrackPositions]);
 
-  const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
-  const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const queueSource = useQueue((store) => store.source);
+  const isActiveSource =
+    queueSource?.type === "playlist" && queueSource.id === id;
 
   const isLoadingRows = !playlistData;
   const playlistSource = useMemo<QueueSource>(
@@ -621,7 +621,7 @@ export default function PlaylistDetail() {
     ],
   );
   const handlePlayPress = () => {
-    if (isPlayingFromList) {
+    if (isActiveSource) {
       togglePlayPause();
       return;
     }
@@ -811,7 +811,7 @@ export default function PlaylistDetail() {
                     onPress={handleShufflePress}
                   />
                   <PlayPauseButton
-                    isPlaying={isPlayingFromList && isPlaying}
+                    isPlaying={isActiveSource && isPlaying}
                     onPress={handlePlayPress}
                     size={48}
                     iconSize={24}

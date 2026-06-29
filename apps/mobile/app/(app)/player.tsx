@@ -396,7 +396,7 @@ export default function PlayerScreen() {
         <HStack
           className={cn(
             "items-center justify-between mb-4 px-6",
-            !isWideLayout && "mt-6",
+            !isWideLayout && "mt-4",
           )}
         >
           <FadeOutScaleDown
