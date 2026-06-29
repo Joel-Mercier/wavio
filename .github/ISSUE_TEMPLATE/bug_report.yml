@@ -4,7 +4,6 @@ title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees:
   - Joel-Mercier
-type: bug
 body:
   - type: markdown
     attributes:
