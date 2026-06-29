@@ -83,9 +83,11 @@ export default {
         playlists: "Плейлисты",
         albums: "Альбомы",
         podcasts: "Подкасты",
-        favorites: "Моя медиатека",
-        songCount_one: "{{count}} песня",
-        songCount_other: "{{count}} песни",
+        favorites: "Любимые треки",
+        songCount_one: "{{count}} трек",
+        songCount_few: "{{count}} трека",
+        songCount_many: "{{count}} треков",
+        songCount_other: "{{count}} треков",
       },
       albums: {
         addToPlaylist: "Добавить в плейлист",
@@ -100,7 +102,7 @@ export default {
         favoriteSuccessMessage: "Альбом добавлен в медиатеку",
         favoriteErrorMessage: "Не удалось добавить альбом в медиатеку",
         unfavoriteSuccessMessage: "Альбом удален из медиатеки",
-        unfavoriteErrorMessage: "Не удалить удалить альбом из медиатеки",
+        unfavoriteErrorMessage: "Не удалось удалить альбом из медиатеки",
         shareSuccessMessage: "Трек успешно добавлен в общий доступ",
         shareErrorMessage:
           "Произошла ошибка при добавлении трека в общий доступ",
@@ -124,6 +126,8 @@ export default {
         likedSongs: "Любимые треки",
         likedAlbums: "Любимые альбомы",
         albumCount_one: "{{count}} релиз",
+        albumCount_few: "{{count}} релиза",
+        albumCount_many: "{{count}} релизов",
         albumCount_other: "{{count}} релизов",
         favoriteSuccessMessage: "Исполнитель добавлен в медиатеку",
         favoriteErrorMessage: "Не удалось добавить исполнителя в медиатеку",
@@ -174,8 +178,8 @@ export default {
         goToPodcastSeries: "Перейти к подкасту",
         addToFavorites: "Подписаться",
         removeFromFavorites: "Отписаться",
-        addToFavoritesSuccessMessage: "Вы подписались на подкаст",
-        removeFromFavoritesSuccessMessage: "Вы отписались от подкаста",
+        addToFavoritesSuccessMessage: "Ты подписался на подкаст",
+        removeFromFavoritesSuccessMessage: "Ты отписался от подкаста",
         shareErrorMessage: "Не удалось поделиться подкастом",
         subscribe: "Подписаться",
         unsubscribe: "Отписаться",
@@ -195,7 +199,7 @@ export default {
         taddyPodcastsNotConfigured: "Доступ к подкастам не настроен",
         yourPodcasts: "Ваши подкасты",
         noServerPodcasts:
-          "Вы еще не добавили подкасты. Нажмите +, чтобы добавить подкаст по RSS-ссылке.",
+          "У тебя еще нет подкастов. Нажми +, чтобы добавить подкаст по RSS-ссылке",
         taddyDiscoveryHint:
           "Хотите искать новые подкасты? Настройте доступ в параметрах.",
         noEpisodes: "Эпизодов пока нет",
@@ -212,13 +216,13 @@ export default {
         deleteChannelErrorMessage: "Не удалось удалить подкаст",
         deleteChannelConfirmTitle: "Удалить этот подкаст?",
         deleteChannelConfirmDescription:
-          "Подкаст и все его эпизоды будут навсегда удалены с сервера. Вы уверены?",
+          "Подкаст и все его эпизоды будут навсегда удалены с сервера. Точно удалить?",
         deleteEpisode: "Удалить эпизод",
         deleteEpisodeSuccessMessage: "Эпизод удален",
         deleteEpisodeErrorMessage: "Не удалось удалить эпизод",
         deleteEpisodeConfirmTitle: "Удалить этот эпизод?",
         deleteEpisodeConfirmDescription:
-          "Эпизод и загруженный файл будут удалены с сервера. Вы уверены?",
+          "Эпизод и загруженный файл будут удалены с сервера. Точно удалить?",
         episodeStatus: {
           new: "Не загружен",
           downloading: "Загрузка…",
@@ -601,7 +605,7 @@ export default {
           scanMusicLibraryLabel: "Сканировать медиатеку",
           scanMusicLibraryDescription:
             "Запуск повторного сканирования медиатеки на сервере",
-          scanMusicLibraryAction: "Сканировать",
+          scanMusicLibraryAction: "Скан",
           scanMusicLibrarySuccessDescription: "Сканирование запущено",
           scanMusicLibraryErrorDescription: "Не удалось запустить сканирование",
           scanStatusLabel: "Статус сканирования",
@@ -609,7 +613,7 @@ export default {
             "Отображает текущее состояние сканирования вашей медиатеки",
           scanStatusLastScan: "Последнее сканирование: {{lastScan}} назад",
           scanStatuses: {
-            idle: "Простой",
+            idle: "Ожидание",
             scanning: "Сканирование",
           },
         },
@@ -628,7 +632,7 @@ export default {
           title: "Интернет-радио",
           countryLabel: "Страна",
           countryDescription:
-            "Выберите страну для раздела «По странам». По умолчанию используется регион вашего устройства.",
+            "Выбери страну для раздела «По странам». По умолчанию используется регион твоего устройства.",
           countryAutomatic: "Автоматически",
           tagsLabel: "Жанровые категории",
           tagsDescription:
@@ -766,7 +770,7 @@ export default {
           trustedCertificatesTitle: "Доверенные сертификаты",
           empty: "Пока нет доверенных сертификатов.",
           emptyHint:
-            "Когда вы подключаетесь к серверу с самоподписанным сертификатом, вы можете доверять ему. Доверенные сертификаты появятся здесь.",
+            "Когда ты подключаешься к серверу с самоподписанным сертификатом, ты можешь доверять ему. Доверенные сертификаты появятся здесь.",
           fingerprint: "SHA-256: {{fingerprint}}",
           acceptedAt: "Доверен {{date}}",
           remove: "Удалить",
@@ -784,7 +788,7 @@ export default {
           title: "Настройки подкастов",
           configurePodcastsLabel: "Настроить подкасты",
           configurePodcastsDescription:
-            "Настройте подкасты для прослушивания через приложение",
+            "Настрой подкасты для прослушивания через приложение",
           configurePodcastsAction: "Настроить",
           configurePodcastsSuccessMessage: "Подкасты успешно настроены",
           configurePodcastsErrorMessage:
@@ -886,7 +890,9 @@ export default {
           title: "Оффлайн загрузки",
           empty: "Еще не было загружено оффлайн треков.",
           totalTracks_one: "{{count}} трек",
-          totalTracks_other: "{{count}} треклв",
+          totalTracks_few: "{{count}} трека",
+          totalTracks_many: "{{count}} треков",
+          totalTracks_other: "{{count}} треков",
           totalSize: "Всего: {{size}}",
           clearAll: "Очистить всё",
         },
@@ -921,7 +927,7 @@ export default {
           goToArtist: "Перейти к исполнителю",
           goToArtist_one: "Перейти к исполнителю",
           goToArtist_other: "Перейти к исполнителям",
-          goToAlbum: "Перейтпи к альбому",
+          goToAlbum: "Перейти к альбому",
           rate: "Оценить",
           share: "Поделиться",
           getInfo: "Получить информацию",
@@ -930,12 +936,12 @@ export default {
           showCredits: "Посмотреть сведения о треке",
           similarSongs: "Похожие песни",
           similarSongsTitle: "Похожие песни: {{title}}",
-          trackInfoModalTitle: "Информация отреке",
+          trackInfoModalTitle: "Информация о треке",
           rateModalTitle: "Оценить трек",
           creditsModalTitle: "Сведения о треке",
           creditsModal: {
             albumArtist: "Исполнитель альбома",
-            composer: "Композитр",
+            composer: "Композитор",
           },
           favoriteSuccessMessage: "Трек добавлен в избранное",
           favoriteErrorMessage:
@@ -1035,6 +1041,7 @@ export default {
         shares: {
           title: "Общий доступ",
           visitCount_one: "{{count}} посещение",
+          visitCount_few: "{{count}} посещения",
           visitCount_other: "{{count}} посещений",
           editShare: "Редактировать ссылку",
           deleteShare: "Удалить ссылку",
@@ -1086,7 +1093,7 @@ export default {
         removeUser: "Удалить пользователя",
         switchServerConfirmTitle: "Сменить сервер?",
         switchServerConfirmDescription:
-          "Вы будете выведены из системы и перенаправлены на экран входа.",
+          "Ты выйдешь из системы и вернешься на экран входа.",
         switchConfirm: "Сменить",
       },
       shared: {
@@ -1102,10 +1109,13 @@ export default {
         unknownEpisode: "Неизвестный эпизод",
         duration: {
           day_one: "{{count}} день",
+          day_few: "{{count}} дня",
           day_other: "{{count}} дней",
           hour_one: "{{count}} час",
+          hour_few: "{{count}} часа",
           hour_other: "{{count}} часов",
           minute_one: "{{count}} минута",
+          minute_few: "{{count}} минуты",
           minute_other: "{{count}} минут",
         },
         errorBoundary: {
@@ -1124,38 +1134,69 @@ export default {
           removeSuccessMessage: "Удалено из загрузок",
           removeErrorMessage: "Произошла ошибка при удалении загрузок",
         },
-        favorites: "Избранное",
-        album_one: "Альбом",
-        album_other: "Альбомы",
-        artist_one: "Исполнитель",
-        artist_other: "Исполнители",
-        playlist_one: "Плейлист",
-        playlist_other: "Плейлисты",
-        podcast_one: "Подкаст",
-        podcast_other: "Подкасты",
-        radioStation_one: "Радиостанция",
-        radioStation_other: "Радиостанции",
-        folder_one: "Папка",
-        folder_other: "Папки",
-        song_one: "Песня",
-        song_other: "Песни",
+        favorites: "Любимые треки",
         save: "Сохранить",
         seeMore: "Показать еще",
         seeLess: "Показать меньше",
         seeAll: "Показать все",
         noData: "Пусто",
-        albumCount_one: "{{count}} альбом",
-        albumCount_other: "{{count}} альбомов",
-        songCount_one: "{{count}} песня",
-        songCount_other: "{{count}} песен",
         toastSuccessTitle: "Успешно",
         toastErrorTitle: "Ошибка",
+
+        album_one: "Альбом",
+        album_few: "Альбома",
+        album_many: "Альбомов",
+        album_other: "Альбомов",
+
+        artist_one: "Исполнитель",
+        artist_few: "Исполнителя",
+        artist_many: "Исполнителей",
+        artist_other: "Исполнителей",
+
+        playlist_one: "Плейлист",
+        playlist_few: "Плейлиста",
+        playlist_many: "Плейлистов",
+        playlist_other: "Плейлистов",
+
+        podcast_one: "Подкаст",
+        podcast_few: "Подкаста",
+        podcast_many: "Подкастов",
+        podcast_other: "Подкастов",
+
+        radioStation_one: "Радиостанция",
+        radioStation_few: "Радиостанции",
+        radioStation_many: "Радиостанций",
+        radioStation_other: "Радиостанций",
+
+        folder_one: "Папка",
+        folder_few: "Папки",
+        folder_many: "Папок",
+        folder_other: "Папок",
+
+        song_one: "Песня",
+        song_few: "Песни",
+        song_many: "Песен",
+        song_other: "Песен",
+
+        albumCount_one: "{{count}} альбом",
+        albumCount_few: "{{count}} альбома",
+        albumCount_many: "{{count}} альбомов",
+        albumCount_other: "{{count}} альбомов",
+
+        songCount_one: "{{count}} трек",
+        songCount_few: "{{count}} трека",
+        songCount_many: "{{count}} треков",
+        songCount_other: "{{count}} треков",
+
         addedToQueueMessage_one: "Добавлена 1 песня в очередь",
+        addedToQueueMessage_few: "Добавлено {{count}} песни в очередь",
+        addedToQueueMessage_many: "Добавлено {{count}} песен в очередь",
         addedToQueueMessage_other: "Добавлено {{count}} песен в очередь",
-        addedToPlayNextMessage_one:
-          "Добавлена 1 песня для воспроизведения следующей",
-        addedToPlayNextMessage_other:
-          "Добавлено {{count}} песен для воспроизведения следующими",
+
+        addedToPlayNextMessage_one: "Добавлена 1 песня для воспроизведения следующей",
+        addedToPlayNextMessage_few: "Добавлено {{count}} песни для воспроизведения следующими",
+        addedToPlayNextMessage_many: "Добавлено {{count}} песен для воспроизведения следующими",
+        addedToPlayNextMessage_other: "Добавлено {{count}} песен для воспроизведения следующими",
         rateSuccessMessage: "Оценка успешно установлена",
         rateErrorMessage: "Произошла ошибка при установке оценки",
         shareUrlCopiedMessage: "Ссылка скопирована в буфер обмена",
@@ -1262,7 +1303,7 @@ export default {
       certificateTrust: {
         title: "Недоверенный сертификат",
         intro:
-          "Этот сервер использует сертификат, которому ваше устройство не доверяет (обычно самоподписанный). Просмотрите его ниже и решите, доверять ли ему.",
+          "Этот сервер использует сертификат, которому твое устройство не доверяет (обычно самоподписанный). Просмотри его ниже и реши, доверять ли ему.",
         loading: "Получение сертификата…",
         loadError: "Не удалось прочитать сертификат сервера.",
         hostname: "Хост",
@@ -1299,7 +1340,7 @@ export default {
       errorCodes: {
         API_KEY_INVALID:
           "Используемый API-ключ или ID пользователя в заголовках недействителен.",
-        API_RATE_LIMIT_EXCEEDED: "Вы превысили месячную квоту запросов к API.",
+        API_RATE_LIMIT_EXCEEDED: "Ты превысил месячный лимит запросов к API.",
         INVALID_QUERY_OR_SYNTAX:
           "Ваш запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используйте сообщение в качестве подсказки для исправления.",
         BAD_USER_INPUT:
@@ -1309,7 +1350,7 @@ export default {
         REQUIRES_USER_AUTHENTICATION:
           "Для выполнения этого запроса необходимо войти в систему.",
         ACCESS_NOT_ALLOWED:
-          "У вас нет прав доступа к этому запросу или мутации.",
+          "У тебя нет прав доступа.",
         TADDY_SERVER_ERROR:
           "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но вы также можете написать на danny@taddy.org, если эта ошибка повторяется.",
       },

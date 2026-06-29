@@ -264,8 +264,7 @@ export const ui = {
     features: {
       headingPre: 'Плеер, который',
       headingEm: 'уважает',
-      // there should be a space
-      headingPost: ' твою медиатеку.',
+      headingPost: 'твою медиатеку.',
       sub: 'Каждый экран заточен под твой стиль прослушивания. Работает быстро, без лишнего шума и полностью на твоих условиях',
       home: {
         label: 'Главная',
@@ -429,7 +428,7 @@ export const ui = {
         {
           num: '10',
           title: 'Контакты',
-          body: `<p>Есть вопросы, замечания или просто любопытство? Открывай issue в <a href="${GITHUB_URL}/issues" target="_blank" rel="noopener" class="text-accent hover:underline">репозитории Wavio на GitHub</a>, и кто-нибудь из разработчиков ответит тебе.</p>`,
+          body: `<p>Есть вопросы, замечания или просто любопытно? Открывай issue в <a href="${GITHUB_URL}/issues" target="_blank" rel="noopener" class="text-accent hover:underline">репозитории Wavio на GitHub</a>, и кто-нибудь из разработчиков ответит тебе.</p>`,
         },
       ],
     },
