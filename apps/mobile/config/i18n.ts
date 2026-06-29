@@ -5,15 +5,15 @@ import zodEn from "zod/v4/locales/en.js";
 import zodFr from "zod/v4/locales/fr.js";
 import zodRu from "zod/v4/locales/ru.js";
 import zodCn from "zod/v4/locales/zh-CN.js";
-import cn from "@/i18n/cn";
-import en from "@/i18n/en";
-import fr from "@/i18n/fr";
-import ru from "@/i18n/ru";
+import en from "@/i18n/en.json";
+import fr from "@/i18n/fr.json";
+import ru from "@/i18n/ru.json";
+import zhCn from "@/i18n/zh-CN.json";
 
 const resources = {
   en,
   fr,
-  cn,
+  'zh-CN': zhCn,
   ru,
 };
 
@@ -25,7 +25,7 @@ export const SupportedLanguages = Object.keys(
 const zodLocales = {
   en: zodEn,
   fr: zodFr,
-  cn: zodCn,
+  'zh-CN': zodCn,
   ru: zodRu,
 } satisfies Record<TSupportedLanguages, () => { localeError: unknown }>;
 
@@ -43,6 +43,7 @@ i18n
     // you can use the i18n.changeLanguage function to change the language manually: https://www.i18next.com/overview/api#changelanguage
     // if you're using a language detector, do not define the lng option
     supportedLngs: SupportedLanguages,
+    load: "currentOnly", // don't derive base codes (e.g. "zh" from "zh-CN"); we only support region-qualified locales
     interpolation: {
       escapeValue: false, // react already safes from xss
     },

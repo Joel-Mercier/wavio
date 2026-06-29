@@ -14,6 +14,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - [How to install](#how-to-install)
 - [Features](#features)
 - [Development](#development)
+- [Translations](#translations)
 - [Useful links](#useful-links)
 - [Gallery](#gallery)
 
@@ -144,6 +145,14 @@ Run from the repo root:
 - `eas build --profile preview --platform android` (inside `apps/mobile`): Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo
+
+## Translations
+
+Wavio is available in multiple languages thanks to the community. If you want to help translate the app, please join the [Crowdin project](https://crowdin.com/project/wavio) and help us translate the app to your language.
+
+[![Crowdin](https://badges.crowdin.net/wavio/localized.svg)](https://crowdin.com/project/wavio)
+
+Currently supported languages: English, French, Chinese, Russian.
 
 ## Useful links
 

@@ -4,7 +4,7 @@ export const languages = {
   en: 'English',
   ru: 'Русский',
   fr: 'Français',
-  cn: '简体中文'
+  'zh-cn': '简体中文'
 } as const
 
 export type Lang = keyof typeof languages
@@ -648,7 +648,7 @@ export const ui = {
     },
   },
 
-  cn: {
+  'zh-cn': {
     meta: {
       homeTitle: 'Wavio. 音乐由你，播放由你，风格由你。',
       homeDescription:
