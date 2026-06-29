@@ -1,0 +1,51 @@
+name: Bug report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+projects: ["Joel-Mercier/wavio"]
+assignees:
+  - Joel-Mercier
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Before submitting, please make sure you're running the latest version of Wavio when you encounter the bug.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: ""
+    validations:
+      required: true
+  - type: dropdown
+    id: server-type
+    attributes:
+      label: Server type
+      description: What server are you running when you encounter the bug?
+      multiple: true
+      options:
+        - Navidrome
+        - Jellyfin
+        - OpenSubsonic
+        - Local library
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: Server version
+      description: What version of the server are you running (ignore for local library)?
+      placeholder: ex. 1.0.2
+    validations:
+      required: false
+  - type: upload
+    id: screenshots
+    attributes:
+      label: Upload screenshots
+      description: If applicable, add screenshots to help explain your problem.
+    validations:
+      required: false
