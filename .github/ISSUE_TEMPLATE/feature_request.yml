@@ -1,0 +1,39 @@
+name: Feature Request
+description: Suggest an idea or improvement for Wavio.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees:
+  - Joel-Mercier
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a feature! Before submitting, please make sure you're running the latest version of Wavio and that a similar request doesn't already exist.
+  - type: textarea
+    id: what-request
+    attributes:
+      label: What is your request?
+      description: Describe the feature or improvement you'd like to see, and why it would be useful.
+      placeholder: Tell us about your idea!
+    validations:
+      required: true
+  - type: dropdown
+    id: server-type
+    attributes:
+      label: Server type
+      description: Which server(s) does this request apply to?
+      multiple: true
+      options:
+        - Navidrome
+        - Jellyfin
+        - OpenSubsonic
+        - Local library
+    validations:
+      required: false
+  - type: textarea
+    id: inspirations
+    attributes:
+      label: Inspirations
+      description: If applicable, add screenshots from other apps, sketches, mockups or anything else that illustrates your idea.
+    validations:
+      required: false

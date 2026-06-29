@@ -1,0 +1,32 @@
+name: Question
+description: Ask a question about Wavio.
+title: "[Question]: "
+labels: ["question", "triage"]
+assignees:
+  - Joel-Mercier
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out! Before submitting, please make sure your question isn't already answered in the documentation or an existing issue.
+  - type: textarea
+    id: what-question
+    attributes:
+      label: What is your question?
+      description: Describe what you'd like to know, with as much context as possible.
+      placeholder: Ask away!
+    validations:
+      required: true
+  - type: dropdown
+    id: server-type
+    attributes:
+      label: Server type
+      description: Which server(s) does this question apply to?
+      multiple: true
+      options:
+        - Navidrome
+        - Jellyfin
+        - OpenSubsonic
+        - Local library
+    validations:
+      required: false
