@@ -718,7 +718,7 @@ export default {
             "Удалить историю недавних поисковых запросов",
           recentSearchesConfirmTitle: "Точно очистить историю поиска?",
           recentSearchesConfirmDescription:
-            "Это действие нельзя отменить. Подтверди действие, чтобы продолжить.",
+            "Это действие нельзя отменить. Подтверди, чтобы продолжить.",
           recentSearchesSuccessMessage: "История поиска успешно удалена",
           recentPlaysLabel: "«Недавние» (треки)",
           recentPlaysDescription:
@@ -735,7 +735,7 @@ export default {
           activityConfirmTitle:
             "Точно хочешь удалить историю активности?",
           activityConfirmDescription:
-            "Это действие нельзя отменить. ПодтвердиW, чтобы продолжить.",
+            "Это действие нельзя отменить. Подтверди, чтобы продолжить.",
           activitySuccessMessage: "История активности успешно удалена",
         },
         backupSettings: {
