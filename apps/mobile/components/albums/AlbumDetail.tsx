@@ -453,7 +453,7 @@ export default function AlbumDetail() {
     [data?.album],
   );
   const handleTrackPress = useTrackListPress(albumTracks, albumSource);
-  const { rows: discRows } = useMemo(
+  const { rows: discRows, isMultiDisc } = useMemo(
     () => buildAlbumListRows(albumTracks, data?.album?.discTitles),
     [albumTracks, data?.album?.discTitles],
   );
@@ -798,6 +798,7 @@ export default function AlbumDetail() {
               className="px-6"
               onPlayCallback={handleTrackPressCallback}
               showCoverArt={false}
+              disableFirstItemMargin={isMultiDisc}
             />
           );
         }}

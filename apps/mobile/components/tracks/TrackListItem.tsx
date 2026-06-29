@@ -39,6 +39,7 @@ interface TrackListItemProps {
   className?: string;
   onPlayCallback?: () => void;
   showCoverArt?: boolean;
+  disableFirstItemMargin?: boolean;
 }
 
 // Rendered in every track list — memoized so a parent re-render (favorite
@@ -53,6 +54,7 @@ function TrackListItem({
   className,
   onPlayCallback,
   showCoverArt = true,
+  disableFirstItemMargin = false,
 }: TrackListItemProps) {
   const [white, gray300] = Uniwind.getCSSVariable([
     "--color-white",
@@ -127,7 +129,7 @@ function TrackListItem({
         className={cn(
           "items-center justify-between mb-4",
           {
-            "mt-6": index === 0,
+            "mt-6": index === 0 && !disableFirstItemMargin,
             "opacity-80": isUnavailableOffline,
           },
           className,
