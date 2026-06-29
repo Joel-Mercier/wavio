@@ -2,7 +2,6 @@ name: Bug Report
 description: File a bug report.
 title: "[Bug]: "
 labels: ["bug", "triage"]
-projects: ["Joel-Mercier/wavio"]
 assignees:
   - Joel-Mercier
 type: bug
@@ -42,10 +41,10 @@ body:
       placeholder: ex. 1.0.2
     validations:
       required: false
-  - type: upload
+  - type: textarea
     id: screenshots
     attributes:
-      label: Upload screenshots
-      description: If applicable, add screenshots to help explain your problem.
+      label: Screenshots
+      description: If applicable, drag and drop screenshots here to help explain your problem.
     validations:
       required: false
