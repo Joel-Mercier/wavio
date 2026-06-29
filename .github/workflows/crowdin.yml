@@ -62,7 +62,7 @@ jobs:
           pull_request_body: >-
             Automated pull request with latest translations from Crowdin.
             Review the changed locale files before merging.
-          pull_request_base_branch_name: master
+          pull_request_base_branch_name: main
           localization_branch_name: crowdin-translations
           commit_message: 'i18n: update translations from Crowdin'
         env:
