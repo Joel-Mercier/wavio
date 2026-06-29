@@ -1,135 +1,135 @@
 {
-	"expo": {
-		"name": "Wavio",
-		"slug": "wavio",
-		"version": "1.0.6",
-		"orientation": "default",
-		"icon": "./assets/images/splash-icon-dark.png",
-		"scheme": "wavio",
-		"userInterfaceStyle": "automatic",
-		"backgroundColor": "#000000",
-		"ios": {
-			"bundleIdentifier": "com.jmercier.wavio",
-			"supportsTablet": true,
-			"requireFullScreen": true,
-			"infoPlist": {
-				"UIBackgroundModes": ["audio"]
-			},
-			"icon": {
-				"dark": "./assets/images/ios-dark.png",
-				"light": "./assets/images/ios-light.png",
-				"tinted": "./assets/images/ios-tinted.png"
-			}
-		},
-		"android": {
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/images/adaptive-icon.png",
-				"backgroundColor": "#000000"
-			},
-			"package": "com.jmercier.wavio"
-		},
-		"web": {
-			"bundler": "metro",
-			"output": "static",
-			"favicon": "./assets/images/favicon.png"
-		},
-		"plugins": [
-			"expo-router",
-			[
-				"expo-splash-screen",
-				{
-					"image": "./assets/images/splash-icon-dark.png",
-					"imageWidth": 200,
-					"resizeMode": "contain",
-					"backgroundColor": "#000000",
-					"dark": {
-						"backgroundColor": "#000000"
-					}
-				}
-			],
-			[
-				"expo-build-properties",
-				{
-					"android": {
-						"usesCleartextTraffic": true,
-						"minSdkVersion": 26,
-						"compileSdkVersion": 36,
-						"targetSdkVersion": 36
-					}
-				}
-			],
-			"expo-font",
-			"expo-image",
-			"expo-web-browser",
-			"expo-localization",
-			[
-				"expo-media-library",
-				{
-					"photosPermission": "Allow $(PRODUCT_NAME) to access your files.",
-					"savePhotosPermission": "Allow $(PRODUCT_NAME) to save files.",
-					"isAccessMediaLocationEnabled": true,
-					"granularPermissions": ["audio"]
-				}
-			],
-			[
-				"expo-audio",
-				{
-					"microphonePermission": false,
-					"enableBackgroundPlayback": true,
-					"enableBackgroundRecording": false
-				}
-			],
-			[
-				"expo-navigation-bar",
-				{
-					"style": "light",
-					"enforceContast": false
-				}
-			],
-			"react-native-google-cast",
-			"./plugins/withAndroidAuto",
-			"./plugins/withWidgets",
-			"./plugins/withDependenciesInfo",
-			"./plugins/withSslTrust",
-			[
-				"@sentry/react-native/expo",
-				{
-					"url": "https://sentry.io/",
-					"project": "wavio",
-					"organization": "joel-mercier",
-					"experimental_android": {
-						"enableAndroidGradlePlugin": true
-					}
-				}
-			],
-			[
-				"expo-status-bar",
-				{
-					"style": "light"
-				}
-			],
-			"expo-asset",
-			"@react-native-community/datetimepicker",
-			"expo-sqlite",
-			[
-				"expo-screen-orientation",
-				{
-					"initialOrientation": "DEFAULT"
-				}
-			]
-		],
-		"experiments": {
-			"typedRoutes": true,
-			"reactCompiler": true
-		},
-		"extra": {
-			"router": {
-				"origin": false
-			},
-			"eas": {
-				"projectId": "6ae6a279-7d36-49e3-af38-fb5d007e3826"
-			}
-		},
-		"owner": "jmercier"
-	}
+  "expo": {
+    "name": "Wavio",
+    "slug": "wavio",
+    "version": "1.0.6",
+    "orientation": "default",
+    "icon": "./assets/images/splash-icon-dark.png",
+    "scheme": "wavio",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#000000",
+    "ios": {
+      "bundleIdentifier": "com.jmercier.wavio",
+      "supportsTablet": true,
+      "requireFullScreen": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      },
+      "icon": {
+        "dark": "./assets/images/ios-dark.png",
+        "light": "./assets/images/ios-light.png",
+        "tinted": "./assets/images/ios-tinted.png"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.jmercier.wavio"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon-dark.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "minSdkVersion": 26,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-web-browser",
+      "expo-localization",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your files.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files.",
+          "isAccessMediaLocationEnabled": true,
+          "granularPermissions": ["audio"]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "enableBackgroundPlayback": true,
+          "enableBackgroundRecording": false
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "style": "light",
+          "enforceContast": false
+        }
+      ],
+      "react-native-google-cast",
+      "./plugins/withAndroidAuto",
+      "./plugins/withWidgets",
+      "./plugins/withDependenciesInfo",
+      "./plugins/withSslTrust",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "wavio",
+          "organization": "joel-mercier",
+          "experimental_android": {
+            "enableAndroidGradlePlugin": true
+          }
+        }
+      ],
+      [
+        "expo-status-bar",
+        {
+          "style": "light"
+        }
+      ],
+      "expo-asset",
+      "@react-native-community/datetimepicker",
+      "expo-sqlite",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "DEFAULT"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6ae6a279-7d36-49e3-af38-fb5d007e3826"
+      }
+    },
+    "owner": "jmercier"
+  }
 }
