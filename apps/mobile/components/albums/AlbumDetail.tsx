@@ -99,12 +99,13 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
-import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import type { AlbumListRow } from "@/utils/albumDiscRows";
+import { buildAlbumListRows } from "@/utils/albumDiscRows";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { format, formatDuration } from "@/utils/date";
@@ -452,6 +453,10 @@ export default function AlbumDetail() {
     [data?.album],
   );
   const handleTrackPress = useTrackListPress(albumTracks, albumSource);
+  const { rows: discRows } = useMemo(
+    () => buildAlbumListRows(albumTracks, data?.album?.discTitles),
+    [albumTracks, data?.album?.discTitles],
+  );
   const albumMeta = useMemo<DownloadCollectionMeta | undefined>(
     () =>
       data?.album
@@ -754,25 +759,48 @@ export default function AlbumDetail() {
         contentContainerStyle={{
           paddingBottom: insets.bottom + bottomTabBarHeight,
         }}
-        data={data?.album?.song || loadingData(16)}
-        renderItem={({ item, index }: { item: Child; index: number }) =>
-          isLoading ? (
-            <TrackListItemSkeleton
-              index={index}
-              showCoverArt={false}
-              className="px-6"
-            />
-          ) : (
+        data={isLoading ? loadingData(16) : discRows}
+        keyExtractor={(item: AlbumListRow, index: number) =>
+          isLoading ? `skeleton-${index}` : item.key
+        }
+        getItemType={(item: AlbumListRow) => (isLoading ? "track" : item.kind)}
+        renderItem={({
+          item,
+          index,
+        }: {
+          item: AlbumListRow;
+          index: number;
+        }) => {
+          if (isLoading) {
+            return (
+              <TrackListItemSkeleton
+                index={index}
+                showCoverArt={false}
+                className="px-6"
+              />
+            );
+          }
+          if (item.kind === "disc") {
+            return (
+              <HStack className="items-center gap-x-2 px-6 mt-6 mb-2">
+                <Disc3 size={16} color={gray400} />
+                <Heading size="sm" className="text-gray-300">
+                  {item.title || t("app.albums.disc", { number: item.disc })}
+                </Heading>
+              </HStack>
+            );
+          }
+          return (
             <TrackListItem
-              track={item}
-              index={index}
+              track={item.track}
+              index={item.trackIndex}
               onPress={handleTrackPress}
               className="px-6"
               onPlayCallback={handleTrackPressCallback}
               showCoverArt={false}
             />
-          )
-        }
+          );
+        }}
         ListHeaderComponent={
           <LinearGradient
             colors={[

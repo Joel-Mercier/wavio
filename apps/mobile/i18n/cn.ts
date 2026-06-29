@@ -95,6 +95,7 @@ export default {
         musicBrainz: "在 MusicBrainz 中打开",
         lastFM: "在 Last.fm 中打开",
         moreFromArtist: "更多 {{artist}} 的作品",
+        disc: "碟片 {{number}}",
         favoriteSuccessMessage: "专辑已收藏",
         favoriteErrorMessage: "收藏专辑时发生错误",
         unfavoriteSuccessMessage: "专辑已取消收藏",

@@ -99,6 +99,7 @@ export default {
         musicBrainz: "Открыть в MusicBrainz",
         lastFM: "Открыть в Last.fm",
         moreFromArtist: "Ещё от {{artist}}",
+        disc: "Диск {{number}}",
         favoriteSuccessMessage: "Альбом добавлен в медиатеку",
         favoriteErrorMessage: "Не удалось добавить альбом в медиатеку",
         unfavoriteSuccessMessage: "Альбом удален из медиатеки",

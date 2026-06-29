@@ -98,6 +98,7 @@ export default {
         musicBrainz: "Ouvrir dans MusicBrainz",
         lastFM: "Ouvrir dans Last.fm",
         moreFromArtist: "Plus de {{artist}}",
+        disc: "Disque {{number}}",
         favoriteSuccessMessage: "Album ajouté aux favoris",
         favoriteErrorMessage:
           "Une erreur s'est produite lors de l'ajout de l'album aux favoris",

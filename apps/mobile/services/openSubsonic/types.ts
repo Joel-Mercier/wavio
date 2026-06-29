@@ -11,7 +11,7 @@ export interface AlbumID3 {
   songCount: number;
   starred?: Date;
   year?: number;
-  discTitles?: string[];
+  discTitles?: DiscTitle[];
   displayArtist?: string;
   isCompilation?: boolean;
   musicBrainzId?: string;
@@ -24,6 +24,12 @@ export interface AlbumID3 {
   userRating?: number;
   version?: string;
   artists?: { id: string; name: string }[];
+}
+
+export interface DiscTitle {
+  disc: number;
+  title?: string;
+  coverArt?: string;
 }
 
 export interface AlbumInfo {
