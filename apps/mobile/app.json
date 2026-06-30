@@ -26,7 +26,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.jmercier.wavio"
+      "package": "com.jmercier.wavio",
+      "permissions": ["android.permission.WAKE_LOCK"]
     },
     "web": {
       "bundler": "metro",

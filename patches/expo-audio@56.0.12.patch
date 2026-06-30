@@ -1,7 +1,30 @@
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..5b70fb2db5d411766715bc12f4cee310767de830 100644
+index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..27d2994698a7c59aa8142bc0614ad5bdc9c9b028 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioModule.kt
+@@ -148,11 +148,11 @@ class AudioModule : Module() {
+     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+       val requestType = interruptionMode?.let {
+         if (it == InterruptionMode.DO_NOT_MIX) {
+-          AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++          AudioManager.AUDIOFOCUS_GAIN
+         } else {
+           AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+         }
+-      } ?: AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++      } ?: AudioManager.AUDIOFOCUS_GAIN
+       audioFocusRequest = AudioFocusRequest.Builder(requestType).run {
+         setAudioAttributes(
+           AudioAttributes.Builder()
+@@ -169,7 +169,7 @@ class AudioModule : Module() {
+     } else {
+       @Suppress("DEPRECATION")
+       val requestType = if (interruptionMode == InterruptionMode.DO_NOT_MIX) {
+-        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++        AudioManager.AUDIOFOCUS_GAIN
+       } else {
+         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+       }
 @@ -464,6 +464,12 @@ class AudioModule : Module() {
          ref.setVolume(volume)
        }
@@ -37,7 +60,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..5b70fb2db5d411766715bc12f4cee310
          runOnMain {
            ref.setActiveForLockScreen(active, metadata, options)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..10d9955f6e9f1fc1d8c233412219da43a4a56fb4 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..3ed57575136ea6fe50c314ff92c2f1dce0847d12 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -8,6 +8,7 @@ import android.util.Log
@@ -58,7 +81,15 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..10d9955f6e9f1fc1d8c233412219da43
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -97,6 +101,46 @@ class AudioPlayer(
+@@ -37,6 +41,7 @@ class AudioPlayer(
+   player = ExoPlayer.Builder(context)
+     .setLooper(context.mainLooper)
+     .setAudioAttributes(AudioAttributes.DEFAULT, false)
++    .setWakeMode(C.WAKE_MODE_NETWORK)
+     .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
+     .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
+     .apply {
+@@ -97,6 +102,46 @@ class AudioPlayer(
      startUpdating()
    }
  
@@ -105,6 +136,26 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..10d9955f6e9f1fc1d8c233412219da43
    fun setActiveForLockScreen(active: Boolean, metadata: Metadata? = null, options: AudioLockScreenOptions? = null) {
      if (active) {
        this.metadata = metadata
+diff --git a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
+index f3536d571535db7d6af57f568fce0d7c0b3fb674..8bd08ad7817d79da89bb7e09556d56bed0005ceb 100644
+--- a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
++++ b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
+@@ -2,6 +2,7 @@ package expo.modules.audio
+ 
+ import android.content.Context
+ import androidx.media3.common.AudioAttributes
++import androidx.media3.common.C
+ import androidx.media3.common.MediaItem
+ import androidx.media3.common.PlaybackException
+ import androidx.media3.common.Player
+@@ -25,6 +26,7 @@ class AudioPlaylist(
+   player = ExoPlayer.Builder(context)
+     .setLooper(context.mainLooper)
+     .setAudioAttributes(AudioAttributes.DEFAULT, false)
++    .setWakeMode(C.WAKE_MODE_NETWORK)
+     .setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(dataSourceFactory))
+     .build(),
+   appContext = appContext,
 diff --git a/android/src/main/java/expo/modules/audio/AudioRecords.kt b/android/src/main/java/expo/modules/audio/AudioRecords.kt
 index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..70b66ba7991c0ac262aacaae8acb3aa5de81abc9 100644
 --- a/android/src/main/java/expo/modules/audio/AudioRecords.kt
