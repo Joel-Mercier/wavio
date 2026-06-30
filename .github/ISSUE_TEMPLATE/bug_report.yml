@@ -36,7 +36,7 @@ body:
     attributes:
       label: Server version
       description: What version of the server are you running (ignore for local library)?
-      placeholder: ex. 1.0.2
+      placeholder: Enter server version number
     validations:
       required: false
   - type: textarea

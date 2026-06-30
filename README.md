@@ -27,6 +27,18 @@ To do that I need your email address, so I can send you the link to the beta tes
 
 I'm also currently working on a [F-Droid](https://f-droid.org/) package.
 
+
+### Use Android Auto with a APK install
+
+Android Auto doesn't detect Wavio automatically if you installed the app via APK on Github, Android Auto detects only Play Store apps automatically. To see Wavio with a APK install on Android Auto : 
+
+1. On the phone, open Android Auto settings  (Settings → Connected devices → Android Auto, or open the standalone Android Auto app's settings,  varies by phone).
+2. Scroll to the bottom and tap "Version" ~10 times until it says developer mode is enabled.
+3. Tap the ⋮ overflow menu (top right) → Developer settings.
+4. Turn on "Unknown sources" (sometimes worded "Add new apps to launcher" or "Unknown sources").
+5. Reconnect the phone to the car (unplug/replug, or restart the Android Auto session).
+6. If it still doesn't show, check Customize launcher in Android Auto settings and make sure Wavio is  enabled/checked.
+
 ## Features
 
 - Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library
@@ -149,6 +161,8 @@ Run from the repo root:
 ## Translations
 
 Wavio is available in multiple languages thanks to the community. If you want to help translate the app, please join the [Crowdin project](https://crowdin.com/project/wavio) and help us translate the app to your language.
+
+If your language isn't listed, please open an issue to request it.
 
 [![Crowdin](https://badges.crowdin.net/wavio/localized.svg)](https://crowdin.com/project/wavio)
 
