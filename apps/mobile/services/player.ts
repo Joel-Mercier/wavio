@@ -261,18 +261,22 @@ function findNextPlayableIndex(startIndex: number): number | null {
 // update over a full (re)activation when the same player already owns them.
 let lockScreenSlot: Slot | null = null;
 
-function applyLockScreen(p: AudioPlayer, track: QueueTrack, slot: Slot) {
-  // Empty/undefined fields must be passed as undefined, not "": the native
-  // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a
-  // "" (returned for local tracks without cover art) throws MalformedURLException
-  // and rejects the whole call. try/catch keeps a rejected metadata update from
-  // aborting playback.
-  const metadata = {
+// Empty/undefined fields must be passed as undefined, not "": the native
+// expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a ""
+// (returned for local tracks without cover art) throws MalformedURLException and
+// rejects the whole call.
+function toLockScreenMetadata(track: QueueTrack) {
+  return {
     title: track.title || undefined,
     artist: track.artist || undefined,
     albumTitle: track.album || undefined,
     artworkUrl: track.artwork || undefined,
   };
+}
+
+function applyLockScreen(p: AudioPlayer, track: QueueTrack, slot: Slot) {
+  const metadata = toLockScreenMetadata(track);
+  // try/catch keeps a rejected metadata update from aborting playback.
   try {
     if (lockScreenSlot === slot) {
       // This player already owns the controls — refresh metadata in place.
@@ -450,9 +454,11 @@ function preloadNext() {
   if (Platform.OS === "android") {
     // True gapless: queue the next source on the active player's ExoPlayer
     // timeline. ExoPlayer pre-buffers and transitions seamlessly, firing
-    // `nextTrackStarted` when the boundary is crossed.
+    // `nextTrackStarted` when the boundary is crossed. Pass the next track's
+    // metadata so the notification updates natively at the boundary even if the
+    // JS thread is throttled in the background.
     const { url } = resolveTrackUrl(next);
-    players[activeSlot].prepareNext({ uri: url });
+    players[activeSlot].prepareNext({ uri: url }, toLockScreenMetadata(next));
     transition = { kind: "queued", trackId: next.id };
     return;
   }

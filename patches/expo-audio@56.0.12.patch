@@ -1,5 +1,5 @@
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..27d2994698a7c59aa8142bc0614ad5bdc9c9b028 100644
+index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2bb9408b6 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioModule.kt
 @@ -148,11 +148,11 @@ class AudioModule : Module() {
@@ -42,10 +42,10 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..27d2994698a7c59aa8142bc0614ad5bd
          }
        }
  
-+      Function("prepareNext") { player: AudioPlayer, source: AudioSource ->
++      Function("prepareNext") { player: AudioPlayer, source: AudioSource, metadata: Metadata? ->
 +        runOnMain {
 +          if (player.ref.availableCommands.contains(Player.COMMAND_CHANGE_MEDIA_ITEMS)) {
-+            createMediaItem(source)?.let { player.prepareNext(it) }
++            createMediaItem(source)?.let { player.prepareNext(it, metadata) }
 +          }
 +        }
 +      }
@@ -60,7 +60,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..27d2994698a7c59aa8142bc0614ad5bd
          runOnMain {
            ref.setActiveForLockScreen(active, metadata, options)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..3ed57575136ea6fe50c314ff92c2f1dce0847d12 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..a94c1d2d04775af9121e27dc96f9cfb531395627 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -8,6 +8,7 @@ import android.util.Log
@@ -89,19 +89,25 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..3ed57575136ea6fe50c314ff92c2f1dc
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -97,6 +102,46 @@ class AudioPlayer(
+@@ -97,6 +102,57 @@ class AudioPlayer(
      startUpdating()
    }
  
++  // Lock-screen metadata for the gapless-queued next item, applied natively when
++  // ExoPlayer auto-advances into it so the notification stays correct even while
++  // the JS thread is throttled in the background.
++  private var pendingNextMetadata: Metadata? = null
++
 +  // Queue a next item so ExoPlayer can transition into it gaplessly when the
 +  // current item ends. Replaces any previously prepared next item.
-+  fun prepareNext(source: MediaSource) {
++  fun prepareNext(source: MediaSource, metadata: Metadata?) {
 +    val count = ref.mediaItemCount
 +    val current = ref.currentMediaItemIndex
 +    if (count > current + 1) {
 +      ref.removeMediaItems(current + 1, count)
 +    }
 +    ref.addMediaSource(source)
++    pendingNextMetadata = metadata
 +  }
 +
 +  fun clearPreparedNext() {
@@ -110,6 +116,7 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..3ed57575136ea6fe50c314ff92c2f1dc
 +    if (count > current + 1) {
 +      ref.removeMediaItems(current + 1, count)
 +    }
++    pendingNextMetadata = null
 +  }
 +
 +  fun emitRemotePrevious() {
@@ -124,6 +131,10 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..3ed57575136ea6fe50c314ff92c2f1dc
 +    super.onMediaItemChanged(mediaItem, reason)
 +    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
 +      emit(NEXT_TRACK_STARTED)
++      // Push the queued item's metadata to the notification immediately, without
++      // waiting for the (possibly throttled) JS thread to call back in.
++      pendingNextMetadata?.let { updateLockScreenMetadata(it) }
++      pendingNextMetadata = null
 +      // Trim the consumed item so the timeline stays at one entry until
 +      // JS calls prepareNext() again.
 +      val current = ref.currentMediaItemIndex
@@ -389,7 +400,7 @@ index cfd92ad0ff5765254c4e6db974fe44bce34aad06..daef7384bcd7090cc200dd65d3812fc6
  //# sourceMappingURL=AudioConstants.d.ts.map
 \ No newline at end of file
 diff --git a/build/AudioModule.types.d.ts b/build/AudioModule.types.d.ts
-index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..a03efca86d91a5d5b6bdcd2754db09b9bf6c879d 100644
+index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..4f779b58d28c6e51455f59e9c2ea9206b38b19c1 100644
 --- a/build/AudioModule.types.d.ts
 +++ b/build/AudioModule.types.d.ts
 @@ -92,6 +92,11 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
@@ -414,7 +425,7 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..a03efca86d91a5d5b6bdcd2754db09b9
 +     * pre-buffers it and transitions seamlessly when the current item ends,
 +     * firing a `nextTrackStarted` event. No-op on iOS.
 +     */
-+    prepareNext(source: AudioSource): void;
++    prepareNext(source: AudioSource, metadata?: AudioMetadata): void;
 +    /**
 +     * Android-only. Removes the source queued by `prepareNext`. No-op on iOS or
 +     * when nothing is queued.
@@ -548,7 +559,7 @@ index dcc0452f7cae66b1bfaf77ed211416b092965bd9..779223ba2550809e621f4006c193beb2
 +  showSkipNext?: boolean;
  };
 diff --git a/src/AudioModule.types.ts b/src/AudioModule.types.ts
-index 7e7537173d067fecef767a03dc0f1860c8aca7ac..cf62b62f4d53a3832d13e28e1c4a6740460bf31d 100644
+index 7e7537173d067fecef767a03dc0f1860c8aca7ac..da210cec9d8b0cbe73a16c011dcc23fe1837bf66 100644
 --- a/src/AudioModule.types.ts
 +++ b/src/AudioModule.types.ts
 @@ -127,6 +127,12 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
@@ -564,7 +575,7 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..cf62b62f4d53a3832d13e28e1c4a6740
    /**
     * The current playback rate of the audio. It accepts different values depending on the platform:
     * - **Android**: `0.1` to `2.0`
-@@ -182,6 +188,20 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
+@@ -182,6 +188,24 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
     */
    replace(source: AudioSource): void;
  
@@ -573,8 +584,12 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..cf62b62f4d53a3832d13e28e1c4a6740
 +   * source ends. Replaces any previously queued next source. ExoPlayer
 +   * pre-buffers it and transitions seamlessly when the current item ends,
 +   * firing a `nextTrackStarted` event. No-op on iOS.
++   *
++   * Pass the next track's `metadata` so the lock-screen / notification updates
++   * natively the moment ExoPlayer auto-advances, without waiting for the JS
++   * thread (which may be throttled while backgrounded).
 +   */
-+  prepareNext(source: AudioSource): void;
++  prepareNext(source: AudioSource, metadata?: AudioMetadata): void;
 +
 +  /**
 +   * Android-only. Removes the source queued by `prepareNext`. No-op on iOS or
@@ -585,7 +600,7 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..cf62b62f4d53a3832d13e28e1c4a6740
    /**
     * Seeks the playback by the given number of seconds.
     * @param seconds The number of seconds to seek by.
-@@ -280,6 +300,16 @@ export type AudioEvents = {
+@@ -280,6 +304,16 @@ export type AudioEvents = {
    playbackStatusUpdate(status: AudioStatus): void;
    /** Fired when audio sampling is enabled and new sample data is available. */
    audioSampleUpdate(data: AudioSample): void;
