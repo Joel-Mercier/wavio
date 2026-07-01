@@ -597,14 +597,8 @@
 				},
 				"playbackSettings": {
 					"title": "Lecture",
-					"gaplessLabel": "Lecture sans coupure",
-					"gaplessDescription": "Élimine le silence entre les morceaux en préchargeant le suivant",
 					"endlessPlaybackLabel": "Lecture sans fin",
 					"endlessPlaybackDescription": "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
-					"crossfadeLabel": "Fondu enchaîné",
-					"crossfadeDescription": "Superpose la fin d'un morceau avec le début du suivant",
-					"crossfadeOff": "Désactivé",
-					"crossfadeSeconds": "{{seconds}} s",
 					"equalizerLabel": "Égaliseur",
 					"equalizerDescription": "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours",
 					"equalizerAction": "Ouvrir",
@@ -710,7 +704,7 @@
 					"clearAllSuccessMessage": "Tous les certificats approuvés ont été supprimés"
 				},
 				"podcastSettings": {
-					"title": "Paramètres des podcasts",
+					"title": "Podcasts",
 					"configurePodcastsLabel": "Configurer les podcasts",
 					"configurePodcastsDescription": "Configurez vos podcasts pour les diffuser depuis l'application",
 					"configurePodcastsAction": "Configurer",

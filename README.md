@@ -63,7 +63,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Share screen with shareable links
 - Servers screen with multiple servers support
 - Settings screen with server scanning, offline downloads, playback, content, display and backup settings
-- Gapless playback, crossfade, replay gain, equalizer and sleep timer
+- Endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net

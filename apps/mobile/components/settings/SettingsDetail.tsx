@@ -158,10 +158,6 @@ export default function SettingsDetail() {
   const setReplayGainMode = useApp((store) => store.setReplayGainMode);
   const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
   const setReplayGainPreampDb = useApp((store) => store.setReplayGainPreampDb);
-  const crossfadeSeconds = useApp((store) => store.crossfadeSeconds);
-  const setCrossfadeSeconds = useApp((store) => store.setCrossfadeSeconds);
-  const gaplessEnabled = useApp((store) => store.gaplessEnabled);
-  const setGaplessEnabled = useApp((store) => store.setGaplessEnabled);
   const endlessPlaybackEnabled = useApp(
     (store) => store.endlessPlaybackEnabled,
   );
@@ -262,10 +258,6 @@ export default function SettingsDetail() {
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
     setReplayGainPreampDb(next);
-  };
-
-  const adjustCrossfade = (delta: number) => {
-    setCrossfadeSeconds(crossfadeSeconds + delta);
   };
 
   const handleOpenEqualizerPress = async () => {
@@ -745,35 +737,12 @@ export default function SettingsDetail() {
               title={t("app.settings.playbackSettings.title")}
             />
             <SettingsToggleRow
-              label={t("app.settings.playbackSettings.gaplessLabel")}
-              description={t(
-                "app.settings.playbackSettings.gaplessDescription",
-              )}
-              value={gaplessEnabled}
-              onToggle={(value) => setGaplessEnabled(value)}
-            />
-            <SettingsToggleRow
               label={t("app.settings.playbackSettings.endlessPlaybackLabel")}
               description={t(
                 "app.settings.playbackSettings.endlessPlaybackDescription",
               )}
               value={endlessPlaybackEnabled}
               onToggle={(value) => setEndlessPlaybackEnabled(value)}
-            />
-            <SettingsStepperRow
-              label={t("app.settings.playbackSettings.crossfadeLabel")}
-              description={t(
-                "app.settings.playbackSettings.crossfadeDescription",
-              )}
-              valueText={
-                crossfadeSeconds === 0
-                  ? t("app.settings.playbackSettings.crossfadeOff")
-                  : t("app.settings.playbackSettings.crossfadeSeconds", {
-                      seconds: crossfadeSeconds,
-                    })
-              }
-              onDecrement={() => adjustCrossfade(-1)}
-              onIncrement={() => adjustCrossfade(1)}
             />
             {isEqualizerAvailable() && (
               <SettingsActionRow

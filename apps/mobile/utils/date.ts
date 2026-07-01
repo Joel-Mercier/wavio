@@ -10,7 +10,7 @@ import i18n from "@/config/i18n";
 const locales: Record<string, Locale> = {
   en,
   fr,
-  'zh-CN': zhCN,
+  "zh-CN": zhCN,
   ru,
 };
 

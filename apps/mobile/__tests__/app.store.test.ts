@@ -46,8 +46,6 @@ const reset = () =>
       downloadsWifiOnly: false,
       replayGainMode: "off",
       replayGainPreampDb: 0,
-      crossfadeSeconds: 0,
-      gaplessEnabled: true,
       endlessPlaybackEnabled: false,
       queueSyncPriority: "off",
     },
@@ -132,22 +130,6 @@ describe("app store", () => {
     useAppBase.getState().setReplayGainPreampDb(-3);
     expect(useAppBase.getState().replayGainMode).toBe("track");
     expect(useAppBase.getState().replayGainPreampDb).toBe(-3);
-  });
-
-  it("setCrossfadeSeconds clamps to [0, 12]", () => {
-    useAppBase.getState().setCrossfadeSeconds(-5);
-    expect(useAppBase.getState().crossfadeSeconds).toBe(0);
-    useAppBase.getState().setCrossfadeSeconds(99);
-    expect(useAppBase.getState().crossfadeSeconds).toBe(12);
-    useAppBase.getState().setCrossfadeSeconds(7);
-    expect(useAppBase.getState().crossfadeSeconds).toBe(7);
-  });
-
-  it("setGaplessEnabled toggles the flag", () => {
-    useAppBase.getState().setGaplessEnabled(false);
-    expect(useAppBase.getState().gaplessEnabled).toBe(false);
-    useAppBase.getState().setGaplessEnabled(true);
-    expect(useAppBase.getState().gaplessEnabled).toBe(true);
   });
 
   it("setEndlessPlaybackEnabled toggles the flag", () => {

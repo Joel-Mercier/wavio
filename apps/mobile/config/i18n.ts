@@ -13,7 +13,7 @@ import zhCn from "@/i18n/zh-CN.json";
 const resources = {
   en,
   fr,
-  'zh-CN': zhCn,
+  "zh-CN": zhCn,
   ru,
 };
 
@@ -25,7 +25,7 @@ export const SupportedLanguages = Object.keys(
 const zodLocales = {
   en: zodEn,
   fr: zodFr,
-  'zh-CN': zodCn,
+  "zh-CN": zodCn,
   ru: zodRu,
 } satisfies Record<TSupportedLanguages, () => { localeError: unknown }>;
 

@@ -63,7 +63,7 @@ export const ui = {
       audiophile: {
         label: 'Audiophile',
         title: 'Tuned, not loud.',
-        desc: 'Gapless, crossfade, replay gain, system EQ.',
+        desc: 'Audio quality settings, endless playback, replay gain, system EQ.',
       },
       offline: { label: 'Offline', title: 'Take it off the grid.' },
       quote: {
@@ -274,7 +274,7 @@ export const ui = {
       audiophile: {
         label: 'Аудиофилам',
         title: 'Широта настроек.',
-        desc: 'Воспроизведение «без пауз», кроссфейд, ReplayGain и системный эквалайзер.',
+        desc: 'Настройки качества звука, музыка нон-стоп, ReplayGain и системный эквалайзер.',
       },
       offline: { label: 'Офлайн-прослушивание', title: 'Уходи в офлайн.' },
       quote: {
@@ -485,7 +485,7 @@ export const ui = {
       audiophile: {
         label: 'Audiophile',
         title: 'Accordé, pas juste fort.',
-        desc: 'Sans blanc, fondu enchaîné, replay gain, égaliseur système.',
+        desc: 'Réglages de qualité audio, lecture sans fin, replay gain, égaliseur système.',
       },
       offline: { label: 'Hors ligne', title: 'Emportez-la partout.' },
       quote: {
@@ -699,7 +699,7 @@ export const ui = {
       audiophile: {
         label: '高保真',
         title: '调声，而非调响。',
-        desc: '无缝播放、平滑过渡、回放增益、均衡器。',
+        desc: '音质设置、无限播放、回放增益、均衡器。',
       },
       offline: { label: '离线模式', title: '离线，不受限。' },
       quote: {

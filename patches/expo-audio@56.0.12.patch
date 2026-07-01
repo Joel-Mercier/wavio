@@ -38,50 +38,20 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2
        Function("play") { player: AudioPlayer ->
          if (!audioEnabled) {
            Log.e(TAG, "Audio has been disabled. Re-enable to start playing")
-@@ -507,6 +513,20 @@ class AudioModule : Module() {
-         }
-       }
- 
-+      Function("prepareNext") { player: AudioPlayer, source: AudioSource, metadata: Metadata? ->
-+        runOnMain {
-+          if (player.ref.availableCommands.contains(Player.COMMAND_CHANGE_MEDIA_ITEMS)) {
-+            createMediaItem(source)?.let { player.prepareNext(it, metadata) }
-+          }
-+        }
-+      }
-+
-+      Function("clearPreparedNext") { player: AudioPlayer ->
-+        runOnMain {
-+          player.clearPreparedNext()
-+        }
-+      }
-+
-       Function("setActiveForLockScreen") { ref: AudioPlayer, active: Boolean, metadata: Metadata?, options: AudioLockScreenOptions? ->
-         runOnMain {
-           ref.setActiveForLockScreen(active, metadata, options)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..a94c1d2d04775af9121e27dc96f9cfb531395627 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..6a26977882ba21151ad78500651a000b90b06e61 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-@@ -8,6 +8,7 @@ import android.util.Log
- import androidx.core.content.ContextCompat
- import androidx.media3.common.AudioAttributes
- import androidx.media3.common.C
-+import androidx.media3.common.MediaItem
- import androidx.media3.common.PlaybackException
- import androidx.media3.common.PlaybackParameters
- import androidx.media3.common.Player
-@@ -24,6 +25,9 @@ import java.lang.ref.WeakReference
+@@ -24,6 +24,8 @@ import java.lang.ref.WeakReference
  
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
 +private const val REMOTE_PREVIOUS = "remotePrevious"
 +private const val REMOTE_NEXT = "remoteNext"
-+private const val NEXT_TRACK_STARTED = "nextTrackStarted"
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +41,7 @@ class AudioPlayer(
+@@ -37,6 +39,7 @@ class AudioPlayer(
    player = ExoPlayer.Builder(context)
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
@@ -89,59 +59,16 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..a94c1d2d04775af9121e27dc96f9cfb5
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -97,6 +102,57 @@ class AudioPlayer(
+@@ -97,6 +100,14 @@ class AudioPlayer(
      startUpdating()
    }
  
-+  // Lock-screen metadata for the gapless-queued next item, applied natively when
-+  // ExoPlayer auto-advances into it so the notification stays correct even while
-+  // the JS thread is throttled in the background.
-+  private var pendingNextMetadata: Metadata? = null
-+
-+  // Queue a next item so ExoPlayer can transition into it gaplessly when the
-+  // current item ends. Replaces any previously prepared next item.
-+  fun prepareNext(source: MediaSource, metadata: Metadata?) {
-+    val count = ref.mediaItemCount
-+    val current = ref.currentMediaItemIndex
-+    if (count > current + 1) {
-+      ref.removeMediaItems(current + 1, count)
-+    }
-+    ref.addMediaSource(source)
-+    pendingNextMetadata = metadata
-+  }
-+
-+  fun clearPreparedNext() {
-+    val count = ref.mediaItemCount
-+    val current = ref.currentMediaItemIndex
-+    if (count > current + 1) {
-+      ref.removeMediaItems(current + 1, count)
-+    }
-+    pendingNextMetadata = null
-+  }
-+
 +  fun emitRemotePrevious() {
 +    emit(REMOTE_PREVIOUS)
 +  }
 +
 +  fun emitRemoteNext() {
 +    emit(REMOTE_NEXT)
-+  }
-+
-+  override fun onMediaItemChanged(mediaItem: MediaItem?, reason: Int) {
-+    super.onMediaItemChanged(mediaItem, reason)
-+    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-+      emit(NEXT_TRACK_STARTED)
-+      // Push the queued item's metadata to the notification immediately, without
-+      // waiting for the (possibly throttled) JS thread to call back in.
-+      pendingNextMetadata?.let { updateLockScreenMetadata(it) }
-+      pendingNextMetadata = null
-+      // Trim the consumed item so the timeline stays at one entry until
-+      // JS calls prepareNext() again.
-+      val current = ref.currentMediaItemIndex
-+      if (current > 0) {
-+        ref.removeMediaItems(0, current)
-+      }
-+    }
 +  }
 +
    fun setActiveForLockScreen(active: Boolean, metadata: Metadata? = null, options: AudioLockScreenOptions? = null) {
@@ -168,10 +95,20 @@ index f3536d571535db7d6af57f568fce0d7c0b3fb674..8bd08ad7817d79da89bb7e09556d56be
      .build(),
    appContext = appContext,
 diff --git a/android/src/main/java/expo/modules/audio/AudioRecords.kt b/android/src/main/java/expo/modules/audio/AudioRecords.kt
-index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..70b66ba7991c0ac262aacaae8acb3aa5de81abc9 100644
+index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381d5095dc8 100644
 --- a/android/src/main/java/expo/modules/audio/AudioRecords.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioRecords.kt
-@@ -110,7 +110,9 @@ enum class AndroidAudioEncoder(val value: String) : Enumerable {
+@@ -55,7 +55,8 @@ class Metadata(
+   @Field val title: String?,
+   @Field val artist: String?,
+   @Field val albumTitle: String?,
+-  @Field val artworkUrl: URL?
++  @Field val artworkUrl: URL?,
++  @Field val durationMs: Double? = null
+ ) : Record
+ 
+ enum class AndroidOutputFormat(val value: String) : Enumerable {
+@@ -110,7 +111,9 @@ enum class AndroidAudioEncoder(val value: String) : Enumerable {
  class AudioLockScreenOptions(
    @Field val showSeekForward: Boolean,
    @Field val showSeekBackward: Boolean,
@@ -380,6 +317,34 @@ index 839aaef12d7699ea1a89037b31849775daa079f4..a976075dfa999a99917b3cb6050328fe
      }
      return super.onCustomCommand(session, controller, command, args)
    }
+diff --git a/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt b/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
+index 18203a364d17dcf3de95d22a20175308e3363889..0cbd9bb1ba694c92f02abdef6bef0db22d047161 100644
+--- a/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
++++ b/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
+@@ -45,6 +45,11 @@ internal class MetadataInjectingPlayer(
+       .setAlbumTitle(metadata?.albumTitle)
+       .setArtworkUri(metadata?.artworkUrl?.toString()?.toUri())
+       .setArtworkData(null, null)
++      // Carry the known track duration on the metadata so the media notification's
++      // duration is authoritative. Media3 uses MediaMetadata.durationMs for
++      // METADATA_KEY_DURATION when the player's live content duration is unknown
++      // (e.g. right after a gapless transition, before the next item buffers).
++      .setDurationMs(metadata?.durationMs?.toLong())
+       .build()
+   }
+ 
+diff --git a/build/Audio.types.d.ts b/build/Audio.types.d.ts
+index 25604783649fe9b64f6655172f08471a5efcbf45..da73354dac3220b01cb9af6ab10e3ddc2fe05edf 100644
+--- a/build/Audio.types.d.ts
++++ b/build/Audio.types.d.ts
+@@ -618,6 +618,7 @@ export type AudioMetadata = {
+     artist?: string;
+     albumTitle?: string;
+     artworkUrl?: string;
++    durationMs?: number;
+ };
+ /**
+  * Loop mode for audio playlist playback.
 diff --git a/build/AudioConstants.d.ts b/build/AudioConstants.d.ts
 index cfd92ad0ff5765254c4e6db974fe44bce34aad06..daef7384bcd7090cc200dd65d3812fc6e5774306 100644
 --- a/build/AudioConstants.d.ts
@@ -415,26 +380,7 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..4f779b58d28c6e51455f59e9c2ea9206
      /**
       * The current playback rate of the audio. It accepts different values depending on the platform:
       * - **Android**: `0.1` to `2.0`
-@@ -141,6 +146,18 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
-      * Replaces the current audio source with a new one.
-      */
-     replace(source: AudioSource): void;
-+    /**
-+     * Android-only. Queues a source for gapless transition after the current
-+     * source ends. Replaces any previously queued next source. ExoPlayer
-+     * pre-buffers it and transitions seamlessly when the current item ends,
-+     * firing a `nextTrackStarted` event. No-op on iOS.
-+     */
-+    prepareNext(source: AudioSource, metadata?: AudioMetadata): void;
-+    /**
-+     * Android-only. Removes the source queued by `prepareNext`. No-op on iOS or
-+     * when nothing is queued.
-+     */
-+    clearPreparedNext(): void;
-     /**
-      * Seeks the playback by the given number of seconds.
-      * @param seconds The number of seconds to seek by.
-@@ -222,6 +239,16 @@ export type AudioEvents = {
+@@ -222,6 +227,10 @@ export type AudioEvents = {
      playbackStatusUpdate(status: AudioStatus): void;
      /** Fired when audio sampling is enabled and new sample data is available. */
      audioSampleUpdate(data: AudioSample): void;
@@ -442,12 +388,6 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..4f779b58d28c6e51455f59e9c2ea9206
 +    remotePrevious(): void;
 +    /** Fired when the user taps the skip-next-track button on the lock screen / notification / headset. */
 +    remoteNext(): void;
-+    /**
-+     * Android-only. Fired when ExoPlayer auto-advances from the current item to the
-+     * item queued via `prepareNext`. JS should update queue index / scrobble state /
-+     * lock-screen metadata when this fires. Not fired on iOS.
-+     */
-+    nextTrackStarted(): void;
  };
  export declare class AudioRecorder extends SharedObject<RecordingEvents> {
      /**
@@ -539,6 +479,22 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..b069388f1b312ddaebeae171c1445270
 +    remoteCommandCenter.nextTrackCommand.removeTarget(self)
    }
  }
+diff --git a/src/Audio.types.ts b/src/Audio.types.ts
+index 906753fa4fcab4323c391bc71c77e7c9f39b7379..860a2f0a010f32ecd75fb81a959a1d2afa0169cb 100644
+--- a/src/Audio.types.ts
++++ b/src/Audio.types.ts
+@@ -664,6 +664,11 @@ export type AudioMetadata = {
+   artist?: string;
+   albumTitle?: string;
+   artworkUrl?: string;
++  /**
++   * Track duration in milliseconds. Used to set the media notification's
++   * duration when the player's live content duration isn't yet known.
++   */
++  durationMs?: number;
+ };
+ 
+ /**
 diff --git a/src/AudioConstants.ts b/src/AudioConstants.ts
 index dcc0452f7cae66b1bfaf77ed211416b092965bd9..779223ba2550809e621f4006c193beb29c7d15e5 100644
 --- a/src/AudioConstants.ts
@@ -575,32 +531,7 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..da210cec9d8b0cbe73a16c011dcc23fe
    /**
     * The current playback rate of the audio. It accepts different values depending on the platform:
     * - **Android**: `0.1` to `2.0`
-@@ -182,6 +188,24 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
-    */
-   replace(source: AudioSource): void;
- 
-+  /**
-+   * Android-only. Queues a source for gapless transition after the current
-+   * source ends. Replaces any previously queued next source. ExoPlayer
-+   * pre-buffers it and transitions seamlessly when the current item ends,
-+   * firing a `nextTrackStarted` event. No-op on iOS.
-+   *
-+   * Pass the next track's `metadata` so the lock-screen / notification updates
-+   * natively the moment ExoPlayer auto-advances, without waiting for the JS
-+   * thread (which may be throttled while backgrounded).
-+   */
-+  prepareNext(source: AudioSource, metadata?: AudioMetadata): void;
-+
-+  /**
-+   * Android-only. Removes the source queued by `prepareNext`. No-op on iOS or
-+   * when nothing is queued.
-+   */
-+  clearPreparedNext(): void;
-+
-   /**
-    * Seeks the playback by the given number of seconds.
-    * @param seconds The number of seconds to seek by.
-@@ -280,6 +304,16 @@ export type AudioEvents = {
+@@ -280,6 +286,10 @@ export type AudioEvents = {
    playbackStatusUpdate(status: AudioStatus): void;
    /** Fired when audio sampling is enabled and new sample data is available. */
    audioSampleUpdate(data: AudioSample): void;
@@ -608,12 +539,6 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..da210cec9d8b0cbe73a16c011dcc23fe
 +  remotePrevious(): void;
 +  /** Fired when the user taps the skip-next-track button on the lock screen / notification / headset. */
 +  remoteNext(): void;
-+  /**
-+   * Android-only. Fired when ExoPlayer auto-advances from the current item to the
-+   * item queued via `prepareNext`. JS should update queue index / scrobble state /
-+   * lock-screen metadata when this fires. Not fired on iOS.
-+   */
-+  nextTrackStarted(): void;
  };
  
  export declare class AudioRecorder extends SharedObject<RecordingEvents> {

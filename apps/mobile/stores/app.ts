@@ -100,10 +100,6 @@ interface AppStore {
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
   setReplayGainPreampDb: (db: number) => void;
-  crossfadeSeconds: number;
-  setCrossfadeSeconds: (seconds: number) => void;
-  gaplessEnabled: boolean;
-  setGaplessEnabled: (enabled: boolean) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
   // See services/playQueueSync.ts.
@@ -206,14 +202,6 @@ export const useAppBase = create<AppStore>()(
       replayGainPreampDb: 0,
       setReplayGainPreampDb: (replayGainPreampDb: number) => {
         set({ replayGainPreampDb });
-      },
-      crossfadeSeconds: 0,
-      setCrossfadeSeconds: (crossfadeSeconds: number) => {
-        set({ crossfadeSeconds: Math.max(0, Math.min(12, crossfadeSeconds)) });
-      },
-      gaplessEnabled: true,
-      setGaplessEnabled: (gaplessEnabled: boolean) => {
-        set({ gaplessEnabled });
       },
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {

@@ -15,6 +15,7 @@ Features:
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
+- [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of favorited songs, downloads management screen
@@ -23,15 +24,16 @@ Features:
 - Share screen with shareable links
 - Servers screen with multiple servers support
 - Settings screen with server scanning, offline downloads, playback, content, display and backup settings
-- Gapless playback, crossfade, replay gain, equalizer and sleep timer
+- Endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net
 - Bookmarks support. Easy access to a song or podcast favorite parts
+- Landscape mode support
 - Android homescreen widgets
 - Android Auto support
 - Navidrome smart playlists beta support
 - Navidrome/Opensubsonic jukebox mode support
 - Backup and restore
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
-- French and English translations
+- English, French, Chinese and Russian translations

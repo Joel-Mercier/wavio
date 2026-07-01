@@ -597,14 +597,8 @@
 				},
 				"playbackSettings": {
 					"title": "Playback",
-					"gaplessLabel": "Gapless playback",
-					"gaplessDescription": "Eliminate silence between consecutive tracks by preloading the next one.",
 					"endlessPlaybackLabel": "Endless playback",
 					"endlessPlaybackDescription": "When the queue ends, automatically add similar tracks to keep the music playing.",
-					"crossfadeLabel": "Crossfade",
-					"crossfadeDescription": "Overlap the end of one track with the start of the next.",
-					"crossfadeOff": "Off",
-					"crossfadeSeconds": "{{seconds}} s",
 					"equalizerLabel": "Equalizer",
 					"equalizerDescription": "Open the system equalizer to tune the sound for the current playback session.",
 					"equalizerAction": "Open",
@@ -710,7 +704,7 @@
 					"clearAllSuccessMessage": "All trusted certificates removed"
 				},
 				"podcastSettings": {
-					"title": "Podcast settings",
+					"title": "Podcasts",
 					"configurePodcastsLabel": "Configure podcasts",
 					"configurePodcastsDescription": "Configure your podcasts to stream from the app",
 					"configurePodcastsAction": "Configure",
