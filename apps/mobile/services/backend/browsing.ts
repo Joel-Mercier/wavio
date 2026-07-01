@@ -35,6 +35,7 @@ export const getSimilarSongs = dispatch(S.getSimilarSongs, J.getSimilarSongs);
 export const getSimilarSongs2 = dispatch(
   S.getSimilarSongs2,
   J.getSimilarSongs2,
+  L.getSimilarSongs2,
 );
 export const getSonicSimilarTracks = dispatch(
   S.getSonicSimilarTracks,

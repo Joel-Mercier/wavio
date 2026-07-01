@@ -66,7 +66,15 @@ let loadedTrackId: string | null = null;
 
 let isLoading = false;
 let playbackInitialized = false;
+// Endless playback extends the queue with similar tracks when it runs dry.
+// `endlessFetchInFlight` guards a single in-flight fetch; `endlessPrefetchedSeedId`
+// records the tail-track id we've already tried to extend from so the prefetch
+// fires once per tail (the status listener ticks ~4×/s); `endlessResumeWhenReady`
+// flags that the tail track finished mid-fetch, so the in-flight extension must
+// advance onto the first appended track and start it rather than just append.
 let endlessFetchInFlight = false;
+let endlessPrefetchedSeedId: string | null = null;
+let endlessResumeWhenReady = false;
 
 // A resume seek can't be applied the instant a source is replaced — expo-audio
 // may not have the media ready, and the bookmark map may still be loading. We
@@ -338,6 +346,74 @@ function loadAndPlay(track: QueueTrack | null) {
   loadTrack(track, true);
 }
 
+// Seconds before a track's end at which we start fetching the endless-playback
+// extension, so the appended tracks are queued before playback runs dry and the
+// end-of-track advance stays seamless instead of stalling on a network call.
+const ENDLESS_PREFETCH_LEAD_SECONDS = 20;
+
+// True when the queue is parked on its final track with no repeat/shuffle — the
+// point at which endless playback must extend it to keep going.
+function atEndlessQueueTail(): boolean {
+  const q = useQueue.getState();
+  return (
+    q.repeatMode === "off" &&
+    !q.shuffle &&
+    q.currentIndex != null &&
+    q.currentIndex >= q.queue.length - 1
+  );
+}
+
+// Fetch similar tracks for `seed` and append them to the queue. Guarded to a
+// single in-flight fetch. When the tail track finished while a fetch was still
+// running (`endlessResumeWhenReady`), this also advances onto the first appended
+// track and starts playback; otherwise the fresh tracks just sit at the end and
+// the normal end-of-track advance picks them up gaplessly.
+function extendEndlessQueue(seed: QueueTrack) {
+  if (endlessFetchInFlight) return;
+  endlessFetchInFlight = true;
+  endlessPrefetchedSeedId = seed.id;
+  const parkedId = useQueue.getState().getCurrent()?.id ?? null;
+  fetchEndlessExtension(seed)
+    .then((tracks) => {
+      if (tracks.length === 0) {
+        if (endlessResumeWhenReady) {
+          try {
+            player.seekTo(0);
+          } catch (error) {
+            logSwallowed("rewind after empty endless fetch", error);
+          }
+        }
+        return;
+      }
+      useQueue.getState().enqueueEnd(tracks);
+      if (endlessResumeWhenReady) {
+        useQueue.getState().next();
+        // The queue subscription loads the new track on the id change; only
+        // load explicitly when the id didn't change (so it never fired).
+        const c = useQueue.getState().getCurrent();
+        if (c && c.id === parkedId) loadAndPlay(c);
+      }
+    })
+    .catch((error) => {
+      reportError(error, {
+        area: "player",
+        endpoint: "endlessRadio",
+        extra: { seedId: seed.id, source: seed.source },
+      });
+      if (endlessResumeWhenReady) {
+        try {
+          player.seekTo(0);
+        } catch (rewindError) {
+          logSwallowed("rewind after failed endless fetch", rewindError);
+        }
+      }
+    })
+    .finally(() => {
+      endlessFetchInFlight = false;
+      endlessResumeWhenReady = false;
+    });
+}
+
 // A streamed source failed. Tell a genuine bad stream from a transient
 // connectivity drop: if the device is offline the loss is environmental;
 // otherwise probe the server and treat it as a real failure only when the server
@@ -453,6 +529,27 @@ function handlePlaybackStatus(status: AudioStatus) {
   wasPlaying = status.playing;
   maybeSubmitScrobble(status);
 
+  // Endless playback: while the queue is parked on its last track and it's near
+  // the end, prefetch similar tracks and append them so the end-of-track advance
+  // is seamless. `endlessPrefetchedSeedId` keeps this to one fetch per tail.
+  if (
+    status.playing &&
+    status.duration > 0 &&
+    useAppBase.getState().endlessPlaybackEnabled &&
+    !endlessFetchInFlight
+  ) {
+    const seed = useQueue.getState().getCurrent();
+    const remaining = status.duration - (status.currentTime ?? 0);
+    if (
+      seed &&
+      endlessPrefetchedSeedId !== seed.id &&
+      remaining <= ENDLESS_PREFETCH_LEAD_SECONDS &&
+      atEndlessQueueTail()
+    ) {
+      extendEndlessQueue(seed);
+    }
+  }
+
   if (status.didJustFinish && !isLoading) {
     const previousId = useQueue.getState().getCurrent()?.id ?? null;
     const previous = useQueue.getState().getCurrent();
@@ -475,20 +572,20 @@ function handlePlaybackStatus(status: AudioStatus) {
       player.pause();
       return;
     }
-    // End of queue with no repeat/shuffle: keep the current track loaded so
-    // the player UI keeps its title/artist/cover, just stop playback. If
-    // endless playback is enabled, fetch similar tracks and append them so
-    // playback continues without disturbing the original queue.
-    const qstate = useQueue.getState();
-    if (
-      qstate.repeatMode === "off" &&
-      !qstate.shuffle &&
-      qstate.currentIndex != null &&
-      qstate.currentIndex >= qstate.queue.length - 1
-    ) {
+    // End of queue with no repeat/shuffle: keep the current track loaded so the
+    // player UI keeps its title/artist/cover, just stop playback. If endless
+    // playback is enabled and the near-end prefetch hasn't already extended the
+    // queue, fall back to fetching now (arming resume so playback restarts once
+    // the tracks land) rather than stopping.
+    if (atEndlessQueueTail()) {
       const endless = useAppBase.getState().endlessPlaybackEnabled;
-      const seed = qstate.getCurrent();
-      if (!endless || !seed || endlessFetchInFlight) {
+      const seed = useQueue.getState().getCurrent();
+      const triedThisTail =
+        !!seed && endlessPrefetchedSeedId === seed.id && !endlessFetchInFlight;
+      if (!endless || !seed || triedThisTail) {
+        // Endless off, nothing to seed from, or a prefetch for this tail already
+        // came back empty (a hit would have extended the queue, so we'd no
+        // longer be at the tail) — genuinely out of content, stop at the end.
         try {
           player.pause();
           player.seekTo(0);
@@ -497,44 +594,11 @@ function handlePlaybackStatus(status: AudioStatus) {
         }
         return;
       }
-      endlessFetchInFlight = true;
-      try {
-        player.pause();
-      } catch (error) {
-        logSwallowed("pause before endless fetch", error);
-      }
-      fetchEndlessExtension(seed)
-        .then((tracks) => {
-          if (tracks.length === 0) {
-            try {
-              player.seekTo(0);
-            } catch (error) {
-              logSwallowed("rewind after empty endless fetch", error);
-            }
-            return;
-          }
-          useQueue.getState().enqueueEnd(tracks);
-          useQueue.getState().next();
-          // The queue subscription loads the new track on the id change; only
-          // load explicitly when the id didn't change (so it never fired).
-          const c = useQueue.getState().getCurrent();
-          if (c && c.id === previousId) loadAndPlay(c);
-        })
-        .catch((error) => {
-          reportError(error, {
-            area: "player",
-            endpoint: "endlessRadio",
-            extra: { seedId: seed.id, source: seed.source },
-          });
-          try {
-            player.seekTo(0);
-          } catch (rewindError) {
-            logSwallowed("rewind after failed endless fetch", rewindError);
-          }
-        })
-        .finally(() => {
-          endlessFetchInFlight = false;
-        });
+      // The tail finished before the extension landed (prefetch still running,
+      // or it never triggered — e.g. a seek straight to the end). Arm resume so
+      // the extension advances + starts playback when ready.
+      endlessResumeWhenReady = true;
+      extendEndlessQueue(seed);
       return;
     }
     // Default path: advance queue and load on the player.

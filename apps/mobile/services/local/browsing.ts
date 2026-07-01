@@ -35,6 +35,7 @@ import type {
   Index,
   Indexes,
   MusicFolder,
+  SimilarSongs2,
 } from "@/services/openSubsonic/types";
 
 export const getMusicFolders = async () => {
@@ -163,6 +164,31 @@ export const getSong = async (id: string) => {
   const row = await queryTrackById(id);
   if (!row) throw new LocalUnsupportedError(`song "${id}" (not indexed)`);
   return localEnvelope({ song: mapRowToChild(row) });
+};
+
+// The on-device index has no acoustic-similarity model, so "similar songs" is
+// a best-effort surface: the seed artist's other most-played tracks (the same
+// ranking getTopSongs uses), excluding the seed itself. Without this, local
+// libraries hit localUnsupported() here and endless playback could only ever
+// fall back to getTopSongs at the call site.
+export const getSimilarSongs2 = async (
+  id: string,
+  { count }: { count?: number } = {},
+) => {
+  const limit = count ?? 20;
+  const seed = await queryTrackById(id);
+  const song: Child[] = [];
+  if (seed?.artist_key) {
+    const rows = await queryTopSongsByArtist(seed.artist_key, limit + 1);
+    song.push(
+      ...rows
+        .filter((row) => row.id !== id)
+        .slice(0, limit)
+        .map(mapRowToChild),
+    );
+  }
+  const similarSongs2: SimilarSongs2 = { song };
+  return localEnvelope({ similarSongs2 });
 };
 
 // `artist` is the display name; its artist_key is normalizeKey(albumArtist ||
