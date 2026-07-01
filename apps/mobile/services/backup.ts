@@ -4,32 +4,11 @@ import { File, Paths } from "expo-file-system";
 import Share from "react-native-share";
 import * as z from "zod";
 import { getAuthScope, storage } from "@/config/storage";
+import { GLOBAL_KEYS, SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
 import { useAppBase } from "@/stores/app";
 import useMusicFolders from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { useServersBase } from "@/stores/servers";
-
-// Globally-scoped persisted stores (one bucket regardless of server/user).
-const GLOBAL_KEYS = [
-  "auth",
-  "servers",
-  "app",
-  "podcasts",
-  "musicFolders",
-] as const;
-
-// Persisted stores namespaced per (server, user) via createDynamicScopedStorage
-// — their MMKV keys look like `<scope>:<name>` (the queue uses `<scope>:queueStore:*`).
-// Used to recover scopes from storage when the `users` list is incomplete.
-const SCOPED_STORE_NAMES = [
-  "offlineStore",
-  "queueStore",
-  "playlists",
-  "jukeboxStore",
-  "activity",
-  "recentPlays",
-  "recentSearches",
-] as const;
 
 const backupSchema = z.object({
   version: z.literal(1),
