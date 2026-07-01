@@ -96,13 +96,28 @@ async function pushNowPlaying() {
       : null) ||
     null;
   const isPlaying = getPlaybackSnapshot().playing;
-  const bgColor = await resolveBgColor(coverUrl);
-  if (token !== lastNowPlayingToken) return;
+  // Push the text/artwork straight away with whatever colour we can get for
+  // free (a cached palette, else the default). Extracting the dominant colour
+  // downloads and decodes the cover, which can take seconds on a cache miss —
+  // never make the title/artist wait on it.
+  const cachedBg = coverUrl ? bgColorCache.get(coverUrl) : undefined;
   Native.updateNowPlaying({
     title: current.title ?? null,
     artist: current.artist ?? null,
     coverUrl,
     isPlaying,
+    bgColor: cachedBg ?? DEFAULT_BG,
+  });
+  if (cachedBg != null) return;
+  // Resolve the palette in the background and push once more when it lands, as
+  // long as this is still the current track and the colour beats the default.
+  const bgColor = await resolveBgColor(coverUrl);
+  if (token !== lastNowPlayingToken || bgColor === DEFAULT_BG) return;
+  Native.updateNowPlaying({
+    title: current.title ?? null,
+    artist: current.artist ?? null,
+    coverUrl,
+    isPlaying: getPlaybackSnapshot().playing,
     bgColor,
   });
 }
