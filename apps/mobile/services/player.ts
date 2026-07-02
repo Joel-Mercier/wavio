@@ -43,6 +43,7 @@ import {
   recordResumePosition,
 } from "@/services/resumePositions";
 import {
+  checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
@@ -65,6 +66,21 @@ function logSwallowed(label: string, error: unknown) {
 // the next source onto this same player from the `didJustFinish` handler.
 const player = createAudioPlayer(null, { updateInterval: 250 });
 let loadedTrackId: string | null = null;
+
+// Sleep-timer fade-out: rather than cut playback dead when the minutes timer
+// expires, ramp the volume to zero over this window, then pause. Driven by the
+// native playback-status ticks (which keep firing during background playback),
+// so it works with the screen off. `sleepFadeUntil` is the ramp's end timestamp
+// and `sleepFadeFromVolume` the volume to fade from / restore afterwards.
+const SLEEP_FADE_MS = 8000;
+let sleepFadeUntil: number | null = null;
+let sleepFadeFromVolume = 1;
+
+function cancelSleepFade() {
+  if (sleepFadeUntil == null) return;
+  sleepFadeUntil = null;
+  player.volume = sleepFadeFromVolume;
+}
 
 let isLoading = false;
 let playbackInitialized = false;
@@ -650,6 +666,25 @@ function handlePlaybackStatus(status: AudioStatus) {
     }
   }
   if (status.playing) {
+    // Advance an in-progress sleep fade off the native tick (works backgrounded).
+    // Ramp volume toward zero; once the window elapses, restore the volume for
+    // the next play and pause.
+    if (sleepFadeUntil != null) {
+      const remaining = sleepFadeUntil - Date.now();
+      if (remaining <= 0) {
+        sleepFadeUntil = null;
+        const restore = sleepFadeFromVolume;
+        pause();
+        player.volume = restore;
+        return;
+      }
+      player.volume = sleepFadeFromVolume * (remaining / SLEEP_FADE_MS);
+      return;
+    }
+    // Native-driven so the minutes sleep timer fires on time even backgrounded,
+    // when the JS setTimeout is throttled. The registered handler starts the
+    // fade-out; skip the rest of this tick.
+    if (checkSleepTimerExpiry()) return;
     const cur = useQueue.getState().getCurrent();
     if (cur) {
       reportNowPlaying(cur);
@@ -1025,6 +1060,9 @@ export function togglePlayPause() {
 }
 
 export function pause() {
+  // A manual pause during a sleep fade takes over: drop the ramp and restore
+  // volume so a later resume isn't stuck quiet.
+  cancelSleepFade();
   if (useJukebox.getState().active) {
     jukeboxPauseAction().catch(() => {});
     return;
@@ -1040,9 +1078,25 @@ export function pause() {
   player.pause();
 }
 
-registerSleepTimerPauseHandler(pause);
+// Sleep-timer expiry handler: start a volume ramp when playing locally, letting
+// the status tick carry it to zero and then pause. If nothing is actively
+// playing (jukebox, or already paused) there's no tick to drive the ramp, so
+// just pause outright.
+function beginSleepFade() {
+  if (useJukebox.getState().active || !player.playing) {
+    pause();
+    return;
+  }
+  sleepFadeFromVolume = player.volume ?? 1;
+  sleepFadeUntil = Date.now() + SLEEP_FADE_MS;
+}
+
+registerSleepTimerPauseHandler(beginSleepFade);
 
 export function play() {
+  // Resuming during a sleep fade means "keep listening" — abort the ramp and
+  // restore full volume before playing.
+  cancelSleepFade();
   if (useJukebox.getState().active) {
     jukeboxPlayAction().catch(() => {});
     return;
