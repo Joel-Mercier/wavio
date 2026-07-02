@@ -545,7 +545,9 @@
           "manageDownloadsDescription": "View downloaded tracks and free up space",
           "manageDownloadsAction": "Manage",
           "downloadsWifiOnlyLabel": "Download on Wi-Fi only",
-          "downloadsWifiOnlyDescription": "Pause the download queue when on cellular. Resumes automatically when Wi-Fi returns."
+          "downloadsWifiOnlyDescription": "Pause the download queue when on cellular. Resumes automatically when Wi-Fi returns.",
+          "autoSignOutLabel": "Sign out when server unreachable",
+          "autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks."
         },
         "storageSettings": {
           "title": "Storage",

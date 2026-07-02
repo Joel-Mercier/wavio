@@ -96,6 +96,8 @@ interface AppStore {
   setStreamingFormat: (streamingFormat: StreamFormat) => void;
   downloadsWifiOnly: boolean;
   setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
+  autoSignOutOnServerUnreachable: boolean;
+  setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
   replayGainMode: "off" | "track" | "album";
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
@@ -194,6 +196,10 @@ export const useAppBase = create<AppStore>()(
       downloadsWifiOnly: false,
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {
         set({ downloadsWifiOnly });
+      },
+      autoSignOutOnServerUnreachable: true,
+      setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
+        set({ autoSignOutOnServerUnreachable: enabled });
       },
       replayGainMode: "off",
       setReplayGainMode: (replayGainMode: "off" | "track" | "album") => {

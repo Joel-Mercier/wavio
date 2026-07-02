@@ -154,6 +154,12 @@ export default function SettingsDetail() {
   const setStreamingFormat = useApp((store) => store.setStreamingFormat);
   const downloadsWifiOnly = useApp((store) => store.downloadsWifiOnly);
   const setDownloadsWifiOnly = useApp((store) => store.setDownloadsWifiOnly);
+  const autoSignOutOnServerUnreachable = useApp(
+    (store) => store.autoSignOutOnServerUnreachable,
+  );
+  const setAutoSignOutOnServerUnreachable = useApp(
+    (store) => store.setAutoSignOutOnServerUnreachable,
+  );
   const replayGainMode = useApp((store) => store.replayGainMode);
   const setReplayGainMode = useApp((store) => store.setReplayGainMode);
   const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
@@ -532,6 +538,14 @@ export default function SettingsDetail() {
                   )}
                   value={downloadsWifiOnly}
                   onToggle={(value) => setDownloadsWifiOnly(value)}
+                />
+                <SettingsToggleRow
+                  label={t("app.settings.offlineSettings.autoSignOutLabel")}
+                  description={t(
+                    "app.settings.offlineSettings.autoSignOutDescription",
+                  )}
+                  value={autoSignOutOnServerUnreachable}
+                  onToggle={(value) => setAutoSignOutOnServerUnreachable(value)}
                 />
                 {offlineModeEnabled && downloadedTracksList.length > 0 && (
                   <SettingsActionRow

@@ -545,7 +545,9 @@
           "manageDownloadsDescription": "查看已下载的曲目并释放空间",
           "manageDownloadsAction": "管理",
           "downloadsWifiOnlyLabel": "仅通过 Wi-Fi 下载",
-          "downloadsWifiOnlyDescription": "使用移动网络时暂停下载，Wi-Fi 连接后恢复下载。"
+          "downloadsWifiOnlyDescription": "使用移动网络时暂停下载，Wi-Fi 连接后恢复下载。",
+          "autoSignOutLabel": "服务器无法访问时退出登录",
+          "autoSignOutDescription": "当网络正常但无法访问服务器时自动退出登录。关闭后可保持登录状态并继续浏览已下载的曲目。"
         },
         "storageSettings": {
           "title": "存储空间",

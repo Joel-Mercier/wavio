@@ -24,7 +24,7 @@ Features:
 - Share screen with shareable links
 - Servers screen with multiple servers support
 - Settings screen with server scanning, offline downloads, playback, content, display and backup settings
-- Endless playback, replay gain, equalizer and sleep timer
+- Audio quality settings, endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net

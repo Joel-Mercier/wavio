@@ -3,6 +3,7 @@ import NetInfo, {
   type NetInfoStateType,
 } from "@react-native-community/netinfo";
 import { ping } from "@/services/backend/system";
+import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
 let currentType: NetInfoStateType = "unknown" as NetInfoStateType;
@@ -34,10 +35,27 @@ const HEARTBEAT_MS = 30000;
 const FAILURES_BEFORE_UNREACHABLE = 2;
 const QUICK_RETRY_MS = 2000;
 // Consecutive failed probes (device online the whole time) before we conclude
-// the server is genuinely gone and log the user out. A failure here always means
-// "device online but server unreachable" (probeServer no-ops while offline), so
-// it's distinct from being offline.
+// the server *might* be genuinely gone. NetInfo isConnected only means a link is
+// attached, not that packets actually route (weak signal, captive/filtered
+// networks) — so before logging out we corroborate against the wider internet
+// (probeInternetReachable). A failure here means "device link attached but
+// server unreachable"; the corroboration decides whether that's the server's
+// fault (→ logout) or the link's (→ keep the session).
 const DISCONNECT_AFTER_FAILURES = 3;
+// Neutral endpoints used to corroborate that the wider internet — not just the
+// active server — is reachable before force-logging-out. A single provider can
+// be blocked or unreachable in a given region/network (e.g. Google in Russia),
+// so we try a diverse set and only need ONE to answer to conclude "internet is
+// up, the server specifically is down". If none answer, the device's own link is
+// the problem and we keep the user signed in (issue #41). Order doesn't matter —
+// they're raced in parallel.
+const INTERNET_CHECK_URLS = [
+  "https://www.cloudflare.com/cdn-cgi/trace",
+  "https://captive.apple.com/hotspot-detect.html",
+  "https://ya.ru/",
+  "https://www.google.com/generate_204",
+];
+const INTERNET_CHECK_TIMEOUT_MS = 4000;
 // A transport handoff (WiFi↔cellular/roaming) briefly reports isConnected=false
 // before the new transport attaches. Don't flip the UI to offline on that first
 // sample — wait out this grace window and only commit "offline" if the device is
@@ -54,6 +72,7 @@ let quickRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingOfflineTimer: ReturnType<typeof setTimeout> | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
+let internetCheckInFlight = false;
 
 export function getConnectionType(): NetInfoStateType {
   return currentType;
@@ -254,7 +273,7 @@ export async function probeServer(): Promise<void> {
       scheduleQuickReprobe();
     }
     if (consecutiveProbeFailures >= DISCONNECT_AFTER_FAILURES) {
-      disconnectUnreachable();
+      void disconnectUnreachable();
     }
   } finally {
     clearTimeout(abortTimer);
@@ -263,20 +282,70 @@ export async function probeServer(): Promise<void> {
   }
 }
 
-// Server confirmed gone (online the whole time, repeated probe failures): log
-// out so the user lands on the login/server screen rather than staring at stale
-// cache. logout() clears credentials and the query cache. Reset our own state
-// first so the next session starts optimistic.
-function disconnectUnreachable() {
+// Races the neutral endpoints and resolves true as soon as ONE answers (any
+// response — even a 4xx/5xx — proves we reached a server, so the internet is
+// up). Resolves false only if every endpoint errors or the whole race times out,
+// which means the device's own link is down/filtered. Never rejects.
+function probeInternetReachable(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    let remaining = INTERNET_CHECK_URLS.length;
+    let settled = false;
+    const settle = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      controller.abort();
+      clearTimeout(timer);
+      resolve(result);
+    };
+    const timer = setTimeout(() => settle(false), INTERNET_CHECK_TIMEOUT_MS);
+    for (const url of INTERNET_CHECK_URLS) {
+      fetch(url, { method: "HEAD", signal: controller.signal })
+        .then(() => settle(true))
+        .catch(() => {
+          remaining -= 1;
+          if (remaining === 0) settle(false);
+        });
+    }
+  });
+}
+
+// Repeated probe failures while the device link is attached: the server *might*
+// be gone, but a weak/restricted link looks identical from the app's side. Only
+// force a logout once we've corroborated that the wider internet is reachable
+// (so the server specifically is the failure). logout() clears credentials and
+// the query cache. Reset our own state first so the next session starts
+// optimistic.
+async function disconnectUnreachable() {
+  // Opt-out (stores/app.ts, default on): when disabled, never force a logout on
+  // an unreachable server. Leave serverReachable=false (banner stays "server
+  // unreachable", offline/cache mode active) and keep the recovery poll running
+  // so the session auto-recovers once the server answers again.
+  if (!useAppBase.getState().autoSignOutOnServerUnreachable) return;
+  // Guard against overlapping internet checks from back-to-back recovery polls.
+  if (internetCheckInFlight) return;
+  internetCheckInFlight = true;
+  let internetUp: boolean;
+  try {
+    internetUp = await probeInternetReachable();
+  } finally {
+    internetCheckInFlight = false;
+  }
+  // The device link can't reach anything (weak signal, captive/filtered network)
+  // — it's the link that's down, not the server. Keep the user signed in; the
+  // recovery poll stays running and restores things when connectivity returns.
+  if (!internetUp) return;
+  // Re-check after the async gap: the user may have toggled the setting, the
+  // device may have dropped offline, or the server may have recovered.
+  if (!useAppBase.getState().autoSignOutOnServerUnreachable) return;
+  if (!isOnline || serverReachable) return;
   stopRecoveryPoll();
   stopHeartbeat();
   cancelQuickReprobe();
   cancelPendingOffline();
   consecutiveProbeFailures = 0;
-  if (!serverReachable) {
-    serverReachable = true;
-    for (const cb of reachableListeners) cb();
-  }
+  serverReachable = true;
+  for (const cb of reachableListeners) cb();
   useAuthBase.getState().logout();
 }
 

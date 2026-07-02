@@ -2,6 +2,11 @@ const mockFetch = jest.fn();
 const mockAddEventListener = jest.fn();
 const mockPing = jest.fn();
 const mockLogout = jest.fn();
+// Controls the auto-sign-out setting read by disconnectUnreachable. Mutable so
+// tests can toggle the opt-out; reset to the default (on) in beforeEach.
+let mockAutoSignOut = true;
+// Stands in for the global fetch used by the pre-logout internet corroboration.
+let mockGlobalFetch: jest.Mock;
 
 jest.mock("@react-native-community/netinfo", () => ({
   __esModule: true,
@@ -17,6 +22,14 @@ jest.mock("@react-native-community/netinfo", () => ({
 
 jest.mock("@/services/backend/system", () => ({
   ping: (opts?: unknown) => mockPing(opts),
+}));
+
+jest.mock("@/stores/app", () => ({
+  useAppBase: {
+    getState: () => ({
+      autoSignOutOnServerUnreachable: mockAutoSignOut,
+    }),
+  },
 }));
 
 jest.mock("@/stores/auth", () => ({
@@ -77,7 +90,20 @@ beforeEach(() => {
   mockAddEventListener.mockReset();
   mockPing.mockReset();
   mockLogout.mockReset();
+  mockAutoSignOut = true;
+  // The pre-logout internet corroboration (probeInternetReachable) hits neutral
+  // endpoints via global fetch. Default to "internet up" (any endpoint answers)
+  // so the server-down path logs out; individual tests override to simulate a
+  // dead/filtered link.
+  mockGlobalFetch = jest.fn().mockResolvedValue({});
+  (globalThis as { fetch: unknown }).fetch = mockGlobalFetch;
 });
+
+// Flush the microtask queue so the fire-and-forget async disconnectUnreachable
+// (which awaits the internet check) runs to completion before assertions.
+const flushMicrotasks = async () => {
+  for (let i = 0; i < 6; i++) await Promise.resolve();
+};
 
 afterEach(() => {
   // Stop any recovery poll / pending offline timer and return reachability to
@@ -205,7 +231,7 @@ describe("server reachability probe", () => {
     expect(getIsEffectivelyOnline()).toBe(true);
   });
 
-  it("logs out after repeated probe failures while online", async () => {
+  it("logs out after repeated probe failures when the internet is reachable", async () => {
     await setDeviceOnline(true);
     mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
     await probeServer();
@@ -213,7 +239,10 @@ describe("server reachability probe", () => {
     // Two failures is within the tolerance — no logout yet.
     expect(mockLogout).not.toHaveBeenCalled();
     await probeServer();
-    // Third consecutive failure crosses the threshold → full logout.
+    // Third consecutive failure crosses the threshold; the internet check
+    // confirms the wider internet is up (a neutral endpoint answers), so the
+    // server specifically is gone → full logout.
+    await flushMicrotasks();
     expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 
@@ -249,6 +278,57 @@ describe("server reachability probe", () => {
     resetServerReachable();
     expect(getServerReachable()).toBe(true);
     expect(getIsEffectivelyOnline()).toBe(true);
+  });
+});
+
+describe("internet-corroborated logout", () => {
+  it("keeps the session on a weak/restricted link where no endpoint answers (issue #41)", async () => {
+    // The device link is attached (isConnected) but nothing actually routes —
+    // both the server probe and every neutral internet endpoint fail.
+    (mockGlobalFetch as jest.Mock).mockRejectedValue(new Error("ERR_NETWORK"));
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    await probeServer();
+    await probeServer();
+    // The internet check fails, so the link — not the server — is the problem:
+    // stay signed in and unreachable (recovery poll keeps running).
+    await flushMicrotasks();
+    expect(mockLogout).not.toHaveBeenCalled();
+    expect(getServerReachable()).toBe(false);
+  });
+
+  it("does not depend on any single provider — one reachable endpoint is enough", async () => {
+    // Simulate a region where most providers are blocked (reject) but one still
+    // answers: the internet is up, so a dead server still logs out.
+    (mockGlobalFetch as jest.Mock).mockImplementation((url: string) =>
+      url.includes("ya.ru")
+        ? Promise.resolve({})
+        : Promise.reject(new Error("blocked")),
+    );
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    await probeServer();
+    await probeServer();
+    await flushMicrotasks();
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not log out on repeated failures when auto sign-out is disabled", async () => {
+    mockAutoSignOut = false;
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    await probeServer();
+    await probeServer();
+    // Crossing the failure threshold surfaces the unreachable banner but keeps
+    // the session alive when the user opted out of auto sign-out. The internet
+    // check is skipped entirely.
+    await flushMicrotasks();
+    expect(mockLogout).not.toHaveBeenCalled();
+    expect(getServerReachable()).toBe(false);
+    expect(mockGlobalFetch).not.toHaveBeenCalled();
   });
 });
 

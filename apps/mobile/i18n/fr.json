@@ -545,7 +545,9 @@
           "manageDownloadsDescription": "Voir les titres téléchargés et libérer de l'espace",
           "manageDownloadsAction": "Gérer",
           "downloadsWifiOnlyLabel": "Télécharger en Wi-Fi uniquement",
-          "downloadsWifiOnlyDescription": "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi."
+          "downloadsWifiOnlyDescription": "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
+          "autoSignOutLabel": "Déconnexion si le serveur est injoignable",
+          "autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés."
         },
         "storageSettings": {
           "title": "Stockage",
