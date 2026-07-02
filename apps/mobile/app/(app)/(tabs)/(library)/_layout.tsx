@@ -7,7 +7,9 @@ export default function LibraryLayout() {
       <Stack.Screen name="favorites" />
       <Stack.Screen name="favorites/search" />
       <Stack.Screen name="search" />
+      <Stack.Screen name="albums/index" />
       <Stack.Screen name="albums/[id]" />
+      <Stack.Screen name="artists/index" />
       <Stack.Screen name="artists/[id]" />
       <Stack.Screen name="artists/[id]/biography" />
       <Stack.Screen name="artists/[id]/discography" />

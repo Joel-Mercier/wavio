@@ -55,6 +55,8 @@
         "alphabeticalSort": "По алфавиту",
         "artistSort": "По автору",
         "albumSort": "По альбому",
+        "allAlbums": "Все альбомы",
+        "allArtists": "Все исполнители",
         "search": {
           "inputPlaceholder": "Поиск в медиатеке"
         }

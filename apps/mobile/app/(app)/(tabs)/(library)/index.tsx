@@ -29,6 +29,8 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import LibraryListItem, {
   type Favorites,
+  type LibraryAllAlbums,
+  type LibraryAllArtists,
   type LibraryFolder,
   type LibraryPodcast,
   type LibraryRadioStation,
@@ -130,7 +132,9 @@ export default function LibraryScreen() {
           Favorites &
           LibraryPodcast &
           LibraryFolder &
-          LibraryRadioStation
+          LibraryRadioStation &
+          LibraryAllAlbums &
+          LibraryAllArtists
       >
     >(null);
   const { handleSheetPositionChange } =
@@ -230,6 +234,16 @@ export default function LibraryScreen() {
       isFavorites: true,
       songCount: starredData?.starred2?.song?.length || 0,
     };
+    const allArtistsItem = {
+      id: "all-artists",
+      name: "All artists",
+      isAllArtists: true,
+    };
+    const allAlbumsItem = {
+      id: "all-albums",
+      name: "All albums",
+      isAllAlbums: true,
+    };
 
     // Offline only: merge saved collections into their bucket so downloaded
     // playlists/albums appear even when the server list query isn't cached.
@@ -267,9 +281,6 @@ export default function LibraryScreen() {
     };
 
     let data = [];
-    if (!filter && hasServerData) {
-      data.push(favoritesItem);
-    }
     if ((!filter || filter === "artists") && starredData?.starred2?.artist) {
       data.push(starredData.starred2.artist);
     }
@@ -337,7 +348,7 @@ export default function LibraryScreen() {
       }
       return 0;
     };
-    return data.sort((a, b) => {
+    const sorted = data.sort((a, b) => {
       if (sort === "addedAtAsc") {
         return sortTime(a) - sortTime(b);
       }
@@ -352,6 +363,12 @@ export default function LibraryScreen() {
       }
       return 0;
     });
+    // Pin Favorites + the "all albums/artists" browse entries at the top of the
+    // unfiltered library so the sort never scatters them into the list.
+    if (!filter && hasServerData) {
+      return [favoritesItem, allArtistsItem, allAlbumsItem, ...sorted];
+    }
+    return sorted;
   }, [
     starredData,
     playlistsData,
@@ -560,7 +577,9 @@ export default function LibraryScreen() {
                 Favorites &
                 LibraryPodcast &
                 LibraryFolder &
-                LibraryRadioStation
+                LibraryRadioStation &
+                LibraryAllAlbums &
+                LibraryAllArtists
             >
           }
           keyExtractor={(item) => item.id}

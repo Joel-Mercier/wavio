@@ -4,10 +4,12 @@ import type { Href } from "expo-router";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import LibraryBig from "lucide-react-native/dist/esm/icons/library-big.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import Users from "lucide-react-native/dist/esm/icons/users.mjs";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -58,6 +60,12 @@ export type LibraryPodcast = {
 export type LibraryFolder = {
   isFolder?: boolean;
 };
+export type LibraryAllAlbums = {
+  isAllAlbums?: boolean;
+};
+export type LibraryAllArtists = {
+  isAllArtists?: boolean;
+};
 export type LibraryRadioStation = {
   isRadioStation?: boolean;
   imageUrl?: string;
@@ -73,7 +81,9 @@ interface LibraryListItemProps {
     Favorites &
     LibraryPodcast &
     LibraryFolder &
-    LibraryRadioStation;
+    LibraryRadioStation &
+    LibraryAllAlbums &
+    LibraryAllArtists;
   layout: LibraryLayout;
   index: number;
   numColumns?: number;
@@ -86,6 +96,12 @@ function LibraryListItemIcon({ type }: { type: string }) {
   }
   if (type === "album") {
     return <Disc3 size={32} color={white} />;
+  }
+  if (type === "allAlbums") {
+    return <LibraryBig size={32} color={white} />;
+  }
+  if (type === "allArtists") {
+    return <Users size={32} color={white} />;
   }
   if (type === "artist") {
     return <User size={32} color={white} />;
@@ -120,6 +136,20 @@ export default function LibraryListItem({
         id: "favorites",
         label: t("app.shared.favorites"),
         url: "/favorites",
+      };
+    }
+    if (item.isAllArtists) {
+      return {
+        id: "allArtists",
+        label: t("app.library.allArtists"),
+        url: "/artists",
+      };
+    }
+    if (item.isAllAlbums) {
+      return {
+        id: "allAlbums",
+        label: t("app.library.allAlbums"),
+        url: "/albums",
       };
     }
     if (item.isFolder) {
@@ -369,7 +399,9 @@ export default function LibraryListItem({
             numberOfLines={layout === "grid" ? 2 : 1}
             className="text-white text-md font-normal capitalize"
           >
-            {item.isFavorites ? type.label : item.name}
+            {item.isFavorites || item.isAllAlbums || item.isAllArtists
+              ? type.label
+              : item.name}
           </Heading>
           <HStack className="items-center">
             {showDownloadedBadge && <DownloadedBadge className="mr-2" />}
@@ -382,13 +414,17 @@ export default function LibraryListItem({
                   ? item.tags
                     ? `${type.label} ⦁ ${item.tags}`
                     : type.label
-                  : type.id === "artist"
-                    ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`
-                    : type.id === "folder"
-                      ? type.label
-                      : type.id === "playlist"
-                        ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
-                        : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}`}
+                  : type.id === "allAlbums"
+                    ? t("app.shared.album_other")
+                    : type.id === "allArtists"
+                      ? t("app.shared.artist_other")
+                      : type.id === "artist"
+                        ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`
+                        : type.id === "folder"
+                          ? type.label
+                          : type.id === "playlist"
+                            ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
+                            : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}`}
             </Text>
           </HStack>
         </VStack>

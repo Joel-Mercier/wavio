@@ -55,6 +55,8 @@
         "alphabeticalSort": "按字母排序",
         "artistSort": "艺人",
         "albumSort": "专辑",
+        "allAlbums": "全部专辑",
+        "allArtists": "全部艺人",
         "search": {
           "inputPlaceholder": "在音乐库中搜索"
         }
