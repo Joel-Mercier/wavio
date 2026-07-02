@@ -109,7 +109,9 @@
         "seeAll": "查看全部",
         "addAllToFavorites": "全部收藏",
         "addAllToFavoritesSuccessMessage": "已全部收藏",
-        "addAllToFavoritesErrorMessage": "全部收藏时发生错误"
+        "addAllToFavoritesErrorMessage": "全部收藏时发生错误",
+        "typeAlbum": "专辑",
+        "typeCompilation": "合辑"
       },
       "artists": {
         "label": "艺人",

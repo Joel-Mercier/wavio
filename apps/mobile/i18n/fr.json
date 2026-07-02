@@ -109,7 +109,9 @@
         "seeAll": "Voir tout",
         "addAllToFavorites": "Ajouter toutes les chansons aux favoris",
         "addAllToFavoritesSuccessMessage": "Toutes les chansons ont été ajoutées aux favoris",
-        "addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris"
+        "addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
+        "typeAlbum": "Album",
+        "typeCompilation": "Compilation"
       },
       "artists": {
         "label": "Artiste",

@@ -913,8 +913,8 @@ export default function AlbumDetail() {
                         )
                         .join(" · ")
                     : data?.album?.isCompilation
-                      ? "Compilation"
-                      : "Album"}{" "}
+                      ? t("app.albums.typeCompilation")
+                      : t("app.albums.typeAlbum")}{" "}
                   ⦁{" "}
                   {data?.album?.originalReleaseDate?.day &&
                   data?.album.originalReleaseDate?.month &&

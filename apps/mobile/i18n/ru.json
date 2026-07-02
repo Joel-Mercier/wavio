@@ -111,7 +111,9 @@
         "seeAll": "Показать все",
         "addAllToFavorites": "Добавить всё в избранное",
         "addAllToFavoritesSuccessMessage": "Все песни добавлены в избранное",
-        "addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное"
+        "addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
+        "typeAlbum": "Альбом",
+        "typeCompilation": "Сборник"
       },
       "artists": {
         "label": "Исполнитель",

@@ -109,7 +109,9 @@
         "seeAll": "See all",
         "addAllToFavorites": "Add all songs to favorites",
         "addAllToFavoritesSuccessMessage": "All songs successfully added to favorites",
-        "addAllToFavoritesErrorMessage": "An error occurred while adding songs to favorites"
+        "addAllToFavoritesErrorMessage": "An error occurred while adding songs to favorites",
+        "typeAlbum": "Album",
+        "typeCompilation": "Compilation"
       },
       "artists": {
         "label": "Artist",
