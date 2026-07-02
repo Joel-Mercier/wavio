@@ -63,7 +63,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Share screen with shareable links
 - Servers screen with multiple servers support
 - Settings screen with server scanning, offline downloads, playback, content, display and backup settings
-- Endless playback, replay gain, equalizer and sleep timer
+- Audio quality settings, endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net
@@ -186,6 +186,7 @@ Currently supported languages: English, French, Chinese, Russian.
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/player-en.jpg" alt="Player screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/queue-en.jpg" alt="Queue screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/library-en.jpg" alt="Library screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/search-en.jpg" alt="Search screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/smart-playlist-en.jpg" alt="Smart playlist screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/offline-1-en.jpg" alt="Offline downloads screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/settings-en.jpg" alt="Settings screen" width="200">
