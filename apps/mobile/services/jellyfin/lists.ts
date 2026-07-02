@@ -171,6 +171,35 @@ export const getAlbumList2 = async (
   return fakeEnvelope({ albumList2: list });
 };
 
+export const getMostPlayedSongs = async ({
+  size = 20,
+  offset = 0,
+  musicFolderId,
+}: {
+  size?: number;
+  offset?: number;
+  musicFolderId?: string;
+} = {}) => {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: {
+      UserId: userId(),
+      Recursive: true,
+      IncludeItemTypes: "Audio",
+      Filters: "IsPlayed",
+      SortBy: "PlayCount,SortName",
+      SortOrder: "Descending",
+      Limit: size,
+      StartIndex: offset,
+      Fields: FIELDS,
+      ParentId: musicFolderId,
+    },
+  });
+  const songs: Songs = {
+    song: (rsp.data?.Items ?? []).map(mapBaseItemToChild),
+  };
+  return fakeEnvelope({ songs });
+};
+
 export const getNowPlaying = async () => {
   // Jellyfin exposes /Sessions but it requires admin and isn't analogous to
   // Subsonic NowPlaying. Return empty for parity.

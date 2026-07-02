@@ -16,6 +16,7 @@ import {
   queryAlbums,
   queryArtistByKey,
   querySongs,
+  queryTopSongs,
   queryTrackById,
 } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
@@ -145,6 +146,13 @@ export const getSongsByGenre = async (
     limit: opts.count ?? 10,
     offset: opts.offset ?? 0,
   });
+  return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
+};
+
+export const getMostPlayedSongs = async (
+  opts: { size?: number; offset?: number; musicFolderId?: string } = {},
+) => {
+  const rows = await queryTopSongs(opts.size ?? 10, opts.offset ?? 0);
   return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
 };
 

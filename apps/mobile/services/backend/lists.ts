@@ -1,6 +1,7 @@
 import { dispatch } from "@/services/backend/dispatch";
 import * as J from "@/services/jellyfin/lists";
 import * as L from "@/services/local/lists";
+import * as N from "@/services/navidrome/songs";
 import * as S from "@/services/openSubsonic/lists";
 
 export type { AlbumListType } from "@/services/openSubsonic/lists";
@@ -29,6 +30,13 @@ export const getSongsByGenre = dispatch(
   S.getSongsByGenre,
   J.getSongsByGenre,
   L.getSongsByGenre,
+);
+// The `subsonic` slot is Navidrome's native-API impl (guarded to return empty
+// for plain OpenSubsonic, which the `mostPlayedTracks` capability gates off).
+export const getMostPlayedSongs = dispatch(
+  N.getMostPlayedSongs,
+  J.getMostPlayedSongs,
+  L.getMostPlayedSongs,
 );
 export const getStarred = dispatch(S.getStarred, J.getStarred, L.getStarred);
 export const getStarred2 = dispatch(

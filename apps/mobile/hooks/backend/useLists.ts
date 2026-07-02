@@ -3,6 +3,7 @@ import {
   type AlbumListType,
   getAlbumList,
   getAlbumList2,
+  getMostPlayedSongs,
   getNowPlaying,
   getRandomSongs,
   getSongsByGenre,
@@ -137,6 +138,39 @@ export const useSongsByGenre = (
       return getSongsByGenre(genre, rest);
     },
     enabled: options?.enabled,
+  });
+};
+
+export const useMostPlayedSongs = (
+  params: { size?: number; musicFolderId?: string } = {},
+  options?: { enabled?: boolean },
+) => {
+  return useQuery({
+    queryKey: ["mostPlayedSongs", params],
+    queryFn: () => {
+      return getMostPlayedSongs(params);
+    },
+    enabled: options?.enabled,
+  });
+};
+
+export const useInfiniteMostPlayedSongs = (
+  params: { size?: number; musicFolderId?: string } = {},
+) => {
+  const size = params.size ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["mostPlayedSongs:infinite", { ...params, size }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      return getMostPlayedSongs({ ...params, size, offset: pageParam });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const songs = lastPage?.songs?.song ?? [];
+      if (songs.length < size) {
+        return undefined;
+      }
+      return allPages.length * size;
+    },
   });
 };
 

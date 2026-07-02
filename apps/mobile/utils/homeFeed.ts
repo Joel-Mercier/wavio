@@ -37,6 +37,7 @@ export type HomeSectionDescriptor =
       genre: string;
     }
   | { id: string; kind: "randomSongs" }
+  | { id: string; kind: "mostPlayedTracks" }
   | { id: string; kind: "randomArtists" }
   | { id: string; kind: "playlists" }
   | { id: string; kind: "starred" }
@@ -177,6 +178,10 @@ export function buildHomeFeed({
       kind: "albumsByGenre",
       genre: albumGenrePick.value,
     });
+  }
+
+  if (capabilities.mostPlayedTracks) {
+    sections.push({ id: "mostPlayedTracks", kind: "mostPlayedTracks" });
   }
 
   if (capabilities.songLists) {

@@ -19,6 +19,12 @@ export type BackendCapabilities = {
   replayGain: boolean;
   jukebox: boolean;
   songLists: boolean;
+  // A home carousel + "See all" list of the user's globally most-played tracks.
+  // Needs a server-side way to sort songs by play count: Jellyfin (Items
+  // SortBy=PlayCount), the local library (track_stats.play_count) and Navidrome
+  // (native /api/song?_sort=playCount) all provide one; plain OpenSubsonic has
+  // no such endpoint (getTopSongs is per-artist only), so it stays off there.
+  mostPlayedTracks: boolean;
   // Server-side play queue persistence (Subsonic getPlayQueue/savePlayQueue)
   // used to resume the same queue + position on another device.
   playQueueSync: boolean;
@@ -55,6 +61,7 @@ const SUBSONIC: BackendCapabilities = {
   replayGain: true,
   jukebox: true,
   songLists: false,
+  mostPlayedTracks: false,
   playQueueSync: true,
   nowPlaying: true,
   similarSongs: true,
@@ -66,6 +73,9 @@ const SUBSONIC: BackendCapabilities = {
 const NAVIDROME: BackendCapabilities = {
   ...SUBSONIC,
   smartPlaylists: true,
+  // Navidrome's native REST API can sort songs by play count even though the
+  // Subsonic surface can't — served via services/navidrome/songs.ts.
+  mostPlayedTracks: true,
   // Navidrome registers every podcast endpoint as 501 Not Implemented, so
   // podcasts are self-hosted on-device instead (same flow as the local library;
   // see services/backend/podcasts.ts).
@@ -92,6 +102,7 @@ const JELLYFIN: BackendCapabilities = {
   replayGain: false,
   jukebox: false,
   songLists: true,
+  mostPlayedTracks: true,
   // Jellyfin's getPlayQueue/getNowPlaying adapters are inert stubs, so these
   // sync/social surfaces stay hidden until a real adapter exists.
   playQueueSync: false,
@@ -127,6 +138,7 @@ const LOCAL: BackendCapabilities = {
   replayGain: true,
   jukebox: false,
   songLists: true,
+  mostPlayedTracks: true,
   playQueueSync: false,
   nowPlaying: false,
   similarSongs: false,

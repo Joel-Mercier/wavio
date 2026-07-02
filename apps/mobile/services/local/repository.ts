@@ -136,6 +136,26 @@ export async function queryTopSongsByArtist(
   );
 }
 
+/**
+ * The globally most-played tracks (most-played first), for the "Most played
+ * tracks" home surface. Unplayed tracks are excluded (play_count > 0); ties
+ * break on title. Paginated via limit/offset.
+ */
+export async function queryTopSongs(
+  limit: number,
+  offset: number,
+): Promise<TrackRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<TrackRow>(
+    `${TRACK_SELECT}
+     WHERE play_count > 0
+     ORDER BY play_count DESC, t.title COLLATE NOCASE ASC
+     LIMIT ? OFFSET ?`,
+    limit,
+    offset,
+  );
+}
+
 export async function queryAlbumTracksByKey(key: string): Promise<TrackRow[]> {
   const db = await getLocalLibraryDb();
   return db.getAllAsync<TrackRow>(

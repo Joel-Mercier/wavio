@@ -4,7 +4,14 @@ import { useAuthBase } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type QueueSource = {
-  type: "album" | "playlist" | "artist" | "likedSongs" | "folder" | "similar";
+  type:
+    | "album"
+    | "playlist"
+    | "artist"
+    | "likedSongs"
+    | "folder"
+    | "similar"
+    | "mostPlayed";
   name: string;
   // Present for navigable sources (album/playlist/artist/folder)
   id?: string;

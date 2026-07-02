@@ -17,6 +17,32 @@ export interface NavidromePlaylist {
 
 export type NavidromePlaylistDetail = NavidromePlaylist;
 
+// Subset of a Navidrome native-API song (`GET /api/song`) — only the fields we
+// map onto the Subsonic `Child` shape. Navidrome returns camelCase, durations in
+// seconds and bitrate in kbps (unlike the Subsonic getRandomSongs response).
+export interface NavidromeSong {
+  id: string;
+  title: string;
+  album?: string;
+  albumId?: string;
+  artist?: string;
+  artistId?: string;
+  albumArtist?: string;
+  trackNumber?: number;
+  discNumber?: number;
+  year?: number;
+  genre?: string;
+  duration?: number;
+  size?: number;
+  suffix?: string;
+  bitRate?: number;
+  playCount?: number;
+  starred?: boolean;
+  starredAt?: string;
+  path?: string;
+  mbzTrackId?: string;
+}
+
 export interface NavidromeUser {
   id: string;
   userName: string;

@@ -26,6 +26,8 @@ const STARRED_AFFECTED_KEYS = [
   ["search3"],
   ["randomSongs"],
   ["songsByGenre"],
+  ["mostPlayedSongs"],
+  ["mostPlayedSongs:infinite"],
   ["similarSongs2"],
   ["topSongs"],
 ] as const;
@@ -44,6 +46,8 @@ const RATING_AFFECTED_KEYS = [
   ["search3"],
   ["randomSongs"],
   ["songsByGenre"],
+  ["mostPlayedSongs"],
+  ["mostPlayedSongs:infinite"],
 ] as const;
 
 export const useScrobble = () => {

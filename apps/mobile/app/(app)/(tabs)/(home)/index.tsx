@@ -13,6 +13,7 @@ import PlaylistCarouselSection from "@/components/home/sections/PlaylistCarousel
 import PodcastCarouselSection from "@/components/home/sections/PodcastCarouselSection";
 import RecentPlaysSection from "@/components/home/sections/RecentPlaysSection";
 import {
+  MostPlayedTracksSection,
   RandomSongsSection,
   SongsByGenreSection,
 } from "@/components/home/sections/SongCarouselSection";
@@ -199,6 +200,13 @@ export default function HomeScreen() {
           return (
             <RandomSongsSection
               title={t("app.home.randomSongs")}
+              enabled={enabled}
+            />
+          );
+        case "mostPlayedTracks":
+          return (
+            <MostPlayedTracksSection
+              title={t("app.home.mostPlayedTracks")}
               enabled={enabled}
             />
           );
