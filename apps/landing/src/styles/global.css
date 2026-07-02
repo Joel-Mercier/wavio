@@ -14,7 +14,7 @@
   --color-accent-soft: rgba(16, 185, 129, 0.12);
   --color-ink: #04140e;
 
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: var(--font-inter), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, sans-serif;
 
   --animate-scroll: scroll 38s linear infinite;
   --animate-eq: eq 1.1s ease-in-out infinite;

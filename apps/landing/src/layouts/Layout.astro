@@ -25,6 +25,7 @@ const { title, description, lang = defaultLang } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
 		<Font cssVariable="--font-inter" preload />
+		<Font cssVariable="--font-noto-sc" preload={lang === "zh-cn"} />
 		<title>{title}</title>
 	</head>
 	<body class="font-sans">

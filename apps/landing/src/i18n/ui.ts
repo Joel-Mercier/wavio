@@ -766,7 +766,7 @@ export const ui = {
       legal: '法律',
       privacy: '隐私政策',
       copyright: '© 2026 Joel Mercier',
-      madeWith: '基于 Astro 和 TailwindCSS 构建，部署于 Vercel。所有文字使用 Inter 字体。',
+      madeWith: '基于 Astro 和 TailwindCSS 构建，部署于 Vercel。文字使用 Inter 和 Noto Sans SC 字体。',
     },
     privacy: {
       back: '返回首页',

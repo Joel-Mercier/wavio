@@ -12,6 +12,15 @@ export default defineConfig({
       provider: fontProviders.google(),
       weights: [400, 500, 600, 700, 800, 900],
       styles: ["normal"],
+      subsets: ["latin", "cyrillic"],
+    },
+    {
+      name: "Noto Sans SC",
+      cssVariable: "--font-noto-sc",
+      provider: fontProviders.google(),
+      weights: [400, 500, 600, 700, 800, 900],
+      styles: ["normal"],
+      subsets: ["latin", "chinese-simplified"],
     },
   ],
 
