@@ -16,7 +16,9 @@ data class NowPlaying(
 data class RecentItem(
     val id: String,
     val title: String,
-    val coverUrl: String?
+    val coverUrl: String?,
+    val type: String,
+    val uri: String
 )
 
 object WidgetState {
@@ -70,6 +72,8 @@ object WidgetState {
             o.put("id", it.id)
             o.put("title", it.title)
             o.put("coverUrl", it.coverUrl ?: JSONObject.NULL)
+            o.put("type", it.type)
+            o.put("uri", it.uri)
             arr.put(o)
         }
         prefs(ctx).edit().putString(K_RECENT, arr.toString()).apply()
@@ -84,7 +88,9 @@ object WidgetState {
                 RecentItem(
                     id = o.optString("id"),
                     title = o.optString("title"),
-                    coverUrl = if (o.isNull("coverUrl")) null else o.optString("coverUrl")
+                    coverUrl = if (o.isNull("coverUrl")) null else o.optString("coverUrl"),
+                    type = o.optString("type"),
+                    uri = o.optString("uri")
                 )
             }
         } catch (e: Exception) {

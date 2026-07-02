@@ -47,7 +47,10 @@ class WavioWidgetModule(reactCtx: ReactApplicationContext) : ReactContextBaseJav
             val id = m.getString("id") ?: continue
             val title = m.getString("title") ?: ""
             val coverUrl = if (m.hasKey("coverUrl") && !m.isNull("coverUrl")) m.getString("coverUrl") else null
-            list.add(RecentItem(id, title, coverUrl))
+            val type = if (m.hasKey("type")) m.getString("type") ?: "" else ""
+            val uri = if (m.hasKey("uri")) m.getString("uri") ?: "" else ""
+            val target = if (uri.isNotEmpty()) uri else "wavio://albums/" + id
+            list.add(RecentItem(id, title, coverUrl, type, target))
         }
         WidgetState.setRecent(ctx, list)
         RecentPlaysWidgetProvider.refreshAll(ctx)

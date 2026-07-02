@@ -1,4 +1,3 @@
-import type { QueryClient } from "@tanstack/react-query";
 import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
 import { getColors } from "react-native-image-colors";
 import { getAuthScope } from "@/config/storage";
@@ -6,11 +5,10 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
-import { getAlbumList2 } from "@/services/backend/lists";
-import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import { useAuthBase } from "@/stores/auth";
 import useQueue from "@/stores/queue";
+import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
 
 type WidgetNative = {
@@ -23,7 +21,13 @@ type WidgetNative = {
   }) => void;
   setIsPlaying: (isPlaying: boolean) => void;
   updateRecent: (
-    items: { id: string; title: string; coverUrl: string | null }[],
+    items: {
+      id: string;
+      title: string;
+      coverUrl: string | null;
+      type: string;
+      uri: string;
+    }[],
   ) => void;
 };
 
@@ -122,44 +126,57 @@ async function pushNowPlaying() {
   });
 }
 
-function albumsFromQueryCache(queryClient: QueryClient): AlbumID3[] {
-  const matches = queryClient
-    .getQueryCache()
-    .findAll({ queryKey: ["albumList2"] });
-  for (const q of matches) {
-    const key = q.queryKey as [string, { type?: string } | undefined];
-    if (key[1]?.type !== "recent") continue;
-    const data = q.state.data as { albumList2?: AlbumList2 } | undefined;
-    const albums = data?.albumList2?.album;
-    if (albums?.length) return albums;
+// Deep link mirroring HomeShortcut.tsx so a widget tap opens the same screen the
+// in-app shortcut would. Radio stations carry their metadata as query params so
+// the detail screen can render without a fetch.
+function deepLinkFor(play: RecentPlay): string {
+  switch (play.type) {
+    case "artist":
+      return `wavio://artists/${play.id}`;
+    case "playlist":
+      return `wavio://playlists/${play.id}`;
+    case "favorites":
+      return "wavio://favorites";
+    case "internetRadioStation": {
+      const params: [string, string | undefined][] = [
+        ["streamUrl", play.streamUrl],
+        ["name", play.title],
+        ["homePageUrl", play.homePageUrl],
+        ["imageUrl", play.coverArt],
+        ["tags", play.tags],
+        ["country", play.country],
+        ["countrySubdivision", play.countrySubdivision],
+        ["languages", play.languages],
+        ["source", play.source],
+      ];
+      const query = params
+        .filter((entry): entry is [string, string] => !!entry[1])
+        .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+        .join("&");
+      const base = `wavio://internet-radio-stations/${play.id}`;
+      return query ? `${base}?${query}` : base;
+    }
+    default:
+      return `wavio://albums/${play.id}`;
   }
-  return [];
 }
 
-// The recent strip is populated from the React Query cache, which is only
-// filled once Home fetches `getAlbumList2("recent")`. Prime it on launch so the
-// widget isn't blank before the user opens Home; the cache subscription in
-// `initWidget` then forwards the result to `pushRecent`. Best-effort only.
-function primeRecent(queryClient: QueryClient) {
-  if (!Native || !useAuthBase.getState().isAuthenticated) return;
-  void queryClient
-    .fetchQuery({
-      queryKey: ["albumList2", { type: "recent", size: 12 }],
-      queryFn: () => getAlbumList2("recent", { size: 12 }),
-    })
-    .catch(() => {});
-}
-
-function pushRecent(queryClient: QueryClient) {
+function pushRecent() {
   if (!Native) return;
-  const albums = albumsFromQueryCache(queryClient);
-  const items = albums
-    .filter((a) => !!a.coverArt)
-    .slice(0, 5)
-    .map((a) => ({
-      id: a.id,
-      title: a.name,
-      coverUrl: a.coverArt ? artworkUrl(a.coverArt) : null,
+  const items = useRecentPlays
+    .getState()
+    .recentPlays.slice(0, 5)
+    .map((play) => ({
+      id: play.id,
+      title: play.title,
+      coverUrl:
+        play.type === "internetRadioStation"
+          ? (play.coverArt ?? null)
+          : play.coverArt
+            ? artworkUrl(play.coverArt)
+            : null,
+      type: play.type,
+      uri: deepLinkFor(play),
     }));
   Native.updateRecent(items);
 }
@@ -167,7 +184,7 @@ function pushRecent(queryClient: QueryClient) {
 let initialized = false;
 let lastIsPlaying = false;
 
-export function initWidget(queryClient: QueryClient) {
+export function initWidget() {
   if (Platform.OS !== "android" || !Native || initialized) return;
   initialized = true;
 
@@ -196,19 +213,17 @@ export function initWidget(queryClient: QueryClient) {
     if (scope === lastScope) return;
     lastScope = scope;
     // New (server, user) scope: drop the previous one's now-playing and recent
-    // strip rather than leaving them stale on the home screen.
+    // strip rather than leaving them stale on the home screen. The recentPlays
+    // rehydrate for the new scope pushes the fresh strip via the subscription
+    // below; clear first so the old scope's items don't linger.
     lastTrackId = null;
     void pushNowPlaying();
     Native.updateRecent([]);
-    if (state.isAuthenticated) primeRecent(queryClient);
+    pushRecent();
   });
 
-  queryClient.getQueryCache().subscribe((event) => {
-    const key = event.query.queryKey as
-      | [string, { type?: string } | undefined]
-      | undefined;
-    if (!key || key[0] !== "albumList2" || key[1]?.type !== "recent") return;
-    pushRecent(queryClient);
+  useRecentPlays.subscribe(() => {
+    pushRecent();
   });
 
   DeviceEventEmitter.addListener("WavioWidgetControl", (action: string) => {
@@ -226,6 +241,5 @@ export function initWidget(queryClient: QueryClient) {
   });
 
   void pushNowPlaying();
-  pushRecent(queryClient);
-  primeRecent(queryClient);
+  pushRecent();
 }

@@ -11,6 +11,8 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.RemoteViews
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.jmercier.wavio.R
 import java.util.concurrent.Executors
 
@@ -77,6 +79,8 @@ object WidgetRenderer {
     fun loadCoverAsync(
         ctx: Context,
         url: String?,
+        circle: Boolean = false,
+        rounded: Boolean = false,
         onReady: (android.graphics.Bitmap?) -> Unit
     ) {
         if (url.isNullOrEmpty()) {
@@ -85,11 +89,14 @@ object WidgetRenderer {
         }
         executor.execute {
             val bmp = try {
-                Glide.with(ctx.applicationContext)
-                    .asBitmap()
-                    .load(url)
-                    .submit(256, 256)
-                    .get()
+                var request = Glide.with(ctx.applicationContext).asBitmap().load(url)
+                if (circle) {
+                    request = request.transform(CircleCrop())
+                } else if (rounded) {
+                    val radius = (8 * ctx.resources.displayMetrics.density).toInt()
+                    request = request.transform(RoundedCorners(radius))
+                }
+                request.submit(256, 256).get()
             } catch (e: Exception) {
                 null
             }
@@ -124,8 +131,11 @@ object WidgetRenderer {
                 if (i < recent.size) {
                     views.setOnClickPendingIntent(
                         frameIds[i],
-                        openAppIntent(ctx, "wavio://albums/" + recent[i].id)
+                        openAppIntent(ctx, recent[i].uri)
                     )
+                    if (recent[i].type == "favorites") {
+                        views.setInt(cellIds[i], "setBackgroundResource", R.drawable.widget_favorites)
+                    }
                 } else {
                     views.setViewVisibility(frameIds[i], android.view.View.INVISIBLE)
                 }
@@ -141,8 +151,11 @@ object WidgetRenderer {
                         if (i < recent.size) {
                             v2.setOnClickPendingIntent(
                                 frameIds[i],
-                                openAppIntent(ctx, "wavio://albums/" + recent[i].id)
+                                openAppIntent(ctx, recent[i].uri)
                             )
+                            if (recent[i].type == "favorites") {
+                                v2.setInt(cellIds[i], "setBackgroundResource", R.drawable.widget_favorites)
+                            }
                         } else {
                             v2.setViewVisibility(frameIds[i], android.view.View.INVISIBLE)
                         }
@@ -154,7 +167,8 @@ object WidgetRenderer {
             for (i in cellIds.indices) {
                 if (i >= recent.size) continue
                 val pos = i
-                loadCoverAsync(ctx, recent[i].coverUrl) { bmp ->
+                val isArtist = recent[i].type == "artist"
+                loadCoverAsync(ctx, recent[i].coverUrl, isArtist, !isArtist) { bmp ->
                     if (bmp != null) {
                         val v3 = RemoteViews(ctx.packageName, R.layout.widget_recent)
                         v3.setImageViewBitmap(cellIds[pos], bmp)

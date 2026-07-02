@@ -299,6 +299,40 @@ const IC_NEXT = `<?xml version="1.0" encoding="utf-8"?>
 </vector>
 `;
 
+const IC_HEART = `<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z" />
+</vector>
+`;
+
+// The Favorites shortcut has no cover art (in-app it's a blue→emerald gradient
+// with a heart). RemoteViews can't draw a runtime gradient, but this layer-list
+// reproduces it: a rounded gradient rectangle with the heart centered on top.
+const WIDGET_FAVORITES = `<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#3B82F6"
+                android:endColor="#10B981"
+                android:angle="270" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item
+        android:width="24dp"
+        android:height="24dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_widget_heart" />
+</layer-list>
+`;
+
 const STRINGS = `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_empty_title">Wavio</string>
@@ -346,7 +380,9 @@ data class NowPlaying(
 data class RecentItem(
     val id: String,
     val title: String,
-    val coverUrl: String?
+    val coverUrl: String?,
+    val type: String,
+    val uri: String
 )
 
 object WidgetState {
@@ -400,6 +436,8 @@ object WidgetState {
             o.put("id", it.id)
             o.put("title", it.title)
             o.put("coverUrl", it.coverUrl ?: JSONObject.NULL)
+            o.put("type", it.type)
+            o.put("uri", it.uri)
             arr.put(o)
         }
         prefs(ctx).edit().putString(K_RECENT, arr.toString()).apply()
@@ -414,7 +452,9 @@ object WidgetState {
                 RecentItem(
                     id = o.optString("id"),
                     title = o.optString("title"),
-                    coverUrl = if (o.isNull("coverUrl")) null else o.optString("coverUrl")
+                    coverUrl = if (o.isNull("coverUrl")) null else o.optString("coverUrl"),
+                    type = o.optString("type"),
+                    uri = o.optString("uri")
                 )
             }
         } catch (e: Exception) {
@@ -437,6 +477,8 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.RemoteViews
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ${PACKAGE}.R
 import java.util.concurrent.Executors
 
@@ -503,6 +545,8 @@ object WidgetRenderer {
     fun loadCoverAsync(
         ctx: Context,
         url: String?,
+        circle: Boolean = false,
+        rounded: Boolean = false,
         onReady: (android.graphics.Bitmap?) -> Unit
     ) {
         if (url.isNullOrEmpty()) {
@@ -511,11 +555,14 @@ object WidgetRenderer {
         }
         executor.execute {
             val bmp = try {
-                Glide.with(ctx.applicationContext)
-                    .asBitmap()
-                    .load(url)
-                    .submit(256, 256)
-                    .get()
+                var request = Glide.with(ctx.applicationContext).asBitmap().load(url)
+                if (circle) {
+                    request = request.transform(CircleCrop())
+                } else if (rounded) {
+                    val radius = (8 * ctx.resources.displayMetrics.density).toInt()
+                    request = request.transform(RoundedCorners(radius))
+                }
+                request.submit(256, 256).get()
             } catch (e: Exception) {
                 null
             }
@@ -550,8 +597,11 @@ object WidgetRenderer {
                 if (i < recent.size) {
                     views.setOnClickPendingIntent(
                         frameIds[i],
-                        openAppIntent(ctx, "wavio://albums/" + recent[i].id)
+                        openAppIntent(ctx, recent[i].uri)
                     )
+                    if (recent[i].type == "favorites") {
+                        views.setInt(cellIds[i], "setBackgroundResource", R.drawable.widget_favorites)
+                    }
                 } else {
                     views.setViewVisibility(frameIds[i], android.view.View.INVISIBLE)
                 }
@@ -567,8 +617,11 @@ object WidgetRenderer {
                         if (i < recent.size) {
                             v2.setOnClickPendingIntent(
                                 frameIds[i],
-                                openAppIntent(ctx, "wavio://albums/" + recent[i].id)
+                                openAppIntent(ctx, recent[i].uri)
                             )
+                            if (recent[i].type == "favorites") {
+                                v2.setInt(cellIds[i], "setBackgroundResource", R.drawable.widget_favorites)
+                            }
                         } else {
                             v2.setViewVisibility(frameIds[i], android.view.View.INVISIBLE)
                         }
@@ -580,7 +633,8 @@ object WidgetRenderer {
             for (i in cellIds.indices) {
                 if (i >= recent.size) continue
                 val pos = i
-                loadCoverAsync(ctx, recent[i].coverUrl) { bmp ->
+                val isArtist = recent[i].type == "artist"
+                loadCoverAsync(ctx, recent[i].coverUrl, isArtist, !isArtist) { bmp ->
                     if (bmp != null) {
                         val v3 = RemoteViews(ctx.packageName, R.layout.widget_recent)
                         v3.setImageViewBitmap(cellIds[pos], bmp)
@@ -705,7 +759,10 @@ class WavioWidgetModule(reactCtx: ReactApplicationContext) : ReactContextBaseJav
             val id = m.getString("id") ?: continue
             val title = m.getString("title") ?: ""
             val coverUrl = if (m.hasKey("coverUrl") && !m.isNull("coverUrl")) m.getString("coverUrl") else null
-            list.add(RecentItem(id, title, coverUrl))
+            val type = if (m.hasKey("type")) m.getString("type") ?: "" else ""
+            val uri = if (m.hasKey("uri")) m.getString("uri") ?: "" else ""
+            val target = if (uri.isNotEmpty()) uri else "wavio://albums/" + id
+            list.add(RecentItem(id, title, coverUrl, type, target))
         }
         WidgetState.setRecent(ctx, list)
         RecentPlaysWidgetProvider.refreshAll(ctx)
@@ -811,6 +868,16 @@ const withWidgetResources = (config) =>
         path.join(resRoot, "drawable"),
         "ic_widget_skip_next.xml",
         IC_NEXT,
+      );
+      writeFile(
+        path.join(resRoot, "drawable"),
+        "ic_widget_heart.xml",
+        IC_HEART,
+      );
+      writeFile(
+        path.join(resRoot, "drawable"),
+        "widget_favorites.xml",
+        WIDGET_FAVORITES,
       );
       writeFile(path.join(resRoot, "values"), "widget_strings.xml", STRINGS);
       writeFile(
