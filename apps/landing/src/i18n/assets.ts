@@ -7,7 +7,7 @@ import { defaultLang, type Lang } from './ui'
  * literal pattern, so add new extensions here if you introduce them.
  */
 const modules = import.meta.glob<{ default: ImageMetadata }>(
-  '../assets/*-{en,fr}.{png,jpg,jpeg,webp}',
+  '../assets/*-{en,fr,ru,zh-cn}.{png,jpg,jpeg,webp}',
   { eager: true },
 )
 
