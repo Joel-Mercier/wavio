@@ -7,9 +7,9 @@ import Animated, {
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Text } from "@/components/ui/text";
 
-export const LYRICS_LINE_HEIGHT = 56;
+export const LYRICS_LINE_HEIGHT = 64;
 
-export default function LyricsDialogLine({
+export default function LyricsLine({
   value,
   isActive,
   isPast,
@@ -20,11 +20,11 @@ export default function LyricsDialogLine({
   isPast: boolean;
   onPress?: () => void;
 }) {
-  const opacity = useSharedValue(isActive ? 1 : isPast ? 0.45 : 0.7);
+  const opacity = useSharedValue(isActive ? 1 : isPast ? 0.6 : 0.8);
   const scale = useSharedValue(isActive ? 1 : 0.96);
 
   useEffect(() => {
-    opacity.value = withTiming(isActive ? 1 : isPast ? 0.45 : 0.7, {
+    opacity.value = withTiming(isActive ? 1 : isPast ? 0.6 : 0.8, {
       duration: 250,
     });
     scale.value = withTiming(isActive ? 1 : 0.96, { duration: 250 });
@@ -39,13 +39,15 @@ export default function LyricsDialogLine({
   const content = (
     <Animated.View
       style={[
-        { height: LYRICS_LINE_HEIGHT, justifyContent: "center" },
+        { minHeight: LYRICS_LINE_HEIGHT, justifyContent: "center" },
         animatedStyle,
       ]}
     >
       <Text
         className={
-          isActive ? "text-white font-bold text-xl" : "text-primary-100 text-lg"
+          isActive
+            ? "text-white font-bold text-2xl"
+            : "text-primary-100 text-xl"
         }
       >
         {trimmed || " "}

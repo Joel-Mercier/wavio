@@ -188,7 +188,6 @@ export default function PlayerScreen() {
   );
   const { lyrics } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
-  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const coverTranslateX = useSharedValue(0);
 
   const coverRowStyle = useAnimatedStyle(() => ({
@@ -508,7 +507,7 @@ export default function PlayerScreen() {
             </Box>
             <CurrentLyricLine
               lyrics={hasSyncedLyrics ? lyrics : null}
-              onPress={() => setShowLyricsDialog(true)}
+              onPress={() => router.push("/lyrics")}
             />
           </VStack>
           <VStack className={cn(isWideLayout && "flex-1 justify-center")}>
@@ -711,10 +710,6 @@ export default function PlayerScreen() {
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
         playingTrack={playingTrack ?? null}
-        lyrics={lyrics}
-        showLyricsDialog={showLyricsDialog}
-        onShowLyrics={() => setShowLyricsDialog(true)}
-        onCloseLyrics={() => setShowLyricsDialog(false)}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}
         onRemoveFavoritePodcast={handleRemoveFavoritePodcastPress}
       />

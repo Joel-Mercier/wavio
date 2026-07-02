@@ -307,6 +307,7 @@ export default function FloatingPlayer() {
   if (
     !playingTrack ||
     pathname.startsWith("/player") ||
+    pathname.startsWith("/lyrics") ||
     pathname.startsWith("/playlists/new") ||
     pathname.includes("/edit-rules") ||
     pathname.startsWith("/internet-radio-stations/new")

@@ -4,7 +4,6 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
-import * as Clipboard from "expo-clipboard";
 import { File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
@@ -12,8 +11,6 @@ import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import BookmarkPlus from "lucide-react-native/dist/esm/icons/bookmark-plus.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
-import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
@@ -36,7 +33,7 @@ import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
-import LyricsDialog from "@/components/player/LyricsDialog";
+import ShareLinkSheet from "@/components/player/ShareLinkSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -58,7 +55,6 @@ import { usePlaybackProgress } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
@@ -83,27 +79,21 @@ function SetBookmarkLabel() {
 }
 
 // The player screen's bottom sheets (track actions, sleep timer, artist picker,
-// share link) and the lyrics dialog. The parent owns the actions sheet ref since
-// its trigger lives in the player chrome. The jukebox sheet lives app-wide (see
-// JukeboxSheet in app/(app)/_layout).
+// share link). The parent owns the actions sheet ref since its trigger lives in
+// the player chrome. The jukebox sheet lives app-wide (see JukeboxSheet in
+// app/(app)/_layout).
 export default function PlayerSheets({
   actionsSheetRef,
   playingTrack,
-  lyrics,
-  showLyricsDialog,
-  onShowLyrics,
-  onCloseLyrics,
+  hideLyricsAction,
   onAddFavoritePodcast,
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
-  lyrics: StructuredLyrics | null;
-  showLyricsDialog: boolean;
-  onShowLyrics: () => void;
-  onCloseLyrics: () => void;
-  onAddFavoritePodcast: () => void;
-  onRemoveFavoritePodcast: () => void;
+  hideLyricsAction?: boolean;
+  onAddFavoritePodcast?: () => void;
+  onRemoveFavoritePodcast?: () => void;
 }) {
   const [emerald500, white, gray200] = Uniwind.getCSSVariable([
     "--color-emerald-500",
@@ -116,8 +106,7 @@ export default function PlayerSheets({
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [clipboardText, setClipboardText] = useState("");
-  const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const [showInfoModal, setShowInfoModal] = useState(false);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
@@ -128,8 +117,6 @@ export default function PlayerSheets({
     useBottomSheetBackHandler(sleepTimerSheetRef);
   const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetArtistsModalRef);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -182,17 +169,6 @@ export default function PlayerSheets({
   const artistReachable = useIsDetailCached(
     primaryArtistId ? ["artist", primaryArtistId] : null,
   );
-
-  useEffect(() => {
-    if (clipoardCopyDone) {
-      const timer = setTimeout(() => {
-        setClipoardCopyDone(false);
-      }, 1000);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [clipoardCopyDone]);
 
   const handleSetBookmarkPress = () => {
     actionsSheetRef.current?.dismiss();
@@ -251,7 +227,7 @@ export default function PlayerSheets({
 
   const handleShowLyricsPress = () => {
     actionsSheetRef.current?.dismiss();
-    onShowLyrics();
+    router.push("/lyrics");
   };
 
   const handleInfoPress = () => {
@@ -426,7 +402,7 @@ export default function PlayerSheets({
       {
         onSuccess: (data) => {
           actionsSheetRef.current?.dismiss();
-          setClipboardText(data?.shares?.share?.[0]?.url ?? "");
+          setShareUrl(data?.shares?.share?.[0]?.url ?? "");
           queryClient.invalidateQueries({ queryKey: ["shares"] });
           bottomSheetShareModalRef.current?.present();
           toast.show({
@@ -458,41 +434,6 @@ export default function PlayerSheets({
         },
       },
     );
-  };
-
-  const handleCopyShareUrlPress = async () => {
-    try {
-      if (clipboardText) {
-        await Clipboard.setStringAsync(clipboardText);
-        setClipoardCopyDone(true);
-        toast.show({
-          placement: "top",
-          duration: 3000,
-          render: () => (
-            <Toast action="success">
-              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-              <ToastDescription>
-                {t("app.shared.shareUrlCopiedMessage")}
-              </ToastDescription>
-            </Toast>
-          ),
-        });
-      }
-    } catch (e) {
-      logError(e);
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="success">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.shared.shareUrlErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
   };
 
   const handleDownloadPress = async () => {
@@ -732,14 +673,16 @@ export default function PlayerSheets({
                     <SetBookmarkLabel />
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleShowLyricsPress}>
-                  <HStack className="items-center">
-                    <Mic2 size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.player.lyrics")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {!hideLyricsAction && (
+                  <FadeOutScaleDown onPress={handleShowLyricsPress}>
+                    <HStack className="items-center">
+                      <Mic2 size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.lyrics")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {capabilities.similarSongs && (
                   <FadeOutScaleDown
                     onPress={handleSimilarSongsPress}
@@ -926,46 +869,7 @@ export default function PlayerSheets({
           </Box>
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
-      <BottomSheetModalComponent
-        ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center">
-              <FadeOutScaleDown
-                className="flex-row gap-x-4 items-center justify-between flex-1  overflow-hidden"
-                onPress={handleCopyShareUrlPress}
-              >
-                {clipoardCopyDone ? (
-                  <ClipboardCheck size={24} color={emerald500} />
-                ) : (
-                  <ClipboardIcon size={24} color={gray200} />
-                )}
-                <Text
-                  className="text-lg text-gray-200 py-1 px-3 bg-primary-900 rounded-xl  flex-1 grow"
-                  ellipsizeMode="tail"
-                  numberOfLines={1}
-                >
-                  {clipboardText}
-                </Text>
-              </FadeOutScaleDown>
-            </HStack>
-          </Box>
-        </BottomSheetScrollView>
-      </BottomSheetModalComponent>
-      <LyricsDialog
-        isOpen={showLyricsDialog}
-        onClose={onCloseLyrics}
-        lyrics={lyrics}
-      />
+      <ShareLinkSheet sheetRef={bottomSheetShareModalRef} url={shareUrl} />
       <TrackInfoModal
         isOpen={showInfoModal}
         onClose={handleCloseInfoModal}

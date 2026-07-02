@@ -182,6 +182,17 @@ export default function AppLayout() {
               presentation: "formSheet",
             }}
           />
+          <Stack.Screen
+            name="lyrics"
+            options={{
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
+              gestureDirection: "vertical",
+              animationDuration: 300,
+              animation: "fade_from_bottom",
+              presentation: "formSheet",
+            }}
+          />
         </Stack>
       </AppErrorBoundary>
       <FloatingPlayer />

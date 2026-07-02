@@ -21,7 +21,7 @@
     },
     "apps/mobile": {
       "name": "wavio",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@expo-google-fonts/inter": "^0.4.2",
         "@expo/html-elements": "^56.0.1",
@@ -32,6 +32,7 @@
         "@legendapp/motion": "^2.5.3",
         "@react-native-community/datetimepicker": "9.1.0",
         "@react-native-community/netinfo": "^12.0.1",
+        "@react-native-masked-view/masked-view": "^0.3.2",
         "@sentry/react-native": "^8.15.1",
         "@shopify/flash-list": "^2.3.2",
         "@tanstack/query-async-storage-persister": "^5.101.1",
