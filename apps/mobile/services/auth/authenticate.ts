@@ -1,4 +1,5 @@
 import axios from "axios";
+import i18n from "@/config/i18n";
 import {
   getCertificateInfo,
   isCertificateTrusted,
@@ -159,10 +160,18 @@ export async function authenticateRemote(
         },
       }),
   );
-  if (rsp.data["subsonic-response"]?.status !== "ok") {
-    throw new Error(
-      openSubsonicErrorCodes[rsp.data["subsonic-response"].error.code],
-    );
+  // A wrong URL (e.g. missing the server's base path) reaches something that
+  // isn't Navidrome — a reverse proxy root, a login page, etc. — which answers
+  // 200 with a non-Subsonic body. Guard against a missing envelope / error code
+  // so we surface the friendly "verify your server" message instead of a raw
+  // "Cannot read property 'error' of undefined" TypeError.
+  const subsonicResponse = rsp.data?.["subsonic-response"];
+  if (subsonicResponse?.status !== "ok") {
+    const code = subsonicResponse?.error?.code;
+    const message =
+      (typeof code === "number" ? openSubsonicErrorCodes[code] : undefined) ??
+      i18n.t("auth.login.loginErrorMessage");
+    throw new Error(message);
   }
 
   let navidrome: RemoteLoginOptions["navidrome"] = null;
