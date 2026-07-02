@@ -35,12 +35,18 @@ export function playbackReportEnabled(): boolean {
   return useServerExtensionsBase.getState().hasExtension("playbackReport");
 }
 
-function send(id: string, state: PlaybackReportState, positionMs: number) {
+function send(
+  id: string,
+  state: PlaybackReportState,
+  positionMs: number,
+  ignoreScrobble?: boolean,
+) {
   reportPlayback({
     mediaId: id,
     state,
     positionMs: Math.max(0, Math.round(positionMs)),
     playbackRate: 1,
+    ignoreScrobble,
   }).catch(() => {});
 }
 
@@ -78,9 +84,12 @@ export function reportPaused(positionMs: number) {
   send(currentId, "paused", positionMs);
 }
 
-export function reportStopped() {
+// `ignoreScrobble` tells the server not to count this play on "stopped" — used
+// when the player already counted it early via a classic scrobble (see
+// services/player.ts) so the server doesn't double-count.
+export function reportStopped(ignoreScrobble?: boolean) {
   if (!currentId) return;
-  send(currentId, "stopped", lastPositionMs);
+  send(currentId, "stopped", lastPositionMs, ignoreScrobble);
   currentId = null;
   lastSentState = null;
   lastPositionMs = 0;

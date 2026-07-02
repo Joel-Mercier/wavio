@@ -5,6 +5,7 @@ import {
   createAudioPlayer,
   setAudioModeAsync,
 } from "expo-audio";
+import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { streamUrl } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
@@ -24,6 +25,7 @@ import {
   getServerReachable,
   probeServer,
 } from "@/services/network";
+import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
 import {
   playbackReportEnabled,
   reportPaused,
@@ -89,6 +91,12 @@ export function getActivePlayer(): AudioPlayer {
 
 let nowPlayingScrobbledId: string | null = null;
 let submittedScrobbleId: string | null = null;
+// playbackReport path only: the track id whose early classic scrobble the server
+// *confirmed*. Used to set ignoreScrobble on the final "stopped" report so the
+// server doesn't double-count — but only when the early scrobble actually landed,
+// so a failed one falls back to the server's own stopped-count instead of losing
+// the play.
+let earlyScrobbledId: string | null = null;
 let scrobbleStartedAt: number | null = null;
 // Tracks the last observed playing flag so the status listener can detect the
 // play→pause edge for playbackReport's "paused" report.
@@ -115,37 +123,163 @@ function reportNowPlaying(track: QueueTrack) {
   }
 }
 
+// Optimistically move a track's album to the front of every cached "recent"
+// album list (the Home carousel and the home-screen widget's strip both read
+// these). Called at the moment the play is counted — not at track start — so a
+// quick skip never populates the sections. Reuses the album's existing cache
+// entry when present so we don't drop metadata, else synthesises a minimal one
+// from the queue track. The setQueriesData write fires the query-cache
+// subscription in services/widget.ts, so the widget updates in the same tick.
+function hoistAlbumToRecent(track: QueueTrack) {
+  const albumId = typeof track.albumId === "string" ? track.albumId : null;
+  if (!albumId) return;
+  queryClient.setQueriesData<{ albumList2?: AlbumList2 }>(
+    {
+      predicate: (query) => {
+        const [name, params] = query.queryKey as [
+          string,
+          { type?: string } | undefined,
+        ];
+        return name === "albumList2" && params?.type === "recent";
+      },
+    },
+    (old) => {
+      const existing = old?.albumList2?.album;
+      if (!existing) return old;
+      if (existing[0]?.id === albumId) return old;
+      const prev = existing.find((a) => a.id === albumId);
+      const hoisted: AlbumID3 = prev
+        ? { ...prev, played: new Date() }
+        : {
+            id: albumId,
+            name: typeof track.album === "string" ? track.album : "",
+            coverArt:
+              typeof track.coverArt === "string" ? track.coverArt : undefined,
+            artist: typeof track.artist === "string" ? track.artist : undefined,
+            artistId:
+              typeof track.artistId === "string" ? track.artistId : undefined,
+            created: new Date(),
+            duration: 0,
+            songCount: 0,
+            played: new Date(),
+          };
+      return {
+        ...old,
+        albumList2: {
+          ...old?.albumList2,
+          album: [hoisted, ...existing.filter((a) => a.id !== albumId)],
+        },
+      };
+    },
+  );
+}
+
+// Count a play — and reorder the server's "recently played" — this many seconds
+// into playback, rather than at the classic Last.fm halfway/4-min mark, so the
+// server (and other clients / the widget) reflect it almost immediately. A quick
+// skip before this window doesn't count (nor scrobble to Last.fm/ListenBrainz).
+const COUNT_PLAY_AFTER_SECONDS = 5;
+
 function maybeSubmitScrobble(status: AudioStatus) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (!isScrobblable(current)) return;
-  // playbackReport path: stream progress to the server, which owns the scrobble
-  // decision (and the "stopped" report on track change finalises it). Only while
-  // actually playing, so a paused tick doesn't flip the server back to playing.
-  if (playbackReportEnabled()) {
-    if (status.playing) reportProgress((status.currentTime ?? 0) * 1000);
-    return;
-  }
-  if (submittedScrobbleId === current.id) return;
   const position = status.currentTime ?? 0;
   const duration = status.duration ?? current.duration ?? 0;
+
+  if (playbackReportEnabled()) {
+    // Progress reports keep the server's now-playing session alive. Only while
+    // actually playing, so a paused tick doesn't flip the server back to playing.
+    if (status.playing) reportProgress(position * 1000);
+    // The server would otherwise only count the play on "stopped" (i.e. at track
+    // end), so count it ourselves a few seconds in with a classic scrobble for an
+    // instant "recently played" reorder. resetScrobbleState() then finalises the
+    // track with ignoreScrobble so the server doesn't count it a second time.
+    if (
+      status.playing &&
+      submittedScrobbleId !== current.id &&
+      duration >= 30 &&
+      position >= COUNT_PLAY_AFTER_SECONDS
+    ) {
+      const id = current.id;
+      submittedScrobbleId = id;
+      hoistAlbumToRecent(current);
+      scrobble(id, {
+        submission: true,
+        time: scrobbleStartedAt ?? Date.now(),
+      })
+        .then(() => {
+          earlyScrobbledId = id;
+          scheduleRecentlyPlayedRefresh();
+        })
+        .catch(() => {});
+    }
+    return;
+  }
+
+  if (submittedScrobbleId === current.id) return;
   if (duration < 30) return;
-  const halfway = duration / 2;
-  if (position < Math.min(halfway, 240)) return;
+  if (position < COUNT_PLAY_AFTER_SECONDS) return;
   submittedScrobbleId = current.id;
+  hoistAlbumToRecent(current);
   scrobble(current.id, {
     submission: true,
     time: scrobbleStartedAt ?? Date.now(),
   }).catch(() => {});
+  scheduleRecentlyPlayedRefresh();
 }
 
 function resetScrobbleState() {
+  // If the server confirmed our early count for this track (playbackReport path),
+  // tell it to ignore the scrobble on "stopped" so the play isn't counted twice.
+  const countedThisTrackEarly =
+    earlyScrobbledId != null && earlyScrobbledId === nowPlayingScrobbledId;
+  // When we didn't count early, a finished playbackReport track may have been
+  // counted by the server's own stopped-threshold (short tracks, or a failed
+  // early scrobble) — refresh to reconcile. If we already counted early we
+  // hoisted + refreshed back then, so skip the redundant refetch here.
+  if (
+    playbackReportEnabled() &&
+    nowPlayingScrobbledId &&
+    !countedThisTrackEarly
+  ) {
+    scheduleRecentlyPlayedRefresh();
+  }
   // Finalise the outgoing track for the playbackReport path before clearing
   // local state. No-op when no track is being reported or the extension is off.
-  reportStopped();
+  reportStopped(countedThisTrackEarly);
   nowPlayingScrobbledId = null;
   submittedScrobbleId = null;
+  earlyScrobbledId = null;
   scrobbleStartedAt = null;
+}
+
+// A counted play bumps Navidrome's play_date/play_count, which reorders the
+// server-side "recent" and "frequent" album lists. Those back both the Home
+// carousels and the home-screen widget's recent strip, so nudge React Query to
+// refetch them. Debounced so a burst of skips coalesces into one refetch, and
+// `refetchType: "all"` so the widget's observer-less cache entry refetches too
+// (the default "active" would skip it) — that refetch drives the widget's cache
+// subscription in services/widget.ts.
+let recentlyPlayedRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleRecentlyPlayedRefresh() {
+  if (recentlyPlayedRefreshTimer) return;
+  recentlyPlayedRefreshTimer = setTimeout(() => {
+    recentlyPlayedRefreshTimer = null;
+    queryClient.invalidateQueries({
+      refetchType: "all",
+      predicate: (query) => {
+        const [name, params] = query.queryKey as [
+          string,
+          { type?: string } | undefined,
+        ];
+        if (name !== "albumList2" && name !== "albumList2:infinite") {
+          return false;
+        }
+        return params?.type === "recent" || params?.type === "frequent";
+      },
+    });
+  }, 1_500);
 }
 
 function getReplayGainFactor(track: QueueTrack): number {
@@ -563,10 +697,12 @@ function handlePlaybackStatus(status: AudioStatus) {
       isScrobblable(previous)
     ) {
       submittedScrobbleId = previousId;
+      hoistAlbumToRecent(previous);
       scrobble(previousId, {
         submission: true,
         time: scrobbleStartedAt ?? Date.now(),
       }).catch(() => {});
+      scheduleRecentlyPlayedRefresh();
     }
     if (consumeSleepEndOfTrack()) {
       player.pause();
