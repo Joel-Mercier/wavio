@@ -41,9 +41,9 @@ export type BackendCapabilities = {
   // source, so these queries are skipped (rather than erroring) for local.
   extendedMetadata: boolean;
   // Client-chosen server-side transcoding format. Subsonic/Navidrome honour a
-  // `format=` param on /stream (transcoding to the named profile); Jellyfin
-  // negotiates its own stream profile and the local library plays files off
-  // disk, so neither exposes a client-pickable output format.
+  // `format=` param on /stream (transcoding to the named profile); Jellyfin maps
+  // it onto the universal endpoint's AudioCodec/TranscodingContainer. The local
+  // library plays files off disk, so it exposes no client-pickable format.
   streamFormatSelection: boolean;
 };
 
@@ -110,7 +110,10 @@ const JELLYFIN: BackendCapabilities = {
   similarSongs: true,
   offlineDownload: true,
   extendedMetadata: true,
-  streamFormatSelection: false,
+  // Jellyfin's /Audio/{id}/universal endpoint transcodes to a client-chosen
+  // AudioCodec/TranscodingContainer, so the format picker maps onto it just like
+  // Subsonic's `format=` param (see services/jellyfin/streaming.ts).
+  streamFormatSelection: true,
 };
 
 // On-device library: no remote server, everything is derived from files the

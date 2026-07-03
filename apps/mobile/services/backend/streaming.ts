@@ -76,7 +76,7 @@ export const streamUrl = (
 ) => {
   const local = localFileUrl(id);
   if (local != null) return local;
-  if (isJellyfin()) return jellyfinStreamUrl(id);
+  if (isJellyfin()) return jellyfinStreamUrl(id, opts);
   const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
   const params = transcodeParams(opts?.forceTranscode ?? false);
   // Subsonic `timeOffset` (integer seconds) makes the server start transcoding

@@ -324,15 +324,25 @@ function isDecodeError(message: string): boolean {
   return /mediacodec|decoder|decode/i.test(message);
 }
 
+// Backends that stream a server-side transcode without a seekable length.
+// Subsonic/Navidrome (format=/maxBitRate on /stream) and Jellyfin (the universal
+// endpoint's AudioCodec/MaxStreamingBitrate); a seek within such a stream must
+// reload it at an offset (Subsonic `timeOffset` / Jellyfin `StartTimeTicks`).
+// Local files play off disk and are natively seekable.
+function isServerTranscodeBackend(): boolean {
+  const type = useAuthBase.getState().serverType;
+  return type === "opensubsonic" || type === "navidrome" || type === "jellyfin";
+}
+
 // Whether the current source is a server-transcoded stream, which is served
 // without a seekable length so ExoPlayer can't seek within it (a seekTo just
-// restarts it). Such a stream must instead be reloaded at a Subsonic
-// `timeOffset`. False for anything played off a local URL (downloaded, radio,
-// podcast) or a non-Subsonic backend. True when the decode-error fallback forced
-// a transcode, or the streaming settings predict one for this track.
+// restarts it). Such a stream must instead be reloaded at an offset. False for
+// anything played off a local URL (downloaded, radio, podcast) or the on-device
+// library. True when the decode-error fallback forced a transcode, or the
+// streaming settings predict one for this track.
 function isTranscodedStream(track: QueueTrack): boolean {
   if (track.isRadio || track.source === "podcast") return false;
-  if (!canTranscodeFallback()) return false;
+  if (!isServerTranscodeBackend()) return false;
   if (useOffline.getState().getDownloadedTrack(track.id)) return false;
   if (transcodeRetriedIds.has(track.id)) return true;
   const { maxBitRate, cellularMaxBitRate, streamingFormat } =
@@ -1209,10 +1219,11 @@ export function skipPrevious(options?: { force?: boolean }) {
   queue.previous();
 }
 
-// Seek within a transcoded stream by re-requesting it at a Subsonic `timeOffset`
-// and playing on from there — the loaded stream itself isn't seekable, so a
-// plain player.seekTo just restarts it. The same track keeps playing, so the
-// scrobble/now-playing state is intentionally left intact.
+// Seek within a transcoded stream by re-requesting it at an offset (Subsonic
+// `timeOffset` / Jellyfin `StartTimeTicks`) and playing on from there — the
+// loaded stream itself isn't seekable, so a plain player.seekTo just restarts
+// it. The same track keeps playing, so the scrobble/now-playing state is
+// intentionally left intact.
 function reloadAtOffset(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
   streamStartOffset = Math.max(0, seconds);

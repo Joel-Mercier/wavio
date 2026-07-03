@@ -69,6 +69,27 @@ describe("getTranscodeInfo", () => {
     expect(info.active).toBe(false);
   });
 
+  it("targets the rawTranscodeFormat codec on a raw bitrate-only cap (Jellyfin)", () => {
+    const info = getTranscodeInfo(track({ suffix: "flac", bitRate: 1016 }), {
+      streamingFormat: "raw",
+      effectiveMaxBitRate: 128,
+      rawTranscodeFormat: "aac",
+    });
+    expect(info.active).toBe(true);
+    expect(info.fromLabel).toBe("FLAC · 1016 kbps");
+    // Jellyfin's raw-mode over-cap transcode lands on AAC, not the source codec.
+    expect(info.toLabel).toBe("AAC · 128 kbps");
+  });
+
+  it("ignores rawTranscodeFormat when a non-raw format drives the transcode", () => {
+    const info = getTranscodeInfo(track({ suffix: "flac", bitRate: 1016 }), {
+      streamingFormat: "opus",
+      effectiveMaxBitRate: null,
+      rawTranscodeFormat: "aac",
+    });
+    expect(info.toLabel).toBe("OPUS");
+  });
+
   it("returns inactive for radio and podcast tracks", () => {
     expect(
       getTranscodeInfo(track({ suffix: "mp3", bitRate: 1000, isRadio: true }), {

@@ -179,19 +179,24 @@ export default function AudioQualityLine({
   // Subscribe so the effective cap recomputes on WiFi↔cellular handoff.
   useConnectionType();
   const serverType = useAuthBase((s) => s.serverType);
-  const isSubsonicFamily =
-    serverType === "navidrome" || serverType === "opensubsonic";
+  // Every remote backend transcodes server-side; only the on-device library
+  // plays untouched files off disk, so it never shows a transcode.
+  const isRemote = serverType !== "local";
 
   const label = formatAudioQuality(track);
   if (!label) return null;
 
-  const transcode = isSubsonicFamily
+  const transcode = isRemote
     ? getTranscodeInfo(track, {
         streamingFormat,
         effectiveMaxBitRate: getEffectiveMaxBitRate(
           maxBitRate,
           cellularMaxBitRate,
         ),
+        // A raw-mode bitrate-forced transcode lands on AAC for Jellyfin (see
+        // JELLYFIN_DEFAULT_TRANSCODE_CODEC in services/jellyfin/streaming.ts);
+        // Subsonic keeps the source codec.
+        rawTranscodeFormat: serverType === "jellyfin" ? "aac" : undefined,
       })
     : { active: false as const, fromLabel: null, toLabel: null };
 
@@ -212,7 +217,7 @@ export default function AudioQualityLine({
       <Text className={LINE_CLASS} numberOfLines={1}>
         {label}
       </Text>
-      {isSubsonicFamily && (
+      {isRemote && (
         <Text className="text-white/60 text-[10px] border border-white/25 rounded-full px-1.5 py-0.5 uppercase tracking-wide">
           {t("app.player.original")}
         </Text>

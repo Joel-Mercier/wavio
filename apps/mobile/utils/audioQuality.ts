@@ -53,16 +53,23 @@ export interface TranscodeInfo {
 
 // Predicts whether the active streaming settings cause the server to transcode
 // this track, and what the streamed output looks like. Mirrors the URL params
-// built in services/backend/streaming.ts: a non-"raw" format asks the server to
-// transcode to that codec, and an effective bitrate cap downsamples only when
-// the source bitrate exceeds it. Subsonic/Navidrome only — the caller gates on
-// server type before consuming this.
+// built in services/backend/streaming.ts (Subsonic) and services/jellyfin/
+// streaming.ts (Jellyfin): a non-"raw" format asks the server to transcode to
+// that codec, and an effective bitrate cap downsamples only when the source
+// bitrate exceeds it. `rawTranscodeFormat` is the codec a bitrate-forced
+// transcode lands on while the format is "raw" (Jellyfin → "aac"); omit it for
+// backends that keep the source codec.
 export function getTranscodeInfo(
   track: QueueTrack | null,
   {
     streamingFormat,
     effectiveMaxBitRate,
-  }: { streamingFormat: StreamFormat; effectiveMaxBitRate: number | null },
+    rawTranscodeFormat,
+  }: {
+    streamingFormat: StreamFormat;
+    effectiveMaxBitRate: number | null;
+    rawTranscodeFormat?: string;
+  },
 ): TranscodeInfo {
   if (!track || track.isRadio || track.source === "podcast") {
     return { active: false, fromLabel: null, toLabel: null };
@@ -87,7 +94,9 @@ export function getTranscodeInfo(
     return { active: false, fromLabel: null, toLabel: null };
   }
 
-  const targetFormat = formatTranscode ? streamingFormat : format;
+  const targetFormat = formatTranscode
+    ? streamingFormat
+    : (rawTranscodeFormat ?? format);
   // The streamed bitrate is only known when the cap drives the transcode; a
   // format-only change transcodes at the server's default bitrate (unknown), so
   // the segment is omitted.
