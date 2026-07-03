@@ -27,6 +27,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import AudioQualityLine from "@/components/player/AudioQualityLine";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
 import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
@@ -55,7 +56,6 @@ import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
-import { formatAudioQuality } from "@/utils/audioQuality";
 import { cn } from "@/utils/tailwind";
 
 const COVER_SWIPE_THRESHOLD = 80;
@@ -133,7 +133,6 @@ export default function PlayerScreen() {
   );
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
-  const audioQuality = formatAudioQuality(playingTrack ?? null);
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
   const showSource = !!source && !isPodcast && !isRadio;
   const sourceHref = useMemo<Href | null>(() => {
@@ -602,14 +601,7 @@ export default function PlayerScreen() {
                   />
                 )}
               </HStack>
-              {!isRadio && audioQuality && (
-                <Text
-                  className="text-white/70 text-xs font-medium tracking-wide mb-4"
-                  numberOfLines={1}
-                >
-                  {audioQuality}
-                </Text>
-              )}
+              {!isRadio && <AudioQualityLine track={playingTrack ?? null} />}
               {!isRadio && <PlaybackSlider />}
               {isRadio && <Box className="mb-6" />}
               <HStack

@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from "react";
 import {
+  getConnectionType,
   getIsEffectivelyOnline,
   getIsOnline,
+  subscribeConnectionType,
   subscribeEffectiveOnline,
   subscribeIsOnline,
 } from "@/services/network";
@@ -25,4 +27,11 @@ export function useIsOnline() {
 // (e.g. the offline banner copy).
 export function useIsDeviceOnline() {
   return useSyncExternalStore(subscribeIsOnline, getIsOnline);
+}
+
+// Current transport type (e.g. "wifi" / "cellular"), from the same singleton.
+// Used to react to WiFi↔cellular handoffs where the effective stream bitrate cap
+// (getEffectiveMaxBitRate) changes.
+export function useConnectionType() {
+  return useSyncExternalStore(subscribeConnectionType, getConnectionType);
 }

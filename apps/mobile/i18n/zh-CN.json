@@ -899,6 +899,7 @@
       },
       "player": {
         "title": "正在播放",
+        "original": "原始",
         "playingFrom": {
           "album": "播放自专辑",
           "playlist": "播放自歌单",
