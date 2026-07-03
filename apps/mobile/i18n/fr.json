@@ -594,6 +594,8 @@
         },
         "internetRadioStationsSettings": {
           "title": "Stations de radio",
+          "enabledLabel": "Annuaire Radio Browser",
+          "enabledDescription": "Parcourez et recherchez des millions de stations de l'annuaire Radio Browser. Désactivez pour n'utiliser que les stations de votre serveur.",
           "countryLabel": "Pays",
           "countryDescription": "Choisissez le pays de la rangée « Par pays ». Par défaut, la région de votre appareil.",
           "countryAutomatic": "Automatique",

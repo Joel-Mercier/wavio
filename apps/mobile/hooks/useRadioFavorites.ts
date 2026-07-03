@@ -3,6 +3,7 @@ import { useGetInternetRadioStations } from "@/hooks/backend/useInternetRadioSta
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSyncServerFavorites } from "@/hooks/useServerFavoritesSync";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { useCurrentAuthScope } from "@/stores/musicFolders";
 import useRadioStations, {
   type FavoriteRadioStation,
@@ -15,10 +16,13 @@ import useRadioStations, {
 export function useScopedRadioFavorites(): FavoriteRadioStation[] {
   const scope = useCurrentAuthScope();
   const favorites = useRadioStations((s) => s.favoriteRadioStations);
-  return useMemo(
-    () => radioFavoritesForScope(favorites, scope),
-    [favorites, scope],
-  );
+  const radioBrowserEnabled = useApp((s) => s.radioBrowserEnabled);
+  return useMemo(() => {
+    const scoped = radioFavoritesForScope(favorites, scope);
+    return radioBrowserEnabled
+      ? scoped
+      : scoped.filter((fav) => fav.source !== "radioBrowser");
+  }, [favorites, scope, radioBrowserEnabled]);
 }
 
 const stationId = (station: InternetRadioStation) => station.id;

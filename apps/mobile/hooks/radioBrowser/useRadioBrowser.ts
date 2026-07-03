@@ -10,6 +10,7 @@ import {
   searchStations,
 } from "@/services/radioBrowser/stations";
 import type { RadioBrowserStation } from "@/services/radioBrowser/types";
+import useApp from "@/stores/app";
 import useRadioStations from "@/stores/radioStations";
 
 // Lookup lists rarely change; cache them for the session.
@@ -30,23 +31,27 @@ export const useTopVotedStations = ({
   limit?: number;
 } = {}) => {
   const favorites = useRadioStations((store) => store.favoriteRadioStations);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   return useQuery({
     queryKey: ["radioBrowser:topVoted", limit],
     queryFn: async () => {
       const stations = await getTopVotedStations({ limit });
       return hydrate(stations, new Set(favorites.map((fav) => fav.id)));
     },
+    enabled: radioBrowserEnabled,
   });
 };
 
 export const usePopularStations = ({ limit = 20 }: { limit?: number } = {}) => {
   const favorites = useRadioStations((store) => store.favoriteRadioStations);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   return useQuery({
     queryKey: ["radioBrowser:popular", limit],
     queryFn: async () => {
       const stations = await getPopularStations({ limit });
       return hydrate(stations, new Set(favorites.map((fav) => fav.id)));
     },
+    enabled: radioBrowserEnabled,
   });
 };
 
@@ -58,6 +63,7 @@ export const useStationsByCountryCode = ({
   limit?: number;
 }) => {
   const favorites = useRadioStations((store) => store.favoriteRadioStations);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   return useQuery({
     queryKey: ["radioBrowser:byCountryCode", countryCode, limit],
     queryFn: async () => {
@@ -66,7 +72,7 @@ export const useStationsByCountryCode = ({
       });
       return hydrate(stations, new Set(favorites.map((fav) => fav.id)));
     },
-    enabled: !!countryCode,
+    enabled: radioBrowserEnabled && !!countryCode,
   });
 };
 
@@ -78,13 +84,14 @@ export const useStationsByTag = ({
   limit?: number;
 }) => {
   const favorites = useRadioStations((store) => store.favoriteRadioStations);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   return useQuery({
     queryKey: ["radioBrowser:byTag", tag, limit],
     queryFn: async () => {
       const stations = await getStationsByTag(tag, { limit });
       return hydrate(stations, new Set(favorites.map((fav) => fav.id)));
     },
-    enabled: !!tag,
+    enabled: radioBrowserEnabled && !!tag,
   });
 };
 
@@ -102,8 +109,10 @@ export const useInfiniteSearchStations = ({
   limit?: number;
 }) => {
   const favorites = useRadioStations((store) => store.favoriteRadioStations);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   const tagList = tags && tags.length > 0 ? tags.join(",") : undefined;
-  const enabled = !!(name || tagList || countryCode || language);
+  const enabled =
+    radioBrowserEnabled && !!(name || tagList || countryCode || language);
   return useInfiniteQuery({
     queryKey: [
       "radioBrowser:search:infinite",
@@ -137,23 +146,32 @@ export const useInfiniteSearchStations = ({
   });
 };
 
-export const useRadioTags = ({ limit = 200 }: { limit?: number } = {}) =>
-  useQuery({
+export const useRadioTags = ({ limit = 200 }: { limit?: number } = {}) => {
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
+  return useQuery({
     queryKey: ["radioBrowser:tags", limit],
     queryFn: () => getTags({ limit }),
     staleTime: LOOKUP_STALE_TIME,
+    enabled: radioBrowserEnabled,
   });
+};
 
-export const useRadioCountries = () =>
-  useQuery({
+export const useRadioCountries = () => {
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
+  return useQuery({
     queryKey: ["radioBrowser:countries"],
     queryFn: getCountries,
     staleTime: LOOKUP_STALE_TIME,
+    enabled: radioBrowserEnabled,
   });
+};
 
-export const useRadioLanguages = () =>
-  useQuery({
+export const useRadioLanguages = () => {
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
+  return useQuery({
     queryKey: ["radioBrowser:languages"],
     queryFn: getLanguages,
     staleTime: LOOKUP_STALE_TIME,
+    enabled: radioBrowserEnabled,
   });
+};

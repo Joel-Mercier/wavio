@@ -136,14 +136,16 @@ export function SettingsSelectRow({
   description,
   badgeText,
   onPress,
+  disabled = false,
 }: {
   label: string;
   description: string;
   badgeText: string;
   onPress: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <FadeOutScaleDown onPress={onPress}>
+    <FadeOutScaleDown onPress={onPress} disabled={disabled}>
       <HStack className="items-center gap-x-4 py-4 justify-between">
         <VStack className="gap-y-2 w-1/2">
           <Heading className="text-white font-normal" size="md">

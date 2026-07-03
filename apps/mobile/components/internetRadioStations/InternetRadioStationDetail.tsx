@@ -124,6 +124,7 @@ export default function InternetRadioStationDetail() {
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  const radioBrowserEnabled = useApp((s) => s.radioBrowserEnabled);
   const isPlaying = useIsPlaying();
   // Only server stations need homepage scraping for cover art — Radio-Browser
   // (api) stations already provide an image, so skip the network round-trip.
@@ -204,7 +205,7 @@ export default function InternetRadioStationDetail() {
     if (isPlaying) {
       pausePlayback();
     } else {
-      if (isRadioBrowser) {
+      if (isRadioBrowser && radioBrowserEnabled) {
         // Fire-and-forget click registration for Radio-Browser analytics.
         registerStationClick(id);
       }

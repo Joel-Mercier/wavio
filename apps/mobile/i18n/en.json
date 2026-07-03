@@ -594,6 +594,8 @@
         },
         "internetRadioStationsSettings": {
           "title": "Internet radio stations",
+          "enabledLabel": "Radio Browser directory",
+          "enabledDescription": "Browse and search millions of stations from the Radio Browser directory. Turn off to only use your server's stations.",
           "countryLabel": "Country",
           "countryDescription": "Pick the country for the 'By country' stations row. Defaults to your device's region.",
           "countryAutomatic": "Automatic",
