@@ -21,7 +21,7 @@ import type {
 import { useAuthBase } from "@/stores/auth";
 
 const FIELDS =
-  "DateCreated,Genres,GenreItems,UserData,ProductionYear,ChildCount,ProviderIds";
+  "DateCreated,Genres,GenreItems,UserData,ProductionYear,ChildCount,ProviderIds,MediaSources";
 
 function userId(): string {
   return useAuthBase.getState().jellyfinUserId ?? "";
