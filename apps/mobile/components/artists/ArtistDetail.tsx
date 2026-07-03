@@ -575,7 +575,7 @@ export default function ArtistDetail() {
 									/>
 								</HStack>
 							</HStack>
-							{likedSongs.length > 0 && (
+							{(likedSongs.length > 0 || likedAlbums.length > 0) && (
 								<FadeOutScaleDown
 									href={{
 										pathname: "/artists/[id]/liked-songs",
