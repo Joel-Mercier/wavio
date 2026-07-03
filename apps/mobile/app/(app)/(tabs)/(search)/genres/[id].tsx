@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo } from "react";
 import Animated, {
@@ -24,7 +23,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -42,8 +41,7 @@ export default function GenreScreen() {
   ]) as string[];
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -147,8 +145,7 @@ export default function GenreScreen() {
         }
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {

@@ -8,7 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import CircleCheckBig from "lucide-react-native/dist/esm/icons/circle-check-big.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
@@ -63,8 +62,8 @@ import {
 } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
 import { offlineDownloadService } from "@/services/offline";
 import type {
@@ -96,8 +95,7 @@ export default function ServerPodcastChannelScreen() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const params = useLocalSearchParams<{
     id: string;
     title?: string;
@@ -381,7 +379,7 @@ export default function ServerPodcastChannelScreen() {
       }
       contentContainerStyle={{
         paddingTop: contentTopInset,
-        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+        paddingBottom: screenBottomPadding,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
       showsVerticalScrollIndicator={false}
@@ -400,7 +398,7 @@ export default function ServerPodcastChannelScreen() {
       contentContainerStyle={{
         paddingTop: contentTopInset + 24,
         paddingHorizontal: 24,
-        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+        paddingBottom: screenBottomPadding,
         minHeight: contentTopInset + 600,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}

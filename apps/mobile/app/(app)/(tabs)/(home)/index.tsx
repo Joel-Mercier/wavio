@@ -1,8 +1,6 @@
 import { FlashList, type ViewToken } from "@shopify/flash-list";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
@@ -22,7 +20,7 @@ import { Box } from "@/components/ui/box";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
@@ -42,9 +40,7 @@ const BACKFILL_START_DELAY_MS = 800;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
-  const insets = useSafeAreaInsets();
+  const screenBottomPadding = useScreenBottomPadding();
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
   const [sessionSeed] = useState(() => Date.now());
@@ -238,7 +234,7 @@ export default function HomeScreen() {
         drawDistance={500}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: tabBarHeight + floatingPlayerInset + insets.bottom,
+          paddingBottom: screenBottomPadding,
         }}
       />
     </Box>

@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import { useMemo } from "react";
@@ -38,8 +37,8 @@ import {
   useInfinitePodcastSeries,
   usePopularContent,
 } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type {
   Genre,
   Language,
@@ -95,8 +94,7 @@ export default function PodcastSeriesScreen() {
   const router = useRouter();
   const toast = useToast();
   const scrollY = useSharedValue(0);
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,
@@ -245,7 +243,7 @@ export default function PodcastSeriesScreen() {
       }
       contentContainerStyle={{
         paddingTop: contentTopInset,
-        paddingBottom: insets.bottom + bottomTabBarHeight,
+        paddingBottom: screenBottomPadding,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
       showsVerticalScrollIndicator={false}
@@ -264,7 +262,7 @@ export default function PodcastSeriesScreen() {
       contentContainerStyle={{
         paddingTop: contentTopInset + 24,
         paddingHorizontal: 24,
-        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+        paddingBottom: screenBottomPadding,
         minHeight: contentTopInset + 600,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
@@ -306,7 +304,7 @@ export default function PodcastSeriesScreen() {
       }
       contentContainerStyle={{
         paddingTop: contentTopInset,
-        paddingBottom: insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+        paddingBottom: screenBottomPadding,
       }}
       scrollIndicatorInsets={{ top: contentTopInset }}
       showsVerticalScrollIndicator={false}

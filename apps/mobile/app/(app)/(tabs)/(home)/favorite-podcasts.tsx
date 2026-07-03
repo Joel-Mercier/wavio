@@ -1,8 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
@@ -16,11 +14,11 @@ import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import { useInfiniteLatestPodcastEpisodes } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import {
   useScopedPodcastFavorites,
   useSyncServerPodcastFavorites,
 } from "@/hooks/usePodcastFavorites";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { PodcastChannel } from "@/services/openSubsonic/types";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import usePodcasts, { type FavoritePodcast } from "@/stores/podcasts";
@@ -42,9 +40,7 @@ function favoriteToChannel(fav: FavoritePodcast): PodcastChannel {
 
 export default function FavoritePodcastsScreen() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const capabilities = useCapabilities();
   const taddyPodcastApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -128,7 +124,7 @@ export default function FavoritePodcastsScreen() {
             </>
           }
           contentContainerStyle={{
-            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyDisplay />}
@@ -138,7 +134,7 @@ export default function FavoritePodcastsScreen() {
         // discovery as a small, non-dominating hint rather than a full CTA.
         <ScrollView
           contentContainerStyle={{
-            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
         >

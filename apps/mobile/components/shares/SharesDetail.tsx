@@ -1,6 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,7 +10,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useGetShares } from "@/hooks/backend/useSharing";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Share } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { loadingData } from "@/utils/loadingData";
@@ -24,8 +23,7 @@ export default function SharesDetail() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const { data, isLoading, error } = useGetShares();
   return (
@@ -52,8 +50,7 @@ export default function SharesDetail() {
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           ListEmptyComponent={() => <EmptyDisplay />}
         />

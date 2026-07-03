@@ -8,7 +8,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -82,9 +81,9 @@ import {
 import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -141,8 +140,7 @@ export default function PlaylistDetail() {
   const toast = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -858,8 +856,7 @@ export default function PlaylistDetail() {
           </VStack>
         }
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

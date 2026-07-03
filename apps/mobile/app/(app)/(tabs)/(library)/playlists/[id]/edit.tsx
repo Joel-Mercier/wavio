@@ -1,7 +1,6 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useTranslation } from "react-i18next";
@@ -34,7 +33,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useApp from "@/stores/app";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
@@ -59,8 +58,7 @@ export default function EditPlaylistScreen() {
   const router = useRouter();
   const toast = useToast();
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = usePlaylist(id);
@@ -169,11 +167,7 @@ export default function EditPlaylistScreen() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
-            paddingBottom:
-              insets.bottom +
-              tabBarHeight +
-              floatingPlayerInset +
-              (isWideLayout ? 48 : 0),
+            paddingBottom: screenBottomPadding + (isWideLayout ? 48 : 0),
           }}
           showsVerticalScrollIndicator={false}
         >

@@ -1,6 +1,5 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
 import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -41,7 +40,7 @@ import {
   useGetUser as useGetNavidromeUser,
   useUpdateUser as useUpdateNavidromeUser,
 } from "@/hooks/navidrome/useUsers";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -134,8 +133,7 @@ export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const toast = useToast();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -364,8 +362,7 @@ export default function EditProfileScreen() {
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom:
-            insets.bottom + tabBarHeight + floatingPlayerInset + 24,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       >

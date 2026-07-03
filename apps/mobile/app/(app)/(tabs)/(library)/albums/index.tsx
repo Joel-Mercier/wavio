@@ -1,7 +1,6 @@
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -22,7 +21,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import useDebounce from "@/hooks/useDebounce";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -37,8 +36,7 @@ export default function AllAlbumsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const musicFolderId = useCurrentMusicFolderId();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useStore(form.store, (state) => state.values.query);
@@ -173,8 +171,7 @@ export default function AllAlbumsScreen() {
           }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           onEndReached={() => {
             if (!isSearching && hasNextPage && !isFetchingNextPage) {

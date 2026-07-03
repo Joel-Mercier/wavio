@@ -6,7 +6,6 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
@@ -44,7 +43,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal } from "@/services/player";
@@ -88,8 +87,7 @@ export default function QueueDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const queue = useQueue((state) => state.queue);
   const currentIndex = useQueue((state) => state.currentIndex);
@@ -384,8 +382,7 @@ export default function QueueDetail() {
                 itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
                 onSort={handleListSort}
                 contentContainerStyle={{
-                  paddingBottom:
-                    insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+                  paddingBottom: screenBottomPadding,
                 }}
                 showsVerticalScrollIndicator={false}
                 renderItem={(item, _index, isActive, beginDrag) => (
@@ -406,8 +403,7 @@ export default function QueueDetail() {
               getItemType={(item) => item.kind}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
-                paddingBottom:
-                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+                paddingBottom: screenBottomPadding,
               }}
               renderItem={({ item }) => {
                 if (item.kind === "header") {

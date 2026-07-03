@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,7 +28,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSimilarTracks } from "@/hooks/backend/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -51,8 +50,7 @@ export default function SimilarSongsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -195,8 +193,7 @@ export default function SimilarSongsScreen() {
         }
         ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

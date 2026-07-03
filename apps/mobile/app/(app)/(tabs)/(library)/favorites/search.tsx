@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import type { FuseResult } from "fuse.js";
 import Fuse from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -19,7 +18,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useStarred2 } from "@/hooks/backend/useLists";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
@@ -34,8 +33,7 @@ export default function FavoritesSearch() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const sort = useApp((store) => store.favoritesSort);
   const musicFolderId = useCurrentMusicFolderId();
   const {
@@ -159,7 +157,7 @@ export default function FavoritesSearch() {
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={error && <ErrorDisplay error={error} />}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

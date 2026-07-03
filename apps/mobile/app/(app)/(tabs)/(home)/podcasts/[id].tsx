@@ -8,7 +8,6 @@ import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { File, Paths } from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
@@ -49,8 +48,8 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import useImageColors from "@/hooks/useImageColors";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
@@ -95,8 +94,7 @@ export default function PodcastScreen() {
       ) ?? [],
     [seriesData],
   );
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
@@ -337,11 +335,7 @@ export default function PodcastScreen() {
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: insets.top,
-          paddingBottom:
-            insets.bottom +
-            bottomTabBarHeight +
-            floatingPlayerInset +
-            (isWideLayout ? 48 : 0),
+          paddingBottom: screenBottomPadding + (isWideLayout ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}

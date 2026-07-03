@@ -5,7 +5,6 @@ import {
 } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
@@ -39,6 +38,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import { pause as pausePlayback, playTracks } from "@/services/player";
 import { registerStationClick } from "@/services/radioBrowser/stations";
@@ -122,7 +122,7 @@ export default function InternetRadioStationDetail() {
     (store) => store.removeFavoriteRadioStation,
   );
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const radioBrowserEnabled = useApp((s) => s.radioBrowserEnabled);
   const isPlaying = useIsPlaying();
@@ -245,8 +245,7 @@ export default function InternetRadioStationDetail() {
     <Box className="h-full w-full">
       <ScrollView
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + (isWideLayout ? 48 : 0),
+          paddingBottom: screenBottomPadding + (isWideLayout ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
       >

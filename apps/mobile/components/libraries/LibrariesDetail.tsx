@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +13,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { MusicFolder } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -44,8 +43,7 @@ export default function LibrariesDetail() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useMusicFoldersQuery();
@@ -116,8 +114,7 @@ export default function LibrariesDetail() {
             isLoading ? `skeleton-${index}` : String(item.id)
           }
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
         />

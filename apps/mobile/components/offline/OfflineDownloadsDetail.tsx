@@ -1,6 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
 import { useState } from "react";
@@ -33,7 +32,7 @@ import {
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useApp from "@/stores/app";
 import { niceBytes } from "@/utils/fileSize";
 import { goBackOrHome } from "@/utils/navigation";
@@ -48,8 +47,7 @@ export default function OfflineDownloadsDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
   const downloadedTracksList = useDownloadedTracksList();
@@ -184,8 +182,7 @@ export default function OfflineDownloadsDetail() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
-                paddingBottom:
-                  insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+                paddingBottom: screenBottomPadding,
               }}
               renderItem={({ item }) => (
                 <OfflineDownloadItem

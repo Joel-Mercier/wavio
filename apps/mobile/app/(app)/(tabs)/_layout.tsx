@@ -13,17 +13,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
 import DrawerMenu from "@/components/DrawerMenu";
-import { SIDEBAR_WIDTH } from "@/components/FloatingPlayer";
+import {
+  SIDEBAR_WIDTH,
+  TAB_BAR_CONTENT_HEIGHT,
+} from "@/components/FloatingPlayer";
 import OfflineBanner, {
   OFFLINE_BANNER_HEIGHT,
 } from "@/components/OfflineBanner";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
-
-// Approximate default react-navigation bottom tab content height (excluding the
-// safe-area inset). Used to grow the bar so the offline banner fits beneath the
-// icons inside the gradient.
-const TAB_BAR_CONTENT_HEIGHT = 49;
 
 export default function TabLayout() {
   const { t } = useTranslation();

@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import { useTranslation } from "react-i18next";
@@ -31,7 +30,7 @@ import {
   useGetUser as useGetNavidromeUser,
   useUsers as useNavidromeUsers,
 } from "@/hooks/navidrome/useUsers";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
@@ -78,8 +77,7 @@ export default function ProfileScreen() {
     "--color-white",
   ]) as string[];
   const { t } = useTranslation();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { username } = useLocalSearchParams<{ username: string }>();
@@ -243,8 +241,7 @@ export default function ProfileScreen() {
         }
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

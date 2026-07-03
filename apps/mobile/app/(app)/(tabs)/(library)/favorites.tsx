@@ -6,7 +6,6 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -41,7 +40,7 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -71,8 +70,7 @@ export default function FavoritesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleSortSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetSortModalRef);
@@ -359,8 +357,7 @@ export default function FavoritesScreen() {
         }
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

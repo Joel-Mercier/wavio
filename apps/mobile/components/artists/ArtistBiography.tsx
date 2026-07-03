@@ -1,5 +1,4 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
@@ -12,15 +11,14 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useApp from "@/stores/app";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 export default function ArtistBiography() {
   const { t } = useTranslation();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
     name: string;
@@ -70,8 +68,7 @@ export default function ArtistBiography() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
       >
         <Text className="text-white mt-6">{biography}</Text>

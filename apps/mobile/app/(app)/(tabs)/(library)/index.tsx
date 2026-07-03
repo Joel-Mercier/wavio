@@ -6,7 +6,6 @@ import {
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
@@ -50,7 +49,6 @@ import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useDownloadedCollections } from "@/hooks/offline";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import {
   useScopedPodcastFavorites,
@@ -60,6 +58,7 @@ import {
   useScopedRadioFavorites,
   useSyncServerRadioFavorites,
 } from "@/hooks/useRadioFavorites";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type {
   AlbumID3,
   ArtistID3,
@@ -109,8 +108,7 @@ export default function LibraryScreen() {
   const favoriteRadioStations = useScopedRadioFavorites();
   useSyncServerRadioFavorites();
   useSyncServerPodcastFavorites();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const gridColumns =
@@ -613,7 +611,7 @@ export default function LibraryScreen() {
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
             paddingHorizontal: 24,
-            paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
         />

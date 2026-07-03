@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useMemo } from "react";
@@ -19,7 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useSearch3 } from "@/hooks/backend/useSearching";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
@@ -32,8 +31,7 @@ export default function RecentSearchesScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const recentSearches = useRecentSearches((store) => store.recentSearches);
   const clearRecentSearches = useRecentSearches(
@@ -196,8 +194,7 @@ export default function RecentSearchesScreen() {
           </Box>
         }
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

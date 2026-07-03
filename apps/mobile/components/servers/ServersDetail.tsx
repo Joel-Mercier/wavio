@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import { useEffect, useState } from "react";
@@ -41,7 +40,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useServers, {
@@ -57,8 +56,7 @@ export default function ServersDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const servers = useServers((store) => store.servers);
   const addServer = useServers((store) => store.addServer);
@@ -209,8 +207,7 @@ export default function ServersDetail() {
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           ListEmptyComponent={() => <EmptyDisplay />}
         />

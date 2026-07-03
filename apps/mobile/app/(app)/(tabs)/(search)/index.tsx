@@ -1,6 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import { useTranslation } from "react-i18next";
 import { useWindowDimensions } from "react-native";
@@ -17,7 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { useGenres } from "@/hooks/backend/useBrowsing";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -32,8 +31,7 @@ export default function SearchScreen() {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const isWideLayout = useApp((store) => store.isWideLayout);
   const router = useRouter();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const { data, isLoading, error } = useGenres();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -106,7 +104,7 @@ export default function SearchScreen() {
         ListEmptyComponent={<EmptyDisplay />}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

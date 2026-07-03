@@ -1,7 +1,6 @@
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Fuse from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -23,7 +22,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useArtists } from "@/hooks/backend/useBrowsing";
 import useDebounce from "@/hooks/useDebounce";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -46,8 +45,7 @@ export default function AllArtistsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const musicFolderId = useCurrentMusicFolderId();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useStore(form.store, (state) => state.values.query);
@@ -239,8 +237,7 @@ export default function AllArtistsScreen() {
             ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingBottom:
-                insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+              paddingBottom: screenBottomPadding,
             }}
           />
           {showIndexBar && (
@@ -249,9 +246,7 @@ export default function AllArtistsScreen() {
               currentIndex={currentSectionIdx}
               onSelect={handleSelectLetter}
               insetTop={8}
-              insetBottom={
-                insets.bottom + bottomTabBarHeight + floatingPlayerInset
-              }
+              insetBottom={screenBottomPadding}
             />
           )}
         </Box>

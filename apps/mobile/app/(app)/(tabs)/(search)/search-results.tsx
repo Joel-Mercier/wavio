@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useMemo, useState } from "react";
@@ -19,7 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { useSearch3 } from "@/hooks/backend/useSearching";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -35,8 +34,7 @@ export default function SearchResultsScreen() {
   const [filter, setFilter] = useState<
     "artists" | "albums" | "playlists" | "songs" | null
   >(null);
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSearch3(query, {
@@ -187,8 +185,7 @@ export default function SearchResultsScreen() {
           }
           ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
         />

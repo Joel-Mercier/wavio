@@ -1,7 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +23,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { usePlaylist, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import usePlaylists from "@/stores/playlists";
@@ -45,8 +44,7 @@ export default function ReorderPlaylistScreen() {
   const [initialOrder, setInitialOrder] = useState<Child[]>([]);
   const [removedItems, setRemovedItems] = useState<Set<Child>>(new Set());
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const toast = useToast();
@@ -265,8 +263,7 @@ export default function ReorderPlaylistScreen() {
           onSort={handleListSort}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
         />
       )}

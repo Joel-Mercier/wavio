@@ -3,17 +3,19 @@ import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { File, Paths } from "expo-file-system";
 import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import { usePodcastEpisodeActions } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import RichText from "@/components/RichText";
+import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Image } from "@/components/ui/image";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import {
@@ -194,10 +196,15 @@ export default function PodcastListItem({
         })}
       >
         <HStack className="gap-x-4">
-          <Image
+          <ImageWithFallback
             source={{ uri: podcast.imageUrl }}
             className="w-16 h-16 rounded-md aspect-square"
             alt={podcast.name}
+            fallback={
+              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                <Podcast size={24} color={white} />
+              </Box>
+            }
           />
           <VStack className="flex-1">
             <Heading className="text-white text-lg" numberOfLines={2}>

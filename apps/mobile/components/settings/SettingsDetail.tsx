@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import * as Application from "expo-application";
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -56,7 +55,7 @@ import { useRadioCountries } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { exportBackup, pickBackupFile, restoreBackup } from "@/services/backup";
 import {
   isEqualizerAvailable,
@@ -126,8 +125,7 @@ export default function SettingsDetail() {
     useBottomSheetBackHandler(bottomSheetRadioTagsModalRef);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
@@ -443,8 +441,7 @@ export default function SettingsDetail() {
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
         >
           <VStack className="mb-6 gap-y-4">

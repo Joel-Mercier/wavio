@@ -2,7 +2,6 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Fuse, { type FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -28,8 +27,8 @@ import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import useDebounce from "@/hooks/useDebounce";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
 import { useScopedRadioFavorites } from "@/hooks/useRadioFavorites";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type {
   AlbumID3,
   ArtistID3,
@@ -55,8 +54,7 @@ export default function LibrarySearchScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const form = useForm({
     defaultValues: {
       query: "",
@@ -367,8 +365,7 @@ export default function LibrarySearchScreen() {
           }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
         />
       )}

@@ -6,7 +6,6 @@ import {
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
@@ -44,7 +43,7 @@ import {
 } from "@/hooks/radioBrowser/useRadioBrowser";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { RadioBrowserStation } from "@/services/radioBrowser/types";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -59,8 +58,7 @@ export default function InternetRadioStationsSearchScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useStore(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -246,7 +244,7 @@ export default function InternetRadioStationsSearchScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

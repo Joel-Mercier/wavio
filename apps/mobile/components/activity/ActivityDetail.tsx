@@ -2,7 +2,6 @@ import { isThisWeek } from "date-fns/isThisWeek";
 import { isToday } from "date-fns/isToday";
 import { isYesterday } from "date-fns/isYesterday";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -19,7 +18,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useActivity, {
   type ActivityEntry,
   type ActivityType,
@@ -67,8 +66,7 @@ export default function ActivityDetail() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const activity = useActivity((store) => store.activity);
 
@@ -106,8 +104,7 @@ export default function ActivityDetail() {
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={false}
             contentContainerStyle={{
-              paddingBottom:
-                insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+              paddingBottom: screenBottomPadding,
             }}
             renderSectionHeader={({ section }) => (
               <Heading className="text-white mt-6 mb-2" size="md">

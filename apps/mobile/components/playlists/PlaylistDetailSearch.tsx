@@ -1,7 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import Fuse, { type FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -18,7 +17,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { usePlaylist } from "@/hooks/backend/usePlaylists";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
@@ -41,8 +40,7 @@ export default function PlaylistDetailSearch() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const { data: playlistData, isLoading, error } = usePlaylist(id);
   const form = useForm({
     defaultValues: {
@@ -165,7 +163,7 @@ export default function PlaylistDetailSearch() {
         ListEmptyComponent={<EmptyDisplay />}
         ListHeaderComponent={error && <ErrorDisplay error={error} />}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

@@ -9,7 +9,6 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
@@ -57,7 +56,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import {
   Country,
   Genre,
@@ -117,8 +116,7 @@ export default function PodcastsSearchScreen() {
     useBottomSheetBackHandler(genresSheetRef);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const queryClient = useQueryClient();
   const router = useRouter();
   const form = useForm({
@@ -312,7 +310,7 @@ export default function PodcastsSearchScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + tabBarHeight + floatingPlayerInset,
+          paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
       />

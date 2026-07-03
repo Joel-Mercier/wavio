@@ -47,6 +47,10 @@ import { invalidateKeys } from "@/utils/invalidateKeys";
 export const FLOATING_PLAYER_HEIGHT = 64;
 // Width of the landscape left tab bar column; the player docks to its bottom.
 export const SIDEBAR_WIDTH = 240;
+// Approximate default react-navigation bottom tab content height (excluding the
+// safe-area inset). The portrait player sits directly on top of the tab bar, so
+// its bottom must track the real tab bar height instead of a hardcoded value.
+export const TAB_BAR_CONTENT_HEIGHT = 49;
 
 const SWIPE_THRESHOLD = 80;
 const MAX_TRANSLATE = 140;
@@ -442,7 +446,12 @@ export default function FloatingPlayer() {
                 width: SIDEBAR_WIDTH,
                 bottom: insets.bottom + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
               }
-            : { bottom: 96 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT) }
+            : {
+                bottom:
+                  insets.bottom +
+                  TAB_BAR_CONTENT_HEIGHT +
+                  (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
+              }
         }
         onPress={handlePress}
       >

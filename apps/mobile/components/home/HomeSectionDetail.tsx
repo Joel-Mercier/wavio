@@ -1,13 +1,12 @@
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
@@ -25,8 +24,7 @@ import { HStack } from "../ui/hstack";
 
 export default function HomeSectionDetail() {
   const { t } = useTranslation();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -78,8 +76,7 @@ export default function HomeSectionDetail() {
           ListEmptyComponent={() => <EmptyDisplay />}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
           onEndReached={() => {

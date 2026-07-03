@@ -1,6 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
@@ -19,7 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIndexes, useMusicDirectory } from "@/hooks/backend/useBrowsing";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
@@ -39,8 +38,7 @@ export default function FolderDetail() {
   ]) as string[];
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const { id, name, root } = useLocalSearchParams<{
     id: string;
     name?: string;
@@ -185,8 +183,7 @@ export default function FolderDetail() {
           }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
         />

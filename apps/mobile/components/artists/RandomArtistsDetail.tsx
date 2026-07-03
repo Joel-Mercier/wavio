@@ -1,13 +1,12 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useArtists } from "@/hooks/backend/useBrowsing";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -25,8 +24,7 @@ import ArtistListItemSkeleton from "./ArtistListItemSkeleton";
 
 export default function RandomArtistsDetail() {
   const { t } = useTranslation();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -68,8 +66,7 @@ export default function RandomArtistsDetail() {
           ListEmptyComponent={() => <EmptyDisplay />}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
         />

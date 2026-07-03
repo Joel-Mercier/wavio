@@ -9,7 +9,6 @@ import { parse } from "date-fns/parse";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
@@ -98,6 +97,7 @@ import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useActivity from "@/stores/activity";
@@ -167,7 +167,7 @@ export default function AlbumDetail() {
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const recordActivity = useActivity((store) => store.recordActivity);
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
+  const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -753,7 +753,7 @@ export default function AlbumDetail() {
       <AnimatedFlashList
         onScroll={scrollHandler}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + bottomTabBarHeight,
+          paddingBottom: screenBottomPadding,
         }}
         data={isLoading ? loadingData(16) : discRows}
         keyExtractor={(item: AlbumListRow, index: number) =>

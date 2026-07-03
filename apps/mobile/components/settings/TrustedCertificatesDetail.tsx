@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
 import { useCallback, useEffect, useState } from "react";
@@ -19,7 +18,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useFloatingPlayerInset } from "@/hooks/useFloatingPlayerInset";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import {
   clearAllTrustedCertificates,
   getTrustedCertificates,
@@ -37,8 +36,7 @@ export default function TrustedCertificatesDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const bottomTabBarHeight = useBottomTabBarHeight();
-  const floatingPlayerInset = useFloatingPlayerInset();
+  const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
 
   const [certs, setCerts] = useState<TrustedCert[]>([]);
@@ -104,8 +102,7 @@ export default function TrustedCertificatesDetail() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom:
-              insets.bottom + bottomTabBarHeight + floatingPlayerInset,
+            paddingBottom: screenBottomPadding,
           }}
         >
           {isEmpty ? (
