@@ -71,11 +71,18 @@ export const useInfiniteAlbumList2 = (
       return getAlbumList2(type, { ...rest, size, offset: pageParam });
     },
     getNextPageParam: (lastPage, allPages) => {
-      const albums = lastPage?.albumList2?.album ?? [];
-      if (albums.length < size) {
+      // A short page isn't the end: some Subsonic servers and the Jellyfin
+      // "newest" path return fewer than `size` while more items remain, so
+      // stopping on a short page truncates the list. Only stop on an empty
+      // page, and offset by the running total (not allPages.length * size) so
+      // variable page sizes don't skip rows.
+      if ((lastPage?.albumList2?.album?.length ?? 0) === 0) {
         return undefined;
       }
-      return allPages.length * size;
+      return allPages.reduce(
+        (total, page) => total + (page?.albumList2?.album?.length ?? 0),
+        0,
+      );
     },
     enabled: options?.enabled,
   });
@@ -165,11 +172,15 @@ export const useInfiniteMostPlayedSongs = (
       return getMostPlayedSongs({ ...params, size, offset: pageParam });
     },
     getNextPageParam: (lastPage, allPages) => {
-      const songs = lastPage?.songs?.song ?? [];
-      if (songs.length < size) {
+      // Stop only on an empty page (a short page can still have more behind it)
+      // and offset by the running total so variable page sizes don't skip rows.
+      if ((lastPage?.songs?.song?.length ?? 0) === 0) {
         return undefined;
       }
-      return allPages.length * size;
+      return allPages.reduce(
+        (total, page) => total + (page?.songs?.song?.length ?? 0),
+        0,
+      );
     },
   });
 };

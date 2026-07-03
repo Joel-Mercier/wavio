@@ -899,6 +899,7 @@
       },
       "player": {
         "title": "En cours de lecture",
+        "original": "Original",
         "playingFrom": {
           "album": "Lecture depuis l'album",
           "playlist": "Lecture depuis la playlist",

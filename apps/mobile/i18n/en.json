@@ -899,6 +899,7 @@
       },
       "player": {
         "title": "Playing now",
+        "original": "Original",
         "playingFrom": {
           "album": "Playing from album",
           "playlist": "Playing from playlist",
