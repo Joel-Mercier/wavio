@@ -41,6 +41,7 @@ export default function InternetRadioStationsScreen() {
   const floatingPlayerInset = useFloatingPlayerInset();
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
   const configuredCountry = useApp((store) => store.internetRadioCountryCode);
   const feedTags = useApp((store) => store.internetRadioFeedTags);
   const localeCountry = useMemo(
@@ -91,28 +92,35 @@ export default function InternetRadioStationsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <HStack className="mx-6 mb-4 gap-x-4 items-center">
-          <FadeOutScaleDown
-            href={"/(app)/(tabs)/(home)/internet-radio-stations/search"}
-            className="flex-1"
-          >
-            <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
-              <Search
-                size={20}
-                color={"rgb(128, 128, 128)"}
-                className="text-primary-100"
-              />
-              <Text className="text-primary-100 text-sm">
-                {t("app.internetRadioStations.searchPlaceholder")}
-              </Text>
-            </HStack>
-          </FadeOutScaleDown>
-          {capabilities.internetRadio && (
-            <FadeOutScaleDown href={"/internet-radio-stations/new"}>
-              <Plus color={white} />
-            </FadeOutScaleDown>
-          )}
-        </HStack>
+        {(radioBrowserEnabled || capabilities.internetRadio) && (
+          <HStack className="mx-6 mb-4 gap-x-4 items-center">
+            {radioBrowserEnabled && (
+              <FadeOutScaleDown
+                href={"/(app)/(tabs)/(home)/internet-radio-stations/search"}
+                className="flex-1"
+              >
+                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+                  <Search
+                    size={20}
+                    color={"rgb(128, 128, 128)"}
+                    className="text-primary-100"
+                  />
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.internetRadioStations.searchPlaceholder")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
+            {capabilities.internetRadio && (
+              <FadeOutScaleDown
+                href={"/internet-radio-stations/new"}
+                className={radioBrowserEnabled ? undefined : "ml-auto"}
+              >
+                <Plus color={white} />
+              </FadeOutScaleDown>
+            )}
+          </HStack>
+        )}
 
         {favoriteItems.length > 0 && (
           <VStack className="gap-y-4 px-6 mt-4">
@@ -164,32 +172,36 @@ export default function InternetRadioStationsScreen() {
             skeletonKey="your-stations"
           />
         )}
-        <RadioStationRow
-          title={t("app.internetRadioStations.topVoted")}
-          isLoading={isLoadingTopVoted}
-          error={topVotedError}
-          stations={topVoted?.map(radioBrowserToItem)}
-          skeletonKey="top-voted"
-        />
-        <RadioStationRow
-          title={t("app.internetRadioStations.popular")}
-          isLoading={isLoadingPopular}
-          error={popularError}
-          stations={popular?.map(radioBrowserToItem)}
-          skeletonKey="popular"
-        />
-        {countryCode && (
-          <RadioStationRow
-            title={t("app.internetRadioStations.byCountry")}
-            isLoading={isLoadingByCountry}
-            error={byCountryError}
-            stations={byCountry?.map(radioBrowserToItem)}
-            skeletonKey="by-country"
-          />
+        {radioBrowserEnabled && (
+          <>
+            <RadioStationRow
+              title={t("app.internetRadioStations.topVoted")}
+              isLoading={isLoadingTopVoted}
+              error={topVotedError}
+              stations={topVoted?.map(radioBrowserToItem)}
+              skeletonKey="top-voted"
+            />
+            <RadioStationRow
+              title={t("app.internetRadioStations.popular")}
+              isLoading={isLoadingPopular}
+              error={popularError}
+              stations={popular?.map(radioBrowserToItem)}
+              skeletonKey="popular"
+            />
+            {countryCode && (
+              <RadioStationRow
+                title={t("app.internetRadioStations.byCountry")}
+                isLoading={isLoadingByCountry}
+                error={byCountryError}
+                stations={byCountry?.map(radioBrowserToItem)}
+                skeletonKey="by-country"
+              />
+            )}
+            {feedTags.map((tag) => (
+              <TagRow key={tag} tag={tag} />
+            ))}
+          </>
         )}
-        {feedTags.map((tag) => (
-          <TagRow key={tag} tag={tag} />
-        ))}
       </ScrollView>
     </Box>
   );

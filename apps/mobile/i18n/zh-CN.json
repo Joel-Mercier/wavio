@@ -594,6 +594,8 @@
         },
         "internetRadioStationsSettings": {
           "title": "网络电台",
+          "enabledLabel": "Radio Browser 目录",
+          "enabledDescription": "从 Radio Browser 目录浏览和搜索数百万个电台。关闭后将仅使用你服务器上的电台。",
           "countryLabel": "国家/地区",
           "countryDescription": "选择“按国家/地区”分类的电台栏所对应的国家。默认使用设备所在地区。",
           "countryAutomatic": "自动",

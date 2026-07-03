@@ -86,6 +86,11 @@ export default function SearchResultListItem({
   }, [searchResult, t]);
 
   const handlePress = () => {
+    // An offline song whose owning album couldn't be resolved would route to
+    // `/albums/undefined`; skip rather than navigate to a dead route.
+    if (type.id === "song" && !searchResult.albumId) {
+      return;
+    }
     useRecentSearches.getState().addRecentSearch({
       id: searchResult.id,
       title: searchResult.title || searchResult.name,

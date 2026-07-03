@@ -598,6 +598,8 @@
         },
         "internetRadioStationsSettings": {
           "title": "Интернет-радио",
+          "enabledLabel": "Каталог Radio Browser",
+          "enabledDescription": "Просматривай и ищи миллионы станций из каталога Radio Browser. Отключи, чтобы использовать только станции своего сервера.",
           "countryLabel": "Страна",
           "countryDescription": "Выбери страну для раздела «По странам». По умолчанию используется регион твоего устройства.",
           "countryAutomatic": "Автоматически",

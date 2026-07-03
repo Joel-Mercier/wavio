@@ -107,6 +107,8 @@ interface AppStore {
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
+  radioBrowserEnabled: boolean;
+  setRadioBrowserEnabled: (enabled: boolean) => void;
   // null = derive the "by country" feed from the device locale's region.
   internetRadioCountryCode: string | null;
   setInternetRadioCountryCode: (countryCode: string | null) => void;
@@ -216,6 +218,10 @@ export const useAppBase = create<AppStore>()(
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {
         set({ queueSyncPriority });
+      },
+      radioBrowserEnabled: true,
+      setRadioBrowserEnabled: (enabled: boolean) => {
+        set({ radioBrowserEnabled: enabled });
       },
       internetRadioCountryCode: null,
       setInternetRadioCountryCode: (

@@ -33,6 +33,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import type { PodcastSource } from "@/stores/podcasts";
 import useRadioStations, {
   type RadioStationSource,
@@ -130,6 +131,7 @@ export default function LibraryListItem({
   ]) as string[];
   const { t, i18n } = useTranslation();
   const offlineModeEnabled = useOfflineModeEnabled();
+  const musicFolderId = useCurrentMusicFolderId();
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
       return {
@@ -289,8 +291,10 @@ export default function LibraryListItem({
   }, [type.url, radioImage]);
 
   // Offline greying: a row is reachable offline only if its destination's
-  // detail query is cached. Folders/podcasts have no cacheable detail here, so
-  // they stay enabled (null key).
+  // content query is cached. Keys must match the destination screens exactly
+  // (the "all albums/artists" and root-folder browse lists are music-folder
+  // scoped, and the album list is the infinite variant). Podcasts/radio have no
+  // cacheable detail here, so they stay enabled (null key).
   const detailKey = useMemo<QueryKey | null>(() => {
     switch (type.id) {
       case "album":
@@ -300,11 +304,20 @@ export default function LibraryListItem({
       case "playlist":
         return ["playlist", item.id];
       case "favorites":
-        return ["starred2", {}];
+        return ["starred2"];
+      case "allAlbums":
+        return [
+          "albumList2:infinite",
+          { type: "alphabeticalByName", size: 20, musicFolderId },
+        ];
+      case "allArtists":
+        return ["artists", { musicFolderId }];
+      case "folder":
+        return ["indexes", { musicFolderId: item.id }];
       default:
         return null;
     }
-  }, [type.id, item.id]);
+  }, [type.id, item.id, musicFolderId]);
   const isDetailCached = useIsDetailCached(detailKey);
 
   // Downloaded badge: albums/playlists show it when the collection is available

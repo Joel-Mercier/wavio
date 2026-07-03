@@ -179,6 +179,10 @@ export default function SettingsDetail() {
     (store) => store.setInternetRadioCountryCode,
   );
   const internetRadioFeedTags = useApp((store) => store.internetRadioFeedTags);
+  const radioBrowserEnabled = useApp((store) => store.radioBrowserEnabled);
+  const setRadioBrowserEnabled = useApp(
+    (store) => store.setRadioBrowserEnabled,
+  );
   const clearTaddyPodcastsConfig = usePodcasts(
     (store) => store.clearTaddyPodcastsConfig,
   );
@@ -689,6 +693,16 @@ export default function SettingsDetail() {
             <SettingsSectionTitle
               title={t("app.settings.internetRadioStationsSettings.title")}
             />
+            <SettingsToggleRow
+              label={t(
+                "app.settings.internetRadioStationsSettings.enabledLabel",
+              )}
+              description={t(
+                "app.settings.internetRadioStationsSettings.enabledDescription",
+              )}
+              value={radioBrowserEnabled}
+              onToggle={(value) => setRadioBrowserEnabled(value)}
+            />
             <SettingsSelectRow
               label={t(
                 "app.settings.internetRadioStationsSettings.countryLabel",
@@ -697,6 +711,7 @@ export default function SettingsDetail() {
                 "app.settings.internetRadioStationsSettings.countryDescription",
               )}
               badgeText={radioCountryBadgeText}
+              disabled={!radioBrowserEnabled}
               onPress={() => bottomSheetRadioCountryModalRef.current?.present()}
             />
             <SettingsSelectRow
@@ -708,6 +723,7 @@ export default function SettingsDetail() {
                 "app.settings.internetRadioStationsSettings.tagsCount",
                 { count: internetRadioFeedTags.length },
               )}
+              disabled={!radioBrowserEnabled}
               onPress={() => bottomSheetRadioTagsModalRef.current?.present()}
             />
             <Divider className="bg-primary-400" />

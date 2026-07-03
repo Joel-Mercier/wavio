@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useOfflineSearch3 } from "@/hooks/offline";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { search, search2, search3 } from "@/services/backend/searching";
 
 export const useSearch = (params: {
@@ -50,11 +52,20 @@ export const useSearch3 = (
     musicFolderId?: string;
   },
 ) => {
-  return useQuery({
+  // Offline (server unreachable), the server query is paused by onlineManager and
+  // returns nothing; branch to a synchronous search over downloads + persisted
+  // cache instead. Both hooks run unconditionally (rules of hooks); we return the
+  // one matching the effective connectivity. On reconnect `isOnline` flips → the
+  // server query enables and refetches. The local backend is always effectively
+  // online, so it keeps its SQLite FTS path.
+  const isOnline = useIsOnline();
+  const serverQuery = useQuery({
     queryKey: ["search3", query, params],
     queryFn: () => {
       return search3(query, params);
     },
-    enabled: query.length > 0,
+    enabled: query.length > 0 && isOnline,
   });
+  const offline = useOfflineSearch3(query, params, { enabled: !isOnline });
+  return isOnline ? serverQuery : offline;
 };

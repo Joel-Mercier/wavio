@@ -70,14 +70,24 @@ export const hlsStreamUrl = (id: string) => {
   );
 };
 
-export const streamUrl = (id: string, opts?: { forceTranscode?: boolean }) => {
+export const streamUrl = (
+  id: string,
+  opts?: { forceTranscode?: boolean; timeOffset?: number },
+) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id);
   const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
   const params = transcodeParams(opts?.forceTranscode ?? false);
+  // Subsonic `timeOffset` (integer seconds) makes the server start transcoding
+  // from that point (Navidrome's `ffmpeg -ss %t`), the only way to seek within a
+  // transcoded stream whose response has no length ExoPlayer can seek against.
+  const timeOffset =
+    opts?.timeOffset && opts.timeOffset > 0
+      ? `&timeOffset=${Math.floor(opts.timeOffset)}`
+      : "";
   return resolveServerBase(
-    `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}`,
+    `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}${timeOffset}`,
   );
 };
 
