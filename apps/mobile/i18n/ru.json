@@ -538,7 +538,7 @@
       "settings": {
         "title": "Настройки",
         "offlineSettings": {
-          "title": "Офлайн-режим",
+          "title": "Офлайн",
           "offlineModeLabel": "Офлайн-режим",
           "offlineModeDescription": "Автоматически скачивать треки из Избранных",
           "downloadedTracksCount": "{{count}}/{{total}} треков скачано ({{size}})",
@@ -633,14 +633,14 @@
         },
         "streamingSettings": {
           "title": "Качество аудиостриминга",
-          "audioQualityLabel": "Прослушивание через Wi-Fi",
+          "audioQualityLabel": "Стриминг через Wi-Fi",
           "audioQualityDescription": "Ограничение максимального битрейта при потоковой передаче. Низкие значения экономят трафик, высокие — улучшают качество.",
           "audioQualityOriginal": "Оригинал (без ограничений)",
           "audioQualityKbps": "{{bitrate}} кбит/c",
-          "cellularAudioQualityLabel": "Стриминг по сотовой сети",
-          "cellularAudioQualityDescription": "Ограничение битрейта при использовании мобильной сети для экономии трафика. Используется наименьшее из этого значения и ограничения для Wi-Fi.",
+          "cellularAudioQualityLabel": "Стриминг через мобильную сеть",
+          "cellularAudioQualityDescription": "Ограничение битрейта при использовании мобильной сети для экономии трафика. Приложение выберет наменьший из двух лимитов: Wi-Fi или мобильной сети",
           "streamingFormatLabel": "Формат потока",
-          "streamingFormatDescription": "Запрос серверу на транскодирование потоков в этот формат. Оставьте «Оригинал» для побитового воспроизведения; выберите формат, если некоторые файлы не воспроизводятся (например, ALAC).",
+          "streamingFormatDescription": "Сервер будет транскодировать потоки. «Оригинал» для побитового качества. Выбирай другой формат, если файлы не запускаются (например, ALAC).",
           "streamingFormatOptions": {
             "raw": "Оригинал",
             "flac": "FLAC (lossless)",
@@ -1080,22 +1080,22 @@
         "songCount_few": "{{count}} трека",
         "songCount_many": "{{count}} треков",
         "songCount_other": "{{count}} треков",
-        "addedToQueueMessage_one": "Добавлена 1 песня в очередь",
-        "addedToQueueMessage_few": "Добавлено {{count}} песни в очередь",
-        "addedToQueueMessage_many": "Добавлено {{count}} песен в очередь",
-        "addedToQueueMessage_other": "Добавлено {{count}} песен в очередь",
-        "addedToPlayNextMessage_one": "Добавлена 1 песня для воспроизведения следующей",
-        "addedToPlayNextMessage_few": "Добавлено {{count}} песни для воспроизведения следующими",
-        "addedToPlayNextMessage_many": "Добавлено {{count}} песен для воспроизведения следующими",
-        "addedToPlayNextMessage_other": "Добавлено {{count}} песен для воспроизведения следующими",
-        "rateSuccessMessage": "Оценка успешно установлена",
-        "rateErrorMessage": "Произошла ошибка при установке оценки",
-        "shareUrlCopiedMessage": "Ссылка скопирована в буфер обмена",
-        "shareUrlErrorMessage": "Произошла ошибка при копировании ссылки в буфер обмена",
+        "addedToQueueMessage_one": "Добавлен 1 трек в очередь",
+        "addedToQueueMessage_few": "Добавлено {{count}} трека в очередь",
+        "addedToQueueMessage_many": "Добавлено {{count}} треков в очередь",
+        "addedToQueueMessage_other": "Добавлено {{count}} треков в очередь",
+        "addedToPlayNextMessage_one": "Добавлен 1 трек для воспроизведения следующим",
+        "addedToPlayNextMessage_few": "Добавлено {{count}} трека для воспроизведения следующими",
+        "addedToPlayNextMessage_many": "Добавлено {{count}} треков для воспроизведения следующими",
+        "addedToPlayNextMessage_other": "Добавлено {{count}} треков для воспроизведения следующими",
+        "rateSuccessMessage": "Оценка сохранена",
+        "rateErrorMessage": "Не удалось поставить оценку",
+        "shareUrlCopiedMessage": "Ссылка скопирована",
+        "shareUrlErrorMessage": "Не удалось скопировать ссылку",
         "tabs": {
           "home": "Главная",
           "search": "Поиск",
-          "library": "Медиатека",
+          "library": "Моя медиатека",
           "create": "Создать"
         },
         "sidebar": {
@@ -1133,7 +1133,7 @@
         ]
       },
       "localLibrary": {
-        "unsupported": "Локальная медиатека не поддерживает эту операцию"
+        "unsupported": "Локальная медиатека не поддерживает это действие"
       },
       "localIndexing": {
         "title": "Создание медиатеки",
@@ -1150,7 +1150,7 @@
         "title": "Смена сервера",
         "subtitle": "Вход в систему…",
         "errorTitle": "Не удалось сменить сервер",
-        "errorDescription": "Не удалось войти с использованием сохраненных учетных данных. Возможно, они изменились на сервере.",
+        "errorDescription": "Не удалось войти с сохраненными данными. Похоже, они изменились на сервере.",
         "retry": "Повторить",
         "enterManually": "Ввести пароль вручную"
       }
@@ -1188,7 +1188,7 @@
         "localInfoFormatsTitle": "Поддерживаемые форматы",
         "localInfoFormats": "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",
         "localInfoMetadataTitle": "Как считываются метаданные",
-        "localInfoMetadata": "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из встроенных тегов файла. Если теги отсутствуют, используется имя файла, поэтому для лучшего результата рекомендуем иметь хорошо размеченные файлы.",
+        "localInfoMetadata": "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из тегов внутри файла. Если тегов нет, мы используем имя файла, поэтому для идеального порядка в медиатеке лучше прописать теги заранее.",
         "localInfoTaggingTitle": "Разметка медиатеки",
         "localInfoTagging": "Для чистоты и единообразия твоей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
         "localInfoTaggingLink": "Скачать MusicBrainz Picard",
