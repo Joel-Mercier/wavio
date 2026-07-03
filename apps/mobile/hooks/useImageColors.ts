@@ -11,7 +11,7 @@ const useImageColors = (url?: string) => {
     }
     let cancelled = false;
     getColors(url, {
-      fallback: "#fff",
+      fallback: "#000",
       cache: true,
       key: url,
     })
