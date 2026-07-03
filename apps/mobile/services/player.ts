@@ -21,6 +21,7 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
+  getEffectiveMaxBitRate,
   getIsOnline,
   getServerReachable,
   probeServer,
@@ -52,6 +53,7 @@ import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
+import { getTranscodeInfo } from "@/utils/audioQuality";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 // Native engine calls (pause/seek/lock-screen/…) can throw while the
@@ -200,7 +202,7 @@ function maybeSubmitScrobble(status: AudioStatus) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (!isScrobblable(current)) return;
-  const position = status.currentTime ?? 0;
+  const position = effectivePosition(status.currentTime ?? 0);
   const duration = status.duration ?? current.duration ?? 0;
 
   if (playbackReportEnabled()) {
@@ -322,10 +324,48 @@ function isDecodeError(message: string): boolean {
   return /mediacodec|decoder|decode/i.test(message);
 }
 
+// Whether the current source is a server-transcoded stream, which is served
+// without a seekable length so ExoPlayer can't seek within it (a seekTo just
+// restarts it). Such a stream must instead be reloaded at a Subsonic
+// `timeOffset`. False for anything played off a local URL (downloaded, radio,
+// podcast) or a non-Subsonic backend. True when the decode-error fallback forced
+// a transcode, or the streaming settings predict one for this track.
+function isTranscodedStream(track: QueueTrack): boolean {
+  if (track.isRadio || track.source === "podcast") return false;
+  if (!canTranscodeFallback()) return false;
+  if (useOffline.getState().getDownloadedTrack(track.id)) return false;
+  if (transcodeRetriedIds.has(track.id)) return true;
+  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
+    useAppBase.getState();
+  return getTranscodeInfo(track, {
+    streamingFormat,
+    effectiveMaxBitRate: getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate),
+  }).active;
+}
+
+// Seconds a transcoded stream was requested to start at (Subsonic `timeOffset`).
+// The reloaded stream's own clock restarts near 0, so this base is added back to
+// every position read to recover the true track position. Reset to 0 on every
+// normal (offset-free) load; set when a transcoded seek/resume reloads the URL.
+let streamStartOffset = 0;
+
+export function getStreamStartOffset(): number {
+  return streamStartOffset;
+}
+
+function effectivePosition(raw: number): number {
+  return raw + streamStartOffset;
+}
+
 // Resolve the freshest source for a track. Queue entries can become stale —
 // a track enqueued before it was downloaded still holds its streamUrl, and
-// vice versa. Always re-check the offline registry at load time.
-function resolveTrackUrl(track: QueueTrack): {
+// vice versa. Always re-check the offline registry at load time. `timeOffset`
+// starts a transcoded stream partway in (seek/resume) and only applies to the
+// streamed branch — local/radio/podcast URLs are seekable and ignore it.
+function resolveTrackUrl(
+  track: QueueTrack,
+  timeOffset?: number,
+): {
   url: string;
   isOffline: boolean;
 } {
@@ -339,6 +379,7 @@ function resolveTrackUrl(track: QueueTrack): {
   return {
     url: streamUrl(track.id, {
       forceTranscode: transcodeRetriedIds.has(track.id),
+      timeOffset,
     }),
     isOffline: false,
   };
@@ -437,7 +478,18 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     return;
   }
   isLoading = true;
-  const { url, isOffline } = resolveTrackUrl(track);
+  // A transcoded stream can't be seeked once loaded, so a saved bookmark is
+  // baked into the URL as a Subsonic `timeOffset` (the stream starts there) and
+  // the seek arming below is skipped. A seekable source keeps the arm-and-seek
+  // resume path.
+  const resumeAt = getResumePosition(track);
+  const transcodeResume =
+    resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
+  streamStartOffset = transcodeResume ? resumeAt : 0;
+  const { url, isOffline } = resolveTrackUrl(
+    track,
+    transcodeResume ? resumeAt : undefined,
+  );
   reportBreadcrumb("player", "load", {
     trackId: track.id,
     source: track.source,
@@ -453,8 +505,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   // Resume long tracks from their saved bookmark position. Arm the seek so the
   // status listener re-applies it once the media is ready, and try an
   // immediate best-effort seek too.
-  const resumeAt = getResumePosition(track);
-  if (resumeAt != null) {
+  if (resumeAt != null && !transcodeResume) {
     pendingResumeId = track.id;
     pendingResumeAt = resumeAt;
     try {
@@ -688,12 +739,12 @@ function handlePlaybackStatus(status: AudioStatus) {
     const cur = useQueue.getState().getCurrent();
     if (cur) {
       reportNowPlaying(cur);
-      recordResumePosition(cur, status.currentTime ?? 0);
+      recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
     }
   } else if (wasPlaying && !status.didJustFinish && !isLoading) {
     // Playback paused (UI, lock-screen or OS control). Report it for the
     // playbackReport path; no-op when the extension is off.
-    reportPaused((status.currentTime ?? 0) * 1000);
+    reportPaused(effectivePosition(status.currentTime ?? 0) * 1000);
   }
   wasPlaying = status.playing;
   maybeSubmitScrobble(status);
@@ -1071,7 +1122,7 @@ export function pause() {
   // the next throttled tick that may never come once playback stops.
   const current = useQueue.getState().getCurrent();
   if (current) {
-    recordResumePosition(current, player.currentTime ?? 0, {
+    recordResumePosition(current, effectivePosition(player.currentTime ?? 0), {
       force: true,
     });
   }
@@ -1112,7 +1163,7 @@ export function play() {
 
 export function getCurrentTime() {
   if (useJukebox.getState().active) return jukeboxGetCurrentTime();
-  return player.currentTime ?? 0;
+  return effectivePosition(player.currentTime ?? 0);
 }
 
 export function isPlaying() {
@@ -1138,8 +1189,8 @@ export function skipPrevious(options?: { force?: boolean }) {
     jukeboxSkipPrevious().catch(() => {});
     return;
   }
-  if (!options?.force && player.currentTime > 3) {
-    player.seekTo(0);
+  if (!options?.force && effectivePosition(player.currentTime) > 3) {
+    seekTo(0);
     return;
   }
   const queue = useQueue.getState();
@@ -1152,15 +1203,34 @@ export function skipPrevious(options?: { force?: boolean }) {
       ? (queue.shuffleCursor ?? 0) <= 0
       : (queue.currentIndex ?? 0) <= 0);
   if (atStart) {
-    player.seekTo(0);
+    seekTo(0);
     return;
   }
   queue.previous();
 }
 
+// Seek within a transcoded stream by re-requesting it at a Subsonic `timeOffset`
+// and playing on from there — the loaded stream itself isn't seekable, so a
+// plain player.seekTo just restarts it. The same track keeps playing, so the
+// scrobble/now-playing state is intentionally left intact.
+function reloadAtOffset(track: QueueTrack, seconds: number) {
+  const wasPlaying = player.playing;
+  streamStartOffset = Math.max(0, seconds);
+  const { url } = resolveTrackUrl(track, streamStartOffset);
+  player.replace({ uri: url });
+  player.volume = getReplayGainFactor(track);
+  pendingResumeId = null;
+  if (wasPlaying) player.play();
+}
+
 export function seekTo(seconds: number) {
   if (useJukebox.getState().active) {
     jukeboxSeekTo(seconds).catch(() => {});
+    return;
+  }
+  const current = useQueue.getState().getCurrent();
+  if (current && isTranscodedStream(current)) {
+    reloadAtOffset(current, seconds);
     return;
   }
   player.seekTo(seconds);

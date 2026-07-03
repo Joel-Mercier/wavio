@@ -1,5 +1,5 @@
 import type { AudioStatus } from "expo-audio";
-import { getActivePlayer } from "@/services/player";
+import { getActivePlayer, getStreamStartOffset } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 
@@ -20,7 +20,9 @@ function readLocalSnapshot(): PlaybackSnapshot {
   const p = getActivePlayer();
   return {
     playing: p.playing,
-    currentTime: p.currentTime ?? 0,
+    // A transcoded stream reloaded at a Subsonic timeOffset restarts its own
+    // clock near 0, so add the offset back to recover the true track position.
+    currentTime: (p.currentTime ?? 0) + getStreamStartOffset(),
     duration: p.duration || currentTrackDuration(),
   };
 }
@@ -66,7 +68,7 @@ getActivePlayer().addListener("playbackStatusUpdate", (status: AudioStatus) => {
   if (useJukebox.getState().active) return;
   pushSnapshot({
     playing: status.playing,
-    currentTime: status.currentTime ?? 0,
+    currentTime: (status.currentTime ?? 0) + getStreamStartOffset(),
     duration: status.duration || currentTrackDuration(),
   });
 });
