@@ -41,7 +41,7 @@ import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import StarRating from "@/components/StarRating";
+import RatingModal from "@/components/RatingModal";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -410,6 +410,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       { id: track.id, rating },
       {
         onSuccess: () => {
+          setShowRatingModal(false);
           toast.show({
             placement: "top",
             duration: 3000,
@@ -889,32 +890,15 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           )}
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
-      <Modal
+      <RatingModal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}
-        closeOnOverlayClick
-      >
-        <ModalBackdrop />
-        <ModalContent
-          className="bg-primary-800 border-primary-600 max-h-[80%]"
-          style={{ marginBottom: insets.bottom, marginTop: insets.top }}
-        >
-          <ModalHeader>
-            <Heading className="text-white">
-              {t("app.tracks.rateModalTitle")}
-            </Heading>
-            <ModalCloseButton testID="track-rating-close-button">
-              <Icon as={X} size="md" className="color-white" />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody className="mb-0 pb-0">
-            <StarRating
-              value={track?.userRating || 0}
-              onChange={handleRatingChange}
-            />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+        title={t("app.tracks.rateModalTitle")}
+        value={track?.userRating || 0}
+        onConfirm={handleRatingChange}
+        isPending={doSetRating.isPending}
+        closeButtonTestID="track-rating-close-button"
+      />
       <TrackInfoModal
         isOpen={showInfoModal}
         onClose={handleCloseInfoModal}

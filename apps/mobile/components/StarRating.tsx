@@ -1,5 +1,5 @@
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {
   GestureDetector,
@@ -99,6 +99,10 @@ export const StarRating = memo(function StarRating({
   const [currentValue, setCurrentValue] = useState(value || 0);
   const clampedValue = Math.max(0, Math.min(max, Math.round(currentValue)));
 
+  useEffect(() => {
+    setCurrentValue(value || 0);
+  }, [value]);
+
   const stars = useMemo(() => Array.from({ length: max }, (_, i) => i), [max]);
 
   const handlePress = useCallback(
@@ -120,14 +124,10 @@ export const StarRating = memo(function StarRating({
 
   const panGesture = usePanGesture({
     enabled: !disabled,
-    onBegin: (event) => {
-      // compute initial value on touch begin
-      const starWidth = size + spacing;
-      const starIndex = Math.floor(event.x / starWidth);
-      const newValue =
-        starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
-      scheduleOnRN(setCurrentValue, newValue);
-    },
+    // Intentionally no onBegin: setting the value on touch-down would make a tap
+    // land on an already-selected star, tripping the tap-to-deselect logic in
+    // StarItem.handlePress. Drag fills via onUpdate; taps go through the per-star
+    // Pressable.
     onUpdate: (event) => {
       // live update UI while swiping (no onChange yet)
       const starWidth = size + spacing;

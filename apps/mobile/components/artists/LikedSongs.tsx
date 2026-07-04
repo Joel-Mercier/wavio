@@ -11,7 +11,6 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
@@ -32,22 +31,13 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import RatingModal from "@/components/RatingModal";
 import ShuffleToggle from "@/components/ShuffleToggle";
-import StarRating from "@/components/StarRating";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Icon } from "@/components/ui/icon";
 import { Image } from "@/components/ui/image";
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -624,32 +614,14 @@ export default function LikedSongs() {
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
-      <Modal
+      <RatingModal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}
-        closeOnOverlayClick
-      >
-        <ModalBackdrop />
-        <ModalContent
-          className="bg-primary-800 border-primary-600 max-h-[80%]"
-          style={{ marginBottom: insets.bottom, marginTop: insets.top }}
-        >
-          <ModalHeader>
-            <Heading className="text-white">
-              {t("app.artists.rateModalTitle")}
-            </Heading>
-            <ModalCloseButton>
-              <Icon as={X} size="md" className="color-white" />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody className="mb-0 pb-0">
-            <StarRating
-              value={data?.artist?.userRating || 0}
-              onChange={handleRatingChange}
-            />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+        title={t("app.artists.rateModalTitle")}
+        value={data?.artist?.userRating || 0}
+        onConfirm={handleRatingChange}
+        isPending={doSetRating.isPending}
+      />
     </Box>
   );
 }

@@ -123,10 +123,11 @@ tags:
 # them, we can leave the album for the Queue screen and assert the resulting order
 # without having to navigate back here.
 
-# --- Rate (modal + star + close) -------------------------------------------
+# --- Rate (modal + star + confirm) -----------------------------------------
 # Guarded on the server advertising the setRating capability. Tapping a star
-# fires handleRatingChange (success toast) but leaves the modal open, so close it
-# via its "X" (testID). The Gluestack Modal ignores Android `back`.
+# only stages a pending rating; "Save" commits it (success toast) and closes the
+# modal on success. If it stays open (e.g. mutation error) close it via its "X"
+# (testID). The Gluestack Modal ignores Android `back`.
 - tapOn:
     id: "track-menu-button"
     index: 0
@@ -143,11 +144,10 @@ tags:
           timeout: 5000
       - waitForAnimationToEnd
       - tapOn: "Rate 3 stars"
+      - tapOn: "Save"
       - assertVisible:
           text: "Rating successfully set"
           optional: true
-      - tapOn:
-          id: "track-rating-close-button"
       - runFlow:
           when:
             visible: "Rate track"
