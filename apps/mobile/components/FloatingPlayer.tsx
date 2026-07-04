@@ -358,10 +358,14 @@ export default function FloatingPlayer() {
                   {playingTrack.title || ""}
                 </Text>
               </MovingText>
-              <Text numberOfLines={1} className="text-gray-300 text-xs">
-                {playingTrack.artist ||
-                  (!isRadio && !isPodcast ? t("app.shared.unknownArtist") : "")}
-              </Text>
+              <MovingText>
+                <Text className="text-gray-300 text-xs">
+                  {playingTrack.artist ||
+                    (!isRadio && !isPodcast
+                      ? t("app.shared.unknownArtist")
+                      : "")}
+                </Text>
+              </MovingText>
             </VStack>
             {!isRadio && isPodcast && podcastSeries && (
               <AnimatedHeart
@@ -489,10 +493,14 @@ export default function FloatingPlayer() {
                   {playingTrack.title || ""}
                 </Text>
               </MovingText>
-              <Text numberOfLines={1} className="text-gray-300">
-                {playingTrack.artist ||
-                  (!isRadio && !isPodcast ? t("app.shared.unknownArtist") : "")}
-              </Text>
+              <MovingText>
+                <Text className="text-gray-300">
+                  {playingTrack.artist ||
+                    (!isRadio && !isPodcast
+                      ? t("app.shared.unknownArtist")
+                      : "")}
+                </Text>
+              </MovingText>
             </Animated.View>
           </HStack>
           <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
