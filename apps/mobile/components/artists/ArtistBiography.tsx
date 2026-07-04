@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LastFM from "@/assets/images/lastfm.svg";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -71,7 +72,7 @@ export default function ArtistBiography() {
           paddingBottom: screenBottomPadding,
         }}
       >
-        <Text className="text-white mt-6">{biography}</Text>
+        <RichText className="text-white mt-6">{biography}</RichText>
         <FadeOutScaleDown
           onPress={handleMusicBrainzPress}
           className="flex flex-row items-center my-6"

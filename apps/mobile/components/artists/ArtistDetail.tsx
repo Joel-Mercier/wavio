@@ -38,6 +38,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import RichText from "@/components/RichText";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import StarRating from "@/components/StarRating";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -800,7 +801,9 @@ export default function ArtistDetail() {
                 >
                   <ImageBackground
                     source={{
-                      uri: artistInfoData?.artistInfo2?.mediumImageUrl,
+                      uri:
+                        artistInfoData?.artistInfo2?.mediumImageUrl ??
+                        artworkUrl(data?.artist?.coverArt),
                     }}
                     alt="Artist cover"
                     contentFit="cover"
@@ -816,9 +819,9 @@ export default function ArtistDetail() {
                           padding: 24,
                         }}
                       >
-                        <Text className="text-white" numberOfLines={3}>
+                        <RichText className="text-white" numberOfLines={3}>
                           {artistInfoData?.artistInfo2?.biography}
-                        </Text>
+                        </RichText>
                       </LinearGradient>
                     </Box>
                   </ImageBackground>
