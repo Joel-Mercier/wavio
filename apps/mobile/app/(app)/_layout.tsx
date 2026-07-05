@@ -180,6 +180,7 @@ export default function AppLayout() {
               animationDuration: 300,
               animation: "fade_from_bottom",
               presentation: "formSheet",
+              sheetAllowedDetents: [1.0],
             }}
           />
           <Stack.Screen
@@ -191,6 +192,7 @@ export default function AppLayout() {
               animationDuration: 300,
               animation: "fade_from_bottom",
               presentation: "formSheet",
+              sheetAllowedDetents: [1.0],
             }}
           />
         </Stack>
