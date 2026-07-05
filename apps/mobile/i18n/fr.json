@@ -590,7 +590,14 @@
           "createTabLabel": "Onglet 'créer'",
           "createTabDescription": "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
           "showEmptyHomeSectionsLabel": "Afficher les sections vides",
-          "showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer"
+          "showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
+          "lyricsSourceLabel": "Paroles",
+          "lyricsSourceDescription": "Choisissez la provenance des paroles synchronisées, ou désactivez-les.",
+          "lyricsSourceOptions": {
+            "off": "Désactivées",
+            "server": "Serveur uniquement",
+            "all": "Serveur + lrclib.net"
+          }
         },
         "internetRadioStationsSettings": {
           "title": "Stations de radio",

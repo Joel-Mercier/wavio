@@ -594,7 +594,14 @@
           "createTabLabel": "Кнопка «Создать»",
           "createTabDescription": "Показывать кнопку «Создать» на главной панели навигации",
           "showEmptyHomeSectionsLabel": "Показывать пустые разделы",
-          "showEmptyHomeSectionsDescription": "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их"
+          "showEmptyHomeSectionsDescription": "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их",
+          "lyricsSourceLabel": "Тексты песен",
+          "lyricsSourceDescription": "Выберите источник синхронизированных текстов или отключите их.",
+          "lyricsSourceOptions": {
+            "off": "Выключено",
+            "server": "Только сервер",
+            "all": "Сервер + lrclib.net"
+          }
         },
         "internetRadioStationsSettings": {
           "title": "Интернет-радио",

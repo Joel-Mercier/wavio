@@ -58,6 +58,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
+import useApp from "@/stores/app";
 import useBookmarks from "@/stores/bookmarks";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
@@ -103,6 +104,7 @@ export default function PlayerSheets({
   const { t } = useTranslation();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  const lyricsSource = useApp((s) => s.lyricsSource);
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -673,7 +675,7 @@ export default function PlayerSheets({
                     <SetBookmarkLabel />
                   </HStack>
                 </FadeOutScaleDown>
-                {!hideLyricsAction && (
+                {!hideLyricsAction && lyricsSource !== "off" && (
                   <FadeOutScaleDown onPress={handleShowLyricsPress}>
                     <HStack className="items-center">
                       <Mic2 size={24} color={gray200} />

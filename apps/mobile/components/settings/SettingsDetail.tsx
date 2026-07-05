@@ -111,6 +111,9 @@ export default function SettingsDetail() {
   const {
     handleSheetPositionChange: handleStreamingFormatSheetPositionChange,
   } = useBottomSheetBackHandler(bottomSheetStreamingFormatModalRef);
+  const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleLyricsSourceSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetLyricsSourceModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
@@ -144,6 +147,8 @@ export default function SettingsDetail() {
   const setShowEmptyHomeSections = useApp(
     (store) => store.setShowEmptyHomeSections,
   );
+  const lyricsSource = useApp((store) => store.lyricsSource);
+  const setLyricsSource = useApp((store) => store.setLyricsSource);
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
   const cellularMaxBitRate = useApp((store) => store.cellularMaxBitRate);
@@ -284,6 +289,12 @@ export default function SettingsDetail() {
     "opus",
     "mp3",
     "aac",
+  ];
+
+  const lyricsSourceOptions: ("off" | "server" | "all")[] = [
+    "off",
+    "server",
+    "all",
   ];
 
   const formatBitRate = (value: number | null) =>
@@ -759,6 +770,16 @@ export default function SettingsDetail() {
               value={showEmptyHomeSections}
               onToggle={(value) => setShowEmptyHomeSections(value)}
             />
+            <SettingsSelectRow
+              label={t("app.settings.displaySettings.lyricsSourceLabel")}
+              description={t(
+                "app.settings.displaySettings.lyricsSourceDescription",
+              )}
+              badgeText={t(
+                `app.settings.displaySettings.lyricsSourceOptions.${lyricsSource}`,
+              )}
+              onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
+            />
             <Divider className="bg-primary-400" />
             <SettingsSectionTitle
               title={t("app.settings.playbackSettings.title")}
@@ -961,6 +982,10 @@ export default function SettingsDetail() {
       <OptionsBottomSheetModal
         modalRef={bottomSheetLanguageModalRef}
         onChange={handleSheetPositionChange}
+        header={t("app.settings.displaySettings.languageLabel")}
+        headerDescription={t(
+          "app.settings.displaySettings.languageDescription",
+        )}
         options={SupportedLanguages.map((language) => ({
           value: language,
           label: t(`app.shared.languages.${language}`, { lng: language }),
@@ -971,6 +996,10 @@ export default function SettingsDetail() {
       <OptionsBottomSheetModal
         modalRef={bottomSheetBitRateModalRef}
         onChange={handleBitRateSheetPositionChange}
+        header={t("app.settings.streamingSettings.audioQualityLabel")}
+        headerDescription={t(
+          "app.settings.streamingSettings.audioQualityDescription",
+        )}
         options={bitRateOptions.map((option) => ({
           value: option,
           label: formatBitRate(option),
@@ -981,6 +1010,10 @@ export default function SettingsDetail() {
       <OptionsBottomSheetModal
         modalRef={bottomSheetCellularBitRateModalRef}
         onChange={handleCellularBitRateSheetPositionChange}
+        header={t("app.settings.streamingSettings.cellularAudioQualityLabel")}
+        headerDescription={t(
+          "app.settings.streamingSettings.cellularAudioQualityDescription",
+        )}
         options={bitRateOptions.map((option) => ({
           value: option,
           label: formatBitRate(option),
@@ -1006,8 +1039,29 @@ export default function SettingsDetail() {
         dismissOnSelect
       />
       <OptionsBottomSheetModal
+        modalRef={bottomSheetLyricsSourceModalRef}
+        onChange={handleLyricsSourceSheetPositionChange}
+        header={t("app.settings.displaySettings.lyricsSourceLabel")}
+        headerDescription={t(
+          "app.settings.displaySettings.lyricsSourceDescription",
+        )}
+        options={lyricsSourceOptions.map((option) => ({
+          value: option,
+          label: t(
+            `app.settings.displaySettings.lyricsSourceOptions.${option}`,
+          ),
+        }))}
+        selectedValue={lyricsSource}
+        onSelect={setLyricsSource}
+        dismissOnSelect
+      />
+      <OptionsBottomSheetModal
         modalRef={bottomSheetReplayGainModalRef}
         onChange={handleReplayGainSheetPositionChange}
+        header={t("app.settings.streamingSettings.replayGainLabel")}
+        headerDescription={t(
+          "app.settings.streamingSettings.replayGainDescription",
+        )}
         options={replayGainOptions.map((option) => ({
           value: option,
           label: t(`app.settings.streamingSettings.replayGainModes.${option}`),

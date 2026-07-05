@@ -38,6 +38,10 @@ interface AppStore {
   setShowAddTab: (showAddTab: boolean) => void;
   showEmptyHomeSections: boolean;
   setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => void;
+  // "off" hides lyrics entirely; "server" uses only server-embedded lyrics;
+  // "all" also falls back to lrclib.net when the server has none.
+  lyricsSource: "off" | "server" | "all";
+  setLyricsSource: (lyricsSource: "off" | "server" | "all") => void;
   librarySort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -145,6 +149,10 @@ export const useAppBase = create<AppStore>()(
       showEmptyHomeSections: true,
       setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => {
         set({ showEmptyHomeSections });
+      },
+      lyricsSource: "all",
+      setLyricsSource: (lyricsSource: "off" | "server" | "all") => {
+        set({ lyricsSource });
       },
       librarySort: "addedAtAsc",
       setLibrarySort: (

@@ -590,7 +590,14 @@
           "createTabLabel": "Create tab",
           "createTabDescription": "Show the 'create' tab in the bottom tab bar",
           "showEmptyHomeSectionsLabel": "Show empty sections",
-          "showEmptyHomeSectionsDescription": "Show home sections that have no content instead of hiding them"
+          "showEmptyHomeSectionsDescription": "Show home sections that have no content instead of hiding them",
+          "lyricsSourceLabel": "Lyrics",
+          "lyricsSourceDescription": "Choose where synced lyrics come from, or turn them off.",
+          "lyricsSourceOptions": {
+            "off": "Off",
+            "server": "Server only",
+            "all": "Server + lrclib.net"
+          }
         },
         "internetRadioStationsSettings": {
           "title": "Internet radio stations",

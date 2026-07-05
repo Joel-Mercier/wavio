@@ -181,6 +181,11 @@ export default function AppLayout() {
               animation: "fade_from_bottom",
               presentation: "formSheet",
               sheetAllowedDetents: [1.0],
+              // Android: extend the sheet behind the top inset so the [1.0]
+              // detent truly covers the screen (no underlying view peeking at
+              // the top) and the screen's own paddingTop: insets.top isn't
+              // stacked on top of a second inset gap.
+              sheetShouldOverflowTopInset: true,
             }}
           />
           <Stack.Screen
@@ -193,6 +198,7 @@ export default function AppLayout() {
               animation: "fade_from_bottom",
               presentation: "formSheet",
               sheetAllowedDetents: [1.0],
+              sheetShouldOverflowTopInset: true,
             }}
           />
         </Stack>

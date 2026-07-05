@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useGetLyricsBySongId } from "@/hooks/backend/useMediaRetrieval";
 import { useLrclibLyrics } from "@/hooks/lrclib/useLrclibLyrics";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
 
 function pickSyncedLyrics(
@@ -12,10 +13,12 @@ function pickSyncedLyrics(
 }
 
 export function useSyncedLyrics(track: QueueTrack | undefined | null) {
+  const lyricsSource = useApp((s) => s.lyricsSource);
   const trackId = track?.id;
   const isRadio = !!track?.isRadio;
   const isPodcast = track?.source === "podcast";
-  const lyricsEligible = !!trackId && !isRadio && !isPodcast;
+  const lyricsEligible =
+    !!trackId && !isRadio && !isPodcast && lyricsSource !== "off";
   const backend = useGetLyricsBySongId(
     trackId ?? "",
     { enhanced: true },
@@ -32,10 +35,14 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     artistName: track?.artist,
     albumName: track?.album,
     duration: track?.duration,
-    enabled: backendSettled && !backendLyrics,
+    enabled: backendSettled && !backendLyrics && lyricsSource === "all",
   });
 
-  const lyrics = backendLyrics ?? lrclib.lyrics;
+  // lrclib's query keeps its cached result after being disabled (staleTime is
+  // Infinity), so switching away from "all" must also stop surfacing it here —
+  // otherwise the last-played track keeps showing its lrclib lyrics.
+  const lyrics =
+    backendLyrics ?? (lyricsSource === "all" ? lrclib.lyrics : null);
   const isLoading = backend.isLoading || lrclib.isLoading;
   return { lyrics, isLoading };
 }

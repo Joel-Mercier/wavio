@@ -590,7 +590,14 @@
           "createTabLabel": "创建标签页",
           "createTabDescription": "在底部导航栏中显示“创建”标签页",
           "showEmptyHomeSectionsLabel": "显示空白板块",
-          "showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏"
+          "showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏",
+          "lyricsSourceLabel": "歌词",
+          "lyricsSourceDescription": "选择同步歌词的来源，或将其关闭。",
+          "lyricsSourceOptions": {
+            "off": "关闭",
+            "server": "仅服务器",
+            "all": "服务器 + lrclib.net"
+          }
         },
         "internetRadioStationsSettings": {
           "title": "网络电台",

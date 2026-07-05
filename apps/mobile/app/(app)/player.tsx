@@ -184,6 +184,7 @@ export default function PlayerScreen() {
 		0,
 		Math.min(coverArea.width - 48, coverArea.height),
 	);
+	const lyricsSource = useApp((s) => s.lyricsSource);
 	const { lyrics } = useSyncedLyrics(playingTrack);
 	const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
 	const coverTranslateX = useSharedValue(0);
@@ -503,10 +504,12 @@ export default function PlayerScreen() {
 								</GestureDetector>
 							)}
 						</Box>
-						<CurrentLyricLine
-							lyrics={hasSyncedLyrics ? lyrics : null}
-							onPress={() => router.push("/lyrics")}
-						/>
+						{lyricsSource !== "off" && (
+							<CurrentLyricLine
+								lyrics={hasSyncedLyrics ? lyrics : null}
+								onPress={() => router.push("/lyrics")}
+							/>
+						)}
 					</VStack>
 					<VStack className={cn(isWideLayout && "flex-1 justify-center")}>
 						<VStack className="px-6">
