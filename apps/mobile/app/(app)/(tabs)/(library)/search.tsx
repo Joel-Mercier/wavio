@@ -44,8 +44,7 @@ type SearchFilter =
   | "artists"
   | "playlists"
   | "radioStations"
-  | "folders"
-  | null;
+  | "folders";
 
 export default function LibrarySearchScreen() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -65,7 +64,7 @@ export default function LibrarySearchScreen() {
   const debounce = useDebounce(150);
   const musicFolderId = useCurrentMusicFolderId();
   const favoriteRadioStations = useScopedRadioFavorites();
-  const [filter, setFilter] = useState<SearchFilter>(null);
+  const [filter, setFilter] = useState<SearchFilter[]>([]);
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
@@ -91,29 +90,37 @@ export default function LibrarySearchScreen() {
     form.setFieldValue("query", "");
   };
 
-  const handleFilterPress = (type: NonNullable<SearchFilter>) => {
-    setFilter(type === filter ? null : type);
+  const handleFilterPress = (type: SearchFilter) => {
+    setFilter(
+      filter.includes(type)
+        ? filter.filter((f) => f !== type)
+        : [...filter, type],
+    );
   };
 
   const fuse = useMemo(() => {
     if (!starredData?.starred2 || !playlistsData?.playlists) {
       return null;
     }
+    const noFilter = filter.length === 0;
     const items: Array<unknown> = [];
-    if ((!filter || filter === "artists") && starredData.starred2.artist) {
+    if (
+      (noFilter || filter.includes("artists")) &&
+      starredData.starred2.artist
+    ) {
       items.push(starredData.starred2.artist);
     }
-    if ((!filter || filter === "albums") && starredData.starred2.album) {
+    if ((noFilter || filter.includes("albums")) && starredData.starred2.album) {
       items.push(starredData.starred2.album);
     }
     if (
-      (!filter || filter === "playlists") &&
+      (noFilter || filter.includes("playlists")) &&
       playlistsData.playlists.playlist
     ) {
       items.push(playlistsData.playlists.playlist);
     }
     if (
-      (!filter || filter === "folders") &&
+      (noFilter || filter.includes("folders")) &&
       musicFoldersData?.musicFolders?.musicFolder
     ) {
       items.push(
@@ -125,7 +132,7 @@ export default function LibrarySearchScreen() {
       );
     }
     if (
-      (!filter || filter === "radioStations") &&
+      (noFilter || filter.includes("radioStations")) &&
       favoriteRadioStations.length > 0
     ) {
       items.push(
@@ -222,7 +229,7 @@ export default function LibrarySearchScreen() {
           <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
             <Badge
               className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                "bg-emerald-500": filter === "albums",
+                "bg-emerald-500": filter.includes("albums"),
               })}
             >
               <BadgeText className="normal-case text-md text-white">
@@ -233,7 +240,7 @@ export default function LibrarySearchScreen() {
           <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
             <Badge
               className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                "bg-emerald-500": filter === "artists",
+                "bg-emerald-500": filter.includes("artists"),
               })}
             >
               <BadgeText className="normal-case text-md text-white">
@@ -244,7 +251,7 @@ export default function LibrarySearchScreen() {
           <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
             <Badge
               className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                "bg-emerald-500": filter === "playlists",
+                "bg-emerald-500": filter.includes("playlists"),
               })}
             >
               <BadgeText className="normal-case text-md text-white">
@@ -255,7 +262,7 @@ export default function LibrarySearchScreen() {
           <FadeOutScaleDown onPress={() => handleFilterPress("radioStations")}>
             <Badge
               className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                "bg-emerald-500": filter === "radioStations",
+                "bg-emerald-500": filter.includes("radioStations"),
               })}
             >
               <BadgeText className="normal-case text-md text-white">
@@ -266,7 +273,7 @@ export default function LibrarySearchScreen() {
           <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
             <Badge
               className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                "bg-emerald-500": filter === "folders",
+                "bg-emerald-500": filter.includes("folders"),
               })}
             >
               <BadgeText className="normal-case text-md text-white">

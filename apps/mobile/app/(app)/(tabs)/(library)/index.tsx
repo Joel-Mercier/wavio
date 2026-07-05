@@ -64,7 +64,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
-import useApp from "@/stores/app";
+import useApp, { type LibraryFilter } from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
@@ -166,16 +166,12 @@ export default function LibraryScreen() {
     setLayout(layout === "list" ? "grid" : "list");
   };
 
-  const handleFilterPress = (
-    type:
-      | "artists"
-      | "albums"
-      | "playlists"
-      | "podcasts"
-      | "radioStations"
-      | "folders",
-  ) => {
-    setFilter(type === filter ? null : type);
+  const handleFilterPress = (type: LibraryFilter) => {
+    setFilter(
+      filter.includes(type)
+        ? filter.filter((f) => f !== type)
+        : [...filter, type],
+    );
   };
 
   const handlePresentModalPress = useCallback(() => {
@@ -278,22 +274,26 @@ export default function LibraryScreen() {
       return [...serverItems, ...offlineItems];
     };
 
+    const noFilter = filter.length === 0;
     let data = [];
-    if ((!filter || filter === "artists") && starredData?.starred2?.artist) {
+    if (
+      (noFilter || filter.includes("artists")) &&
+      starredData?.starred2?.artist
+    ) {
       data.push(starredData.starred2.artist);
     }
-    if (!filter || filter === "albums") {
+    if (noFilter || filter.includes("albums")) {
       data.push(mergeOffline(starredData?.starred2?.album ?? [], "album"));
     }
-    if (!filter || filter === "playlists") {
-      if (filter === "playlists" && hasServerData) {
+    if (noFilter || filter.includes("playlists")) {
+      if (filter.includes("playlists") && hasServerData) {
         data.push(favoritesItem);
       }
       data.push(
         mergeOffline(playlistsData?.playlists?.playlist ?? [], "playlist"),
       );
     }
-    if (showPodcasts && (!filter || filter === "podcasts")) {
+    if (showPodcasts && (noFilter || filter.includes("podcasts"))) {
       data.push(
         favoritePodcasts.map((p) => ({
           id: p.uuid,
@@ -308,7 +308,7 @@ export default function LibraryScreen() {
         })),
       );
     }
-    if (!filter || filter === "radioStations") {
+    if (noFilter || filter.includes("radioStations")) {
       data.push(
         favoriteRadioStations.map((r) => ({
           id: r.id,
@@ -324,7 +324,7 @@ export default function LibraryScreen() {
       );
     }
     if (
-      (!filter || filter === "folders") &&
+      (noFilter || filter.includes("folders")) &&
       musicFoldersData?.musicFolders?.musicFolder
     ) {
       data.push(
@@ -363,7 +363,7 @@ export default function LibraryScreen() {
     });
     // Pin Favorites + the "all albums/artists" browse entries at the top of the
     // unfiltered library so the sort never scatters them into the list.
-    if (!filter && hasServerData) {
+    if (noFilter && hasServerData) {
       return [favoritesItem, allArtistsItem, allAlbumsItem, ...sorted];
     }
     return sorted;
@@ -439,7 +439,8 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800": filter === "playlists",
+                    "bg-emerald-500 text-primary-800":
+                      filter.includes("playlists"),
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
@@ -450,7 +451,8 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800": filter === "albums",
+                    "bg-emerald-500 text-primary-800":
+                      filter.includes("albums"),
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
@@ -461,7 +463,8 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800": filter === "artists",
+                    "bg-emerald-500 text-primary-800":
+                      filter.includes("artists"),
                     "mr-2": showPodcasts,
                   })}
                 >
@@ -474,7 +477,8 @@ export default function LibraryScreen() {
                 <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
                   <Badge
                     className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                      "bg-emerald-500 text-primary-800": filter === "podcasts",
+                      "bg-emerald-500 text-primary-800":
+                        filter.includes("podcasts"),
                     })}
                   >
                     <BadgeText className="normal-case text-md text-white">
@@ -489,7 +493,7 @@ export default function LibraryScreen() {
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
                     "bg-emerald-500 text-primary-800":
-                      filter === "radioStations",
+                      filter.includes("radioStations"),
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
@@ -500,7 +504,8 @@ export default function LibraryScreen() {
               <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                    "bg-emerald-500 text-primary-800": filter === "folders",
+                    "bg-emerald-500 text-primary-800":
+                      filter.includes("folders"),
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">

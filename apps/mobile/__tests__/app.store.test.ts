@@ -40,7 +40,7 @@ const reset = () =>
       showAddTab: false,
       librarySort: "addedAtAsc",
       favoritesSort: "addedAtAsc",
-      libraryFilter: null,
+      libraryFilter: [],
       maxBitRate: null,
       cellularMaxBitRate: null,
       downloadsWifiOnly: false,
@@ -96,10 +96,10 @@ describe("app store", () => {
   });
 
   it("setLibraryFilter sets and clears the filter", () => {
-    useAppBase.getState().setLibraryFilter("artists");
-    expect(useAppBase.getState().libraryFilter).toBe("artists");
-    useAppBase.getState().setLibraryFilter(null);
-    expect(useAppBase.getState().libraryFilter).toBeNull();
+    useAppBase.getState().setLibraryFilter(["artists", "albums"]);
+    expect(useAppBase.getState().libraryFilter).toEqual(["artists", "albums"]);
+    useAppBase.getState().setLibraryFilter([]);
+    expect(useAppBase.getState().libraryFilter).toEqual([]);
   });
 
   it("setMaxBitRate accepts numbers and null", () => {

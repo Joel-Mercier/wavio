@@ -29,6 +29,14 @@ export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
 
+export type LibraryFilter =
+  | "artists"
+  | "albums"
+  | "playlists"
+  | "podcasts"
+  | "radioStations"
+  | "folders";
+
 interface AppStore {
   locale: TSupportedLanguages | null;
   setLocale: (locale: TSupportedLanguages) => void;
@@ -54,24 +62,8 @@ interface AppStore {
       | "alphabeticalAsc"
       | "alphabeticalDesc",
   ) => void;
-  libraryFilter:
-    | "artists"
-    | "albums"
-    | "playlists"
-    | "podcasts"
-    | "radioStations"
-    | "folders"
-    | null;
-  setLibraryFilter: (
-    libraryFilter:
-      | "artists"
-      | "albums"
-      | "playlists"
-      | "podcasts"
-      | "radioStations"
-      | "folders"
-      | null,
-  ) => void;
+  libraryFilter: LibraryFilter[];
+  setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
   favoritesSort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -164,17 +156,8 @@ export const useAppBase = create<AppStore>()(
       ) => {
         set({ librarySort });
       },
-      libraryFilter: null,
-      setLibraryFilter: (
-        libraryFilter:
-          | "artists"
-          | "albums"
-          | "playlists"
-          | "podcasts"
-          | "radioStations"
-          | "folders"
-          | null,
-      ) => {
+      libraryFilter: [],
+      setLibraryFilter: (libraryFilter: LibraryFilter[]) => {
         set({ libraryFilter });
       },
       favoritesSort: "addedAtAsc",
@@ -262,7 +245,22 @@ export const useAppBase = create<AppStore>()(
     }),
     {
       name: "app",
+      version: 1,
       storage: createJSONStorage(() => zustandStorage),
+      // v0 persisted libraryFilter as a single string (or null); it is now a
+      // multi-select array. Wrap an existing selection into a one-element array.
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<AppStore> & {
+          libraryFilter?: LibraryFilter | LibraryFilter[] | null;
+        };
+        if (version < 1) {
+          state.libraryFilter =
+            typeof state.libraryFilter === "string"
+              ? [state.libraryFilter]
+              : [];
+        }
+        return state as AppStore;
+      },
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(

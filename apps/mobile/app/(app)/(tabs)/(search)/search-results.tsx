@@ -32,8 +32,8 @@ export default function SearchResultsScreen() {
   const { t } = useTranslation();
   const { query } = useLocalSearchParams<{ query: string }>();
   const [filter, setFilter] = useState<
-    "artists" | "albums" | "playlists" | "songs" | null
-  >(null);
+    Array<"artists" | "albums" | "playlists" | "songs">
+  >([]);
   const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
   const musicFolderId = useCurrentMusicFolderId();
@@ -58,14 +58,18 @@ export default function SearchResultsScreen() {
       return [];
     }
 
+    const noFilter = filter.length === 0;
     const searchData = [];
-    if ((!filter || filter === "albums") && data?.searchResult3?.album) {
+    if ((noFilter || filter.includes("albums")) && data?.searchResult3?.album) {
       searchData.push(...data.searchResult3.album);
     }
-    if ((!filter || filter === "artists") && data?.searchResult3?.artist) {
+    if (
+      (noFilter || filter.includes("artists")) &&
+      data?.searchResult3?.artist
+    ) {
       searchData.push(...data.searchResult3.artist);
     }
-    if ((!filter || filter === "songs") && data?.searchResult3?.song) {
+    if ((noFilter || filter.includes("songs")) && data?.searchResult3?.song) {
       searchData.push(...data.searchResult3.song);
     }
     return searchData;
@@ -78,7 +82,11 @@ export default function SearchResultsScreen() {
   const handleFilterPress = (
     type: "artists" | "albums" | "playlists" | "songs",
   ) => {
-    setFilter(type === filter ? null : type);
+    setFilter(
+      filter.includes(type)
+        ? filter.filter((f) => f !== type)
+        : [...filter, type],
+    );
   };
 
   return (
@@ -124,7 +132,7 @@ export default function SearchResultsScreen() {
         <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
           <Badge
             className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500 text-primary-800": filter === "albums",
+              "bg-emerald-500 text-primary-800": filter.includes("albums"),
             })}
           >
             <BadgeText className="normal-case text-md text-white">
@@ -135,7 +143,7 @@ export default function SearchResultsScreen() {
         <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
           <Badge
             className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500 text-primary-800": filter === "artists",
+              "bg-emerald-500 text-primary-800": filter.includes("artists"),
             })}
           >
             <BadgeText className="normal-case text-md text-white">
@@ -146,7 +154,7 @@ export default function SearchResultsScreen() {
         <FadeOutScaleDown onPress={() => handleFilterPress("songs")}>
           <Badge
             className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-              "bg-emerald-500 text-primary-800": filter === "songs",
+              "bg-emerald-500 text-primary-800": filter.includes("songs"),
             })}
           >
             <BadgeText className="normal-case text-md text-white">
