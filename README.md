@@ -22,10 +22,10 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 For now you can only install the app from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
 
+Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architetures (x86, x86_64) are not provided.
+
 You can also apply for the closed testing beta on the Google Play Store in order for the app to be published.
 To do that I need your email address, so I can send you the link to the beta testing page.
-
-I'm also currently working on a [F-Droid](https://f-droid.org/) package.
 
 
 ### Use Android Auto with a APK install
