@@ -16,7 +16,8 @@
     },
     "preview": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
       },
       "distribution": "internal",
       "environment": "preview",
@@ -39,10 +40,18 @@
       "extends": "production",
       "autoIncrement": false,
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
       },
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
+    },
+    "production-apk-armv7": {
+      "extends": "production-apk",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=armeabi-v7a"
       }
     }
   },
