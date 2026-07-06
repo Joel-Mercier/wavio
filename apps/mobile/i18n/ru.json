@@ -128,14 +128,14 @@
         "rateModalTitle": "Rate artist",
         "likedSongs": "Любимые треки",
         "likedAlbums": "Любимые альбомы",
-        "albumCount_one": "{{count}} релиз",
-        "albumCount_few": "{{count}} релиза",
-        "albumCount_many": "{{count}} релизов",
-        "albumCount_other": "{{count}} релизов",
         "favoriteSuccessMessage": "Исполнитель добавлен в медиатеку",
         "favoriteErrorMessage": "Не удалось добавить исполнителя в медиатеку",
         "unfavoriteSuccessMessage": "Исполнитель удален из медиатеки",
-        "unfavoriteErrorMessage": "Не удалось удалить исполнителя из медиатеки"
+        "unfavoriteErrorMessage": "Не удалось удалить исполнителя из медиатеки",
+        "albumCount_one": "{{count}} релиз",
+        "albumCount_few": "{{count}} релиза",
+        "albumCount_many": "{{count}} релизов",
+        "albumCount_other": "{{count}} релизов"
       },
       "favorites": {
         "title": "Любимые треки",
@@ -154,24 +154,30 @@
         "deletePlaylistConfirmDescription": "Точно хочешь удалить плейлист? Он будет удален навсегда, это действие нельзя отменить.",
         "deletePlaylistSuccessMessage": "Плейлист удален",
         "deletePlaylistErrorMessage": "Не удалось удалить плейлист",
-        "shareSuccessMessage": "Трек успешно добавлен в общий доступ",
-        "shareErrorMessage": "Произошла ошибка при добавлении трека в общий доступ",
+        "sharePlaylistSuccessMessage": "Playlist successfully shared",
+        "sharePlaylistErrorMessage": "An error occurred while sharing the playlist",
         "removeTrackSuccessMessage": "Трек удален из плейлиста",
         "removeTrackErrorMessage": "Не удалось удалить трек из плейлиста",
         "addToPlaylistTitle": "Добавить в плейлист",
         "newPlaylist": "Новый плейлист",
         "finished": "Готово",
-        "addTrackSuccessMessage_one": "Добавлено в плейлист",
-        "addTrackSuccessMessage_other": "Добавлены в плейлист",
-        "addTrackErrorMessage_one": "Не удалось добавить трек",
-        "addTrackErrorMessage_other": "Не удалось добавить треки",
         "duplicateTitle": "Уже есть в плейлисте",
         "addAnyway": "Всё равно добавить",
-        "duplicateDescription_one": "Трек уже есть в плейлисте {{playlists}}. Всё равно добавить?",
-        "duplicateDescription_other": "Некоторые треки уже есть в плейлисте {{playlists}}. Всё равно добавить?",
         "empty": "Здесь пока пусто",
         "emptyAction": "Найти треки",
-        "searchPlaceholder": "Поиск по плейлисту"
+        "searchPlaceholder": "Поиск по плейлисту",
+        "addTrackSuccessMessage_one": "Добавлено в плейлист",
+        "addTrackSuccessMessage_few": "Songs successfully added to playlist",
+        "addTrackSuccessMessage_many": "Songs successfully added to playlist",
+        "addTrackSuccessMessage_other": "Добавлены в плейлист",
+        "addTrackErrorMessage_one": "Не удалось добавить трек",
+        "addTrackErrorMessage_few": "An error occurred while adding the songs to the playlist",
+        "addTrackErrorMessage_many": "An error occurred while adding the songs to the playlist",
+        "addTrackErrorMessage_other": "Не удалось добавить треки",
+        "duplicateDescription_one": "Трек уже есть в плейлисте {{playlists}}. Всё равно добавить?",
+        "duplicateDescription_few": "Some of these songs are already in {{playlists}}. Add them anyway?",
+        "duplicateDescription_many": "Some of these songs are already in {{playlists}}. Add them anyway?",
+        "duplicateDescription_other": "Некоторые треки уже есть в плейлисте {{playlists}}. Всё равно добавить?"
       },
       "podcasts": {
         "goToPodcastSeries": "Перейти к подкасту",
@@ -247,8 +253,6 @@
           "durationMaxPlaceholder": "Макс.",
           "hasTranscriptLabel": "Только с транскрипцией",
           "safeModeLabel": "Безопасный режим",
-          "selectedCount_one": "{{count}} выбран",
-          "selectedCount_other": "{{count}} выбрано",
           "sortOrders": {
             "EXACTNESS": "Релевантность",
             "POPULARITY": "Популярность"
@@ -261,7 +265,11 @@
           "contentTypes": {
             "AUDIO": "Аудио",
             "VIDEO": "Видео"
-          }
+          },
+          "selectedCount_one": "{{count}} выбран",
+          "selectedCount_few": "{{count}} selected",
+          "selectedCount_many": "{{count}} selected",
+          "selectedCount_other": "{{count}} выбрано"
         },
         "genres": {
           "PODCASTSERIES_ARTS": "Искусство",
@@ -813,12 +821,12 @@
       "offlineDownloads": {
         "title": "Оффлайн загрузки",
         "empty": "Еще не было загружено оффлайн треков.",
+        "totalSize": "Всего: {{size}}",
+        "clearAll": "Очистить всё",
         "totalTracks_one": "{{count}} трек",
         "totalTracks_few": "{{count}} трека",
         "totalTracks_many": "{{count}} треков",
-        "totalTracks_other": "{{count}} треков",
-        "totalSize": "Всего: {{size}}",
-        "clearAll": "Очистить всё"
+        "totalTracks_other": "{{count}} треков"
       },
       "queue": {
         "title": "Очередь",
@@ -849,9 +857,6 @@
         "removeFromPlaylist": "Убрать из плейлиста",
         "playNext": "Включить следующим",
         "addToQueue": "Добавить в очередь",
-        "goToArtist": "Перейти к исполнителю",
-        "goToArtist_one": "Перейти к исполнителю",
-        "goToArtist_other": "Перейти к исполнителям",
         "goToAlbum": "Перейти к альбому",
         "rate": "Оценить",
         "share": "Поделиться",
@@ -910,7 +915,11 @@
           "unknownDuration": "Неизвестно",
           "neverPlayed": "Никогда",
           "lastPlayedDistance": "{{distance}} назад"
-        }
+        },
+        "goToArtist_few": "Go to artists",
+        "goToArtist_many": "Go to artists",
+        "goToArtist_one": "Перейти к исполнителю",
+        "goToArtist_other": "Перейти к исполнителям"
       },
       "player": {
         "title": "Играет сейчас",
@@ -957,9 +966,6 @@
       },
       "shares": {
         "title": "Общий доступ",
-        "visitCount_one": "{{count}} посещение",
-        "visitCount_few": "{{count}} посещения",
-        "visitCount_other": "{{count}} посещений",
         "editShare": "Редактировать ссылку",
         "deleteShare": "Удалить ссылку",
         "editShareSuccessMessage": "Ссылка успешно обновлена",
@@ -977,7 +983,11 @@
         "mediaType_album": "Альбом",
         "mediaType_podcast": "Подкаст",
         "mediaType_audiobook": "Аудиокнига",
-        "mediaType_video": "Видео"
+        "mediaType_video": "Видео",
+        "visitCount_one": "{{count}} посещение",
+        "visitCount_few": "{{count}} посещения",
+        "visitCount_many": "{{count}} visits",
+        "visitCount_other": "{{count}} посещений"
       },
       "libraries": {
         "title": "Библиотеки",
@@ -1022,12 +1032,15 @@
         "duration": {
           "day_one": "{{count}} день",
           "day_few": "{{count}} дня",
+          "day_many": "{{count}} days",
           "day_other": "{{count}} дней",
           "hour_one": "{{count}} час",
           "hour_few": "{{count}} часа",
+          "hour_many": "{{count}} hours",
           "hour_other": "{{count}} часов",
           "minute_one": "{{count}} минута",
           "minute_few": "{{count}} минуты",
+          "minute_many": "{{count}} minutes",
           "minute_other": "{{count}} минут"
         },
         "errorBoundary": {
@@ -1053,6 +1066,48 @@
         "noData": "Пусто",
         "toastSuccessTitle": "Успешно",
         "toastErrorTitle": "Ошибка",
+        "rateSuccessMessage": "Оценка сохранена",
+        "rateErrorMessage": "Не удалось поставить оценку",
+        "shareUrlCopiedMessage": "Ссылка скопирована",
+        "shareUrlErrorMessage": "Не удалось скопировать ссылку",
+        "tabs": {
+          "home": "Главная",
+          "search": "Поиск",
+          "library": "Моя медиатека",
+          "create": "Создать"
+        },
+        "sidebar": {
+          "activity": "Активность",
+          "queue": "Очередь",
+          "settings": "Настройки",
+          "shares": "Общий доступ",
+          "servers": "Серверы",
+          "libraries": "Библиотеки",
+          "logout": "Выйти",
+          "switchUser": "Сменить пользователя",
+          "currentServer": "Текущий сервер",
+          "version": "Версия {{version}}",
+          "seeProfile": "Профиль",
+          "privacyPolicy": "Политика конфиденциальности",
+          "bugReport": "Сообщить об ошибке",
+          "changelog": "История изменений"
+        },
+        "languages": {
+          "zh-CN": "简体中文",
+          "en": "English",
+          "fr": "Français"
+        },
+        "fileSizes": [
+          "байт",
+          "КБ",
+          "МБ",
+          "ГБ",
+          "ТБ",
+          "ПБ",
+          "ЭБ",
+          "ЗБ",
+          "ЙБ"
+        ],
         "album_one": "Альбом",
         "album_few": "Альбома",
         "album_many": "Альбомов",
@@ -1096,40 +1151,7 @@
         "addedToPlayNextMessage_one": "Добавлен 1 трек для воспроизведения следующим",
         "addedToPlayNextMessage_few": "Добавлено {{count}} трека для воспроизведения следующими",
         "addedToPlayNextMessage_many": "Добавлено {{count}} треков для воспроизведения следующими",
-        "addedToPlayNextMessage_other": "Добавлено {{count}} треков для воспроизведения следующими",
-        "rateSuccessMessage": "Оценка сохранена",
-        "rateErrorMessage": "Не удалось поставить оценку",
-        "shareUrlCopiedMessage": "Ссылка скопирована",
-        "shareUrlErrorMessage": "Не удалось скопировать ссылку",
-        "tabs": {
-          "home": "Главная",
-          "search": "Поиск",
-          "library": "Моя медиатека",
-          "create": "Создать"
-        },
-        "sidebar": {
-          "activity": "Активность",
-          "queue": "Очередь",
-          "settings": "Настройки",
-          "shares": "Общий доступ",
-          "servers": "Серверы",
-          "libraries": "Библиотеки",
-          "logout": "Выйти",
-          "switchUser": "Сменить пользователя",
-          "currentServer": "Текущий сервер",
-          "version": "Версия {{version}}",
-          "seeProfile": "Профиль",
-          "privacyPolicy": "Политика конфиденциальности",
-          "bugReport": "Сообщить об ошибке",
-          "changelog": "История изменений"
-        },
-        "languages": {
-          "zh-CN": "简体中文",
-          "en": "English",
-          "fr": "Français",
-          "ru": "Русский"
-        },
-        "fileSizes": ["байт", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
+        "addedToPlayNextMessage_other": "Добавлено {{count}} треков для воспроизведения следующими"
       },
       "localLibrary": {
         "unsupported": "Локальная медиатека не поддерживает это действие"

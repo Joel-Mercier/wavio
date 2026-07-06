@@ -126,12 +126,12 @@
         "rateModalTitle": "Noter l'artiste",
         "likedSongs": "Titres likés",
         "likedAlbums": "Albums likés",
-        "albumCount_one": "{{count}} album",
-        "albumCount_other": "{{count}} albums",
         "favoriteSuccessMessage": "Artiste ajouté aux favoris",
         "favoriteErrorMessage": "Une erreur s'est produite lors de l'ajout de l'artiste aux favoris",
         "unfavoriteSuccessMessage": "Artiste supprimé des favoris",
-        "unfavoriteErrorMessage": "Une erreur s'est produite lors de la suppression de l'artiste des favoris"
+        "unfavoriteErrorMessage": "Une erreur s'est produite lors de la suppression de l'artiste des favoris",
+        "albumCount_one": "{{count}} album",
+        "albumCount_other": "{{count}} albums"
       },
       "favorites": {
         "title": "Favoris",
@@ -157,17 +157,17 @@
         "addToPlaylistTitle": "Ajouter à la playlist",
         "newPlaylist": "Nouvelle playlist",
         "finished": "Terminé",
+        "duplicateTitle": "Déjà dans la playlist",
+        "addAnyway": "Ajouter quand même",
+        "empty": "Cette playlist est vide",
+        "emptyAction": "Rechercher des titres à ajouter à cette playlist",
+        "searchPlaceholder": "Rechercher dans la playlist",
         "addTrackSuccessMessage_one": "Titre ajouté à la playlist",
         "addTrackSuccessMessage_other": "Titres ajoutés à la playlist",
         "addTrackErrorMessage_one": "Une erreur s'est produite lors de l'ajout du titre à la playlist",
         "addTrackErrorMessage_other": "Une erreur s'est produite lors de l'ajout des titres à la playlist",
-        "duplicateTitle": "Déjà dans la playlist",
-        "addAnyway": "Ajouter quand même",
         "duplicateDescription_one": "Ce titre est déjà dans {{playlists}}. L'ajouter quand même ?",
-        "duplicateDescription_other": "Certains de ces titres sont déjà dans {{playlists}}. Les ajouter quand même ?",
-        "empty": "Cette playlist est vide",
-        "emptyAction": "Rechercher des titres à ajouter à cette playlist",
-        "searchPlaceholder": "Rechercher dans la playlist"
+        "duplicateDescription_other": "Certains de ces titres sont déjà dans {{playlists}}. Les ajouter quand même ?"
       },
       "podcasts": {
         "goToPodcastSeries": "Voir le podcast",
@@ -243,8 +243,6 @@
           "durationMaxPlaceholder": "Max",
           "hasTranscriptLabel": "Avec transcription uniquement",
           "safeModeLabel": "Mode sans risque",
-          "selectedCount_one": "{{count}} sélectionné",
-          "selectedCount_other": "{{count}} sélectionnés",
           "sortOrders": {
             "EXACTNESS": "Exactitude",
             "POPULARITY": "Popularité"
@@ -257,7 +255,9 @@
           "contentTypes": {
             "AUDIO": "Audio",
             "VIDEO": "Vidéo"
-          }
+          },
+          "selectedCount_one": "{{count}} sélectionné",
+          "selectedCount_other": "{{count}} sélectionnés"
         },
         "genres": {
           "PODCASTSERIES_ARTS": "Arts",
@@ -809,10 +809,10 @@
       "offlineDownloads": {
         "title": "Téléchargements hors ligne",
         "empty": "Aucun titre téléchargé pour le moment.",
-        "totalTracks_one": "{{count}} titre",
-        "totalTracks_other": "{{count}} titres",
         "totalSize": "Taille totale : {{size}}",
-        "clearAll": "Tout effacer"
+        "clearAll": "Tout effacer",
+        "totalTracks_one": "{{count}} titre",
+        "totalTracks_other": "{{count}} titres"
       },
       "queue": {
         "title": "File d'attente",
@@ -843,9 +843,6 @@
         "removeFromPlaylist": "Retirer de la playlist",
         "playNext": "Ajouter à la file d'attente",
         "addToQueue": "Ajouter à la fin de la file d'attente",
-        "goToArtist": "Aller à l'artiste",
-        "goToArtist_one": "Aller à l'artiste",
-        "goToArtist_other": "Aller aux artistes",
         "goToAlbum": "Aller à l'album",
         "rate": "Noter",
         "share": "Partager",
@@ -904,7 +901,9 @@
           "unknownDuration": "Inconnue",
           "neverPlayed": "Jamais",
           "lastPlayedDistance": "Il y a {{distance}}"
-        }
+        },
+        "goToArtist_one": "Aller à l'artiste",
+        "goToArtist_other": "Aller aux artistes"
       },
       "player": {
         "title": "En cours de lecture",
@@ -951,8 +950,6 @@
       },
       "shares": {
         "title": "Partages",
-        "visitCount_one": "{{count}} visite",
-        "visitCount_other": "{{count}} visites",
         "editShare": "Modifier le partage",
         "deleteShare": "Supprimer le partage",
         "editShareSuccessMessage": "Partage mis à jour",
@@ -970,7 +967,9 @@
         "mediaType_album": "Album",
         "mediaType_podcast": "Podcast",
         "mediaType_audiobook": "Livre audio",
-        "mediaType_video": "Vidéo"
+        "mediaType_video": "Vidéo",
+        "visitCount_one": "{{count}} visite",
+        "visitCount_other": "{{count}} visites"
       },
       "libraries": {
         "title": "Bibliothèques",
@@ -1036,35 +1035,13 @@
           "removeErrorMessage": "Une erreur s'est produite lors de la suppression des téléchargements hors ligne"
         },
         "favorites": "Favoris",
-        "album_one": "Album",
-        "album_other": "Albums",
-        "artist_one": "Artiste",
-        "artist_other": "Artistes",
-        "playlist_one": "Playlist",
-        "playlist_other": "Playlists",
-        "podcast_one": "Podcast",
-        "podcast_other": "Podcasts",
-        "radioStation_one": "Station de radio",
-        "radioStation_other": "Stations de radio",
-        "folder_one": "Dossier",
-        "folder_other": "Dossiers",
-        "song_one": "Titre",
-        "song_other": "Titres",
         "save": "Enregistrer",
         "seeMore": "Voir plus",
         "seeLess": "Voir moins",
         "seeAll": "Voir tout",
         "noData": "Vide",
-        "albumCount_one": "{{count}} album",
-        "albumCount_other": "{{count}} albums",
-        "songCount_one": "{{count}} titre",
-        "songCount_other": "{{count}} titres",
         "toastSuccessTitle": "Succès",
         "toastErrorTitle": "Erreur",
-        "addedToQueueMessage_one": "1 titre ajouté à la fin de la file d'attente",
-        "addedToQueueMessage_other": "{{count}} titres ajoutés à la fin de la file d'attente",
-        "addedToPlayNextMessage_one": "1 titre ajouté à la file d'attente",
-        "addedToPlayNextMessage_other": "{{count}} titres ajoutés à la file d'attente",
         "rateSuccessMessage": "Notation réussie",
         "rateErrorMessage": "Une erreur s'est produite lors de la notation",
         "shareUrlCopiedMessage": "URL de partage copiée dans le presse-papier",
@@ -1096,7 +1073,39 @@
           "en": "English",
           "fr": "Français"
         },
-        "fileSizes": ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"]
+        "fileSizes": [
+          "octets",
+          "Ko",
+          "Mo",
+          "Go",
+          "To",
+          "Po",
+          "Eo",
+          "Zo",
+          "Yo"
+        ],
+        "album_one": "Album",
+        "album_other": "Albums",
+        "artist_one": "Artiste",
+        "artist_other": "Artistes",
+        "playlist_one": "Playlist",
+        "playlist_other": "Playlists",
+        "podcast_one": "Podcast",
+        "podcast_other": "Podcasts",
+        "radioStation_one": "Station de radio",
+        "radioStation_other": "Stations de radio",
+        "folder_one": "Dossier",
+        "folder_other": "Dossiers",
+        "song_one": "Titre",
+        "song_other": "Titres",
+        "albumCount_one": "{{count}} album",
+        "albumCount_other": "{{count}} albums",
+        "songCount_one": "{{count}} titre",
+        "songCount_other": "{{count}} titres",
+        "addedToQueueMessage_one": "1 titre ajouté à la fin de la file d'attente",
+        "addedToQueueMessage_other": "{{count}} titres ajoutés à la fin de la file d'attente",
+        "addedToPlayNextMessage_one": "1 titre ajouté à la file d'attente",
+        "addedToPlayNextMessage_other": "{{count}} titres ajoutés à la file d'attente"
       },
       "localLibrary": {
         "unsupported": "La bibliothèque locale ne prend pas en charge cette opération"
