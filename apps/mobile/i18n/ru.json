@@ -125,7 +125,7 @@
         "rate": "Оценить",
         "musicBrainz": "Открыть в MusicBrainz",
         "lastFM": "Открыть в Last.fm",
-        "rateModalTitle": "Rate artist",
+        "rateModalTitle": "Оценить исполнителя",
         "likedSongs": "Любимые треки",
         "likedAlbums": "Любимые альбомы",
         "favoriteSuccessMessage": "Исполнитель добавлен в медиатеку",
@@ -154,8 +154,8 @@
         "deletePlaylistConfirmDescription": "Точно хочешь удалить плейлист? Он будет удален навсегда, это действие нельзя отменить.",
         "deletePlaylistSuccessMessage": "Плейлист удален",
         "deletePlaylistErrorMessage": "Не удалось удалить плейлист",
-        "sharePlaylistSuccessMessage": "Playlist successfully shared",
-        "sharePlaylistErrorMessage": "An error occurred while sharing the playlist",
+        "sharePlaylistSuccessMessage": "Плейлист отправлен",
+        "sharePlaylistErrorMessage": "Что-то пошло не так при отправке плейлиста",
         "removeTrackSuccessMessage": "Трек удален из плейлиста",
         "removeTrackErrorMessage": "Не удалось удалить трек из плейлиста",
         "addToPlaylistTitle": "Добавить в плейлист",
@@ -167,16 +167,16 @@
         "emptyAction": "Найти треки",
         "searchPlaceholder": "Поиск по плейлисту",
         "addTrackSuccessMessage_one": "Добавлено в плейлист",
-        "addTrackSuccessMessage_few": "Songs successfully added to playlist",
-        "addTrackSuccessMessage_many": "Songs successfully added to playlist",
+        "addTrackSuccessMessage_few": "Треки добавлены в плейлист",
+        "addTrackSuccessMessage_many": "Треки добавлены в плейлист",
         "addTrackSuccessMessage_other": "Добавлены в плейлист",
         "addTrackErrorMessage_one": "Не удалось добавить трек",
-        "addTrackErrorMessage_few": "An error occurred while adding the songs to the playlist",
-        "addTrackErrorMessage_many": "An error occurred while adding the songs to the playlist",
+        "addTrackErrorMessage_few": "Не удалось добавить треки в плейлист",
+        "addTrackErrorMessage_many": "Не удалось добавить треки в плейлист",
         "addTrackErrorMessage_other": "Не удалось добавить треки",
         "duplicateDescription_one": "Трек уже есть в плейлисте {{playlists}}. Всё равно добавить?",
-        "duplicateDescription_few": "Some of these songs are already in {{playlists}}. Add them anyway?",
-        "duplicateDescription_many": "Some of these songs are already in {{playlists}}. Add them anyway?",
+        "duplicateDescription_few": "Некоторые из этих треков уже есть в плейлисте {{playlists}}. Всё равно добавить?",
+        "duplicateDescription_many": "Некоторые из этих треков уже есть в плейлисте {{playlists}}. Всё равно добавить?",
         "duplicateDescription_other": "Некоторые треки уже есть в плейлисте {{playlists}}. Всё равно добавить?"
       },
       "podcasts": {
@@ -267,8 +267,8 @@
             "VIDEO": "Видео"
           },
           "selectedCount_one": "{{count}} выбран",
-          "selectedCount_few": "{{count}} selected",
-          "selectedCount_many": "{{count}} selected",
+          "selectedCount_few": "{{count}} выбрано",
+          "selectedCount_many": "{{count}} выбрано",
           "selectedCount_other": "{{count}} выбрано"
         },
         "genres": {
@@ -917,8 +917,8 @@
           "neverPlayed": "Никогда",
           "lastPlayedDistance": "{{distance}} назад"
         },
-        "goToArtist_few": "Go to artists",
-        "goToArtist_many": "Go to artists",
+        "goToArtist_few": "Перейти к исполнителям",
+        "goToArtist_many": "Перейти к исполнителям",
         "goToArtist_one": "Перейти к исполнителю",
         "goToArtist_other": "Перейти к исполнителям"
       },
@@ -987,7 +987,7 @@
         "mediaType_video": "Видео",
         "visitCount_one": "{{count}} посещение",
         "visitCount_few": "{{count}} посещения",
-        "visitCount_many": "{{count}} visits",
+        "visitCount_many": "{{count}} посещений",
         "visitCount_other": "{{count}} посещений"
       },
       "libraries": {
@@ -1033,15 +1033,15 @@
         "duration": {
           "day_one": "{{count}} день",
           "day_few": "{{count}} дня",
-          "day_many": "{{count}} days",
+          "day_many": "{{count}} дней",
           "day_other": "{{count}} дней",
           "hour_one": "{{count}} час",
           "hour_few": "{{count}} часа",
-          "hour_many": "{{count}} hours",
+          "hour_many": "{{count}} часов",
           "hour_other": "{{count}} часов",
           "minute_one": "{{count}} минута",
           "minute_few": "{{count}} минуты",
-          "minute_many": "{{count}} minutes",
+          "minute_many": "{{count}} минут",
           "minute_other": "{{count}} минут"
         },
         "errorBoundary": {
@@ -1099,7 +1099,17 @@
           "fr": "Français",
           "ru": "Русский"
         },
-        "fileSizes": ["байт", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"],
+        "fileSizes": [
+          "байт",
+          "КБ",
+          "МБ",
+          "ГБ",
+          "ТБ",
+          "ПБ",
+          "ЭБ",
+          "ЗБ",
+          "ЙБ"
+        ],
         "album_one": "Альбом",
         "album_few": "Альбома",
         "album_many": "Альбомов",
