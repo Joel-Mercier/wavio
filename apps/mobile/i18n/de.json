@@ -575,6 +575,7 @@
 					"scanMusicLibraryAction": "Scannen",
 					"scanMusicLibrarySuccessDescription": "Der Scan wurde erfolgreich gestartet",
 					"scanMusicLibraryErrorDescription": "Beim Starten eines Scans ist ein Fehler aufgetreten",
+					"scanMusicLibraryAdminRequiredDescription": "Starting a scan requires administrator rights on your server",
 					"scanStatusLabel": "Scan-Status",
 					"scanStatusDescription": "Zeigt den Scan-Status Ihrer Musikbibliothek an",
 					"scanStatusLastScan": "Letzter Scan: {{lastScan}} zurück",
