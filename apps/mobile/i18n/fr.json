@@ -12,7 +12,7 @@
         "recentlyPlayed": "Joués récemment",
         "recentlyAdded": "Ajoutés récemment",
         "mostPlayed": "Les plus joués",
-        "mostPlayedTracks": "Titres les plus écoutés",
+        "mostPlayedTracks": "Most played tracks",
         "topRated": "Les mieux notés",
         "random": "Au hasard",
         "randomSongs": "Morceaux aléatoires",
@@ -56,8 +56,8 @@
         "alphabeticalSort": "Alphabétique",
         "artistSort": "Artiste",
         "albumSort": "Album",
-        "allAlbums": "Tous les albums",
-        "allArtists": "Tous les artistes",
+        "allAlbums": "All albums",
+        "allArtists": "All artists",
         "search": {
           "inputPlaceholder": "Rechercher"
         }
@@ -549,8 +549,8 @@
           "manageDownloadsAction": "Gérer",
           "downloadsWifiOnlyLabel": "Télécharger en Wi-Fi uniquement",
           "downloadsWifiOnlyDescription": "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
-          "autoSignOutLabel": "Déconnexion si le serveur est injoignable",
-          "autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés."
+          "autoSignOutLabel": "Sign out when server unreachable",
+          "autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks."
         },
         "storageSettings": {
           "title": "Stockage",
@@ -591,18 +591,18 @@
           "createTabDescription": "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
           "showEmptyHomeSectionsLabel": "Afficher les sections vides",
           "showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
-          "lyricsSourceLabel": "Paroles",
-          "lyricsSourceDescription": "Choisissez la provenance des paroles synchronisées, ou désactivez-les.",
+          "lyricsSourceLabel": "Lyrics",
+          "lyricsSourceDescription": "Choose where synced lyrics come from, or turn them off.",
           "lyricsSourceOptions": {
-            "off": "Désactivées",
-            "server": "Serveur uniquement",
-            "all": "Serveur + lrclib.net"
+            "off": "Off",
+            "server": "Server only",
+            "all": "Server + lrclib.net"
           }
         },
         "internetRadioStationsSettings": {
           "title": "Stations de radio",
-          "enabledLabel": "Annuaire Radio Browser",
-          "enabledDescription": "Parcourez et recherchez des millions de stations de l'annuaire Radio Browser. Désactivez pour n'utiliser que les stations de votre serveur.",
+          "enabledLabel": "Radio Browser directory",
+          "enabledDescription": "Browse and search millions of stations from the Radio Browser directory. Turn off to only use your server's stations.",
           "countryLabel": "Pays",
           "countryDescription": "Choisissez le pays de la rangée « Par pays ». Par défaut, la région de votre appareil.",
           "countryAutomatic": "Automatique",
@@ -1096,7 +1096,17 @@
           "en": "English",
           "fr": "Français"
         },
-        "fileSizes": ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"]
+        "fileSizes": [
+          "octets",
+          "Ko",
+          "Mo",
+          "Go",
+          "To",
+          "Po",
+          "Eo",
+          "Zo",
+          "Yo"
+        ]
       },
       "localLibrary": {
         "unsupported": "La bibliothèque locale ne prend pas en charge cette opération"
