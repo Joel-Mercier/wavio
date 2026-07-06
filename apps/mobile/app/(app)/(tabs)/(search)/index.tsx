@@ -77,7 +77,7 @@ export default function SearchScreen() {
       </FadeOutScaleDown>
       <FlashList
         key={`genres-${numColumns}`}
-        data={data?.genres.genre || loadingData(16)}
+        data={isLoading ? loadingData(16) : (data?.genres.genre ?? [])}
         renderItem={({ item, index }: { item: Genre; index: number }) => (
           <Box
             className={cn(
