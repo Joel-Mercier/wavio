@@ -85,7 +85,6 @@
         "albums": "专辑",
         "podcasts": "播客",
         "favorites": "收藏",
-        "songCount_one": "{{count}} 首歌曲",
         "songCount_other": "{{count}} 首歌曲"
       },
       "albums": {
@@ -126,12 +125,11 @@
         "rateModalTitle": "艺人评分",
         "likedSongs": "喜欢的歌曲",
         "likedAlbums": "喜欢的专辑",
-        "albumCount_one": "{{count}} 张专辑",
-        "albumCount_other": "{{count}} 张专辑",
         "favoriteSuccessMessage": "艺人已收藏",
         "favoriteErrorMessage": "收藏艺人时发生错误",
         "unfavoriteSuccessMessage": "艺人已取消收藏",
-        "unfavoriteErrorMessage": "取消收藏艺人时发生错误"
+        "unfavoriteErrorMessage": "取消收藏艺人时发生错误",
+        "albumCount_other": "{{count}} 张专辑"
       },
       "favorites": {
         "title": "收藏",
@@ -157,17 +155,14 @@
         "addToPlaylistTitle": "加入歌单",
         "newPlaylist": "新建歌单",
         "finished": "完成",
-        "addTrackSuccessMessage_one": "已加入歌单",
-        "addTrackSuccessMessage_other": "已全部加入歌单",
-        "addTrackErrorMessage_one": "加入歌单时发生错误",
-        "addTrackErrorMessage_other": "全部加入歌单时发生错误",
         "duplicateTitle": "已在歌单中",
         "addAnyway": "仍要加入",
-        "duplicateDescription_one": "{{playlists}} 中已包含该歌曲，仍要加入吗？",
-        "duplicateDescription_other": "{{playlists}} 中已包含其中部分歌曲，仍要加入吗？",
         "empty": "歌单是空的",
         "emptyAction": "寻找歌曲加入该歌单",
-        "searchPlaceholder": "在歌单中搜索"
+        "searchPlaceholder": "在歌单中搜索",
+        "addTrackSuccessMessage_other": "已全部加入歌单",
+        "addTrackErrorMessage_other": "全部加入歌单时发生错误",
+        "duplicateDescription_other": "{{playlists}} 中已包含其中部分歌曲，仍要加入吗？"
       },
       "podcasts": {
         "goToPodcastSeries": "前往播客",
@@ -243,8 +238,6 @@
           "durationMaxPlaceholder": "最大",
           "hasTranscriptLabel": "仅限有文字稿",
           "safeModeLabel": "安全模式",
-          "selectedCount_one": "已选 {{count}} 项",
-          "selectedCount_other": "已选 {{count}} 项",
           "sortOrders": {
             "EXACTNESS": "相关度",
             "POPULARITY": "热度"
@@ -257,7 +250,8 @@
           "contentTypes": {
             "AUDIO": "音频",
             "VIDEO": "视频"
-          }
+          },
+          "selectedCount_other": "已选 {{count}} 项"
         },
         "genres": {
           "PODCASTSERIES_ARTS": "艺术",
@@ -809,10 +803,9 @@
       "offlineDownloads": {
         "title": "离线下载",
         "empty": "暂无已下载的曲目",
-        "totalTracks_one": "{{count}} 首",
-        "totalTracks_other": "{{count}} 首",
         "totalSize": "总大小：{{size}}",
-        "clearAll": "清除全部"
+        "clearAll": "清除全部",
+        "totalTracks_other": "{{count}} 首"
       },
       "queue": {
         "title": "播放队列",
@@ -843,9 +836,6 @@
         "removeFromPlaylist": "从歌单中移除",
         "playNext": "下一首播放",
         "addToQueue": "加入播放队列",
-        "goToArtist": "前往艺人页",
-        "goToArtist_one": "前往艺人页",
-        "goToArtist_other": "前往艺人页",
         "goToAlbum": "前往专辑页",
         "rate": "评分",
         "share": "分享",
@@ -904,7 +894,8 @@
           "unknownDuration": "未知",
           "neverPlayed": "从未",
           "lastPlayedDistance": "{{distance}}前"
-        }
+        },
+        "goToArtist_other": "前往艺人页"
       },
       "player": {
         "title": "正在播放",
@@ -951,8 +942,6 @@
       },
       "shares": {
         "title": "分享",
-        "visitCount_one": "{{count}} 次访问",
-        "visitCount_other": "{{count}} 次访问",
         "editShare": "编辑分享",
         "deleteShare": "删除分享",
         "editShareSuccessMessage": "分享已更新",
@@ -970,7 +959,8 @@
         "mediaType_album": "专辑",
         "mediaType_podcast": "播客",
         "mediaType_audiobook": "有声读物",
-        "mediaType_video": "视频"
+        "mediaType_video": "视频",
+        "visitCount_other": "{{count}} 次访问"
       },
       "libraries": {
         "title": "音乐库",
@@ -1013,11 +1003,8 @@
         "unknownArtist": "未知艺人",
         "unknownEpisode": "未知单集",
         "duration": {
-          "day_one": "{{count}}天",
           "day_other": "{{count}}天",
-          "hour_one": "{{count}}小时",
           "hour_other": "{{count}}小时",
-          "minute_one": "{{count}}分钟",
           "minute_other": "{{count}}分钟"
         },
         "errorBoundary": {
@@ -1036,35 +1023,13 @@
           "removeErrorMessage": "移除离线下载时发生错误"
         },
         "favorites": "收藏",
-        "album_one": "专辑",
-        "album_other": "专辑",
-        "artist_one": "艺人",
-        "artist_other": "艺人",
-        "playlist_one": "歌单",
-        "playlist_other": "歌单",
-        "podcast_one": "播客",
-        "podcast_other": "播客",
-        "radioStation_one": "电台",
-        "radioStation_other": "电台",
-        "folder_one": "文件夹",
-        "folder_other": "文件夹",
-        "song_one": "歌曲",
-        "song_other": "歌曲",
         "save": "保存",
         "seeMore": "查看更多",
         "seeLess": "收起",
         "seeAll": "查看全部",
         "noData": "空",
-        "albumCount_one": "{{count}} 张专辑",
-        "albumCount_other": "{{count}} 张专辑",
-        "songCount_one": "{{count}} 首歌",
-        "songCount_other": "{{count}} 首歌",
         "toastSuccessTitle": "成功",
         "toastErrorTitle": "错误",
-        "addedToQueueMessage_one": "已添加 1 首歌曲到播放队列",
-        "addedToQueueMessage_other": "已添加 {{count}} 首歌曲到播放队列",
-        "addedToPlayNextMessage_one": "已添加 1 首歌曲到下一首播放",
-        "addedToPlayNextMessage_other": "已添加 {{count}} 首歌曲到下一首播放",
         "rateSuccessMessage": "已评分",
         "rateErrorMessage": "评分时发生错误",
         "shareUrlCopiedMessage": "分享链接已复制到剪贴板",
@@ -1096,7 +1061,28 @@
           "en": "English",
           "fr": "Français"
         },
-        "fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+        "fileSizes": [
+          "bytes",
+          "KB",
+          "MB",
+          "GB",
+          "TB",
+          "PB",
+          "EB",
+          "ZB",
+          "YB"
+        ],
+        "album_other": "专辑",
+        "artist_other": "艺人",
+        "playlist_other": "歌单",
+        "podcast_other": "播客",
+        "radioStation_other": "电台",
+        "folder_other": "文件夹",
+        "song_other": "歌曲",
+        "albumCount_other": "{{count}} 张专辑",
+        "songCount_other": "{{count}} 首歌",
+        "addedToQueueMessage_other": "已添加 {{count}} 首歌曲到播放队列",
+        "addedToPlayNextMessage_other": "已添加 {{count}} 首歌曲到下一首播放"
       },
       "localLibrary": {
         "unsupported": "本地音乐库不支持此操作"
