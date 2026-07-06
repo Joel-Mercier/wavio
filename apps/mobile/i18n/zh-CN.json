@@ -12,7 +12,7 @@
         "recentlyPlayed": "最近播放",
         "recentlyAdded": "最近添加",
         "mostPlayed": "最常播放",
-        "mostPlayedTracks": "最常播放的曲目",
+        "mostPlayedTracks": "Most played tracks",
         "topRated": "最受好评",
         "random": "随机",
         "randomSongs": "随机歌曲",
@@ -56,8 +56,8 @@
         "alphabeticalSort": "按字母排序",
         "artistSort": "艺人",
         "albumSort": "专辑",
-        "allAlbums": "全部专辑",
-        "allArtists": "全部艺人",
+        "allAlbums": "All albums",
+        "allArtists": "All artists",
         "search": {
           "inputPlaceholder": "在音乐库中搜索"
         }
@@ -110,8 +110,8 @@
         "addAllToFavorites": "全部收藏",
         "addAllToFavoritesSuccessMessage": "已全部收藏",
         "addAllToFavoritesErrorMessage": "全部收藏时发生错误",
-        "typeAlbum": "专辑",
-        "typeCompilation": "合辑"
+        "typeAlbum": "Album",
+        "typeCompilation": "Compilation"
       },
       "artists": {
         "label": "艺人",
@@ -549,8 +549,8 @@
           "manageDownloadsAction": "管理",
           "downloadsWifiOnlyLabel": "仅通过 Wi-Fi 下载",
           "downloadsWifiOnlyDescription": "使用移动网络时暂停下载，Wi-Fi 连接后恢复下载。",
-          "autoSignOutLabel": "服务器无法访问时退出登录",
-          "autoSignOutDescription": "当网络正常但无法访问服务器时自动退出登录。关闭后可保持登录状态并继续浏览已下载的曲目。"
+          "autoSignOutLabel": "Sign out when server unreachable",
+          "autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks."
         },
         "storageSettings": {
           "title": "存储空间",
@@ -591,18 +591,18 @@
           "createTabDescription": "在底部导航栏中显示“创建”标签页",
           "showEmptyHomeSectionsLabel": "显示空白板块",
           "showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏",
-          "lyricsSourceLabel": "歌词",
-          "lyricsSourceDescription": "选择同步歌词的来源，或将其关闭。",
+          "lyricsSourceLabel": "Lyrics",
+          "lyricsSourceDescription": "Choose where synced lyrics come from, or turn them off.",
           "lyricsSourceOptions": {
-            "off": "关闭",
-            "server": "仅服务器",
-            "all": "服务器 + lrclib.net"
+            "off": "Off",
+            "server": "Server only",
+            "all": "Server + lrclib.net"
           }
         },
         "internetRadioStationsSettings": {
           "title": "网络电台",
-          "enabledLabel": "Radio Browser 目录",
-          "enabledDescription": "从 Radio Browser 目录浏览和搜索数百万个电台。关闭后将仅使用你服务器上的电台。",
+          "enabledLabel": "Radio Browser directory",
+          "enabledDescription": "Browse and search millions of stations from the Radio Browser directory. Turn off to only use your server's stations.",
           "countryLabel": "国家/地区",
           "countryDescription": "选择“按国家/地区”分类的电台栏所对应的国家。默认使用设备所在地区。",
           "countryAutomatic": "自动",
@@ -720,7 +720,7 @@
           "clearAllSuccessMessage": "已删除所有受信任的证书"
         },
         "podcastSettings": {
-          "title": "播客设置",
+          "title": "Podcasts",
           "configurePodcastsLabel": "配置播客",
           "configurePodcastsDescription": "配置播客以便在应用中播放",
           "configurePodcastsAction": "配置",
@@ -908,7 +908,7 @@
       },
       "player": {
         "title": "正在播放",
-        "original": "原始",
+        "original": "Original",
         "playingFrom": {
           "album": "播放自专辑",
           "playlist": "播放自歌单",
@@ -1096,7 +1096,17 @@
           "en": "English",
           "fr": "Français"
         },
-        "fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+        "fileSizes": [
+          "bytes",
+          "KB",
+          "MB",
+          "GB",
+          "TB",
+          "PB",
+          "EB",
+          "ZB",
+          "YB"
+        ]
       },
       "localLibrary": {
         "unsupported": "本地音乐库不支持此操作"
