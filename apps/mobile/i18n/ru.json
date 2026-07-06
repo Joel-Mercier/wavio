@@ -12,7 +12,7 @@
         "recentlyPlayed": "Недавние",
         "recentlyAdded": "Новые",
         "mostPlayed": "Популярные",
-        "mostPlayedTracks": "На повторе",
+        "mostPlayedTracks": "Most played tracks",
         "topRated": "Лучшие",
         "random": "Вперемешку",
         "randomSongs": "Случайные треки",
@@ -56,8 +56,8 @@
         "alphabeticalSort": "По алфавиту",
         "artistSort": "По автору",
         "albumSort": "По альбому",
-        "allAlbums": "Все альбомы",
-        "allArtists": "Все исполнители",
+        "allAlbums": "All albums",
+        "allArtists": "All artists",
         "search": {
           "inputPlaceholder": "Поиск в медиатеке"
         }
@@ -86,8 +86,6 @@
         "podcasts": "Подкасты",
         "favorites": "Любимые треки",
         "songCount_one": "{{count}} трек",
-        "songCount_few": "{{count}} трека",
-        "songCount_many": "{{count}} треков",
         "songCount_other": "{{count}} треков"
       },
       "albums": {
@@ -112,8 +110,8 @@
         "addAllToFavorites": "Добавить всё в избранное",
         "addAllToFavoritesSuccessMessage": "Все песни добавлены в избранное",
         "addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
-        "typeAlbum": "Альбом",
-        "typeCompilation": "Сборник"
+        "typeAlbum": "Album",
+        "typeCompilation": "Compilation"
       },
       "artists": {
         "label": "Исполнитель",
@@ -125,12 +123,10 @@
         "rate": "Оценить",
         "musicBrainz": "Открыть в MusicBrainz",
         "lastFM": "Открыть в Last.fm",
-        "rateModalTitle": "Rate artist",
+        "rateModalTitle": "Оценить исполнителя",
         "likedSongs": "Любимые треки",
         "likedAlbums": "Любимые альбомы",
         "albumCount_one": "{{count}} релиз",
-        "albumCount_few": "{{count}} релиза",
-        "albumCount_many": "{{count}} релизов",
         "albumCount_other": "{{count}} релизов",
         "favoriteSuccessMessage": "Исполнитель добавлен в медиатеку",
         "favoriteErrorMessage": "Не удалось добавить исполнителя в медиатеку",
@@ -154,8 +150,8 @@
         "deletePlaylistConfirmDescription": "Точно хочешь удалить плейлист? Он будет удален навсегда, это действие нельзя отменить.",
         "deletePlaylistSuccessMessage": "Плейлист удален",
         "deletePlaylistErrorMessage": "Не удалось удалить плейлист",
-        "shareSuccessMessage": "Трек успешно добавлен в общий доступ",
-        "shareErrorMessage": "Произошла ошибка при добавлении трека в общий доступ",
+        "sharePlaylistSuccessMessage": "Плейлист отправлен",
+        "sharePlaylistErrorMessage": "Что-то пошло не так при отправке плейлиста",
         "removeTrackSuccessMessage": "Трек удален из плейлиста",
         "removeTrackErrorMessage": "Не удалось удалить трек из плейлиста",
         "addToPlaylistTitle": "Добавить в плейлист",
@@ -538,7 +534,7 @@
       "settings": {
         "title": "Настройки",
         "offlineSettings": {
-          "title": "Офлайн",
+          "title": "Офлайн-режим",
           "offlineModeLabel": "Офлайн-режим",
           "offlineModeDescription": "Автоматически скачивать треки из Избранных",
           "downloadedTracksCount": "{{count}}/{{total}} треков скачано ({{size}})",
@@ -552,9 +548,9 @@
           "manageDownloadsDescription": "Просмотр скачанных треков и освобождение места",
           "manageDownloadsAction": "Управлять",
           "downloadsWifiOnlyLabel": "Скачивать только через Wi-Fi",
-          "downloadsWifiOnlyDescription": "Скачивать треки только по Wi-Fi. При переходе на мобильный интернет загрузка встанет на паузу.",
-          "autoSignOutLabel": "Выходить, если сервер недоступен",
-          "autoSignOutDescription": "Автоматически выходить из аккаунта, если сервер не отвечает, хотя интернет есть. Отключи опцию, чтобы оставаться в приложении и слушать скачанные треки."
+          "downloadsWifiOnlyDescription": "Запрещает загрузку при использовании мобильного интернета. Возобновление произойдет при подключении к Wi-Fi.",
+          "autoSignOutLabel": "Sign out when server unreachable",
+          "autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks."
         },
         "storageSettings": {
           "title": "Хранилище",
@@ -595,18 +591,18 @@
           "createTabDescription": "Показывать кнопку «Создать» на главной панели навигации",
           "showEmptyHomeSectionsLabel": "Показывать пустые разделы",
           "showEmptyHomeSectionsDescription": "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их",
-          "lyricsSourceLabel": "Тексты песен",
-          "lyricsSourceDescription": "Выберите источник синхронизированных текстов или отключите их.",
+          "lyricsSourceLabel": "Lyrics",
+          "lyricsSourceDescription": "Choose where synced lyrics come from, or turn them off.",
           "lyricsSourceOptions": {
-            "off": "Выключено",
-            "server": "Только сервер",
-            "all": "Сервер + lrclib.net"
+            "off": "Off",
+            "server": "Server only",
+            "all": "Server + lrclib.net"
           }
         },
         "internetRadioStationsSettings": {
           "title": "Интернет-радио",
-          "enabledLabel": "Каталог Radio Browser",
-          "enabledDescription": "Просматривай и ищи миллионы станций из каталога Radio Browser. Отключи, чтобы использовать только станции своего сервера.",
+          "enabledLabel": "Radio Browser directory",
+          "enabledDescription": "Browse and search millions of stations from the Radio Browser directory. Turn off to only use your server's stations.",
           "countryLabel": "Страна",
           "countryDescription": "Выбери страну для раздела «По странам». По умолчанию используется регион твоего устройства.",
           "countryAutomatic": "Автоматически",
@@ -642,14 +638,14 @@
         },
         "streamingSettings": {
           "title": "Качество аудиостриминга",
-          "audioQualityLabel": "Стриминг через Wi-Fi",
+          "audioQualityLabel": "Прослушивание через Wi-Fi",
           "audioQualityDescription": "Ограничение максимального битрейта при потоковой передаче. Низкие значения экономят трафик, высокие — улучшают качество.",
           "audioQualityOriginal": "Оригинал (без ограничений)",
           "audioQualityKbps": "{{bitrate}} кбит/c",
-          "cellularAudioQualityLabel": "Стриминг через мобильную сеть",
-          "cellularAudioQualityDescription": "Ограничение битрейта при использовании мобильной сети для экономии трафика. Приложение выберет наменьший из двух лимитов: Wi-Fi или мобильной сети",
+          "cellularAudioQualityLabel": "Стриминг по сотовой сети",
+          "cellularAudioQualityDescription": "Ограничение битрейта при использовании мобильной сети для экономии трафика. Используется наименьшее из этого значения и ограничения для Wi-Fi.",
           "streamingFormatLabel": "Формат потока",
-          "streamingFormatDescription": "Сервер будет транскодировать потоки. «Оригинал» для побитового качества. Выбирай другой формат, если файлы не запускаются (например, ALAC).",
+          "streamingFormatDescription": "Запрос серверу на транскодирование потоков в этот формат. Оставьте «Оригинал» для побитового воспроизведения; выберите формат, если некоторые файлы не воспроизводятся (например, ALAC).",
           "streamingFormatOptions": {
             "raw": "Оригинал",
             "flac": "FLAC (lossless)",
@@ -724,7 +720,7 @@
           "clearAllSuccessMessage": "Все доверенные сертификаты удалены"
         },
         "podcastSettings": {
-          "title": "Настройки подкастов",
+          "title": "Podcasts",
           "configurePodcastsLabel": "Настроить подкасты",
           "configurePodcastsDescription": "Настрой подкасты для прослушивания через приложение",
           "configurePodcastsAction": "Настроить",
@@ -814,8 +810,6 @@
         "title": "Оффлайн загрузки",
         "empty": "Еще не было загружено оффлайн треков.",
         "totalTracks_one": "{{count}} трек",
-        "totalTracks_few": "{{count}} трека",
-        "totalTracks_many": "{{count}} треков",
         "totalTracks_other": "{{count}} треков",
         "totalSize": "Всего: {{size}}",
         "clearAll": "Очистить всё"
@@ -914,7 +908,7 @@
       },
       "player": {
         "title": "Играет сейчас",
-        "original": "Оригинал",
+        "original": "Original",
         "playingFrom": {
           "album": "Воспроизведение альбома",
           "playlist": "Воспроизведение плейлиста",
@@ -958,7 +952,6 @@
       "shares": {
         "title": "Общий доступ",
         "visitCount_one": "{{count}} посещение",
-        "visitCount_few": "{{count}} посещения",
         "visitCount_other": "{{count}} посещений",
         "editShare": "Редактировать ссылку",
         "deleteShare": "Удалить ссылку",
@@ -1021,13 +1014,10 @@
         "unknownEpisode": "Неизвестный эпизод",
         "duration": {
           "day_one": "{{count}} день",
-          "day_few": "{{count}} дня",
           "day_other": "{{count}} дней",
           "hour_one": "{{count}} час",
-          "hour_few": "{{count}} часа",
           "hour_other": "{{count}} часов",
           "minute_one": "{{count}} минута",
-          "minute_few": "{{count}} минуты",
           "minute_other": "{{count}} минут"
         },
         "errorBoundary": {
@@ -1046,65 +1036,43 @@
           "removeErrorMessage": "Произошла ошибка при удалении загрузок"
         },
         "favorites": "Любимые треки",
+        "album_one": "Альбом",
+        "album_other": "Альбомов",
+        "artist_one": "Исполнитель",
+        "artist_other": "Исполнителей",
+        "playlist_one": "Плейлист",
+        "playlist_other": "Плейлистов",
+        "podcast_one": "Подкаст",
+        "podcast_other": "Подкастов",
+        "radioStation_one": "Радиостанция",
+        "radioStation_other": "Радиостанций",
+        "folder_one": "Папка",
+        "folder_other": "Папок",
+        "song_one": "Песня",
+        "song_other": "Песен",
         "save": "Сохранить",
         "seeMore": "Показать еще",
         "seeLess": "Показать меньше",
         "seeAll": "Показать все",
         "noData": "Пусто",
-        "toastSuccessTitle": "Успешно",
-        "toastErrorTitle": "Ошибка",
-        "album_one": "Альбом",
-        "album_few": "Альбома",
-        "album_many": "Альбомов",
-        "album_other": "Альбомов",
-        "artist_one": "Исполнитель",
-        "artist_few": "Исполнителя",
-        "artist_many": "Исполнителей",
-        "artist_other": "Исполнителей",
-        "playlist_one": "Плейлист",
-        "playlist_few": "Плейлиста",
-        "playlist_many": "Плейлистов",
-        "playlist_other": "Плейлистов",
-        "podcast_one": "Подкаст",
-        "podcast_few": "Подкаста",
-        "podcast_many": "Подкастов",
-        "podcast_other": "Подкастов",
-        "radioStation_one": "Радиостанция",
-        "radioStation_few": "Радиостанции",
-        "radioStation_many": "Радиостанций",
-        "radioStation_other": "Радиостанций",
-        "folder_one": "Папка",
-        "folder_few": "Папки",
-        "folder_many": "Папок",
-        "folder_other": "Папок",
-        "song_one": "Песня",
-        "song_few": "Песни",
-        "song_many": "Песен",
-        "song_other": "Песен",
         "albumCount_one": "{{count}} альбом",
-        "albumCount_few": "{{count}} альбома",
-        "albumCount_many": "{{count}} альбомов",
         "albumCount_other": "{{count}} альбомов",
         "songCount_one": "{{count}} трек",
-        "songCount_few": "{{count}} трека",
-        "songCount_many": "{{count}} треков",
         "songCount_other": "{{count}} треков",
-        "addedToQueueMessage_one": "Добавлен 1 трек в очередь",
-        "addedToQueueMessage_few": "Добавлено {{count}} трека в очередь",
-        "addedToQueueMessage_many": "Добавлено {{count}} треков в очередь",
-        "addedToQueueMessage_other": "Добавлено {{count}} треков в очередь",
-        "addedToPlayNextMessage_one": "Добавлен 1 трек для воспроизведения следующим",
-        "addedToPlayNextMessage_few": "Добавлено {{count}} трека для воспроизведения следующими",
-        "addedToPlayNextMessage_many": "Добавлено {{count}} треков для воспроизведения следующими",
-        "addedToPlayNextMessage_other": "Добавлено {{count}} треков для воспроизведения следующими",
-        "rateSuccessMessage": "Оценка сохранена",
-        "rateErrorMessage": "Не удалось поставить оценку",
-        "shareUrlCopiedMessage": "Ссылка скопирована",
-        "shareUrlErrorMessage": "Не удалось скопировать ссылку",
+        "toastSuccessTitle": "Успешно",
+        "toastErrorTitle": "Ошибка",
+        "addedToQueueMessage_one": "Добавлена 1 песня в очередь",
+        "addedToQueueMessage_other": "Добавлено {{count}} песен в очередь",
+        "addedToPlayNextMessage_one": "Добавлена 1 песня для воспроизведения следующей",
+        "addedToPlayNextMessage_other": "Добавлено {{count}} песен для воспроизведения следующими",
+        "rateSuccessMessage": "Оценка успешно установлена",
+        "rateErrorMessage": "Произошла ошибка при установке оценки",
+        "shareUrlCopiedMessage": "Ссылка скопирована в буфер обмена",
+        "shareUrlErrorMessage": "Произошла ошибка при копировании ссылки в буфер обмена",
         "tabs": {
           "home": "Главная",
           "search": "Поиск",
-          "library": "Моя медиатека",
+          "library": "Медиатека",
           "create": "Создать"
         },
         "sidebar": {
@@ -1126,13 +1094,22 @@
         "languages": {
           "zh-CN": "简体中文",
           "en": "English",
-          "fr": "Français",
-          "ru": "Русский"
+          "fr": "Français"
         },
-        "fileSizes": ["байт", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
+        "fileSizes": [
+          "байт",
+          "КБ",
+          "МБ",
+          "ГБ",
+          "ТБ",
+          "ПБ",
+          "ЭБ",
+          "ЗБ",
+          "ЙБ"
+        ]
       },
       "localLibrary": {
-        "unsupported": "Локальная медиатека не поддерживает это действие"
+        "unsupported": "Локальная медиатека не поддерживает эту операцию"
       },
       "localIndexing": {
         "title": "Создание медиатеки",
@@ -1149,7 +1126,7 @@
         "title": "Смена сервера",
         "subtitle": "Вход в систему…",
         "errorTitle": "Не удалось сменить сервер",
-        "errorDescription": "Не удалось войти с сохраненными данными. Похоже, они изменились на сервере.",
+        "errorDescription": "Не удалось войти с использованием сохраненных учетных данных. Возможно, они изменились на сервере.",
         "retry": "Повторить",
         "enterManually": "Ввести пароль вручную"
       }
@@ -1187,7 +1164,7 @@
         "localInfoFormatsTitle": "Поддерживаемые форматы",
         "localInfoFormats": "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",
         "localInfoMetadataTitle": "Как считываются метаданные",
-        "localInfoMetadata": "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из тегов внутри файла. Если тегов нет, мы используем имя файла, поэтому для идеального порядка в медиатеке лучше прописать теги заранее.",
+        "localInfoMetadata": "Название, исполнитель, альбом, номер трека, обложка и другие данные считываются из встроенных тегов файла. Если теги отсутствуют, используется имя файла, поэтому для лучшего результата рекомендуем иметь хорошо размеченные файлы.",
         "localInfoTaggingTitle": "Разметка медиатеки",
         "localInfoTagging": "Для чистоты и единообразия твоей медиатеки мы рекомендуем разметить файлы с помощью MusicBrainz Picard перед добавлением.",
         "localInfoTaggingLink": "Скачать MusicBrainz Picard",
@@ -1229,14 +1206,14 @@
     },
     "taddyPodcasts": {
       "errorCodes": {
-        "API_KEY_INVALID": "Указан неверный API-ключ или User ID.",
+        "API_KEY_INVALID": "Используемый API-ключ или ID пользователя в заголовках недействителен.",
         "API_RATE_LIMIT_EXCEEDED": "Ты превысил месячный лимит запросов к API.",
-        "INVALID_QUERY_OR_SYNTAX": "Запрос слишком сложный, либо в нём есть опечатка или ошибка синтаксиса. В тексте ошибки есть подсказка, как это исправить.",
-        "BAD_USER_INPUT": "Один из параметров указан неверно. Прочитай сообщение об ошибке, чтобы узнать подробности.",
-        "QUERY_TOO_COMPLEX": "Твой запрос слишком сложный. Попробуй упростить его, убрав лишние элементы.",
-        "REQUIRES_USER_AUTHENTICATION": "Чтобы выполнить этот запрос, нужно войти в аккаунт.",
-        "ACCESS_NOT_ALLOWED": "У тебя нет доступа к этому запросу или операции.",
-        "TADDY_SERVER_ERROR": "Что-то сломалось на нашей стороне. Мы уже следим за ситуацией, но если ошибка не исчезает, пиши на danny@taddy.org."
+        "INVALID_QUERY_OR_SYNTAX": "Твой запрос слишком сложен, или в нем допущена орфографическая или синтаксическая ошибка. Используй сообщение в качестве подсказки для исправления.",
+        "BAD_USER_INPUT": "Один из передаваемых аргументов недействителен. Используй сообщение для получения подробной информации о том, что именно не так.",
+        "QUERY_TOO_COMPLEX": "Твой запрос слишком сложен. Пожалуйста, упрости его (удалив лишние элементы).",
+        "REQUIRES_USER_AUTHENTICATION": "Для выполнения этого запроса необходимо войти в систему.",
+        "ACCESS_NOT_ALLOWED": "У тебя нет прав доступа.",
+        "TADDY_SERVER_ERROR": "Произошла ошибка на нашей стороне. Мы отслеживаем такие ситуации, но ты также можешь написать на danny@taddy.org, если эта ошибка повторяется."
       }
     }
   }
