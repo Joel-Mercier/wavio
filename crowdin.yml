@@ -1,8 +1,6 @@
 project_id_env: CROWDIN_PROJECT_ID
 api_token_env: CROWDIN_PERSONAL_TOKEN
-
 preserve_hierarchy: true
-
 files:
   - source: /apps/mobile/i18n/en.json
     translation: /apps/mobile/i18n/%two_letters_code%.json
