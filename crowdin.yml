@@ -6,4 +6,4 @@ preserve_hierarchy: true
 files:
   - source: /apps/mobile/i18n/en.json
     translation: /apps/mobile/i18n/%two_letters_code%.json
-    type: json
+    type: i18next_json
