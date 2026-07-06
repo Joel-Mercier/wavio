@@ -575,6 +575,7 @@
 					"scanMusicLibraryAction": "Scan",
 					"scanMusicLibrarySuccessDescription": "Scan started successfully",
 					"scanMusicLibraryErrorDescription": "An error occurred while starting a scan",
+					"scanMusicLibraryAdminRequiredDescription": "Starting a scan requires administrator rights on your server",
 					"scanStatusLabel": "Scan status",
 					"scanStatusDescription": "Indicates the scan status of your music library",
 					"scanStatusLastScan": "Last scan: {{lastScan}} ago",

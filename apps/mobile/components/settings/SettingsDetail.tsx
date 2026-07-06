@@ -61,6 +61,7 @@ import {
   isEqualizerAvailable,
   openSystemEqualizer,
 } from "@/services/equalizer";
+import { isSubsonicNotAuthorized } from "@/services/openSubsonic";
 import useActivity from "@/stores/activity";
 import useApp, { type StreamFormat } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -139,6 +140,15 @@ export default function SettingsDetail() {
   // The on-device library reads straight off the filesystem: offline downloads
   // and stream-bitrate settings don't apply, so those rows are hidden for it.
   const isLocal = useAuthBase((store) => store.serverType === "local");
+  const serverType = useAuthBase((store) => store.serverType);
+  const hasNavidromeNative = useAuthBase((store) => store.hasNavidromeNative);
+  const isAdmin = useAuthBase((store) => store.isAdmin);
+  // Navidrome restricts startScan to admins (code 50 otherwise). When native
+  // login confirmed a non-admin account, disable the scan action up front. When
+  // native login didn't run (pure OpenSubsonic / fallback), isAdmin is
+  // unreliable, so leave it enabled and let the error toast explain a failure.
+  const scanRequiresAdmin =
+    serverType === "navidrome" && hasNavidromeNative && !isAdmin;
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
   const showAddTab = useApp((store) => store.showAddTab);
@@ -355,9 +365,14 @@ export default function SettingsDetail() {
       },
       onError: (error) => {
         logError(error);
+        // Navidrome (and other Subsonic servers) return code 50 when a non-admin
+        // triggers a scan — tell the user admin rights are required rather than
+        // showing the generic failure message.
         showErrorToast(
           t(
-            "app.settings.musicLibrarySettings.scanMusicLibraryErrorDescription",
+            isSubsonicNotAuthorized(error)
+              ? "app.settings.musicLibrarySettings.scanMusicLibraryAdminRequiredDescription"
+              : "app.settings.musicLibrarySettings.scanMusicLibraryErrorDescription",
           ),
         );
       },
@@ -465,12 +480,15 @@ export default function SettingsDetail() {
                 "app.settings.musicLibrarySettings.scanMusicLibraryLabel",
               )}
               description={t(
-                "app.settings.musicLibrarySettings.scanMusicLibraryDescription",
+                scanRequiresAdmin
+                  ? "app.settings.musicLibrarySettings.scanMusicLibraryAdminRequiredDescription"
+                  : "app.settings.musicLibrarySettings.scanMusicLibraryDescription",
               )}
               actionLabel={t(
                 "app.settings.musicLibrarySettings.scanMusicLibraryAction",
               )}
               onPress={handleMediaLibraryScanPress}
+              disabled={scanRequiresAdmin}
             />
             {!isLocal && (
               <HStack className="items-center gap-x-4 py-4 justify-between">

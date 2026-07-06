@@ -73,6 +73,7 @@ export function SettingsActionRow({
   onPress,
   variant = "primary",
   layout = "split",
+  disabled = false,
 }: {
   label: string;
   description: string;
@@ -80,11 +81,14 @@ export function SettingsActionRow({
   onPress: () => void;
   variant?: "primary" | "danger";
   layout?: "split" | "wide";
+  disabled?: boolean;
 }) {
-  const buttonColor =
-    variant === "danger"
+  const buttonColor = disabled
+    ? "border-primary-500 bg-primary-500"
+    : variant === "danger"
       ? "border-red-500 bg-red-500"
       : "border-emerald-500 bg-emerald-500";
+  const buttonTextColor = disabled ? "text-primary-300" : "text-primary-800";
   if (layout === "wide") {
     return (
       <HStack className="items-center gap-x-4 py-4 justify-between">
@@ -96,12 +100,13 @@ export function SettingsActionRow({
         </VStack>
         <FadeOutScaleDown
           onPress={onPress}
+          disabled={disabled}
           className={cn(
             "items-center justify-center py-2 px-8 border rounded-full",
             buttonColor,
           )}
         >
-          <Text className="text-primary-800 font-bold text-lg">
+          <Text className={cn("font-bold text-lg", buttonTextColor)}>
             {actionLabel}
           </Text>
         </FadeOutScaleDown>
@@ -118,12 +123,16 @@ export function SettingsActionRow({
       </VStack>
       <FadeOutScaleDown
         onPress={onPress}
+        disabled={disabled}
         className={cn(
           "flex-1 items-center justify-center py-2 px-8 border rounded-full",
           buttonColor,
         )}
       >
-        <Text numberOfLines={1} className="text-primary-800 font-bold text-lg">
+        <Text
+          numberOfLines={1}
+          className={cn("font-bold text-lg", buttonTextColor)}
+        >
           {actionLabel}
         </Text>
       </FadeOutScaleDown>

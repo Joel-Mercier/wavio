@@ -121,11 +121,24 @@ export type ApiType = typeof openSubsonicApiInstance;
 // library — a data state the caller can resolve to an empty result.
 export const SUBSONIC_DATA_NOT_FOUND = 70;
 
+// Subsonic error code 50 = "user is not authorized for the given operation".
+// Navidrome returns it for admin-only endpoints (e.g. startScan) when a
+// non-admin calls them — an expected outcome the caller can explain, not a bug.
+export const SUBSONIC_NOT_AUTHORIZED = 50;
+
 export function isSubsonicDataNotFound(error: unknown): boolean {
   return (
     !!error &&
     typeof error === "object" &&
     (error as { code?: number }).code === SUBSONIC_DATA_NOT_FOUND
+  );
+}
+
+export function isSubsonicNotAuthorized(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    (error as { code?: number }).code === SUBSONIC_NOT_AUTHORIZED
   );
 }
 
@@ -157,7 +170,8 @@ export function subsonicEnvelope<T>(
     const error = rsp.data["subsonic-response"].error;
     // Application-level Subsonic failure (HTTP 200, status "failed"). Code 40 is
     // wrong-credentials, already handled by the response interceptor's logout —
-    // don't double-report it. Everything else is a real failing endpoint.
+    // don't double-report it. Everything else is a real failing endpoint (the
+    // reportError classifier still drops expected codes such as 50 from Sentry).
     if (error?.code !== 40) {
       reportError(error, {
         area: "api",

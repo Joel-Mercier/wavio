@@ -569,6 +569,7 @@
 					"scanMusicLibraryAction": "扫描",
 					"scanMusicLibrarySuccessDescription": "扫描已启动",
 					"scanMusicLibraryErrorDescription": "启动扫描时发生错误",
+					"scanMusicLibraryAdminRequiredDescription": "启动扫描需要您服务器上的管理员权限",
 					"scanStatusLabel": "扫描状态",
 					"scanStatusDescription": "显示音乐库的扫描状态",
 					"scanStatusLastScan": "上次扫描：{{lastScan}}前",
