@@ -587,6 +587,7 @@
 					"scanMusicLibraryAction": "Скан",
 					"scanMusicLibrarySuccessDescription": "Сканирование запущено",
 					"scanMusicLibraryErrorDescription": "Не удалось запустить сканирование",
+					"scanMusicLibraryAdminRequiredDescription": "Для запуска сканирования требуются права администратора на вашем сервере",
 					"scanStatusLabel": "Статус сканирования",
 					"scanStatusDescription": "Отображает текущее состояние сканирования твоей медиатеки",
 					"scanStatusLastScan": "Последнее сканирование: {{lastScan}} назад",
