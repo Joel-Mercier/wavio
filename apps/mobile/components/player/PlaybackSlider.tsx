@@ -5,6 +5,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useIsBuffering,
   usePlaybackProgress,
   usePlaybackProgressValue,
   usePlayingTrack,
@@ -26,6 +27,7 @@ export default function PlaybackSlider() {
   // Live position as a 0..1 shared value, updated on the UI thread (~4 Hz) with
   // no React re-render, so a progress tick can never fight the drag gesture.
   const liveProgress = usePlaybackProgressValue();
+  const buffering = useIsBuffering();
   const track = usePlayingTrack();
   const bookmarks = useTrackBookmarks(track?.id);
   const durationRef = useRef(duration);
@@ -51,6 +53,7 @@ export default function PlaybackSlider() {
       <GestureSlider
         progress={liveProgress}
         disabled={!hasDuration}
+        buffering={buffering}
         ticks={ticks}
         settleEpsilon={
           hasDuration ? SEEK_SETTLE_THRESHOLD / duration : undefined

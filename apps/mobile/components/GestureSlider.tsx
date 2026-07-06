@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
+import BufferingSweep from "@/components/player/BufferingSweep";
 
 const CONTAINER_HEIGHT = 24;
 const TRACK_HEIGHT = 6;
@@ -27,6 +28,8 @@ type GestureSliderProps = {
   value?: number;
   progress?: SharedValue<number>;
   disabled?: boolean;
+  // When true, an emerald pulse sweeps across the track to signal buffering.
+  buffering?: boolean;
   // Tick mark positions as 0..1 fractions (e.g. bookmarks).
   ticks?: number[];
   // After release, the dragged position is held until the source lands within
@@ -50,6 +53,7 @@ export default function GestureSlider({
   value,
   progress,
   disabled = false,
+  buffering = false,
   ticks,
   settleEpsilon = DEFAULT_SETTLE_EPSILON,
   resetKey,
@@ -190,6 +194,18 @@ export default function GestureSlider({
             fillStyle,
           ]}
         />
+        {buffering && (
+          <BufferingSweep
+            borderRadius={TRACK_HEIGHT / 2}
+            style={{
+              left: 0,
+              right: 0,
+              top: TRACK_TOP,
+              bottom: undefined,
+              height: TRACK_HEIGHT,
+            }}
+          />
+        )}
         {/* Ticks render on top of the bars: the tick's middle is hidden by the
             bar while its ends poke out above and below it. */}
         {trackWidth > 0 &&

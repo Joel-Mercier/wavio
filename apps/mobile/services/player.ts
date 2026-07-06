@@ -820,7 +820,11 @@ function handlePlaybackStatus(status: AudioStatus) {
         // longer be at the tail) — genuinely out of content, stop at the end.
         try {
           player.pause();
-          player.seekTo(0);
+          // Go through seekTo (not player.seekTo) so a transcoded stream is
+          // reloaded at offset 0 and its streamStartOffset is cleared; a raw
+          // seek would land at the start of the offset segment, leaving the
+          // position stuck at the last seek point instead of the beginning.
+          seekTo(0);
         } catch (error) {
           logSwallowed("stop at queue end", error);
         }

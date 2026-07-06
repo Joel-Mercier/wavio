@@ -1,3 +1,4 @@
+export { useIsBuffering } from "@/hooks/player/useIsBuffering";
 export { useIsCurrentTrack } from "@/hooks/player/useIsCurrentTrack";
 export { useIsPlaying } from "@/hooks/player/useIsPlaying";
 export {

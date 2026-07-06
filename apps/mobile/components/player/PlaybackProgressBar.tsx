@@ -1,6 +1,7 @@
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import BufferingSweep from "@/components/player/BufferingSweep";
 import { Box } from "@/components/ui/box";
-import { usePlaybackProgressValue } from "@/hooks/player";
+import { useIsBuffering, usePlaybackProgressValue } from "@/hooks/player";
 import { cn } from "@/utils/tailwind";
 
 export default function PlaybackProgressBar({
@@ -12,6 +13,7 @@ export default function PlaybackProgressBar({
   // FloatingPlayer, so re-rendering it on every ~4 Hz progress tick would commit
   // a layout on the JS thread app-wide; the animated width avoids React renders.
   const progress = usePlaybackProgressValue();
+  const buffering = useIsBuffering();
   const fillStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
   }));
@@ -24,6 +26,7 @@ export default function PlaybackProgressBar({
       style={{ zIndex: 3 }}
     >
       <Animated.View className="h-full bg-white" style={fillStyle} />
+      {buffering && <BufferingSweep />}
     </Box>
   );
 }

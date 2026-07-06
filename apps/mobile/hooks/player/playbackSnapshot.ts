@@ -5,6 +5,7 @@ import useQueue from "@/stores/queue";
 
 export type PlaybackSnapshot = {
   playing: boolean;
+  buffering: boolean;
   currentTime: number;
   duration: number;
 };
@@ -16,14 +17,26 @@ function currentTrackDuration(): number {
   return useQueue.getState().getCurrent()?.duration ?? 0;
 }
 
+// A transcoded stream reloaded at an offset (a seek/resume via Subsonic
+// `timeOffset`) restarts its own clock at ~0 and, once its length becomes known,
+// reports only its REMAINING duration (fullDuration − offset). Since currentTime
+// adds the offset back to recover the absolute position, trusting that shortened
+// duration would peg progress past its end (bar jumps to the end, total-time
+// label shrinks). Whenever an offset is in play, use the full metadata duration.
+function resolveDuration(rawDuration: number): number {
+  if (getStreamStartOffset() > 0) return currentTrackDuration();
+  return rawDuration || currentTrackDuration();
+}
+
 function readLocalSnapshot(): PlaybackSnapshot {
   const p = getActivePlayer();
   return {
     playing: p.playing,
+    buffering: p.isBuffering,
     // A transcoded stream reloaded at a Subsonic timeOffset restarts its own
     // clock near 0, so add the offset back to recover the true track position.
     currentTime: (p.currentTime ?? 0) + getStreamStartOffset(),
-    duration: p.duration || currentTrackDuration(),
+    duration: resolveDuration(p.duration),
   };
 }
 
@@ -32,6 +45,7 @@ function readJukeboxSnapshot(): PlaybackSnapshot {
   const current = useQueue.getState().getCurrent();
   return {
     playing: status?.playing ?? false,
+    buffering: false,
     currentTime: status?.position ?? 0,
     duration: current?.duration ?? 0,
   };
@@ -54,11 +68,13 @@ const progressListeners = new Set<() => void>();
 
 function pushSnapshot(next: PlaybackSnapshot) {
   const playingChanged = next.playing !== snapshot.playing;
+  const bufferingChanged = next.buffering !== snapshot.buffering;
   const durationChanged = next.duration !== snapshot.duration;
   const timeChanged = next.currentTime !== snapshot.currentTime;
-  if (!playingChanged && !durationChanged && !timeChanged) return;
+  if (!playingChanged && !bufferingChanged && !durationChanged && !timeChanged)
+    return;
   snapshot = next;
-  if (playingChanged || durationChanged) {
+  if (playingChanged || bufferingChanged || durationChanged) {
     for (const l of stateListeners) l();
   }
   for (const l of progressListeners) l();
@@ -68,8 +84,9 @@ getActivePlayer().addListener("playbackStatusUpdate", (status: AudioStatus) => {
   if (useJukebox.getState().active) return;
   pushSnapshot({
     playing: status.playing,
+    buffering: status.isBuffering,
     currentTime: (status.currentTime ?? 0) + getStreamStartOffset(),
-    duration: status.duration || currentTrackDuration(),
+    duration: resolveDuration(status.duration),
   });
 });
 
