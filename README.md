@@ -76,7 +76,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Navidrome/Opensubsonic jukebox mode support
 - Backup and restore
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
-- English, French, Chinese and Russian translations
+- English, French, German, Chinese and Russian translations
 
 ## Translations
 
@@ -86,7 +86,7 @@ If your language isn't listed, please open an issue to request it.
 
 [![Crowdin](https://badges.crowdin.net/wavio/localized.svg)](https://crowdin.com/project/wavio)
 
-Currently supported languages: English, French, Chinese, Russian.
+Currently supported languages: English, French, German, Chinese, Russian.
 
 ![Translation status](https://badges.awesome-crowdin.com/translation-17766125-909133.png)
 
