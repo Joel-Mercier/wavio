@@ -552,9 +552,9 @@
 					"autoSignOutLabel": "Déconnexion si le serveur est injoignable",
 					"autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés.",
 					"pendingChangesLabel": "Modifications en attente",
+					"pendingChangesAction": "Voir",
 					"pendingChangesDescription_one": "{{count}} modification effectuée hors ligne en attente de synchronisation",
-					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation",
-					"pendingChangesAction": "Voir"
+					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation"
 				},
 				"storageSettings": {
 					"title": "Stockage",
@@ -822,26 +822,26 @@
 			"pendingChanges": {
 				"title": "Modifications en attente",
 				"empty": "Aucune modification en attente.",
-				"totalCount_one": "{{count}} modification en attente",
-				"totalCount_other": "{{count}} modifications en attente",
 				"autoSyncHint": "Synchronisées automatiquement dès que votre serveur est à nouveau joignable",
 				"syncNow": "Synchroniser",
 				"clearAll": "Tout effacer",
 				"clearConfirmTitle": "Voulez-vous vraiment abandonner toutes les modifications en attente ?",
 				"clearConfirmDescription": "Ces modifications ne seront jamais envoyées à votre serveur. Cette action est irréversible.",
-				"syncFailedMessage_one": "{{count}} modification hors ligne n'a pas pu être synchronisée",
-				"syncFailedMessage_other": "{{count}} modifications hors ligne n'ont pas pu être synchronisées",
 				"actions": {
 					"star": "Ajouter aux favoris",
 					"unstar": "Retirer des favoris",
 					"setRating": "Noter {{rating}}/5",
+					"playlistEdit": "Modifier les détails de la playlist",
+					"playlistDelete": "Supprimer la playlist",
 					"playlistAddSongs_one": "Ajouter {{count}} titre à la playlist",
 					"playlistAddSongs_other": "Ajouter {{count}} titres à la playlist",
 					"playlistRemoveSongs_one": "Retirer {{count}} titre de la playlist",
-					"playlistRemoveSongs_other": "Retirer {{count}} titres de la playlist",
-					"playlistEdit": "Modifier les détails de la playlist",
-					"playlistDelete": "Supprimer la playlist"
-				}
+					"playlistRemoveSongs_other": "Retirer {{count}} titres de la playlist"
+				},
+				"totalCount_one": "{{count}} modification en attente",
+				"totalCount_other": "{{count}} modifications en attente",
+				"syncFailedMessage_one": "{{count}} modification hors ligne n'a pas pu être synchronisée",
+				"syncFailedMessage_other": "{{count}} modifications hors ligne n'ont pas pu être synchronisées"
 			},
 			"queue": {
 				"title": "File d'attente",
