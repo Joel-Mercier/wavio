@@ -18,6 +18,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
 import type { QueueTrack } from "@/stores/queue";
+import { formatSampleRate } from "@/utils/audioQuality";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 
@@ -143,6 +144,16 @@ export default function TrackInfoModal({
                   {t("app.tracks.infoModal.bitRate")}
                 </Text>
                 <Text className="text-white">{track.bitRate}</Text>
+              </VStack>
+              <VStack className="border-b border-primary-600 py-2">
+                <Text className="text-primary-100 text-sm">
+                  {t("app.tracks.infoModal.sampleRate")}
+                </Text>
+                <Text className="text-white">
+                  {track.samplingRate
+                    ? `${formatSampleRate(track.samplingRate)} kHz`
+                    : null}
+                </Text>
               </VStack>
               <VStack className="border-b border-primary-600 py-2">
                 <Text className="text-primary-100 text-sm">

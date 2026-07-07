@@ -30,4 +30,12 @@ export const SCOPED_STORE_NAMES = [
   "bookmarks",
   "localLibraryStore",
   "capabilityOverridesStore",
+  "offlineMutations",
 ] as const;
+
+// Scoped stores that must NOT travel in a backup file. The offline-mutations
+// queue is transient sync state: restoring it later (or on another device)
+// would replay stale actions against the server — duplicating playlist adds or
+// deleting a playlist the user has since re-created — possibly after the
+// original device already synced them.
+export const BACKUP_EXCLUDED_SCOPED_STORE_NAMES = ["offlineMutations"] as const;

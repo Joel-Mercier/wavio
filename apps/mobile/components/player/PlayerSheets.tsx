@@ -616,10 +616,7 @@ export default function PlayerSheets({
               </VStack>
             ) : (
               <VStack className="mt-6 gap-y-8">
-                <FadeOutScaleDown
-                  onPress={handleAddToPlaylistPress}
-                  disabled={!isOnline}
-                >
+                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
                     <PlusCircle size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">

@@ -550,7 +550,11 @@
 					"downloadsWifiOnlyLabel": "Download on Wi-Fi only",
 					"downloadsWifiOnlyDescription": "Pause the download queue when on cellular. Resumes automatically when Wi-Fi returns.",
 					"autoSignOutLabel": "Sign out when server unreachable",
-					"autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks."
+					"autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks.",
+					"pendingChangesLabel": "Pending changes",
+					"pendingChangesDescription_one": "{{count}} change made offline waiting to sync",
+					"pendingChangesDescription_other": "{{count}} changes made offline waiting to sync",
+					"pendingChangesAction": "View"
 				},
 				"storageSettings": {
 					"title": "Storage",
@@ -815,6 +819,30 @@
 				"totalSize": "Total size: {{size}}",
 				"clearAll": "Clear all"
 			},
+			"pendingChanges": {
+				"title": "Pending changes",
+				"empty": "No pending changes.",
+				"totalCount_one": "{{count}} pending change",
+				"totalCount_other": "{{count}} pending changes",
+				"autoSyncHint": "Synced automatically when your server is reachable again",
+				"syncNow": "Sync now",
+				"clearAll": "Clear all",
+				"clearConfirmTitle": "Are you sure you want to discard all pending changes?",
+				"clearConfirmDescription": "These changes will never be sent to your server. This cannot be undone.",
+				"syncFailedMessage_one": "{{count}} offline change couldn't be synced",
+				"syncFailedMessage_other": "{{count}} offline changes couldn't be synced",
+				"actions": {
+					"star": "Add to favorites",
+					"unstar": "Remove from favorites",
+					"setRating": "Rate {{rating}}/5",
+					"playlistAddSongs_one": "Add {{count}} song to playlist",
+					"playlistAddSongs_other": "Add {{count}} songs to playlist",
+					"playlistRemoveSongs_one": "Remove {{count}} song from playlist",
+					"playlistRemoveSongs_other": "Remove {{count}} songs from playlist",
+					"playlistEdit": "Edit playlist details",
+					"playlistDelete": "Delete playlist"
+				}
+			},
 			"queue": {
 				"title": "Queue",
 				"empty": "The queue is empty.",
@@ -894,6 +922,7 @@
 					"duration": "Duration",
 					"codec": "Codec",
 					"bitRate": "Bitrate",
+					"sampleRate": "Sample rate",
 					"channelCount": "Channels",
 					"size": "Size",
 					"favorite": "Favorite",
@@ -1099,7 +1128,17 @@
 					"ru": "Русский",
 					"de": "Deutsch"
 				},
-				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+				"fileSizes": [
+					"bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				]
 			},
 			"localLibrary": {
 				"unsupported": "The local library doesn't support this operation"

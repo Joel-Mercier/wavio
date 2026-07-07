@@ -595,7 +595,6 @@ export default function PlayerScreen() {
                   <AnimatedHeart
                     testID="player-favorite-button"
                     filled={!!playingTrack?.starred}
-                    disabled={!isOnline}
                     hitSlop={ICON_HIT_SLOP}
                     onPress={
                       playingTrack?.starred

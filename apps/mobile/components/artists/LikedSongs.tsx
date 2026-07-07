@@ -493,7 +493,6 @@ export default function LikedSongs() {
                 <HStack className="items-center gap-x-4">
                   <AnimatedHeart
                     filled={!!data?.artist?.starred}
-                    disabled={!isOnline}
                     onPress={
                       data?.artist?.starred
                         ? handleUnfavoritePress
@@ -563,10 +562,7 @@ export default function LikedSongs() {
             </HStack>
             <VStack className="mt-6 gap-y-8">
               {capabilities.setRating && (
-                <FadeOutScaleDown
-                  onPress={handleRatingPress}
-                  disabled={!isOnline}
-                >
+                <FadeOutScaleDown onPress={handleRatingPress}>
                   <HStack className="items-center justify-between">
                     <HStack className="items-center">
                       <Star size={24} color={gray200} />

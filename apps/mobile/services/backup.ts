@@ -4,7 +4,11 @@ import { File, Paths } from "expo-file-system";
 import Share from "react-native-share";
 import * as z from "zod";
 import { getAuthScope, storage } from "@/config/storage";
-import { GLOBAL_KEYS, SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
+import {
+  BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
+  GLOBAL_KEYS,
+  SCOPED_STORE_NAMES,
+} from "@/services/backupStoreKeys";
 import { useAppBase } from "@/stores/app";
 import useMusicFolders from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
@@ -24,6 +28,11 @@ const backupSchema = z.object({
 });
 
 export type BackupFile = z.infer<typeof backupSchema>;
+
+const isBackupExcluded = (storeName: string) =>
+  BACKUP_EXCLUDED_SCOPED_STORE_NAMES.some((excluded) =>
+    storeName.startsWith(excluded),
+  );
 
 function collectScopes(): string[] {
   const { servers, users } = useServersBase.getState();
@@ -64,8 +73,10 @@ export function buildBackup(): BackupFile {
     const values: Record<string, string> = {};
     for (const key of allKeys) {
       if (!key.startsWith(prefix)) continue;
+      const name = key.slice(prefix.length);
+      if (isBackupExcluded(name)) continue;
       const value = storage.getString(key);
-      if (value !== undefined) values[key.slice(prefix.length)] = value;
+      if (value !== undefined) values[name] = value;
     }
     return { scope, values };
   });
@@ -145,6 +156,7 @@ export async function restoreBackup(
   }
   for (const { scope, values } of backup.scoped) {
     for (const [key, value] of Object.entries(values)) {
+      if (isBackupExcluded(key)) continue;
       storage.set(`${scope}:${key}`, value);
     }
   }

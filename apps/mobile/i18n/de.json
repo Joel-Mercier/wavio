@@ -550,7 +550,11 @@
 					"downloadsWifiOnlyLabel": "Nur über WLAN herunterladen",
 					"downloadsWifiOnlyDescription": "Die Download-Warteschlange wird bei Nutzung des Mobilfunknetzes angehalten. Sie wird automatisch fortgesetzt, sobald wieder eine WLAN-Verbindung besteht.",
 					"autoSignOutLabel": "Abmelden, wenn der Server nicht erreichbar ist",
-					"autoSignOutDescription": "Automatisch abmelden, wenn Dein Server nicht erreichbar ist, das Internet jedoch funktioniert. Deaktiviere diese Option, um angemeldet zu bleiben und weiterhin Deine heruntergeladenen Titel anzusehen."
+					"autoSignOutDescription": "Automatisch abmelden, wenn Dein Server nicht erreichbar ist, das Internet jedoch funktioniert. Deaktiviere diese Option, um angemeldet zu bleiben und weiterhin Deine heruntergeladenen Titel anzusehen.",
+					"pendingChangesLabel": "Ausstehende Änderungen",
+					"pendingChangesDescription_one": "{{count}} offline vorgenommene Änderung wartet auf Synchronisierung",
+					"pendingChangesDescription_other": "{{count}} offline vorgenommene Änderungen warten auf Synchronisierung",
+					"pendingChangesAction": "Anzeigen"
 				},
 				"storageSettings": {
 					"title": "Speicher",
@@ -815,6 +819,30 @@
 				"totalTracks_one": "{{count}} Titel",
 				"totalTracks_other": "{{count}} Titel"
 			},
+			"pendingChanges": {
+				"title": "Ausstehende Änderungen",
+				"empty": "Keine ausstehenden Änderungen.",
+				"totalCount_one": "{{count}} ausstehende Änderung",
+				"totalCount_other": "{{count}} ausstehende Änderungen",
+				"autoSyncHint": "Wird automatisch synchronisiert, sobald dein Server wieder erreichbar ist",
+				"syncNow": "Jetzt synchronisieren",
+				"clearAll": "Alle löschen",
+				"clearConfirmTitle": "Möchtest du wirklich alle ausstehenden Änderungen verwerfen?",
+				"clearConfirmDescription": "Diese Änderungen werden nie an deinen Server gesendet. Dies kann nicht rückgängig gemacht werden.",
+				"syncFailedMessage_one": "{{count}} Offline-Änderung konnte nicht synchronisiert werden",
+				"syncFailedMessage_other": "{{count}} Offline-Änderungen konnten nicht synchronisiert werden",
+				"actions": {
+					"star": "Zu Favoriten hinzufügen",
+					"unstar": "Aus Favoriten entfernen",
+					"setRating": "Mit {{rating}}/5 bewerten",
+					"playlistAddSongs_one": "{{count}} Titel zur Playlist hinzufügen",
+					"playlistAddSongs_other": "{{count}} Titel zur Playlist hinzufügen",
+					"playlistRemoveSongs_one": "{{count}} Titel aus der Playlist entfernen",
+					"playlistRemoveSongs_other": "{{count}} Titel aus der Playlist entfernen",
+					"playlistEdit": "Playlist-Details bearbeiten",
+					"playlistDelete": "Playlist löschen"
+				}
+			},
 			"queue": {
 				"title": "Warteschlange",
 				"empty": "Die Warteschlange ist leer.",
@@ -891,6 +919,7 @@
 					"duration": "Dauer",
 					"codec": "Codec",
 					"bitRate": "Bitrate",
+					"sampleRate": "Abtastrate",
 					"channelCount": "Kanäle",
 					"size": "Größe",
 					"favorite": "Favorit",
@@ -1076,7 +1105,17 @@
 					"ru": "Русский",
 					"de": "Deutsch"
 				},
-				"fileSizes": ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+				"fileSizes": [
+					"Bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				],
 				"album_one": "Album",
 				"album_other": "Alben",
 				"artist_one": "Interpret",

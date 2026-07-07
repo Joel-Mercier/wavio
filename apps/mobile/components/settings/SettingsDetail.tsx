@@ -66,6 +66,7 @@ import useActivity from "@/stores/activity";
 import useApp, { type StreamFormat } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useLocalLibrary from "@/stores/localLibrary";
+import useOfflineMutations from "@/stores/offlineMutations";
 import usePodcasts from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
@@ -213,6 +214,7 @@ export default function SettingsDetail() {
   );
 
   const { offlineModeEnabled, setOfflineModeEnabled } = useOfflineDownloads();
+  const pendingChangesCount = useOfflineMutations.use.queue().length;
   const downloadedTracksCount = useDownloadedTracksCount();
   const totalDownloadSize = useTotalDownloadSize();
   const downloadedTracksList = useDownloadedTracksList();
@@ -589,6 +591,21 @@ export default function SettingsDetail() {
                       "app.settings.offlineSettings.manageDownloadsAction",
                     )}
                     onPress={() => router.navigate("/offline-downloads")}
+                  />
+                )}
+                {pendingChangesCount > 0 && (
+                  <SettingsActionRow
+                    label={t(
+                      "app.settings.offlineSettings.pendingChangesLabel",
+                    )}
+                    description={t(
+                      "app.settings.offlineSettings.pendingChangesDescription",
+                      { count: pendingChangesCount },
+                    )}
+                    actionLabel={t(
+                      "app.settings.offlineSettings.pendingChangesAction",
+                    )}
+                    onPress={() => router.navigate("/pending-changes" as Href)}
                   />
                 )}
                 <Divider className="bg-primary-400" />

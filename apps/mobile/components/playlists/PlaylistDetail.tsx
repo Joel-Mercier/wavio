@@ -924,10 +924,7 @@ export default function PlaylistDetail() {
             </HStack>
             <VStack className="mt-6 gap-y-8">
               {!isSmartPlaylist && (
-                <FadeOutScaleDown
-                  onPress={handlePlaylistReorderPress}
-                  disabled={!isOnline}
-                >
+                <FadeOutScaleDown onPress={handlePlaylistReorderPress}>
                   <HStack className="items-center">
                     <ListOrdered size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -997,10 +994,7 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              <FadeOutScaleDown
-                onPress={handlePlaylistUpdatePress}
-                disabled={!isOnline}
-              >
+              <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
                   <Pencil size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1026,7 +1020,6 @@ export default function PlaylistDetail() {
                   bottomSheetModalRef.current?.dismiss();
                   setShowAlertDialog(true);
                 }}
-                disabled={!isOnline}
               >
                 <HStack className="items-center">
                   <X size={24} color={red500} />

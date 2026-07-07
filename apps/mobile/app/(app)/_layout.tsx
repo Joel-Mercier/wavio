@@ -5,6 +5,7 @@ import { AppState, type AppStateStatus } from "react-native";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
+import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import JukeboxSheet from "@/components/player/JukeboxSheet";
@@ -18,6 +19,11 @@ import { getAuthScope } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
+import {
+  initOfflineMutationReplay,
+  resetOfflineMutationReplay,
+  stopOfflineMutationReplay,
+} from "@/services/offlineMutations/replay";
 import { resetPlayerForScopeChange } from "@/services/player";
 import {
   flushPlayQueue,
@@ -31,6 +37,7 @@ import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
+import useOfflineMutations from "@/stores/offlineMutations";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -73,6 +80,8 @@ export default function AppLayout() {
       // rehydrate below.
       resetPlayerForScopeChange();
       useOffline.getState().__reset();
+      resetOfflineMutationReplay();
+      useOfflineMutations.getState().__reset();
       useLocalLibrary.getState().__reset();
       useBookmarks.getState().__reset();
       useCapabilityOverrides.getState().__reset();
@@ -108,6 +117,10 @@ export default function AppLayout() {
     useOffline.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
+    useOfflineMutations.persist.onFinishHydration(() => {
+      initOfflineMutationReplay();
+    });
+    useOfflineMutations.persist.rehydrate();
     // Flag the local-library store ready once its saved scan summary is back, so
     // the first-login indexing gate below can trust `lastScanAt`.
     void Promise.resolve(useLocalLibrary.persist.rehydrate()).then(() => {
@@ -143,6 +156,7 @@ export default function AppLayout() {
   useEffect(() => {
     if (isAuthenticated) return;
     stopPlayQueueSync();
+    stopOfflineMutationReplay();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
@@ -204,6 +218,7 @@ export default function AppLayout() {
         </Stack>
       </AppErrorBoundary>
       <FloatingPlayer />
+      <OfflineMutationsSync />
       <OfflineStarredAutoSync />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />

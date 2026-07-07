@@ -550,7 +550,11 @@
 					"downloadsWifiOnlyLabel": "Télécharger en Wi-Fi uniquement",
 					"downloadsWifiOnlyDescription": "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
 					"autoSignOutLabel": "Déconnexion si le serveur est injoignable",
-					"autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés."
+					"autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés.",
+					"pendingChangesLabel": "Modifications en attente",
+					"pendingChangesDescription_one": "{{count}} modification effectuée hors ligne en attente de synchronisation",
+					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation",
+					"pendingChangesAction": "Voir"
 				},
 				"storageSettings": {
 					"title": "Stockage",
@@ -815,6 +819,30 @@
 				"totalTracks_one": "{{count}} titre",
 				"totalTracks_other": "{{count}} titres"
 			},
+			"pendingChanges": {
+				"title": "Modifications en attente",
+				"empty": "Aucune modification en attente.",
+				"totalCount_one": "{{count}} modification en attente",
+				"totalCount_other": "{{count}} modifications en attente",
+				"autoSyncHint": "Synchronisées automatiquement dès que votre serveur est à nouveau joignable",
+				"syncNow": "Synchroniser",
+				"clearAll": "Tout effacer",
+				"clearConfirmTitle": "Voulez-vous vraiment abandonner toutes les modifications en attente ?",
+				"clearConfirmDescription": "Ces modifications ne seront jamais envoyées à votre serveur. Cette action est irréversible.",
+				"syncFailedMessage_one": "{{count}} modification hors ligne n'a pas pu être synchronisée",
+				"syncFailedMessage_other": "{{count}} modifications hors ligne n'ont pas pu être synchronisées",
+				"actions": {
+					"star": "Ajouter aux favoris",
+					"unstar": "Retirer des favoris",
+					"setRating": "Noter {{rating}}/5",
+					"playlistAddSongs_one": "Ajouter {{count}} titre à la playlist",
+					"playlistAddSongs_other": "Ajouter {{count}} titres à la playlist",
+					"playlistRemoveSongs_one": "Retirer {{count}} titre de la playlist",
+					"playlistRemoveSongs_other": "Retirer {{count}} titres de la playlist",
+					"playlistEdit": "Modifier les détails de la playlist",
+					"playlistDelete": "Supprimer la playlist"
+				}
+			},
 			"queue": {
 				"title": "File d'attente",
 				"empty": "La file d'attente est vide",
@@ -891,6 +919,7 @@
 					"duration": "Durée",
 					"codec": "Codec",
 					"bitRate": "Bitrate",
+					"sampleRate": "Fréquence d'échantillonnage",
 					"channelCount": "Canaux",
 					"size": "Taille",
 					"favorite": "Favoris",
@@ -1076,7 +1105,17 @@
 					"ru": "Русский",
 					"de": "Deutsch"
 				},
-				"fileSizes": ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"],
+				"fileSizes": [
+					"octets",
+					"Ko",
+					"Mo",
+					"Go",
+					"To",
+					"Po",
+					"Eo",
+					"Zo",
+					"Yo"
+				],
 				"album_one": "Album",
 				"album_other": "Albums",
 				"artist_one": "Artiste",

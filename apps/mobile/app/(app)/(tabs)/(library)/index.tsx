@@ -11,17 +11,14 @@ import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
 import List from "lucide-react-native/dist/esm/icons/list.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
-import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import AddBottomSheet from "@/components/AddBottomSheet";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -70,28 +67,20 @@ import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
-import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
 
 export default function LibraryScreen() {
-  const [white, gray200, emerald500] = Uniwind.getCSSVariable([
+  const [white, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
-    "--color-gray-200",
     "--color-emerald-500",
   ]) as string[];
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
-  const hasNavidromeNative = useAuth((store) => store.hasNavidromeNative);
-  const serverVersion = useAuth((store) => store.serverVersion);
   const isWideLayout = useApp((store) => store.isWideLayout);
   const capabilities = useCapabilities();
-  const showSmartPlaylist =
-    capabilities.smartPlaylists &&
-    hasNavidromeNative &&
-    supportsSmartPlaylists(serverVersion);
   const router = useRouter();
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
@@ -181,26 +170,6 @@ export default function LibraryScreen() {
   const handlePresentSortModalPress = useCallback(() => {
     bottomSheetModalSortRef.current?.present();
   }, []);
-
-  const handleCreatePlaylistPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    router.navigate("/playlists/new");
-  };
-
-  const handleCreateSmartPlaylistPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    router.navigate("/playlists/new-smart");
-  };
-
-  const handleCreateInternetRadioStationPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    router.navigate("/internet-radio-stations/new");
-  };
-
-  const handleCreatePodcastChannelPress = () => {
-    bottomSheetModalRef.current?.dismiss();
-    router.navigate("/podcast-channels/new");
-  };
 
   const handleSortPress = (type: typeof sort) => {
     bottomSheetModalSortRef.current?.dismiss();
@@ -621,84 +590,10 @@ export default function LibraryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-      <CenteredBottomSheetModal
+      <AddBottomSheet
         ref={bottomSheetModalRef}
         onChange={handleSheetPositionChange}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown onPress={handleCreatePlaylistPress}>
-                <HStack className="items-center">
-                  <ListMusic size={32} color={gray200} />
-                  <VStack className="ml-4 flex-1">
-                    <Heading className="text-white">
-                      {t("app.create.playlistTitle")}
-                    </Heading>
-                    <Text className="text-md text-gray-200">
-                      {t("app.create.playlistDescription")}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </FadeOutScaleDown>
-              {showSmartPlaylist && (
-                <FadeOutScaleDown onPress={handleCreateSmartPlaylistPress}>
-                  <HStack className="items-center">
-                    <Wand2 size={32} color={gray200} />
-                    <VStack className="ml-4 flex-1">
-                      <Heading className="text-white">
-                        {t("app.create.smartPlaylistTitle")}
-                      </Heading>
-                      <Text className="text-md text-gray-200">
-                        {t("app.create.smartPlaylistDescription")}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
-              {capabilities.internetRadio && (
-                <FadeOutScaleDown
-                  onPress={handleCreateInternetRadioStationPress}
-                >
-                  <HStack className="items-center">
-                    <Radio size={32} color={gray200} />
-                    <VStack className="ml-4 flex-1">
-                      <Heading className="text-white">
-                        {t("app.create.internetRadioStationTitle")}
-                      </Heading>
-                      <Text className="text-md text-gray-200">
-                        {t("app.create.internetRadioStationDescription")}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
-              {capabilities.podcasts && (
-                <FadeOutScaleDown onPress={handleCreatePodcastChannelPress}>
-                  <HStack className="items-center">
-                    <Podcast size={32} color={gray200} />
-                    <VStack className="ml-4 flex-1">
-                      <Heading className="text-white">
-                        {t("app.create.podcastChannelTitle")}
-                      </Heading>
-                      <Text className="text-md text-gray-200">
-                        {t("app.create.podcastChannelDescription")}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+      />
       <CenteredBottomSheetModal
         ref={bottomSheetModalSortRef}
         onChange={handleSheetPositionChangeSort}

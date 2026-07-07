@@ -562,7 +562,13 @@
 					"downloadsWifiOnlyLabel": "Скачивать только через Wi-Fi",
 					"downloadsWifiOnlyDescription": "Скачивать треки только по Wi-Fi. При переходе на мобильный интернет загрузка встанет на паузу.",
 					"autoSignOutLabel": "Выходить, если сервер недоступен",
-					"autoSignOutDescription": "Автоматически выходить из аккаунта, если сервер не отвечает, хотя интернет есть. Отключи опцию, чтобы оставаться в приложении и слушать скачанные треки."
+					"autoSignOutDescription": "Автоматически выходить из аккаунта, если сервер не отвечает, хотя интернет есть. Отключи опцию, чтобы оставаться в приложении и слушать скачанные треки.",
+					"pendingChangesLabel": "Ожидающие изменения",
+					"pendingChangesDescription_one": "{{count}} изменение, сделанное офлайн, ожидает синхронизации",
+					"pendingChangesDescription_few": "{{count}} изменения, сделанные офлайн, ожидают синхронизации",
+					"pendingChangesDescription_many": "{{count}} изменений, сделанных офлайн, ожидают синхронизации",
+					"pendingChangesDescription_other": "{{count}} изменения, сделанные офлайн, ожидают синхронизации",
+					"pendingChangesAction": "Открыть"
 				},
 				"storageSettings": {
 					"title": "Хранилище",
@@ -829,6 +835,38 @@
 				"totalTracks_many": "{{count}} треков",
 				"totalTracks_other": "{{count}} треков"
 			},
+			"pendingChanges": {
+				"title": "Ожидающие изменения",
+				"empty": "Нет ожидающих изменений.",
+				"totalCount_one": "{{count}} ожидающее изменение",
+				"totalCount_few": "{{count}} ожидающих изменения",
+				"totalCount_many": "{{count}} ожидающих изменений",
+				"totalCount_other": "{{count}} ожидающего изменения",
+				"autoSyncHint": "Синхронизируются автоматически, как только сервер снова станет доступен",
+				"syncNow": "Синхронизировать",
+				"clearAll": "Очистить всё",
+				"clearConfirmTitle": "Вы уверены, что хотите отменить все ожидающие изменения?",
+				"clearConfirmDescription": "Эти изменения никогда не будут отправлены на сервер. Это действие необратимо.",
+				"syncFailedMessage_one": "{{count}} офлайн-изменение не удалось синхронизировать",
+				"syncFailedMessage_few": "{{count}} офлайн-изменения не удалось синхронизировать",
+				"syncFailedMessage_many": "{{count}} офлайн-изменений не удалось синхронизировать",
+				"syncFailedMessage_other": "{{count}} офлайн-изменения не удалось синхронизировать",
+				"actions": {
+					"star": "Добавить в избранное",
+					"unstar": "Убрать из избранного",
+					"setRating": "Оценить на {{rating}}/5",
+					"playlistAddSongs_one": "Добавить {{count}} трек в плейлист",
+					"playlistAddSongs_few": "Добавить {{count}} трека в плейлист",
+					"playlistAddSongs_many": "Добавить {{count}} треков в плейлист",
+					"playlistAddSongs_other": "Добавить {{count}} трека в плейлист",
+					"playlistRemoveSongs_one": "Убрать {{count}} трек из плейлиста",
+					"playlistRemoveSongs_few": "Убрать {{count}} трека из плейлиста",
+					"playlistRemoveSongs_many": "Убрать {{count}} треков из плейлиста",
+					"playlistRemoveSongs_other": "Убрать {{count}} трека из плейлиста",
+					"playlistEdit": "Изменить сведения о плейлисте",
+					"playlistDelete": "Удалить плейлист"
+				}
+			},
 			"queue": {
 				"title": "Очередь",
 				"empty": "В очереди нет треков.",
@@ -905,6 +943,7 @@
 					"duration": "Длительность",
 					"codec": "Кодек",
 					"bitRate": "Битрейт",
+					"sampleRate": "Частота дискретизации",
 					"channelCount": "Каналы",
 					"size": "Размер",
 					"favorite": "Избранное",
@@ -1100,7 +1139,17 @@
 					"ru": "Русский",
 					"de": "Deutsch"
 				},
-				"fileSizes": ["байт", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"],
+				"fileSizes": [
+					"байт",
+					"КБ",
+					"МБ",
+					"ГБ",
+					"ТБ",
+					"ПБ",
+					"ЭБ",
+					"ЗБ",
+					"ЙБ"
+				],
 				"album_one": "Альбом",
 				"album_few": "Альбома",
 				"album_many": "Альбомов",

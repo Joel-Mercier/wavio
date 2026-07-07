@@ -675,10 +675,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               </HStack>
               <VStack className="mt-6 gap-y-8">
                 {!track.starred && (
-                  <FadeOutScaleDown
-                    onPress={handleFavoritePress}
-                    disabled={!isOnline}
-                  >
+                  <FadeOutScaleDown onPress={handleFavoritePress}>
                     <HStack className="items-center">
                       <Heart size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -687,10 +684,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown
-                  onPress={handleAddToPlaylistPress}
-                  disabled={!isOnline}
-                >
+                <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
                     <PlusCircle size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
@@ -701,10 +695,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {inPlaylistContext && (
-                  <FadeOutScaleDown
-                    onPress={handleRemoveFromPlaylistPress}
-                    disabled={!isOnline}
-                  >
+                  <FadeOutScaleDown onPress={handleRemoveFromPlaylistPress}>
                     <HStack className="items-center">
                       <CircleX size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
@@ -756,10 +747,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {capabilities.setRating && (
-                  <FadeOutScaleDown
-                    onPress={handleRatingPress}
-                    disabled={!isOnline}
-                  >
+                  <FadeOutScaleDown onPress={handleRatingPress}>
                     <HStack className="items-center justify-between">
                       <HStack className="items-center">
                         <Star size={24} color={gray200} />

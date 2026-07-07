@@ -908,7 +908,6 @@ export default function AlbumDetail() {
                 <HStack className="items-center gap-x-4">
                   <AnimatedHeart
                     filled={!!data?.album?.starred}
-                    disabled={!isOnline}
                     onPress={
                       data?.album?.starred
                         ? handleUnfavoritePress
@@ -1107,10 +1106,7 @@ export default function AlbumDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={handleAddAllToFavoritesPress}
-                disabled={!isOnline}
-              >
+              <FadeOutScaleDown onPress={handleAddAllToFavoritesPress}>
                 <HStack className="items-center">
                   <Heart size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1118,10 +1114,7 @@ export default function AlbumDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={handleAddToPlaylistPress}
-                disabled={!isOnline}
-              >
+              <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                 <HStack className="items-center">
                   <PlusCircle size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
@@ -1189,10 +1182,7 @@ export default function AlbumDetail() {
                 </HStack>
               </FadeOutScaleDown>
               {capabilities.setRating && (
-                <FadeOutScaleDown
-                  onPress={handleRatingPress}
-                  disabled={!isOnline}
-                >
+                <FadeOutScaleDown onPress={handleRatingPress}>
                   <HStack className="items-center justify-between">
                     <HStack className="items-center">
                       <Star size={24} color={gray200} />

@@ -441,7 +441,6 @@ export default function FloatingPlayer() {
               <AnimatedHeart
                 hitSlop={8}
                 filled={!!playingTrack.starred}
-                disabled={!isOnline}
                 onPress={
                   playingTrack.starred
                     ? handleUnfavoritePress
@@ -591,7 +590,6 @@ export default function FloatingPlayer() {
                 <AnimatedHeart
                   hitSlop={12}
                   filled={!!playingTrack.starred}
-                  disabled={!isOnline}
                   onPress={
                     playingTrack.starred
                       ? handleUnfavoritePress

@@ -23,6 +23,7 @@ export default function LibraryLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="trusted-certificates" />
       <Stack.Screen name="offline-downloads" />
+      <Stack.Screen name="pending-changes" />
       <Stack.Screen name="servers" />
       <Stack.Screen name="shares" />
       <Stack.Screen name="libraries" />

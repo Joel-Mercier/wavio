@@ -1,7 +1,7 @@
 import type { StreamFormat } from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
 
-function formatSampleRate(hz: number): string {
+export function formatSampleRate(hz: number): string {
   const khz = hz / 1000;
   return Number.isInteger(khz) ? String(khz) : khz.toFixed(1);
 }
