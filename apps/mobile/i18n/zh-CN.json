@@ -1064,7 +1064,17 @@
 					"ru": "Русский",
 					"de": "Deutsch"
 				},
-				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+				"fileSizes": [
+					"bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				],
 				"album_other": "专辑",
 				"artist_other": "艺人",
 				"playlist_other": "歌单",
