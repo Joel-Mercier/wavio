@@ -1070,11 +1070,11 @@
 					"changelog": "Änderungsprotokoll"
 				},
 				"languages": {
-					"zh-CN": "Vereinfachtes Chinesisch",
-					"en": "Englisch",
-					"fr": "Französisch",
-					"ru": "Russisch",
-					"de": "Deutsch"
+					"zh-CN": "",
+					"en": "",
+					"fr": "",
+					"ru": "",
+					"de": ""
 				},
 				"fileSizes": [
 					"Bytes",
