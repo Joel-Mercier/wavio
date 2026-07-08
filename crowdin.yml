@@ -5,3 +5,6 @@ files:
   - source: /apps/mobile/i18n/en.json
     translation: /apps/mobile/i18n/%two_letters_code%.json
     type: i18next_json
+  - source: /apps/landing/src/i18n/en.json
+    translation: /apps/landing/src/i18n/%two_letters_code%.json
+    type: json

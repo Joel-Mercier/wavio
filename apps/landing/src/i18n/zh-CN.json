@@ -1,0 +1,194 @@
+{
+	"meta": {
+		"homeTitle": "Wavio. 音乐由你，播放由你，风格由你。",
+		"homeDescription": "一款开源 Android 音乐播放器，为 Navidrome、Jellyfin 和 OpenSubsonic 服务器或本地音乐库而生。无广告，无追踪，支持完全离线使用。",
+		"privacyTitle": "Wavio 隐私政策",
+		"privacyDescription": "Wavio 只在您的设备上运行，仅与您配置的音乐服务器通信。我们不会收集、出售或分享您的任何数据。"
+	},
+	"nav": {
+		"features": "功能",
+		"github": "GitHub",
+		"download": "下载"
+	},
+	"hero": {
+		"tag": "一款开源音乐播放器",
+		"titleLines": [
+			[
+				"音乐",
+				"由你，"
+			],
+			[
+				"播放",
+				"由你，"
+			]
+		],
+		"titleAccent": "风格由你。",
+		"lead": "一款 Android 音乐播放器，支持 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库。打造仅属于你的音乐库与归属感。"
+	},
+	"cta": {
+		"releaseMain": "获取最新版本",
+		"releaseNote": "即将上架 Google Play",
+		"starGithub": "在 GitHub 上查看",
+		"viewSource": "查看源代码"
+	},
+	"highlightsLabel": "亮点速览",
+	"highlights": [
+		"开源，MIT 许可",
+		"永无广告",
+		"无追踪，不收集运行数据",
+		"可完全离线使用",
+		"支持 Android Auto",
+		"支持 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库"
+	],
+	"features": {
+		"headingPre": "只播放",
+		"headingEm": "不越界",
+		"headingPost": "的音乐播放器。",
+		"sub": "每个界面，都为你的听歌习惯而生。快速、安静，由你掌控。",
+		"home": {
+			"label": "首页",
+			"title": "你的曲库，井井有条。",
+			"desc": "\t最近播放、最近添加、最多播放和网络电台，首屏尽览。"
+		},
+		"audiophile": {
+			"label": "高保真",
+			"title": "调声，而非调响。",
+			"desc": "音质设置、无限播放、回放增益、均衡器。"
+		},
+		"offline": {
+			"label": "离线模式",
+			"title": "离线，不受限。"
+		},
+		"quote": {
+			"label": "纯净",
+			"title": "无广告。无账户。无追踪。回归音乐应用本该有的样子。"
+		},
+		"playlists": {
+			"label": "歌单",
+			"title": "智能歌单，随你定制。"
+		},
+		"auto": {
+			"label": "车载",
+			"title": "Android Auto，原生支持。"
+		},
+		"queue": {
+			"label": "播放队列",
+			"title": "播放队列，真正可控。",
+			"desc": "排序、编辑、清空。一键保存当前队列为歌单。"
+		},
+		"servers": {
+			"label": "服务器",
+			"title": "多个后端，一键切换。",
+			"desc": "家里用 Navidrome，朋友那用 Jellyfin，别处还有 OpenSubsonic，再加上本地音乐库作备份。一个应用接管所有。"
+		},
+		"sleep": {
+			"label": "睡眠定时",
+			"title": "渐弱入眠。",
+			"desc": "逐渐静默，让喜欢的专辑伴你缓缓入眠。"
+		},
+		"podcasts": {
+			"label": "播客",
+			"title": "边走边听，总有收获。",
+			"desc": "搜索、订阅和播放由 Taddy 提供的播客。音乐与播客，一应俱全。"
+		},
+		"radio": {
+			"label": "网络电台",
+			"title": "想听就听，哪都行。",
+			"desc": "一键播放在你的服务器上收藏的网络电台。浏览、保存、实时收听。"
+		},
+		"lyrics": {
+			"label": "歌词",
+			"title": "同步跟唱。",
+			"desc": "来自 LRCLib 的同步歌词，逐行滚动，随曲同步。"
+		},
+		"widgets": {
+			"label": "桌面小组件",
+			"title": "一目了然。",
+			"desc": "正在播放和最近播放，直接显示在 Android 桌面上。无需打开应用。"
+		}
+	},
+	"showcase": {
+		"headingPre": "每个界面，",
+		"headingEm": "恰到好处。",
+		"sub": "界面随你的使用习惯调整。浏览、播放、队列、调音、下载，无感体验。"
+	},
+	"final": {
+		"titleL1": "把音乐，",
+		"titleEm": "带回家。",
+		"desc": "免费、开源，由一群坚信音乐库就该属于你的人打造。"
+	},
+	"footer": {
+		"tagline": "一款开源 Android 音乐播放器，兼容 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库。",
+		"product": "产品",
+		"features": "功能",
+		"download": "下载",
+		"changelog": "更新日志",
+		"openSource": "开源",
+		"github": "GitHub",
+		"legal": "法律",
+		"privacy": "隐私政策",
+		"copyright": "© 2026 Joel Mercier",
+		"madeWith": "基于 Astro 和 TailwindCSS 构建，部署于 Vercel。文字使用 Inter 和 Noto Sans SC 字体。"
+	},
+	"privacy": {
+		"back": "返回首页",
+		"titlePre": "隐私政策，",
+		"titleEm": "平平无奇的那种。",
+		"updated": "最后更新于 2026年5月27日",
+		"readTime": "阅读约需 5分钟",
+		"summaryLabel": "省流总结",
+		"summary": "Wavio 完全运行于你的设备本地，仅与你配置的音乐服务器通信。我们不会收集、出售或分享你的数据——因为我们根本没有这些数据。",
+		"sections": [
+			{
+				"num": "01",
+				"title": "关于我们",
+				"body": "<p>Wavio 是一款免费、开源的 Android 应用，由独立贡献者维护。源代码根据 MIT 许可证发布，任何人都可以在 <a href=\"https://github.com/Joel-Mercier/wavio\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">GitHub</a> 上查看。</p>"
+			},
+			{
+				"num": "02",
+				"title": "Wavio 向你收集哪些信息",
+				"body": "<p><strong>不涉及任何个人信息。</strong> Wavio 没有账户系统、没有用户档案、没有广告 SDK、没有行为分析工具、也没有社交追踪器。我们不运营任何存储用户身份或收听记录的服务器。</p>\n\t\t\t\t\t\t<p>从你的设备中发出的数据，仅有用于播放音乐所需的请求，以及帮助我们定位崩溃问题的诊断信息，具体见下两节。</p>"
+			},
+			{
+				"num": "03",
+				"title": "哪些数据留在你的设备上",
+				"body": "<p>作为一款音乐播放器，Wavio 会在你的手机本地存储以下数据：</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>你添加的每台服务器的连接信息（URL、用户名以及加密的密码或令牌）。</li>\n\t\t\t\t\t\t<li>你的播放队列、最近播放和最近搜索的项目、睡眠定时和均衡器设置，以及其他应用偏好。</li>\n\t\t\t\t\t\t<li>你选择下载以供离线收听的曲目，以及从服务器获取的缓存的封面和元数据。</li>\n\t\t\t\t\t\t\t<li>如果你启用播客，则存储播客 API 凭证（Taddy）。.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>这些信息存储在应用的私有存储空间中。卸载 Wavio 将删除所有数据。</p>"
+			},
+			{
+				"num": "04",
+				"title": "你的音乐服务器会记录什么",
+				"body": "<p>当你将 Wavio 连接到 Navidrome、Jellyfin 或 OpenSubsonic 服务时，应用会使用你提供的凭证直接与该服务器通信。与任何其他客户端一样，服务器通常会记录你的 IP 地址、发出的请求以及收听活动。</p>\n\t\t\t\t\t\t<p>Wavio 的贡献者不运营那些服务器，也无法访问它们的日志记录。</p>\n\t\t\t\t\t<p>具体请查阅你所连接的服务器对应的隐私政策。</p>"
+			},
+			{
+				"num": "05",
+				"title": "崩溃与错误报告",
+				"body": "<p>Wavio 的正式版本使用 <a href=\"https://sentry.io/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Sentry</a> 来报告崩溃和意外错误，以便我们修复它们。每份报告都包含技术上下文，如堆栈跟踪、应用版本、设备型号、Android 版本，以及发送报告的 IP 地址。</p>\n\t\t\t\t\t\t<p>我们不会为你分配标识符，不会追踪你访问的页面，不会记录你收听的内容，也不会建立用户画像。报告仅用于诊断错误，并按照 <a href=\"https://sentry.io/privacy/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Sentry 的数据保留政策</a> 进行保留。</p>"
+			},
+			{
+				"num": "06",
+				"title": "Android 权限",
+				"body": "<p>Wavio 仅请求播放音乐所需的权限：</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong>网络</strong> 用于连接你的音乐服务器及下述第三方服务。</li>\n\t\t\t\t\t\t<li><strong>前台服务与媒体播放</strong> 用于在屏幕关闭时保持音频持续播放。</li>\n\t\t\t\t\t\t<li><strong>通知</strong> 于在锁屏界面和通知栏中显示播放控制。</li>\n\t\t\t\t\t\t\t<li><strong>修改音频设置</strong> 用于应用系统均衡器。</li>\n\t\t\t\t\t\t<li><strong>读取媒体音频与存储</strong> 用于保存和读取已下载的曲目，以便离线播放。</li>\n\t\t\t\t\t\t\t<li><strong>振动</strong> 用于某些控制按钮的轻微触感反馈。</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<p>Wavio 不会请求访问你的通讯录、精确位置、相机或其他任何敏感数据。</p>"
+			},
+			{
+				"num": "07",
+				"title": "第三方服务",
+				"body": "<p>除了你的音乐服务器和 Sentry 之外，Wavio 还会与少量外部服务通信，且仅在相应功能被使用时才会进行：</p>\n\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://lrclib.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">LRCLib</a></strong> 当你打开某首曲目的歌词视图时，会向其查询同步歌词。</li>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://taddy.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Taddy</a></strong> 为播客搜索和元数据提供支持，仅当你在设置中提供了自己的 Taddy API 密钥和用户 ID 时才会被调用。</li>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://www.radio-browser.info/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Radio Browser</a></strong> 提供网络电台目录，当你浏览或搜索电台时会被查询。</li>\n\t\t\t\t\t\t\t<li><strong>Google Cast</strong> 当你将播放内容投射到兼容 Chromecast 的设备时使用。该会话将适用 Google 的相关条款。</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<p>Wavio 未集成任何广告网络、数据分析提供商或社交追踪器。</p>"
+			},
+			{
+				"num": "08",
+				"title": "儿童",
+				"body": "<p>Wavio 适用于所有年龄段的用户，且不会有意收集包括儿童在内的任何人的信息。</p>"
+			},
+			{
+				"num": "09",
+				"title": "本政策的变更",
+				"body": "<p>如果本政策发生变更，更新后的版本将在此处发布，并在 GitHub 上的项目更新日志中公布。</p>"
+			},
+			{
+				"num": "10",
+				"title": "联系方式",
+				"body": "<p>有任何问题、疑虑或好奇？欢迎在 <a href=\"https://github.com/Joel-Mercier/wavio/issues\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Wavio GitHub 仓库</a> 中提交 Issue，维护者会及时回复你。</p>"
+			}
+		]
+	}
+}
