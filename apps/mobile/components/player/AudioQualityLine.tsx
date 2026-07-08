@@ -28,6 +28,7 @@ import { useConnectionType } from "@/hooks/useIsOnline";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
 import { formatAudioQuality, getTranscodeInfo } from "@/utils/audioQuality";
 
@@ -182,23 +183,30 @@ export default function AudioQualityLine({
   // Every remote backend transcodes server-side; only the on-device library
   // plays untouched files off disk, so it never shows a transcode.
   const isRemote = serverType !== "local";
+  // A downloaded track plays straight off disk (see resolveTrackUrl in
+  // services/player.ts), so it's never transcoded regardless of streaming
+  // settings — mirror that guard here so the label matches what's playing.
+  const isDownloaded = useOffline((s) =>
+    track ? track.id in s.downloadedTracks : false,
+  );
 
   const label = formatAudioQuality(track);
   if (!label) return null;
 
-  const transcode = isRemote
-    ? getTranscodeInfo(track, {
-        streamingFormat,
-        effectiveMaxBitRate: getEffectiveMaxBitRate(
-          maxBitRate,
-          cellularMaxBitRate,
-        ),
-        // A raw-mode bitrate-forced transcode lands on AAC for Jellyfin (see
-        // JELLYFIN_DEFAULT_TRANSCODE_CODEC in services/jellyfin/streaming.ts);
-        // Subsonic keeps the source codec.
-        rawTranscodeFormat: serverType === "jellyfin" ? "aac" : undefined,
-      })
-    : { active: false as const, fromLabel: null, toLabel: null };
+  const transcode =
+    isRemote && !isDownloaded
+      ? getTranscodeInfo(track, {
+          streamingFormat,
+          effectiveMaxBitRate: getEffectiveMaxBitRate(
+            maxBitRate,
+            cellularMaxBitRate,
+          ),
+          // A raw-mode bitrate-forced transcode lands on AAC for Jellyfin (see
+          // JELLYFIN_DEFAULT_TRANSCODE_CODEC in services/jellyfin/streaming.ts);
+          // Subsonic keeps the source codec.
+          rawTranscodeFormat: serverType === "jellyfin" ? "aac" : undefined,
+        })
+      : { active: false as const, fromLabel: null, toLabel: null };
 
   if (transcode.active && transcode.fromLabel && transcode.toLabel) {
     return (
