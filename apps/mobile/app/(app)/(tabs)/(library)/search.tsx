@@ -337,7 +337,6 @@ export default function LibrarySearchScreen() {
           }
           renderItem={({
             item,
-            index,
           }: {
             item: FuseResult<
               AlbumID3 &
@@ -347,15 +346,14 @@ export default function LibrarySearchScreen() {
                 LibraryFolder &
                 LibraryRadioStation
             >;
-            index: number;
           }) =>
             isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders ? (
               <Box className="px-6">
-                <LibraryListItemSkeleton layout="list" index={index} />
+                <LibraryListItemSkeleton layout="list" />
               </Box>
             ) : (
               <Box className="px-6">
-                <LibraryListItem item={item.item} layout="list" index={index} />
+                <LibraryListItem item={item.item} layout="list" />
               </Box>
             )
           }

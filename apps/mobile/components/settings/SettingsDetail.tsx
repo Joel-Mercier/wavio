@@ -197,6 +197,10 @@ export default function SettingsDetail() {
   const setRadioBrowserEnabled = useApp(
     (store) => store.setRadioBrowserEnabled,
   );
+  const hapticFeedbackEnabled = useApp((store) => store.hapticFeedbackEnabled);
+  const setHapticFeedbackEnabled = useApp(
+    (store) => store.setHapticFeedbackEnabled,
+  );
   const clearTaddyPodcastsConfig = usePodcasts(
     (store) => store.clearTaddyPodcastsConfig,
   );
@@ -814,6 +818,16 @@ export default function SettingsDetail() {
                 `app.settings.displaySettings.lyricsSourceOptions.${lyricsSource}`,
               )}
               onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
+            />
+            <Divider className="bg-primary-400" />
+            <SettingsSectionTitle
+              title={t("app.settings.hapticsSettings.title")}
+            />
+            <SettingsToggleRow
+              label={t("app.settings.hapticsSettings.enabledLabel")}
+              description={t("app.settings.hapticsSettings.enabledDescription")}
+              value={hapticFeedbackEnabled}
+              onToggle={(value) => setHapticFeedbackEnabled(value)}
             />
             <Divider className="bg-primary-400" />
             <SettingsSectionTitle

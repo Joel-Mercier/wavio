@@ -6,9 +6,10 @@ import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import AlbumLayoutToggle from "@/components/albums/AlbumLayoutToggle";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -20,10 +21,12 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useSearch3 } from "@/hooks/backend/useSearching";
+import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 
@@ -38,6 +41,16 @@ export default function AllAlbumsScreen() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const musicFolderId = useCurrentMusicFolderId();
+  const { width } = useWindowDimensions();
+  const { layout, toggle } = useAlbumScreenLayout("library-albums");
+  const gridColumns =
+    layout === "grid"
+      ? gridColumnCount(width, {
+          minItemWidth: 160,
+          minColumns: 3,
+          maxColumns: 5,
+        })
+      : 1;
   const form = useForm({ defaultValues: { query: "" } });
   const query = useStore(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -100,16 +113,19 @@ export default function AllAlbumsScreen() {
         className="bg-primary-600 px-6 py-6 mb-6"
         style={{ paddingTop: insets.top + 24 }}
       >
-        <HStack className="items-center mb-4">
-          <FadeOutScaleDown
-            className="mr-4"
-            onPress={() => goBackOrHome(router)}
-          >
-            <ArrowLeft size={24} color={white} />
-          </FadeOutScaleDown>
-          <Heading className="text-white" size="xl">
-            {t("app.library.allAlbums")}
-          </Heading>
+        <HStack className="items-center justify-between mb-4">
+          <HStack className="items-center flex-1">
+            <FadeOutScaleDown
+              className="mr-4"
+              onPress={() => goBackOrHome(router)}
+            >
+              <ArrowLeft size={24} color={white} />
+            </FadeOutScaleDown>
+            <Heading className="text-white" size="xl">
+              {t("app.library.allAlbums")}
+            </Heading>
+          </HStack>
+          <AlbumLayoutToggle layout={layout} onPress={toggle} />
         </HStack>
         <form.Field name="query">
           {(field) => (
@@ -141,20 +157,30 @@ export default function AllAlbumsScreen() {
       {!error && (
         <FlashList
           ref={listRef}
+          key={`all-albums-${layout}-${gridColumns}`}
           // Off by default it keeps the visible item pinned when the filtered
           // set changes above the viewport, which hides the new top matches on
           // query edits and overrides our scroll-to-top. We only ever append
           // (pagination), so position preservation isn't needed here.
           maintainVisibleContentPosition={{ disabled: true }}
           data={isLoading ? loadingData(12) : albums}
+          numColumns={gridColumns}
+          extraData={layout}
           keyExtractor={(item, index) =>
             isLoading ? `skeleton-${index}` : (item as AlbumID3).id
           }
           renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
             isLoading ? (
-              <AlbumListItemSkeleton index={index} />
+              <AlbumListItemSkeleton
+                index={index}
+                layout={layout === "grid" ? "grid" : "vertical"}
+              />
             ) : (
-              <AlbumListItem album={item} index={index} />
+              <AlbumListItem
+                album={item}
+                index={index}
+                layout={layout === "grid" ? "grid" : "vertical"}
+              />
             )
           }
           ListEmptyComponent={() =>
@@ -172,6 +198,7 @@ export default function AllAlbumsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,
+            paddingHorizontal: layout === "grid" ? 16 : 0,
           }}
           onEndReached={() => {
             if (!isSearching && hasNextPage && !isFetchingNextPage) {

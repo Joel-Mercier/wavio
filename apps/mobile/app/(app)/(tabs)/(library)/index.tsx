@@ -13,7 +13,7 @@ import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
 import List from "lucide-react-native/dist/esm/icons/list.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,6 +44,7 @@ import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useDownloadedCollections } from "@/hooks/offline";
+import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -84,7 +85,8 @@ export default function LibraryScreen() {
   const router = useRouter();
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
-  const [layout, setLayout] = useState<LibraryLayout>("list");
+  const { layout, toggle: handleLayoutPress } =
+    useAlbumScreenLayout("library-index");
   const filter = useApp((store) => store.libraryFilter);
   const setFilter = useApp((store) => store.setLibraryFilter);
   const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
@@ -150,10 +152,6 @@ export default function LibraryScreen() {
     isFetching: isFetchingMusicFolders,
     refetch: refetchMusicFolders,
   } = useMusicFolders();
-
-  const handleLayoutPress = () => {
-    setLayout(layout === "list" ? "grid" : "list");
-  };
 
   const handleFilterPress = (type: LibraryFilter) => {
     setFilter(
@@ -561,30 +559,23 @@ export default function LibraryScreen() {
             refetchStarred();
             refetchMusicFolders();
           }}
-          renderItem={({ item, index, extraData }) => {
+          renderItem={({ item, extraData }) => {
             const { layout: itemLayout } = extraData as {
               layout: LibraryLayout;
             };
             return isLoading ? (
-              <LibraryListItemSkeleton
-                layout={itemLayout}
-                index={index}
-                numColumns={gridColumns}
-              />
+              <LibraryListItemSkeleton layout={itemLayout} />
             ) : (
-              <LibraryListItem
-                item={item}
-                layout={itemLayout}
-                key={item.id}
-                index={index}
-                numColumns={gridColumns}
-              />
+              <LibraryListItem item={item} layout={itemLayout} key={item.id} />
             );
           }}
           extraData={{ layout, gridColumns }}
           ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
           contentContainerStyle={{
-            paddingHorizontal: 24,
+            // Grid cells add their own 8px (px-2) each side; drop the container
+            // padding to 16 so the outer edge stays at 24 and every column has
+            // equal width. List rows keep the full 24.
+            paddingHorizontal: layout === "grid" ? 16 : 24,
             paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
