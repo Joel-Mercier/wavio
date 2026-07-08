@@ -552,9 +552,9 @@
 					"autoSignOutLabel": "Abmelden, wenn der Server nicht erreichbar ist",
 					"autoSignOutDescription": "Automatisch abmelden, wenn Dein Server nicht erreichbar ist, das Internet jedoch funktioniert. Deaktiviere diese Option, um angemeldet zu bleiben und weiterhin Deine heruntergeladenen Titel anzusehen.",
 					"pendingChangesLabel": "Ausstehende Änderungen",
+					"pendingChangesAction": "Anzeigen",
 					"pendingChangesDescription_one": "{{count}} offline vorgenommene Änderung wartet auf Synchronisierung",
-					"pendingChangesDescription_other": "{{count}} offline vorgenommene Änderungen warten auf Synchronisierung",
-					"pendingChangesAction": "Anzeigen"
+					"pendingChangesDescription_other": "{{count}} offline vorgenommene Änderungen warten auf Synchronisierung"
 				},
 				"storageSettings": {
 					"title": "Speicher",
@@ -822,26 +822,26 @@
 			"pendingChanges": {
 				"title": "Ausstehende Änderungen",
 				"empty": "Keine ausstehenden Änderungen.",
-				"totalCount_one": "{{count}} ausstehende Änderung",
-				"totalCount_other": "{{count}} ausstehende Änderungen",
 				"autoSyncHint": "Wird automatisch synchronisiert, sobald dein Server wieder erreichbar ist",
 				"syncNow": "Jetzt synchronisieren",
 				"clearAll": "Alle löschen",
 				"clearConfirmTitle": "Möchtest du wirklich alle ausstehenden Änderungen verwerfen?",
 				"clearConfirmDescription": "Diese Änderungen werden nie an deinen Server gesendet. Dies kann nicht rückgängig gemacht werden.",
-				"syncFailedMessage_one": "{{count}} Offline-Änderung konnte nicht synchronisiert werden",
-				"syncFailedMessage_other": "{{count}} Offline-Änderungen konnten nicht synchronisiert werden",
 				"actions": {
 					"star": "Zu Favoriten hinzufügen",
 					"unstar": "Aus Favoriten entfernen",
 					"setRating": "Mit {{rating}}/5 bewerten",
+					"playlistEdit": "Playlist-Details bearbeiten",
+					"playlistDelete": "Playlist löschen",
 					"playlistAddSongs_one": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistAddSongs_other": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistRemoveSongs_one": "{{count}} Titel aus der Playlist entfernen",
-					"playlistRemoveSongs_other": "{{count}} Titel aus der Playlist entfernen",
-					"playlistEdit": "Playlist-Details bearbeiten",
-					"playlistDelete": "Playlist löschen"
-				}
+					"playlistRemoveSongs_other": "{{count}} Titel aus der Playlist entfernen"
+				},
+				"totalCount_one": "{{count}} ausstehende Änderung",
+				"totalCount_other": "{{count}} ausstehende Änderungen",
+				"syncFailedMessage_one": "{{count}} Offline-Änderung konnte nicht synchronisiert werden",
+				"syncFailedMessage_other": "{{count}} Offline-Änderungen konnten nicht synchronisiert werden"
 			},
 			"queue": {
 				"title": "Warteschlange",

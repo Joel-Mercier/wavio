@@ -546,8 +546,8 @@
 					"autoSignOutLabel": "服务器无法访问时退出登录",
 					"autoSignOutDescription": "当网络正常但无法访问服务器时自动退出登录。关闭后可保持登录状态并继续浏览已下载的曲目。",
 					"pendingChangesLabel": "待同步的更改",
-					"pendingChangesDescription_other": "{{count}} 项离线更改等待同步",
-					"pendingChangesAction": "查看"
+					"pendingChangesAction": "查看",
+					"pendingChangesDescription_other": "{{count}} 项离线更改等待同步"
 				},
 				"storageSettings": {
 					"title": "存储空间",
@@ -814,22 +814,22 @@
 			"pendingChanges": {
 				"title": "待同步的更改",
 				"empty": "没有待同步的更改。",
-				"totalCount_other": "{{count}} 项待同步更改",
 				"autoSyncHint": "服务器恢复连接后将自动同步",
 				"syncNow": "立即同步",
 				"clearAll": "清除全部",
 				"clearConfirmTitle": "确定要放弃所有待同步的更改吗？",
 				"clearConfirmDescription": "这些更改将不会发送到服务器。此操作无法撤销。",
-				"syncFailedMessage_other": "{{count}} 项离线更改同步失败",
 				"actions": {
 					"star": "添加到收藏",
 					"unstar": "从收藏中移除",
 					"setRating": "评分 {{rating}}/5",
-					"playlistAddSongs_other": "添加 {{count}} 首歌曲到播放列表",
-					"playlistRemoveSongs_other": "从播放列表移除 {{count}} 首歌曲",
 					"playlistEdit": "编辑播放列表信息",
-					"playlistDelete": "删除播放列表"
-				}
+					"playlistDelete": "删除播放列表",
+					"playlistAddSongs_other": "添加 {{count}} 首歌曲到播放列表",
+					"playlistRemoveSongs_other": "从播放列表移除 {{count}} 首歌曲"
+				},
+				"totalCount_other": "{{count}} 项待同步更改",
+				"syncFailedMessage_other": "{{count}} 项离线更改同步失败"
 			},
 			"queue": {
 				"title": "播放队列",

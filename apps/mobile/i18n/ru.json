@@ -564,11 +564,11 @@
 					"autoSignOutLabel": "Выходить, если сервер недоступен",
 					"autoSignOutDescription": "Автоматически выходить из аккаунта, если сервер не отвечает, хотя интернет есть. Отключи опцию, чтобы оставаться в приложении и слушать скачанные треки.",
 					"pendingChangesLabel": "Ожидающие изменения",
+					"pendingChangesAction": "Открыть",
 					"pendingChangesDescription_one": "{{count}} изменение, сделанное офлайн, ожидает синхронизации",
 					"pendingChangesDescription_few": "{{count}} изменения, сделанные офлайн, ожидают синхронизации",
 					"pendingChangesDescription_many": "{{count}} изменений, сделанных офлайн, ожидают синхронизации",
-					"pendingChangesDescription_other": "{{count}} изменения, сделанные офлайн, ожидают синхронизации",
-					"pendingChangesAction": "Открыть"
+					"pendingChangesDescription_other": "{{count}} изменения, сделанные офлайн, ожидают синхронизации"
 				},
 				"storageSettings": {
 					"title": "Хранилище",
@@ -838,23 +838,17 @@
 			"pendingChanges": {
 				"title": "Ожидающие изменения",
 				"empty": "Нет ожидающих изменений.",
-				"totalCount_one": "{{count}} ожидающее изменение",
-				"totalCount_few": "{{count}} ожидающих изменения",
-				"totalCount_many": "{{count}} ожидающих изменений",
-				"totalCount_other": "{{count}} ожидающего изменения",
 				"autoSyncHint": "Синхронизируются автоматически, как только сервер снова станет доступен",
 				"syncNow": "Синхронизировать",
 				"clearAll": "Очистить всё",
 				"clearConfirmTitle": "Вы уверены, что хотите отменить все ожидающие изменения?",
 				"clearConfirmDescription": "Эти изменения никогда не будут отправлены на сервер. Это действие необратимо.",
-				"syncFailedMessage_one": "{{count}} офлайн-изменение не удалось синхронизировать",
-				"syncFailedMessage_few": "{{count}} офлайн-изменения не удалось синхронизировать",
-				"syncFailedMessage_many": "{{count}} офлайн-изменений не удалось синхронизировать",
-				"syncFailedMessage_other": "{{count}} офлайн-изменения не удалось синхронизировать",
 				"actions": {
 					"star": "Добавить в избранное",
 					"unstar": "Убрать из избранного",
 					"setRating": "Оценить на {{rating}}/5",
+					"playlistEdit": "Изменить сведения о плейлисте",
+					"playlistDelete": "Удалить плейлист",
 					"playlistAddSongs_one": "Добавить {{count}} трек в плейлист",
 					"playlistAddSongs_few": "Добавить {{count}} трека в плейлист",
 					"playlistAddSongs_many": "Добавить {{count}} треков в плейлист",
@@ -862,10 +856,16 @@
 					"playlistRemoveSongs_one": "Убрать {{count}} трек из плейлиста",
 					"playlistRemoveSongs_few": "Убрать {{count}} трека из плейлиста",
 					"playlistRemoveSongs_many": "Убрать {{count}} треков из плейлиста",
-					"playlistRemoveSongs_other": "Убрать {{count}} трека из плейлиста",
-					"playlistEdit": "Изменить сведения о плейлисте",
-					"playlistDelete": "Удалить плейлист"
-				}
+					"playlistRemoveSongs_other": "Убрать {{count}} трека из плейлиста"
+				},
+				"totalCount_one": "{{count}} ожидающее изменение",
+				"totalCount_few": "{{count}} ожидающих изменения",
+				"totalCount_many": "{{count}} ожидающих изменений",
+				"totalCount_other": "{{count}} ожидающего изменения",
+				"syncFailedMessage_one": "{{count}} офлайн-изменение не удалось синхронизировать",
+				"syncFailedMessage_few": "{{count}} офлайн-изменения не удалось синхронизировать",
+				"syncFailedMessage_many": "{{count}} офлайн-изменений не удалось синхронизировать",
+				"syncFailedMessage_other": "{{count}} офлайн-изменения не удалось синхронизировать"
 			},
 			"queue": {
 				"title": "Очередь",
