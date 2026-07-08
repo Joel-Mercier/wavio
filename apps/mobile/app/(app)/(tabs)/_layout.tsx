@@ -12,7 +12,6 @@ import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
-import DrawerMenu from "@/components/DrawerMenu";
 import {
   SIDEBAR_WIDTH,
   TAB_BAR_CONTENT_HEIGHT,
@@ -25,8 +24,6 @@ import useApp from "@/stores/app";
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const showDrawer = useApp((store) => store.showDrawer);
-  const setShowDrawer = useApp((store) => store.setShowDrawer);
   const showAddTab = useApp((store) => store.showAddTab);
   const addBottomSheetRef = useRef<BottomSheetModal>(null);
   const emerald = useCSSVariable("--color-emerald-500") as string | undefined;
@@ -37,10 +34,6 @@ export default function TabLayout() {
   const isOnline = useIsOnline();
   const isWideLayout = useApp((store) => store.isWideLayout);
   const insets = useSafeAreaInsets();
-
-  const handleClose = () => {
-    setShowDrawer(false);
-  };
 
   const handleAddTabPress = () => {
     addBottomSheetRef.current?.present();
@@ -182,7 +175,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <DrawerMenu onClose={handleClose} showDrawer={showDrawer} />
       <AddBottomSheet ref={addBottomSheetRef} />
     </>
   );

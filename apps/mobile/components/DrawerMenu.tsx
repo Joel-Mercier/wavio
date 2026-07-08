@@ -14,18 +14,11 @@ import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, useWindowDimensions } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
-import {
-  Drawer,
-  DrawerBackdrop,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
-} from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
@@ -48,7 +41,6 @@ import useServers, { type ServerUser } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 
 interface DrawerMenuProps {
-  showDrawer: boolean;
   onClose: () => void;
 }
 
@@ -80,14 +72,13 @@ function SwitchUserRow({
   );
 }
 
-export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
+export default function DrawerMenu({ onClose }: DrawerMenuProps) {
   const [white, red500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-red-500",
   ]) as string[];
   const { t, i18n } = useTranslation();
   const { bottom, top, left, right } = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const isWideLayout = useApp((store) => store.isWideLayout);
   const router = useRouter();
   const logout = useAuth((store) => store.logout);
@@ -162,228 +153,229 @@ export default function DrawerMenu({ showDrawer, onClose }: DrawerMenuProps) {
   };
 
   return (
-    <Drawer isOpen={showDrawer} onClose={onClose} size="lg" anchor="left">
-      <DrawerBackdrop />
-      <DrawerContent
-        className="bg-primary-600 border-0"
-        style={{
-          paddingTop: top,
-          paddingBottom: bottom,
-          paddingLeft: left,
-          paddingRight: right,
-          // The lg drawer is 3/4 of the screen — far too wide in landscape;
-          // roughly halve it there.
-          ...(isWideLayout ? { width: width * 0.4 } : {}),
-        }}
+    <View
+      className="flex-1 bg-primary-600"
+      style={{
+        paddingTop: top,
+        paddingBottom: bottom,
+        paddingLeft: left,
+        paddingRight: right,
+      }}
+    >
+      <View
+        className={cn(
+          "justify-between items-center flex-row pb-4",
+          isWideLayout && "pb-1",
+        )}
       >
-        <DrawerHeader className={cn(isWideLayout && "pb-1")}>
-          <HStack
-            className={cn(
-              "flex-1 items-center m-1 border-b-2 border-primary-500",
-              isWideLayout ? "px-4 py-2" : "p-4",
-            )}
-          >
-            <Pressable
-              className="flex-row flex-1 items-center"
-              onPress={() => {
-                onClose();
-                router.navigate(`/profile/${username}`);
-              }}
-            >
-              <Avatar className="mr-4 bg-primary-400 w-10 h-10">
-                <AvatarFallbackText className="font-body">
-                  {username}
-                </AvatarFallbackText>
-              </Avatar>
-              <VStack className="flex-1">
-                <Heading
-                  numberOfLines={1}
-                  size="lg"
-                  className="text-white font-bold"
-                >
-                  {username}
-                </Heading>
-                <Text className="text-primary-300 text-sm">
-                  {t("app.shared.sidebar.seeProfile")}
-                </Text>
-              </VStack>
-            </Pressable>
-            {otherUsers.length > 0 && (
-              <Select>
-                <SelectTrigger
-                  variant="outline"
-                  className="border-0 p-2 rounded-full active:bg-primary-800"
-                  accessibilityLabel={t("app.shared.sidebar.switchUser")}
-                >
-                  <ArrowLeftRight size={22} color={white} />
-                </SelectTrigger>
-                <SelectPortal>
-                  <SelectBackdrop />
-                  <SelectContent className="bg-primary-600">
-                    <SelectDragIndicatorWrapper className="mb-4">
-                      <SelectDragIndicator />
-                    </SelectDragIndicatorWrapper>
-                    <SelectScrollView>
-                      <Box className="px-4 pb-12 w-full">
-                        {otherUsers.map((u) => (
-                          <SwitchUserRow
-                            key={`${u.serverId}:${u.username}`}
-                            user={u}
-                            onSelect={handleSwitchUser}
-                          />
-                        ))}
-                      </Box>
-                    </SelectScrollView>
-                  </SelectContent>
-                </SelectPortal>
-              </Select>
-            )}
-          </HStack>
-        </DrawerHeader>
-        <DrawerBody
-          className={cn(isWideLayout && "mt-2")}
-          style={isWideLayout ? { flex: 1 } : undefined}
+        <HStack
+          className={cn(
+            "flex-1 items-center m-1 border-b-2 border-primary-500",
+            isWideLayout ? "px-4 py-2" : "p-4",
+          )}
         >
-          <VStack className={cn(!isWideLayout && "justify-between h-full")}>
-            <VStack>
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleActivityPress}
+          <Pressable
+            className="flex-row flex-1 items-center"
+            onPress={() => {
+              onClose();
+              router.navigate(`/profile/${username}`);
+            }}
+          >
+            <Avatar className="mr-4 bg-primary-400 w-10 h-10">
+              <AvatarFallbackText className="font-body">
+                {username}
+              </AvatarFallbackText>
+            </Avatar>
+            <VStack className="flex-1">
+              <Heading
+                numberOfLines={1}
+                size="lg"
+                className="text-white font-bold"
               >
-                <History size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.activity")}
-                </Heading>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleQueuePress}
-              >
-                <ListMusic size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.queue")}
-                </Heading>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleLibrariesPress}
-              >
-                <Library size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.libraries")}
-                </Heading>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleServersPress}
-              >
-                <Server size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.servers")}
-                </Heading>
-              </Pressable>
-              {capabilities.sharing && (
-                <Pressable
-                  className={cn(
-                    "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                    isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                  )}
-                  onPress={handleSharesPress}
-                >
-                  <Share2 size={24} color={white} />
-                  <Heading size="lg" className="text-white font-normal">
-                    {t("app.shared.sidebar.shares")}
-                  </Heading>
-                </Pressable>
-              )}
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleSettingsPress}
-              >
-                <Settings size={24} color={white} />
-                <Heading size="lg" className="text-white font-normal">
-                  {t("app.shared.sidebar.settings")}
-                </Heading>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
-                )}
-                onPress={handleLogoutPress}
-              >
-                <LogOut size={24} color={red500} />
-                <Heading size="lg" className="text-red-500 font-normal">
-                  {t("app.shared.sidebar.logout")}
-                </Heading>
-              </Pressable>
-            </VStack>
-            <VStack
-              className={cn(
-                "border-t-2 border-primary-500",
-                isWideLayout ? "mt-2 pt-3" : "mt-4 pt-4",
-              )}
-            >
-              <Pressable
-                className={cn(
-                  "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
-                )}
-                onPress={handlePrivacyPolicyPress}
-              >
-                <ShieldCheck size={20} color={white} />
-                <Text className="text-white">
-                  {t("app.shared.sidebar.privacyPolicy")}
-                </Text>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
-                )}
-                onPress={handleBugReportPress}
-              >
-                <Bug size={20} color={white} />
-                <Text className="text-white">
-                  {t("app.shared.sidebar.bugReport")}
-                </Text>
-              </Pressable>
-              <Pressable
-                className={cn(
-                  "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
-                  isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
-                )}
-                onPress={handleChangelogPress}
-              >
-                <ClipboardClock size={20} color={white} />
-                <Text className="text-white">
-                  {t("app.shared.sidebar.changelog")}
-                </Text>
-              </Pressable>
-              <Text className="mt-2 ml-4 text-primary-100">
-                {t("app.shared.sidebar.version", {
-                  version: Application.nativeApplicationVersion,
-                })}
+                {username}
+              </Heading>
+              <Text className="text-primary-300 text-sm">
+                {t("app.shared.sidebar.seeProfile")}
               </Text>
             </VStack>
-          </VStack>
-        </DrawerBody>
-      </DrawerContent>
-    </Drawer>
+          </Pressable>
+          {otherUsers.length > 0 && (
+            <Select>
+              <SelectTrigger
+                variant="outline"
+                className="border-0 p-2 rounded-full active:bg-primary-800"
+                accessibilityLabel={t("app.shared.sidebar.switchUser")}
+              >
+                <ArrowLeftRight size={22} color={white} />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectBackdrop />
+                <SelectContent className="bg-primary-600">
+                  <SelectDragIndicatorWrapper className="mb-4">
+                    <SelectDragIndicator />
+                  </SelectDragIndicatorWrapper>
+                  <SelectScrollView>
+                    <Box className="px-4 pb-12 w-full">
+                      {otherUsers.map((u) => (
+                        <SwitchUserRow
+                          key={`${u.serverId}:${u.username}`}
+                          user={u}
+                          onSelect={handleSwitchUser}
+                        />
+                      ))}
+                    </Box>
+                  </SelectScrollView>
+                </SelectContent>
+              </SelectPortal>
+            </Select>
+          )}
+        </HStack>
+      </View>
+      <ScrollView
+        className={cn("flex-1 mt-4 mb-6", isWideLayout && "mt-2")}
+        contentContainerStyle={
+          isWideLayout
+            ? { flexGrow: 1 }
+            : { flexGrow: 1, justifyContent: "space-between" }
+        }
+      >
+        <VStack>
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleActivityPress}
+          >
+            <History size={24} color={white} />
+            <Heading size="lg" className="text-white font-normal">
+              {t("app.shared.sidebar.activity")}
+            </Heading>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleQueuePress}
+          >
+            <ListMusic size={24} color={white} />
+            <Heading size="lg" className="text-white font-normal">
+              {t("app.shared.sidebar.queue")}
+            </Heading>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleLibrariesPress}
+          >
+            <Library size={24} color={white} />
+            <Heading size="lg" className="text-white font-normal">
+              {t("app.shared.sidebar.libraries")}
+            </Heading>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleServersPress}
+          >
+            <Server size={24} color={white} />
+            <Heading size="lg" className="text-white font-normal">
+              {t("app.shared.sidebar.servers")}
+            </Heading>
+          </Pressable>
+          {capabilities.sharing && (
+            <Pressable
+              className={cn(
+                "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+                isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+              )}
+              onPress={handleSharesPress}
+            >
+              <Share2 size={24} color={white} />
+              <Heading size="lg" className="text-white font-normal">
+                {t("app.shared.sidebar.shares")}
+              </Heading>
+            </Pressable>
+          )}
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleSettingsPress}
+          >
+            <Settings size={24} color={white} />
+            <Heading size="lg" className="text-white font-normal">
+              {t("app.shared.sidebar.settings")}
+            </Heading>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center border-primary-500 gap-x-4 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-4 py-2.5" : "m-1 p-4",
+            )}
+            onPress={handleLogoutPress}
+          >
+            <LogOut size={24} color={red500} />
+            <Heading size="lg" className="text-red-500 font-normal">
+              {t("app.shared.sidebar.logout")}
+            </Heading>
+          </Pressable>
+        </VStack>
+        <VStack
+          className={cn(
+            "border-t-2 border-primary-500",
+            isWideLayout ? "mt-2 pt-3" : "mt-4 pt-4",
+          )}
+        >
+          <Pressable
+            className={cn(
+              "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+            )}
+            onPress={handlePrivacyPolicyPress}
+          >
+            <ShieldCheck size={20} color={white} />
+            <Text className="text-white">
+              {t("app.shared.sidebar.privacyPolicy")}
+            </Text>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+            )}
+            onPress={handleBugReportPress}
+          >
+            <Bug size={20} color={white} />
+            <Text className="text-white">
+              {t("app.shared.sidebar.bugReport")}
+            </Text>
+          </Pressable>
+          <Pressable
+            className={cn(
+              "flex-row items-center gap-x-3 rounded-md active:bg-primary-800",
+              isWideLayout ? "mx-1 my-0.5 px-3 py-2" : "m-1 p-3",
+            )}
+            onPress={handleChangelogPress}
+          >
+            <ClipboardClock size={20} color={white} />
+            <Text className="text-white">
+              {t("app.shared.sidebar.changelog")}
+            </Text>
+          </Pressable>
+          <Text className="mt-2 ml-4 text-primary-100">
+            {t("app.shared.sidebar.version", {
+              version: Application.nativeApplicationVersion,
+            })}
+          </Text>
+        </VStack>
+      </ScrollView>
+    </View>
   );
 }

@@ -90,6 +90,7 @@
     "react-i18next": "^17.0.6",
     "react-native": "0.85.3",
     "react-native-carplay": "^2.4.1-beta.0",
+    "react-native-drawer-layout": "^4.2.2",
     "react-native-gesture-handler": "~3.0.2",
     "react-native-google-cast": "^4.9.1",
     "react-native-image-colors": "^2.6.0",
