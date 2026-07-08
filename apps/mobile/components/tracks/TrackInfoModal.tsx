@@ -123,6 +123,66 @@ export default function TrackInfoModal({
                   <Text className="text-white">{track.groupings}</Text>
                 </VStack>
               ) : null}
+              {track.displayComposer ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.composer")}
+                  </Text>
+                  <Text className="text-white">{track.displayComposer}</Text>
+                </VStack>
+              ) : null}
+              {track.works?.length ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.work")}
+                  </Text>
+                  <Text className="text-white">
+                    {track.works
+                      .map((work: { name: string }) => work.name)
+                      .join(", ")}
+                  </Text>
+                </VStack>
+              ) : null}
+              {track.movements?.length ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.movement")}
+                  </Text>
+                  <Text className="text-white">
+                    {track.movements
+                      .map((movement: { name: string; number?: number }) =>
+                        movement.number != null
+                          ? `${movement.number}. ${movement.name}`
+                          : movement.name,
+                      )
+                      .join(", ")}
+                  </Text>
+                </VStack>
+              ) : null}
+              {track.moods?.length ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.moods")}
+                  </Text>
+                  <Text className="text-white">{track.moods.join(", ")}</Text>
+                </VStack>
+              ) : null}
+              {track.bpm ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.bpm")}
+                  </Text>
+                  <Text className="text-white">{track.bpm}</Text>
+                </VStack>
+              ) : null}
+              {track.comment ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.comment")}
+                  </Text>
+                  <Text className="text-white">{track.comment}</Text>
+                </VStack>
+              ) : null}
               <VStack className="border-b border-primary-600 py-2">
                 <Text className="text-primary-100 text-sm">
                   {t("app.tracks.infoModal.duration")}

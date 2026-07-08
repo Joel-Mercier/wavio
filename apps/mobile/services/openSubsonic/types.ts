@@ -189,12 +189,28 @@ export interface Child {
   displayAlbumArtist?: string;
   displayComposer?: string;
   contributors?: Contributor[];
+  works?: Work[];
+  movements?: Movement[];
+  bpm?: number;
+  comment?: string;
+  moods?: string[];
 }
 
 export interface Contributor {
   role: string;
   subRole?: string;
   artist: { id: string; name: string };
+}
+
+export interface Work {
+  name: string;
+  musicBrainzId?: string;
+}
+
+export interface Movement {
+  name: string;
+  number?: number;
+  count?: number;
 }
 
 export interface Directory {
