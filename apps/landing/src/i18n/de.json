@@ -1,0 +1,194 @@
+{
+	"meta": {
+		"homeTitle": "Wavio. Deine Musik, dein Player, dein Stil.",
+		"homeDescription": "Ein Open-Source Android Musikplayer für Navidrome, Jellyfin und OpenSubsonic Server oder eine lokale Mediathek. Keine Werbung, kein Tracking, vollständig offline nutzbar.",
+		"privacyTitle": "Datenschutzerklärung. Wavio",
+		"privacyDescription": "Wavio läuft vollständig auf Deinem Gerät und verbindet sich nur mit dem Musikserver, den Du eingerichtet hast. Wir sammeln, verkaufen oder teilen keine Daten, weil wir sie gar nicht haben."
+	},
+	"nav": {
+		"features": "Funktionen",
+		"github": "GitHub",
+		"download": "Download"
+	},
+	"hero": {
+		"tag": "Ein Open-Source Musikplayer",
+		"titleLines": [
+			[
+				"Deine",
+				"Musik,"
+			],
+			[
+				"Dein",
+				"Player,"
+			]
+		],
+		"titleAccent": "Dein Stil.",
+		"lead": "Ein Open-Source Android Musikplayer für Navidrome, Jellyfin und OpenSubsonic Server oder eine lokale Mediathek. Entwickelt für alle, die ihre Musiksammlung selbst besitzen und möchten, dass sie sich wie zu Hause anfühlt."
+	},
+	"cta": {
+		"releaseMain": "Neueste Version herunterladen",
+		"releaseNote": "Bald auf Google Play",
+		"starGithub": "Auf GitHub ansehen",
+		"viewSource": "Quellcode ansehen"
+	},
+	"highlightsLabel": "Das erwartet Dich",
+	"highlights": [
+		"Open Source (MIT-Lizenz)",
+		"Keine Werbung",
+		"Kein Tracking, keine Telemetrie",
+		"Funktioniert vollständig offline",
+		"Android Auto-Unterstützung",
+		"Navidrome, Jellyfin, OpenSubsonic & lokale Mediathek"
+	],
+	"features": {
+		"headingPre": "Ein Player, der",
+		"headingEm": "Deine Mediathek",
+		"headingPost": "respektiert.",
+		"sub": "Jeder Bildschirm ist für die Art entwickelt, wie Du tatsächlich Musik hörst. Schnell, unaufdringlich und ganz nach Deinen Vorstellungen.",
+		"home": {
+			"label": "Startseite",
+			"title": "Deine Musiksammlung. Perfekt sortiert.",
+			"desc": "Zuletzt gehört, zuletzt hinzugefügt, meistgespielt und Internetradio. Alles auf einer aufgeräumten Startseite."
+		},
+		"audiophile": {
+			"label": "Audiophil",
+			"title": "Abgestimmt statt aufgedreht.",
+			"desc": "Einstellungen für Audioqualität, Endloswiedergabe, ReplayGain und System-Equalizer."
+		},
+		"offline": {
+			"label": "Offline",
+			"title": "Musik auch ohne Internet."
+		},
+		"quote": {
+			"label": "Ohne Verpflichtungen",
+			"title": "Keine Werbung. Keine Konten. Kein Tracking. So wie Musik-Apps früher waren."
+		},
+		"playlists": {
+			"label": "Wiedergabelisten",
+			"title": "Intelligente Regeln, volle Kontrolle."
+		},
+		"auto": {
+			"label": "Im Auto",
+			"title": "Android Auto inklusive."
+		},
+		"queue": {
+			"label": "Warteschlange",
+			"title": "Eine Warteschlange, die Du wirklich kontrollierst.",
+			"desc": "Sortieren, bearbeiten, leeren. Speichere die aktuelle Warteschlange mit einem Tippen als Wiedergabeliste."
+		},
+		"servers": {
+			"label": "Server",
+			"title": "Mit einem Tippen zwischen Servern wechseln.",
+			"desc": "Nutze Navidrome zu Hause, Jellyfin bei Freunden, OpenSubsonic anderswo oder eine lokale Mediathek als Backup. Eine App für alles."
+		},
+		"sleep": {
+			"label": "Sleep-Timer",
+			"title": "Entspannt einschlafen.",
+			"desc": "Lass die Musik langsam ausklingen und schlafe entspannt zu deinem Lieblingsalbum ein."
+		},
+		"podcasts": {
+			"label": "Podcasts",
+			"title": "Unterwegs Neues entdecken.",
+			"desc": "Podcasts suchen, abonnieren und anhören mit Taddy. Deine Musik und deine Podcasts an einem Ort."
+		},
+		"radio": {
+			"label": "Internetradio",
+			"title": "Überall live dabei.",
+			"desc": "Streame die Internetradiosender Deines Servers mit nur einem Tippen. Durchsuchen, speichern und live hören."
+		},
+		"lyrics": {
+			"label": "Songtexte",
+			"title": "Immer im Takt.",
+			"desc": "Synchronisierte Songtexte von LRCLib, passend zur Musik, Zeile für Zeile."
+		},
+		"widgets": {
+			"label": "Widgets für den Startbildschirm",
+			"title": "Alles auf einen Blick.",
+			"desc": "Aktuelle Wiedergabe und zuletzt gehörte Titel direkt auf Deinem Android-Startbildschirm. Ganz ohne die App zu öffnen."
+		}
+	},
+	"showcase": {
+		"headingPre": "Jeder Bildschirm,",
+		"headingEm": "genau richtig.",
+		"sub": "Ansichten für das, was Du am häufigsten machst: stöbern, hören, verwalten, herunterladen. Und die App dabei fast vergessen."
+	},
+	"final": {
+		"titleL1": "Hol deine Musik",
+		"titleEm": "zurück nach Hause.",
+		"desc": "Kostenlos, Open Source und entwickelt von Menschen, die finden, dass Deine Musiksammlung Dir gehören sollte."
+	},
+	"footer": {
+		"tagline": "Ein Open-Source-Musikplayer für Android. Kompatibel mit Navidrome, Jellyfin, OpenSubsonic und lokalen Mediatheken.",
+		"product": "Produkt",
+		"features": "Funktionen",
+		"download": "Download",
+		"changelog": "Changelog",
+		"openSource": "Open-Source",
+		"github": "GitHub",
+		"legal": "Rechtliches",
+		"privacy": "Datenschutz",
+		"copyright": "© 2026 Joel Mercier",
+		"madeWith": "Entwickelt mit Astro und Tailwind CSS. Gehostet auf Vercel. Alle Texte verwenden die Schriftart Inter."
+	},
+	"privacy": {
+		"back": "Zur Startseite",
+		"titlePre": "Datenschutz, ganz",
+		"titleEm": "ohne Überraschungen.",
+		"updated": "Zuletzt aktualisiert: 27. Mai 2026",
+		"readTime": "5 Minuten Lesezeit",
+		"summaryLabel": "Kurz gesagt\"",
+		"summary": "Wavio läuft vollständig auf Deinem Gerät und verbindet sich nur mit dem Musikserver, den Du eingerichtet hast. Wir sammeln, verkaufen oder teilen keine Daten, weil wir sie gar nicht haben.",
+		"sections": [
+			{
+				"num": "01",
+				"title": "Wer wir sind",
+				"body": "Wavio ist eine kostenlose Open-Source-App für Android, die von unabhängigen Mitwirkenden entwickelt und gepflegt wird. Der Quellcode steht unter der MIT-Lizenz und ist für alle auf <a href=\"https://github.com/Joel-Mercier/wavio\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\"> GitHub </a>einsehbar.</p>"
+			},
+			{
+				"num": "02",
+				"title": "Welche Daten Wavio über dich sammelt",
+				"body": "<p><strong>Keine persönlichen Daten.</strong> Wavio verwendet keine Konten, keine Profile, keine Werbe-SDKs, keine Nutzungsanalysen und keine Social-Tracker. Wir betreiben keine Server, auf denen gespeichert wird, wer Du bist oder was Du hörst.</p>\n\t\t\t\t\t\t<p>Die einzigen Daten, die Dein Smartphone verlassen, sind die Informationen, die zum Abspielen Deiner Musik oder zur Diagnose von Abstürzen erforderlich sind. Mehr dazu in den beiden nächsten Abschnitten.</p>"
+			},
+			{
+				"num": "03",
+				"title": "Welche Daten auf Deinem Gerät bleiben",
+				"body": "<p>Damit Wavio als Musikplayer funktioniert, werden folgende Daten ausschließlich lokal auf deinem Gerät gespeichert:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t<li>Verbindungsdaten (URL, Benutzername sowie ein verschlüsseltes Passwort oder Token) für jeden hinzugefügten Server.</li>\n\t\t\t\t\t\t<li>Deine Warteschlange, zuletzt gehörte und zuletzt gesuchte Inhalte, Einstellungen für Sleep-Timer und Equalizer sowie weitere App-Einstellungen.</li>\n\t\t\t\t\t\t<li>Titel, die Du für die Offline-Wiedergabe herunterlädst, sowie zwischengespeicherte Albumcover und Metadaten von Deinem Server.</li>\n\t\t\t\t\t\t<li>Zugangsdaten für die Podcast-API (Taddy), sofern Du Podcasts aktivierst.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Diese Informationen werden ausschließlich im privaten App-Speicher abgelegt. Wenn Du Wavio deinstallierst, werden alle diese Daten entfernt.</p>"
+			},
+			{
+				"num": "04",
+				"title": "Was Dein Musik-Server sieht",
+				"body": "<p>Wenn Du Wavio mit einer Navidrome-, Jellyfin- oder OpenSubsonic-Instanz verbindest, kommuniziert die App direkt mit diesem Server und verwendet dabei die Zugangsdaten, die Du angegeben hast. Wie bei jedem anderen Client protokolliert der Server in der Regel Deine IP-Adresse, Deine Anfragen und deine Höraktivitäten.</p>\n\t\t\t\t\t\t<p></p>Die Mitwirkenden von Wavio betreiben diese Server nicht und haben keinen Zugriff auf deren Protokolle.</p>\n\t\t\t\t\t<p>Bitte informiere Dich über die Datenschutzerklärung des Servers, mit dem Du Dich verbindest.</p>"
+			},
+			{
+				"num": "05",
+				"title": "Absturz- und Fehlerberichte",
+				"body": "<p>Die veröffentlichten Versionen von Wavio verwenden<a href=\"https://sentry.io/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Sentry</a>, um Abstürze und unerwartete Fehler zu melden, damit wir sie beheben können. Jeder Bericht enthält technische Informationen wie einen Stack Trace, die App-Version, das Gerätemodell, die Android-Version sowie die IP-Adresse, über die der Bericht übermittelt wurde.</p>\n\t\t\t\t\t\t<p>Wir weisen Dir keine Kennung zu, verfolgen nicht, welche Bereiche der App Du nutzt, protokollieren nicht, welche Musik Du hörst, und erstellen kein Profil von Dir. Die Berichte dienen ausschließlich der Fehleranalyse und werden gemäß der <a href=\"https://sentry.io/privacy/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Datenspeicherungsrichtlinie von Sentry</a> aufbewahrt.</p>"
+			},
+			{
+				"num": "06",
+				"title": "Android-Berechtigungen",
+				"body": "<p>Wavio fordert nur die Berechtigungen an, die zum Abspielen Deiner Musik erforderlich sind:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong>Internet</strong>, um deinen Musikserver und die unten aufgeführten Drittanbieterdienste zu erreichen.</li>\n\t\t\t\t\t\t<li><strong>Vordergrunddienst und Medienwiedergabe</strong>, damit die Wiedergabe auch bei ausgeschaltetem Bildschirm weiterläuft..</li>\n\t\t\t\t\t\t\t<li><strong>Benachrichtigungen</strong>, um die Wiedergabe auf dem Sperrbildschirm zu steuern und in der Benachrichtigungsleiste anzuzeigen.</li>\n\t\t\t\t\t\t\t<li><strong>Audioeinstellungen ändern</strong>, um den System-Equalizer zu verwenden.</li>\n\t\t\t\t\t\t<li><strong>Audio- und Mediendateien lesen sowie Speicherzugriff</strong>, um heruntergeladene Titel für die Offline-Wiedergabe zu speichern und wiederzugeben.</li>\n\t\t\t\t\t\t\t<li><strong>Vibration</strong>, für dezentes haptisches Feedback bei bestimmten Bedienelementen.</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<p>Wavio verlangt keinen Zugriff auf Deine Kontakte, Deinen Standort, die Kamera oder andere sensible Daten.</p>"
+			},
+			{
+				"num": "07",
+				"title": "Drittanbieterdienste",
+				"body": "<p>Abgesehen von Deinem Musikserver und Sentry kommuniziert Wavio nur mit wenigen externen Diensten, und auch nur dann, wenn du die jeweilige Funktion nutzt:</p>\n\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://lrclib.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">LRCLib</a></strong> wird für synchronisierte Songtexte verwendet, wenn Du die Songtextansicht eines Titels öffnest..</li>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://taddy.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Taddy</a></strong> stellt die Podcast-Suche und Metadaten bereit und wird nur genutzt, wenn Du in den Einstellungen Deinen eigenen Taddy-API-Schlüssel und Deine Benutzer-ID hinterlegst</li>\n\t\t\t\t\t\t\t<li><strong><a href=\"https://www.radio-browser.info/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Radio Browser</a></strong> liefert das Verzeichnis der Internetradiosender und wird kontaktiert, wenn Du Radiosender durchsuchst oder suchst.</li>\n\t\t\t\t\t\t\t<li><strong>Google Cast</strong> wird verwendet, wenn Du Musik auf ein Chromecast-kompatibles Gerät überträgst. Für diese Verbindung gelten anschließend die Nutzungsbedingungen von Google</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<p>Wavio enthält keine Werbenetzwerke, keine Analyseplattformen und keine Social-Tracker.</p>"
+			},
+			{
+				"num": "08",
+				"title": "Kinder",
+				"body": "<p>Wavio ist für Nutzerinnen und Nutzer jeden Alters geeignet und sammelt wissentlich keinerlei Informationen über Personen, auch nicht über Kinder.</p>"
+			},
+			{
+				"num": "09",
+				"title": "Änderungen an dieser Datenschutzerklärung ",
+				"body": "<p>Sollte sich diese Datenschutzerklärung ändern, veröffentlichen wir die aktualisierte Version hier und weisen in den Release Notes des Projekts auf GitHub darauf hin.</p>"
+			},
+			{
+				"num": "10",
+				"title": "Kontakt",
+				"body": "<p>Fragen, Anmerkungen oder einfach neugierig? Eröffne ein Issue im <a href=\"https://github.com/Joel-Mercier/wavio/issues\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">GitHub-Repository von Wavio</a> und jemand aus dem Entwicklerteam wird sich bei Dir melden.</p>"
+			}
+		]
+	}
+}
