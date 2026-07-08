@@ -604,6 +604,11 @@
 						"all": "Serveur + lrclib.net"
 					}
 				},
+				"hapticsSettings": {
+					"title": "Retour haptique",
+					"enabledLabel": "Retour haptique",
+					"enabledDescription": "Vibrer lors des interactions comme le défilement de l'index alphabétique"
+				},
 				"internetRadioStationsSettings": {
 					"title": "Stations de radio",
 					"enabledLabel": "Annuaire Radio Browser",

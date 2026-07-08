@@ -105,6 +105,8 @@ interface AppStore {
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
   radioBrowserEnabled: boolean;
   setRadioBrowserEnabled: (enabled: boolean) => void;
+  hapticFeedbackEnabled: boolean;
+  setHapticFeedbackEnabled: (enabled: boolean) => void;
   // null = derive the "by country" feed from the device locale's region.
   internetRadioCountryCode: string | null;
   setInternetRadioCountryCode: (countryCode: string | null) => void;
@@ -213,6 +215,10 @@ export const useAppBase = create<AppStore>()(
       radioBrowserEnabled: true,
       setRadioBrowserEnabled: (enabled: boolean) => {
         set({ radioBrowserEnabled: enabled });
+      },
+      hapticFeedbackEnabled: true,
+      setHapticFeedbackEnabled: (enabled: boolean) => {
+        set({ hapticFeedbackEnabled: enabled });
       },
       internetRadioCountryCode: null,
       setInternetRadioCountryCode: (

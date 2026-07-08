@@ -597,6 +597,11 @@
 						"all": "服务器 + lrclib.net"
 					}
 				},
+				"hapticsSettings": {
+					"title": "触感反馈",
+					"enabledLabel": "触感反馈",
+					"enabledDescription": "在滚动字母索引等交互时振动"
+				},
 				"internetRadioStationsSettings": {
 					"title": "网络电台",
 					"enabledLabel": "Radio Browser 目录",

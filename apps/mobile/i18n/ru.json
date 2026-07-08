@@ -618,6 +618,11 @@
 						"all": "Сервер + lrclib.net"
 					}
 				},
+				"hapticsSettings": {
+					"title": "Тактильная отдача",
+					"enabledLabel": "Тактильная отдача",
+					"enabledDescription": "Вибрация при взаимодействиях, например при прокрутке алфавитного указателя"
+				},
 				"internetRadioStationsSettings": {
 					"title": "Интернет-радио",
 					"enabledLabel": "Каталог Radio Browser",

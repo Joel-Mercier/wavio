@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
+import { selectionHaptic } from "@/services/haptics";
 
 const SPRING = { mass: 0.5, damping: 12, stiffness: 220 };
 
@@ -83,6 +84,9 @@ function AlphabetIndexBar({
   }, [currentIndex, scrollIdx]);
 
   const handleChange = (index: number) => {
+    // Only pulse when the touched letter actually changes (handleChange is
+    // already only called on a letter transition), matching a native picker.
+    selectionHaptic();
     setActiveLetter(letters[index] ?? null);
     onSelect(index);
   };

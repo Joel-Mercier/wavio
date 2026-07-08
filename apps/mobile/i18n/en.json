@@ -604,6 +604,11 @@
 						"all": "Server + lrclib.net"
 					}
 				},
+				"hapticsSettings": {
+					"title": "Haptics",
+					"enabledLabel": "Haptic feedback",
+					"enabledDescription": "Vibrate on interactions like scrolling the alphabet index"
+				},
 				"internetRadioStationsSettings": {
 					"title": "Internet radio stations",
 					"enabledLabel": "Radio Browser directory",
