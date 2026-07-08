@@ -1,3 +1,4 @@
+import de from "./de.json";
 import en from "./en.json";
 import fr from "./fr.json";
 import ru from "./ru.json";
@@ -7,6 +8,7 @@ export const languages = {
   en: "English",
   ru: "Русский",
   fr: "Français",
+  de: "Deutsch",
   "zh-cn": "简体中文",
 } as const;
 
@@ -20,5 +22,6 @@ export const ui: Record<Lang, UiStrings> = {
   en,
   ru,
   fr,
+  de,
   "zh-cn": zhCn,
 };
