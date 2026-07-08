@@ -99,7 +99,7 @@
 		"lyrics": {
 			"label": "Lyrics",
 			"title": "Sing along, in sync.",
-			"desc": "Synchronised lyrics from LRCLib, scrolling line by line with the track."
+			"desc": "Synchronisierte Songtexte von LRCLib, passend zur Musik Zeile für Zeile."
 		},
 		"widgets": {
 			"label": "Home screen widgets",
