@@ -535,9 +535,35 @@ export interface StructuredLyrics {
   displayArtist?: string;
   displayTitle?: string;
   offset?: number;
+  kind?: string;
+  agents?: Agent[];
+  cueLine?: CueLine[];
 }
 
 export interface Line {
   value: string;
   start?: number;
+}
+
+export interface LyricCue {
+  start: number;
+  end?: number;
+  byteStart: number;
+  byteEnd: number;
+  value: string;
+}
+
+export interface CueLine {
+  index: number;
+  start?: number;
+  end?: number;
+  value: string;
+  agentId?: string;
+  cue?: LyricCue[];
+}
+
+export interface Agent {
+  id: string;
+  role: string;
+  name?: string;
 }

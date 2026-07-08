@@ -5,13 +5,15 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import FadeOut from "@/components/FadeOut";
+import KaraokeLine from "@/components/player/KaraokeLine";
 import { Box } from "@/components/ui/box";
 import {
   getPlaybackSnapshot,
   subscribePlaybackProgress,
 } from "@/hooks/player/playbackSnapshot";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
-import { findCurrentLineIndex } from "@/utils/lyrics";
+import useApp from "@/stores/app";
+import { findCurrentLineIndex, getCueLineForLine } from "@/utils/lyrics";
 
 const HIT_SLOP = { top: 12, bottom: 12, left: 16, right: 16 };
 
@@ -27,6 +29,7 @@ export default function CurrentLyricLine({
   // runs per tick (cheap, JS thread), but the setState bails out via referential
   // equality unless the line actually advances.
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const karaokeEnabled = useApp((s) => s.karaokeEnabled);
 
   useEffect(() => {
     const update = () => {
@@ -69,7 +72,20 @@ export default function CurrentLyricLine({
     return <Box className="px-6 h-12 items-center justify-center" />;
   }
 
-  const line = (
+  const cueLine = karaokeEnabled
+    ? getCueLineForLine(lyrics, currentIndex)
+    : undefined;
+
+  const line = cueLine?.cue?.length ? (
+    <Animated.View style={animatedStyle}>
+      <KaraokeLine
+        cueLine={cueLine}
+        offsetMs={lyrics?.offset ?? 0}
+        numberOfLines={2}
+        textClassName="text-white text-center font-bold text-base"
+      />
+    </Animated.View>
+  ) : (
     <Animated.Text
       numberOfLines={2}
       style={animatedStyle}

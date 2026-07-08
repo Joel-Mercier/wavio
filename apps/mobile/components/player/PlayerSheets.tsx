@@ -87,12 +87,14 @@ export default function PlayerSheets({
   actionsSheetRef,
   playingTrack,
   hideLyricsAction,
+  hasKaraoke,
   onAddFavoritePodcast,
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   hideLyricsAction?: boolean;
+  hasKaraoke?: boolean;
   onAddFavoritePodcast?: () => void;
   onRemoveFavoritePodcast?: () => void;
 }) {
@@ -105,6 +107,8 @@ export default function PlayerSheets({
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const lyricsSource = useApp((s) => s.lyricsSource);
+  const karaokeEnabled = useApp((s) => s.karaokeEnabled);
+  const setKaraokeEnabled = useApp((s) => s.setKaraokeEnabled);
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -230,6 +234,10 @@ export default function PlayerSheets({
   const handleShowLyricsPress = () => {
     actionsSheetRef.current?.dismiss();
     router.push("/lyrics");
+  };
+
+  const handleToggleKaraokePress = () => {
+    setKaraokeEnabled(!karaokeEnabled);
   };
 
   const handleInfoPress = () => {
@@ -678,6 +686,22 @@ export default function PlayerSheets({
                       <Mic2 size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.player.lyrics")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hasKaraoke && lyricsSource !== "off" && (
+                  <FadeOutScaleDown onPress={handleToggleKaraokePress}>
+                    <HStack className="items-center">
+                      <AudioLines
+                        size={24}
+                        color={karaokeEnabled ? emerald500 : gray200}
+                      />
+                      <Text
+                        className="ml-4 text-lg"
+                        style={{ color: karaokeEnabled ? emerald500 : gray200 }}
+                      >
+                        {t("app.player.karaoke")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
