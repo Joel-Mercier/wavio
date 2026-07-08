@@ -37,6 +37,11 @@ export type LibraryFilter =
   | "radioStations"
   | "folders";
 
+// list = single-column rows, grid = responsive multi-column cards. Persisted
+// per album-list screen (keyed in `albumScreenLayouts`) via
+// `useAlbumScreenLayout`.
+export type AlbumScreenLayout = "list" | "grid";
+
 interface AppStore {
   locale: TSupportedLanguages | null;
   setLocale: (locale: TSupportedLanguages) => void;
@@ -64,6 +69,10 @@ interface AppStore {
   ) => void;
   libraryFilter: LibraryFilter[];
   setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
+  // Layout (list/grid) chosen on each album-list screen, keyed by a stable
+  // screen id. One value per screen so choices don't bleed across screens.
+  albumScreenLayouts: Record<string, AlbumScreenLayout>;
+  setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => void;
   favoritesSort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -161,6 +170,15 @@ export const useAppBase = create<AppStore>()(
       libraryFilter: [],
       setLibraryFilter: (libraryFilter: LibraryFilter[]) => {
         set({ libraryFilter });
+      },
+      albumScreenLayouts: {},
+      setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => {
+        set((state) => ({
+          albumScreenLayouts: {
+            ...state.albumScreenLayouts,
+            [screenKey]: layout,
+          },
+        }));
       },
       favoritesSort: "addedAtAsc",
       setFavoritesSort: (

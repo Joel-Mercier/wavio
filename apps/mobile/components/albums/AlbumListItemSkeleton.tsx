@@ -5,7 +5,7 @@ import { cn } from "@/utils/tailwind";
 
 interface AlbumListItemSkeletonProps {
   index: number;
-  layout?: "vertical" | "horizontal";
+  layout?: "vertical" | "horizontal" | "grid";
 }
 
 export default function AlbumListItemSkeleton({
@@ -21,11 +21,17 @@ export default function AlbumListItemSkeleton({
         "mr-6": layout === "horizontal",
         "w-32": layout === "horizontal",
         "flex-row items-center": layout === "vertical",
+        "mb-4 px-2": layout === "grid",
       })}
     >
-      <Box className="bg-primary-600">
+      <Box
+        className={cn("bg-primary-600 rounded-md aspect-square", {
+          "w-full": layout === "grid",
+          "w-32 h-32": layout !== "grid",
+        })}
+      >
         <Skeleton
-          className="w-32 h-32 aspect-square rounded-md items-center justify-center"
+          className="aspect-square rounded-md items-center justify-center"
           variant="rounded"
           startColor="bg-primary-400"
           speed={4}

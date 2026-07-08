@@ -3,17 +3,21 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Box } from "@/components/ui/box";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
+import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import AlbumLayoutToggle from "../albums/AlbumLayoutToggle";
 import AlbumListItem from "../albums/AlbumListItem";
 import AlbumListItemSkeleton from "../albums/AlbumListItemSkeleton";
 import EmptyDisplay from "../EmptyDisplay";
@@ -29,6 +33,16 @@ export default function HomeSectionDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: AlbumListType }>();
+  const { width } = useWindowDimensions();
+  const { layout, toggle } = useAlbumScreenLayout(`home-section:${type}`);
+  const gridColumns =
+    layout === "grid"
+      ? gridColumnCount(width, {
+          minItemWidth: 160,
+          minColumns: 3,
+          maxColumns: 5,
+        })
+      : 1;
   const musicFolderId = useCurrentMusicFolderId();
   const {
     data,
@@ -58,15 +72,23 @@ export default function HomeSectionDetail() {
         <Heading className="text-white text-center truncate flex-1" size="lg">
           {t(`app.home.sections.${type}`)}
         </Heading>
-        <Box className="w-6" />
+        <AlbumLayoutToggle layout={layout} onPress={toggle} />
       </HStack>
       {error && <ErrorDisplay error={error} />}
       {!error && (
         <FlashList
+          key={`home-section-${layout}-${gridColumns}`}
           data={isLoading ? loadingData(12) : albums}
+          numColumns={gridColumns}
+          extraData={layout}
           renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
             isLoading ? (
-              <AlbumListItemSkeleton index={index} />
+              <AlbumListItemSkeleton
+                index={index}
+                layout={layout === "grid" ? "grid" : "vertical"}
+              />
+            ) : layout === "grid" ? (
+              <AlbumListItem album={item} index={index} layout="grid" />
             ) : (
               <Box className="bg-black">
                 <AlbumListItem album={item} index={index} />
@@ -77,6 +99,7 @@ export default function HomeSectionDetail() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,
+            paddingHorizontal: layout === "grid" ? 16 : 0,
           }}
           showsVerticalScrollIndicator={false}
           onEndReached={() => {

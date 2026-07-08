@@ -2,7 +2,10 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
+import List from "lucide-react-native/dist/esm/icons/list.mjs";
 import { useMemo } from "react";
+import { useWindowDimensions } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -23,9 +26,11 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
+import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 
@@ -52,6 +57,16 @@ export default function GenreScreen() {
     offsetY.value = event.contentOffset.y;
   });
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { width } = useWindowDimensions();
+  const { layout, toggle } = useAlbumScreenLayout("genre-albums");
+  const gridColumns =
+    layout === "grid"
+      ? gridColumnCount(width, {
+          minItemWidth: 160,
+          minColumns: 3,
+          maxColumns: 5,
+        })
+      : 1;
   const musicFolderId = useCurrentMusicFolderId();
   const {
     data,
@@ -93,18 +108,36 @@ export default function GenreScreen() {
             >
               {id}
             </Heading>
-            <Box className="w-10" />
+            <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
+              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                {layout === "list" ? (
+                  <LayoutGrid size={20} color={white} />
+                ) : (
+                  <List size={20} color={white} />
+                )}
+              </Box>
+            </FadeOutScaleDown>
           </HStack>
         </LinearGradient>
       </AnimatedBox>
       <AnimatedFlashList
+        key={`genre-albums-${layout}-${gridColumns}`}
         onScroll={scrollHandler}
         data={isLoading ? loadingData(12) : albums}
+        numColumns={gridColumns}
+        extraData={layout}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
-            <AlbumListItemSkeleton index={index} />
+            <AlbumListItemSkeleton
+              index={index}
+              layout={layout === "grid" ? "grid" : "vertical"}
+            />
           ) : (
-            <AlbumListItem album={item} index={index} />
+            <AlbumListItem
+              album={item}
+              index={index}
+              layout={layout === "grid" ? "grid" : "vertical"}
+            />
           )
         }
         ListHeaderComponent={
@@ -118,19 +151,33 @@ export default function GenreScreen() {
               style={{ paddingTop: insets.top }}
             >
               <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                <Pressable onPress={() => goBackOrHome(router)}>
-                  {({ pressed }) => (
-                    <Animated.View
-                      className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                      style={{
-                        transform: [{ scale: pressed ? 0.95 : 1 }],
-                        opacity: pressed ? 0.5 : 1,
-                      }}
-                    >
-                      <ArrowLeft size={24} color={white} />
-                    </Animated.View>
-                  )}
-                </Pressable>
+                <HStack className="items-center justify-between w-full">
+                  <Pressable onPress={() => goBackOrHome(router)}>
+                    {({ pressed }) => (
+                      <Animated.View
+                        className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                        style={{
+                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                          opacity: pressed ? 0.5 : 1,
+                        }}
+                      >
+                        <ArrowLeft size={24} color={white} />
+                      </Animated.View>
+                    )}
+                  </Pressable>
+                  <FadeOutScaleDown
+                    testID="album-layout-toggle"
+                    onPress={toggle}
+                  >
+                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                      {layout === "list" ? (
+                        <LayoutGrid size={20} color={white} />
+                      ) : (
+                        <List size={20} color={white} />
+                      )}
+                    </Box>
+                  </FadeOutScaleDown>
+                </HStack>
                 <Heading
                   numberOfLines={2}
                   className="text-white mb-12"
@@ -144,8 +191,14 @@ export default function GenreScreen() {
           </LinearGradient>
         }
         ListEmptyComponent={<EmptyDisplay />}
+        // The hero header is full-bleed; cancel the grid container padding on it
+        // with a matching negative margin so only the album cells get inset.
+        ListHeaderComponentStyle={
+          layout === "grid" ? { marginHorizontal: -16 } : undefined
+        }
         contentContainerStyle={{
           paddingBottom: screenBottomPadding,
+          paddingHorizontal: layout === "grid" ? 16 : 0,
         }}
         showsVerticalScrollIndicator={false}
         onEndReached={() => {

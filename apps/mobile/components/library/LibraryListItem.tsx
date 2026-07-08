@@ -39,7 +39,6 @@ import useRadioStations, {
   type RadioStationSource,
 } from "@/stores/radioStations";
 import { artworkUrl } from "@/utils/artwork";
-import { gridCellMarginClass } from "@/utils/grid";
 import { cn } from "@/utils/tailwind";
 
 export type Favorites = {
@@ -86,8 +85,6 @@ interface LibraryListItemProps {
     LibraryAllAlbums &
     LibraryAllArtists;
   layout: LibraryLayout;
-  index: number;
-  numColumns?: number;
 }
 
 function LibraryListItemIcon({ type }: { type: string }) {
@@ -122,8 +119,6 @@ function LibraryListItemIcon({ type }: { type: string }) {
 export default function LibraryListItem({
   item,
   layout,
-  index,
-  numColumns = 3,
 }: LibraryListItemProps) {
   const [blue500, emerald500] = Uniwind.getCSSVariable([
     "--color-blue-500",
@@ -331,16 +326,14 @@ export default function LibraryListItem({
     isCollectionAvailableOffline ||
     (type.id === "favorites" && offlineModeEnabled);
 
-  const gridMarginClass = useMemo(() => {
-    if (layout !== "grid") return "";
-    return gridCellMarginClass(index % numColumns, numColumns);
-  }, [layout, index, numColumns]);
-
   return (
     <FadeOutScaleDown
       href={href}
       disabled={!isDetailCached && !isCollectionAvailableOffline}
-      className={cn("mb-4", gridMarginClass)}
+      // Grid cells use symmetric horizontal padding so every column has the
+      // same content width; the parent list offsets its own paddingHorizontal
+      // by that amount to keep the outer edge aligned.
+      className={cn("mb-4", { "px-2": layout === "grid" })}
     >
       <HStack
         className={cn("flex-row transition duration-100 items-center", {
@@ -416,9 +409,9 @@ export default function LibraryListItem({
               ? type.label
               : item.name}
           </Heading>
-          <HStack className="items-center">
+          <HStack className="items-center w-full">
             {showDownloadedBadge && <DownloadedBadge className="mr-2" />}
-            <Text numberOfLines={1} className="text-md text-primary-100">
+            <Text numberOfLines={1} className="text-md text-primary-100 flex-1">
               {type.id === "podcast"
                 ? item.authorName
                   ? `${type.label} ⦁ ${item.authorName}`

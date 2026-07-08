@@ -100,7 +100,7 @@ export default function LibrariesDetail() {
             index: number;
           }) =>
             isLoading ? (
-              <LibraryListItemSkeleton layout="list" index={index} />
+              <LibraryListItemSkeleton layout="list" />
             ) : (
               <LibraryRow
                 label={item.name ?? `Library ${item.id}`}
