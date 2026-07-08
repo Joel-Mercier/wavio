@@ -58,7 +58,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - [Octo-Fiesta](https://github.com/V1ck3s/octo-fiesta) proxy server support. Automatically fetch songs not in your library. (Navidrome and OpenSubsonic only)
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
-- Offline downloads of favorited songs, downloads management screen
+- Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs, downloads management screen, queued changes screen
 - Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen with now playing users
 - Share screen with shareable links
