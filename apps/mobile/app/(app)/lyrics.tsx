@@ -3,11 +3,13 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
 import { useCastSession } from "react-native-google-cast";
@@ -18,6 +20,7 @@ import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
+import LyricsLayersSheet from "@/components/player/LyricsLayersSheet";
 import LyricsLine, { LYRICS_LINE_HEIGHT } from "@/components/player/LyricsLine";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerSheets from "@/components/player/PlayerSheets";
@@ -46,13 +49,38 @@ import { seekTo, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import { logError } from "@/utils/log";
-import { findCurrentLineIndex } from "@/utils/lyrics";
+import {
+  agentAlign,
+  alignLayerToMain,
+  findCurrentLineIndex,
+  getAgentForLine,
+  getCueLineForLine,
+  type LyricAlign,
+} from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
+
+const ALIGN_TEXT: Record<LyricAlign, string> = {
+  left: "text-left",
+  right: "text-right",
+  center: "text-center",
+};
 
 const ICON_HIT_SLOP = { top: 16, bottom: 16, left: 16, right: 16 };
 const MANUAL_SCROLL_GRACE_MS = 4000;
 
-function LyricsBody({ lyrics }: { lyrics: StructuredLyrics | null }) {
+type LyricLayers = {
+  main: StructuredLyrics | null;
+  translations: StructuredLyrics[];
+  pronunciations: StructuredLyrics[];
+};
+
+function LyricsBody({
+  lyrics,
+  layers,
+}: {
+  lyrics: StructuredLyrics | null;
+  layers: LyricLayers;
+}) {
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -60,6 +88,26 @@ function LyricsBody({ lyrics }: { lyrics: StructuredLyrics | null }) {
   const userScrollingUntilRef = useRef(0);
   const lineLayoutsRef = useRef<{ y: number; height: number }[]>([]);
   const offsetMs = lyrics?.offset ?? 0;
+  const karaokeEnabled = useApp((s) => s.karaokeEnabled);
+  const translationLang = useApp((s) => s.lyricsTranslationLang);
+  const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
+
+  const selectedTranslation = useMemo(
+    () => layers.translations.find((l) => l.lang === translationLang) ?? null,
+    [layers.translations, translationLang],
+  );
+  const selectedPronunciation = showPronunciation
+    ? (layers.pronunciations[0] ?? null)
+    : null;
+
+  const translationByLine = useMemo(
+    () => alignLayerToMain(lyrics?.line ?? [], selectedTranslation?.line),
+    [lyrics, selectedTranslation],
+  );
+  const pronunciationByLine = useMemo(
+    () => alignLayerToMain(lyrics?.line ?? [], selectedPronunciation?.line),
+    [lyrics, selectedPronunciation],
+  );
 
   useEffect(() => {
     lineLayoutsRef.current = [];
@@ -120,6 +168,12 @@ function LyricsBody({ lyrics }: { lyrics: StructuredLyrics | null }) {
         >
           {lyrics?.line.map((line, index) => {
             const { start } = line;
+            const agent = getAgentForLine(lyrics, index);
+            const align = agentAlign(agent?.role);
+            const muted = agent?.role === "bg" || agent?.role === "group";
+            const alignClass = ALIGN_TEXT[align];
+            const pronunciationLines = pronunciationByLine[index] ?? [];
+            const translationLines = translationByLine[index] ?? [];
             return (
               <Box
                 key={`${index}-${start ?? 0}`}
@@ -130,16 +184,42 @@ function LyricsBody({ lyrics }: { lyrics: StructuredLyrics | null }) {
                   };
                 }}
               >
+                {pronunciationLines.map((l, i) => (
+                  <Text
+                    // biome-ignore lint/suspicious/noArrayIndexKey: stable ordered lines
+                    key={`p-${i}`}
+                    className={cn("text-primary-200 text-sm mb-1", alignClass)}
+                  >
+                    {l.value}
+                  </Text>
+                ))}
                 <LyricsLine
                   value={line.value}
                   isActive={index === currentIndex}
                   isPast={index < currentIndex}
+                  align={align}
+                  muted={muted}
+                  cueLine={
+                    karaokeEnabled && index === currentIndex
+                      ? getCueLineForLine(lyrics, currentIndex)
+                      : undefined
+                  }
+                  offsetMs={offsetMs}
                   onPress={
                     lyrics.synced && start != null
                       ? () => seekTo(Math.max(0, (start - offsetMs) / 1000))
                       : undefined
                   }
                 />
+                {translationLines.map((l, i) => (
+                  <Text
+                    // biome-ignore lint/suspicious/noArrayIndexKey: stable ordered lines
+                    key={`t-${i}`}
+                    className={cn("text-primary-200 text-sm mt-1", alignClass)}
+                  >
+                    {l.value}
+                  </Text>
+                ))}
               </Box>
             );
           })}
@@ -165,6 +245,10 @@ export default function LyricsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  const karaokeEnabled = useApp((s) => s.karaokeEnabled);
+  const setKaraokeEnabled = useApp((s) => s.setKaraokeEnabled);
+  const translationLang = useApp((s) => s.lyricsTranslationLang);
+  const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const router = useRouter();
@@ -172,12 +256,15 @@ export default function LyricsScreen() {
   const queryClient = useQueryClient();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
   const shareSheetRef = useRef<BottomSheetModal>(null);
+  const layersSheetRef = useRef<BottomSheetModal>(null);
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const colors = useImageColors(playingTrack?.artwork);
-  const { lyrics } = useSyncedLyrics(playingTrack);
+  const { lyrics, hasKaraoke, layers, hasTranslations, hasPronunciation } =
+    useSyncedLyrics(playingTrack);
+  const hasLayers = hasTranslations || hasPronunciation;
   const castSession = useCastSession();
   const doShare = useCreateShare();
   const isRadio = !!playingTrack?.isRadio;
@@ -196,6 +283,14 @@ export default function LyricsScreen() {
 
   const handleJukeboxPress = () => {
     openJukeboxSheet();
+  };
+
+  const handleToggleKaraoke = () => {
+    setKaraokeEnabled(!karaokeEnabled);
+  };
+
+  const handleLayersPress = () => {
+    layersSheetRef.current?.present();
   };
 
   const handleSharePress = () => {
@@ -305,9 +400,40 @@ export default function LyricsScreen() {
               {playingTrack?.artist || t("app.shared.unknownArtist")}
             </Text>
           </VStack>
-          <Box className="w-10 h-10" />
+          {hasLayers || hasKaraoke ? (
+            <HStack className="items-center gap-x-2">
+              {hasLayers && (
+                <FadeOutScaleDown
+                  onPress={handleLayersPress}
+                  className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                >
+                  <Languages
+                    size={20}
+                    color={
+                      translationLang || showPronunciation
+                        ? emerald500
+                        : "white"
+                    }
+                  />
+                </FadeOutScaleDown>
+              )}
+              {hasKaraoke && (
+                <FadeOutScaleDown
+                  onPress={handleToggleKaraoke}
+                  className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                >
+                  <AudioLines
+                    size={20}
+                    color={karaokeEnabled ? emerald500 : "white"}
+                  />
+                </FadeOutScaleDown>
+              )}
+            </HStack>
+          ) : (
+            <Box className="w-10 h-10" />
+          )}
         </HStack>
-        <LyricsBody lyrics={lyrics} />
+        <LyricsBody lyrics={lyrics} layers={layers} />
         <VStack className="px-6 pt-4">
           <HStack className="items-center justify-between mb-4">
             {capabilities.jukebox && !isRadio && !castSession ? (
@@ -362,6 +488,11 @@ export default function LyricsScreen() {
         hideLyricsAction
       />
       <ShareLinkSheet sheetRef={shareSheetRef} url={shareUrl} />
+      <LyricsLayersSheet
+        sheetRef={layersSheetRef}
+        translations={layers.translations}
+        pronunciations={layers.pronunciations}
+      />
     </LinearGradient>
   );
 }

@@ -1,4 +1,12 @@
-import type { Line, StructuredLyrics } from "@/services/openSubsonic/types";
+import type {
+  Agent,
+  CueLine,
+  Line,
+  LyricCue,
+  StructuredLyrics,
+} from "@/services/openSubsonic/types";
+
+export type LyricAlign = "left" | "right" | "center";
 
 export function findCurrentLineIndex(
   lines: Line[],
@@ -19,6 +27,95 @@ export function findCurrentLineIndex(
     }
   }
   return result;
+}
+
+export function findCurrentCueIndex(
+  cues: LyricCue[],
+  positionMs: number,
+): number {
+  if (cues.length === 0) return -1;
+  let lo = 0;
+  let hi = cues.length - 1;
+  let result = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (cues[mid].start <= positionMs) {
+      result = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return result;
+}
+
+export function getCueLineForLine(
+  lyrics: StructuredLyrics | null | undefined,
+  lineIndex: number,
+): CueLine | undefined {
+  return lyrics?.cueLine?.find((c) => c.index === lineIndex);
+}
+
+export function hasKaraoke(
+  lyrics: StructuredLyrics | null | undefined,
+): boolean {
+  return !!lyrics?.cueLine?.some((c) => !!c.cue?.length);
+}
+
+// Agents (multi-voice) live at the word level: each cueLine carries an agentId
+// that resolves to an entry in the layer's `agents` list. Lines without a
+// cueLine (or in single-voice tracks) resolve to no agent.
+export function getAgentForLine(
+  lyrics: StructuredLyrics | null | undefined,
+  lineIndex: number,
+): Agent | undefined {
+  const agents = lyrics?.agents;
+  if (!agents?.length) return undefined;
+  const agentId = getCueLineForLine(lyrics, lineIndex)?.agentId;
+  if (!agentId) return undefined;
+  return agents.find((a) => a.id === agentId);
+}
+
+export function agentAlign(role: string | undefined): LyricAlign {
+  switch (role) {
+    case "voice":
+      return "right";
+    case "bg":
+    case "group":
+      return "center";
+    default:
+      return "left";
+  }
+}
+
+// The kind layers (translation / pronunciation) are independent entries with no
+// guaranteed 1:1 line alignment, so map each layer line onto the main line whose
+// [start, nextStart) window contains it. Falls back to positional index mapping
+// when the main layer is unsynced (no timestamps to bucket by).
+export function alignLayerToMain(
+  mainLines: Line[],
+  layerLines: Line[] | undefined,
+): Line[][] {
+  const buckets: Line[][] = mainLines.map(() => []);
+  if (!layerLines?.length || !mainLines.length) return buckets;
+
+  const mainSynced = mainLines.some((l) => l.start != null);
+  const layerSynced = layerLines.some((l) => l.start != null);
+
+  if (!mainSynced || !layerSynced) {
+    layerLines.forEach((line, i) => {
+      if (i < buckets.length) buckets[i].push(line);
+    });
+    return buckets;
+  }
+
+  for (const line of layerLines) {
+    const start = line.start ?? 0;
+    const target = findCurrentLineIndex(mainLines, start);
+    if (target >= 0) buckets[target].push(line);
+    else if (buckets.length) buckets[0].push(line);
+  }
+  return buckets;
 }
 
 const LRC_TIMESTAMP_RE = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g;

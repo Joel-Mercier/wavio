@@ -185,7 +185,7 @@ export default function PlayerScreen() {
     Math.min(coverArea.width - 48, coverArea.height),
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
-  const { lyrics } = useSyncedLyrics(playingTrack);
+  const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
   const coverTranslateX = useSharedValue(0);
 
@@ -705,6 +705,7 @@ export default function PlayerScreen() {
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
         playingTrack={playingTrack ?? null}
+        hasKaraoke={hasKaraoke}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}
         onRemoveFavoritePodcast={handleRemoveFavoritePodcastPress}
       />

@@ -4,12 +4,18 @@ import { useLrclibLyrics } from "@/hooks/lrclib/useLrclibLyrics";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
+import { hasKaraoke } from "@/utils/lyrics";
 
 function pickSyncedLyrics(
   list: StructuredLyrics[] | undefined,
 ): StructuredLyrics | null {
   if (!Array.isArray(list) || list.length === 0) return null;
-  return list.find((l) => l.synced) ?? list[0] ?? null;
+  return (
+    list.find((l) => l.synced && hasKaraoke(l)) ??
+    list.find((l) => l.synced) ??
+    list[0] ??
+    null
+  );
 }
 
 export function useSyncedLyrics(track: QueueTrack | undefined | null) {
@@ -24,10 +30,18 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     { enhanced: true },
     lyricsEligible,
   );
+  const list = backend.data?.lyricsList?.structuredLyrics;
   const backendLyrics = useMemo(
-    () => pickSyncedLyrics(backend.data?.lyricsList?.structuredLyrics),
-    [backend.data],
+    () => pickSyncedLyrics(list?.filter((l) => (l.kind ?? "main") === "main")),
+    [list],
   );
+  const layers = useMemo(() => {
+    return {
+      main: backendLyrics,
+      translations: list?.filter((l) => l.kind === "translation") ?? [],
+      pronunciations: list?.filter((l) => l.kind === "pronunciation") ?? [],
+    };
+  }, [list, backendLyrics]);
 
   const backendSettled = lyricsEligible && !backend.isLoading;
   const lrclib = useLrclibLyrics({
@@ -44,5 +58,12 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
   const lyrics =
     backendLyrics ?? (lyricsSource === "all" ? lrclib.lyrics : null);
   const isLoading = backend.isLoading || lrclib.isLoading;
-  return { lyrics, isLoading };
+  return {
+    lyrics,
+    isLoading,
+    hasKaraoke: hasKaraoke(lyrics),
+    layers,
+    hasTranslations: layers.translations.length > 0,
+    hasPronunciation: layers.pronunciations.length > 0,
+  };
 }

@@ -1,8 +1,15 @@
 import { persistQueryClientRestore } from "@tanstack/react-query-persist-client";
 import { Redirect, Stack } from "expo-router";
-import { useEffect } from "react";
-import { AppState, type AppStateStatus } from "react-native";
+import { type ReactNode, useCallback, useEffect } from "react";
+import {
+  AppState,
+  type AppStateStatus,
+  useWindowDimensions,
+} from "react-native";
+import { Drawer } from "react-native-drawer-layout";
+import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import DrawerMenu from "@/components/DrawerMenu";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
@@ -32,6 +39,7 @@ import {
 } from "@/services/playQueueSync";
 import { loadResumePositions } from "@/services/resumePositions";
 import useActivity from "@/stores/activity";
+import useApp from "@/stores/app";
 import useAuth, { useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
@@ -48,6 +56,44 @@ import { logError } from "@/utils/log";
 // Module-level so it survives AppLayout unmount/remount during the
 // logout → login flow used by switchToServer.
 let lastHydratedScope: string | null = null;
+
+// Isolates the drawer's open-state subscription so toggling it re-renders only
+// this wrapper — not AppLayout, whose re-render would recreate the whole Stack
+// navigator config and flicker the screen. `children` (the Stack subtree) stays
+// referentially stable, so it's skipped on open/close.
+function AppDrawer({ children }: { children: ReactNode }) {
+  const showDrawer = useApp((s) => s.showDrawer);
+  const setShowDrawer = useApp((s) => s.setShowDrawer);
+  const isWideLayout = useApp((s) => s.isWideLayout);
+  const { width } = useWindowDimensions();
+  const primary600 = useCSSVariable("--color-primary-600") as
+    | string
+    | undefined;
+  const openDrawer = useCallback(() => setShowDrawer(true), [setShowDrawer]);
+  const closeDrawer = useCallback(() => setShowDrawer(false), [setShowDrawer]);
+  const renderDrawerContent = useCallback(
+    () => <DrawerMenu onClose={closeDrawer} />,
+    [closeDrawer],
+  );
+  return (
+    <Drawer
+      open={showDrawer}
+      onOpen={openDrawer}
+      onClose={closeDrawer}
+      drawerPosition="left"
+      drawerType="front"
+      drawerStyle={{
+        backgroundColor: primary600,
+        // The lg drawer was 3/4 of the screen — far too wide in landscape;
+        // roughly halve it there.
+        width: isWideLayout ? width * 0.4 : "75%",
+      }}
+      renderDrawerContent={renderDrawerContent}
+    >
+      {children}
+    </Drawer>
+  );
+}
 
 export default function AppLayout() {
   const isAuthenticated = useAuth((store) => store.isAuthenticated);
@@ -177,47 +223,49 @@ export default function AppLayout() {
     console.log("[app] User is authenticated, rendering (app) layout");
   return (
     <>
-      <AppErrorBoundary variant="inline">
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="playlists/new" />
-          <Stack.Screen name="playlists/new-smart" />
-          <Stack.Screen name="playlists/[id]/edit-rules" />
-          <Stack.Screen name="internet-radio-stations/new" />
-          <Stack.Screen name="podcast-channels/new" />
-          <Stack.Screen
-            name="player"
-            options={{
-              gestureEnabled: true,
-              fullScreenGestureEnabled: true,
-              gestureDirection: "vertical",
-              animationDuration: 300,
-              animation: "fade_from_bottom",
-              presentation: "formSheet",
-              sheetAllowedDetents: [1.0],
-              // Android: extend the sheet behind the top inset so the [1.0]
-              // detent truly covers the screen (no underlying view peeking at
-              // the top) and the screen's own paddingTop: insets.top isn't
-              // stacked on top of a second inset gap.
-              sheetShouldOverflowTopInset: true,
-            }}
-          />
-          <Stack.Screen
-            name="lyrics"
-            options={{
-              gestureEnabled: true,
-              fullScreenGestureEnabled: true,
-              gestureDirection: "vertical",
-              animationDuration: 300,
-              animation: "fade_from_bottom",
-              presentation: "formSheet",
-              sheetAllowedDetents: [1.0],
-              sheetShouldOverflowTopInset: true,
-            }}
-          />
-        </Stack>
-      </AppErrorBoundary>
-      <FloatingPlayer />
+      <AppDrawer>
+        <AppErrorBoundary variant="inline">
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="playlists/new" />
+            <Stack.Screen name="playlists/new-smart" />
+            <Stack.Screen name="playlists/[id]/edit-rules" />
+            <Stack.Screen name="internet-radio-stations/new" />
+            <Stack.Screen name="podcast-channels/new" />
+            <Stack.Screen
+              name="player"
+              options={{
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                gestureDirection: "vertical",
+                animationDuration: 300,
+                animation: "fade_from_bottom",
+                presentation: "formSheet",
+                sheetAllowedDetents: [1.0],
+                // Android: extend the sheet behind the top inset so the [1.0]
+                // detent truly covers the screen (no underlying view peeking at
+                // the top) and the screen's own paddingTop: insets.top isn't
+                // stacked on top of a second inset gap.
+                sheetShouldOverflowTopInset: true,
+              }}
+            />
+            <Stack.Screen
+              name="lyrics"
+              options={{
+                gestureEnabled: true,
+                fullScreenGestureEnabled: true,
+                gestureDirection: "vertical",
+                animationDuration: 300,
+                animation: "fade_from_bottom",
+                presentation: "formSheet",
+                sheetAllowedDetents: [1.0],
+                sheetShouldOverflowTopInset: true,
+              }}
+            />
+          </Stack>
+        </AppErrorBoundary>
+        <FloatingPlayer />
+      </AppDrawer>
       <OfflineMutationsSync />
       <OfflineStarredAutoSync />
       <ServerExtensionsSync />
