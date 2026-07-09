@@ -19,6 +19,7 @@
 		"build:android:preview": "eas build -p android --profile preview --local",
 		"build:android:production": "eas build -p android --profile production --local",
 		"build:android:production-apk": "eas build -p android --profile production-apk --local",
+		"build:android:production-apk-armv7": "eas build -p android --profile production-apk-armv7 --local",
 		"submit:android:closed": "eas submit -p android --profile closed",
 		"submit:android:production": "eas submit -p android --profile production"
 	},

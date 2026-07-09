@@ -21,6 +21,7 @@
 		"mobile:build:android:preview": "bun run --cwd apps/mobile build:android:preview",
 		"mobile:build:android:production": "bun run --cwd apps/mobile build:android:production",
 		"mobile:build:android:production-apk": "bun run --cwd apps/mobile build:android:production-apk",
+		"mobile:build:android:production-apk-armv7": "bun run --cwd apps/mobile build:android:production-apk-armv7",
 		"mobile:submit:android:closed": "bun run --cwd apps/mobile submit:android:closed",
 		"mobile:submit:android:production": "bun run --cwd apps/mobile submit:android:production",
 		"landing:dev": "bun run --cwd apps/landing dev",
