@@ -1116,14 +1116,24 @@
 					"changelog": "Änderungsprotokoll"
 				},
 				"languages": {
-					"zh-CN": "简体中文",
-					"en": "English",
-					"fr": "Français",
-					"ru": "Русский",
-					"de": "Deutsch",
+					"zh-CN": "",
+					"en": "",
+					"fr": "",
+					"ru": "",
+					"de": "",
 					"it": "Italiano"
 				},
-				"fileSizes": ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+				"fileSizes": [
+					"Bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				],
 				"album_one": "Album",
 				"album_other": "Alben",
 				"artist_one": "Interpret",
