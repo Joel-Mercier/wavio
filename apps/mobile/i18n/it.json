@@ -1115,14 +1115,6 @@
 					"bugReport": "Segnala un bug",
 					"changelog": "Registro delle modifiche"
 				},
-				"languages": {
-					"zh-CN": "Cinese semplificato",
-					"en": "Inglese",
-					"fr": "Francese",
-					"ru": "Russo",
-					"de": "Tedesco",
-					"it": "Italiano"
-				},
 				"fileSizes": [
 					"byte",
 					"KB",
