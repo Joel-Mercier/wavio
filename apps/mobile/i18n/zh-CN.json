@@ -1098,14 +1098,6 @@
 					"bugReport": "报告问题",
 					"changelog": "更新日志"
 				},
-				"languages": {
-					"zh-CN": "简体中文",
-					"en": "English",
-					"fr": "Français",
-					"ru": "Русский",
-					"de": "Deutsch",
-					"it": "Italiano"
-				},
 				"fileSizes": [
 					"bytes",
 					"KB",
