@@ -28,6 +28,15 @@ export const SupportedLanguages = Object.keys(
   resources,
 ) as (keyof typeof resources)[];
 
+export const LanguageNames: Record<TSupportedLanguages, string> = {
+  en: "English",
+  fr: "Français",
+  de: "Deutsch",
+  it: "Italiano",
+  "zh-CN": "简体中文",
+  ru: "Русский",
+};
+
 const zodLocales = {
   en: zodEn,
   fr: zodFr,
