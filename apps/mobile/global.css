@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @import "uniwind";
 
+/* Each weight sets both the Inter family and an explicit font-weight. The weight
+   is what keeps the type hierarchy intact when Inter is intentionally not loaded
+   (zh-CN, see app/_layout.tsx): the unregistered family falls back to the OS
+   system font, and font-weight makes that fallback render Light/Regular/Bold. */
+@utility font-light {
+  font-family: "Inter_300Light";
+  font-weight: 300;
+}
+@utility font-normal {
+  font-family: "Inter_400Regular";
+  font-weight: 400;
+}
+@utility font-bold {
+  font-family: "Inter_700Bold";
+  font-weight: 700;
+}
+
 @layer theme {
   .light {
     --primary-0: 166 166 166;
@@ -140,9 +157,6 @@
 }
 
 @theme inline {
-  --font-light: 'Inter_300Light';
-  --font-normal: 'Inter_400Regular';
-  --font-bold: 'Inter_700Bold';
   --color-primary-0: rgb(var(--primary-0));
   --color-primary-50: rgb(var(--primary-50));
   --color-primary-100: rgb(var(--primary-100));

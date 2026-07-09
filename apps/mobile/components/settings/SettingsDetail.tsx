@@ -38,7 +38,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { SupportedLanguages } from "@/config/i18n";
+import { LanguageNames, SupportedLanguages } from "@/config/i18n";
 import { queryPersister } from "@/config/queryClient";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import {
@@ -1037,7 +1037,7 @@ export default function SettingsDetail() {
         )}
         options={SupportedLanguages.map((language) => ({
           value: language,
-          label: t(`app.shared.languages.${language}`, { lng: language }),
+          label: LanguageNames[language],
         }))}
         selectedValue={locale}
         onSelect={setLocale}

@@ -1138,14 +1138,6 @@
 					"bugReport": "Report a bug",
 					"changelog": "Changelog"
 				},
-				"languages": {
-					"zh-CN": "简体中文",
-					"en": "English",
-					"fr": "Français",
-					"ru": "Русский",
-					"de": "Deutsch",
-					"it": "Italiano"
-				},
 				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
 			},
 			"localLibrary": {

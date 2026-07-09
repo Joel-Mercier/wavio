@@ -1098,17 +1098,7 @@
 					"bugReport": "报告问题",
 					"changelog": "更新日志"
 				},
-				"fileSizes": [
-					"bytes",
-					"KB",
-					"MB",
-					"GB",
-					"TB",
-					"PB",
-					"EB",
-					"ZB",
-					"YB"
-				],
+				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
 				"album_other": "专辑",
 				"artist_other": "艺人",
 				"playlist_other": "歌单",

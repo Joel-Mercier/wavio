@@ -119,11 +119,20 @@ function onAppStateChange(status: AppStateStatus) {
 export default sentryWrap(function RootLayout() {
 	const locale = useApp((store) => store.locale);
 	const setLocale = useApp((store) => store.setLocale);
-	const [loaded] = useFonts({
-		Inter_400Regular,
-		Inter_300Light,
-		Inter_700Bold,
-	});
+	// Inter has no CJK glyphs, so forcing it under zh-CN renders Latin in Inter and
+	// Chinese in Android's system Noto CJK — a mismatched, uneven mix. Skip loading
+	// Inter for zh-CN so the whole UI falls back to the OS system font (Roboto +
+	// Noto CJK on Android), which renders Latin and CJK consistently and ships zero
+	// extra bytes. font-weight in global.css preserves the type hierarchy.
+	const [loaded] = useFonts(
+		locale === "zh-CN"
+			? {}
+			: {
+					Inter_400Regular,
+					Inter_300Light,
+					Inter_700Bold,
+				},
+	);
 
 	useEffect(() => {
 		if (loaded) {
@@ -196,7 +205,14 @@ export default sentryWrap(function RootLayout() {
 				userLocale.languageCode &&
 				(SupportedLanguages as string[]).includes(userLocale.languageCode),
 		);
-		const next = (matching?.languageCode ?? "en") as TSupportedLanguages;
+		// SupportedLanguages only holds the region-qualified "zh-CN", so a device
+		// reporting a bare "zh" (or "zh-Hans", "zh-TW", …) never matches above and
+		// would wrongly fall back to English. Map any Chinese base code to zh-CN.
+		const zhMatch = userLocales.find((userLocale) =>
+			userLocale.languageCode?.toLowerCase().startsWith("zh"),
+		);
+		const next = (matching?.languageCode ??
+			(zhMatch ? "zh-CN" : "en")) as TSupportedLanguages;
 		setLocale(next);
 		i18n.changeLanguage(next);
 		applyZodLocale(next);
