@@ -1143,19 +1143,10 @@
 					"en": "English",
 					"fr": "Français",
 					"ru": "Русский",
-					"de": "Deutsch"
+					"de": "Deutsch",
+					"it": "Italiano"
 				},
-				"fileSizes": [
-					"bytes",
-					"KB",
-					"MB",
-					"GB",
-					"TB",
-					"PB",
-					"EB",
-					"ZB",
-					"YB"
-				]
+				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
 			},
 			"localLibrary": {
 				"unsupported": "The local library doesn't support this operation"

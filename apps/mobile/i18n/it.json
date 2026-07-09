@@ -1116,23 +1116,14 @@
 					"changelog": "Registro delle modifiche"
 				},
 				"languages": {
-					"zh-CN": "Cinese semplificato",
-					"en": "Inglese",
-					"fr": "Francese",
-					"ru": "Russo",
-					"de": "Tedesco"
+					"zh-CN": "简体中文",
+					"en": "English",
+					"fr": "Français",
+					"ru": "Русский",
+					"de": "Deutsch",
+					"it": "Italiano"
 				},
-				"fileSizes": [
-					"byte",
-					"KB",
-					"MB",
-					"GB",
-					"TB",
-					"PB",
-					"EB",
-					"ZB",
-					"YB"
-				],
+				"fileSizes": ["byte", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
 				"album_one": "Album",
 				"album_other": "Album",
 				"artist_one": "Artista",

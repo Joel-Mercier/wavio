@@ -4,11 +4,13 @@ import * as z from "zod";
 import zodDe from "zod/v4/locales/de.js";
 import zodEn from "zod/v4/locales/en.js";
 import zodFr from "zod/v4/locales/fr.js";
+import zodIt from "zod/v4/locales/it.js";
 import zodRu from "zod/v4/locales/ru.js";
 import zodCn from "zod/v4/locales/zh-CN.js";
 import de from "@/i18n/de.json";
 import en from "@/i18n/en.json";
 import fr from "@/i18n/fr.json";
+import it from "@/i18n/it.json";
 import ru from "@/i18n/ru.json";
 import zhCn from "@/i18n/zh-CN.json";
 
@@ -16,6 +18,7 @@ const resources = {
   en,
   fr,
   de,
+  it,
   "zh-CN": zhCn,
   ru,
 };
@@ -31,6 +34,7 @@ const zodLocales = {
   de: zodDe,
   "zh-CN": zodCn,
   ru: zodRu,
+  it: zodIt,
 } satisfies Record<TSupportedLanguages, () => { localeError: unknown }>;
 
 export function applyZodLocale(locale: TSupportedLanguages) {
