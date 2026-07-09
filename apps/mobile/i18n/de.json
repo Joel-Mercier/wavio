@@ -1115,14 +1115,6 @@
 					"bugReport": "Einen Fehler melden",
 					"changelog": "Änderungsprotokoll"
 				},
-				"languages": {
-					"zh-CN": "",
-					"en": "",
-					"fr": "",
-					"ru": "",
-					"de": "",
-					"it": "Italiano"
-				},
 				"fileSizes": [
 					"Bytes",
 					"KB",
