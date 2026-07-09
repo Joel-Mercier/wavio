@@ -1149,14 +1149,6 @@
 					"bugReport": "Сообщить об ошибке",
 					"changelog": "История изменений"
 				},
-				"languages": {
-					"zh-CN": "简体中文",
-					"en": "English",
-					"fr": "Français",
-					"ru": "Русский",
-					"de": "Deutsch",
-					"it": "Italiano"
-				},
 				"fileSizes": [
 					"байт",
 					"КБ",
