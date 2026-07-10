@@ -22,7 +22,7 @@
 				"songsByGenre": "{{genre}} canzoni",
 				"albumsByGenre": "{{genre}} album",
 				"albumsByDecade": "Album degli anni ' {{decade}}",
-				"moreFromArtist": "Altri articoli da {{artist}}",
+				"moreFromArtist": "Altro di {{artist}}",
 				"moreFrom": "More from",
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
@@ -30,7 +30,7 @@
 					"music": "Musica",
 					"podcasts": "Podcast",
 					"favoritePodcasts": "Iscritto",
-					"internetRadioStations": "Stazioni radio su Internet",
+					"internetRadioStations": "Web Radio",
 					"radio": "Radio",
 					"radioFavorites": "Preferiti"
 				},
@@ -80,7 +80,7 @@
 				"recentlyAdded": "Aggiunti di recente",
 				"mostPlayed": "I più ascoltati",
 				"topRated": "I più apprezzati",
-				"random": "A caso",
+				"random": "Casuale",
 				"library": "Biblioteca",
 				"playlists": "Playlist",
 				"albums": "Album",
@@ -520,7 +520,7 @@
 					"lastplayed": "Ultima riproduzione",
 					"bpm": "BPM",
 					"duration": "Durata",
-					"random": "A caso"
+					"random": "Casuale"
 				}
 			},
 			"editPlaylist": {
@@ -618,21 +618,21 @@
 					}
 				},
 				"hapticsSettings": {
-					"title": "Tattilità",
+					"title": "Feedback tattile",
 					"enabledLabel": "Feedback tattile",
 					"enabledDescription": "Attiva la vibrazione in caso di interazioni come lo scorrimento dell'indice alfabetico"
 				},
 				"internetRadioStationsSettings": {
-					"title": "Stazioni radio su Internet",
+					"title": "Web Radio",
 					"enabledLabel": "Elenco di Radio Browser",
 					"enabledDescription": "Sfoglia e cerca tra milioni di stazioni presenti nella directory di Radio Browser. Disattiva questa opzione per utilizzare solo le stazioni del tuo server.",
 					"countryLabel": "Paese",
-					"countryDescription": "Seleziona il Paese per la riga delle stazioni \"Per Paese\". L'impostazione predefinita è la regione del tuo dispositivo.",
+					"countryDescription": "Seleziona il Paese per le stazioni Radio. Per impostazione predefinita è impostata la regione del tuo dispositivo.",
 					"countryAutomatic": "Automatico",
-					"tagsLabel": "Righe di genere",
-					"tagsDescription": "Scegli quali righe relative ai generi musicali visualizzare nella schermata delle stazioni radio.",
+					"tagsLabel": "Generi",
+					"tagsDescription": "Scegli quali generi musicali visualizzare nella schermata delle stazioni radio.",
 					"tagsCount": "{{count}} selezionato",
-					"tagsSheetTitle": "Righe di genere"
+					"tagsSheetTitle": "Generi"
 				},
 				"playbackSettings": {
 					"title": "Riproduzione",
@@ -948,7 +948,7 @@
 					"size": "Dimensioni",
 					"favorite": "Preferiti",
 					"playCount": "Numero di riproduzioni",
-					"lastPlayed": "Ultima partita giocata",
+					"lastPlayed": "Ultima riproduzione",
 					"modified": "Modificato",
 					"albumPeak": "Posizione massima in classifica dell'album",
 					"trackPeak": "Punto di picco della traccia",
@@ -1010,7 +1010,7 @@
 			},
 			"shares": {
 				"title": "Condivisioni",
-				"editShare": "Modifica Condividi",
+				"editShare": "Modifica Condivisione",
 				"deleteShare": "Elimina condivisione",
 				"editShareSuccessMessage": "Condivisione aggiornata con successo",
 				"editShareErrorMessage": "Si è verificato un errore durante l'aggiornamento della condivisione",
@@ -1058,7 +1058,7 @@
 				"removeUser": "Elimina utente",
 				"switchServerConfirmTitle": "Cambiare server?",
 				"switchServerConfirmDescription": "Verrai disconnesso e reindirizzato alla schermata di accesso.",
-				"switchConfirm": "Interruttore"
+				"switchConfirm": "Cambia"
 			},
 			"shared": {
 				"cancel": "Annulla",
@@ -1116,7 +1116,7 @@
 					"activity": "Attività",
 					"queue": "Coda",
 					"settings": "Impostazioni",
-					"shares": "Azioni",
+					"shares": "Condivisioni",
 					"servers": "Server",
 					"libraries": "Biblioteche",
 					"logout": "Esci",
@@ -1147,7 +1147,7 @@
 				"playlist_other": "Playlist",
 				"podcast_one": "Podcast",
 				"podcast_other": "Podcast",
-				"radioStation_one": "Stazione radiofonica",
+				"radioStation_one": "Stazione radio",
 				"radioStation_other": "Stazioni radio",
 				"folder_one": "Cartella",
 				"folder_other": "Cartelle",
