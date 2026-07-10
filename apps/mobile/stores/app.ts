@@ -51,6 +51,11 @@ interface AppStore {
   setShowAddTab: (showAddTab: boolean) => void;
   showEmptyHomeSections: boolean;
   setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => void;
+  // Home feed sections hidden via Settings > Display settings. Values are
+  // HOME_SECTION_CATALOG keys (utils/homeFeed.ts); stored as the hidden list
+  // so sections added in future releases default to visible.
+  hiddenHomeSections: string[];
+  setHiddenHomeSections: (hiddenHomeSections: string[]) => void;
   // "off" hides lyrics entirely; "server" uses only server-embedded lyrics;
   // "all" also falls back to lrclib.net when the server has none.
   lyricsSource: "off" | "server" | "all";
@@ -158,6 +163,10 @@ export const useAppBase = create<AppStore>()(
       showEmptyHomeSections: true,
       setShowEmptyHomeSections: (showEmptyHomeSections: boolean) => {
         set({ showEmptyHomeSections });
+      },
+      hiddenHomeSections: [],
+      setHiddenHomeSections: (hiddenHomeSections: string[]) => {
+        set({ hiddenHomeSections });
       },
       lyricsSource: "all",
       setLyricsSource: (lyricsSource: "off" | "server" | "all") => {

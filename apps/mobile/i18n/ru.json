@@ -610,6 +610,18 @@
 					"createTabDescription": "Показывать кнопку «Создать» на главной панели навигации",
 					"showEmptyHomeSectionsLabel": "Показывать пустые разделы",
 					"showEmptyHomeSectionsDescription": "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их",
+					"homeSectionsLabel": "Разделы главного экрана",
+					"homeSectionsDescription": "Выберите, какие разделы отображать на главном экране",
+					"homeSectionsCount": "Показано: {{count}}",
+					"homeSectionsSheetTitle": "Разделы главного экрана",
+					"homeSectionsSheetDescription": "Отключите разделы, чтобы скрыть их с главного экрана",
+					"homeSections": {
+						"recentPlays": "Ярлыки",
+						"moreFromArtist": "Больше от исполнителя",
+						"songsByGenre": "Песни по жанру",
+						"albumsByGenre": "Альбомы по жанру",
+						"albumsByDecade": "Альбомы по десятилетиям"
+					},
 					"lyricsSourceLabel": "Тексты песен",
 					"lyricsSourceDescription": "Выберите источник синхронизированных текстов или отключите их.",
 					"lyricsSourceOptions": {

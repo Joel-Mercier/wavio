@@ -596,6 +596,18 @@
 					"createTabDescription": "Afficher l'onglet 'créer' dans la barre d'onglets en bas",
 					"showEmptyHomeSectionsLabel": "Afficher les sections vides",
 					"showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
+					"homeSectionsLabel": "Sections de l'accueil",
+					"homeSectionsDescription": "Choisissez les sections à afficher sur l'écran d'accueil",
+					"homeSectionsCount": "{{count}} affichées",
+					"homeSectionsSheetTitle": "Sections de l'accueil",
+					"homeSectionsSheetDescription": "Désactivez des sections pour les masquer de l'écran d'accueil",
+					"homeSections": {
+						"recentPlays": "Raccourcis",
+						"moreFromArtist": "Plus d'un artiste",
+						"songsByGenre": "Titres par genre",
+						"albumsByGenre": "Albums par genre",
+						"albumsByDecade": "Albums par décennie"
+					},
 					"lyricsSourceLabel": "Paroles",
 					"lyricsSourceDescription": "Choisissez la provenance des paroles synchronisées, ou désactivez-les.",
 					"lyricsSourceOptions": {

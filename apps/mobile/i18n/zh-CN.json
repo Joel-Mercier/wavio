@@ -589,6 +589,18 @@
 					"createTabDescription": "在底部导航栏中显示“创建”标签页",
 					"showEmptyHomeSectionsLabel": "显示空白板块",
 					"showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏",
+					"homeSectionsLabel": "主页板块",
+					"homeSectionsDescription": "选择在主页上显示哪些板块",
+					"homeSectionsCount": "已显示 {{count}} 个",
+					"homeSectionsSheetTitle": "主页板块",
+					"homeSectionsSheetDescription": "关闭板块以将其从主页上隐藏",
+					"homeSections": {
+						"recentPlays": "快捷方式",
+						"moreFromArtist": "来自某位艺术家的更多内容",
+						"songsByGenre": "按流派划分的歌曲",
+						"albumsByGenre": "按流派划分的专辑",
+						"albumsByDecade": "按年代划分的专辑"
+					},
 					"lyricsSourceLabel": "歌词",
 					"lyricsSourceDescription": "选择同步歌词的来源，或将其关闭。",
 					"lyricsSourceOptions": {

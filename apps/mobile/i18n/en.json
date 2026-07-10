@@ -596,6 +596,18 @@
 					"createTabDescription": "Show the 'create' tab in the bottom tab bar",
 					"showEmptyHomeSectionsLabel": "Show empty sections",
 					"showEmptyHomeSectionsDescription": "Show home sections that have no content instead of hiding them",
+					"homeSectionsLabel": "Home sections",
+					"homeSectionsDescription": "Choose which sections appear on the home screen",
+					"homeSectionsCount": "{{count}} shown",
+					"homeSectionsSheetTitle": "Home sections",
+					"homeSectionsSheetDescription": "Turn sections off to hide them from the home screen",
+					"homeSections": {
+						"recentPlays": "Shortcuts",
+						"moreFromArtist": "More from an artist",
+						"songsByGenre": "Songs by genre",
+						"albumsByGenre": "Albums by genre",
+						"albumsByDecade": "Albums by decade"
+					},
 					"lyricsSourceLabel": "Lyrics",
 					"lyricsSourceDescription": "Choose where synced lyrics come from, or turn them off.",
 					"lyricsSourceOptions": {

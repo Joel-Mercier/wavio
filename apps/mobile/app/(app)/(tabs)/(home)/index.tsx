@@ -22,6 +22,7 @@ import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
 
@@ -43,6 +44,7 @@ export default function HomeScreen() {
   const screenBottomPadding = useScreenBottomPadding();
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
+  const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const [sessionSeed] = useState(() => Date.now());
 
   // Eager seed data — drives the dynamic picks (featured artists / decades).
@@ -89,8 +91,15 @@ export default function HomeScreen() {
         genres: genresData?.genres?.genre ?? [],
         capabilities,
         sessionSeed,
+        hiddenSections: hiddenHomeSections,
       }),
-    [seedAlbums, genresData?.genres?.genre, capabilities, sessionSeed],
+    [
+      seedAlbums,
+      genresData?.genres?.genre,
+      capabilities,
+      sessionSeed,
+      hiddenHomeSections,
+    ],
   );
 
   const [lastSeenIndex, setLastSeenIndex] = useState(INITIAL_ENABLED_INDEX);
