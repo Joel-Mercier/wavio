@@ -111,7 +111,26 @@
 				"addAllToFavoritesSuccessMessage": "已全部收藏",
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
-				"typeCompilation": "合辑"
+				"typeCompilation": "合辑",
+				"releaseTypes": {
+					"album": "专辑",
+					"single": "Single",
+					"ep": "EP",
+					"broadcast": "Broadcast",
+					"other": "Other",
+					"compilation": "合辑",
+					"soundtrack": "Soundtrack",
+					"spokenword": "Spoken word",
+					"interview": "Interview",
+					"audiobook": "有声读物",
+					"audiodrama": "Audio drama",
+					"live": "Live",
+					"remix": "Remix",
+					"djmix": "DJ-mix",
+					"mixtapestreet": "Mixtape/Street",
+					"demo": "Demo",
+					"fieldrecording": "Field recording"
+				}
 			},
 			"artists": {
 				"label": "艺人",
