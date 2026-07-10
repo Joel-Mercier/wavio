@@ -23,7 +23,7 @@
 				"albumsByGenre": "{{genre}} album",
 				"albumsByDecade": "Album degli anni ' {{decade}}",
 				"moreFromArtist": "Altro di {{artist}}",
-				"moreFrom": "More from",
+				"moreFrom": "Altro di",
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
 				"tabs": {
@@ -112,7 +112,26 @@
 				"addAllToFavoritesSuccessMessage": "Tutti i brani sono stati aggiunti con successo ai preferiti",
 				"addAllToFavoritesErrorMessage": "Si è verificato un errore durante l'aggiunta dei brani ai preferiti",
 				"typeAlbum": "Album",
-				"typeCompilation": "Raccolta"
+				"typeCompilation": "Raccolta",
+				"releaseTypes": {
+					"album": "Album",
+					"single": "Singolo",
+					"ep": "EP",
+					"broadcast": "Broadcast",
+					"other": "Altro",
+					"compilation": "Raccolta",
+					"soundtrack": "Soundtrack",
+					"spokenword": "Spoken Word",
+					"interview": "Intervista",
+					"audiobook": "Audiolibro",
+					"audiodrama": "Audio drama",
+					"live": "Live",
+					"remix": "Remix",
+					"djmix": "DJ-mix",
+					"mixtapestreet": "Mixtape/Street",
+					"demo": "Demo",
+					"fieldrecording": "Registrazioni sul campo"
+				}
 			},
 			"artists": {
 				"label": "Artista",
