@@ -133,12 +133,14 @@ export function buildHomeFeed({
 
   sections.push({ id: "randomArtists", kind: "randomArtists" });
 
+  // Genres from Navidrome's per-library endpoint carry no counts; treat them as
+  // eligible for both rows (an empty byGenre section hides itself anyway).
   const songGenres = shuffle(
-    genres.filter((g) => g.songCount > 0).slice(0, 12),
+    genres.filter((g) => (g.songCount ?? 1) > 0).slice(0, 12),
     rand,
   );
   const albumGenres = shuffle(
-    genres.filter((g) => g.albumCount > 0).slice(0, 12),
+    genres.filter((g) => (g.albumCount ?? 1) > 0).slice(0, 12),
     rand,
   );
 

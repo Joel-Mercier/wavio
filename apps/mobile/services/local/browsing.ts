@@ -201,7 +201,7 @@ export const getTopSongs = async (
   return localEnvelope({ topSongs: { song: rows.map(mapRowToChild) } });
 };
 
-export const getGenres = async () => {
+export const getGenres = async (_params: { musicFolderId?: string } = {}) => {
   const rows = await queryGenres();
   return localEnvelope({ genres: { genre: rows.map(mapGenreRow) } });
 };

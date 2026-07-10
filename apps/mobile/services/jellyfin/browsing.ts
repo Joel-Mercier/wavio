@@ -186,13 +186,18 @@ export const getArtists = async ({
   return fakeEnvelope({ artists });
 };
 
-export const getGenres = async () => {
+export const getGenres = async ({
+  musicFolderId,
+}: {
+  musicFolderId?: string;
+} = {}) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
     "/MusicGenres",
     {
       params: {
         UserId: userId(),
         Fields: "ChildCount",
+        ParentId: musicFolderId,
       },
     },
   );

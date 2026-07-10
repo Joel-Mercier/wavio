@@ -5,6 +5,10 @@ export function isJellyfin(): boolean {
   return useAuthBase.getState().serverType === "jellyfin";
 }
 
+export function isNavidrome(): boolean {
+  return useAuthBase.getState().serverType === "navidrome";
+}
+
 // `local` is a first-class server type (chosen at login like Navidrome /
 // Jellyfin). When the active server is local, backend calls are served from the
 // on-device SQLite index (services/local/*) instead of any remote server, so

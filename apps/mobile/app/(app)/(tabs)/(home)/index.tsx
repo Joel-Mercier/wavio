@@ -61,7 +61,7 @@ export default function HomeScreen() {
     size: 12,
     musicFolderId,
   });
-  const { data: genresData } = useGenres();
+  const { data: genresData } = useGenres({ musicFolderId });
 
   const seedAlbums = useMemo<AlbumID3[]>(() => {
     const out: AlbumID3[] = [];

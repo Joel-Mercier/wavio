@@ -62,6 +62,11 @@ export interface NavidromeLibrary {
   path?: string;
 }
 
+export interface NavidromeGenre {
+  id: string;
+  name: string;
+}
+
 export interface NavidromeAuthPayload {
   id: string;
   name: string;
