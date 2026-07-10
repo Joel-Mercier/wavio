@@ -90,6 +90,29 @@ describe("getTranscodeInfo", () => {
     expect(info.toLabel).toBe("OPUS");
   });
 
+  it("targets rawTranscodeFormat on a raw container-forced transcode (formatTranscode override)", () => {
+    const info = getTranscodeInfo(track({ suffix: "m4a", bitRate: 256 }), {
+      streamingFormat: "raw",
+      effectiveMaxBitRate: null,
+      rawTranscodeFormat: "aac",
+      formatTranscode: true,
+    });
+    expect(info.active).toBe(true);
+    expect(info.fromLabel).toBe("M4A · 256 kbps");
+    // The transcode is container-forced, not format-driven, so the target is
+    // the backend's default codec — never the literal "raw".
+    expect(info.toLabel).toBe("AAC");
+  });
+
+  it("stays inactive when formatTranscode is overridden to false despite a format mismatch", () => {
+    const info = getTranscodeInfo(track({ suffix: "m4a", bitRate: 256 }), {
+      streamingFormat: "aac",
+      effectiveMaxBitRate: null,
+      formatTranscode: false,
+    });
+    expect(info.active).toBe(false);
+  });
+
   it("returns inactive for radio and podcast tracks", () => {
     expect(
       getTranscodeInfo(track({ suffix: "mp3", bitRate: 1000, isRadio: true }), {

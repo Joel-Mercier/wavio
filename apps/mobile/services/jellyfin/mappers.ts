@@ -58,6 +58,11 @@ export function mapBaseItemToChild(item: BaseItemDto): Child {
     discNumber: item.ParentIndexNumber,
     year: item.ProductionYear,
     suffix: (source?.Container ?? item.Container)?.split(",")[0]?.trim(),
+    // Codec-as-mime so willDirectPlay (services/jellyfin/streaming.ts) can
+    // match `container|codec` accept-list entries (e.g. m4a|aac vs m4a/ALAC).
+    contentType: audioStream?.Codec
+      ? `audio/${audioStream.Codec.toLowerCase()}`
+      : undefined,
     bitRate: bitRateBps ? Math.round(bitRateBps / 1000) : undefined,
     samplingRate: audioStream?.SampleRate,
     channelCount: audioStream?.Channels,

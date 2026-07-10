@@ -56,19 +56,23 @@ export interface TranscodeInfo {
 // built in services/backend/streaming.ts (Subsonic) and services/jellyfin/
 // streaming.ts (Jellyfin): a non-"raw" format asks the server to transcode to
 // that codec, and an effective bitrate cap downsamples only when the source
-// bitrate exceeds it. `rawTranscodeFormat` is the codec a bitrate-forced
-// transcode lands on while the format is "raw" (Jellyfin → "aac"); omit it for
-// backends that keep the source codec.
+// bitrate exceeds it. `rawTranscodeFormat` is the codec a format- or
+// bitrate-forced transcode lands on while the format is "raw" (Jellyfin →
+// "aac"); omit it for backends that keep the source codec. `formatTranscode`
+// overrides the default suffix-vs-format comparison for backends whose
+// negotiation isn't format-based (Jellyfin's container accept-lists).
 export function getTranscodeInfo(
   track: QueueTrack | null,
   {
     streamingFormat,
     effectiveMaxBitRate,
     rawTranscodeFormat,
+    formatTranscode: formatTranscodeOverride,
   }: {
     streamingFormat: StreamFormat;
     effectiveMaxBitRate: number | null;
     rawTranscodeFormat?: string;
+    formatTranscode?: boolean;
   },
 ): TranscodeInfo {
   if (!track || track.isRadio || track.source === "podcast") {
@@ -83,7 +87,8 @@ export function getTranscodeInfo(
       : null;
 
   const formatTranscode =
-    streamingFormat !== "raw" && streamingFormat !== normalizedFormat;
+    formatTranscodeOverride ??
+    (streamingFormat !== "raw" && streamingFormat !== normalizedFormat);
   const bitrateTranscode =
     effectiveMaxBitRate != null &&
     sourceBitRate != null &&
@@ -94,9 +99,13 @@ export function getTranscodeInfo(
     return { active: false, fromLabel: null, toLabel: null };
   }
 
-  const targetFormat = formatTranscode
-    ? streamingFormat
-    : (rawTranscodeFormat ?? format);
+  // A raw-mode format transcode (container not direct-playable) has no target
+  // codec in `streamingFormat`; it lands on `rawTranscodeFormat` like the
+  // bitrate-forced case.
+  const targetFormat =
+    formatTranscode && streamingFormat !== "raw"
+      ? streamingFormat
+      : (rawTranscodeFormat ?? format);
   // The streamed bitrate is only known when the cap drives the transcode; a
   // format-only change transcodes at the server's default bitrate (unknown), so
   // the segment is omitted.

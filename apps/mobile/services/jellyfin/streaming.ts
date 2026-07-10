@@ -3,6 +3,7 @@ import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { type StreamFormat, useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import type { QueueTrack } from "@/stores/queue";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
@@ -13,7 +14,10 @@ const FALLBACK_TRANSCODE_FORMAT: StreamFormat = "opus";
 // The permissive accept-list used in "raw" mode: every common container the app
 // can direct-play, so the source streams untouched unless the bitrate cap forces
 // a transcode. Also the accept-list JELLYFIN_DEFAULT_TRANSCODE_CODEC lands on.
-const RAW_CONTAINERS = "mp3,aac,flac,ogg,opus,wav";
+// A `container|codec` pair (universal-endpoint syntax, as used by jellyfin-web)
+// direct-plays only that codec — m4a holds AAC (playable) or ALAC (ExoPlayer
+// can't decode it), so only the AAC case direct-plays.
+const RAW_CONTAINERS = "mp3,aac,m4a|aac,m4b|aac,flac,ogg,opus,wav";
 
 // Codec a bitrate-forced transcode uses when the format is "raw". Kept in sync
 // with utils/audioQuality.ts (rawTranscodeFormat) so the player's predicted
@@ -52,7 +56,7 @@ function formatProfile(format: StreamFormat): {
       return {
         audioCodec: "aac",
         transcodingContainer: "ts",
-        containers: "aac,m4a",
+        containers: "aac,m4a|aac,m4b|aac",
       };
     default:
       return {
@@ -61,6 +65,31 @@ function formatProfile(format: StreamFormat): {
         containers: RAW_CONTAINERS,
       };
   }
+}
+
+// Predicts whether the universal endpoint will direct-play this track under the
+// given format: its container must appear in the profile's accept-list, and a
+// `container|codec` entry additionally requires the codec to match. Mirrors the
+// server's negotiation so the player knows whether the stream is natively
+// seekable (direct play) or must be reloaded at a StartTimeTicks offset
+// (transcode). An unknown container means the server would transcode.
+export function willDirectPlay(
+  track: QueueTrack,
+  format: StreamFormat,
+): boolean {
+  const container = track.suffix?.toLowerCase();
+  if (!container) return false;
+  const codec =
+    typeof track.contentType === "string"
+      ? track.contentType.split("/").pop()?.toLowerCase()
+      : undefined;
+  return formatProfile(format)
+    .containers.split(",")
+    .some((entry) => {
+      const [entryContainer, entryCodec] = entry.split("|");
+      if (entryContainer !== container) return false;
+      return !entryCodec || entryCodec === codec;
+    });
 }
 
 type StreamOptions = { forceTranscode?: boolean; timeOffset?: number };

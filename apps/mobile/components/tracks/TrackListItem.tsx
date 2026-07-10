@@ -177,7 +177,7 @@ function TrackListItem({
                 </Box>
               )}
               <Text numberOfLines={1} className="text-md text-primary-100">
-                {track.artist}
+                {track.artist || t("app.shared.unknownArtist")}
               </Text>
             </HStack>
           </VStack>

@@ -7,7 +7,7 @@ import {
 } from "expo-audio";
 import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
-import { streamUrl } from "@/services/backend/streaming";
+import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
@@ -21,7 +21,6 @@ import {
   jukeboxTogglePlayPause,
 } from "@/services/jukebox";
 import {
-  getEffectiveMaxBitRate,
   getIsOnline,
   getServerReachable,
   probeServer,
@@ -53,7 +52,6 @@ import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
-import { getTranscodeInfo } from "@/utils/audioQuality";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 // Native engine calls (pause/seek/lock-screen/…) can throw while the
@@ -345,12 +343,7 @@ function isTranscodedStream(track: QueueTrack): boolean {
   if (!isServerTranscodeBackend()) return false;
   if (useOffline.getState().getDownloadedTrack(track.id)) return false;
   if (transcodeRetriedIds.has(track.id)) return true;
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
-  return getTranscodeInfo(track, {
-    streamingFormat,
-    effectiveMaxBitRate: getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate),
-  }).active;
+  return trackTranscodeInfo(track).active;
 }
 
 // Seconds a transcoded stream was requested to start at (Subsonic `timeOffset`).
