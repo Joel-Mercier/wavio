@@ -137,6 +137,14 @@ The two states are handled differently on purpose: **offline** (no network) keep
 - i18n: `i18next` + `react-i18next`, locales in `i18n/`, configured in `config/i18n.ts`. Zod error messages follow the selected locale (`z.config(z.locales[locale]())`).
 - Icons: `lucide-react-native`.
 
+### i18n & translations (Crowdin)
+
+Translations are managed through the **Crowdin GitHub integration** (`crowdin.yml` at the repo root), which covers both workspaces: `apps/mobile/i18n/en.json` and `apps/landing/src/i18n/en.json` are the sources. Crowdin watches these `en.json` files, and pushes translations back as PRs (e.g. the recurring "New Crowdin updates" PRs) that update the per-locale files (`de.json`, `fr.json`, `it.json`, `ru.json`, `zh-CN.json`, …).
+
+**When adding or changing a locale string, only touch `en.json`** (the default/fallback locale). Don't hand-edit the other locale files — Crowdin owns them, and manual edits get overwritten on the next sync. Add the English key/copy, wire it up in code, and let translation happen in Crowdin.
+
+Locale JSON files are **tab-indented** (Crowdin's format), unlike the rest of the codebase. `bun run mobile:lint:fix` (Biome) will convert them to spaces — restore the tabs afterward if it touches them, so Crowdin diffs stay clean.
+
 ### Testing
 
 Jest with `jest-expo` preset. Tests live in `apps/mobile/__tests__/`.
