@@ -23,7 +23,7 @@
 				"albumsByGenre": "{{genre}} 专辑",
 				"albumsByDecade": "{{decade}}年代专辑",
 				"moreFromArtist": "更多 {{artist}} 的作品",
-				"moreFrom": "More from",
+				"moreFrom": "更多作品来自",
 				"podcasts": "播客",
 				"internetRadioStations": "网络电台",
 				"tabs": {
