@@ -1,6 +1,6 @@
 {
 	"meta": {
-		"homeTitle": "Wavio. La tua musica, il tuo lettore, a modo tuo.",
+		"homeTitle": "Wavio. La tua musica, il tuo player, come vuoi tu.",
 		"homeDescription": "Un lettore musicale Android open source per i server Navidrome, Jellyfin e OpenSubsonic o per una libreria locale. Senza pubblicità, senza tracciamento, completamente funzionante in modalità offline.",
 		"privacyTitle": "Informativa sulla privacy. Wavio",
 		"privacyDescription": "Wavio funziona interamente sul tuo dispositivo e comunica esclusivamente con il server musicale che hai configurato. Non raccogliamo, vendiamo né condividiamo i tuoi dati."
@@ -14,15 +14,15 @@
 		"tag": "Un lettore musicale open source",
 		"titleLines": [
 			[
-				"Il tuo",
+				"La tua",
 				"musica,"
 			],
 			[
 				"il tuo",
-				"giocatore,"
+				"player,"
 			]
 		],
-		"titleAccent": "a modo tuo.",
+		"titleAccent": "come vuoi tu.",
 		"lead": "Un lettore musicale Android per i server Navidrome, Jellyfin e OpenSubsonic o per una libreria locale. Pensato per chi possiede una propria libreria e desidera sentirsi come a casa."
 	},
 	"cta": {
@@ -41,10 +41,10 @@
 		"Navidrome, Jellyfin e OpenSubsonic, libreria locale"
 	],
 	"features": {
-		"headingPre": "Un giocatore che",
+		"headingPre": "Un player che",
 		"headingEm": "aspetti",
 		"headingPost": "la tua biblioteca.",
-		"sub": "Ogni schermo è progettato per adattarsi al tuo modo di ascoltare. Veloce, silenzioso e completamente su misura per te.",
+		"sub": "Ogni schermata è progettata per adattarsi alle tue abitudini di utilizzo in modo facile e veloce.",
 		"home": {
 			"label": "Home",
 			"title": "La tua libreria, ordinata alla perfezione.",
@@ -52,12 +52,12 @@
 		},
 		"audiophile": {
 			"label": "Audiofilo",
-			"title": "Ben regolato, non rumoroso.",
+			"title": "Tutto equalizzato, senza distorsioni.",
 			"desc": "Impostazioni della qualità audio, riproduzione continua, Replay Gain, equalizzatore di sistema."
 		},
 		"offline": {
 			"label": "Non connesso",
-			"title": "Staccalo dalla rete elettrica."
+			"title": "Disconnettiti dal mondo digitale."
 		},
 		"quote": {
 			"label": "Senza vincoli",
@@ -78,12 +78,12 @@
 		},
 		"servers": {
 			"label": "Server",
-			"title": "Cambia backend con un solo tocco.",
+			"title": "Cambia server in un tocco.",
 			"desc": "Usa Navidrome a casa, Jellyfin da un amico, OpenSubsonic da qualche altra parte e persino in una biblioteca locale come soluzione di backup. Un'unica app per tutte queste piattaforme."
 		},
 		"sleep": {
 			"label": "Timer di spegnimento",
-			"title": "Scomparire con eleganza.",
+			"title": "Addormentati dolcemente.",
 			"desc": "Imposta una dissolvenza in uscita graduale, così il tuo album preferito ti accompagnerà nel sonno."
 		},
 		"podcasts": {
@@ -92,7 +92,7 @@
 			"desc": "Cerca, segui e ascolta i podcast con la tecnologia di Taddy. I tuoi brani e i tuoi programmi, tutti in un unico posto."
 		},
 		"radio": {
-			"label": "Radio su Internet",
+			"label": "Web Radio",
 			"title": "Sintonizzati, ovunque tu sia.",
 			"desc": "Ascolta le stazioni radio su Internet dal tuo server con un semplice tocco. Cerca, salva e ascolta in diretta."
 		},
@@ -103,13 +103,13 @@
 		},
 		"widgets": {
 			"label": "Widget della schermata iniziale",
-			"title": "Uno sguardo distolto.",
+			"title": "Controllo rapido nella tua home.",
 			"desc": "Brani in riproduzione e riprodotti di recente, direttamente sulla schermata iniziale del tuo dispositivo Android. Non è necessario aprire l'app."
 		}
 	},
 	"showcase": {
 		"headingPre": "Ogni schermata,",
-		"headingEm": "proprio come ci vuole.",
+		"headingEm": "curata in ogni dettaglio.",
 		"sub": "Funzionalità pensate proprio per le tue attività quotidiane. Naviga, riproduci, aggiungi alla coda, regola le impostazioni, scarica e dimenticati persino che l'app esista."
 	},
 	"final": {
@@ -132,11 +132,11 @@
 	},
 	"privacy": {
 		"back": "Torna alla home page",
-		"titlePre": "La privacy, la",
-		"titleEm": "di quelli noiosi.",
+		"titlePre": "La tua privacy,",
+		"titleEm": "prima di ogni cosa.",
 		"updated": "Ultimo aggiornamento: 27 maggio 2026",
 		"readTime": "5 minuti di lettura",
-		"summaryLabel": "In una frase",
+		"summaryLabel": "In poche parole",
 		"summary": "Wavio funziona interamente sul tuo dispositivo e comunica esclusivamente con il server musicale che hai configurato. Non raccogliamo, vendiamo né condividiamo i tuoi dati, perché non ne disponiamo.",
 		"sections": [
 			{
