@@ -1127,7 +1127,17 @@
 					"bugReport": "Einen Fehler melden",
 					"changelog": "Änderungsprotokoll"
 				},
-				"fileSizes": ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+				"fileSizes": [
+					"Bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				],
 				"album_one": "Album",
 				"album_other": "Alben",
 				"artist_one": "Interpret",
