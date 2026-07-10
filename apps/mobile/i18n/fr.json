@@ -1115,7 +1115,17 @@
 					"bugReport": "Signaler un bug",
 					"changelog": "Changelog"
 				},
-				"fileSizes": ["octets", "Ko", "Mo", "Go", "To", "Po", "Eo", "Zo", "Yo"],
+				"fileSizes": [
+					"octets",
+					"Ko",
+					"Mo",
+					"Go",
+					"To",
+					"Po",
+					"Eo",
+					"Zo",
+					"Yo"
+				],
 				"album_one": "Album",
 				"album_other": "Albums",
 				"artist_one": "Artiste",
