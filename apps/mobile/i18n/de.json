@@ -112,7 +112,26 @@
 				"addAllToFavoritesSuccessMessage": "Alle Titel wurden erfolgreich zu den Favoriten hinzugefügt",
 				"addAllToFavoritesErrorMessage": "Beim Hinzufügen von Titeln zu den Favoriten ist ein Fehler aufgetreten",
 				"typeAlbum": "Album",
-				"typeCompilation": "Zusammenstellung"
+				"typeCompilation": "Zusammenstellung",
+				"releaseTypes": {
+					"album": "Album",
+					"single": "Single",
+					"ep": "EP",
+					"broadcast": "Broadcast",
+					"other": "Other",
+					"compilation": "Zusammenstellung",
+					"soundtrack": "Soundtrack",
+					"spokenword": "Spoken word",
+					"interview": "Interview",
+					"audiobook": "Hörbuch",
+					"audiodrama": "Audio drama",
+					"live": "Live",
+					"remix": "Remix",
+					"djmix": "DJ-mix",
+					"mixtapestreet": "Mixtape/Street",
+					"demo": "Demo",
+					"fieldrecording": "Field recording"
+				}
 			},
 			"artists": {
 				"label": "Interpret",
