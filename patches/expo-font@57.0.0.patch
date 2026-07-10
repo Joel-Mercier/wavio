@@ -1,0 +1,16 @@
+diff --git a/android/src/main/java/expo/modules/font/FontLoaderModule.kt b/android/src/main/java/expo/modules/font/FontLoaderModule.kt
+index dbb5cbc3c61fc16843076b14f9dd070767762c4c..fb973565ec951b25a3af1bd1a55f81305f036505 100644
+--- a/android/src/main/java/expo/modules/font/FontLoaderModule.kt
++++ b/android/src/main/java/expo/modules/font/FontLoaderModule.kt
+@@ -56,7 +56,10 @@ open class FontLoaderModule : Module() {
+         Typeface.createFromFile(file)
+       }
+ 
+-      ReactFontManager.getInstance().setTypeface(fontFamilyName, Typeface.NORMAL, typeface)
++      // Register through the custom-typeface cache so an explicit fontWeight is applied to this
++      // typeface, instead of the legacy per-style lookup that misses (e.g. fontWeight: 700 on a
++      // family registered only under NORMAL) and silently falls back to the system font.
++      ReactFontManager.getInstance().addCustomFont(fontFamilyName, typeface)
+       loadedFonts = getLoadedFonts().toMutableSet().apply { add(fontFamilyName) }.toList()
+     }
+   }

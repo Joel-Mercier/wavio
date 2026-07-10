@@ -133,7 +133,8 @@
 		"autolinking": {
 			"android": {
 				"buildFromSource": [
-					"expo-audio"
+					"expo-audio",
+					"expo-font"
 				]
 			}
 		},
