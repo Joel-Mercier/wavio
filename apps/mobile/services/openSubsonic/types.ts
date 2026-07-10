@@ -231,8 +231,10 @@ export interface Error {
 
 export interface Genre {
   value: string;
-  albumCount: number;
-  songCount: number;
+  // Absent when the list comes from Navidrome's native per-library endpoint,
+  // which doesn't expose counts (see services/navidrome/genres.ts).
+  albumCount?: number;
+  songCount?: number;
 }
 
 export interface Genres {

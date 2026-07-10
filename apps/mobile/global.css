@@ -4,7 +4,13 @@
 /* Each weight sets both the Inter family and an explicit font-weight. The weight
    is what keeps the type hierarchy intact when Inter is intentionally not loaded
    (zh-CN, see app/_layout.tsx): the unregistered family falls back to the OS
-   system font, and font-weight makes that fallback render Light/Regular/Bold. */
+   system font, and font-weight makes that fallback render Light/Regular/Bold.
+   Combining font-weight with an expo-font family relies on
+   patches/expo-font@57.0.0.patch — without it Android resolves e.g.
+   Inter_700Bold + weight 700 through the legacy per-style lookup, misses the
+   registered face and silently swaps in the system font. The patch only takes
+   effect because expo-font is in expo.autolinking.android.buildFromSource
+   (package.json); otherwise the prebuilt AAR ships the unpatched code. */
 @utility font-light {
   font-family: "Inter_300Light";
   font-weight: 300;

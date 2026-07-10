@@ -596,6 +596,18 @@
 					"createTabDescription": "Mostra la scheda \"Crea\" nella barra delle schede in basso",
 					"showEmptyHomeSectionsLabel": "Mostra le sezioni vuote",
 					"showEmptyHomeSectionsDescription": "Mostrare le sezioni della home page prive di contenuto invece di nasconderle",
+					"homeSectionsLabel": "Sezioni della home page",
+					"homeSectionsDescription": "Scegli quali sezioni mostrare nella home page",
+					"homeSectionsCount": "{{count}} mostrate",
+					"homeSectionsSheetTitle": "Sezioni della home page",
+					"homeSectionsSheetDescription": "Disattiva le sezioni per nasconderle dalla home page",
+					"homeSections": {
+						"recentPlays": "Scorciatoie",
+						"moreFromArtist": "Altro da un artista",
+						"songsByGenre": "Brani per genere",
+						"albumsByGenre": "Album per genere",
+						"albumsByDecade": "Album per decennio"
+					},
 					"lyricsSourceLabel": "Testi delle canzoni",
 					"lyricsSourceDescription": "Scegli da dove provengono i testi sincronizzati oppure disattivalo.",
 					"lyricsSourceOptions": {

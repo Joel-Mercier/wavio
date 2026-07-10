@@ -33,7 +33,6 @@ export default function TabLayout() {
     | undefined;
   const isOnline = useIsOnline();
   const isWideLayout = useApp((store) => store.isWideLayout);
-  const isCJK = useApp((store) => store.locale) === "zh-CN";
   const insets = useSafeAreaInsets();
 
   const handleAddTabPress = () => {
@@ -46,9 +45,9 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarLabelStyle: {
-            // Under zh-CN, Inter isn't loaded (see app/_layout.tsx); drop the
-            // family so the label uses the system font, and keep it bold via weight.
-            fontFamily: isCJK ? undefined : "Inter_700Bold",
+            // Family + weight, like the font-bold utility in global.css: Inter Bold
+            // when loaded, bold system font under zh-CN (see app/_layout.tsx).
+            fontFamily: "Inter_700Bold",
             fontWeight: "700",
           },
           // In landscape, dock the tab bar to the left as a solid sidebar column;

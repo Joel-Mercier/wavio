@@ -14,7 +14,10 @@ interface GenreListItemProps {
 export default function GenreListItem({ genre }: GenreListItemProps) {
   const { t } = useTranslation();
   const serverType = useAuth((s) => s.serverType);
-  const showCounts = serverType !== "jellyfin";
+  const showCounts =
+    serverType !== "jellyfin" &&
+    genre.songCount != null &&
+    genre.albumCount != null;
   return (
     <FadeOutScaleDown testID="genre-item" href={`/genres/${genre.value}`}>
       <VStack className="bg-primary-600 p-4 w-full rounded-md">

@@ -20,6 +20,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { gridCellMarginClass, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { cn } from "@/utils/tailwind";
@@ -32,7 +33,8 @@ export default function SearchScreen() {
   const isWideLayout = useApp((store) => store.isWideLayout);
   const router = useRouter();
   const screenBottomPadding = useScreenBottomPadding();
-  const { data, isLoading, error } = useGenres();
+  const musicFolderId = useCurrentMusicFolderId();
+  const { data, isLoading, error } = useGenres({ musicFolderId });
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const numColumns = gridColumnCount(width, {

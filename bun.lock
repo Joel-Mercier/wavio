@@ -21,7 +21,7 @@
     },
     "apps/mobile": {
       "name": "wavio",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "dependencies": {
         "@expo-google-fonts/inter": "^0.4.2",
         "@expo/html-elements": "^57.0.0",
@@ -125,6 +125,7 @@
     "expo-navigation-bar@57.0.1": "patches/expo-navigation-bar@57.0.1.patch",
     "zod@4.4.3": "patches/zod@4.4.3.patch",
     "lucide-react-native@1.23.0": "patches/lucide-react-native@1.23.0.patch",
+    "expo-font@57.0.0": "patches/expo-font@57.0.0.patch",
     "expo-audio@57.0.0": "patches/expo-audio@57.0.0.patch",
   },
   "packages": {

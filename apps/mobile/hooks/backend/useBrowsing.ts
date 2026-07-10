@@ -151,11 +151,14 @@ export const useIndexes = (params: {
   return query;
 };
 
-export const useGenres = (options?: { enabled?: boolean }) => {
+export const useGenres = (
+  params: { musicFolderId?: string } = {},
+  options?: { enabled?: boolean },
+) => {
   const query = useQuery({
-    queryKey: ["genres"],
+    queryKey: ["genres", params],
     queryFn: () => {
-      return getGenres();
+      return getGenres(params);
     },
     enabled: options?.enabled,
   });

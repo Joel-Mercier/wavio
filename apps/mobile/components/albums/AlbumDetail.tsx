@@ -862,13 +862,19 @@ export default function AlbumDetail() {
                         )}
                       </React.Fragment>
                     ))) ||
-                    (artistReachable ? (
-                      <Link href={`/artists/${data?.album?.artistId}`}>
-                        {data?.album?.displayArtist || data?.album?.artist}
+                    (artistReachable && data?.album?.artistId ? (
+                      <Link href={`/artists/${data.album.artistId}`}>
+                        {data.album.displayArtist ||
+                          data.album.artist ||
+                          t("app.shared.unknownArtist")}
                       </Link>
                     ) : (
                       <Text>
-                        {data?.album?.displayArtist || data?.album?.artist}
+                        {data?.album
+                          ? data.album.displayArtist ||
+                            data.album.artist ||
+                            t("app.shared.unknownArtist")
+                          : ""}
                       </Text>
                     ))}
                 </Text>

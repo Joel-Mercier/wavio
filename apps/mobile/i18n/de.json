@@ -596,6 +596,18 @@
 					"createTabDescription": "Die Registerkarte „Erstellen“ in der unteren Leiste anzeigen",
 					"showEmptyHomeSectionsLabel": "Leere Kategorien anzeigen",
 					"showEmptyHomeSectionsDescription": "Kategorien ohne Inhalt auf der Startseite anzeigen, anstatt sie auszublenden",
+					"homeSectionsLabel": "Startseiten-Kategorien",
+					"homeSectionsDescription": "Wählen Sie, welche Kategorien auf der Startseite angezeigt werden",
+					"homeSectionsCount": "{{count}} angezeigt",
+					"homeSectionsSheetTitle": "Startseiten-Kategorien",
+					"homeSectionsSheetDescription": "Deaktivieren Sie Kategorien, um sie auf der Startseite auszublenden",
+					"homeSections": {
+						"recentPlays": "Verknüpfungen",
+						"moreFromArtist": "Mehr von einem Künstler",
+						"songsByGenre": "Songs nach Genre",
+						"albumsByGenre": "Alben nach Genre",
+						"albumsByDecade": "Alben nach Jahrzehnt"
+					},
 					"lyricsSourceLabel": "Songtext",
 					"lyricsSourceDescription": "Auswählen, woher die synchronisierten Liedtexte stammen sollen, oder diese deaktivieren.",
 					"lyricsSourceOptions": {

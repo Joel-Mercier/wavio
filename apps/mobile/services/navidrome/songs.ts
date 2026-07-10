@@ -42,9 +42,11 @@ function mapNavidromeSongToChild(song: NavidromeSong): Child {
 export const getMostPlayedSongs = async ({
   size = 20,
   offset = 0,
+  musicFolderId,
 }: {
   size?: number;
   offset?: number;
+  musicFolderId?: string;
 } = {}): Promise<{ songs: Songs }> => {
   if (useAuthBase.getState().serverType !== "navidrome") {
     return { songs: { song: [] } };
@@ -55,6 +57,7 @@ export const getMostPlayedSongs = async ({
       _order: "DESC",
       _start: offset,
       _end: offset + size,
+      library_id: musicFolderId,
     },
   });
   // Only surface tracks actually played (mirrors Jellyfin IsPlayed / local

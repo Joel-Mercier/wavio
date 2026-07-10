@@ -25,12 +25,12 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { useConnectionType } from "@/hooks/useIsOnline";
-import { getEffectiveMaxBitRate } from "@/services/network";
+import { trackTranscodeInfo } from "@/services/backend/streaming";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
-import { formatAudioQuality, getTranscodeInfo } from "@/utils/audioQuality";
+import { formatAudioQuality } from "@/utils/audioQuality";
 
 const LINE_CLASS = "text-white/70 text-xs font-medium tracking-wide";
 const SWEEP_DURATION = 2800;
@@ -174,10 +174,12 @@ export default function AudioQualityLine({
   const [emerald500] = Uniwind.getCSSVariable([
     "--color-emerald-500",
   ]) as string[];
-  const streamingFormat = useApp((s) => s.streamingFormat);
-  const maxBitRate = useApp((s) => s.maxBitRate);
-  const cellularMaxBitRate = useApp((s) => s.cellularMaxBitRate);
-  // Subscribe so the effective cap recomputes on WiFi↔cellular handoff.
+  // Subscriptions only: trackTranscodeInfo reads this state imperatively, but
+  // the prediction must recompute when streaming settings change or on a
+  // WiFi↔cellular handoff.
+  useApp((s) => s.streamingFormat);
+  useApp((s) => s.maxBitRate);
+  useApp((s) => s.cellularMaxBitRate);
   useConnectionType();
   const serverType = useAuthBase((s) => s.serverType);
   // Every remote backend transcodes server-side; only the on-device library
@@ -195,17 +197,7 @@ export default function AudioQualityLine({
 
   const transcode =
     isRemote && !isDownloaded
-      ? getTranscodeInfo(track, {
-          streamingFormat,
-          effectiveMaxBitRate: getEffectiveMaxBitRate(
-            maxBitRate,
-            cellularMaxBitRate,
-          ),
-          // A raw-mode bitrate-forced transcode lands on AAC for Jellyfin (see
-          // JELLYFIN_DEFAULT_TRANSCODE_CODEC in services/jellyfin/streaming.ts);
-          // Subsonic keeps the source codec.
-          rawTranscodeFormat: serverType === "jellyfin" ? "aac" : undefined,
-        })
+      ? trackTranscodeInfo(track)
       : { active: false as const, fromLabel: null, toLabel: null };
 
   if (transcode.active && transcode.fromLabel && transcode.toLabel) {

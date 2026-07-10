@@ -1,6 +1,7 @@
-import { dispatch } from "@/services/backend/dispatch";
+import { dispatch, isNavidrome } from "@/services/backend/dispatch";
 import * as J from "@/services/jellyfin/browsing";
 import * as L from "@/services/local/browsing";
+import * as N from "@/services/navidrome/genres";
 import * as S from "@/services/openSubsonic/browsing";
 
 export const getMusicFolders = dispatch(
@@ -20,7 +21,11 @@ export const getArtistAppearances = dispatch(
 export const getArtistInfo = dispatch(S.getArtistInfo, J.getArtistInfo);
 export const getArtistInfo2 = dispatch(S.getArtistInfo2, J.getArtistInfo2);
 export const getArtists = dispatch(S.getArtists, J.getArtists, L.getArtists);
-export const getGenres = dispatch(S.getGenres, J.getGenres, L.getGenres);
+// Subsonic getGenres has no musicFolderId param, so with a library selected on
+// Navidrome the list comes from the native per-library endpoint instead.
+const subsonicGetGenres = (params: { musicFolderId?: string } = {}) =>
+  isNavidrome() && params.musicFolderId ? N.getGenres(params) : S.getGenres();
+export const getGenres = dispatch(subsonicGetGenres, J.getGenres, L.getGenres);
 export const getIndexes = dispatch(S.getIndexes, J.getIndexes, L.getIndexes);
 export const getMusicDirectory = dispatch(
   S.getMusicDirectory,

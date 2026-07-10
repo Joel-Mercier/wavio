@@ -14,6 +14,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RadioFeedTagsSheet from "@/components/internetRadioStations/RadioFeedTagsSheet";
 import SearchableSelectSheet from "@/components/internetRadioStations/SearchableSelectSheet";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
+import HomeSectionsSheet from "@/components/settings/HomeSectionsSheet";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import PodcastConfigDialog from "@/components/settings/PodcastConfigDialog";
 import {
@@ -72,6 +73,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { formatDistanceToNow } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
+import { HOME_SECTION_CATALOG } from "@/utils/homeFeed";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { switchToServer } from "@/utils/switchServer";
@@ -128,6 +130,9 @@ export default function SettingsDetail() {
   const bottomSheetRadioTagsModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleRadioTagsSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetRadioTagsModalRef);
+  const bottomSheetHomeSectionsModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleHomeSectionsSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetHomeSectionsModalRef);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
@@ -157,6 +162,16 @@ export default function SettingsDetail() {
   const showEmptyHomeSections = useApp((store) => store.showEmptyHomeSections);
   const setShowEmptyHomeSections = useApp(
     (store) => store.setShowEmptyHomeSections,
+  );
+  const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
+  const visibleHomeSectionCount = useMemo(
+    () =>
+      HOME_SECTION_CATALOG.filter(
+        (entry) =>
+          (!entry.capability || capabilities[entry.capability]) &&
+          !hiddenHomeSections.includes(entry.key),
+      ).length,
+    [capabilities, hiddenHomeSections],
   );
   const lyricsSource = useApp((store) => store.lyricsSource);
   const setLyricsSource = useApp((store) => store.setLyricsSource);
@@ -810,6 +825,16 @@ export default function SettingsDetail() {
               onToggle={(value) => setShowEmptyHomeSections(value)}
             />
             <SettingsSelectRow
+              label={t("app.settings.displaySettings.homeSectionsLabel")}
+              description={t(
+                "app.settings.displaySettings.homeSectionsDescription",
+              )}
+              badgeText={t("app.settings.displaySettings.homeSectionsCount", {
+                count: visibleHomeSectionCount,
+              })}
+              onPress={() => bottomSheetHomeSectionsModalRef.current?.present()}
+            />
+            <SettingsSelectRow
               label={t("app.settings.displaySettings.lyricsSourceLabel")}
               description={t(
                 "app.settings.displaySettings.lyricsSourceDescription",
@@ -1027,6 +1052,10 @@ export default function SettingsDetail() {
       <RadioFeedTagsSheet
         modalRef={bottomSheetRadioTagsModalRef}
         onChange={handleRadioTagsSheetPositionChange}
+      />
+      <HomeSectionsSheet
+        modalRef={bottomSheetHomeSectionsModalRef}
+        onChange={handleHomeSectionsSheetPositionChange}
       />
       <OptionsBottomSheetModal
         modalRef={bottomSheetLanguageModalRef}
