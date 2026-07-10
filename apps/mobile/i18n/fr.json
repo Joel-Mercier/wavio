@@ -112,7 +112,26 @@
 				"addAllToFavoritesSuccessMessage": "Toutes les chansons ont été ajoutées aux favoris",
 				"addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
 				"typeAlbum": "Album",
-				"typeCompilation": "Compilation"
+				"typeCompilation": "Compilation",
+				"releaseTypes": {
+					"album": "Album",
+					"single": "Single",
+					"ep": "EP",
+					"broadcast": "Diffusion",
+					"other": "Autre",
+					"compilation": "Compilation",
+					"soundtrack": "Bande sonore",
+					"spokenword": "Mots parlés",
+					"interview": "Interview",
+					"audiobook": "Livre audio",
+					"audiodrama": "Drame audio",
+					"live": "Live",
+					"remix": "Remix",
+					"djmix": "Mix de DJ",
+					"mixtapestreet": "Mixtape / Street",
+					"demo": "Démo",
+					"fieldrecording": "Enregistrement de champ"
+				}
 			},
 			"artists": {
 				"label": "Artiste",
