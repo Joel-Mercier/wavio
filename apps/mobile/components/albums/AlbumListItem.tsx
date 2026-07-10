@@ -16,6 +16,7 @@ import {
 } from "@/hooks/offline";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
+import { formatReleaseTypes } from "@/utils/releaseTypes";
 import { cn } from "@/utils/tailwind";
 
 interface AlbumListItemProps {
@@ -96,14 +97,7 @@ function AlbumListItem({
         >
           {album.releaseTypes && album.releaseTypes.length > 0 ? (
             <Text numberOfLines={1} className="text-md text-primary-100">
-              {album.releaseTypes
-                .map((type) =>
-                  type.toLowerCase() === "ep"
-                    ? type.toUpperCase()
-                    : type.charAt(0).toUpperCase() +
-                      type.slice(1).toLowerCase(),
-                )
-                .join(" · ")}
+              {formatReleaseTypes(album.releaseTypes, t)}
             </Text>
           ) : (
             <Text className="text-md text-primary-100" numberOfLines={1}>

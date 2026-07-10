@@ -103,6 +103,7 @@ import { format, formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { formatReleaseTypes } from "@/utils/releaseTypes";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -884,14 +885,7 @@ export default function AlbumDetail() {
                 <Text className="text-primary-100">
                   {data?.album?.releaseTypes &&
                   data.album.releaseTypes.length > 0
-                    ? data.album.releaseTypes
-                        .map((type) =>
-                          type.toLowerCase() === "ep"
-                            ? type.toUpperCase()
-                            : type.charAt(0).toUpperCase() +
-                              type.slice(1).toLowerCase(),
-                        )
-                        .join(" · ")
+                    ? formatReleaseTypes(data.album.releaseTypes, t)
                     : data?.album?.isCompilation
                       ? t("app.albums.typeCompilation")
                       : t("app.albums.typeAlbum")}{" "}
