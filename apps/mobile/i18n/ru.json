@@ -23,6 +23,7 @@
 				"albumsByGenre": "{{genre}} альбомы",
 				"albumsByDecade": "Альбомы из {{decade}}-х",
 				"moreFromArtist": "Ещё от {{artist}}",
+				"moreFrom": "Ещё от",
 				"podcasts": "Подкасты",
 				"internetRadioStations": "Интернет-радио",
 				"tabs": {
