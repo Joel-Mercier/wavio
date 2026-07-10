@@ -114,7 +114,26 @@
 				"addAllToFavoritesSuccessMessage": "Все песни добавлены в избранное",
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
-				"typeCompilation": "Сборник"
+				"typeCompilation": "Сборник",
+				"releaseTypes": {
+					"album": "По альбому",
+					"single": "Single",
+					"ep": "EP",
+					"broadcast": "Broadcast",
+					"other": "Other",
+					"compilation": "Сборник",
+					"soundtrack": "Soundtrack",
+					"spokenword": "Spoken word",
+					"interview": "Interview",
+					"audiobook": "Аудиокнига",
+					"audiodrama": "Audio drama",
+					"live": "Live",
+					"remix": "Remix",
+					"djmix": "DJ-mix",
+					"mixtapestreet": "Mixtape/Street",
+					"demo": "Demo",
+					"fieldrecording": "Field recording"
+				}
 			},
 			"artists": {
 				"label": "Исполнитель",
