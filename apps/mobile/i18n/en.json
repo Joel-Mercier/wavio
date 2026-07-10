@@ -23,6 +23,7 @@
 				"albumsByGenre": "{{genre}} albums",
 				"albumsByDecade": "Albums from the {{decade}}s",
 				"moreFromArtist": "More from {{artist}}",
+				"moreFrom": "More from",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internet radio stations",
 				"tabs": {

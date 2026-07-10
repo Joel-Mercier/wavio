@@ -3,6 +3,7 @@ import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import HomeSection from "@/components/home/sections/HomeSection";
 import { useArtist } from "@/hooks/backend/useBrowsing";
+import { artworkUrl } from "@/utils/artwork";
 import { loadingData } from "@/utils/loadingData";
 
 interface ArtistAlbumsSectionProps {
@@ -18,10 +19,11 @@ export default function ArtistAlbumsSection({
   const { data, isLoading, error } = useArtist(enabled ? artistId : "");
   const artist = data?.artist;
   const albums = artist?.album;
-  const title = t("app.home.moreFromArtist", { artist: artist?.name ?? "" });
   return (
     <HomeSection
-      title={title}
+      title={artist?.name ?? ""}
+      subtitle={t("app.home.moreFrom")}
+      imageUrl={artist?.coverArt ? artworkUrl(artist.coverArt) : undefined}
       seeAllHref={
         artist?.id
           ? { pathname: "/artists/[id]", params: { id: artist.id } }
