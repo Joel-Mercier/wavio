@@ -175,6 +175,7 @@ describe("auth login schema", () => {
       password: "secret",
       type: "navidrome",
       paths: [],
+      mtlsAlias: "",
     });
     expect(result.success).toBe(true);
   });
@@ -186,6 +187,7 @@ describe("auth login schema", () => {
       password: "",
       type: "local",
       paths: ["/storage/emulated/0/Music"],
+      mtlsAlias: "",
     });
     expect(result.success).toBe(true);
   });

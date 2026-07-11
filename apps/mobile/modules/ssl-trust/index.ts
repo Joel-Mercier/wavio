@@ -54,6 +54,12 @@ export interface ProxyInfo {
   upstreams: ProxyUpstream[];
 }
 
+/** A host mapped to the Android KeyChain alias used for its mTLS client cert. */
+export interface ClientCertMapping {
+  hostname: string;
+  alias: string;
+}
+
 type SslTrustNativeModule = {
   initTrustStore(): Promise<TrustStoreInstallStatus>;
   getInstallStatus(): Promise<TrustStoreInstallStatus>;
@@ -67,6 +73,10 @@ type SslTrustNativeModule = {
   clearAllTrustedCertificates(): Promise<void>;
   getTrustedCertificates(): Promise<TrustedCert[]>;
   isCertificateTrusted(hostname: string): Promise<boolean>;
+  // Android-only mTLS client-cert controls; absent on iOS.
+  chooseClientCertificate?(host: string | null): Promise<string | null>;
+  syncClientCertificates?(certs: Record<string, string>): Promise<void>;
+  getClientCertificates?(): Promise<ClientCertMapping[]>;
   // iOS-only proxy controls; absent on Android.
   syncProxyUpstreams?(baseUrls: string[]): Promise<ProxyInfo | null>;
   getProxyInfo?(): Promise<ProxyInfo | null>;
@@ -79,6 +89,15 @@ const Native = requireOptionalNativeModule<SslTrustNativeModule>("SslTrust");
 
 /** Whether the native module is linked in the current binary. */
 export const isSslTrustAvailable = (): boolean => Native != null;
+
+/**
+ * Whether the Android mTLS client-cert picker is callable in this binary.
+ * False on iOS/web, and on an Android binary built before the client-cert
+ * functions were added (module present, new AsyncFunction absent) — lets the UI
+ * show a "rebuild required" hint instead of a silently dead button.
+ */
+export const isClientCertPickerAvailable = (): boolean =>
+  Platform.OS === "android" && !!Native?.chooseClientCertificate;
 
 export async function initTrustStore(): Promise<TrustStoreInstallStatus> {
   if (!Native) return { installed: false, error: "native module unavailable" };
@@ -126,6 +145,48 @@ export async function getTrustedCertificates(): Promise<TrustedCert[]> {
 export async function isCertificateTrusted(hostname: string): Promise<boolean> {
   if (!Native) return false;
   return Native.isCertificateTrusted(hostname);
+}
+
+// --- mTLS client certificates (Android) --------------------------------------
+
+/**
+ * Extract the lowercased hostname from a URL (no scheme/port/path), for keying
+ * the host->alias mTLS map. Returns "" when no host can be parsed.
+ */
+export function hostnameFromUrl(url: string): string {
+  const m = /^[a-z][a-z0-9+.-]*:\/\/([^/:?#]+)/i.exec(url.trim());
+  return m ? m[1].toLowerCase() : "";
+}
+
+/**
+ * Launch the Android system credential-store picker to select a client
+ * certificate for mTLS. Resolves with the chosen KeyChain alias, or null on
+ * cancel / no available cert / non-Android. `host` is an optional hint shown in
+ * the chooser.
+ */
+export async function chooseClientCertificate(
+  host?: string | null,
+): Promise<string | null> {
+  if (Platform.OS !== "android" || !Native?.chooseClientCertificate)
+    return null;
+  return Native.chooseClientCertificate(host ?? null);
+}
+
+/**
+ * Replace the native host->alias map (the JS servers store is the source of
+ * truth). The native KeyManager reads it live, so this takes effect without a
+ * TLS re-init. No-op off Android.
+ */
+export async function syncClientCertificates(
+  certs: Record<string, string>,
+): Promise<void> {
+  if (Platform.OS !== "android" || !Native?.syncClientCertificates) return;
+  await Native.syncClientCertificates(certs);
+}
+
+export async function getClientCertificates(): Promise<ClientCertMapping[]> {
+  if (Platform.OS !== "android" || !Native?.getClientCertificates) return [];
+  return Native.getClientCertificates();
 }
 
 // --- iOS loopback proxy ------------------------------------------------------

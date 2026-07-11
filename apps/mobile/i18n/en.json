@@ -1081,6 +1081,7 @@
 				"switchConfirm": "Switch"
 			},
 			"shared": {
+				"advancedSettings": "Advanced settings",
 				"cancel": "Cancel",
 				"close": "Close",
 				"create": "Create",
@@ -1251,6 +1252,17 @@
 				"trust": "Trust and continue",
 				"cancel": "Cancel",
 				"trustedMessage": "Certificate trusted"
+			},
+			"clientCertificate": {
+				"label": "Client certificate (mTLS)",
+				"select": "Select a certificate",
+				"change": "Change",
+				"remove": "Remove",
+				"selected": "Certificate: {{alias}}",
+				"hint": "Authenticate to servers that require mutual TLS. Pick a certificate from your device's keystore — install one first in Android Settings → Security → Encryption & credentials.",
+				"unavailable": "Client certificate selection needs a native rebuild of the app to become available.",
+				"noneTitle": "No certificate selected",
+				"noneMessage": "If you haven't installed a client certificate yet, add one in Android Settings → Security → Encryption & credentials, then try again."
 			}
 		},
 		"openSubsonic": {

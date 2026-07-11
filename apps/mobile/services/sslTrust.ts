@@ -1,7 +1,9 @@
 import {
+  hostnameFromUrl,
   initTrustStore,
   refreshProxyInfo,
   refreshProxyUpstreams,
+  syncClientCertificates,
 } from "@/modules/ssl-trust";
 import { reportError } from "@/services/errorReporting";
 import { useServersBase } from "@/stores/servers";
@@ -17,6 +19,39 @@ function savedRemoteBaseUrls(): string[] {
     .map((s) => s.url);
 }
 
+/** host -> mTLS KeyChain alias, derived from the saved remote servers. */
+function savedClientCertificates(): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const s of useServersBase.getState().servers) {
+    if (s.type === "local" || !s.mtlsAlias) continue;
+    const host = hostnameFromUrl(s.url);
+    if (host) map[host] = s.mtlsAlias;
+  }
+  return map;
+}
+
+/**
+ * Push the host->alias map (from saved servers, plus an optional not-yet-saved
+ * login entry) into the native KeyManager. Call before a login request so the
+ * mTLS handshake can present the client certificate. Android-only; no-op
+ * elsewhere. See modules/ssl-trust.
+ */
+export async function syncSslClientCertificates(extra?: {
+  url: string;
+  alias?: string;
+}): Promise<void> {
+  try {
+    const map = savedClientCertificates();
+    if (extra?.alias) {
+      const host = hostnameFromUrl(extra.url);
+      if (host) map[host] = extra.alias;
+    }
+    await syncClientCertificates(map);
+  } catch (err) {
+    reportError(err, { area: "auth", endpoint: "ssl-trust client-cert sync" });
+  }
+}
+
 /**
  * Install the custom trust manager and (on iOS) start the loopback proxy for
  * already-trusted upstreams. Call once at app startup, before the first network
@@ -26,6 +61,7 @@ export async function initSslTrust(): Promise<void> {
   try {
     await initTrustStore();
     await refreshProxyUpstreams(savedRemoteBaseUrls());
+    await syncClientCertificates(savedClientCertificates());
   } catch (err) {
     reportError(err, { area: "auth", endpoint: "ssl-trust init" });
   }

@@ -7,7 +7,7 @@ import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
 import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
+import { Linking, Platform } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -15,6 +15,8 @@ import Logo from "@/assets/images/logo.svg";
 import CertificateTrustDialog from "@/components/auth/CertificateTrustDialog";
 import LocalLibraryInfoDialog from "@/components/auth/LocalLibraryInfoDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
+import ClientCertificateField from "@/components/forms/ClientCertificateField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -63,13 +65,17 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { trustCertificate } from "@/modules/ssl-trust";
+import {
+  hostnameFromUrl,
+  isSslTrustAvailable,
+  trustCertificate,
+} from "@/modules/ssl-trust";
 import {
   authenticateRemote,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
-import { syncSslProxy } from "@/services/sslTrust";
+import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, {
   type Server,
@@ -181,6 +187,7 @@ export default function LoginScreen() {
       url: preselectedServer?.url ?? "https://",
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
       paths: (preselectedServer?.paths ?? []) as string[],
+      mtlsAlias: preselectedServer?.mtlsAlias ?? "",
     },
     validators: {
       onChange: loginSchema,
@@ -223,6 +230,13 @@ export default function LoginScreen() {
           setCurrentServer(server.id);
           login("local", "local", "", { serverType: "local" });
         } else {
+          const mtlsAlias = value.mtlsAlias?.trim() || undefined;
+          // Register the client cert with the native KeyManager before the
+          // handshake so mTLS servers get it presented on this first request.
+          await syncSslClientCertificates({
+            url: trimmedUrl,
+            alias: mtlsAlias,
+          });
           const options = await authenticateRemote(
             serverType,
             trimmedUrl,
@@ -235,6 +249,7 @@ export default function LoginScreen() {
             name: existing?.name ?? fallbackName,
             url: trimmedUrl,
             type: serverType,
+            mtlsAlias,
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
@@ -322,6 +337,7 @@ export default function LoginScreen() {
     form.setFieldValue("password", "");
     form.setFieldValue("type", server.type);
     form.setFieldValue("paths", server.paths ?? []);
+    form.setFieldValue("mtlsAlias", server.mtlsAlias ?? "");
     if (server.type !== "local") {
       setTimeout(() => usernameRef.current?.focus(), 250);
     }
@@ -581,6 +597,27 @@ export default function LoginScreen() {
                       {t("auth.login.saveCredentials")}
                     </CheckboxLabel>
                   </Checkbox>
+                  {Platform.OS === "android" && isSslTrustAvailable() && (
+                    <AdvancedSettingsSection>
+                      <form.Field name="mtlsAlias">
+                        {(field) => (
+                          <form.Subscribe
+                            selector={(state) => state.values.url}
+                          >
+                            {(url) => (
+                              <ClientCertificateField
+                                value={field.state.value || undefined}
+                                host={hostnameFromUrl(url ?? "")}
+                                onChange={(alias) =>
+                                  field.handleChange(alias ?? "")
+                                }
+                              />
+                            )}
+                          </form.Subscribe>
+                        )}
+                      </form.Field>
+                    </AdvancedSettingsSection>
+                  )}
                 </>
               )
             }

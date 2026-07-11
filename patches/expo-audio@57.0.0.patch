@@ -1,8 +1,32 @@
+diff --git a/node_modules/expo-audio/.bun-tag-144718d19ce51a97 b/.bun-tag-144718d19ce51a97
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2bb9408b6 100644
+index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..b7f72781612d263468f185cce3f9174c869e04a8 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioModule.kt
-@@ -148,11 +148,11 @@ class AudioModule : Module() {
+@@ -49,7 +49,19 @@ class AudioModule : Module() {
+   private lateinit var audioManager: AudioManager
+   private val context: Context
+     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+-  private val httpClient = OkHttpClient()
++  // Route audio streaming through React Native's shared OkHttpClient, which the
++  // ssl-trust module patches with the app's custom SSLSocketFactory (self-signed
++  // TOFU trust + mTLS client cert). A bare OkHttpClient() uses the system default
++  // trust manager, so it can't reach self-signed / mutual-TLS servers. Reflection
++  // avoids a compile-time dependency on react-android; falls back to a plain
++  // client if RN's provider can't be reached.
++  private val httpClient: OkHttpClient = try {
++    Class.forName("com.facebook.react.modules.network.OkHttpClientProvider")
++      .getMethod("getOkHttpClient")
++      .invoke(null) as OkHttpClient
++  } catch (e: Exception) {
++    OkHttpClient()
++  }
+ 
+   private val players = ConcurrentHashMap<String, AudioPlayer>()
+   private val recorders = ConcurrentHashMap<String, AudioRecorder>()
+@@ -148,11 +160,11 @@ class AudioModule : Module() {
      val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
        val requestType = interruptionMode?.let {
          if (it == InterruptionMode.DO_NOT_MIX) {
@@ -16,7 +40,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2
        audioFocusRequest = AudioFocusRequest.Builder(requestType).run {
          setAudioAttributes(
            AudioAttributes.Builder()
-@@ -169,7 +169,7 @@ class AudioModule : Module() {
+@@ -169,7 +181,7 @@ class AudioModule : Module() {
      } else {
        @Suppress("DEPRECATION")
        val requestType = if (interruptionMode == InterruptionMode.DO_NOT_MIX) {
@@ -25,7 +49,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2
        } else {
          AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
        }
-@@ -464,6 +464,12 @@ class AudioModule : Module() {
+@@ -464,6 +476,12 @@ class AudioModule : Module() {
          ref.setVolume(volume)
        }
  
@@ -39,7 +63,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..0ef1a57459c61af0fba8ce9b73d7bae2
          if (!audioEnabled) {
            Log.e(TAG, "Audio has been disabled. Re-enable to start playing")
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..6a26977882ba21151ad78500651a000b90b06e61 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..a6e3e004abe1db6321506db60fec8d0a69ac2a96 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -24,6 +24,8 @@ import java.lang.ref.WeakReference
@@ -120,7 +144,7 @@ index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381
  
  enum class InterruptionMode(val value: String) : Enumerable {
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d5..e86eb0c 100644
+index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f226c93d4 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -90,6 +90,8 @@ class AudioControlsService : MediaSessionService() {
@@ -340,7 +364,7 @@ index 196a5d5..e86eb0c 100644
      const val SEEK_INTERVAL_MS = 10000L
    }
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt b/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
-index 839aaef..9f5420f 100644
+index 839aaef12d7699ea1a89037b31849775daa079f4..9f5420f76b164ecdadab86a3f7f19a734702242f 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
 @@ -10,7 +10,10 @@ import androidx.media3.common.util.UnstableApi
@@ -443,7 +467,7 @@ index cfd92ad0ff5765254c4e6db974fe44bce34aad06..daef7384bcd7090cc200dd65d3812fc6
  //# sourceMappingURL=AudioConstants.d.ts.map
 \ No newline at end of file
 diff --git a/build/AudioModule.types.d.ts b/build/AudioModule.types.d.ts
-index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..4f779b58d28c6e51455f59e9c2ea9206b38b19c1 100644
+index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..ab86f9c70f583f693302f194a6b6ffb5e7567b28 100644
 --- a/build/AudioModule.types.d.ts
 +++ b/build/AudioModule.types.d.ts
 @@ -92,6 +92,11 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
@@ -593,7 +617,7 @@ index dcc0452f7cae66b1bfaf77ed211416b092965bd9..779223ba2550809e621f4006c193beb2
 +  showSkipNext?: boolean;
  };
 diff --git a/src/AudioModule.types.ts b/src/AudioModule.types.ts
-index 7e7537173d067fecef767a03dc0f1860c8aca7ac..da210cec9d8b0cbe73a16c011dcc23fe1837bf66 100644
+index 7e7537173d067fecef767a03dc0f1860c8aca7ac..961a189840b6ffea60d5a43325108c006de50c54 100644
 --- a/src/AudioModule.types.ts
 +++ b/src/AudioModule.types.ts
 @@ -127,6 +127,12 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {

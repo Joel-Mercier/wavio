@@ -15,6 +15,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ClientCertificateField from "@/components/forms/ClientCertificateField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -48,6 +49,8 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
+import { hostnameFromUrl } from "@/modules/ssl-trust";
+import { syncSslClientCertificates } from "@/services/sslTrust";
 import { useAuthBase } from "@/stores/auth";
 import useServers, {
   editServerFormSchema,
@@ -95,6 +98,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       url: server.url,
       type: server.type,
       paths: server.paths ?? [],
+      mtlsAlias: server.mtlsAlias ?? "",
     },
     validators: {
       onChange: editServerFormSchema,
@@ -107,7 +111,10 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           name: value.name,
           url: value.url,
           type: value.type,
+          mtlsAlias: value.mtlsAlias?.trim() || undefined,
         });
+        // Refresh the native KeyManager so the updated client cert applies.
+        await syncSslClientCertificates();
       }
       form.reset();
       toast.show({
@@ -424,7 +431,10 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         size="md"
       >
         <AlertDialogBackdrop />
-        <KeyboardAvoidingView behavior="padding">
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={{ width: "100%", alignItems: "center" }}
+        >
           <AlertDialogContent className="bg-primary-800 border-primary-400">
             <AlertDialogHeader>
               <Heading className="text-white font-bold" size="md">
@@ -489,6 +499,21 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                         </Input>
                         <FieldError field={field} />
                       </FormControl>
+                    )}
+                  </form.Field>
+                  <form.Field name="mtlsAlias">
+                    {(field) => (
+                      <form.Subscribe selector={(state) => state.values.url}>
+                        {(url) => (
+                          <ClientCertificateField
+                            value={field.state.value || undefined}
+                            host={hostnameFromUrl(url ?? "")}
+                            onChange={(alias) =>
+                              field.handleChange(alias ?? "")
+                            }
+                          />
+                        )}
+                      </form.Subscribe>
                     )}
                   </form.Field>
                 </>

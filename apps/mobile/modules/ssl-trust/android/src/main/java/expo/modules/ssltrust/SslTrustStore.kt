@@ -1,16 +1,23 @@
 package expo.modules.ssltrust
 
 import android.content.Context
+import android.security.KeyChain
 import android.util.Log
 import java.lang.reflect.Proxy
+import java.net.Socket
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.Principal
+import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLEngine
+import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,6 +34,7 @@ object SslTrustStore {
   private const val TAG = "SslTrustStore"
   private const val PREFS = "wavio_ssl_trust"
   private const val KEY_ENTRIES = "entries"
+  private const val KEY_CLIENT_ALIASES = "client_aliases"
 
   data class TrustedCertEntry(
     val hostname: String,
@@ -38,7 +46,12 @@ object SslTrustStore {
   // host -> entry. ConcurrentHashMap so handshake-thread reads are safe while
   // the JS thread writes.
   private val entries = ConcurrentHashMap<String, TrustedCertEntry>()
+  // host -> Android KeyChain alias for mTLS client-cert auth. Read live on the
+  // handshake thread by [MtlsKeyManager]; the private key stays in the OS
+  // keystore, only the alias string is persisted here.
+  private val clientAliases = ConcurrentHashMap<String, String>()
   private var prefs: android.content.SharedPreferences? = null
+  @Volatile private var appContext: Context? = null
 
   @Volatile var installed = false
     private set
@@ -46,6 +59,7 @@ object SslTrustStore {
     private set
 
   fun init(context: Context) {
+    appContext = context.applicationContext
     if (prefs == null) {
       prefs = context.applicationContext.getSharedPreferences(
         PREFS, Context.MODE_PRIVATE,
@@ -92,6 +106,36 @@ object SslTrustStore {
   fun isFingerprintTrusted(fingerprint: String): Boolean =
     entries.values.any { it.sha256Fingerprint.equals(fingerprint, true) }
 
+  // --- mTLS client certificates ---------------------------------------------
+
+  fun applicationContext(): Context? = appContext
+
+  /** KeyChain alias configured for [host], or null if none / host unknown. */
+  fun getClientAlias(host: String?): String? {
+    if (host == null) return null
+    return clientAliases[host.lowercase()]
+  }
+
+  /** Distinct configured aliases, for the KeyManager's `getClientAliases`. */
+  fun getConfiguredAliases(): List<String> = clientAliases.values.distinct()
+
+  fun getClientCertificates(): List<Map<String, Any?>> =
+    clientAliases.map { mapOf("hostname" to it.key, "alias" to it.value) }
+
+  /**
+   * Replace the whole host->alias map (source of truth is the JS servers
+   * store). Mirrors the iOS `syncProxyUpstreams` bulk-replace: entries with a
+   * blank alias are dropped so a server that clears its cert stops presenting
+   * one.
+   */
+  fun syncClientCertificates(certs: Map<String, String>) {
+    clientAliases.clear()
+    for ((host, alias) in certs) {
+      if (alias.isNotBlank()) clientAliases[host.lowercase()] = alias
+    }
+    persistClientAliases()
+  }
+
   fun getFingerprint(cert: X509Certificate): String =
     MessageDigest.getInstance("SHA-256").digest(cert.encoded)
       .joinToString(":") { "%02X".format(it) }
@@ -112,7 +156,12 @@ object SslTrustStore {
       val systemTm = resolveSystemTrustManager()
       val appTm = AppTrustManager(systemTm)
       val sslContext = SSLContext.getInstance("TLS")
-      sslContext.init(null, arrayOf(appTm), java.security.SecureRandom())
+      // A host-aware KeyManager presents the configured client certificate for
+      // mTLS servers (reads `clientAliases` live, so adding a cert later needs
+      // no re-init); the null slot used to disable client auth entirely.
+      sslContext.init(
+        arrayOf(MtlsKeyManager()), arrayOf(appTm), java.security.SecureRandom(),
+      )
       val socketFactory = sslContext.socketFactory
 
       HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory)
@@ -213,21 +262,30 @@ object SslTrustStore {
   // --- persistence -----------------------------------------------------------
 
   private fun loadFromPrefs() {
-    val raw = prefs?.getString(KEY_ENTRIES, null) ?: return
-    try {
-      val arr = JSONArray(raw)
-      for (i in 0 until arr.length()) {
-        val o = arr.getJSONObject(i)
-        val host = o.getString("hostname").lowercase()
-        entries[host] = TrustedCertEntry(
-          host,
-          o.getString("sha256Fingerprint"),
-          o.optLong("acceptedAt", System.currentTimeMillis()),
-          o.optString("validTo", null),
-        )
+    prefs?.getString(KEY_ENTRIES, null)?.let { raw ->
+      try {
+        val arr = JSONArray(raw)
+        for (i in 0 until arr.length()) {
+          val o = arr.getJSONObject(i)
+          val host = o.getString("hostname").lowercase()
+          entries[host] = TrustedCertEntry(
+            host,
+            o.getString("sha256Fingerprint"),
+            o.optLong("acceptedAt", System.currentTimeMillis()),
+            o.optString("validTo", null),
+          )
+        }
+      } catch (e: Exception) {
+        Log.w(TAG, "failed to load trust store: ${e.message}")
       }
-    } catch (e: Exception) {
-      Log.w(TAG, "failed to load trust store: ${e.message}")
+    }
+    prefs?.getString(KEY_CLIENT_ALIASES, null)?.let { raw ->
+      try {
+        val o = JSONObject(raw)
+        for (host in o.keys()) clientAliases[host.lowercase()] = o.getString(host)
+      } catch (e: Exception) {
+        Log.w(TAG, "failed to load client aliases: ${e.message}")
+      }
     }
   }
 
@@ -243,6 +301,88 @@ object SslTrustStore {
       )
     }
     prefs?.edit()?.putString(KEY_ENTRIES, arr.toString())?.apply()
+  }
+
+  private fun persistClientAliases() {
+    val o = JSONObject()
+    for ((host, alias) in clientAliases) o.put(host, alias)
+    prefs?.edit()?.putString(KEY_CLIENT_ALIASES, o.toString())?.apply()
+  }
+}
+
+/**
+ * KeyManager that presents the Android KeyChain client certificate configured
+ * for the connection's target host (mTLS). Reads [SslTrustStore.clientAliases]
+ * live on the handshake thread; the private key never leaves the OS keystore —
+ * [KeyChain.getPrivateKey] returns a handle the system unlocks. Returns a null
+ * alias for hosts without a configured cert, so normal (non-mTLS) TLS is
+ * unaffected.
+ */
+class MtlsKeyManager : X509ExtendedKeyManager() {
+  private val tag = "SslTrustStore"
+
+  override fun chooseClientAlias(
+    keyType: Array<out String>?,
+    issuers: Array<out Principal>?,
+    socket: Socket?,
+  ): String? = SslTrustStore.getClientAlias(peerHost(socket))
+
+  override fun chooseEngineClientAlias(
+    keyType: Array<out String>?,
+    issuers: Array<out Principal>?,
+    engine: SSLEngine?,
+  ): String? = SslTrustStore.getClientAlias(engine?.peerHost)
+
+  override fun getCertificateChain(alias: String?): Array<X509Certificate>? {
+    val ctx = SslTrustStore.applicationContext() ?: return null
+    if (alias == null) return null
+    return try {
+      KeyChain.getCertificateChain(ctx, alias)
+    } catch (e: Exception) {
+      Log.w(tag, "getCertificateChain($alias) failed: ${e.message}")
+      null
+    }
+  }
+
+  override fun getPrivateKey(alias: String?): PrivateKey? {
+    val ctx = SslTrustStore.applicationContext() ?: return null
+    if (alias == null) return null
+    return try {
+      KeyChain.getPrivateKey(ctx, alias)
+    } catch (e: Exception) {
+      Log.w(tag, "getPrivateKey($alias) failed: ${e.message}")
+      null
+    }
+  }
+
+  override fun getClientAliases(
+    keyType: String?,
+    issuers: Array<out Principal>?,
+  ): Array<String>? =
+    SslTrustStore.getConfiguredAliases().ifEmpty { return null }.toTypedArray()
+
+  override fun getServerAliases(
+    keyType: String?,
+    issuers: Array<out Principal>?,
+  ): Array<String>? = null
+
+  override fun chooseServerAlias(
+    keyType: String?,
+    issuers: Array<out Principal>?,
+    socket: Socket?,
+  ): String? = null
+
+  /**
+   * The TLS peer host, preferring the handshake session's `peerHost` (the SNI
+   * name, no reverse-DNS lookup) over the resolved address.
+   */
+  private fun peerHost(socket: Socket?): String? {
+    val ssl = socket as? SSLSocket ?: return null
+    return try {
+      ssl.handshakeSession?.peerHost
+    } catch (e: Exception) {
+      null
+    } ?: ssl.inetAddress?.hostName
   }
 }
 
