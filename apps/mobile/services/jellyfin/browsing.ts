@@ -30,6 +30,7 @@ import type {
   SonicSimilarTracks,
   TopSongs,
 } from "@/services/openSubsonic/types";
+import { buildArtistIndex } from "@/services/pinyinIndex";
 import { useAuthBase } from "@/stores/auth";
 
 const COMMON_FIELDS =
@@ -166,22 +167,9 @@ export const getArtists = async ({
       },
     },
   );
-  // Group by first letter
-  const buckets = new Map<string, BaseItemDto[]>();
-  for (const item of rsp.data?.Items ?? []) {
-    const letter = (item.Name?.[0] ?? "#").toUpperCase();
-    const key = /[A-Z]/.test(letter) ? letter : "#";
-    if (!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key)?.push(item);
-  }
   const artists: ArtistsID3 = {
     ignoredArticles: "",
-    index: [...buckets.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([name, items]) => ({
-        name,
-        artist: items.map(mapBaseItemToArtist),
-      })),
+    index: buildArtistIndex((rsp.data?.Items ?? []).map(mapBaseItemToArtist)),
   };
   return fakeEnvelope({ artists });
 };

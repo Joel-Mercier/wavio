@@ -29,6 +29,7 @@ import type {
   PodcastEpisode,
   PodcastStatus,
 } from "@/services/openSubsonic/types";
+import { buildArtistIndex as buildPinyinAwareArtistIndex } from "@/services/pinyinIndex";
 import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 
 // Adapts SQLite rows to the OpenSubsonic envelope shapes, mirroring
@@ -150,17 +151,7 @@ export function mapGenreRow(row: GenreRow): Genre {
 
 /** Group artists into alphabetical index buckets for the ArtistsID3 shape. */
 export function buildArtistIndex(artists: ArtistID3[]): IndexID3[] {
-  const buckets = new Map<string, ArtistID3[]>();
-  for (const artist of artists) {
-    const first = (artist.name?.[0] ?? "#").toUpperCase();
-    const letter = /[A-Z]/.test(first) ? first : "#";
-    const bucket = buckets.get(letter);
-    if (bucket) bucket.push(artist);
-    else buckets.set(letter, [artist]);
-  }
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, artist]) => ({ name, artist }));
+  return buildPinyinAwareArtistIndex(artists);
 }
 
 export function mapRadioRow(row: RadioStationRow): InternetRadioStation {

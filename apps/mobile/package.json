@@ -85,6 +85,7 @@
 		"html-entities": "^2.6.0",
 		"i18next": "^26.3.5",
 		"lucide-react-native": "^1.23.0",
+		"pinyin-pro": "^3.28.1",
 		"react": "19.2.3",
 		"react-aria": "^3.50.0",
 		"react-dom": "19.2.3",

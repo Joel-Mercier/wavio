@@ -6,6 +6,9 @@ jest.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 
 import {
   __setProxyInfoForTests,
+  chooseClientCertificate,
+  getClientCertificates,
+  hostnameFromUrl,
   isSSLError,
   normalizeBase,
   resolveServerBase,
@@ -52,6 +55,27 @@ describe("normalizeBase", () => {
 
   it("passes through a string without a scheme", () => {
     expect(normalizeBase("Example.com/foo/")).toBe("example.com/foo");
+  });
+});
+
+describe("hostnameFromUrl", () => {
+  it("extracts the lowercased host, dropping scheme, port and path", () => {
+    expect(hostnameFromUrl("https://Music.Example.com:4533/rest/ping")).toBe(
+      "music.example.com",
+    );
+    expect(hostnameFromUrl("  http://host.local/foo  ")).toBe("host.local");
+  });
+
+  it("returns an empty string when no host can be parsed", () => {
+    expect(hostnameFromUrl("not a url")).toBe("");
+    expect(hostnameFromUrl("")).toBe("");
+  });
+});
+
+describe("client-cert wrappers off Android", () => {
+  it("no-op gracefully when the native module is unavailable", async () => {
+    await expect(chooseClientCertificate("example.com")).resolves.toBeNull();
+    await expect(getClientCertificates()).resolves.toEqual([]);
   });
 });
 

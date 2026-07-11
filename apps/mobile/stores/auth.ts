@@ -32,6 +32,10 @@ export const loginSchema = z
     // login form always supplies this (defaults to []), so it's required here to
     // match the form's value shape for the StandardSchema validator.
     paths: z.array(z.string()),
+    // Android KeyChain alias for mTLS client-cert auth (remote types, Android
+    // only); presence enables mTLS. Required (empty = none) so the inferred
+    // input type matches the login form's string default; no refinement.
+    mtlsAlias: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;

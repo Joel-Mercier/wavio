@@ -24,6 +24,7 @@ import { useArtists } from "@/hooks/backend/useBrowsing";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
+import { buildArtistIndex, hasCJK } from "@/services/pinyinIndex";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -75,7 +76,17 @@ export default function AllArtistsScreen() {
   // Browse mode: keep the backend's alphabetical grouping so we can render
   // section headers and drive the index bar.
   const { rows, letters, headerRowIndex } = useMemo(() => {
-    const index = data?.artists?.index ?? [];
+    // Subsonic/Navidrome build the section index server-side and drop CJK names
+    // into "#". When the library has any CJK artist, re-bucket client-side so
+    // Chinese names land under their pinyin initial; honor the server's
+    // ignoredArticles so Latin grouping stays identical. Pure-Latin libraries
+    // keep the untouched server index.
+    const rebucket = allArtists.some((artist) => hasCJK(artist.name ?? ""));
+    const index = rebucket
+      ? buildArtistIndex(allArtists, {
+          ignoredArticles: data?.artists?.ignoredArticles,
+        })
+      : (data?.artists?.index ?? []);
     const rows: ArtistRow[] = [];
     const letters: string[] = [];
     const headerRowIndex: number[] = [];
@@ -93,7 +104,7 @@ export default function AllArtistsScreen() {
       }
     });
     return { rows, letters, headerRowIndex };
-  }, [data]);
+  }, [data, allArtists]);
 
   const fuse = useMemo(
     () => new Fuse(allArtists, { ignoreDiacritics: true, keys: ["name"] }),

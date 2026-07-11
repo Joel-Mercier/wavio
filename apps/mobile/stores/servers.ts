@@ -17,6 +17,8 @@ export const serverFormSchema = z.object({
   name: z.string().trim().min(1),
   url: z.url().trim().min(1),
   type: serverTypeSchema,
+  // Android KeyChain alias for mTLS client-cert auth; presence enables mTLS.
+  mtlsAlias: z.string().trim().optional(),
 });
 
 // Add-server form variant: `local` servers have no name/URL (auto-named, fixed
@@ -29,6 +31,9 @@ export const addServerFormSchema = z
     url: z.string().trim(),
     type: serverTypeSchema,
     paths: z.array(z.string()),
+    // Required (empty = no cert) so the inferred input type matches the form's
+    // string default; presence of a non-empty alias enables mTLS.
+    mtlsAlias: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -59,6 +64,7 @@ export const editServerFormSchema = z
     url: z.string().trim(),
     type: serverTypeSchema,
     paths: z.array(z.string()),
+    mtlsAlias: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -90,6 +96,10 @@ export type Server = {
   // folders the on-device indexer scans. There is a single local server (no
   // remote URL, no multiple accounts), so this is where its config lives.
   paths?: string[];
+  // Android KeyChain alias for mTLS client-cert auth (Android only). Only the
+  // alias is stored; the private key stays in the OS keystore. Its presence is
+  // what enables mTLS for this server. See modules/ssl-trust.
+  mtlsAlias?: string;
 };
 
 export type ServerUser = {
@@ -108,10 +118,17 @@ interface ServersStore {
     url: string;
     type?: ServerType;
     paths?: string[];
+    mtlsAlias?: string;
   }) => Server;
   editServer: (
     id: string,
-    patch: { name?: string; url?: string; type?: ServerType; paths?: string[] },
+    patch: {
+      name?: string;
+      url?: string;
+      type?: ServerType;
+      paths?: string[];
+      mtlsAlias?: string;
+    },
   ) => void;
   removeServer: (id: string) => void;
   setCurrentServer: (id: string) => void;
@@ -132,14 +149,18 @@ const useServersBase = create<ServersStore>()(
     (set, get) => ({
       servers: [],
       users: [],
-      addServer: ({ name, url, type, paths }) => {
+      addServer: ({ name, url, type, paths, mtlsAlias }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
+        const cleanAlias = mtlsAlias?.trim() || undefined;
         const existing = get().servers.find((s) => s.url === trimmedUrl);
         if (existing) {
           const patch: Partial<Server> = {};
           if (type && existing.type !== type) patch.type = type;
           if (paths) patch.paths = paths;
+          if (mtlsAlias !== undefined && existing.mtlsAlias !== cleanAlias) {
+            patch.mtlsAlias = cleanAlias;
+          }
           if (Object.keys(patch).length > 0) {
             set((state) => ({
               servers: state.servers.map((s) =>
@@ -158,6 +179,7 @@ const useServersBase = create<ServersStore>()(
           current: !hasCurrent,
           type: type ?? "navidrome",
           ...(paths ? { paths } : {}),
+          ...(cleanAlias ? { mtlsAlias: cleanAlias } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -180,6 +202,9 @@ const useServersBase = create<ServersStore>()(
                   ...(patch.url !== undefined ? { url: patch.url.trim() } : {}),
                   ...(patch.type !== undefined ? { type: patch.type } : {}),
                   ...(patch.paths !== undefined ? { paths: patch.paths } : {}),
+                  ...(patch.mtlsAlias !== undefined
+                    ? { mtlsAlias: patch.mtlsAlias.trim() || undefined }
+                    : {}),
                 }
               : s,
           ),

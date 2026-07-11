@@ -5,10 +5,13 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
+import ClientCertificateField from "@/components/forms/ClientCertificateField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -41,6 +44,8 @@ import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import { syncSslClientCertificates } from "@/services/sslTrust";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useServers, {
@@ -100,6 +105,7 @@ export default function ServersDetail() {
       url: "",
       type: "navidrome" as ServerType,
       paths: [] as string[],
+      mtlsAlias: "",
     },
     validators: {
       onChange: addServerFormSchema,
@@ -131,7 +137,15 @@ export default function ServersDetail() {
           paths,
         });
       } else {
-        addServer({ name: value.name, url: value.url, type: value.type });
+        addServer({
+          name: value.name,
+          url: value.url,
+          type: value.type,
+          mtlsAlias: value.mtlsAlias?.trim() || undefined,
+        });
+        // Refresh the native KeyManager so this server's client cert is
+        // presented on future connections.
+        await syncSslClientCertificates();
       }
       form.reset();
       toast.show({
@@ -217,7 +231,10 @@ export default function ServersDetail() {
           size="md"
         >
           <AlertDialogBackdrop />
-          <KeyboardAvoidingView behavior="padding">
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={{ width: "100%", alignItems: "center" }}
+          >
             <AlertDialogContent className="bg-primary-800 border-primary-400">
               <AlertDialogHeader>
                 <Heading className="text-white font-bold" size="md">
@@ -357,6 +374,27 @@ export default function ServersDetail() {
                             </FormControl>
                           )}
                         </form.Field>
+                        {Platform.OS === "android" && isSslTrustAvailable() && (
+                          <AdvancedSettingsSection>
+                            <form.Field name="mtlsAlias">
+                              {(field) => (
+                                <form.Subscribe
+                                  selector={(state) => state.values.url}
+                                >
+                                  {(url) => (
+                                    <ClientCertificateField
+                                      value={field.state.value || undefined}
+                                      host={hostnameFromUrl(url ?? "")}
+                                      onChange={(alias) =>
+                                        field.handleChange(alias ?? "")
+                                      }
+                                    />
+                                  )}
+                                </form.Subscribe>
+                              )}
+                            </form.Field>
+                          </AdvancedSettingsSection>
+                        )}
                       </>
                     )
                   }
