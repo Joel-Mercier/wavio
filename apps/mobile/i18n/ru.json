@@ -117,22 +117,22 @@
 				"typeCompilation": "Сборник",
 				"releaseTypes": {
 					"album": "По альбому",
-					"single": "Single",
-					"ep": "EP",
-					"broadcast": "Broadcast",
-					"other": "Other",
+					"single": "Сингл",
+					"ep": "Мини-альбом",
+					"broadcast": "Трансляция",
+					"other": "Другое",
 					"compilation": "Сборник",
-					"soundtrack": "Soundtrack",
-					"spokenword": "Spoken word",
-					"interview": "Interview",
+					"soundtrack": "Саундтрек",
+					"spokenword": "Разговорный жанр",
+					"interview": "Интервью",
 					"audiobook": "Аудиокнига",
-					"audiodrama": "Audio drama",
-					"live": "Live",
-					"remix": "Remix",
-					"djmix": "DJ-mix",
-					"mixtapestreet": "Mixtape/Street",
-					"demo": "Demo",
-					"fieldrecording": "Field recording"
+					"audiodrama": "Аудиоспектакль",
+					"live": "Концерт",
+					"remix": "Ремикс",
+					"djmix": "DJ-микс",
+					"mixtapestreet": "Микстейп",
+					"demo": "Демо",
+					"fieldrecording": "Полевая запись"
 				}
 			},
 			"artists": {
@@ -1010,8 +1010,8 @@
 				"playingFrom": {
 					"album": "Из альбома",
 					"playlist": "Из плейлиста",
-					"artist": "Треки исполнителя",
-					"likedSongs": "Любимые треки",
+					"artist": "Из треков исполнителя",
+					"likedSongs": "Из любимых треков",
 					"folder": "Из папки",
 					"similar": "Похожие треки"
 				},
