@@ -114,7 +114,26 @@
 				"addAllToFavoritesSuccessMessage": "Все песни добавлены в избранное",
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
-				"typeCompilation": "Сборник"
+				"typeCompilation": "Сборник",
+				"releaseTypes": {
+					"album": "По альбому",
+					"single": "Сингл",
+					"ep": "Мини-альбом",
+					"broadcast": "Трансляция",
+					"other": "Другое",
+					"compilation": "Сборник",
+					"soundtrack": "Саундтрек",
+					"spokenword": "Разговорный жанр",
+					"interview": "Интервью",
+					"audiobook": "Аудиокнига",
+					"audiodrama": "Аудиоспектакль",
+					"live": "Концерт",
+					"remix": "Ремикс",
+					"djmix": "DJ-микс",
+					"mixtapestreet": "Микстейп",
+					"demo": "Демо",
+					"fieldrecording": "Полевая запись"
+				}
 			},
 			"artists": {
 				"label": "Исполнитель",
@@ -991,8 +1010,8 @@
 				"playingFrom": {
 					"album": "Из альбома",
 					"playlist": "Из плейлиста",
-					"artist": "Треки исполнителя",
-					"likedSongs": "Любимые треки",
+					"artist": "Из треков исполнителя",
+					"likedSongs": "Из любимых треков",
 					"folder": "Из папки",
 					"similar": "Похожие треки"
 				},
