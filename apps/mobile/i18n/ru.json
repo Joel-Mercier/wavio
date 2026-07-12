@@ -1108,7 +1108,7 @@
 				"switchConfirm": "Сменить"
 			},
 			"shared": {
-				"advancedSettings": "Advanced settings",
+				"advancedSettings": "Расширенные настройки",
 				"cancel": "Отмена",
 				"close": "Закрыть",
 				"create": "Создать",
@@ -1319,12 +1319,12 @@
 				"trustedMessage": "Сертификат добавлен в доверенные"
 			},
 			"clientCertificate": {
-				"label": "Client certificate (mTLS)",
-				"select": "Select a certificate",
-				"change": "Change",
+				"label": "Клиентский сертификат (mTLS)",
+				"select": "Выбрать сертификат",
+				"change": "Изменить",
 				"remove": "Удалить",
-				"selected": "Certificate: {{alias}}",
-				"hint": "Authenticate to servers that require mutual TLS. Pick a certificate from your device's keystore — install one first in Android Settings → Security → Encryption & credentials.",
+				"selected": "Сертификат: {{alias}}",
+				"hint": "Аутентификация на серверах с mTLS. Выбери сертификат из памяти устройства (сначала его нужно установить в настройках Android → Безопасность → Шифрование и учетные данные).",
 				"unavailable": "Чтобы выбирать сертификаты, нужно полностью пересобрать приложение.",
 				"noneTitle": "Сертификат не выбран",
 				"noneMessage": "Ещё нет клиентского сертификата? Добавь его в настройках Android → Безопасность → Шифрование и учетные данные, а затем попробуй снова."
