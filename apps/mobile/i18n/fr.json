@@ -635,10 +635,10 @@
 						"server": "Serveur uniquement",
 						"all": "Serveur + lrclib.net"
 					},
-					"swipeActionLabel": "Swipe action",
-					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionLabel": "Action de balayage",
+					"swipeActionDescription": "Action déclenchée lors du glissement d'une piste vers la droite dans une liste",
 					"swipeActionOptions": {
-						"off": "Désactivées",
+						"off": "Désactivée",
 						"addToQueue": "Ajouter à la fin de la file d'attente",
 						"playNext": "Ajouter à la file d'attente",
 						"rate": "Noter",
