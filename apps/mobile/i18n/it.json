@@ -634,6 +634,16 @@
 						"off": "Spento",
 						"server": "Solo server",
 						"all": "Server + lrclib.net"
+					},
+					"swipeActionLabel": "Swipe action",
+					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionOptions": {
+						"off": "Spento",
+						"addToQueue": "Aggiungi alla coda",
+						"playNext": "Riproduci successivo",
+						"rate": "Tasso",
+						"showInfo": "Ottieni informazioni",
+						"addToPlaylist": "Aggiungi alla playlist"
 					}
 				},
 				"hapticsSettings": {
