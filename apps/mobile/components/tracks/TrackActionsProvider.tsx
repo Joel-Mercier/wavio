@@ -31,6 +31,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -86,8 +87,16 @@ export interface TrackActionsContextValue {
   handleRemoveFromPlaylist?: (index: string) => void;
 }
 
-interface TrackActionsApi {
+export interface TrackActionsApi {
   open: (track: Child, ctx?: TrackActionsContextValue) => void;
+  // Direct action entry points (used by the track-row swipe gesture) that skip
+  // the bottom sheet. They reuse the same mutations/navigation/toasts as the
+  // sheet, but operate on an explicit track passed by the caller.
+  addToQueue: (track: Child) => void;
+  playNext: (track: Child) => void;
+  addToPlaylist: (track: Child) => void;
+  showInfo: (track: Child) => void;
+  rate: (track: Child) => void;
 }
 
 const TrackActionsContext = createContext<TrackActionsApi | null>(null);
@@ -158,6 +167,64 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const addToQueue = useCallback(
+    (target: Child) => {
+      useQueue.getState().enqueueEnd(childToTrack(target));
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.addedToQueueMessage", { count: 1 })}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    },
+    [toast, t],
+  );
+
+  const playNext = useCallback(
+    (target: Child) => {
+      useQueue.getState().enqueueNext(childToTrack(target));
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    },
+    [toast, t],
+  );
+
+  const addToPlaylist = useCallback(
+    (target: Child) => {
+      router.navigate({
+        pathname: "/playlists/add-to-playlist",
+        params: { ids: [target.id] },
+      });
+    },
+    [router],
+  );
+
+  const showInfo = useCallback((target: Child) => {
+    setTrack(target);
+    setShowInfoModal(true);
+  }, []);
+
+  const rate = useCallback((target: Child) => {
+    setTrack(target);
+    setShowRatingModal(true);
+  }, []);
 
   const trackArtists = track?.artists?.length
     ? track.artists
@@ -572,8 +639,13 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const api = useMemo<TrackActionsApi>(
+    () => ({ open, addToQueue, playNext, addToPlaylist, showInfo, rate }),
+    [open, addToQueue, playNext, addToPlaylist, showInfo, rate],
+  );
+
   return (
-    <TrackActionsContext.Provider value={{ open }}>
+    <TrackActionsContext.Provider value={api}>
       {children}
       <CenteredBottomSheetModal
         ref={bottomSheetArtistsModalRef}
