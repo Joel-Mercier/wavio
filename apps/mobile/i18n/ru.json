@@ -648,6 +648,16 @@
 						"off": "Выключено",
 						"server": "Только сервер",
 						"all": "Сервер + lrclib.net"
+					},
+					"swipeActionLabel": "Swipe action",
+					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionOptions": {
+						"off": "Выключено",
+						"addToQueue": "Добавить в очередь",
+						"playNext": "Включить следующим",
+						"rate": "Оценить",
+						"showInfo": "Получить информацию",
+						"addToPlaylist": "Добавить в плейлист"
 					}
 				},
 				"hapticsSettings": {
