@@ -1080,6 +1080,7 @@
 				"switchConfirm": "Cambia"
 			},
 			"shared": {
+				"advancedSettings": "Impostazioni avanzate",
 				"cancel": "Annulla",
 				"close": "Chiudi",
 				"create": "Crea",
@@ -1260,6 +1261,17 @@
 				"trust": "Abbi fiducia e vai avanti",
 				"cancel": "Annulla",
 				"trustedMessage": "Certificato attendibile"
+			},
+			"clientCertificate": {
+				"label": "Certificato del client (mTLS)",
+				"select": "Seleziona il certificato",
+				"change": "Cambia",
+				"remove": "Rimuovi",
+				"selected": "Certificato: {{alias}}",
+				"hint": "Autenticazione ai server che richiedono TLS reciproco. Seleziona un certificato dal keystore del dispositivo. Se necessario installane uno da Impostazioni di Android → Sicurezza → Crittografia e Credenziali.",
+				"unavailable": "La selezione del certificato del client non è disponibile in questa versione dell'app. Sarà disponibile dopo una ricompilazione nativa dell'app.",
+				"noneTitle": "Nessun certificato selezionato",
+				"noneMessage": "Se non hai ancora installato un certificato client, aggiungine uno in Android → Sicurezza → Crittografia e Credenziali, e poi riprova."
 			}
 		},
 		"openSubsonic": {

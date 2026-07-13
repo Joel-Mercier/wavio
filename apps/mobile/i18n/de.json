@@ -23,7 +23,7 @@
 				"albumsByGenre": "{{genre}}-Alben",
 				"albumsByDecade": "Alben aus den {{decade}}ern",
 				"moreFromArtist": "Mehr von {{artist}}",
-				"moreFrom": "More from",
+				"moreFrom": "Mehr von",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internetradiosender",
 				"tabs": {
@@ -117,20 +117,20 @@
 					"album": "Album",
 					"single": "Single",
 					"ep": "EP",
-					"broadcast": "Broadcast",
-					"other": "Other",
+					"broadcast": "Sendung",
+					"other": "Sonstiges",
 					"compilation": "Zusammenstellung",
 					"soundtrack": "Soundtrack",
-					"spokenword": "Spoken word",
+					"spokenword": "Gesprochenes Wort",
 					"interview": "Interview",
 					"audiobook": "Hörbuch",
-					"audiodrama": "Audio drama",
+					"audiodrama": "Hörspiel",
 					"live": "Live",
 					"remix": "Remix",
-					"djmix": "DJ-mix",
+					"djmix": "DJ-Mix",
 					"mixtapestreet": "Mixtape/Street",
 					"demo": "Demo",
-					"fieldrecording": "Field recording"
+					"fieldrecording": "Feldaufnahme"
 				}
 			},
 			"artists": {
@@ -1080,6 +1080,7 @@
 				"switchConfirm": "Wechseln"
 			},
 			"shared": {
+				"advancedSettings": "Erweiterte Einstellungen",
 				"cancel": "Abbrechen",
 				"close": "Schließen",
 				"create": "Erstellen",
@@ -1260,6 +1261,17 @@
 				"trust": "Vertrauen und weitermachen",
 				"cancel": "Abbrechen",
 				"trustedMessage": "Zertifikat als vertrauenswürdig eingestuft"
+			},
+			"clientCertificate": {
+				"label": "Client-Zertifikat (mTLS)",
+				"select": "Zertifikat auswählen",
+				"change": "Ändern",
+				"remove": "Entfernen",
+				"selected": "Zertifikat: {{alias}}",
+				"hint": "Authentifizieren Sie sich bei Servern, die gegenseitiges TLS erfordern. Wählen Sie ein Zertifikat aus dem Keystore Ihres Geräts aus – installieren Sie zuvor eines unter „Android-Einstellungen“ → „Sicherheit“ → „Verschlüsselung und Anmeldedaten“.",
+				"unavailable": "Damit die Auswahl von Client-Zertifikaten verfügbar wird, muss die App neu kompiliert werden.",
+				"noneTitle": "Kein Zertifikat ausgewählt",
+				"noneMessage": "Falls Sie noch kein Client-Zertifikat installiert haben, fügen Sie eines unter „Android-Einstellungen → Sicherheit → Verschlüsselung und Anmeldedaten“ hinzu und versuchen Sie es dann erneut."
 			}
 		},
 		"openSubsonic": {

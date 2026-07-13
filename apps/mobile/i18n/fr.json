@@ -1080,6 +1080,7 @@
 				"switchConfirm": "Changer"
 			},
 			"shared": {
+				"advancedSettings": "Paramètres avancés",
 				"cancel": "Annuler",
 				"close": "Fermer",
 				"create": "Créer",
@@ -1260,6 +1261,17 @@
 				"trust": "Approuver et continuer",
 				"cancel": "Annuler",
 				"trustedMessage": "Certificat approuvé"
+			},
+			"clientCertificate": {
+				"label": "Certificat client (mTLS)",
+				"select": "Sélectionner un certificat",
+				"change": "Modifier",
+				"remove": "Supprimer",
+				"selected": "Certificat : {{alias}}",
+				"hint": "Authentifiez-vous auprès des serveurs qui exigent un protocole TLS réciproque. Choisissez un certificat dans le magasin de clés de votre appareil — vous devez d'abord en installer un dans les Paramètres Android → Sécurité → Chiffrement et identifiants.",
+				"unavailable": "La sélection du certificat client nécessite une reconstruction native de l'application pour être disponible.",
+				"noneTitle": "Aucun certificat sélectionné",
+				"noneMessage": "Si vous n'avez pas encore installé de certificat client, ajoutez-en un dans les Paramètres Android → Sécurité → Chiffrement et identifiants, puis réessayez."
 			}
 		},
 		"openSubsonic": {
