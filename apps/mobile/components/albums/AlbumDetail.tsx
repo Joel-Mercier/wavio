@@ -880,8 +880,7 @@ export default function AlbumDetail() {
                     ))}
                 </Text>
               </HStack>
-              <HStack className="mt-2 items-center gap-x-2">
-                {albumDownload.status === "all" && <DownloadedBadge />}
+              <HStack className="mt-2 items-center">
                 <Text className="text-primary-100">
                   {data?.album?.releaseTypes &&
                   data.album.releaseTypes.length > 0
@@ -914,6 +913,22 @@ export default function AlbumDetail() {
                         : handleFavoritePress
                     }
                   />
+                  {albumDownload.status === "downloading" ? (
+                    <Download size={24} color={gray400} />
+                  ) : albumDownload.status === "all" ? (
+                    <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                      <DownloadedBadge size={24} />
+                    </FadeOutScaleDown>
+                  ) : (
+                    <FadeOutScaleDown
+                      onPress={handleSaveOfflinePress}
+                      disabled={!isOnline}
+                    >
+                      <Box className="size-6 rounded-full border-2 border-gray-200 items-center justify-center">
+                        <ArrowDown size={16} color={gray200} />
+                      </Box>
+                    </FadeOutScaleDown>
+                  )}
                   <FadeOutScaleDown
                     testID="album-menu-button"
                     onPress={handlePresentModalPress}

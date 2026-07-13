@@ -766,7 +766,6 @@ export default function PlaylistDetail() {
                 </FadeOutScaleDown>
               )}
               <HStack className="mt-2 items-center gap-x-1">
-                {playlistDownload.status === "all" && <DownloadedBadge />}
                 <Clock color={"#808080"} size={16} />
                 <Text className="ml-2 text-primary-100">
                   {formatDuration(playlistData?.playlist.duration || 0)}
@@ -792,6 +791,22 @@ export default function PlaylistDetail() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
+                  {playlistDownload.status === "downloading" ? (
+                    <Download size={24} color={gray400} />
+                  ) : playlistDownload.status === "all" ? (
+                    <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                      <DownloadedBadge size={24} />
+                    </FadeOutScaleDown>
+                  ) : (
+                    <FadeOutScaleDown
+                      onPress={handleSaveOfflinePress}
+                      disabled={!isOnline}
+                    >
+                      <Box className="size-6 rounded-full border-2 border-gray-200 items-center justify-center">
+                        <ArrowDown size={16} color={gray200} />
+                      </Box>
+                    </FadeOutScaleDown>
+                  )}
                   <FadeOutScaleDown
                     testID="playlist-menu-button"
                     onPress={handlePresentModalPress}
