@@ -649,8 +649,8 @@
 						"server": "Только сервер",
 						"all": "Сервер + lrclib.net"
 					},
-					"swipeActionLabel": "Swipe action",
-					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionLabel": "Действие при свайпе",
+					"swipeActionDescription": "Действие при свайпе трека в списке вправо",
 					"swipeActionOptions": {
 						"off": "Выключено",
 						"addToQueue": "Добавить в очередь",
