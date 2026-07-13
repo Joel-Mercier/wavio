@@ -627,6 +627,16 @@
 						"off": "关闭",
 						"server": "仅服务器",
 						"all": "服务器 + lrclib.net"
+					},
+					"swipeActionLabel": "Swipe action",
+					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionOptions": {
+						"off": "关闭",
+						"addToQueue": "加入播放队列",
+						"playNext": "下一首播放",
+						"rate": "评分",
+						"showInfo": "查看歌曲信息",
+						"addToPlaylist": "加入歌单"
 					}
 				},
 				"hapticsSettings": {

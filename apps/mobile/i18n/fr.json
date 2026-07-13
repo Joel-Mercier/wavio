@@ -634,6 +634,16 @@
 						"off": "Désactivées",
 						"server": "Serveur uniquement",
 						"all": "Serveur + lrclib.net"
+					},
+					"swipeActionLabel": "Action de balayage",
+					"swipeActionDescription": "Action déclenchée lors du glissement d'une piste vers la droite dans une liste",
+					"swipeActionOptions": {
+						"off": "Désactivée",
+						"addToQueue": "Ajouter à la fin de la file d'attente",
+						"playNext": "Ajouter à la file d'attente",
+						"rate": "Noter",
+						"showInfo": "Obtenir des informations",
+						"addToPlaylist": "Ajouter à la playlist"
 					}
 				},
 				"hapticsSettings": {
