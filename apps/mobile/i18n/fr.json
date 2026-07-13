@@ -634,6 +634,16 @@
 						"off": "Désactivées",
 						"server": "Serveur uniquement",
 						"all": "Serveur + lrclib.net"
+					},
+					"swipeActionLabel": "Swipe action",
+					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionOptions": {
+						"off": "Désactivées",
+						"addToQueue": "Ajouter à la fin de la file d'attente",
+						"playNext": "Ajouter à la file d'attente",
+						"rate": "Noter",
+						"showInfo": "Obtenir des informations",
+						"addToPlaylist": "Ajouter à la playlist"
 					}
 				},
 				"hapticsSettings": {
