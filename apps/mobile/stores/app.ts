@@ -42,6 +42,17 @@ export type LibraryFilter =
 // `useAlbumScreenLayout`.
 export type AlbumScreenLayout = "list" | "grid";
 
+// Action fired when a track row is swiped. "off" disables the gesture. Named
+// per side (swipeLeftAction = the left-anchored, right-drag action) to leave
+// room for a future right-side swipe.
+export type SwipeAction =
+  | "off"
+  | "addToQueue"
+  | "playNext"
+  | "rate"
+  | "showInfo"
+  | "addToPlaylist";
+
 interface AppStore {
   locale: TSupportedLanguages | null;
   setLocale: (locale: TSupportedLanguages) => void;
@@ -127,6 +138,8 @@ interface AppStore {
   setRadioBrowserEnabled: (enabled: boolean) => void;
   hapticFeedbackEnabled: boolean;
   setHapticFeedbackEnabled: (enabled: boolean) => void;
+  swipeLeftAction: SwipeAction;
+  setSwipeLeftAction: (swipeLeftAction: SwipeAction) => void;
   // null = derive the "by country" feed from the device locale's region.
   internetRadioCountryCode: string | null;
   setInternetRadioCountryCode: (countryCode: string | null) => void;
@@ -264,6 +277,10 @@ export const useAppBase = create<AppStore>()(
       hapticFeedbackEnabled: true,
       setHapticFeedbackEnabled: (enabled: boolean) => {
         set({ hapticFeedbackEnabled: enabled });
+      },
+      swipeLeftAction: "addToQueue",
+      setSwipeLeftAction: (swipeLeftAction: SwipeAction) => {
+        set({ swipeLeftAction });
       },
       internetRadioCountryCode: null,
       setInternetRadioCountryCode: (

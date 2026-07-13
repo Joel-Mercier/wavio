@@ -64,7 +64,7 @@ import {
 } from "@/services/equalizer";
 import { isSubsonicNotAuthorized } from "@/services/openSubsonic";
 import useActivity from "@/stores/activity";
-import useApp, { type StreamFormat } from "@/stores/app";
+import useApp, { type StreamFormat, type SwipeAction } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -118,6 +118,9 @@ export default function SettingsDetail() {
   const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleLyricsSourceSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetLyricsSourceModalRef);
+  const bottomSheetSwipeActionModalRef = useRef<BottomSheetModal>(null);
+  const { handleSheetPositionChange: handleSwipeActionSheetPositionChange } =
+    useBottomSheetBackHandler(bottomSheetSwipeActionModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
@@ -175,6 +178,8 @@ export default function SettingsDetail() {
   );
   const lyricsSource = useApp((store) => store.lyricsSource);
   const setLyricsSource = useApp((store) => store.setLyricsSource);
+  const swipeLeftAction = useApp((store) => store.swipeLeftAction);
+  const setSwipeLeftAction = useApp((store) => store.setSwipeLeftAction);
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
   const cellularMaxBitRate = useApp((store) => store.cellularMaxBitRate);
@@ -326,6 +331,15 @@ export default function SettingsDetail() {
     "off",
     "server",
     "all",
+  ];
+
+  const swipeActionOptions: SwipeAction[] = [
+    "off",
+    "addToQueue",
+    "playNext",
+    "rate",
+    "showInfo",
+    "addToPlaylist",
   ];
 
   const formatBitRate = (value: number | null) =>
@@ -844,6 +858,16 @@ export default function SettingsDetail() {
               )}
               onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
             />
+            <SettingsSelectRow
+              label={t("app.settings.displaySettings.swipeActionLabel")}
+              description={t(
+                "app.settings.displaySettings.swipeActionDescription",
+              )}
+              badgeText={t(
+                `app.settings.displaySettings.swipeActionOptions.${swipeLeftAction}`,
+              )}
+              onPress={() => bottomSheetSwipeActionModalRef.current?.present()}
+            />
             <Divider className="bg-primary-400" />
             <SettingsSectionTitle
               title={t("app.settings.hapticsSettings.title")}
@@ -1131,6 +1155,21 @@ export default function SettingsDetail() {
         }))}
         selectedValue={lyricsSource}
         onSelect={setLyricsSource}
+        dismissOnSelect
+      />
+      <OptionsBottomSheetModal
+        modalRef={bottomSheetSwipeActionModalRef}
+        onChange={handleSwipeActionSheetPositionChange}
+        header={t("app.settings.displaySettings.swipeActionLabel")}
+        headerDescription={t(
+          "app.settings.displaySettings.swipeActionDescription",
+        )}
+        options={swipeActionOptions.map((option) => ({
+          value: option,
+          label: t(`app.settings.displaySettings.swipeActionOptions.${option}`),
+        }))}
+        selectedValue={swipeLeftAction}
+        onSelect={setSwipeLeftAction}
         dismissOnSelect
       />
       <OptionsBottomSheetModal

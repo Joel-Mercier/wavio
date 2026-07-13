@@ -11,14 +11,17 @@ import { shuffleWithSeed } from "@/utils/shuffle";
 interface PlaylistCarouselSectionProps {
   enabled: boolean;
   size?: number;
+  shuffleSeed?: number;
 }
 
 export default function PlaylistCarouselSection({
   enabled,
   size = 12,
+  shuffleSeed,
 }: PlaylistCarouselSectionProps) {
   const { t } = useTranslation();
-  const [seed] = useState(() => Date.now());
+  const [mountSeed] = useState(() => Date.now());
+  const seed = shuffleSeed ?? mountSeed;
   const { data, isLoading, error } = usePlaylists({}, { enabled });
   const playlists = useMemo<Playlist[]>(() => {
     const all = data?.playlists?.playlist ?? [];

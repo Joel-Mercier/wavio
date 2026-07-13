@@ -634,6 +634,16 @@
 						"off": "Off",
 						"server": "Server only",
 						"all": "Server + lrclib.net"
+					},
+					"swipeActionLabel": "Swipe action",
+					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionOptions": {
+						"off": "Off",
+						"addToQueue": "Add to queue",
+						"playNext": "Play next",
+						"rate": "Rate",
+						"showInfo": "Get info",
+						"addToPlaylist": "Add to playlist"
 					}
 				},
 				"hapticsSettings": {

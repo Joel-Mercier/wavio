@@ -1,4 +1,5 @@
 import { FlashList, type ViewToken } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
@@ -21,10 +22,12 @@ import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { getIsEffectivelyOnline } from "@/services/network";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
+import { invalidateKeys } from "@/utils/invalidateKeys";
 
 // A section counts as "seen" once half of it is on screen (not a 1px sliver).
 const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 50 };
@@ -39,13 +42,45 @@ const BACKFILL_BATCH = 2;
 const BACKFILL_INTERVAL_MS = 350;
 const BACKFILL_START_DELAY_MS = 800;
 
+// Query-key prefixes backing the home feed sections, refetched on pull-to-refresh
+// so the constant-key random rows (random songs/albums, most played) return new
+// content. Dynamic genre/decade/artist rows change via a fresh sessionSeed.
+const HOME_REFRESH_KEYS = [
+  ["albumList2"],
+  ["randomSongs"],
+  ["mostPlayedSongs"],
+  ["songsByGenre"],
+  ["artists"],
+  ["artist"],
+  ["starred2"],
+  ["playlists"],
+  ["nowPlaying"],
+  ["genres"],
+] as const;
+
 export default function HomeScreen() {
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
   const capabilities = useCapabilities();
   const musicFolderId = useCurrentMusicFolderId();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
-  const [sessionSeed] = useState(() => Date.now());
+  const queryClient = useQueryClient();
+  const [sessionSeed, setSessionSeed] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    // Don't hit an unreachable server / dead network — bail so the spinner
+    // retracts and the RQ cache is left untouched.
+    if (!getIsEffectivelyOnline()) return;
+    setRefreshing(true);
+    // New seed reshuffles the dynamic picks (featured artists, genres, decade).
+    setSessionSeed(Date.now());
+    try {
+      await invalidateKeys(queryClient, HOME_REFRESH_KEYS);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient]);
 
   // Eager seed data — drives the dynamic picks (featured artists / decades).
   const { data: recentlyPlayedData } = useAlbumList2({
@@ -216,9 +251,19 @@ export default function HomeScreen() {
             />
           );
         case "randomArtists":
-          return <ArtistCarouselSection enabled={enabled} />;
+          return (
+            <ArtistCarouselSection
+              enabled={enabled}
+              shuffleSeed={sessionSeed}
+            />
+          );
         case "playlists":
-          return <PlaylistCarouselSection enabled={enabled} />;
+          return (
+            <PlaylistCarouselSection
+              enabled={enabled}
+              shuffleSeed={sessionSeed}
+            />
+          );
         case "starred":
           return <StarredSection enabled={enabled} />;
         case "podcasts":
@@ -227,7 +272,7 @@ export default function HomeScreen() {
           return <InternetRadioSection enabled={enabled} />;
       }
     },
-    [t, lastSeenIndex, backfillIndex],
+    [t, lastSeenIndex, backfillIndex, sessionSeed],
   );
 
   return (
@@ -241,6 +286,8 @@ export default function HomeScreen() {
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={VIEWABILITY_CONFIG}
         drawDistance={500}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: screenBottomPadding,

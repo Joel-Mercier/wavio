@@ -12,15 +12,18 @@ import { shuffleWithSeed } from "@/utils/shuffle";
 interface ArtistCarouselSectionProps {
   enabled: boolean;
   size?: number;
+  shuffleSeed?: number;
 }
 
 export default function ArtistCarouselSection({
   enabled,
   size = 12,
+  shuffleSeed,
 }: ArtistCarouselSectionProps) {
   const { t } = useTranslation();
   const musicFolderId = useCurrentMusicFolderId();
-  const [seed] = useState(() => Date.now());
+  const [mountSeed] = useState(() => Date.now());
+  const seed = shuffleSeed ?? mountSeed;
   const { data, isLoading, error } = useArtists({ musicFolderId }, { enabled });
   const artists = useMemo<ArtistID3[]>(() => {
     const all =

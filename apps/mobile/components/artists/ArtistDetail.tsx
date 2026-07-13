@@ -655,6 +655,7 @@ export default function ArtistDetail() {
                           index={index}
                           onPress={handleTopSongPress}
                           onPlayCallback={handleTrackPressCallback}
+                          disableSwipe
                         />
                       ))}
                     </>
