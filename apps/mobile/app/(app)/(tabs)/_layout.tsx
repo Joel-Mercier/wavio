@@ -166,7 +166,10 @@ export default function TabLayout() {
         <Tabs.Screen
           name="add"
           options={{
-            href: (showAddTab ? "" : null) as never,
+            // Only set `href` to hide the tab; when shown, omit it so the
+            // custom `tabBarButton` (which suppresses the Android ripple)
+            // applies instead of expo-router's href-injected Pressable.
+            ...(showAddTab ? {} : { href: null as never }),
             title: t("app.create.title"),
             tabBarIcon: ({ color }) => <Plus size={24} color={color} />,
           }}
