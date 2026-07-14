@@ -48,7 +48,12 @@
 				"inputPlaceholder": "What do you want to listen to ?",
 				"exploreGenres": "Explore genres",
 				"recentSearches": "Recent searches",
-				"clearRecentSearches": "Clear all"
+				"clearRecentSearches": "Clear all",
+				"sort": {
+					"alphabetical": "Alphabetical",
+					"trackCount": "Tracks",
+					"albumCount": "Albums"
+				}
 			},
 			"library": {
 				"title": "Library",
