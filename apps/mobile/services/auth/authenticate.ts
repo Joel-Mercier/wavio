@@ -11,6 +11,7 @@ import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import {
   computeSubsonicToken,
+  encodePasswordParam,
   generateSalt,
 } from "@/services/openSubsonic/auth";
 import type { ServerType } from "@/stores/servers";
@@ -33,6 +34,7 @@ export type RemoteLoginOptions = {
   } | null;
   subsonicSalt?: string | null;
   subsonicToken?: string | null;
+  useTokenAuth?: boolean;
 };
 
 // Thrown when the server's TLS certificate isn't trusted (self-signed / unknown
@@ -143,29 +145,45 @@ export async function authenticateRemote(
     trimmedPassword,
     subsonicSalt,
   );
-  const rsp = await withSslDetection(trimmedUrl, () =>
-    axios
-      .create({
-        baseURL: trimmedUrl,
-        headers: { "Content-Type": "application/json" },
-      })
-      .get("/rest/ping", {
-        params: {
-          u: trimmedUsername,
-          t: subsonicToken,
-          s: subsonicSalt,
-          v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
-          c: process.env.EXPO_PUBLIC_CLIENT_NAME,
-          f: "json",
-        },
-      }),
+
+  const pingClient = axios.create({
+    baseURL: trimmedUrl,
+    headers: { "Content-Type": "application/json" },
+  });
+  const ping = (authParams: Record<string, string>) =>
+    pingClient.get("/rest/ping", {
+      params: {
+        u: trimmedUsername,
+        ...authParams,
+        v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
+        c: process.env.EXPO_PUBLIC_CLIENT_NAME,
+        f: "json",
+      },
+    });
+
+  // Negotiate the auth mechanism: prefer Subsonic token auth (`t`/`s`), but fall
+  // back to password auth (`p`) for servers that reject token auth — LMS/Lyrion's
+  // Subsonic bridge answers OpenSubsonic error 41/42 ("mechanism not supported").
+  let useTokenAuth = true;
+  let rsp = await withSslDetection(trimmedUrl, () =>
+    ping({ t: subsonicToken, s: subsonicSalt }),
   );
+  let subsonicResponse = rsp.data?.["subsonic-response"];
+  if (
+    subsonicResponse?.status !== "ok" &&
+    (subsonicResponse?.error?.code === 41 ||
+      subsonicResponse?.error?.code === 42)
+  ) {
+    useTokenAuth = false;
+    rsp = await ping({ p: encodePasswordParam(trimmedPassword) });
+    subsonicResponse = rsp.data?.["subsonic-response"];
+  }
+
   // A wrong URL (e.g. missing the server's base path) reaches something that
   // isn't Navidrome — a reverse proxy root, a login page, etc. — which answers
   // 200 with a non-Subsonic body. Guard against a missing envelope / error code
   // so we surface the friendly "verify your server" message instead of a raw
   // "Cannot read property 'error' of undefined" TypeError.
-  const subsonicResponse = rsp.data?.["subsonic-response"];
   if (subsonicResponse?.status !== "ok") {
     const code = subsonicResponse?.error?.code;
     const message =
@@ -200,7 +218,8 @@ export async function authenticateRemote(
   return {
     serverType: type,
     navidrome,
-    subsonicSalt,
-    subsonicToken,
+    subsonicSalt: useTokenAuth ? subsonicSalt : null,
+    subsonicToken: useTokenAuth ? subsonicToken : null,
+    useTokenAuth,
   };
 }

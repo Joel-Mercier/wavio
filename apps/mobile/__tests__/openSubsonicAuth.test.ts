@@ -9,6 +9,7 @@ jest.mock("expo-crypto", () => ({
 
 import {
   computeSubsonicToken,
+  encodePasswordParam,
   generateSalt,
 } from "@/services/openSubsonic/auth";
 
@@ -28,5 +29,14 @@ describe("openSubsonic auth", () => {
     const salt = generateSalt();
     expect(salt.length).toBeGreaterThanOrEqual(6);
     expect(salt).not.toContain("-");
+  });
+
+  it("hex-encodes the password for the enc: param", () => {
+    expect(encodePasswordParam("sesame")).toBe("enc:736573616d65");
+  });
+
+  it("encodes spaces and unicode as UTF-8 hex", () => {
+    // "é" is two UTF-8 bytes (0xc3 0xa9); a space is 0x20.
+    expect(encodePasswordParam("a é")).toBe("enc:6120c3a9");
   });
 });

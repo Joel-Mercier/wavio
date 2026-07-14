@@ -92,6 +92,10 @@ type AuthStore = {
   serverVersion: string | null;
   subsonicSalt: string | null;
   subsonicToken: string | null;
+  // Whether this session authenticates with Subsonic token+salt (`t`/`s`) or
+  // falls back to password auth (`p`) for servers that reject token auth
+  // (OpenSubsonic error 41/42, e.g. LMS/Lyrion's Subsonic bridge).
+  useTokenAuth: boolean;
   login: (
     url: string,
     username: string,
@@ -102,6 +106,7 @@ type AuthStore = {
       jellyfin?: JellyfinSession | null;
       subsonicSalt?: string | null;
       subsonicToken?: string | null;
+      useTokenAuth?: boolean;
     },
   ) => void;
   setNavidromeSession: (session: NavidromeNativeSession | null) => void;
@@ -130,6 +135,7 @@ export const useAuthBase = create<AuthStore>()(
       serverVersion: null,
       subsonicSalt: null,
       subsonicToken: null,
+      useTokenAuth: true,
       login: (
         url: string,
         username: string,
@@ -140,6 +146,7 @@ export const useAuthBase = create<AuthStore>()(
           jellyfin?: JellyfinSession | null;
           subsonicSalt?: string | null;
           subsonicToken?: string | null;
+          useTokenAuth?: boolean;
         },
       ) => {
         const serverType = options?.serverType ?? "navidrome";
@@ -159,6 +166,7 @@ export const useAuthBase = create<AuthStore>()(
           jellyfinUserId: jellyfin?.userId ?? null,
           subsonicSalt: options?.subsonicSalt ?? null,
           subsonicToken: options?.subsonicToken ?? null,
+          useTokenAuth: options?.useTokenAuth ?? true,
         });
       },
       setNavidromeSession: (session: NavidromeNativeSession | null) => {
@@ -213,6 +221,7 @@ export const useAuthBase = create<AuthStore>()(
           serverVersion: null,
           subsonicSalt: null,
           subsonicToken: null,
+          useTokenAuth: true,
         });
         // Wipe every cached server response so reconnecting to a different
         // server (or user) never shows stale content that isn't backed by a
@@ -227,15 +236,17 @@ export const useAuthBase = create<AuthStore>()(
     {
       name: "auth",
       storage: createJSONStorage(() => zustandStorage),
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<AuthStore> | undefined;
-        if (!state || version >= 2) return persistedState as AuthStore;
+        if (!state || version >= 3) return persistedState as AuthStore;
         return {
           ...state,
           serverType: state.serverType ?? "navidrome",
           jellyfinAccessToken: state.jellyfinAccessToken ?? null,
           jellyfinUserId: state.jellyfinUserId ?? null,
+          // Existing sessions authenticated with token+salt, so default to true.
+          useTokenAuth: state.useTokenAuth ?? true,
         } as AuthStore;
       },
     },

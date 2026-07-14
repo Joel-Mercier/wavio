@@ -2,6 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
 import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
+import { encodePasswordParam } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
 import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
@@ -43,13 +44,24 @@ const openSubsonicApiInstance = axios.create({
 
 openSubsonicApiInstance.interceptors.request.use(
   (request) => {
-    const { url, username, subsonicSalt, subsonicToken } =
-      useAuthBase.getState();
+    const {
+      url,
+      username,
+      subsonicSalt,
+      subsonicToken,
+      password,
+      useTokenAuth,
+    } = useAuthBase.getState();
+    // Servers that reject Subsonic token auth (OpenSubsonic error 41/42) are
+    // detected at login and fall back to password auth. Send exactly one
+    // mechanism — supplying both `p` and `t`/`s` triggers error 43.
+    const authParams =
+      useTokenAuth === false
+        ? { u: username, p: encodePasswordParam(password) }
+        : { u: username, t: subsonicToken, s: subsonicSalt };
     request.params = {
       ...(request.params ?? {}),
-      u: username,
-      t: subsonicToken,
-      s: subsonicSalt,
+      ...authParams,
       v: openSubsonicApiVersion,
       c: clientName,
       f: "json",
