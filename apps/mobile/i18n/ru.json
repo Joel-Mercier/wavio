@@ -48,7 +48,12 @@
 				"inputPlaceholder": "Что хочешь послушать?",
 				"exploreGenres": "Обзор жанров",
 				"recentSearches": "Недавние",
-				"clearRecentSearches": "Очистить всё"
+				"clearRecentSearches": "Очистить всё",
+				"sort": {
+					"alphabetical": "По алфавиту",
+					"trackCount": "Tracks",
+					"albumCount": "Альбомы"
+				}
 			},
 			"library": {
 				"title": "Моя медиатека",
