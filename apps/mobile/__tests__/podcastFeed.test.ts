@@ -1,4 +1,8 @@
-import { InvalidFeedError, parseFeed } from "@/services/podcastFeed";
+import {
+  fetchAndParseFeed,
+  InvalidFeedError,
+  parseFeed,
+} from "@/services/podcastFeed";
 
 const FEED = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
@@ -86,5 +90,41 @@ describe("podcastFeed parseFeed", () => {
     expect(() => parseFeed("<html><body>nope</body></html>")).toThrow(
       InvalidFeedError,
     );
+  });
+});
+
+describe("podcastFeed fetchAndParseFeed", () => {
+  const realFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = realFetch;
+  });
+
+  it("rejects an oversized body before reading it (WAVIO-F1)", async () => {
+    const text = jest.fn();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (key: string) =>
+          key === "content-length" ? String(20 * 1024 * 1024) : null,
+      },
+      text,
+    }) as unknown as typeof fetch;
+
+    await expect(fetchAndParseFeed("https://x/feed")).rejects.toBeInstanceOf(
+      InvalidFeedError,
+    );
+    // The whole point: we must not allocate the giant body into a string.
+    expect(text).not.toHaveBeenCalled();
+  });
+
+  it("parses a normally-sized feed", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      text: async () => FEED,
+    }) as unknown as typeof fetch;
+
+    const feed = await fetchAndParseFeed("https://x/feed");
+    expect(feed.title).toBe("My Show");
   });
 });

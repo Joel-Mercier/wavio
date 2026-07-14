@@ -681,6 +681,16 @@ function handlePlaybackStatus(status: AudioStatus) {
           isRadio: current?.isRadio ?? false,
           source: current?.source,
           playbackState,
+          // Codec + transcode context so distinct causes of "Source error" split
+          // apart: a decode failure (bad/unsupported codec) that the transcode
+          // fallback already retried and still failed, vs a non-decode/stream
+          // failure. `suffix`/`contentType` name the format that wouldn't play.
+          suffix: current?.suffix ?? null,
+          contentType: current?.contentType ?? null,
+          isDecodeError: isDecodeError(errorMessage),
+          transcodeRetried: current
+            ? transcodeRetriedIds.has(current.id)
+            : false,
         },
       });
     // Offline-file failures (corrupt/missing download) need no network and are

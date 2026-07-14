@@ -9,6 +9,11 @@ type SavableTrack = {
   suffix?: string;
 };
 
+// Groups device-saved tracks under one media-library album, and — because
+// passing an album to Asset.create overrides the MIME-derived directory — keeps
+// untypeable audio formats out of the DCIM directory MediaStore rejects.
+const DEVICE_ALBUM_NAME = "Wavio";
+
 // Saves a track's audio file into the device's shared media library (system
 // Music/Downloads), reachable from other apps. Remote tracks are fetched over
 // HTTP; local-library tracks resolve to an on-device source instead — a
@@ -39,7 +44,23 @@ export async function saveTrackToDevice(track: SavableTrack): Promise<void> {
   }
 
   try {
-    await MediaLibrary.Asset.create(cacheFile.uri);
+    // Create the asset inside a dedicated album. Passing an album makes
+    // expo-media-library use the album's relative path instead of deriving the
+    // directory from the file's MIME type — which for audio containers Android
+    // can't type (e.g. m4a / opus, where `getType` and `MimeTypeMap` both return
+    // null) otherwise defaults to DCIM and is rejected by MediaStore ("Primary
+    // directory DCIM not allowed" for audio). Once the album exists, every save
+    // (including untypeable formats) lands in its Music directory.
+    const existing = await MediaLibrary.Album.get(DEVICE_ALBUM_NAME);
+    if (existing) {
+      await MediaLibrary.Asset.create(cacheFile.uri, existing);
+    } else {
+      await MediaLibrary.Album.create(
+        DEVICE_ALBUM_NAME,
+        [cacheFile.uri],
+        false,
+      );
+    }
   } finally {
     if (cacheFile.exists) cacheFile.delete();
   }

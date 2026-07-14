@@ -167,6 +167,9 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
 //   query that was paused while offline gets resumed after its only observer
 //   unmounted (e.g. the user left the screen), so React Query has no queryFn to
 //   run. There is no observer left to show anything, so it has no user impact.
+// - DownloadCancelledError: an offline download aborted because the user logged
+//   out / switched servers mid-flight (services/offline/downloadService.ts). A
+//   self-inflicted cancellation the queue resumes on next login, not a bug.
 export function isExpectedNoise(error: unknown): boolean {
   if (isNetworkNoise(error)) return true;
   if (isPluginTimeout(error)) return true;
@@ -176,6 +179,7 @@ export function isExpectedNoise(error: unknown): boolean {
     (error.name === "LocalUnsupportedError" ||
       error.name === "JellyfinUnsupportedError" ||
       error.name === "InvalidFeedError" ||
+      error.name === "DownloadCancelledError" ||
       error.message.startsWith("Missing queryFn"))
   );
 }
