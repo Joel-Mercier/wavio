@@ -1057,7 +1057,18 @@ export function playTracks(
   const previousId = lastTrackId;
   useQueue.getState().playNow(tracks, index, options?.source ?? null);
   const current = useQueue.getState().getCurrent();
-  if (current && current.id === previousId) {
+  if (!current) return;
+  // Starting a new track normally auto-plays via the queue subscription, which
+  // fires on the id change. Two cases need an explicit push instead: the id
+  // didn't change (subscription never fired), or the subscription took a silent
+  // load path — during hydration or a server-queue restore (suppressAutoplayOnce
+  // / !hasHydrated) it loads the track paused and leaves playbackInitialized
+  // false. An explicit user play must start playback regardless. Jukebox owns
+  // playback server-side, so never force the local engine there.
+  if (
+    current.id === previousId ||
+    (!playbackInitialized && !useJukebox.getState().active)
+  ) {
     loadAndPlay(current);
   }
 }
