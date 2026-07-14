@@ -73,20 +73,34 @@ export type ReportContext = {
 //   and the reachability probe in services/network.ts. Real *application*
 //   failures come back with an HTTP status (4xx/5xx) or a domain error envelope,
 //   and those are reported.
-// - HTTP 530: a non-standard, Cloudflare-emitted status meaning the edge is up
-//   but couldn't reach the origin (Argo/Tunnel down, origin DNS error). For the
-//   self-hosted servers behind Cloudflare this app talks to, it's the same class
-//   as a connection error — the box is unreachable, not buggy — but it arrives
-//   *with* a response so the `!error.response` check above misses it. Suppress it
-//   directly instead of waiting for the reachability probe to flip, which would
-//   otherwise let every concurrent request to a downed origin report its own 530.
+// - a gateway / upstream status: the edge (Cloudflare, nginx, a reverse proxy)
+//   is up but couldn't reach or get a healthy answer from the origin — 502 Bad
+//   Gateway, 503 Service Unavailable, 504 Gateway Timeout, Cloudflare's 520–527
+//   origin-error range, and 530 (Argo/Tunnel down). For the self-hosted servers
+//   behind a proxy this app talks to, these are the same class as a connection
+//   error — the box is unreachable, not buggy — but they arrive *with* a response
+//   so the `!error.response` check above misses them. Suppress them directly
+//   instead of waiting for the reachability probe to flip, which would otherwise
+//   let every concurrent request to a downed origin report its own gateway error.
+//   A plain 500 is intentionally left reportable: that's the origin itself
+//   erroring (which can be a real bug), not an unreachable gateway.
 //
 // Scoped to the error object itself (no device-online check) so `logError` can
 // reuse it without dropping every log while offline.
+const GATEWAY_STATUSES: ReadonlySet<number> = new Set([
+  502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530,
+]);
+
 export function isNetworkNoise(error: unknown): boolean {
   if (axios.isCancel(error)) return true;
   if (axios.isAxiosError(error) && !error.response) return true;
-  if (axios.isAxiosError(error) && error.response?.status === 530) return true;
+  if (
+    axios.isAxiosError(error) &&
+    error.response != null &&
+    GATEWAY_STATUSES.has(error.response.status)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -108,6 +122,34 @@ function isPluginTimeout(error: unknown): boolean {
   );
 }
 
+// A Subsonic envelope error that says nothing about an app bug:
+// - code 0 with a "Method not supported: <method>" message — the server doesn't
+//   implement (or has disabled) that endpoint. It's the Subsonic-envelope
+//   equivalent of an HTTP 501 (already suppressed): a server-capability signal.
+// - code -1 "Invalid or empty response from server" — a reverse proxy answered
+//   with a non-JSON / empty body (an HTML error page) where the Subsonic JSON was
+//   expected. Environmental, same class as an unreachable origin.
+// Matched narrowly on the plain {code,message} shape the Subsonic layer throws.
+function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { code, message } = error as { code?: number; message?: string };
+  if (
+    code === 0 &&
+    typeof message === "string" &&
+    message.includes("Method not supported")
+  ) {
+    return true;
+  }
+  if (
+    code === -1 &&
+    typeof message === "string" &&
+    message.includes("Invalid or empty response")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 // Failures that are expected from the error itself, independent of any request
 // context: network noise plus typed control-flow / user-input errors. Shared by
 // `reportError`'s classifier and `logError` so neither path reports them —
@@ -121,14 +163,20 @@ function isPluginTimeout(error: unknown): boolean {
 // - InvalidFeedError: a user-entered feed URL that doesn't resolve to a
 //   parseable RSS feed (e.g. an HTML page pasted into "add podcast"). Surfaced to
 //   the user via an error toast — a correctable input mistake, not a bug.
+// - "Missing queryFn": a React Query lifecycle artifact, not a call site bug — a
+//   query that was paused while offline gets resumed after its only observer
+//   unmounted (e.g. the user left the screen), so React Query has no queryFn to
+//   run. There is no observer left to show anything, so it has no user impact.
 export function isExpectedNoise(error: unknown): boolean {
   if (isNetworkNoise(error)) return true;
   if (isPluginTimeout(error)) return true;
+  if (isUnsupportedOrEmptySubsonic(error)) return true;
   return (
     error instanceof Error &&
     (error.name === "LocalUnsupportedError" ||
       error.name === "JellyfinUnsupportedError" ||
-      error.name === "InvalidFeedError")
+      error.name === "InvalidFeedError" ||
+      error.message.startsWith("Missing queryFn"))
   );
 }
 
