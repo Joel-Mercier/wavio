@@ -29,6 +29,14 @@ export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
 
+export type GenresSort =
+  | "alphabeticalAsc"
+  | "alphabeticalDesc"
+  | "songCountAsc"
+  | "songCountDesc"
+  | "albumCountAsc"
+  | "albumCountDesc";
+
 export type LibraryFilter =
   | "artists"
   | "albums"
@@ -91,6 +99,8 @@ interface AppStore {
   ) => void;
   libraryFilter: LibraryFilter[];
   setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
+  genresSort: GenresSort;
+  setGenresSort: (genresSort: GenresSort) => void;
   // Layout (list/grid) chosen on each album-list screen, keyed by a stable
   // screen id. One value per screen so choices don't bleed across screens.
   albumScreenLayouts: Record<string, AlbumScreenLayout>;
@@ -210,6 +220,10 @@ export const useAppBase = create<AppStore>()(
       libraryFilter: [],
       setLibraryFilter: (libraryFilter: LibraryFilter[]) => {
         set({ libraryFilter });
+      },
+      genresSort: "alphabeticalAsc",
+      setGenresSort: (genresSort: GenresSort) => {
+        set({ genresSort });
       },
       albumScreenLayouts: {},
       setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => {
