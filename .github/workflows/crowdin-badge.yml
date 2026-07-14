@@ -1,0 +1,37 @@
+name: Refresh Crowdin status image
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crowdin-badge
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download latest translation status chart
+        run: |
+          curl -fsSL \
+            "https://badges.awesome-crowdin.com/translation-17766125-909133.png" \
+            -o crowdin-status.png
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- crowdin-status.png; then
+            echo "Chart unchanged, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add crowdin-status.png
+          git commit -m "chore: refresh Crowdin status image"
+          git push

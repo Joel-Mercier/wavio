@@ -44,11 +44,22 @@ jellyfinApiInstance.interceptors.request.use(
 jellyfinApiInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    const status = axios.isAxiosError(error)
+      ? error.response?.status
+      : undefined;
+    // A child browse (album/artist/directory contents) can carry this flag: a
+    // 400/404 there means a stale/invalid item id, which the caller resolves to
+    // an empty result — a data state, not a bug, so don't report it.
+    const notFoundIsExpected = (
+      error?.config as { notFoundIsExpected?: boolean } | undefined
+    )?.notFoundIsExpected;
+    if (status === 401) {
       // Token rejected — drop the Jellyfin session so the user falls back
       // to the login screen. Do not log out from offline-mode-induced errors.
       useAuthBase.getState().setJellyfinSession(null);
       useAuthBase.getState().logout();
+    } else if (notFoundIsExpected && (status === 400 || status === 404)) {
+      // Expected stale-id not-found on a child browse; handled by the caller.
     } else {
       // The classifier drops offline / unreachable / cancelled noise; a genuine
       // 4xx/5xx (other than the 401 handled above) is a real failing endpoint.

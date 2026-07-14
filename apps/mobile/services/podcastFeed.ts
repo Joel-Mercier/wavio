@@ -44,6 +44,11 @@ export class InvalidFeedError extends Error {
   }
 }
 
+// Upper bound on a feed body we'll read into memory. Real RSS feeds are well
+// under this; a larger Content-Length means a malformed / non-feed response that
+// would OOM the app if buffered as a string.
+const MAX_FEED_BYTES = 10 * 1024 * 1024;
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
@@ -61,6 +66,13 @@ export async function fetchAndParseFeed(url: string): Promise<ParsedFeed> {
   });
   if (!res.ok) {
     throw new Error(`Podcast feed request failed (${res.status})`);
+  }
+  // Reject an oversized body before reading it into a string — a malformed /
+  // giant response would otherwise OOM the app (`res.text()` allocates the whole
+  // body). A real RSS feed is comfortably under this cap.
+  const contentLength = Number(res.headers?.get?.("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_FEED_BYTES) {
+    throw new InvalidFeedError();
   }
   const xml = await res.text();
   return parseFeed(xml);

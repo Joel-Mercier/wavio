@@ -194,9 +194,9 @@ export default function LoginScreen() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const trimmedUrl = value.url.trim();
-        const trimmedUsername = value.username.trim();
-        const trimmedPassword = value.password.trim();
+        const trimmedUrl = (value.url ?? "").trim();
+        const trimmedUsername = (value.username ?? "").trim();
+        const trimmedPassword = (value.password ?? "").trim();
         const serverType: ServerType = value.type;
 
         if (serverType === "local") {
@@ -296,7 +296,7 @@ export default function LoginScreen() {
             : undefined,
           extra: {
             serverType: value.type,
-            url: scrubUrl(value.url.trim()),
+            url: scrubUrl((value.url ?? "").trim()),
             hasResponse: axios.isAxiosError(error)
               ? !!error.response
               : undefined,

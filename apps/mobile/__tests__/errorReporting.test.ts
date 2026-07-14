@@ -23,6 +23,7 @@ jest.mock("@/services/network", () => ({
 
 import axios from "axios";
 import { reportError } from "@/services/errorReporting";
+import { logError } from "@/utils/log";
 
 const realDev = (global as { __DEV__?: boolean }).__DEV__;
 
@@ -90,6 +91,66 @@ describe("reportError classifier", () => {
       backend: "subsonic",
       endpoint: "/rest/getAlbumList2",
     });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    502, 503, 504, 521, 524,
+  ])("suppresses a gateway/upstream %s (edge up, origin unreachable)", (status) => {
+    const error = new axios.AxiosError(`Request failed with status ${status}`);
+    error.response = { status } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "/rest/getAlbumList2",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports a plain 500 (origin itself erroring, not a gateway)", () => {
+    const error = new axios.AxiosError("Request failed with status 500");
+    error.response = { status: 500 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "/rest/getAlbumList2",
+    });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("suppresses a React Query 'Missing queryFn' lifecycle artifact", () => {
+    reportError(
+      new Error(
+        `Missing queryFn: '["albumList2",{"size":12,"type":"recent"}]'`,
+      ),
+      { area: "api", backend: "subsonic", endpoint: "albumList2" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a Subsonic code-0 'Method not supported' (server doesn't implement it)", () => {
+    reportError(
+      { code: 0, message: "Method not supported: getNowPlaying" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getNowPlaying",
+        status: 0,
+      },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a Subsonic code -1 'Invalid or empty response' (proxy returned non-JSON)", () => {
+    reportError(
+      { code: -1, message: "Invalid or empty response from server" },
+      {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getAlbumList2",
+        status: -1,
+      },
+    );
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
@@ -235,6 +296,39 @@ describe("reportError classifier", () => {
       backend: "subsonic",
       endpoint: "startScan",
     });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+});
+
+describe("logError", () => {
+  it("reports through reportError with an area:ui tag", () => {
+    logError("Failed to load screen", new Error("boom"));
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+    expect(mockSetTag).toHaveBeenCalledWith("area", "ui");
+    const reported = mockCapture.mock.calls[0][0] as Error;
+    expect(reported.message).toBe("boom");
+  });
+
+  it("coerces a bare non-Error object into a real Error (no '[object Object]')", () => {
+    logError({ some: "state", nested: { code: 1 } });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+    const reported = mockCapture.mock.calls[0][0] as Error;
+    expect(reported).toBeInstanceOf(Error);
+    expect(reported.message).not.toContain("[object Object]");
+    expect(reported.message).toContain("some");
+  });
+
+  it("suppresses a gateway 5xx passed to logError", () => {
+    const error = new axios.AxiosError("Request failed with status 503");
+    error.response = { status: 503 } as never;
+    logError("mutation failed:", error);
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a 501 axios error passed to logError (the tagless-dup case)", () => {
+    const error = new axios.AxiosError("Not Implemented");
+    error.response = { status: 501 } as never;
+    logError(error);
     expect(mockCapture).not.toHaveBeenCalled();
   });
 });

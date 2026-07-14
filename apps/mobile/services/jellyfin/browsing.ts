@@ -1,3 +1,4 @@
+import axios, { type AxiosRequestConfig } from "axios";
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
   mapBaseItemToAlbum,
@@ -42,16 +43,35 @@ function userId(): string {
 
 async function fetchItems(
   params: Record<string, string | number | boolean | undefined>,
+  // Set for an id-scoped child browse (album/artist/directory contents): a
+  // stale/invalid parent id then resolves to an empty result instead of an
+  // error (Jellyfin answers 400 or 404), mirroring the Subsonic code-70
+  // folderScopedRequest handling. Don't set it for top-level list/search calls,
+  // where a 400 is a real request bug.
+  opts: { notFoundIsExpected?: boolean } = {},
 ): Promise<JellyfinItemsResult> {
-  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
-    params: {
-      UserId: userId(),
-      Recursive: true,
-      Fields: COMMON_FIELDS,
-      ...params,
-    },
-  });
-  return rsp.data;
+  try {
+    const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+      params: {
+        UserId: userId(),
+        Recursive: true,
+        Fields: COMMON_FIELDS,
+        ...params,
+      },
+      // Read by the response interceptor to skip reporting the expected 400/404.
+      notFoundIsExpected: opts.notFoundIsExpected,
+    } as AxiosRequestConfig & { notFoundIsExpected?: boolean });
+    return rsp.data;
+  } catch (error) {
+    if (
+      opts.notFoundIsExpected &&
+      axios.isAxiosError(error) &&
+      (error.response?.status === 400 || error.response?.status === 404)
+    ) {
+      return { Items: [] };
+    }
+    throw error;
+  }
 }
 
 export const getMusicFolders = async () => {
@@ -70,11 +90,14 @@ export const getMusicFolders = async () => {
 };
 
 export const getAlbum = async (id: string) => {
-  const tracks = await fetchItems({
-    ParentId: id,
-    IncludeItemTypes: "Audio",
-    SortBy: "ParentIndexNumber,IndexNumber,SortName",
-  });
+  const tracks = await fetchItems(
+    {
+      ParentId: id,
+      IncludeItemTypes: "Audio",
+      SortBy: "ParentIndexNumber,IndexNumber,SortName",
+    },
+    { notFoundIsExpected: true },
+  );
   const albumRsp = await jellyfinApiInstance.get<BaseItemDto>(
     `/Users/${userId()}/Items/${id}`,
     { params: { Fields: COMMON_FIELDS } },
@@ -98,12 +121,15 @@ export const getAlbumInfo = async (id: string) => {
 export const getAlbumInfo2 = getAlbumInfo;
 
 export const getArtist = async (id: string) => {
-  const albums = await fetchItems({
-    ArtistIds: id,
-    IncludeItemTypes: "MusicAlbum",
-    SortBy: "PremiereDate,ProductionYear,SortName",
-    SortOrder: "Descending",
-  });
+  const albums = await fetchItems(
+    {
+      ArtistIds: id,
+      IncludeItemTypes: "MusicAlbum",
+      SortBy: "PremiereDate,ProductionYear,SortName",
+      SortOrder: "Descending",
+    },
+    { notFoundIsExpected: true },
+  );
   const artistRsp = await jellyfinApiInstance.get<BaseItemDto>(
     `/Users/${userId()}/Items/${id}`,
     { params: { Fields: COMMON_FIELDS } },
@@ -119,13 +145,16 @@ export const getArtistAppearances = async (
   id: string,
   _opts: { name?: string; musicFolderId?: string } = {},
 ) => {
-  const rsp = await fetchItems({
-    IncludeItemTypes: "MusicAlbum",
-    ContributingArtistIds: id,
-    ExcludeItemIds: id,
-    SortBy: "PremiereDate,ProductionYear,SortName",
-    SortOrder: "Descending",
-  });
+  const rsp = await fetchItems(
+    {
+      IncludeItemTypes: "MusicAlbum",
+      ContributingArtistIds: id,
+      ExcludeItemIds: id,
+      SortBy: "PremiereDate,ProductionYear,SortName",
+      SortOrder: "Descending",
+    },
+    { notFoundIsExpected: true },
+  );
   const album: AlbumID3[] = (rsp.Items ?? []).map(mapBaseItemToAlbum);
   return fakeEnvelope({ artistAppearances: { album } });
 };
@@ -227,12 +256,15 @@ export const getMusicDirectory = async (id: string) => {
   const items =
     itemRsp.data?.Type === "MusicArtist"
       ? (
-          await fetchItems({
-            ArtistIds: id,
-            IncludeItemTypes: "MusicAlbum",
-            SortBy: "PremiereDate,ProductionYear,SortName",
-            SortOrder: "Descending",
-          })
+          await fetchItems(
+            {
+              ArtistIds: id,
+              IncludeItemTypes: "MusicAlbum",
+              SortBy: "PremiereDate,ProductionYear,SortName",
+              SortOrder: "Descending",
+            },
+            { notFoundIsExpected: true },
+          )
         ).Items
       : (
           await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {

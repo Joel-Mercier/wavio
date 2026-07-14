@@ -15,6 +15,17 @@ const MAX_CONCURRENT_DOWNLOADS = 3;
 
 type Resolvers = { resolve: () => void; reject: (err: unknown) => void };
 
+// Thrown when a download can't proceed because there's no active server — the
+// user logged out or switched servers mid-download. A self-inflicted
+// cancellation, not a bug: the item stays queued to resume on the next login and
+// is kept out of Sentry (errorReporting.isExpectedNoise matches this by name).
+class DownloadCancelledError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DownloadCancelledError";
+  }
+}
+
 export class OfflineDownloadService {
   private static instance: OfflineDownloadService;
   private activeIds: Set<string> = new Set();
@@ -132,6 +143,12 @@ export class OfflineDownloadService {
     const offlineStore = useOffline.getState();
     const { downloadsWifiOnly } = useAppBase.getState();
 
+    // No active server (logged out / mid server-switch): don't drain the queue.
+    // Leave items pending so they resume after the next login, and avoid a
+    // busy-retry loop that would otherwise throw per item against no server.
+    const { url: authUrl, username } = useAuthBase.getState();
+    if (!authUrl || !username) return;
+
     if (downloadsWifiOnly && getConnectionType() !== "wifi") {
       for (const track of offlineStore.downloadQueue) {
         if (this.activeIds.has(track.id)) continue;
@@ -167,7 +184,15 @@ export class OfflineDownloadService {
       offlineStore.removeFromDownloadQueue(track.id);
       resolvers?.resolve();
     } catch (error) {
-      if (generation === this.generation) {
+      if (error instanceof DownloadCancelledError) {
+        // Logged out / switched servers mid-download. Keep the item queued (it
+        // resumes on next login), reflect that it's waiting, and don't report it.
+        offlineStore.setDownloadProgress(track.id, {
+          trackId: track.id,
+          status: "pending",
+          progress: 0,
+        });
+      } else if (generation === this.generation) {
         offlineStore.removeFromDownloadQueue(track.id);
         offlineStore.setDownloadProgress(track.id, {
           trackId: track.id,
@@ -202,7 +227,7 @@ export class OfflineDownloadService {
 
     const { url: authUrl, username } = useAuthBase.getState();
     if (!authUrl || !username) {
-      throw new Error("Cannot download without an active server");
+      throw new DownloadCancelledError("No active server");
     }
     const scope = getAuthScope(authUrl, username);
     // Files live under per-scope subdirectories so the same track id on two

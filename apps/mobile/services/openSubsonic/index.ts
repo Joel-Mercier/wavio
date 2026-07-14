@@ -166,24 +166,32 @@ export function subsonicEnvelope<T>(
   rsp: AxiosResponse<OpenSubsonicResponse<T>>,
   opts: SubsonicRequestOptions = {},
 ): OpenSubsonicResponse<T>["subsonic-response"] {
-  if (rsp.data["subsonic-response"]?.status !== "ok") {
-    const error = rsp.data["subsonic-response"].error;
+  const envelope = rsp.data?.["subsonic-response"];
+  if (envelope?.status !== "ok") {
+    // A wrong URL / reverse-proxy root can answer HTTP 200 with a non-Subsonic
+    // body, so there's no envelope to read. Synthesize a stable error instead of
+    // crashing on `.error` of undefined; code -1 is classified as expected
+    // environmental noise, matching the SubsonicError(-1) some servers send.
+    const error: OpenSubsonicErrorResponse = envelope?.error ?? {
+      code: -1,
+      message: "Invalid or empty response from server",
+    };
     // Application-level Subsonic failure (HTTP 200, status "failed"). Code 40 is
     // wrong-credentials, already handled by the response interceptor's logout —
     // don't double-report it. Everything else is a real failing endpoint (the
     // reportError classifier still drops expected codes such as 50 from Sentry).
-    if (error?.code !== 40) {
+    if (error.code !== 40) {
       reportError(error, {
         area: "api",
         backend: "subsonic",
         endpoint: rsp.config?.url,
-        status: error?.code,
+        status: error.code,
         notFoundIsExpected: opts.notFoundIsExpected,
       });
     }
     throw error;
   }
-  return rsp.data["subsonic-response"];
+  return envelope;
 }
 
 // Shared request wrapper for the section files: performs the GET and validates
