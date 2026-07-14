@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Genre } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
+import { cn } from "@/utils/tailwind";
 
 interface GenreListItemProps {
   genre: Genre;
@@ -20,10 +21,11 @@ export default function GenreListItem({ genre }: GenreListItemProps) {
     genre.albumCount != null;
   return (
     <FadeOutScaleDown testID="genre-item" href={`/genres/${genre.value}`}>
-      <VStack className="bg-primary-600 p-4 w-full rounded-md">
+      <VStack className="bg-primary-600 p-4 w-full h-full rounded-md">
         <Heading
           size="md"
-          className={showCounts ? "text-white mb-8" : "text-white"}
+          numberOfLines={2}
+          className={cn("text-white", showCounts && "h-14 mb-2")}
         >
           {genre.value}
         </Heading>
