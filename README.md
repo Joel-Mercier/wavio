@@ -88,7 +88,7 @@ If your language isn't listed, please open an issue to request it.
 
 Currently supported languages: English, French, German, Italian, Chinese, Russian.
 
-![Translation status](https://badges.awesome-crowdin.com/translation-17766125-909133.png)
+![Translation status](https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/crowdin-status.png)
 
 ## Development
 
