@@ -48,7 +48,12 @@
 				"inputPlaceholder": "Cosa vuoi ascoltare?",
 				"exploreGenres": "Esplora i generi",
 				"recentSearches": "Ricerche recenti",
-				"clearRecentSearches": "Cancella tutto"
+				"clearRecentSearches": "Cancella tutto",
+				"sort": {
+					"alphabetical": "Ordine alfabetico",
+					"trackCount": "Tracce",
+					"albumCount": "Album"
+				}
 			},
 			"library": {
 				"title": "Libreria",
@@ -635,8 +640,8 @@
 						"server": "Solo server",
 						"all": "Server + lrclib.net"
 					},
-					"swipeActionLabel": "Swipe action",
-					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"swipeActionLabel": "Azione Swipe",
+					"swipeActionDescription": "Azione che viene eseguita quando si effettua uno swipe (trascinamento) di un brano verso destra in un elenco",
 					"swipeActionOptions": {
 						"off": "Spento",
 						"addToQueue": "Aggiungi alla coda",

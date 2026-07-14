@@ -48,7 +48,12 @@
 				"inputPlaceholder": "想听什么？",
 				"exploreGenres": "按风格浏览",
 				"recentSearches": "搜索历史",
-				"clearRecentSearches": "清除"
+				"clearRecentSearches": "清除",
+				"sort": {
+					"alphabetical": "按字母排序",
+					"trackCount": "Tracks",
+					"albumCount": "专辑"
+				}
 			},
 			"library": {
 				"title": "音乐库",
