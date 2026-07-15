@@ -1,4 +1,6 @@
 import {
+  addServerFormSchema,
+  editServerFormSchema,
   serverFormSchema,
   serverUserSchema,
   useServersBase,
@@ -284,6 +286,81 @@ describe("servers store actions", () => {
   });
 });
 
+describe("fallbackUrl", () => {
+  it("stores a trimmed fallbackUrl on create", () => {
+    const s = useServersBase.getState().addServer({
+      name: "Home",
+      url: "http://192.168.1.10:4533",
+      type: "navidrome",
+      fallbackUrl: "  https://music.example.com  ",
+    });
+    expect(s.fallbackUrl).toBe("https://music.example.com");
+  });
+
+  it("omits a blank or bare-protocol fallbackUrl", () => {
+    const a = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      fallbackUrl: "",
+    });
+    expect(a.fallbackUrl).toBeUndefined();
+    const b = useServersBase.getState().addServer({
+      name: "B",
+      url: "https://b.example.com",
+      fallbackUrl: "https://",
+    });
+    expect(b.fallbackUrl).toBeUndefined();
+  });
+
+  it("updates and clears fallbackUrl via editServer", () => {
+    const s = useServersBase.getState().addServer({
+      name: "Home",
+      url: "http://192.168.1.10:4533",
+      fallbackUrl: "https://music.example.com",
+    });
+    useServersBase
+      .getState()
+      .editServer(s.id, { fallbackUrl: "https://other.example.com" });
+    expect(useServersBase.getState().getServerById(s.id)?.fallbackUrl).toBe(
+      "https://other.example.com",
+    );
+    // Clearing the field must actually remove it, not leave the old value.
+    useServersBase.getState().editServer(s.id, { fallbackUrl: "https://" });
+    expect(
+      useServersBase.getState().getServerById(s.id)?.fallbackUrl,
+    ).toBeUndefined();
+  });
+
+  it("leaves fallbackUrl alone when the patch omits it", () => {
+    const s = useServersBase.getState().addServer({
+      name: "Home",
+      url: "http://192.168.1.10:4533",
+      fallbackUrl: "https://music.example.com",
+    });
+    useServersBase.getState().editServer(s.id, { name: "Renamed" });
+    expect(useServersBase.getState().getServerById(s.id)?.fallbackUrl).toBe(
+      "https://music.example.com",
+    );
+  });
+
+  it("adds a fallbackUrl to an existing row matched by url", () => {
+    // addServer dedupes on url, so logging in again with a fallback filled in
+    // must update the saved server rather than silently drop it.
+    const first = useServersBase
+      .getState()
+      .addServer({ name: "Home", url: "http://192.168.1.10:4533" });
+    const second = useServersBase.getState().addServer({
+      name: "Home",
+      url: "http://192.168.1.10:4533",
+      fallbackUrl: "https://music.example.com",
+    });
+    expect(second.id).toBe(first.id);
+    expect(useServersBase.getState().getServerById(first.id)?.fallbackUrl).toBe(
+      "https://music.example.com",
+    );
+  });
+});
+
 describe("server schemas", () => {
   it("serverFormSchema accepts valid input and rejects bad url", () => {
     expect(
@@ -306,6 +383,68 @@ describe("server schemas", () => {
         url: "https://a.example.com",
         type: "navidrome",
       }).success,
+    ).toBe(false);
+  });
+
+  const addForm = (over: Record<string, unknown> = {}) => ({
+    name: "A",
+    url: "https://a.example.com",
+    type: "navidrome",
+    paths: [],
+    mtlsAlias: "",
+    fallbackUrl: "",
+    ...over,
+  });
+
+  it("accepts a blank fallbackUrl", () => {
+    expect(addServerFormSchema.safeParse(addForm()).success).toBe(true);
+  });
+
+  it("treats a bare protocol as blank rather than an invalid url", () => {
+    // UrlInputField always re-prepends the protocol, so a field the user typed
+    // into and then cleared reads "https://" — non-empty, and not a valid URL.
+    // Rejecting it would block submit on an optional field with no explanation.
+    expect(
+      addServerFormSchema.safeParse(addForm({ fallbackUrl: "https://" }))
+        .success,
+    ).toBe(true);
+    expect(
+      addServerFormSchema.safeParse(addForm({ fallbackUrl: "http://" }))
+        .success,
+    ).toBe(true);
+  });
+
+  it("accepts a valid fallbackUrl", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ fallbackUrl: "https://music.example.com" }),
+      ).success,
+    ).toBe(true);
+  });
+
+  it("rejects a malformed fallbackUrl at its own field path", () => {
+    const result = addServerFormSchema.safeParse(
+      addForm({ fallbackUrl: "https://not a url" }),
+    );
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["fallbackUrl"]);
+  });
+
+  it("ignores fallbackUrl for local libraries", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ type: "local", name: "", url: "", fallbackUrl: "garbage" }),
+      ).success,
+    ).toBe(true);
+  });
+
+  it("editServerFormSchema validates fallbackUrl the same way", () => {
+    expect(
+      editServerFormSchema.safeParse(addForm({ fallbackUrl: "https://" }))
+        .success,
+    ).toBe(true);
+    expect(
+      editServerFormSchema.safeParse(addForm({ fallbackUrl: "nope" })).success,
     ).toBe(false);
   });
 

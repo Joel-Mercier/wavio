@@ -3,19 +3,27 @@ import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import Share from "react-native-share";
 import * as z from "zod";
-import { getAuthScope, storage } from "@/config/storage";
+import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
+import { storage } from "@/config/storage";
 import {
   BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
   GLOBAL_KEYS,
   SCOPED_STORE_NAMES,
 } from "@/services/backupStoreKeys";
+import {
+  buildScopeRemap,
+  remapOfflineTrackPaths,
+} from "@/services/storageScopeMigration";
 import { useAppBase } from "@/stores/app";
 import useMusicFolders from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { useServersBase } from "@/stores/servers";
 
+// v1 files carry URL-derived scopes; v2 carries id-derived ones (see
+// config/authScope.ts). Both are readable — restoreBackup remaps a v1 file's
+// scopes on the way in.
 const backupSchema = z.object({
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   appVersion: z.string(),
   exportedAt: z.string(),
   global: z.record(z.string(), z.string()),
@@ -26,6 +34,8 @@ const backupSchema = z.object({
     }),
   ),
 });
+
+const BACKUP_VERSION = 2;
 
 export type BackupFile = z.infer<typeof backupSchema>;
 
@@ -41,7 +51,11 @@ function collectScopes(): string[] {
   for (const user of users) {
     const server = serverById.get(user.serverId);
     if (!server) continue;
-    scopes.add(getAuthScope(server.url, user.username));
+    scopes.add(
+      server.type === "local"
+        ? LOCAL_AUTH_SCOPE
+        : getAuthScope(server.id, user.username),
+    );
   }
   // Also recover scopes directly from storage so data for users missing from
   // the `users` list (legacy state, removed users) is still backed up. A scoped
@@ -82,7 +96,7 @@ export function buildBackup(): BackupFile {
   });
 
   return {
-    version: 1,
+    version: BACKUP_VERSION,
     appVersion: Application.nativeApplicationVersion ?? "unknown",
     exportedAt: new Date().toISOString(),
     global,
@@ -136,10 +150,39 @@ export type RestoreOutcome = {
   username: string | null;
 };
 
+/**
+ * Bring a v1 file's URL-derived scopes onto the id-derived scheme. Without this
+ * a pre-migration backup would restore into keys nothing reads, silently losing
+ * every scoped store it carried.
+ *
+ * The mapping is rebuilt from the backup's own `servers` blob rather than live
+ * state, so it stays correct even when restoring onto a different device.
+ */
+function migrateBackupScopes(backup: BackupFile): BackupFile["scoped"] {
+  if (backup.version >= 2) return backup.scoped;
+  const remap = buildScopeRemap(
+    backup.global.servers,
+    backup.scoped.map((s) => s.scope),
+  );
+  if (remap.size === 0) return backup.scoped;
+  return backup.scoped.map(({ scope, values }) => {
+    const to = remap.get(scope);
+    if (!to) return { scope, values };
+    // The download directory has already been moved by the storage migration, so
+    // the paths this file carries point at the old location.
+    const offline = remapOfflineTrackPaths(values.offlineStore, scope, to);
+    return {
+      scope: to,
+      values: offline ? { ...values, offlineStore: offline } : values,
+    };
+  });
+}
+
 export async function restoreBackup(
   backup: BackupFile,
 ): Promise<RestoreOutcome> {
-  const scopes = backup.scoped.map((s) => s.scope);
+  const scoped = migrateBackupScopes(backup);
+  const scopes = scoped.map((s) => s.scope);
   const allKeys = storage.getAllKeys();
   const keysToClear = new Set<string>(GLOBAL_KEYS);
   for (const key of allKeys) {
@@ -154,7 +197,7 @@ export async function restoreBackup(
   for (const [key, value] of Object.entries(backup.global)) {
     storage.set(key, value);
   }
-  for (const { scope, values } of backup.scoped) {
+  for (const { scope, values } of scoped) {
     for (const [key, value] of Object.entries(values)) {
       if (isBackupExcluded(key)) continue;
       storage.set(`${scope}:${key}`, value);
@@ -177,7 +220,12 @@ export async function restoreBackup(
 
   const target = readRestoredAuthTarget(backup);
   if (!target) return { serverId: null, username: null };
-  const server = useServersBase.getState().getServerByUrl(target.url);
+  const servers = useServersBase.getState();
+  // A v2 backup's auth blob names the server directly; a v1's predates
+  // `serverId` and can only be resolved by the URL it was signed in with.
+  const server = target.serverId
+    ? servers.getServerById(target.serverId)
+    : servers.getServerByUrl(target.url);
   return { serverId: server?.id ?? null, username: target.username || null };
 }
 
@@ -186,16 +234,25 @@ export async function restoreBackup(
 // `{ state, version }` wrapper.
 function readRestoredAuthTarget(
   backup: BackupFile,
-): { url: string; username: string } | null {
+): { serverId?: string; url: string; username: string } | null {
   const raw = backup.global.auth;
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as {
-      state?: { url?: string; username?: string; isAuthenticated?: boolean };
+      state?: {
+        serverId?: string;
+        url?: string;
+        username?: string;
+        isAuthenticated?: boolean;
+      };
     };
     const state = parsed?.state;
     if (!state?.isAuthenticated || !state.url) return null;
-    return { url: state.url, username: state.username ?? "" };
+    return {
+      serverId: state.serverId || undefined,
+      url: state.url,
+      username: state.username ?? "",
+    };
   } catch {
     return null;
   }

@@ -3,9 +3,8 @@ import {
   openDatabaseAsync,
   type SQLiteDatabase,
 } from "expo-sqlite";
-import { getAuthScope } from "@/config/storage";
 import { localTrackId } from "@/services/local/keys";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
 // Per-(server, user) on-device index for the local-library feature. SQLite (not
@@ -13,19 +12,23 @@ import { logError } from "@/utils/log";
 // a few thousand local tracks would be unwieldy as a single JSON blob.
 //
 // The index is scoped exactly like the rest of the app's persisted state: a
-// separate physical database file per `getAuthScope(url, username)`, so
-// switching servers never mixes one account's local library into another's. The
-// handle follows the active scope automatically (see `getLocalLibraryDb`).
+// separate physical database file per `currentAuthScope()`, so switching servers
+// never mixes one account's local library into another's. The handle follows the
+// active scope automatically (see `getLocalLibraryDb`).
 
 const SCHEMA_VERSION = 4;
 
-const currentScope = (): string => {
-  const { url, username } = useAuthBase.getState();
-  return getAuthScope(url, username);
-};
+const currentScope = currentAuthScope;
 
-// `getAuthScope` already sanitizes to [A-Za-z0-9_], so the scope is a safe
-// filename fragment.
+// `getAuthScope` sanitizes to [A-Za-z0-9_], so the scope is a safe filename
+// fragment.
+//
+// Despite the name, this file is not only the local library's: it also holds the
+// on-device podcast store that Navidrome and Jellyfin fall back to (see
+// services/backend/podcasts.ts), so it is keyed by a *remote* server's scope too
+// — not just the fixed `local_local` sentinel. Any change to how a scope is
+// derived therefore has to move these files, or the data is orphaned under the
+// old name (see migrateLocalLibraryDatabases in services/storageScopeMigration).
 const dbNameForScope = (scope: string): string => `local-library-${scope}.db`;
 
 // Open handle, memoized per scope. We keep the *promise* so a burst of callers

@@ -16,9 +16,8 @@ import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrow
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { MusicFolder } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { useAuthBase } from "@/stores/auth";
+import { useAuthBase, useCurrentAuthScope } from "@/stores/auth";
 import {
-  useCurrentAuthScope,
   useCurrentMusicFolderId,
   useMusicFoldersBase,
 } from "@/stores/musicFolders";

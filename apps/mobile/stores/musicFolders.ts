@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { getAuthScope, zustandStorage } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { zustandStorage } from "@/config/storage";
+import { useCurrentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 interface MusicFoldersStore {
@@ -37,13 +37,6 @@ export const useMusicFoldersBase = create<MusicFoldersStore>()(
 const useMusicFolders = createSelectors(useMusicFoldersBase);
 
 export default useMusicFolders;
-
-export const useCurrentAuthScope = (): string | undefined => {
-  const url = useAuthBase((s) => s.url);
-  const username = useAuthBase((s) => s.username);
-  if (!url || !username) return undefined;
-  return getAuthScope(url, username);
-};
 
 export const useCurrentMusicFolderId = (): string | undefined => {
   const scope = useCurrentAuthScope();

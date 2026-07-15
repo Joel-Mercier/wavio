@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 
 // Shared reconciliation for "server"-sourced favorites (podcast channels,
 // internet-radio stations): patches drifted metadata and prunes favorites whose

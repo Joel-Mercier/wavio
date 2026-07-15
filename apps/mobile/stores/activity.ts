@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { createDynamicScopedStorage } from "@/config/storage";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type ActivityType = "album" | "artist" | "playlist";
@@ -53,10 +53,7 @@ const useActivityBase = create<ActivityStore>()(
     {
       name: "activity",
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
     },

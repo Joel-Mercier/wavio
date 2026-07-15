@@ -71,7 +71,7 @@ import type {
   PodcastEpisode,
 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import { artworkUrl } from "@/utils/artwork";
 import { formatDistanceToNow } from "@/utils/date";

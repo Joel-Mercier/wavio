@@ -1,10 +1,15 @@
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { queryClient } from "@/config/queryClient";
 import { zustandStorage } from "@/config/storage";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
-import { type ServerType, serverTypeSchema } from "@/stores/servers";
+import {
+  refineFallbackUrl,
+  type ServerType,
+  serverTypeSchema,
+} from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
 
 // Side effects to run when the active session is torn down (logout / server
@@ -36,9 +41,13 @@ export const loginSchema = z
     // only); presence enables mTLS. Required (empty = none) so the inferred
     // input type matches the login form's string default; no refinement.
     mtlsAlias: z.string().trim(),
+    // Optional alternative address for the same server (remote types only).
+    // Required-but-empty for the same reason as `mtlsAlias`.
+    fallbackUrl: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
+    refineFallbackUrl(data.fallbackUrl, ctx);
     const url = z.url().min(1).trim().safeParse(data.url);
     if (!url.success) {
       ctx.addIssue({
@@ -77,7 +86,31 @@ export type JellyfinSession = {
   isAdmin: boolean;
 };
 
+export type LoginOptions = {
+  serverType?: ServerType;
+  navidrome?: NavidromeNativeSession | null;
+  jellyfin?: JellyfinSession | null;
+  subsonicSalt?: string | null;
+  subsonicToken?: string | null;
+  useTokenAuth?: boolean;
+};
+
+export type LoginParams = LoginOptions & {
+  // Identity of the server row this session belongs to. Together with
+  // `username` it forms the storage scope (see config/storage.ts), so it must
+  // always be a real `Server.id` — an empty value would bucket the session into
+  // a shared, colliding scope.
+  serverId: string;
+  // The route this session talks to. Unlike `serverId` this is free to change
+  // (see the fallback URL failover in services/network.ts) and is deliberately
+  // NOT part of the storage scope.
+  url: string;
+  username: string;
+  password: string;
+};
+
 type AuthStore = {
+  serverId: string;
   url: string;
   username: string;
   password: string;
@@ -96,19 +129,8 @@ type AuthStore = {
   // falls back to password auth (`p`) for servers that reject token auth
   // (OpenSubsonic error 41/42, e.g. LMS/Lyrion's Subsonic bridge).
   useTokenAuth: boolean;
-  login: (
-    url: string,
-    username: string,
-    password: string,
-    options?: {
-      serverType?: ServerType;
-      navidrome?: NavidromeNativeSession | null;
-      jellyfin?: JellyfinSession | null;
-      subsonicSalt?: string | null;
-      subsonicToken?: string | null;
-      useTokenAuth?: boolean;
-    },
-  ) => void;
+  login: (params: LoginParams) => void;
+  setActiveUrl: (url: string) => void;
   setNavidromeSession: (session: NavidromeNativeSession | null) => void;
   setJellyfinSession: (session: JellyfinSession | null) => void;
   setServerType: (type: ServerType) => void;
@@ -121,6 +143,7 @@ type AuthStore = {
 export const useAuthBase = create<AuthStore>()(
   persist(
     (set) => ({
+      serverId: "",
       url: "",
       username: "",
       password: "",
@@ -136,23 +159,18 @@ export const useAuthBase = create<AuthStore>()(
       subsonicSalt: null,
       subsonicToken: null,
       useTokenAuth: true,
-      login: (
-        url: string,
-        username: string,
-        password: string,
-        options?: {
-          serverType?: ServerType;
-          navidrome?: NavidromeNativeSession | null;
-          jellyfin?: JellyfinSession | null;
-          subsonicSalt?: string | null;
-          subsonicToken?: string | null;
-          useTokenAuth?: boolean;
-        },
-      ) => {
-        const serverType = options?.serverType ?? "navidrome";
-        const navidrome = options?.navidrome ?? null;
-        const jellyfin = options?.jellyfin ?? null;
+      login: ({
+        serverId,
+        url,
+        username,
+        password,
+        ...options
+      }: LoginParams) => {
+        const serverType = options.serverType ?? "navidrome";
+        const navidrome = options.navidrome ?? null;
+        const jellyfin = options.jellyfin ?? null;
         set({
+          serverId: serverId.trim(),
           url: url.trim(),
           username: username.trim(),
           password: password.trim(),
@@ -164,10 +182,16 @@ export const useAuthBase = create<AuthStore>()(
           hasNavidromeNative: !!navidrome,
           jellyfinAccessToken: jellyfin?.accessToken ?? null,
           jellyfinUserId: jellyfin?.userId ?? null,
-          subsonicSalt: options?.subsonicSalt ?? null,
-          subsonicToken: options?.subsonicToken ?? null,
-          useTokenAuth: options?.useTokenAuth ?? true,
+          subsonicSalt: options.subsonicSalt ?? null,
+          subsonicToken: options.subsonicToken ?? null,
+          useTokenAuth: options.useTokenAuth ?? true,
         });
+      },
+      // Repoint the session at a different route for the same server (primary <->
+      // fallback failover). Deliberately touches only `url`: the storage scope is
+      // keyed on `serverId`, so swapping routes must not disturb any other state.
+      setActiveUrl: (url: string) => {
+        set({ url: url.trim() });
       },
       setNavidromeSession: (session: NavidromeNativeSession | null) => {
         set({
@@ -207,6 +231,7 @@ export const useAuthBase = create<AuthStore>()(
           } catch {}
         }
         set({
+          serverId: "",
           url: "",
           username: "",
           password: "",
@@ -236,10 +261,10 @@ export const useAuthBase = create<AuthStore>()(
     {
       name: "auth",
       storage: createJSONStorage(() => zustandStorage),
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<AuthStore> | undefined;
-        if (!state || version >= 3) return persistedState as AuthStore;
+        if (!state || version >= 4) return persistedState as AuthStore;
         return {
           ...state,
           serverType: state.serverType ?? "navidrome",
@@ -247,11 +272,41 @@ export const useAuthBase = create<AuthStore>()(
           jellyfinUserId: state.jellyfinUserId ?? null,
           // Existing sessions authenticated with token+salt, so default to true.
           useTokenAuth: state.useTokenAuth ?? true,
+          // v4: `serverId` became the storage scope's identity. It can't be
+          // resolved here — that needs the `servers` store, whose rehydration
+          // order relative to this one isn't guaranteed — so it's back-filled by
+          // services/storageScopeMigration.ts, which runs before first render.
+          serverId: state.serverId ?? "",
         } as AuthStore;
       },
     },
   ),
 );
+
+// The active session's storage scope. Every scoped store, the query cache, the
+// download directory and the local SQLite file resolve their bucket through
+// this, so it is the single definition of "whose data is this".
+//
+// Deliberately independent of `url`: swapping routes (primary <-> fallback) must
+// never move the scope, or the app would tear down and re-hydrate as if it were
+// a different server. See services/network.ts.
+export function currentAuthScope(): string {
+  const { serverId, username, serverType } = useAuthBase.getState();
+  if (serverType === "local") return LOCAL_AUTH_SCOPE;
+  return getAuthScope(serverId, username);
+}
+
+// Reactive counterpart of `currentAuthScope`, for components that must re-render
+// when the active scope changes. Returns undefined when no session is scoped
+// yet, so callers can distinguish "signed out" from a real scope.
+export function useCurrentAuthScope(): string | undefined {
+  const serverId = useAuthBase((s) => s.serverId);
+  const username = useAuthBase((s) => s.username);
+  const serverType = useAuthBase((s) => s.serverType);
+  if (serverType === "local") return LOCAL_AUTH_SCOPE;
+  if (!serverId || !username) return undefined;
+  return getAuthScope(serverId, username);
+}
 
 const useAuth = createSelectors(useAuthBase);
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { createDynamicScopedStorage } from "@/config/storage";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 const MAX_BOOKMARKS_PER_TRACK = 50;
@@ -61,10 +61,7 @@ const useBookmarksBase = create<BookmarksStore>()(
     {
       name: "bookmarks",
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
     },

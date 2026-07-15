@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { createDynamicScopedStorage } from "@/config/storage";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type RecentSearch = {
@@ -59,10 +59,7 @@ const useRecentSearchesBase = create<RecentSearchesStore>()(
     {
       name: "recentSearches",
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
     },

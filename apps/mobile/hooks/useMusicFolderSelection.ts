@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
-import { useAuthBase } from "@/stores/auth";
+import { useAuthBase, useCurrentAuthScope } from "@/stores/auth";
 import {
-  useCurrentAuthScope,
   useCurrentMusicFolderId,
   useMusicFoldersBase,
 } from "@/stores/musicFolders";

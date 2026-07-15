@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { createDynamicScopedStorage } from "@/config/storage";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type QueueSource = {
@@ -854,10 +854,7 @@ export function peekNextTrack(): QueueTrack | null {
 // shuffle order are heavy fields that only re-serialize when their reference
 // actually changes; cursor fields are tiny and rewritten on any change.
 const QUEUE_STORAGE_NAME = "queueStore";
-const persistedStorage = createDynamicScopedStorage(() => {
-  const { url, username } = useAuthBase.getState();
-  return getAuthScope(url, username);
-});
+const persistedStorage = createDynamicScopedStorage(currentAuthScope);
 
 type CursorBlob = {
   currentIndex: number | null;

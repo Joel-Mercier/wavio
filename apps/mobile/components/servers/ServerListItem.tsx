@@ -11,16 +11,20 @@ import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import UsersIcon from "lucide-react-native/dist/esm/icons/users.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
 import LocalPathsField from "@/components/forms/LocalPathsField";
+import UrlInputField from "@/components/forms/UrlInputField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
   AlertDialog,
@@ -49,8 +53,8 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
-import { hostnameFromUrl } from "@/modules/ssl-trust";
-import { syncSslClientCertificates } from "@/services/sslTrust";
+import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import { useAuthBase } from "@/stores/auth";
 import useServers, {
   editServerFormSchema,
@@ -99,6 +103,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       type: server.type,
       paths: server.paths ?? [],
       mtlsAlias: server.mtlsAlias ?? "",
+      fallbackUrl: server.fallbackUrl ?? "",
     },
     validators: {
       onChange: editServerFormSchema,
@@ -112,9 +117,13 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           url: value.url,
           type: value.type,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
+          fallbackUrl: value.fallbackUrl ?? "",
         });
-        // Refresh the native KeyManager so the updated client cert applies.
+        // Refresh the native KeyManager so the updated client cert applies, and
+        // register the (possibly new) fallback origin with the iOS proxy —
+        // otherwise it wouldn't be an upstream until the next cold start.
         await syncSslClientCertificates();
+        await syncSslProxy();
       }
       form.reset();
       toast.show({
@@ -487,35 +496,49 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                         className="my-4"
                       >
                         <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                          <InputField
+                          <UrlInputField
                             value={field.state.value}
                             onChangeText={field.handleChange}
                             onBlur={() => handleFieldBlur(field)}
-                            className="text-md text-white"
                             placeholder={t("app.servers.urlPlaceholder")}
-                            autoCapitalize="none"
-                            textContentType="URL"
                           />
                         </Input>
                         <FieldError field={field} />
                       </FormControl>
                     )}
                   </form.Field>
-                  <form.Field name="mtlsAlias">
-                    {(field) => (
-                      <form.Subscribe selector={(state) => state.values.url}>
-                        {(url) => (
-                          <ClientCertificateField
-                            value={field.state.value || undefined}
-                            host={hostnameFromUrl(url ?? "")}
-                            onChange={(alias) =>
-                              field.handleChange(alias ?? "")
-                            }
-                          />
+                  {/* Matches the login and add-server forms: advanced fields
+                      behind a disclosure, client certificate gated on Android +
+                      the native trust module (it does nothing elsewhere). */}
+                  <AdvancedSettingsSection>
+                    <form.Field name="fallbackUrl">
+                      {(field) => (
+                        <FallbackUrlField
+                          field={field}
+                          placeholder={t("app.servers.fallbackUrlPlaceholder")}
+                        />
+                      )}
+                    </form.Field>
+                    {Platform.OS === "android" && isSslTrustAvailable() && (
+                      <form.Field name="mtlsAlias">
+                        {(field) => (
+                          <form.Subscribe
+                            selector={(state) => state.values.url}
+                          >
+                            {(url) => (
+                              <ClientCertificateField
+                                value={field.state.value || undefined}
+                                host={hostnameFromUrl(url ?? "")}
+                                onChange={(alias) =>
+                                  field.handleChange(alias ?? "")
+                                }
+                              />
+                            )}
+                          </form.Subscribe>
                         )}
-                      </form.Subscribe>
+                      </form.Field>
                     )}
-                  </form.Field>
+                  </AdvancedSettingsSection>
                 </>
               )}
             </AlertDialogBody>

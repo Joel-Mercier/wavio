@@ -1,12 +1,11 @@
 import { DeviceEventEmitter, NativeModules, Platform } from "react-native";
 import { getColors } from "react-native-image-colors";
-import { getAuthScope } from "@/config/storage";
 import {
   getPlaybackSnapshot,
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useQueue from "@/stores/queue";
 import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -204,12 +203,11 @@ export function initWidget() {
     Native.setIsPlaying(playing);
   });
 
-  let lastScope = (() => {
-    const { url, username } = useAuthBase.getState();
-    return getAuthScope(url, username);
-  })();
-  useAuthBase.subscribe((state) => {
-    const scope = getAuthScope(state.url, state.username);
+  let lastScope = currentAuthScope();
+  useAuthBase.subscribe(() => {
+    // Keyed on the scope, not the URL, so a route swap (primary <-> fallback for
+    // the same server) doesn't read as a new scope and wipe the widget.
+    const scope = currentAuthScope();
     if (scope === lastScope) return;
     lastScope = scope;
     // New (server, user) scope: drop the previous one's now-playing and recent

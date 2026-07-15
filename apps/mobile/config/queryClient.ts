@@ -7,13 +7,12 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import {
-  getAuthScope,
   QUERY_CACHE_KEY,
   scopedQueryCacheKey,
   storage,
 } from "@/config/storage";
 import { type ReportBackend, reportError } from "@/services/errorReporting";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
 
 // Map the active server type to the reporting backend tag. Navidrome and
 // OpenSubsonic both speak Subsonic, so they share the `subsonic` tag.
@@ -64,27 +63,23 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Resolve the active (server, user) scope at call time. The persisted cache is
-// stored under `${scope}:wavio-rq-cache`, mirroring the zustand stores'
-// per-scope namespacing (createDynamicScopedStorage). The persister uses a
-// single logical key; this adapter routes it to the current scope's bucket.
-function currentScope(): string {
-  const { url, username } = useAuthBase.getState();
-  return getAuthScope(url, username);
-}
-
 // MMKV is synchronous, but the async persister keeps cache reads/writes off the
 // critical render path (createAsyncStoragePersister awaits these). We wrap the
 // synchronous MMKV calls in resolved promises.
+//
+// The scope is resolved at call time (see currentAuthScope): the persisted cache
+// lives under `${scope}:wavio-rq-cache`, mirroring the zustand stores' per-scope
+// namespacing. The persister uses a single logical key; this adapter routes it
+// to the current scope's bucket.
 const mmkvQueryPersisterStorage = {
   getItem: (key: string): Promise<string | null> =>
-    Promise.resolve(storage.getString(`${currentScope()}:${key}`) ?? null),
+    Promise.resolve(storage.getString(`${currentAuthScope()}:${key}`) ?? null),
   setItem: (key: string, value: string): Promise<void> => {
-    storage.set(`${currentScope()}:${key}`, value);
+    storage.set(`${currentAuthScope()}:${key}`, value);
     return Promise.resolve();
   },
   removeItem: (key: string): Promise<void> => {
-    storage.remove(`${currentScope()}:${key}`);
+    storage.remove(`${currentAuthScope()}:${key}`);
     return Promise.resolve();
   },
 };
@@ -110,7 +105,7 @@ export const persistOptions = {
 // Byte length (UTF-8 approx) of the current scope's persisted cache blob — used
 // by the storage overview in settings.
 export function getPersistedCacheSize(): number {
-  const raw = storage.getString(scopedQueryCacheKey(currentScope()));
+  const raw = storage.getString(scopedQueryCacheKey(currentAuthScope()));
   return raw ? raw.length : 0;
 }
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { createDynamicScopedStorage } from "@/config/storage";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 export type PlaylistSortType =
@@ -62,10 +62,7 @@ const usePlaylistsBase = create<PlaylistsStore>()(
       name: "playlists",
       version: 1,
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
       // v0 persisted custom order as a per-track position map

@@ -12,6 +12,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -45,11 +46,12 @@ import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
-import { syncSslClientCertificates } from "@/services/sslTrust";
+import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import useServers, {
   addServerFormSchema,
+  cleanOptionalUrl,
   type ServerType,
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
@@ -106,6 +108,7 @@ export default function ServersDetail() {
       type: "navidrome" as ServerType,
       paths: [] as string[],
       mtlsAlias: "",
+      fallbackUrl: "",
     },
     validators: {
       onChange: addServerFormSchema,
@@ -142,10 +145,13 @@ export default function ServersDetail() {
           url: value.url,
           type: value.type,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
+          fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
         });
         // Refresh the native KeyManager so this server's client cert is
-        // presented on future connections.
+        // presented on future connections, and register the (possibly new)
+        // fallback origin with the iOS loopback proxy.
         await syncSslClientCertificates();
+        await syncSslProxy();
       }
       form.reset();
       toast.show({
@@ -374,27 +380,40 @@ export default function ServersDetail() {
                             </FormControl>
                           )}
                         </form.Field>
-                        {Platform.OS === "android" && isSslTrustAvailable() && (
-                          <AdvancedSettingsSection>
-                            <form.Field name="mtlsAlias">
-                              {(field) => (
-                                <form.Subscribe
-                                  selector={(state) => state.values.url}
-                                >
-                                  {(url) => (
-                                    <ClientCertificateField
-                                      value={field.state.value || undefined}
-                                      host={hostnameFromUrl(url ?? "")}
-                                      onChange={(alias) =>
-                                        field.handleChange(alias ?? "")
-                                      }
-                                    />
-                                  )}
-                                </form.Subscribe>
-                              )}
-                            </form.Field>
-                          </AdvancedSettingsSection>
-                        )}
+                        {/* Cross-platform section; only the client certificate
+                            is gated on Android + the native trust module. */}
+                        <AdvancedSettingsSection>
+                          <form.Field name="fallbackUrl">
+                            {(field) => (
+                              <FallbackUrlField
+                                field={field}
+                                placeholder={t(
+                                  "app.servers.fallbackUrlPlaceholder",
+                                )}
+                              />
+                            )}
+                          </form.Field>
+                          {Platform.OS === "android" &&
+                            isSslTrustAvailable() && (
+                              <form.Field name="mtlsAlias">
+                                {(field) => (
+                                  <form.Subscribe
+                                    selector={(state) => state.values.url}
+                                  >
+                                    {(url) => (
+                                      <ClientCertificateField
+                                        value={field.state.value || undefined}
+                                        host={hostnameFromUrl(url ?? "")}
+                                        onChange={(alias) =>
+                                          field.handleChange(alias ?? "")
+                                        }
+                                      />
+                                    )}
+                                  </form.Subscribe>
+                                )}
+                              </form.Field>
+                            )}
+                        </AdvancedSettingsSection>
                       </>
                     )
                   }

@@ -22,7 +22,6 @@ import {
   queryClient,
   setCacheRestoring,
 } from "@/config/queryClient";
-import { getAuthScope } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
@@ -38,9 +37,10 @@ import {
   stopPlayQueueSync,
 } from "@/services/playQueueSync";
 import { loadResumePositions } from "@/services/resumePositions";
+import { rewriteQueueRoutes } from "@/services/routeSwap";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
-import useAuth, { useAuthBase } from "@/stores/auth";
+import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLocalLibrary from "@/stores/localLibrary";
@@ -104,8 +104,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const { url, username } = useAuthBase.getState();
-    const scope = getAuthScope(url, username);
+    const scope = currentAuthScope();
     if (lastHydratedScope === scope) return;
     // Only reset when switching to a different (server, user) scope. On the
     // initial hydration after app start the in-memory state is already the
@@ -160,6 +159,10 @@ export default function AppLayout() {
     usePlaylists.persist.rehydrate();
     useActivity.persist.rehydrate();
     useQueue.persist.rehydrate();
+    // The queue bakes absolute URLs, and the session may have cold-started on a
+    // different route than the one it was saved under (the active route is
+    // persisted). Rehydration is synchronous, so this sees the restored queue.
+    rewriteQueueRoutes();
     useOffline.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();

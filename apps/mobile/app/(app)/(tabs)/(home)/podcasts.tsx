@@ -25,7 +25,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSyncServerPodcastFavorites } from "@/hooks/usePodcastFavorites";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/taddyPodcasts/types";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 import usePodcasts from "@/stores/podcasts";
 
 export default function PodcastsScreen() {
