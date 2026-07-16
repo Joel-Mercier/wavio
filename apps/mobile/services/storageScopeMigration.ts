@@ -395,8 +395,7 @@ export function runStorageScopeMigration(): void {
       return;
     }
 
-    const { remap, musicFolders, podcasts, radioStations } =
-      migrateStorageScopes();
+    const { musicFolders, podcasts, radioStations } = migrateStorageScopes();
     if (musicFolders) useMusicFoldersBase.setState(musicFolders);
     if (podcasts) usePodcastsBase.setState(podcasts);
     if (radioStations) useRadioStationsBase.setState(radioStations);
@@ -413,9 +412,6 @@ export function runStorageScopeMigration(): void {
     }
 
     storage.set(SENTINEL_KEY, new Date().toISOString());
-    if (__DEV__ && remap.size > 0) {
-      console.log(`[storage] migrated ${remap.size} scope(s) to id-based keys`);
-    }
   } catch (err) {
     // No sentinel: the next launch retries. Every step is idempotent and writes
     // the new copy before removing the old, so a partial run is recoverable.
