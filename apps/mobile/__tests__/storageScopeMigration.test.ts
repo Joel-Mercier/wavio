@@ -255,12 +255,12 @@ describe("runStorageScopeMigration", () => {
     runStorageScopeMigration();
 
     for (const suffix of ["", "-wal", "-shm"]) {
-      expect(mockFiles.has(`/doc/SQLite/local-library-${NEW}.db${suffix}`)).toBe(
-        true,
-      );
-      expect(mockFiles.has(`/doc/SQLite/local-library-${OLD}.db${suffix}`)).toBe(
-        false,
-      );
+      expect(
+        mockFiles.has(`/doc/SQLite/local-library-${NEW}.db${suffix}`),
+      ).toBe(true);
+      expect(
+        mockFiles.has(`/doc/SQLite/local-library-${OLD}.db${suffix}`),
+      ).toBe(false);
     }
   });
 
@@ -286,7 +286,9 @@ describe("runStorageScopeMigration", () => {
 
     runStorageScopeMigration();
 
-    expect(mockFiles.has("/doc/SQLite/local-library-local_local.db")).toBe(true);
+    expect(mockFiles.has("/doc/SQLite/local-library-local_local.db")).toBe(
+      true,
+    );
     expect(mockMem.get("local_local:queueStore:queue")).toBe("q");
     expect(mockDirs.has("/doc/offline/local_local")).toBe(true);
     expect(mockAuth.logout).not.toHaveBeenCalled();
@@ -335,7 +337,9 @@ describe("runStorageScopeMigration", () => {
 
     runStorageScopeMigration();
 
-    expect(mockFiles.has("/doc/SQLite/local-library-local_local.db")).toBe(true);
+    expect(mockFiles.has("/doc/SQLite/local-library-local_local.db")).toBe(
+      true,
+    );
     // Only the remote server's database moved.
     expect(mockFiles.has(`/doc/SQLite/local-library-${NEW}.db`)).toBe(true);
   });
