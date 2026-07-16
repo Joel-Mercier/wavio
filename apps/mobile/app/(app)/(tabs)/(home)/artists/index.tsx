@@ -1,5 +1,5 @@
-import RandomArtistsDetail from "@/components/artists/RandomArtistsDetail";
+import AllArtistsScreen from "@/components/artists/AllArtistsScreen";
 
 export default function ArtistsScreen() {
-  return <RandomArtistsDetail />;
+  return <AllArtistsScreen />;
 }

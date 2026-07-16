@@ -81,6 +81,8 @@ export default function MostPlayedTracksScreen() {
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs.map((s) => s.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -88,15 +90,11 @@ export default function MostPlayedTracksScreen() {
       return;
     }
     if (songs.length === 0) return;
-    useQueue.getState().setShuffle(false);
-    playTracks(songs.map(childToTrack), 0, { source });
+    playTracks(songs.map(childToTrack), 0, { shuffleFromRandom: true, source });
   };
 
   const handleShufflePress = () => {
-    if (songs.length === 0) return;
-    useQueue.getState().setShuffle(true);
-    const startIndex = Math.floor(Math.random() * songs.length);
-    playTracks(songs.map(childToTrack), startIndex, { source });
+    setShuffle(!shuffle);
   };
 
   return (
@@ -180,7 +178,10 @@ export default function MostPlayedTracksScreen() {
             <VStack className="px-6">
               <HStack className="items-center justify-end mb-4">
                 <HStack className="items-center gap-x-4">
-                  <ShuffleToggle active={false} onPress={handleShufflePress} />
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={handleShufflePress}
+                  />
                   <PlayPauseButton
                     isPlaying={isPlayingFromList && isPlaying}
                     onPress={handlePlayPress}
