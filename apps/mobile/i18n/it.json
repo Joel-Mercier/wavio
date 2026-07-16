@@ -574,23 +574,23 @@
 					},
 					"appearance": {
 						"title": "Appearance",
-						"description": "Language, home sections, haptics"
+						"description": "Lingua, selezione home, feedback aptico"
 					},
 					"podcasts": {
 						"title": "Podcast",
-						"description": "Configure the Taddy podcast API"
+						"description": "Configura Taddy podcast API"
 					},
 					"radio": {
 						"title": "Web Radio",
-						"description": "Enable stations, country, tags"
+						"description": "Stazioni abilitate, regione, tag"
 					},
 					"storage": {
-						"title": "Storage & data",
-						"description": "Storage usage, cache, recent activity"
+						"title": "Memoria & dati",
+						"description": "Uso della memoria, cache, attività recenti"
 					},
 					"backup": {
 						"title": "Backup e ripristino",
-						"description": "Export and restore your data"
+						"description": "Esporta e ripristina i tuoi dati"
 					},
 					"security": {
 						"title": "Sicurezza",
@@ -1042,8 +1042,8 @@
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
-					"albumList": "Playing from albums",
-					"playlistList": "Playing from playlists"
+					"albumList": "Riproduzione dagli album",
+					"playlistList": "Riproduzione dalla playlist"
 				},
 				"addToPlaylist": "Aggiungi alla playlist",
 				"playNext": "Riproduci successivo",
