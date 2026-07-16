@@ -1041,8 +1041,8 @@
 					"likedSongs": "Lecture depuis les titres aimés",
 					"folder": "Lecture depuis le dossier",
 					"similar": "Lecture depuis les titres similaires",
-					"albumList": "Playing from albums",
-					"playlistList": "Playing from playlists"
+					"albumList": "Lecture à partir d'albums",
+					"playlistList": "Lecture à partir de playlists"
 				},
 				"addToPlaylist": "Ajouter à la playlist",
 				"playNext": "Ajouter à la file d'attente",
