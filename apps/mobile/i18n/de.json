@@ -1040,7 +1040,9 @@
 					"artist": "Wiedergabe vom Interpreten",
 					"likedSongs": "Wiedergabe von gemochten Titeln",
 					"folder": "Wiedergabe aus einem Ordner",
-					"similar": "Ähnliche Songs abspielen"
+					"similar": "Ähnliche Songs abspielen",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
 				"playNext": "Nächsten Titel abspielen",
