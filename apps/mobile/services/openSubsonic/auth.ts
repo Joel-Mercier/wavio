@@ -21,3 +21,14 @@ export async function computeSubsonicToken(
   );
   return digest.toLowerCase();
 }
+
+// Subsonic legacy password auth (`p`): some servers (e.g. LMS/Lyrion's Subsonic
+// bridge) don't support token auth and require the password instead. Sent as
+// `enc:<hex>` — the UTF-8 bytes of the password hex-encoded — so special
+// characters and unicode survive the query string intact.
+export function encodePasswordParam(password: string): string {
+  const bytes = new TextEncoder().encode(password);
+  let hex = "";
+  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
+  return `enc:${hex}`;
+}

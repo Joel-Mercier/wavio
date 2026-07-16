@@ -14,11 +14,17 @@ jest.mock("@/config/storage", () => {
   };
 });
 
-import { loginSchema, useAuthBase } from "@/stores/auth";
+import {
+  currentAuthScope,
+  type LoginOptions,
+  loginSchema,
+  useAuthBase,
+} from "@/stores/auth";
 
 const reset = () =>
   useAuthBase.setState(
     {
+      serverId: "",
       url: "",
       username: "",
       password: "",
@@ -34,13 +40,25 @@ const reset = () =>
     false,
   );
 
+const login = (
+  url: string,
+  username: string,
+  password: string,
+  options?: LoginOptions,
+) =>
+  useAuthBase.getState().login({
+    serverId: "srv-1",
+    url,
+    username,
+    password,
+    ...options,
+  });
+
 beforeEach(reset);
 
 describe("auth store", () => {
   it("login sets credentials and authenticated flag, trimming inputs", () => {
-    useAuthBase
-      .getState()
-      .login("  https://music.example.com  ", "  alice  ", "  secret  ");
+    login("  https://music.example.com  ", "  alice  ", "  secret  ");
     const s = useAuthBase.getState();
     expect(s.url).toBe("https://music.example.com");
     expect(s.username).toBe("alice");
@@ -48,10 +66,33 @@ describe("auth store", () => {
     expect(s.isAuthenticated).toBe(true);
   });
 
+  it("login records the serverId that identifies the storage scope", () => {
+    useAuthBase.getState().login({
+      serverId: "  srv-42  ",
+      url: "https://x",
+      username: "u",
+      password: "p",
+    });
+    expect(useAuthBase.getState().serverId).toBe("srv-42");
+  });
+
+  it("setActiveUrl repoints the route without touching the serverId", () => {
+    login("https://lan.example.com", "alice", "secret");
+    useAuthBase.getState().setActiveUrl("  https://wan.example.com  ");
+    const s = useAuthBase.getState();
+    expect(s.url).toBe("https://wan.example.com");
+    // The scope identity and the session must survive a route swap.
+    expect(s.serverId).toBe("srv-1");
+    expect(s.username).toBe("alice");
+    expect(s.password).toBe("secret");
+    expect(s.isAuthenticated).toBe(true);
+  });
+
   it("logout clears all credentials", () => {
-    useAuthBase.getState().login("https://x", "u", "p");
+    login("https://x", "u", "p");
     useAuthBase.getState().logout();
     expect(useAuthBase.getState()).toMatchObject({
+      serverId: "",
       url: "",
       username: "",
       password: "",
@@ -66,7 +107,7 @@ describe("auth store", () => {
       isAdmin: true,
       hasNavidromeNative: true,
     });
-    useAuthBase.getState().login("https://x", "u", "p");
+    login("https://x", "u", "p");
     const s = useAuthBase.getState();
     expect(s.token).toBeNull();
     expect(s.userId).toBeNull();
@@ -75,7 +116,7 @@ describe("auth store", () => {
   });
 
   it("login with navidrome session populates native fields", () => {
-    useAuthBase.getState().login("https://x", "u", "p", {
+    login("https://x", "u", "p", {
       navidrome: { token: "tok-1", userId: "user-1", isAdmin: true },
     });
     const s = useAuthBase.getState();
@@ -86,7 +127,7 @@ describe("auth store", () => {
   });
 
   it("logout resets navidrome and serverVersion fields", () => {
-    useAuthBase.getState().login("https://x", "u", "p", {
+    login("https://x", "u", "p", {
       navidrome: { token: "tok-1", userId: "user-1", isAdmin: true },
     });
     useAuthBase.getState().setServerVersion("0.50.0");
@@ -128,7 +169,7 @@ describe("auth store", () => {
   });
 
   it("login stores subsonic salt and token, and logout clears them", () => {
-    useAuthBase.getState().login("https://x", "u", "p", {
+    login("https://x", "u", "p", {
       subsonicSalt: "abc123",
       subsonicToken: "deadbeef",
     });
@@ -143,7 +184,7 @@ describe("auth store", () => {
 
   it("login without subsonic options clears salt and token", () => {
     useAuthBase.setState({ subsonicSalt: "old", subsonicToken: "old" });
-    useAuthBase.getState().login("https://x", "u", "p");
+    login("https://x", "u", "p");
     const s = useAuthBase.getState();
     expect(s.subsonicSalt).toBeNull();
     expect(s.subsonicToken).toBeNull();
@@ -167,6 +208,44 @@ describe("auth store", () => {
   });
 });
 
+describe("currentAuthScope", () => {
+  it("derives the scope from the server id, not the url", () => {
+    login("https://lan.example.com", "alice", "secret");
+    expect(currentAuthScope()).toBe("srv_1_alice");
+  });
+
+  it("is unchanged by a route swap", () => {
+    // The whole point of id-based scoping: failing over to a fallback address
+    // must not move the bucket, or every scoped store would tear down and
+    // rehydrate as if this were a different server.
+    login("https://lan.example.com", "alice", "secret");
+    const before = currentAuthScope();
+    useAuthBase.getState().setActiveUrl("https://wan.example.com");
+    expect(currentAuthScope()).toBe(before);
+  });
+
+  it("sanitizes non-alphanumerics in the id and username", () => {
+    useAuthBase.getState().login({
+      serverId: "mg1-2ab",
+      url: "https://x",
+      username: "a.b@c",
+      password: "p",
+    });
+    expect(currentAuthScope()).toBe("mg1_2ab_a_b_c");
+  });
+
+  it("uses the fixed sentinel for the local library", () => {
+    useAuthBase.getState().login({
+      serverId: "whatever",
+      url: "local",
+      username: "local",
+      password: "",
+      serverType: "local",
+    });
+    expect(currentAuthScope()).toBe("local_local");
+  });
+});
+
 describe("auth login schema", () => {
   it("accepts a valid login payload", () => {
     const result = loginSchema.safeParse({
@@ -176,6 +255,7 @@ describe("auth login schema", () => {
       type: "navidrome",
       paths: [],
       mtlsAlias: "",
+      fallbackUrl: "",
     });
     expect(result.success).toBe(true);
   });
@@ -188,8 +268,33 @@ describe("auth login schema", () => {
       type: "local",
       paths: ["/storage/emulated/0/Music"],
       mtlsAlias: "",
+      fallbackUrl: "",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("accepts a valid fallbackUrl and rejects a malformed one", () => {
+    const payload = {
+      url: "https://music.example.com",
+      username: "alice",
+      password: "secret",
+      type: "navidrome" as const,
+      paths: [],
+      mtlsAlias: "",
+    };
+    expect(
+      loginSchema.safeParse({
+        ...payload,
+        fallbackUrl: "https://wan.example.com",
+      }).success,
+    ).toBe(true);
+    // A cleared UrlInputField leaves the bare protocol behind; that's blank.
+    expect(
+      loginSchema.safeParse({ ...payload, fallbackUrl: "https://" }).success,
+    ).toBe(true);
+    expect(
+      loginSchema.safeParse({ ...payload, fallbackUrl: "not a url" }).success,
+    ).toBe(false);
   });
 
   it("rejects an invalid url", () => {

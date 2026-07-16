@@ -36,6 +36,7 @@ export type ReportArea =
   | "player"
   | "local-library"
   | "metadata"
+  | "storage"
   | "ui";
 
 export type ReportBackend = "subsonic" | "jellyfin" | "local";

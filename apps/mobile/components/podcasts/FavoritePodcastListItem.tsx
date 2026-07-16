@@ -1,5 +1,8 @@
+import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { Image } from "@/components/ui/image";
+import ImageWithFallback from "@/components/ImageWithFallback";
+import { Box } from "@/components/ui/box";
 import type { FavoritePodcast } from "@/stores/podcasts";
 import { artworkUrl } from "@/utils/artwork";
 
@@ -9,6 +12,7 @@ interface FavoritePodcastListItemProps {
 export default function FavoritePodcastListItem({
   podcast,
 }: FavoritePodcastListItemProps) {
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   // Self-hosted (server/local) favorites open the channel screen and resolve
   // their art from the feed image or the Subsonic cover-art id; Taddy favorites
   // open the series screen with their direct image url.
@@ -30,10 +34,15 @@ export default function FavoritePodcastListItem({
         }}
         className="rounded-lg"
       >
-        <Image
+        <ImageWithFallback
           source={{ uri: image }}
           className="aspect-square"
           alt={podcast.name}
+          fallback={
+            <Box className="aspect-square rounded-md bg-primary-600 items-center justify-center">
+              <Podcast size={24} color={white} />
+            </Box>
+          }
         />
       </FadeOutScaleDown>
     );
@@ -56,10 +65,15 @@ export default function FavoritePodcastListItem({
       }}
       className="rounded-lg"
     >
-      <Image
+      <ImageWithFallback
         source={{ uri: podcast.imageUrl }}
         className="aspect-square"
         alt={podcast.name}
+        fallback={
+          <Box className="aspect-square rounded-md bg-primary-600 items-center justify-center">
+            <Podcast size={24} color={white} />
+          </Box>
+        }
       />
     </FadeOutScaleDown>
   );

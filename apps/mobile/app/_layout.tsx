@@ -46,13 +46,14 @@ import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
 import {
 	getIsEffectivelyOnline,
 	initConnectionType,
-	probeServer,
+	probeServerPreferringPrimary,
 	subscribeEffectiveOnline,
 } from "@/services/network";
 import { initOrientation } from "@/services/orientation";
 import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
 import { initSslTrust, refreshSslProxyOnForeground } from "@/services/sslTrust";
+import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -102,14 +103,22 @@ sentryInit({
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+// Move any legacy URL-keyed storage buckets onto the id-based scope. Runs at
+// module scope, synchronously, because it has to beat the (app) layout's
+// hydration effect — hydrating a scoped store before its keys are renamed would
+// read an empty bucket and then persist that emptiness over the real data.
+runStorageScopeMigration();
+
 function onAppStateChange(status: AppStateStatus) {
 	if (Platform.OS !== "web") {
 		focusManager.setFocused(status === "active");
 	}
 	if (status === "active") {
 		// Re-check server reachability on foreground: the network (and thus the
-		// server's reachability) may have changed while backgrounded.
-		void probeServer();
+		// server's reachability) may have changed while backgrounded. Prefers the
+		// primary route (throttled): foregrounding is one of the few signals that
+		// the user might be back on their LAN.
+		probeServerPreferringPrimary();
 		// The iOS loopback proxy may have been torn down while backgrounded; make
 		// sure the cached proxy info is current before streaming resumes.
 		void refreshSslProxyOnForeground();

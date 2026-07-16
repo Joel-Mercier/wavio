@@ -43,7 +43,7 @@ import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import { pause as pausePlayback, playTracks } from "@/services/player";
 import { registerStationClick } from "@/services/radioBrowser/stations";
 import useApp from "@/stores/app";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 import useRadioStations, {
   radioFavoritesForScope,
 } from "@/stores/radioStations";

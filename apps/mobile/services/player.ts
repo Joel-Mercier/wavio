@@ -42,6 +42,7 @@ import {
   notePlaybackTrack,
   recordResumePosition,
 } from "@/services/resumePositions";
+import { rewriteQueueRoutes } from "@/services/routeSwap";
 import {
   checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
@@ -1036,6 +1037,34 @@ export function stopPlayback() {
 
 registerLogoutHandler(stopPlayback);
 
+// React to a route swap (primary <-> fallback for the same server).
+//
+// The next track load re-resolves its URL and follows the new route for free,
+// but the *currently loaded* source was handed to the player as an already
+// resolved absolute URL: it keeps playing off its buffer and then errors on the
+// dead host. handlePlaybackStatus only re-resolves the URL to classify that
+// error for Sentry — the sole branch that actually reloads is the decode-error
+// transcode fallback — so playback would just stop, and file a bogus report. A
+// swap is a *known* event, so re-resolve deliberately and eat a ~1s gap.
+let lastRouteUrl = useAuthBase.getState().url;
+useAuthBase.subscribe((state) => {
+  if (state.url === lastRouteUrl) return;
+  const previous = lastRouteUrl;
+  lastRouteUrl = state.url;
+  // Login (""-> url) and logout (url -> "") are not swaps; logout has its own
+  // teardown and login has nothing loaded yet.
+  if (!previous || !state.url) return;
+  rewriteQueueRoutes();
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  // Downloaded tracks play from disk and radio/podcast sources are absolute
+  // URLs on other hosts — none of them care which route the server is on.
+  if (current.isRadio || current.source === "podcast") return;
+  if (resolveTrackUrl(current).isOffline) return;
+  // reloadAtOffset preserves paused-ness, so this is safe either way.
+  reloadAtOffset(current, getCurrentTime());
+});
+
 export async function configurePlayback() {
   await setAudioModeAsync({
     playsInSilentMode: true,
@@ -1057,7 +1086,18 @@ export function playTracks(
   const previousId = lastTrackId;
   useQueue.getState().playNow(tracks, index, options?.source ?? null);
   const current = useQueue.getState().getCurrent();
-  if (current && current.id === previousId) {
+  if (!current) return;
+  // Starting a new track normally auto-plays via the queue subscription, which
+  // fires on the id change. Two cases need an explicit push instead: the id
+  // didn't change (subscription never fired), or the subscription took a silent
+  // load path — during hydration or a server-queue restore (suppressAutoplayOnce
+  // / !hasHydrated) it loads the track paused and leaves playbackInitialized
+  // false. An explicit user play must start playback regardless. Jukebox owns
+  // playback server-side, so never force the local engine there.
+  if (
+    current.id === previousId ||
+    (!playbackInitialized && !useJukebox.getState().active)
+  ) {
     loadAndPlay(current);
   }
 }

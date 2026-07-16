@@ -26,6 +26,14 @@ export function findCurrentLineIndex(
       hi = mid - 1;
     }
   }
+  // When several lines share a timestamp (original / romanization / translation),
+  // highlight the first of the group (the original language) rather than the last.
+  while (
+    result > 0 &&
+    (lines[result - 1].start ?? 0) === (lines[result].start ?? 0)
+  ) {
+    result--;
+  }
   return result;
 }
 
@@ -118,6 +126,30 @@ export function alignLayerToMain(
   return buckets;
 }
 
+// Removes LRC time tokens left inside a line's text — either bracketed line
+// stamps `[mm:ss.xx]` (leading or trailing, as some sources emit) or A2
+// word-level stamps `<mm:ss.xx>` — then collapses the resulting gaps.
+const LYRIC_TIME_TOKEN_RE = /[[<]\d{1,3}:\d{2}(?:[.:]\d{1,3})?[\]>]/g;
+
+export function stripLyricTimeTokens(value: string): string {
+  return value
+    .replace(LYRIC_TIME_TOKEN_RE, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+export function sanitizeStructuredLyrics(
+  lyrics: StructuredLyrics,
+): StructuredLyrics {
+  return {
+    ...lyrics,
+    line: lyrics.line.map((l) => ({
+      ...l,
+      value: stripLyricTimeTokens(l.value),
+    })),
+  };
+}
+
 const LRC_TIMESTAMP_RE = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
 
 function parseSyncedLrc(text: string): Line[] {
@@ -126,7 +158,6 @@ function parseSyncedLrc(text: string): Line[] {
     LRC_TIMESTAMP_RE.lastIndex = 0;
     const stamps: number[] = [];
     let match: RegExpExecArray | null;
-    let lastIndex = 0;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop
     while ((match = LRC_TIMESTAMP_RE.exec(raw)) !== null) {
       const minutes = Number(match[1]);
@@ -136,10 +167,11 @@ function parseSyncedLrc(text: string): Line[] {
       if (!Number.isNaN(minutes) && !Number.isNaN(seconds)) {
         stamps.push(minutes * 60_000 + seconds * 1000 + frac);
       }
-      lastIndex = LRC_TIMESTAMP_RE.lastIndex;
     }
     if (stamps.length === 0) continue;
-    const value = raw.slice(lastIndex).trim();
+    // Strip all stamps rather than slicing after the last one, so trailing-stamp
+    // formats (`text[mm:ss.xx]`) keep their text instead of collapsing to empty.
+    const value = stripLyricTimeTokens(raw);
     for (const start of stamps) {
       lines.push({ value, start });
     }
@@ -172,7 +204,7 @@ export function parseLrcToStructuredLyrics(
   if (record.plainLyrics) {
     const line = record.plainLyrics
       .split(/\r?\n/)
-      .map((v) => ({ value: v }))
+      .map((v) => ({ value: stripLyricTimeTokens(v) }))
       .filter((l) => l.value.length > 0);
     if (line.length > 0) {
       return {

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
+import { createDynamicScopedStorage } from "@/config/storage";
 import type { BackendCapabilities } from "@/services/backend/capabilities";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 // Runtime-detected capability downgrades, persisted per (server, user). The
@@ -45,10 +45,7 @@ const useCapabilityOverridesBase = create<CapabilityOverridesStore>()(
     {
       name: "capabilityOverridesStore",
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
       partialize: (state) => ({ overrides: state.overrides }),

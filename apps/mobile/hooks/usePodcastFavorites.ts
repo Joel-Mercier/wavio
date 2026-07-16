@@ -3,7 +3,7 @@ import { useGetPodcasts } from "@/hooks/backend/usePodcasts";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSyncServerFavorites } from "@/hooks/useServerFavoritesSync";
 import type { PodcastChannel } from "@/services/openSubsonic/types";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 import usePodcasts, {
   type FavoritePodcast,
   podcastFavoritesForScope,

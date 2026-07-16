@@ -51,11 +51,9 @@ export const createDynamicScopedStorage = (
   },
 });
 
-export const getAuthScope = (url: string, username: string) => {
-  const safeUrl = url.replace(/[^a-zA-Z0-9]/g, "_");
-  const safeUsername = username.replace(/[^a-zA-Z0-9]/g, "_");
-  return `${safeUrl}_${safeUsername}`;
-};
+// Scope derivation lives in config/authScope.ts, kept free of native imports so
+// tests and the migration helpers can use the real formula. Resolve the active
+// session's scope with `currentAuthScope()` (stores/auth.ts).
 
 // Logical key for the persisted React Query cache. The physical MMKV key is
 // namespaced per (server, user) scope — see mmkvQueryPersisterStorage in

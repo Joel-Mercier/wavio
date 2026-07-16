@@ -17,6 +17,7 @@ import LocalLibraryInfoDialog from "@/components/auth/LocalLibraryInfoDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -71,13 +72,14 @@ import {
   trustCertificate,
 } from "@/modules/ssl-trust";
 import {
-  authenticateRemote,
+  authenticateWithFallback,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
 import useServers, {
+  cleanOptionalUrl,
   type Server,
   type ServerType,
   type ServerUser,
@@ -188,6 +190,7 @@ export default function LoginScreen() {
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
       paths: (preselectedServer?.paths ?? []) as string[],
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
+      fallbackUrl: preselectedServer?.fallbackUrl ?? "",
     },
     validators: {
       onChange: loginSchema,
@@ -228,18 +231,28 @@ export default function LoginScreen() {
             paths,
           });
           setCurrentServer(server.id);
-          login("local", "local", "", { serverType: "local" });
+          login({
+            serverId: server.id,
+            url: "local",
+            username: "local",
+            password: "",
+            serverType: "local",
+          });
         } else {
           const mtlsAlias = value.mtlsAlias?.trim() || undefined;
+          const fallbackUrl = cleanOptionalUrl(value.fallbackUrl);
           // Register the client cert with the native KeyManager before the
-          // handshake so mTLS servers get it presented on this first request.
+          // handshake so mTLS servers get it presented on this first request —
+          // for both routes, since either may be the one we end up talking to.
           await syncSslClientCertificates({
             url: trimmedUrl,
+            fallbackUrl,
             alias: mtlsAlias,
           });
-          const options = await authenticateRemote(
+          const { options, activeUrl } = await authenticateWithFallback(
             serverType,
             trimmedUrl,
+            fallbackUrl,
             trimmedUsername,
             trimmedPassword,
           );
@@ -250,6 +263,7 @@ export default function LoginScreen() {
             url: trimmedUrl,
             type: serverType,
             mtlsAlias,
+            fallbackUrl,
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
@@ -259,7 +273,19 @@ export default function LoginScreen() {
             password: saveCredentials ? trimmedPassword : undefined,
           });
           setCurrentServer(server.id);
-          login(trimmedUrl, trimmedUsername, trimmedPassword, options);
+          // `activeUrl` may be the fallback: the scope is keyed on serverId, so
+          // which route we signed in through doesn't affect where state lives.
+          login({
+            serverId: server.id,
+            url: activeUrl,
+            username: trimmedUsername,
+            password: trimmedPassword,
+            ...options,
+          });
+          // Register the fallback origin as an iOS proxy upstream now that the
+          // server is saved; without it, streaming over a self-signed fallback
+          // fails silently under AVPlayer.
+          await syncSslProxy();
         }
         toast.show({
           placement: "top",
@@ -338,6 +364,9 @@ export default function LoginScreen() {
     form.setFieldValue("type", server.type);
     form.setFieldValue("paths", server.paths ?? []);
     form.setFieldValue("mtlsAlias", server.mtlsAlias ?? "");
+    // Without this the previously selected server's fallback would leak into
+    // the newly selected one.
+    form.setFieldValue("fallbackUrl", server.fallbackUrl ?? "");
     if (server.type !== "local") {
       setTimeout(() => usernameRef.current?.focus(), 250);
     }
@@ -597,8 +626,19 @@ export default function LoginScreen() {
                       {t("auth.login.saveCredentials")}
                     </CheckboxLabel>
                   </Checkbox>
-                  {Platform.OS === "android" && isSslTrustAvailable() && (
-                    <AdvancedSettingsSection>
+                  {/* The section itself is cross-platform now that it holds the
+                      fallback URL; only the client certificate stays gated on
+                      Android + the native trust module. */}
+                  <AdvancedSettingsSection>
+                    <form.Field name="fallbackUrl">
+                      {(field) => (
+                        <FallbackUrlField
+                          field={field}
+                          placeholder={t("auth.login.fallbackUrlPlaceholder")}
+                        />
+                      )}
+                    </form.Field>
+                    {Platform.OS === "android" && isSslTrustAvailable() && (
                       <form.Field name="mtlsAlias">
                         {(field) => (
                           <form.Subscribe
@@ -616,8 +656,8 @@ export default function LoginScreen() {
                           </form.Subscribe>
                         )}
                       </form.Field>
-                    </AdvancedSettingsSection>
-                  )}
+                    )}
+                  </AdvancedSettingsSection>
                 </>
               )
             }

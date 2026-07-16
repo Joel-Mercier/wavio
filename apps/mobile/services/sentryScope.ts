@@ -1,6 +1,5 @@
 import { setTag, setUser } from "@sentry/react-native";
-import { getAuthScope } from "@/config/storage";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
 
 // Attribute Sentry events to the active (server, user) scope and backend, so an
 // Issue can be tied to "which connection hit it" without shipping the real
@@ -15,13 +14,17 @@ function hashScope(scope: string): string {
   return (hash >>> 0).toString(36);
 }
 
+// `state` is always the live store state (this runs from subscribe and from
+// init with getState()), so currentAuthScope() resolves the same session.
+// The id is keyed on the server id, so it stays stable when a session swaps
+// routes (primary <-> fallback) — same user, same Sentry id.
 function applyScope(state: ReturnType<typeof useAuthBase.getState>): void {
   setTag("serverType", state.serverType);
   if (!state.isAuthenticated) {
     setUser(null);
     return;
   }
-  setUser({ id: hashScope(getAuthScope(state.url, state.username)) });
+  setUser({ id: hashScope(currentAuthScope()) });
 }
 
 /**

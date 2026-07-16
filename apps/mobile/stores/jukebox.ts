@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
+import { createDynamicScopedStorage } from "@/config/storage";
 import type { JukeboxStatus } from "@/services/openSubsonic/types";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 type State = {
@@ -41,10 +41,7 @@ const useJukeboxBase = create<State & Actions>()(
       name: "jukeboxStore",
       version: 1,
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       partialize: (state) => ({ active: state.active, gain: state.gain }),
     },

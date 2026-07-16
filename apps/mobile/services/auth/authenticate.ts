@@ -6,11 +6,13 @@ import {
   isSSLError,
   isSslTrustAvailable,
 } from "@/modules/ssl-trust";
+import { createBareClient } from "@/services/backend/probe";
 import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import {
   computeSubsonicToken,
+  encodePasswordParam,
   generateSalt,
 } from "@/services/openSubsonic/auth";
 import type { ServerType } from "@/stores/servers";
@@ -33,6 +35,7 @@ export type RemoteLoginOptions = {
   } | null;
   subsonicSalt?: string | null;
   subsonicToken?: string | null;
+  useTokenAuth?: boolean;
 };
 
 // Thrown when the server's TLS certificate isn't trusted (self-signed / unknown
@@ -143,29 +146,42 @@ export async function authenticateRemote(
     trimmedPassword,
     subsonicSalt,
   );
-  const rsp = await withSslDetection(trimmedUrl, () =>
-    axios
-      .create({
-        baseURL: trimmedUrl,
-        headers: { "Content-Type": "application/json" },
-      })
-      .get("/rest/ping", {
-        params: {
-          u: trimmedUsername,
-          t: subsonicToken,
-          s: subsonicSalt,
-          v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
-          c: process.env.EXPO_PUBLIC_CLIENT_NAME,
-          f: "json",
-        },
-      }),
+
+  const pingClient = createBareClient(trimmedUrl);
+  const ping = (authParams: Record<string, string>) =>
+    pingClient.get("/rest/ping", {
+      params: {
+        u: trimmedUsername,
+        ...authParams,
+        v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
+        c: process.env.EXPO_PUBLIC_CLIENT_NAME,
+        f: "json",
+      },
+    });
+
+  // Negotiate the auth mechanism: prefer Subsonic token auth (`t`/`s`), but fall
+  // back to password auth (`p`) for servers that reject token auth — LMS/Lyrion's
+  // Subsonic bridge answers OpenSubsonic error 41/42 ("mechanism not supported").
+  let useTokenAuth = true;
+  let rsp = await withSslDetection(trimmedUrl, () =>
+    ping({ t: subsonicToken, s: subsonicSalt }),
   );
+  let subsonicResponse = rsp.data?.["subsonic-response"];
+  if (
+    subsonicResponse?.status !== "ok" &&
+    (subsonicResponse?.error?.code === 41 ||
+      subsonicResponse?.error?.code === 42)
+  ) {
+    useTokenAuth = false;
+    rsp = await ping({ p: encodePasswordParam(trimmedPassword) });
+    subsonicResponse = rsp.data?.["subsonic-response"];
+  }
+
   // A wrong URL (e.g. missing the server's base path) reaches something that
   // isn't Navidrome — a reverse proxy root, a login page, etc. — which answers
   // 200 with a non-Subsonic body. Guard against a missing envelope / error code
   // so we surface the friendly "verify your server" message instead of a raw
   // "Cannot read property 'error' of undefined" TypeError.
-  const subsonicResponse = rsp.data?.["subsonic-response"];
   if (subsonicResponse?.status !== "ok") {
     const code = subsonicResponse?.error?.code;
     const message =
@@ -200,7 +216,73 @@ export async function authenticateRemote(
   return {
     serverType: type,
     navidrome,
-    subsonicSalt,
-    subsonicToken,
+    subsonicSalt: useTokenAuth ? subsonicSalt : null,
+    subsonicToken: useTokenAuth ? subsonicToken : null,
+    useTokenAuth,
   };
+}
+
+/**
+ * A failure where nothing answered: a timeout, DNS failure, refused connection.
+ * An axios error carrying a `response` means the far side *did* reply, so the
+ * URL is reachable and the problem lies elsewhere.
+ */
+function isUnreachableError(err: unknown): boolean {
+  return axios.isAxiosError(err) && !err.response;
+}
+
+/**
+ * Authenticate against a server's primary URL, falling back to its alternative
+ * address when the primary can't be reached at all.
+ *
+ * Wraps `authenticateRemote` rather than extending it: that function targets one
+ * exact URL and stays the retry unit for the certificate-trust flow.
+ *
+ * Only an *unreachable* primary triggers the fallback:
+ * - `SslUntrustedError` is rethrown. It can only be raised when the primary was
+ *   actually reached (withSslDetection completes a handshake to inspect the
+ *   cert), so it means "reachable but untrusted" — the user has to resolve it,
+ *   and quietly using the fallback would hide that.
+ * - A credential/envelope error is rethrown. The primary answered and rejected
+ *   us; the same credentials would be rejected by the fallback too, and falling
+ *   back would replace a precise message with a vague one.
+ */
+export async function authenticateWithFallback(
+  type: ServerType,
+  url: string,
+  fallbackUrl: string | undefined,
+  username: string,
+  password: string,
+): Promise<{ options: RemoteLoginOptions; activeUrl: string }> {
+  const trimmedUrl = url.trim();
+  const trimmedFallback = fallbackUrl?.trim();
+  try {
+    const options = await authenticateRemote(
+      type,
+      trimmedUrl,
+      username,
+      password,
+    );
+    return { options, activeUrl: trimmedUrl };
+  } catch (primaryError) {
+    if (!trimmedFallback || !isUnreachableError(primaryError))
+      throw primaryError;
+    try {
+      const options = await authenticateRemote(
+        type,
+        trimmedFallback,
+        username,
+        password,
+      );
+      return { options, activeUrl: trimmedFallback };
+    } catch (fallbackError) {
+      // The fallback host's certificate isn't trusted yet. Surface *this* error:
+      // it carries the fallback's URL, so the trust-on-first-use dialog prompts
+      // for the right host and the retry then succeeds.
+      if (fallbackError instanceof SslUntrustedError) throw fallbackError;
+      // Otherwise report the primary's failure — that's the URL the user typed
+      // and expects to hear about.
+      throw primaryError;
+    }
+  }
 }

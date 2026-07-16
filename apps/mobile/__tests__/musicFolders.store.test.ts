@@ -10,27 +10,19 @@ jest.mock("@/config/storage", () => {
         mem.delete(name);
       },
     },
-    getAuthScope: (url: string, username: string) => {
-      const safeUrl = url.replace(/[^a-zA-Z0-9]/g, "_");
-      const safeUsername = username.replace(/[^a-zA-Z0-9]/g, "_");
-      return `${safeUrl}_${safeUsername}`;
-    },
   };
 });
 
-const authState = { url: "", username: "" };
+// The scope itself is stores/auth's concern (and is covered there); this suite
+// only needs it to vary, so the hook is stubbed rather than reimplemented.
+const mockAuthState: { scope: string | undefined } = { scope: undefined };
 jest.mock("@/stores/auth", () => ({
-  useAuthBase: Object.assign(
-    (selector: (s: { url: string; username: string }) => unknown) =>
-      selector(authState),
-    { getState: () => authState },
-  ),
+  useCurrentAuthScope: () => mockAuthState.scope,
 }));
 
 import * as React from "react";
 import TestRenderer from "react-test-renderer";
 import {
-  useCurrentAuthScope,
   useCurrentMusicFolderId,
   useMusicFoldersBase,
 } from "@/stores/musicFolders";
@@ -103,43 +95,21 @@ describe("musicFolders store", () => {
   });
 });
 
-describe("useCurrentAuthScope / useCurrentMusicFolderId", () => {
+describe("useCurrentMusicFolderId", () => {
   beforeEach(() => {
-    authState.url = "";
-    authState.username = "";
+    mockAuthState.scope = undefined;
     useMusicFoldersBase.setState({ selections: {} });
   });
 
-  test("useCurrentAuthScope returns undefined when url is missing", () => {
-    authState.url = "";
-    authState.username = "alice";
-    expect(callHook(useCurrentAuthScope)).toBeUndefined();
-  });
-
-  test("useCurrentAuthScope returns undefined when username is missing", () => {
-    authState.url = "https://x.example.com";
-    authState.username = "";
-    expect(callHook(useCurrentAuthScope)).toBeUndefined();
-  });
-
-  test("useCurrentAuthScope derives scope from url + username", () => {
-    authState.url = "https://x.example.com";
-    authState.username = "alice";
-    expect(callHook(useCurrentAuthScope)).toBe("https___x_example_com_alice");
-  });
-
   test("useCurrentMusicFolderId returns undefined when no scope", () => {
-    authState.url = "";
-    authState.username = "";
+    mockAuthState.scope = undefined;
     useMusicFoldersBase.setState({ selections: { anything: "f1" } });
     expect(callHook(useCurrentMusicFolderId)).toBeUndefined();
   });
 
   test("useCurrentMusicFolderId reads selection for the active scope", () => {
-    authState.url = "https://x.example.com";
-    authState.username = "alice";
-    const scope = "https___x_example_com_alice";
-    useMusicFoldersBase.setState({ selections: { [scope]: "folder-9" } });
+    mockAuthState.scope = "srv_1_alice";
+    useMusicFoldersBase.setState({ selections: { srv_1_alice: "folder-9" } });
     expect(callHook(useCurrentMusicFolderId)).toBe("folder-9");
   });
 });

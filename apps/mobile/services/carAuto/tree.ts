@@ -1,5 +1,4 @@
 import i18n from "@/config/i18n";
-import { getAuthScope } from "@/config/storage";
 import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
 import { getAlbumList2, getStarred2 } from "@/services/backend/lists";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
@@ -11,7 +10,7 @@ import type {
   Playlist,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -293,10 +292,9 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
     podcastsState.taddyPodcastsApiKey && podcastsState.taddyPodcastsUserId,
   );
   if (podcastsEnabled) {
-    const { url, username } = useAuthBase.getState();
     const favPodcasts = podcastFavoritesForScope(
       podcastsState.favoritePodcasts,
-      getAuthScope(url, username),
+      currentAuthScope(),
     );
     libraryChildren.push({
       id: "lib:podcasts",

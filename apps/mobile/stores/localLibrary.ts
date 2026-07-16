@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage, getAuthScope } from "@/config/storage";
+import { createDynamicScopedStorage } from "@/config/storage";
 import type { ScanPhase, ScanResult } from "@/services/local/indexer";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
 // Scan state for the on-device local-library feature. The source folders are
@@ -155,10 +155,7 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
     {
       name: "localLibraryStore",
       storage: createJSONStorage(() =>
-        createDynamicScopedStorage(() => {
-          const { url, username } = useAuthBase.getState();
-          return getAuthScope(url, username);
-        }),
+        createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
       // Never persist live scan progress.

@@ -20,8 +20,46 @@ jest.mock("@react-native-community/netinfo", () => ({
   },
 }));
 
-jest.mock("@/services/backend/system", () => ({
-  ping: (opts?: unknown) => mockPing(opts),
+// Models one route probe. Tests drive it by resolving (the route answers) or
+// rejecting (it doesn't). probeUrl itself never throws — it reports a boolean —
+// so the adapter translates a rejection into `false`.
+jest.mock("@/services/backend/probe", () => ({
+  probeUrl: async (url: string) => {
+    try {
+      await mockPing(url);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+}));
+
+jest.mock("@/services/errorReporting", () => ({
+  reportBreadcrumb: () => {},
+  scrubUrl: (url: string) => url,
+}));
+
+// The saved server row behind the session. `fallbackUrl` is undefined by
+// default, so the whole existing suite exercises the single-route case — which
+// must behave exactly as it did before failover existed.
+const mockServer: {
+  id: string;
+  url: string;
+  fallbackUrl: string | undefined;
+  type: string;
+} = {
+  id: "srv-1",
+  url: "http://server.test",
+  fallbackUrl: undefined,
+  type: "navidrome",
+};
+jest.mock("@/stores/servers", () => ({
+  useServersBase: {
+    getState: () => ({
+      getServerById: (id: string) =>
+        id === mockServer.id ? mockServer : undefined,
+    }),
+  },
 }));
 
 jest.mock("@/stores/app", () => ({
@@ -32,12 +70,21 @@ jest.mock("@/stores/app", () => ({
   },
 }));
 
+// The live session. `url` is mutable because failover repoints it — that swap is
+// the observable the failover tests assert on.
+const mockAuthState = {
+  isAuthenticated: true,
+  serverId: "srv-1",
+  url: "http://server.test",
+};
 jest.mock("@/stores/auth", () => ({
   useAuthBase: {
     getState: () => ({
-      isAuthenticated: true,
-      url: "http://server.test",
+      ...mockAuthState,
       logout: mockLogout,
+      setActiveUrl: (url: string) => {
+        mockAuthState.url = url;
+      },
     }),
     // network.ts subscribes to serverType changes; the tests don't exercise a
     // switch, so a no-op subscription that returns a no-op unsubscribe suffices.
@@ -53,6 +100,7 @@ import {
   getServerReachable,
   initConnectionType,
   probeServer,
+  probeServerPreferringPrimary,
   resetServerReachable,
   subscribeConnectionType,
 } from "@/services/network";
@@ -91,6 +139,11 @@ beforeEach(() => {
   mockPing.mockReset();
   mockLogout.mockReset();
   mockAutoSignOut = true;
+  mockAuthState.isAuthenticated = true;
+  mockAuthState.serverId = "srv-1";
+  mockAuthState.url = "http://server.test";
+  mockServer.url = "http://server.test";
+  mockServer.fallbackUrl = undefined;
   // The pre-logout internet corroboration (probeInternetReachable) hits neutral
   // endpoints via global fetch. Default to "internet up" (any endpoint answers)
   // so the server-down path logs out; individual tests override to simulate a
@@ -389,5 +442,142 @@ describe("network handoff grace period", () => {
     jest.advanceTimersByTime(OFFLINE_GRACE_MS);
     // The pending flip was cancelled, so we never committed offline.
     expect(getIsOnline()).toBe(true);
+  });
+});
+
+const PRIMARY = "http://192.168.1.10:4533";
+const FALLBACK = "https://music.example.com";
+
+// Answers for `only`, fails for everything else.
+const onlyReachable = (only: string) =>
+  mockPing.mockImplementation((url: string) => {
+    if (url === only) return Promise.resolve({});
+    return Promise.reject(new Error("ERR_NETWORK"));
+  });
+
+describe("fallback URL failover", () => {
+  beforeEach(() => {
+    mockServer.url = PRIMARY;
+    mockServer.fallbackUrl = FALLBACK;
+    mockAuthState.url = PRIMARY;
+  });
+
+  it("never probes the fallback while the primary answers", async () => {
+    await setDeviceOnline(true);
+    mockPing.mockResolvedValue({});
+    await probeServer();
+    expect(mockPing).toHaveBeenCalledTimes(1);
+    expect(mockPing).toHaveBeenCalledWith(PRIMARY);
+    expect(mockAuthState.url).toBe(PRIMARY);
+  });
+
+  it("swaps to the fallback when the primary stops answering", async () => {
+    await setDeviceOnline(true);
+    onlyReachable(FALLBACK);
+    await probeServer();
+    await flushMicrotasks();
+
+    expect(mockAuthState.url).toBe(FALLBACK);
+    // A round where *some* route answered is a success: no banner, no logout.
+    expect(getServerReachable()).toBe(true);
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("counts a round, not a ping — one dead route must not trip the banner", async () => {
+    await setDeviceOnline(true);
+    onlyReachable(FALLBACK);
+    // Two rounds: four pings, two of which fail. Under per-ping counting this
+    // would have passed FAILURES_BEFORE_UNREACHABLE and shown the banner.
+    await probeServer();
+    await probeServer();
+    await flushMicrotasks();
+    expect(getServerReachable()).toBe(true);
+  });
+
+  it("only reports unreachable once BOTH routes fail", async () => {
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    expect(getServerReachable()).toBe(true); // first failed round: grace window
+    await probeServer();
+    await flushMicrotasks();
+    expect(getServerReachable()).toBe(false);
+  });
+
+  it("only forces a sign-out once both routes have failed repeatedly", async () => {
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    for (let i = 0; i < 3; i++) {
+      await probeServer();
+      await flushMicrotasks();
+    }
+    expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("tries the active fallback first and leaves the primary alone", async () => {
+    await setDeviceOnline(true);
+    mockAuthState.url = FALLBACK;
+    mockPing.mockResolvedValue({});
+    await probeServer();
+    // The steady heartbeat must not keep poking a LAN address that isn't there.
+    expect(mockPing).toHaveBeenCalledTimes(1);
+    expect(mockPing).toHaveBeenCalledWith(FALLBACK);
+  });
+
+  it("returns to the primary when asked to prefer it", async () => {
+    await setDeviceOnline(true);
+    mockAuthState.url = FALLBACK;
+    mockPing.mockResolvedValue({});
+    await probeServer({ preferPrimary: true });
+    expect(mockAuthState.url).toBe(PRIMARY);
+  });
+
+  it("stays on the fallback when a preferred primary is still unreachable", async () => {
+    await setDeviceOnline(true);
+    mockAuthState.url = FALLBACK;
+    onlyReachable(FALLBACK);
+    await probeServer({ preferPrimary: true });
+    await flushMicrotasks();
+
+    expect(mockAuthState.url).toBe(FALLBACK);
+    // Coming home and finding the LAN absent is not a failure of anything.
+    expect(getServerReachable()).toBe(true);
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("throttles primary re-checks across a flurry of triggers", async () => {
+    await setDeviceOnline(true);
+    mockAuthState.url = FALLBACK;
+    onlyReachable(FALLBACK);
+
+    probeServerPreferringPrimary();
+    await flushMicrotasks();
+    const afterFirst = mockPing.mock.calls.length;
+    // The first re-check tried [primary, fallback]; both were probed.
+    expect(mockPing.mock.calls.map((c) => c[0])).toContain(PRIMARY);
+
+    mockPing.mockClear();
+    // A second trigger inside the throttle window (iOS fires `active` in
+    // flurries) must not burn another primary timeout.
+    probeServerPreferringPrimary();
+    await flushMicrotasks();
+    expect(mockPing).toHaveBeenCalledTimes(1);
+    expect(mockPing).toHaveBeenCalledWith(FALLBACK);
+    expect(afterFirst).toBe(2);
+  });
+
+  it("still confirms the current route when the primary re-check is throttled", async () => {
+    await setDeviceOnline(true);
+    mockAuthState.url = FALLBACK;
+    onlyReachable(FALLBACK);
+    probeServerPreferringPrimary();
+    await flushMicrotasks();
+
+    mockPing.mockClear();
+    probeServerPreferringPrimary();
+    await flushMicrotasks();
+    // Throttled means "don't reorder", not "don't probe".
+    expect(getServerReachable()).toBe(true);
+    expect(mockPing).toHaveBeenCalled();
   });
 });

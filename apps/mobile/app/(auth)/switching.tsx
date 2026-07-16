@@ -10,7 +10,7 @@ import { Heading } from "@/components/ui/heading";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { authenticateRemote } from "@/services/auth/authenticate";
+import { authenticateWithFallback } from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
@@ -54,15 +54,20 @@ export default function SwitchingScreen() {
     }
     try {
       setError(false);
-      const options = await authenticateRemote(
+      const { options, activeUrl } = await authenticateWithFallback(
         server.type,
         server.url,
+        server.fallbackUrl,
         user.username,
         user.password,
       );
-      useAuthBase
-        .getState()
-        .login(server.url, user.username, user.password, options);
+      useAuthBase.getState().login({
+        serverId: server.id,
+        url: activeUrl,
+        username: user.username,
+        password: user.password,
+        ...options,
+      });
     } catch (err) {
       reportError(err, {
         area: "auth",

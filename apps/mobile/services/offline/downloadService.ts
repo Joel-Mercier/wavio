@@ -1,9 +1,8 @@
 import { Directory, File, Paths } from "expo-file-system";
-import { getAuthScope } from "@/config/storage";
 import { downloadUrl } from "@/services/backend/streaming";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { useAppBase } from "@/stores/app";
-import { useAuthBase } from "@/stores/auth";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useOffline, {
   type DownloadProgress,
   type OfflineTrack,
@@ -229,7 +228,7 @@ export class OfflineDownloadService {
     if (!authUrl || !username) {
       throw new DownloadCancelledError("No active server");
     }
-    const scope = getAuthScope(authUrl, username);
+    const scope = currentAuthScope();
     // Files live under per-scope subdirectories so the same track id on two
     // different servers doesn't overwrite a single shared file.
     const offlineDir = new Directory(Paths.document, "offline", scope);
@@ -324,8 +323,11 @@ export class OfflineDownloadService {
   clearAllDownloads(): void {
     const offlineStore = useOffline.getState();
     const tracks = offlineStore.getDownloadedTracksList();
-    const { url, username } = useAuthBase.getState();
-    const scope = url && username ? getAuthScope(url, username) : null;
+    const { serverId, username } = useAuthBase.getState();
+    // No signed-in scope means no directory to clear; guard on the scope's
+    // identity fields rather than letting currentAuthScope() return a degenerate
+    // "_" bucket and deleting the wrong directory.
+    const scope = serverId && username ? currentAuthScope() : null;
 
     try {
       for (const track of tracks) {

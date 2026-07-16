@@ -4,7 +4,7 @@ import { useLrclibLyrics } from "@/hooks/lrclib/useLrclibLyrics";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
-import { hasKaraoke } from "@/utils/lyrics";
+import { hasKaraoke, sanitizeStructuredLyrics } from "@/utils/lyrics";
 
 function pickSyncedLyrics(
   list: StructuredLyrics[] | undefined,
@@ -30,7 +30,11 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     { enhanced: true },
     lyricsEligible,
   );
-  const list = backend.data?.lyricsList?.structuredLyrics;
+  const list = useMemo(
+    () =>
+      backend.data?.lyricsList?.structuredLyrics?.map(sanitizeStructuredLyrics),
+    [backend.data],
+  );
   const backendLyrics = useMemo(
     () => pickSyncedLyrics(list?.filter((l) => (l.kind ?? "main") === "main")),
     [list],

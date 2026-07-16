@@ -2,9 +2,11 @@ import NetInfo, {
   type NetInfoState,
   type NetInfoStateType,
 } from "@react-native-community/netinfo";
-import { ping } from "@/services/backend/system";
+import { probeUrl } from "@/services/backend/probe";
+import { reportBreadcrumb, scrubUrl } from "@/services/errorReporting";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import { useServersBase } from "@/stores/servers";
 
 let currentType: NetInfoStateType = "unknown" as NetInfoStateType;
 // Optimistic default — matches the previous per-component useIsOnline behavior
@@ -17,25 +19,33 @@ let isOnline = true;
 // "offline" UI before the first probe resolves.
 let serverReachable = true;
 
-// Probe deadline. Kept well under the axios request timeout so reachability is
-// decided quickly rather than waiting on a real query.
-const PROBE_TIMEOUT_MS = 4000;
 // While the server is unreachable, re-probe on this cadence to detect recovery.
+// This poll never gives up: a route that comes back is adopted on the next tick
+// with no user action. (Other clients that stop retrying after a few attempts
+// strand the user on a "server offline" screen until they force a refresh.)
 const RECOVERY_POLL_MS = 12000;
 // While the server *is* reachable, probe on this (slower) cadence so a server
 // that dies while the app sits open and foregrounded — no offline→online
 // transition, no foreground event, no stream to fail — is still noticed instead
 // of leaving the UI optimistically "online" until the next user action.
 const HEARTBEAT_MS = 30000;
-// A single failed probe right after reconnecting (or a brief server hiccup) is
-// usually just the network not being routable yet, not the server being gone.
-// Stay optimistically reachable and re-probe quickly after the first failure;
-// only surface "unreachable" once this many consecutive probes have failed, so
-// effective-online (and the offline banner) don't flicker on reconnect.
+// A single failed probe round right after reconnecting (or a brief server
+// hiccup) is usually just the network not being routable yet, not the server
+// being gone. Stay optimistically reachable and re-probe quickly after the first
+// failure; only surface "unreachable" once this many consecutive rounds have
+// failed, so effective-online (and the offline banner) don't flicker on
+// reconnect.
 const FAILURES_BEFORE_UNREACHABLE = 2;
 const QUICK_RETRY_MS = 2000;
-// Consecutive failed probes (device online the whole time) before we conclude
-// the server *might* be genuinely gone. NetInfo isConnected only means a link is
+// While pinned to the fallback, only re-check the primary on events that could
+// plausibly mean "you're home again" — a transport change, a reconnect, an app
+// foreground — never on the steady heartbeat, and at most this often. Foreground
+// events in particular arrive in flurries (iOS fires `active` when a
+// control-centre pull or a permission dialog is dismissed), and each unthrottled
+// re-check would burn a full probe timeout on a LAN address that isn't there.
+const PRIMARY_RECHECK_MIN_INTERVAL_MS = 60000;
+// Consecutive failed probe rounds (device online the whole time) before we
+// conclude the server *might* be genuinely gone. NetInfo isConnected only means a link is
 // attached, not that packets actually route (weak signal, captive/filtered
 // networks) — so before logging out we corroborate against the wider internet
 // (probeInternetReachable). A failure here means "device link attached but
@@ -73,6 +83,7 @@ let pendingOfflineTimer: ReturnType<typeof setTimeout> | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
 let internetCheckInFlight = false;
+let lastPrimaryRecheckAt = 0;
 
 export function getConnectionType(): NetInfoStateType {
   return currentType;
@@ -219,10 +230,47 @@ function commitOffline() {
   consecutiveProbeFailures = 0;
 }
 
-// Pings the active server with a short deadline and updates serverReachable.
-// No-ops when the device is offline (device connectivity dominates) or when no
-// server is signed in. Safe to call repeatedly — overlapping probes are ignored.
-export async function probeServer(): Promise<void> {
+// The routes to try this round, best-first.
+//
+// A server with no fallback yields exactly one candidate — the active URL — so
+// every timing and counter below behaves identically to before this feature
+// existed. That equivalence is the point: failover must not change the
+// single-route case at all.
+function orderCandidates(preferPrimary: boolean): string[] {
+  const { serverId, url } = useAuthBase.getState();
+  const server = useServersBase.getState().getServerById(serverId);
+  const primary = server?.url;
+  const fallback = server?.fallbackUrl;
+  if (!primary || !fallback) return [url];
+  // The primary is preferred whenever we have a reason to think it might work:
+  // it's normally the LAN route, which is faster and doesn't round-trip through
+  // the user's upload bandwidth.
+  const onPrimary = url === primary;
+  return onPrimary || preferPrimary ? [primary, fallback] : [fallback, primary];
+}
+
+/**
+ * Try each of the active server's routes and update serverReachable.
+ *
+ * The unit of work is a *round*, not a single ping: `consecutiveProbeFailures`
+ * counts rounds in which **no** route answered. That keeps the two existing
+ * gates (FAILURES_BEFORE_UNREACHABLE, DISCONNECT_AFTER_FAILURES) meaningful
+ * unchanged — the banner and the forced sign-out only ever fire when the server
+ * is unreachable by every route we know.
+ *
+ * Candidates are tried sequentially rather than raced: racing would double the
+ * request volume on every heartbeat forever, and a double answer would be
+ * resolved in the primary's favour anyway. Sequential costs nothing in the happy
+ * path, where the first candidate answers.
+ *
+ * No-ops when the device is offline (device connectivity dominates) or when no
+ * server is signed in. Safe to call repeatedly — overlapping rounds are ignored.
+ */
+export async function probeServer({
+  preferPrimary = false,
+}: {
+  preferPrimary?: boolean;
+} = {}): Promise<void> {
   if (probeInFlight) return;
   const { isAuthenticated, url, serverType } = useAuthBase.getState();
   // No server to ping for an on-device library — mark it reachable so the
@@ -235,31 +283,24 @@ export async function probeServer(): Promise<void> {
   if (!isAuthenticated || !url) return;
 
   probeInFlight = true;
-  const controller = new AbortController();
-  const abortTimer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  // Hard deadline independent of the request. If a ping never settles — e.g. a
-  // socket wedged by a network change that ignores the abort — `await ping`
-  // could hang forever, leaving probeInFlight stuck true so every later probe
-  // (including the recovery poll) no-ops and the offline banner freezes on
-  // "server unreachable" with no failure count and no logout. The race
-  // guarantees probeServer always settles and resets probeInFlight.
-  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
-  const deadline = new Promise<never>((_, reject) => {
-    deadlineTimer = setTimeout(
-      () => reject(new Error("probe deadline exceeded")),
-      PROBE_TIMEOUT_MS + 1000,
-    );
-  });
   try {
-    await Promise.race([ping({ signal: controller.signal }), deadline]);
-    consecutiveProbeFailures = 0;
-    cancelQuickReprobe();
-    setServerReachable(true);
-    // Keep probing on the slow heartbeat cadence so a later outage is noticed
-    // even with no foreground / connectivity event to trigger a probe.
-    // Idempotent, so repeated successful probes don't stack timers.
-    startHeartbeat();
-  } catch {
+    // probeUrl owns its own deadline and never throws, so a round always
+    // settles and probeInFlight can't wedge.
+    for (const candidate of orderCandidates(preferPrimary)) {
+      if (!(await probeUrl(candidate))) continue;
+      if (candidate !== useAuthBase.getState().url) {
+        adoptRoute(candidate);
+      }
+      consecutiveProbeFailures = 0;
+      cancelQuickReprobe();
+      setServerReachable(true);
+      // Keep probing on the slow heartbeat cadence so a later outage is noticed
+      // even with no foreground / connectivity event to trigger a probe.
+      // Idempotent, so repeated successful rounds don't stack timers.
+      startHeartbeat();
+      return;
+    }
+    // Nothing answered.
     consecutiveProbeFailures += 1;
     if (consecutiveProbeFailures >= FAILURES_BEFORE_UNREACHABLE) {
       // Confirmed: flip to unreachable (surfaces the banner, starts the
@@ -267,7 +308,7 @@ export async function probeServer(): Promise<void> {
       cancelQuickReprobe();
       setServerReachable(false);
     } else {
-      // First failure — likely the network isn't routable yet right after a
+      // First failed round — likely the network isn't routable yet right after a
       // reconnect. Stay optimistically reachable and re-probe quickly to confirm
       // before flipping the UI to "unreachable".
       scheduleQuickReprobe();
@@ -276,10 +317,42 @@ export async function probeServer(): Promise<void> {
       void disconnectUnreachable();
     }
   } finally {
-    clearTimeout(abortTimer);
-    clearTimeout(deadlineTimer);
     probeInFlight = false;
   }
+}
+
+// Point the session at a different route for the same server. Only `url` moves:
+// the storage scope is keyed on the server id, so nothing rehydrates and the
+// queue, downloads and cache stay exactly where they are.
+function adoptRoute(url: string): void {
+  const from = useAuthBase.getState().url;
+  useAuthBase.getState().setActiveUrl(url);
+  reportBreadcrumb("network", "route-swap", {
+    from: scrubUrl(from),
+    to: scrubUrl(url),
+  });
+}
+
+// Should this trigger try the primary first? Bounded by
+// PRIMARY_RECHECK_MIN_INTERVAL_MS; when throttled the caller still probes, just
+// without reordering — reachability of the current route still needs confirming.
+function shouldRecheckPrimary(): boolean {
+  const now = Date.now();
+  if (now - lastPrimaryRecheckAt < PRIMARY_RECHECK_MIN_INTERVAL_MS)
+    return false;
+  lastPrimaryRecheckAt = now;
+  return true;
+}
+
+/**
+ * Probe triggered by an event that might mean the primary route is usable again
+ * (a transport change, a reconnect, an app foreground). This is the *only* way
+ * back to the primary once we're on the fallback — the heartbeat deliberately
+ * never re-checks it, so a LAN address that isn't there costs nothing while
+ * you're away.
+ */
+export function probeServerPreferringPrimary(): void {
+  void probeServer({ preferPrimary: shouldRecheckPrimary() });
 }
 
 // Races the neutral endpoints and resolves true as soon as ONE answers (any
@@ -358,6 +431,9 @@ export function resetServerReachable(): void {
   cancelQuickReprobe();
   cancelPendingOffline();
   consecutiveProbeFailures = 0;
+  // A new server gets a fresh primary re-check budget; the previous server's
+  // throttle must not suppress the first one.
+  lastPrimaryRecheckAt = 0;
   if (!serverReachable) {
     serverReachable = true;
     for (const cb of reachableListeners) cb();
@@ -376,12 +452,15 @@ function applyState(state: NetInfoState) {
     // remote server reachable on both transports; a LAN server that's genuinely
     // gone is caught promptly. Skip the very first event after cold start
     // (prevType "unknown") — auth/cache restore already kicks a probe there.
+    //
+    // This is also the handoff that carries you off the LAN (and back onto it),
+    // so it's the main trigger that re-checks the primary route.
     if (
       nextOnline &&
       isOnline &&
       prevType !== ("unknown" as NetInfoStateType)
     ) {
-      void probeServer();
+      probeServerPreferringPrimary();
     }
   }
   if (nextOnline) {
@@ -400,7 +479,9 @@ function applyState(state: NetInfoState) {
         serverReachable = true;
         for (const cb of reachableListeners) cb();
       }
-      void probeServer();
+      // Connectivity is back, possibly on a different network — the primary may
+      // be reachable again.
+      probeServerPreferringPrimary();
     }
   } else if (isOnline && !pendingOfflineTimer) {
     // NetInfo reports the device disconnected, but a transport handoff briefly

@@ -4,7 +4,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSyncServerFavorites } from "@/hooks/useServerFavoritesSync";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { useCurrentAuthScope } from "@/stores/musicFolders";
+import { useCurrentAuthScope } from "@/stores/auth";
 import useRadioStations, {
   type FavoriteRadioStation,
   radioFavoritesForScope,

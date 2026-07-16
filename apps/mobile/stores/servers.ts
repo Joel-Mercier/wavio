@@ -19,7 +19,48 @@ export const serverFormSchema = z.object({
   type: serverTypeSchema,
   // Android KeyChain alias for mTLS client-cert auth; presence enables mTLS.
   mtlsAlias: z.string().trim().optional(),
+  // Alternative address for the *same* server — see `Server.fallbackUrl`.
+  fallbackUrl: z.string().trim().optional(),
 });
+
+// `UrlInputField` always emits `<protocol><host>`, so clearing a URL field
+// leaves the bare protocol behind rather than an empty string — and
+// `z.url().safeParse("https://")` fails. For a required field that error is
+// correct (the URL really is missing), but for the optional fallback it would
+// block submit with no way to explain why. Treat a bare protocol as blank.
+const BARE_PROTOCOL = /^https?:\/\/$/;
+
+export const isBlankUrlInput = (value: string | undefined | null): boolean => {
+  const trimmed = (value ?? "").trim();
+  return !trimmed || BARE_PROTOCOL.test(trimmed);
+};
+
+/** Normalize an optional URL field to `string | undefined` for the store. */
+export const cleanOptionalUrl = (
+  value: string | undefined | null,
+): string | undefined =>
+  isBlankUrlInput(value) ? undefined : (value ?? "").trim();
+
+// Shared by every form's superRefine: the fallback is optional, but a non-blank
+// one still has to be a real URL.
+export function refineFallbackUrl(
+  fallbackUrl: string | undefined,
+  ctx: z.RefinementCtx,
+): void {
+  if (isBlankUrlInput(fallbackUrl)) return;
+  const parsed = z
+    .url()
+    .min(1)
+    .trim()
+    .safeParse((fallbackUrl ?? "").trim());
+  if (!parsed.success) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["fallbackUrl"],
+      message: parsed.error.issues[0]?.message,
+    });
+  }
+}
 
 // Add-server form variant: `local` servers have no name/URL (auto-named, fixed
 // sentinel URL) and only carry filesystem `paths`, so name/url are validated for
@@ -34,6 +75,8 @@ export const addServerFormSchema = z
     // Required (empty = no cert) so the inferred input type matches the form's
     // string default; presence of a non-empty alias enables mTLS.
     mtlsAlias: z.string().trim(),
+    // Required (empty = none) for the same reason; validated in the refine.
+    fallbackUrl: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -53,6 +96,7 @@ export const addServerFormSchema = z
         message: url.error.issues[0]?.message,
       });
     }
+    refineFallbackUrl(data.fallbackUrl, ctx);
   });
 
 // Edit-server form variant: name is always required (editable for every type,
@@ -65,6 +109,7 @@ export const editServerFormSchema = z
     type: serverTypeSchema,
     paths: z.array(z.string()),
     mtlsAlias: z.string().trim(),
+    fallbackUrl: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -76,6 +121,7 @@ export const editServerFormSchema = z
         message: url.error.issues[0]?.message,
       });
     }
+    refineFallbackUrl(data.fallbackUrl, ctx);
   });
 
 export const serverUserSchema = z.object({
@@ -100,6 +146,12 @@ export type Server = {
   // alias is stored; the private key stays in the OS keystore. Its presence is
   // what enables mTLS for this server. See modules/ssl-trust.
   mtlsAlias?: string;
+  // Optional second address for the *same* server, typically a public domain
+  // when `url` is a LAN IP. Used when `url` can't be reached (see
+  // services/network.ts). Both are routes to one server, never two servers:
+  // credentials and content are assumed identical, and only `id` identifies the
+  // session — neither URL is part of the storage scope.
+  fallbackUrl?: string;
 };
 
 export type ServerUser = {
@@ -119,6 +171,7 @@ interface ServersStore {
     type?: ServerType;
     paths?: string[];
     mtlsAlias?: string;
+    fallbackUrl?: string;
   }) => Server;
   editServer: (
     id: string,
@@ -128,6 +181,7 @@ interface ServersStore {
       type?: ServerType;
       paths?: string[];
       mtlsAlias?: string;
+      fallbackUrl?: string;
     },
   ) => void;
   removeServer: (id: string) => void;
@@ -149,10 +203,11 @@ const useServersBase = create<ServersStore>()(
     (set, get) => ({
       servers: [],
       users: [],
-      addServer: ({ name, url, type, paths, mtlsAlias }) => {
+      addServer: ({ name, url, type, paths, mtlsAlias, fallbackUrl }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
         const cleanAlias = mtlsAlias?.trim() || undefined;
+        const cleanFallback = cleanOptionalUrl(fallbackUrl);
         const existing = get().servers.find((s) => s.url === trimmedUrl);
         if (existing) {
           const patch: Partial<Server> = {};
@@ -160,6 +215,12 @@ const useServersBase = create<ServersStore>()(
           if (paths) patch.paths = paths;
           if (mtlsAlias !== undefined && existing.mtlsAlias !== cleanAlias) {
             patch.mtlsAlias = cleanAlias;
+          }
+          if (
+            fallbackUrl !== undefined &&
+            existing.fallbackUrl !== cleanFallback
+          ) {
+            patch.fallbackUrl = cleanFallback;
           }
           if (Object.keys(patch).length > 0) {
             set((state) => ({
@@ -180,6 +241,7 @@ const useServersBase = create<ServersStore>()(
           type: type ?? "navidrome",
           ...(paths ? { paths } : {}),
           ...(cleanAlias ? { mtlsAlias: cleanAlias } : {}),
+          ...(cleanFallback ? { fallbackUrl: cleanFallback } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -204,6 +266,9 @@ const useServersBase = create<ServersStore>()(
                   ...(patch.paths !== undefined ? { paths: patch.paths } : {}),
                   ...(patch.mtlsAlias !== undefined
                     ? { mtlsAlias: patch.mtlsAlias.trim() || undefined }
+                    : {}),
+                  ...(patch.fallbackUrl !== undefined
+                    ? { fallbackUrl: cleanOptionalUrl(patch.fallbackUrl) }
                     : {}),
                 }
               : s,
