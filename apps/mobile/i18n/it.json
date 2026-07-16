@@ -26,7 +26,7 @@
 				"moreFrom": "Altro di",
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
-				"playErrorMessage": "An error occurred while starting playback",
+				"playErrorMessage": "Si è verificato un errore durante l'avvio della riproduzione",
 				"tabs": {
 					"music": "Musica",
 					"podcasts": "Podcast",
@@ -561,19 +561,19 @@
 				"title": "Impostazioni",
 				"menu": {
 					"playback": {
-						"title": "Playback & audio",
-						"description": "Audio quality, replay gain, equalizer"
+						"title": "Riproduzione & audio",
+						"description": "Qualità audio, replay gain, equalizzatore"
 					},
 					"library": {
-						"title": "Music library",
-						"description": "Scan your library and view its status"
+						"title": "Libreria musicale",
+						"description": "Scansiona la tua libreria e visualizza lo stato"
 					},
 					"downloads": {
-						"title": "Downloads & offline",
-						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+						"title": "Download & offline",
+						"description": "Modalità offline, download via Wi-Fi, gestione download"
 					},
 					"appearance": {
-						"title": "Appearance",
+						"title": "Aspetto",
 						"description": "Lingua, selezione home, feedback aptico"
 					},
 					"podcasts": {
