@@ -570,6 +570,44 @@
 			},
 			"settings": {
 				"title": "Настройки",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "Подкасты",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "Интернет-радио",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "Резервное копирование и восстановление",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "Безопасность",
+						"description": "Доверенные сертификаты"
+					}
+				},
 				"offlineSettings": {
 					"title": "Офлайн",
 					"offlineModeLabel": "Офлайн-режим",
