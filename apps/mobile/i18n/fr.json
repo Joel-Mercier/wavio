@@ -1040,7 +1040,9 @@
 					"artist": "Lecture depuis l'artiste",
 					"likedSongs": "Lecture depuis les titres aimés",
 					"folder": "Lecture depuis le dossier",
-					"similar": "Lecture depuis les titres similaires"
+					"similar": "Lecture depuis les titres similaires",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Ajouter à la playlist",
 				"playNext": "Ajouter à la file d'attente",
