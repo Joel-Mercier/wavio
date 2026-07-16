@@ -26,6 +26,7 @@
 				"moreFrom": "Altro di",
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "Musica",
 					"podcasts": "Podcast",
