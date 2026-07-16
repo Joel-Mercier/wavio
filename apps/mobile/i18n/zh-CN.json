@@ -552,6 +552,44 @@
 			},
 			"settings": {
 				"title": "设置",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "播客",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "网络电台",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "备份与恢复",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "安全",
+						"description": "受信任的证书"
+					}
+				},
 				"offlineSettings": {
 					"title": "离线模式",
 					"offlineModeLabel": "启用离线模式",
