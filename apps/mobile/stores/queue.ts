@@ -11,7 +11,9 @@ export type QueueSource = {
     | "likedSongs"
     | "folder"
     | "similar"
-    | "mostPlayed";
+    | "mostPlayed"
+    | "albumList"
+    | "playlistList";
   name: string;
   // Present for navigable sources (album/playlist/artist/folder)
   id?: string;

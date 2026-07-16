@@ -72,6 +72,8 @@ export default function SimilarSongsScreen() {
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -79,15 +81,14 @@ export default function SimilarSongsScreen() {
       return;
     }
     if (!songs || songs.length === 0) return;
-    useQueue.getState().setShuffle(false);
-    playTracks(songs.map(childToTrack), 0, { source: similarSource });
+    playTracks(songs.map(childToTrack), 0, {
+      shuffleFromRandom: true,
+      source: similarSource,
+    });
   };
 
   const handleShufflePress = () => {
-    if (!songs || songs.length === 0) return;
-    useQueue.getState().setShuffle(true);
-    const startIndex = Math.floor(Math.random() * songs.length);
-    playTracks(songs.map(childToTrack), startIndex, { source: similarSource });
+    setShuffle(!shuffle);
   };
 
   return (
@@ -176,7 +177,10 @@ export default function SimilarSongsScreen() {
               </HStack>
               <HStack className="items-center justify-end">
                 <HStack className="items-center gap-x-4">
-                  <ShuffleToggle active={false} onPress={handleShufflePress} />
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={handleShufflePress}
+                  />
                   <PlayPauseButton
                     isPlaying={isPlayingFromList && isPlaying}
                     onPress={handlePlayPress}

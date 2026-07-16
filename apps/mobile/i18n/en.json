@@ -1041,7 +1041,9 @@
 					"artist": "Playing from artist",
 					"likedSongs": "Playing from liked songs",
 					"folder": "Playing from folder",
-					"similar": "Playing from similar songs"
+					"similar": "Playing from similar songs",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Add to playlist",
 				"playNext": "Play next",
