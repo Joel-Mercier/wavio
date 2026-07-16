@@ -1062,6 +1062,7 @@
 				"addServer": "添加服务器",
 				"namePlaceholder": "请输入服务器名称",
 				"urlPlaceholder": "请输入服务器地址",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "请输入服务器用户名",
 				"passwordPlaceholder": "请输入服务器密码",
 				"editServer": "编辑服务器",
@@ -1082,6 +1083,7 @@
 			},
 			"shared": {
 				"advancedSettings": "Advanced settings",
+				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
 				"cancel": "取消",
 				"close": "关闭",
 				"create": "创建",
@@ -1201,6 +1203,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "本地音乐库",
 				"urlPlaceholder": "请输入服务器地址",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "请输入用户名",
 				"passwordPlaceholder": "请输入密码",
 				"choice": "或手动输入服务器信息",

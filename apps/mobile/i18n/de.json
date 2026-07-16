@@ -1076,6 +1076,7 @@
 				"addServer": "Server hinzufügen",
 				"namePlaceholder": "Servernamen eingeben",
 				"urlPlaceholder": "Server-URL eingeben",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Benutzernamen für den Server eingeben",
 				"passwordPlaceholder": "Passwort für den Server eingeben",
 				"editServer": "Server bearbeiten",
@@ -1096,6 +1097,7 @@
 			},
 			"shared": {
 				"advancedSettings": "Erweiterte Einstellungen",
+				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
 				"cancel": "Abbrechen",
 				"close": "Schließen",
 				"create": "Erstellen",
@@ -1229,6 +1231,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Lokale Bibliothek",
 				"urlPlaceholder": "Server-URL eingeben",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Benutzernamen eingeben",
 				"passwordPlaceholder": "Passwort eingeben",
 				"choice": "Oder geben Sie Ihre Serverdaten ein",

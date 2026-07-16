@@ -1076,6 +1076,7 @@
 				"addServer": "Aggiungi server",
 				"namePlaceholder": "Inserisci il nome del server",
 				"urlPlaceholder": "Inserisci l'URL del server",
+				"fallbackUrlPlaceholder": "URL del server di riserva (facoltativo)",
 				"usernamePlaceholder": "Inserisci il nome utente del server",
 				"passwordPlaceholder": "Inserisci la password del server",
 				"editServer": "Modifica server",
@@ -1096,6 +1097,7 @@
 			},
 			"shared": {
 				"advancedSettings": "Impostazioni avanzate",
+				"fallbackUrlHelp": "Viene utilizzato quando l'URL principale non è raggiungibile. Deve puntare allo stesso server.",
 				"cancel": "Annulla",
 				"close": "Chiudi",
 				"create": "Crea",
@@ -1229,6 +1231,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Biblioteca comunale",
 				"urlPlaceholder": "Inserisci l'URL del server",
+				"fallbackUrlPlaceholder": "URL del server di riserva (facoltativo)",
 				"usernamePlaceholder": "Inserisci il nome utente",
 				"passwordPlaceholder": "Inserisci la password utente",
 				"choice": "Oppure inserisci i dati del tuo server",

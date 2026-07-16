@@ -51,7 +51,7 @@
 				"clearRecentSearches": "Очистить всё",
 				"sort": {
 					"alphabetical": "По алфавиту",
-					"trackCount": "Tracks",
+					"trackCount": "Треки",
 					"albumCount": "Альбомы"
 				}
 			},
@@ -1104,6 +1104,7 @@
 				"addServer": "Добавить сервер",
 				"namePlaceholder": "Название сервера",
 				"urlPlaceholder": "URL сервера",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Имя пользователя",
 				"passwordPlaceholder": "Пароль",
 				"editServer": "Редактировать сервер",
@@ -1124,6 +1125,7 @@
 			},
 			"shared": {
 				"advancedSettings": "Расширенные настройки",
+				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
 				"cancel": "Отмена",
 				"close": "Закрыть",
 				"create": "Создать",
@@ -1285,6 +1287,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Локальная медиатека",
 				"urlPlaceholder": "URL сервера",
+				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Имя пользователя",
 				"passwordPlaceholder": "Пароль",
 				"choice": "Или введите данные сервера вручную",
