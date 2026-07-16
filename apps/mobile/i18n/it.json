@@ -1040,7 +1040,9 @@
 					"artist": "Riproduzione dall'artista",
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"folder": "Riproduzione dalla cartella",
-					"similar": "Brani simili"
+					"similar": "Brani simili",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Aggiungi alla playlist",
 				"playNext": "Riproduci successivo",
