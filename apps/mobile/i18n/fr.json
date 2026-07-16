@@ -26,6 +26,7 @@
 				"moreFrom": "Plus de",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Stations de radio en ligne",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "Musique",
 					"podcasts": "Podcasts",
