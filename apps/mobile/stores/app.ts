@@ -264,7 +264,7 @@ export const useAppBase = create<AppStore>()(
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {
         set({ downloadsWifiOnly });
       },
-      autoSignOutOnServerUnreachable: true,
+      autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
         set({ autoSignOutOnServerUnreachable: enabled });
       },
@@ -327,7 +327,7 @@ export const useAppBase = create<AppStore>()(
     }),
     {
       name: "app",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => zustandStorage),
       // v0 persisted libraryFilter as a single string (or null); it is now a
       // multi-select array. Wrap an existing selection into a one-element array.
@@ -340,6 +340,13 @@ export const useAppBase = create<AppStore>()(
             typeof state.libraryFilter === "string"
               ? [state.libraryFilter]
               : [];
+        }
+        // v1 defaulted autoSignOutOnServerUnreachable to true; the default is
+        // now off, and persisted true was almost always the old default rather
+        // than a deliberate choice — reset it so unreachable behaves like
+        // offline unless the user re-enables auto sign-out.
+        if (version < 2) {
+          state.autoSignOutOnServerUnreachable = false;
         }
         return state as AppStore;
       },

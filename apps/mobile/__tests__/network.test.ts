@@ -3,8 +3,8 @@ const mockAddEventListener = jest.fn();
 const mockPing = jest.fn();
 const mockLogout = jest.fn();
 // Controls the auto-sign-out setting read by disconnectUnreachable. Mutable so
-// tests can toggle the opt-out; reset to the default (on) in beforeEach.
-let mockAutoSignOut = true;
+// tests can opt in to the logout path; reset to the default (off) in beforeEach.
+let mockAutoSignOut = false;
 // Stands in for the global fetch used by the pre-logout internet corroboration.
 let mockGlobalFetch: jest.Mock;
 
@@ -138,7 +138,7 @@ beforeEach(() => {
   mockAddEventListener.mockReset();
   mockPing.mockReset();
   mockLogout.mockReset();
-  mockAutoSignOut = true;
+  mockAutoSignOut = false;
   mockAuthState.isAuthenticated = true;
   mockAuthState.serverId = "srv-1";
   mockAuthState.url = "http://server.test";
@@ -284,7 +284,22 @@ describe("server reachability probe", () => {
     expect(getIsEffectivelyOnline()).toBe(true);
   });
 
+  it("never logs out by default — unreachable behaves like offline", async () => {
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    await probeServer();
+    await probeServer();
+    await flushMicrotasks();
+    // Default is auto sign-out off: the banner shows, queries pause, but the
+    // session and cached content survive an unreachable server indefinitely.
+    expect(mockLogout).not.toHaveBeenCalled();
+    expect(getServerReachable()).toBe(false);
+    expect(getIsEffectivelyOnline()).toBe(false);
+  });
+
   it("logs out after repeated probe failures when the internet is reachable", async () => {
+    mockAutoSignOut = true;
     await setDeviceOnline(true);
     mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
     await probeServer();
@@ -300,6 +315,7 @@ describe("server reachability probe", () => {
   });
 
   it("does not log out if a probe succeeds before the threshold", async () => {
+    mockAutoSignOut = true;
     await setDeviceOnline(true);
     mockPing.mockRejectedValueOnce(new Error("ERR_NETWORK"));
     await probeServer();
@@ -335,6 +351,12 @@ describe("server reachability probe", () => {
 });
 
 describe("internet-corroborated logout", () => {
+  // The logout path is opt-in since the default became off; enable it so these
+  // tests exercise the corroboration logic rather than the opt-out gate.
+  beforeEach(() => {
+    mockAutoSignOut = true;
+  });
+
   it("keeps the session on a weak/restricted link where no endpoint answers (issue #41)", async () => {
     // The device link is attached (isConnected) but nothing actually routes —
     // both the server probe and every neutral internet endpoint fail.
@@ -457,6 +479,7 @@ const onlyReachable = (only: string) =>
 
 describe("fallback URL failover", () => {
   beforeEach(() => {
+    mockAutoSignOut = true;
     mockServer.url = PRIMARY;
     mockServer.fallbackUrl = FALLBACK;
     mockAuthState.url = PRIMARY;

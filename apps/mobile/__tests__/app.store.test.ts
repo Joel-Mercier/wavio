@@ -164,6 +164,29 @@ describe("app store", () => {
     expect(persisted.state.queueSyncPriority).toBe("server");
   });
 
+  it("migrates v1 persisted state to auto sign-out off", async () => {
+    const storage = (
+      jest.requireMock("@/config/storage") as {
+        zustandStorage: {
+          setItem: (k: string, v: string) => void;
+          getItem: (k: string) => string | null;
+        };
+      }
+    ).zustandStorage;
+    storage.setItem(
+      "app",
+      JSON.stringify({
+        state: { autoSignOutOnServerUnreachable: true, libraryFilter: [] },
+        version: 1,
+      }),
+    );
+    await useAppBase.persist.rehydrate();
+    expect(useAppBase.getState().autoSignOutOnServerUnreachable).toBe(false);
+    const persisted = JSON.parse(storage.getItem("app") as string);
+    expect(persisted.version).toBe(2);
+    expect(persisted.state.autoSignOutOnServerUnreachable).toBe(false);
+  });
+
   it("partialize excludes showDrawer from persisted state", async () => {
     useAppBase.getState().setShowDrawer(true);
     useAppBase.getState().setShowAddTab(true);
