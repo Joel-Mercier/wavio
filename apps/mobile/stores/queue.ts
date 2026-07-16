@@ -80,6 +80,31 @@ interface QueueStore {
   __reset: () => void;
 }
 
+// Global bound on materialized queue size. The queue is persisted to MMKV as a
+// single JSON blob on every queue-reference change, and every entry carries
+// full track metadata — an uncapped "play everything" (a huge playlist, all
+// saved playlists at once) would balloon memory and re-serialize megabytes per
+// write. Bulk loads keep a cap-sized window around the requested start track
+// (what will actually play); enqueues fill only the remaining capacity.
+export const MAX_QUEUE_TRACKS = 1000;
+
+// Window of at most MAX_QUEUE_TRACKS containing `startIndex`. The window starts
+// at the requested track so everything ahead of it survives; near the tail it
+// is pulled back so the window stays full. Entries dropped behind the start are
+// the ones playback would only reach via "previous"/repeat-all wrap.
+function capQueueWindow(
+  tracks: QueueTrack[],
+  startIndex: number | null,
+): { tracks: QueueTrack[]; startIndex: number | null } {
+  if (tracks.length <= MAX_QUEUE_TRACKS) return { tracks, startIndex };
+  const target = Math.max(0, Math.min(startIndex ?? 0, tracks.length - 1));
+  const start = Math.min(target, tracks.length - MAX_QUEUE_TRACKS);
+  return {
+    tracks: tracks.slice(start, start + MAX_QUEUE_TRACKS),
+    startIndex: startIndex == null ? null : target - start,
+  };
+}
+
 const initialQueueState = {
   queue: [] as QueueTrack[],
   currentIndex: null as number | null,
@@ -140,18 +165,21 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
 
   setQueue: (tracks, startIndex = 0, source = null) => {
     set((state) => {
+      const capped = capQueueWindow(tracks, startIndex);
+      const nextTracks = capped.tracks;
+      const nextStart = capped.startIndex;
       // When replacing the queue, drop context if it no longer applies
-      const newIds = new Set(tracks.map((t) => t.id));
+      const newIds = new Set(nextTracks.map((t) => t.id));
       const nextContext = state.contextIds
         ? state.contextIds.filter((id) => newIds.has(id))
         : null;
       const base: Partial<QueueStore> = {
-        queue: [...tracks],
+        queue: [...nextTracks],
         currentIndex:
-          tracks.length === 0
+          nextTracks.length === 0
             ? null
-            : startIndex != null
-              ? Math.max(0, Math.min(startIndex, tracks.length - 1))
+            : nextStart != null
+              ? Math.max(0, Math.min(nextStart, nextTracks.length - 1))
               : 0,
         contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
         source,
@@ -310,7 +338,11 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
 
   enqueueNext: (track) => {
     set((state) => {
-      const items = Array.isArray(track) ? track : [track];
+      // Fill only the remaining capacity; overflow is dropped from the tail of
+      // the incoming batch.
+      const capacity = Math.max(0, MAX_QUEUE_TRACKS - state.queue.length);
+      const items = (Array.isArray(track) ? track : [track]).slice(0, capacity);
+      if (items.length === 0) return state;
       const insertAt =
         state.currentIndex != null
           ? state.currentIndex + 1
@@ -343,7 +375,9 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
 
   enqueueEnd: (track) => {
     set((state) => {
-      const items = Array.isArray(track) ? track : [track];
+      const capacity = Math.max(0, MAX_QUEUE_TRACKS - state.queue.length);
+      const items = (Array.isArray(track) ? track : [track]).slice(0, capacity);
+      if (items.length === 0) return state;
       const nextQueue = state.queue.concat(items);
       // Keep contextIds as-is; they are based on ids and remain valid
       const base: Partial<QueueStore> = {
@@ -369,7 +403,12 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   },
 
   playNow: (tracks, startIndex = 0, source = null) => {
-    const items = Array.isArray(tracks) ? tracks : [tracks];
+    const capped = capQueueWindow(
+      Array.isArray(tracks) ? tracks : [tracks],
+      startIndex,
+    );
+    const items = capped.tracks;
+    const cappedStart = capped.startIndex ?? 0;
     set((state) => {
       const newIds = new Set(items.map((t) => t.id));
       const nextContext = state.contextIds
@@ -380,7 +419,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         currentIndex:
           items.length === 0
             ? null
-            : Math.max(0, Math.min(startIndex, items.length - 1)),
+            : Math.max(0, Math.min(cappedStart, items.length - 1)),
         contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
         source,
       };

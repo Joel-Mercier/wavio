@@ -18,12 +18,14 @@ import { Box } from "@/components/ui/box";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useIsPlaying } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { getPlaylist } from "@/services/backend/playlists";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
+import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import { goBackOrHome } from "@/utils/navigation";
 import { shuffleWithSeed } from "@/utils/shuffle";
 import EmptyDisplay from "../EmptyDisplay";
@@ -51,6 +53,7 @@ export default function YourPlaylistsDetail() {
     "--color-white",
   ]) as string[];
   const { t } = useTranslation();
+  const { showErrorToast } = useSettingsToast();
   const screenBottomPadding = useScreenBottomPadding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -82,18 +85,32 @@ export default function YourPlaylistsDetail() {
   const [preparing, setPreparing] = useState(false);
   const canPlay = !preparing && playlists.length > 0;
 
+  // Fetch playlists in concurrency-limited batches, stopping once the queue
+  // cap is covered — the store would drop the excess anyway, so fetching every
+  // remaining playlist would be wasted requests.
   const buildTracks = async () => {
-    const results = await Promise.all(
-      playlists.map((playlist) =>
-        queryClient.fetchQuery({
-          queryKey: ["playlist", playlist.id],
-          queryFn: () => getPlaylist(playlist.id),
-        }),
-      ),
-    );
-    return results
-      .flatMap((result) => result?.playlist?.entry ?? [])
-      .map(childToTrack);
+    const tracks: ReturnType<typeof childToTrack>[] = [];
+    for (
+      let i = 0;
+      i < playlists.length && tracks.length < MAX_QUEUE_TRACKS;
+      i += 4
+    ) {
+      const results = await mapWithConcurrency(
+        playlists.slice(i, i + 4),
+        4,
+        (playlist) =>
+          queryClient.fetchQuery({
+            queryKey: ["playlist", playlist.id],
+            queryFn: () => getPlaylist(playlist.id),
+          }),
+      );
+      tracks.push(
+        ...results
+          .flatMap((result) => result?.playlist?.entry ?? [])
+          .map(childToTrack),
+      );
+    }
+    return tracks;
   };
 
   const handlePlayPress = async () => {
@@ -107,6 +124,8 @@ export default function YourPlaylistsDetail() {
       const tracks = await buildTracks();
       if (tracks.length === 0) return;
       playTracks(tracks, 0, { shuffleFromRandom: true, source });
+    } catch {
+      showErrorToast(t("app.home.playErrorMessage"));
     } finally {
       setPreparing(false);
     }

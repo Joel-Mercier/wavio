@@ -11,6 +11,7 @@ import {
   parseLocalTrackId,
 } from "@/services/local/keys";
 import { getEffectiveMaxBitRate } from "@/services/network";
+import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
@@ -63,14 +64,14 @@ export const hlsStreamUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinHlsStreamUrl(id);
-  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
+  const { url } = useAuthBase.getState();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
   // resolveServerBase reroutes trusted self-signed hosts through the iOS
   // loopback proxy so AVPlayer can stream them (no-op on Android / untrusted).
   return resolveServerBase(
-    `${url}/rest/hls.m3u8?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`,
+    `${url}/rest/hls.m3u8?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${bitRateParam}`,
   );
 };
 
@@ -81,7 +82,7 @@ export const streamUrl = (
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id, opts);
-  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
+  const { url } = useAuthBase.getState();
   const params = transcodeParams(opts?.forceTranscode ?? false);
   // Subsonic `timeOffset` (integer seconds) makes the server start transcoding
   // from that point (Navidrome's `ffmpeg -ss %t`), the only way to seek within a
@@ -91,7 +92,7 @@ export const streamUrl = (
       ? `&timeOffset=${Math.floor(opts.timeOffset)}`
       : "";
   return resolveServerBase(
-    `${url}/rest/stream?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}${timeOffset}`,
+    `${url}/rest/stream?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json${params}${timeOffset}`,
   );
 };
 
@@ -132,6 +133,6 @@ export const downloadUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
-  const { url, username, subsonicSalt, subsonicToken } = useAuthBase.getState();
-  return `${url}/rest/download?id=${id}&u=${username}&t=${subsonicToken}&s=${subsonicSalt}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+  const { url } = useAuthBase.getState();
+  return `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
 };

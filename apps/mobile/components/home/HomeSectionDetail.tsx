@@ -20,6 +20,7 @@ import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useIsPlaying } from "@/hooks/player";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -29,6 +30,7 @@ import useQueue, { type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
+import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import { goBackOrHome } from "@/utils/navigation";
 import AlbumLayoutToggle from "../albums/AlbumLayoutToggle";
 import AlbumListItem from "../albums/AlbumListItem";
@@ -54,6 +56,7 @@ export default function HomeSectionDetail() {
     "--color-white",
   ]) as string[];
   const { t } = useTranslation();
+  const { showErrorToast } = useSettingsToast();
   const screenBottomPadding = useScreenBottomPadding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -108,13 +111,11 @@ export default function HomeSectionDetail() {
   const canPlay = !preparing && albums.length > 0;
 
   const buildTracks = async () => {
-    const results = await Promise.all(
-      albums.map((album) =>
-        queryClient.fetchQuery({
-          queryKey: ["album", album.id],
-          queryFn: () => getAlbum(album.id),
-        }),
-      ),
+    const results = await mapWithConcurrency(albums, 4, (album) =>
+      queryClient.fetchQuery({
+        queryKey: ["album", album.id],
+        queryFn: () => getAlbum(album.id),
+      }),
     );
     return results
       .flatMap((result) => result?.album?.song ?? [])
@@ -132,6 +133,8 @@ export default function HomeSectionDetail() {
       const tracks = await buildTracks();
       if (tracks.length === 0) return;
       playTracks(tracks, 0, { shuffleFromRandom: true, source });
+    } catch {
+      showErrorToast(t("app.home.playErrorMessage"));
     } finally {
       setPreparing(false);
     }

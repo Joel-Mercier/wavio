@@ -12,6 +12,13 @@ import type { Child } from "../openSubsonic/types";
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
 
+// Subsonic reports API errors as HTTP 200 with a JSON/XML envelope (and a
+// misconfigured reverse proxy can 200 an HTML page), so a "successful" download
+// can be an error body saved under the track's name — downloadFileAsync only
+// rejects on non-2xx statuses. No real audio file is this small, so only files
+// under this size are sniffed for a text body before being registered.
+const SUSPICIOUS_DOWNLOAD_BYTES = 8192;
+
 type Resolvers = { resolve: () => void; reject: (err: unknown) => void };
 
 // Thrown when a download can't proceed because there's no active server — the
@@ -244,6 +251,16 @@ export class OfflineDownloadService {
 
     if (!downloadResult.exists) {
       throw new Error("Download failed - file does not exist");
+    }
+
+    if ((downloadResult.size ?? 0) < SUSPICIOUS_DOWNLOAD_BYTES) {
+      const head = (await downloadResult.text()).trimStart();
+      if (head.startsWith("{") || head.startsWith("<")) {
+        try {
+          downloadResult.delete();
+        } catch {}
+        throw new Error("Download failed - server returned an error response");
+      }
     }
 
     if (generation !== this.generation) {
