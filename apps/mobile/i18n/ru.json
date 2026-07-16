@@ -1066,7 +1066,9 @@
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
 					"folder": "Из папки",
-					"similar": "Похожие треки"
+					"similar": "Похожие треки",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Добавить в плейлист",
 				"playNext": "Включить следующим",
