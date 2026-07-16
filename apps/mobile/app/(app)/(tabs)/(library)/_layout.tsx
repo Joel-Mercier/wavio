@@ -20,7 +20,8 @@ export default function LibraryLayout() {
       <Stack.Screen name="playlists/[id]/edit" />
       <Stack.Screen name="playlists/[id]/reorder" />
       <Stack.Screen name="tracks/[id]/similar" />
-      <Stack.Screen name="settings" />
+      <Stack.Screen name="settings/index" />
+      <Stack.Screen name="settings/[section]" />
       <Stack.Screen name="trusted-certificates" />
       <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="pending-changes" />

@@ -558,6 +558,44 @@
 			},
 			"settings": {
 				"title": "Settings",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "Podcasts",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "Internet radio",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "Backup & restore",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "Security",
+						"description": "Trusted certificates"
+					}
+				},
 				"offlineSettings": {
 					"title": "Offline mode",
 					"offlineModeLabel": "Offline mode",

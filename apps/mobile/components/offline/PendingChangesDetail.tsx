@@ -65,7 +65,10 @@ export default function PendingChangesDetail() {
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const isOnline = useIsOnline();
-  const queue = useOfflineMutations.use.queue();
+  // Plain selector form (not `.use.queue()`) so the React Compiler recognizes
+  // it as a hook — the member form gets memoized as a normal call and can skip
+  // the underlying store hook on some renders, breaking the hook order.
+  const queue = useOfflineMutations((s) => s.queue);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 

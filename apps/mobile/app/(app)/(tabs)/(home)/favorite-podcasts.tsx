@@ -1,4 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
+import type { Href } from "expo-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -152,10 +153,9 @@ export default function FavoritePodcastsScreen() {
               {t("app.podcasts.taddyDiscoveryHint")}
             </Text>
             <FadeOutScaleDown
-              href={{
-                pathname: "/(app)/(tabs)/(home)/settings",
-                params: { section: "podcasts" },
-              }}
+              // Cast until expo-router regenerates typed routes for the new
+              // nested settings screen on the next dev-server/prebuild run.
+              href={"/(app)/(tabs)/(home)/settings/podcasts" as Href}
               className="mt-3 self-start"
             >
               <Text className="text-white font-semibold underline">
@@ -171,10 +171,7 @@ export default function FavoritePodcastsScreen() {
           </Text>
           <Center>
             <FadeOutScaleDown
-              href={{
-                pathname: "/(app)/(tabs)/(home)/settings",
-                params: { section: "podcasts" },
-              }}
+              href={"/(app)/(tabs)/(home)/settings/podcasts" as Href}
               className="mt-6 items-center justify-center py-3 px-8 border border-white rounded-full"
             >
               <Text className="text-white font-bold text-lg">
