@@ -26,7 +26,7 @@
 				"moreFrom": "Ещё от",
 				"podcasts": "Подкасты",
 				"internetRadioStations": "Интернет-радио",
-				"playErrorMessage": "An error occurred while starting playback",
+				"playErrorMessage": "Не удалось начать воспроизведение",
 				"tabs": {
 					"music": "Музыка",
 					"podcasts": "Подкасты",
@@ -573,20 +573,20 @@
 				"title": "Настройки",
 				"menu": {
 					"playback": {
-						"title": "Playback & audio",
-						"description": "Audio quality, replay gain, equalizer"
+						"title": "Воспроизведение и звук",
+						"description": "Качество звука, выравнивание громкости, эквалайзер"
 					},
 					"library": {
-						"title": "Music library",
-						"description": "Scan your library and view its status"
+						"title": "Медиатека",
+						"description": "Сканирование и статус медиатеки"
 					},
 					"downloads": {
-						"title": "Downloads & offline",
-						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+						"title": "Скачанное и офлайн",
+						"description": "Офлайн-режим, скачивание по Wi-Fi, управление загрузками"
 					},
 					"appearance": {
-						"title": "Appearance",
-						"description": "Language, home sections, haptics"
+						"title": "Внешний вид",
+						"description": "Язык, разделы главного экрана, тактильный отклик"
 					},
 					"podcasts": {
 						"title": "Подкасты",
@@ -961,6 +961,9 @@
 			"queue": {
 				"title": "Очередь",
 				"empty": "В очереди нет треков.",
+				"tabQueue": "Очередь",
+				"tabRecentlyPlayed": "Недавние",
+				"recentlyPlayedEmpty": "No tracks played yet.",
 				"edit": "Редактировать",
 				"done": "Готово",
 				"order": "Порядок",
@@ -970,6 +973,10 @@
 				"clearConfirmTitle": "Очистить очередь?",
 				"clearConfirmMessage": "Все треки будут убраны из очереди и воспроизведение остановится.",
 				"clearedMessage": "Очередь очищена",
+				"clearHistory": "Clear history",
+				"clearHistoryConfirmTitle": "Clear history?",
+				"clearHistoryConfirmMessage": "All recently played tracks will be removed from this list. Your queue and playback are unaffected.",
+				"clearedHistoryMessage": "History cleared",
 				"nowPlaying": "Сейчас играет",
 				"nextInQueue": "Далее в очереди",
 				"removeFromQueue": "Удалить из очереди",
