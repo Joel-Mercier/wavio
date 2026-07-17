@@ -590,19 +590,19 @@
 					},
 					"podcasts": {
 						"title": "Подкасты",
-						"description": "Configure the Taddy podcast API"
+						"description": "Настройка Taddy API для подкастов"
 					},
 					"radio": {
 						"title": "Интернет-радио",
-						"description": "Enable stations, country, tags"
+						"description": "Включение станций, выбор страны, теги"
 					},
 					"storage": {
-						"title": "Storage & data",
-						"description": "Storage usage, cache, recent activity"
+						"title": "Память и данные",
+						"description": "Использование хранилища, кэш, история активности"
 					},
 					"backup": {
 						"title": "Резервное копирование и восстановление",
-						"description": "Export and restore your data"
+						"description": "Экспорт и восстановление данных"
 					},
 					"security": {
 						"title": "Безопасность",
@@ -963,7 +963,7 @@
 				"empty": "В очереди нет треков.",
 				"tabQueue": "Очередь",
 				"tabRecentlyPlayed": "Недавние",
-				"recentlyPlayedEmpty": "No tracks played yet.",
+				"recentlyPlayedEmpty": "Вы еще ничего не слушали.",
 				"edit": "Редактировать",
 				"done": "Готово",
 				"order": "Порядок",
@@ -973,10 +973,10 @@
 				"clearConfirmTitle": "Очистить очередь?",
 				"clearConfirmMessage": "Все треки будут убраны из очереди и воспроизведение остановится.",
 				"clearedMessage": "Очередь очищена",
-				"clearHistory": "Clear history",
-				"clearHistoryConfirmTitle": "Clear history?",
-				"clearHistoryConfirmMessage": "All recently played tracks will be removed from this list. Your queue and playback are unaffected.",
-				"clearedHistoryMessage": "History cleared",
+				"clearHistory": "Очистить историю",
+				"clearHistoryConfirmTitle": "Очистить историю?",
+				"clearHistoryConfirmMessage": "Все недавно прослушанные треки будут удалены из этого списка. Это не повлияет на очередь и текущее воспроизведение.",
+				"clearedHistoryMessage": "История очищена",
 				"nowPlaying": "Сейчас играет",
 				"nextInQueue": "Далее в очереди",
 				"removeFromQueue": "Удалить из очереди",
@@ -1075,8 +1075,8 @@
 					"likedSongs": "Из любимых треков",
 					"folder": "Из папки",
 					"similar": "Похожие треки",
-					"albumList": "Playing from albums",
-					"playlistList": "Playing from playlists"
+					"albumList": "Из альбомов",
+					"playlistList": "Из плейлистов"
 				},
 				"addToPlaylist": "Добавить в плейлист",
 				"playNext": "Включить следующим",
@@ -1096,7 +1096,7 @@
 				"translationOff": "Выкл.",
 				"pronunciation": "Произношение",
 				"showPronunciation": "Показать произношение",
-				"lyricsUnavailable": "No lyrics available for this track.",
+				"lyricsUnavailable": "Для этого трека нет текста.",
 				"sleepTimer": "Таймер сна",
 				"sleepTimerOff": "Выкл.",
 				"sleepTimerEndOfTrack": "В конце трека",
@@ -1152,7 +1152,7 @@
 				"addServer": "Добавить сервер",
 				"namePlaceholder": "Название сервера",
 				"urlPlaceholder": "URL сервера",
-				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
+				"fallbackUrlPlaceholder": "URL резервного сервера (необязательно)",
 				"usernamePlaceholder": "Имя пользователя",
 				"passwordPlaceholder": "Пароль",
 				"editServer": "Редактировать сервер",
@@ -1173,7 +1173,7 @@
 			},
 			"shared": {
 				"advancedSettings": "Расширенные настройки",
-				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
+				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
 				"cancel": "Отмена",
 				"close": "Закрыть",
 				"create": "Создать",
@@ -1335,7 +1335,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Локальная медиатека",
 				"urlPlaceholder": "URL сервера",
-				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
+				"fallbackUrlPlaceholder": "URL резервного сервера (необязательно)",
 				"usernamePlaceholder": "Имя пользователя",
 				"passwordPlaceholder": "Пароль",
 				"choice": "Или введите данные сервера вручную",
