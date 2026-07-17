@@ -60,6 +60,7 @@ const pausedStatusKeys = {
   pausedOffline: "app.settings.offlineSettings.extendedOfflinePausedOffline",
   pausedWifi: "app.settings.offlineSettings.extendedOfflinePausedWifi",
   pausedDisk: "app.settings.offlineSettings.extendedOfflinePausedDisk",
+  syncError: "app.settings.offlineSettings.extendedOfflineSyncError",
   unsupported: "app.settings.offlineSettings.extendedOfflineUnsupported",
 } as const;
 
@@ -95,7 +96,8 @@ function LibrarySyncStatusLine() {
       {(status === "syncing" ||
         status === "pausedOffline" ||
         status === "pausedWifi" ||
-        status === "pausedDisk") && (
+        status === "pausedDisk" ||
+        status === "syncError") && (
         <Box className="h-1.5 rounded-full bg-primary-400 overflow-hidden">
           <Box
             className="h-full rounded-full bg-emerald-500"

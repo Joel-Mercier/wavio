@@ -7,17 +7,21 @@ import {
   subscribeConnectionType,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import { offlineDownloadService } from "@/services/offline/downloadService";
 import {
   ALBUM_PAGE_SIZE,
   advanceCursor,
   albumToAutoCollection,
   groupSongIdsByAlbum,
+  isArtworkStale,
   isSyncStale,
   MIN_FREE_DISK_BYTES,
   planServerDeletions,
   playlistToAutoCollection,
   QUEUE_LOW_WATER,
+  RETRY_BACKOFF_STEPS_MS,
+  refreshedOfflineTrack,
   SONG_PAGE_SIZE,
   shouldWriteAutoCollection,
 } from "@/services/offline/librarySyncPlan";
@@ -35,6 +39,29 @@ const ARTWORK_CONCURRENCY = 2;
 // pre-OpenSubsonic server answers to the empty-query search3 the crawl relies
 // on (the OpenSubsonic spec requires empty query = whole library).
 const SUBSONIC_MISSING_PARAMETER = 10;
+
+export type LibrarySyncCompletedResult = { downloadedCount: number };
+
+// Fired once when a pass that actually downloaded something finishes AND its
+// queued downloads have drained — i.e. the library just became fully cached.
+// No-op resyncs stay silent. The root LibrarySyncController surfaces it as a
+// toast (the service can't render UI itself).
+const completedListeners = new Set<
+  (result: LibrarySyncCompletedResult) => void
+>();
+
+export function subscribeLibrarySyncCompleted(
+  cb: (result: LibrarySyncCompletedResult) => void,
+): () => void {
+  completedListeners.add(cb);
+  return () => {
+    completedListeners.delete(cb);
+  };
+}
+
+const notifySyncCompleted = (result: LibrarySyncCompletedResult) => {
+  for (const cb of completedListeners) cb(result);
+};
 
 // Progressive whole-library crawl for extended offline mode. Enumerates the
 // active server through the backend dispatch layer (so Subsonic/Navidrome and
@@ -59,7 +86,14 @@ export class LibrarySyncService {
   private running = false;
   private pendingKick = false;
   private artworkQueue: string[] = [];
+  // Ids either queued or in flight — the queue alone can't dedupe an id whose
+  // download already started (shifted off), and a stale cover fetched twice
+  // concurrently would orphan one of the two timestamped files.
+  private artworkPending: Set<string> = new Set();
   private artworkActive = 0;
+  // Backoff state for transient step failures — reset on any successful step.
+  private failureCount = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   private constructor() {
     subscribeEffectiveOnline(() => {
@@ -75,14 +109,14 @@ export class LibrarySyncService {
       }
     });
     // Fetch the next songs page as the download queue drains below the low
-    // water mark.
+    // water mark; a drain after the crawl completed may also mean the library
+    // just became fully cached.
     useOffline.subscribe((state, prev) => {
-      if (
-        state.downloadQueue.length < prev.downloadQueue.length &&
-        state.downloadQueue.length < QUEUE_LOW_WATER
-      ) {
+      if (state.downloadQueue.length >= prev.downloadQueue.length) return;
+      if (state.downloadQueue.length < QUEUE_LOW_WATER) {
         this.kick();
       }
+      this.maybeNotifyFullyCached();
     });
   }
 
@@ -114,25 +148,80 @@ export class LibrarySyncService {
   reset(): void {
     this.generation++;
     this.artworkQueue = [];
+    this.artworkPending.clear();
+    this.failureCount = 0;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
   }
 
   // Toggle-off: stop the crawl and remove everything the sync downloaded,
   // keeping user-saved collections/tracks (and auto tracks they reference).
   disable(): void {
-    this.generation++;
-    this.artworkQueue = [];
+    this.reset();
     useLibrarySync.getState().__reset();
     offlineDownloadService.removeQueuedAutoDownloads();
     this.removeAutoContent();
   }
 
   // After "clear all downloads": the downloaded state is gone, so a still
-  // enabled sync restarts from scratch.
+  // enabled sync restarts from scratch. reset() first — an in-flight step
+  // from the old pass must not write its stale cursor onto the fresh one.
   handleDownloadsCleared(): void {
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return;
+    this.reset();
     this.beginPass();
     this.kick();
+  }
+
+  // Called after an online playlist mutation succeeds so the offline auto
+  // copy reflects the edit immediately instead of waiting for the next pass.
+  async refreshPlaylist(playlistId: string): Promise<void> {
+    if (!useLibrarySync.getState().extendedOfflineModeEnabled) return;
+    if (!getIsEffectivelyOnline()) return;
+    const generation = this.generation;
+    try {
+      const detail = await getPlaylist(playlistId);
+      if (generation !== this.generation) return;
+      const withSongs = detail.playlist;
+      if (!withSongs) return;
+      const offlineStore = useOffline.getState();
+      const existing = offlineStore.downloadedCollections[withSongs.id];
+      if (!shouldWriteAutoCollection(existing)) return;
+      offlineStore.addDownloadedCollection(
+        playlistToAutoCollection(withSongs, existing),
+      );
+      this.enqueueArtwork(withSongs.coverArt);
+      const entries = withSongs.entry ?? [];
+      // A pass in flight reconciles against its seen inventory when it
+      // completes — record this playlist and its songs so the refresh isn't
+      // mistaken for server-deleted content (or swept from the queue).
+      const { phase, appendSeenIds } = useLibrarySync.getState();
+      if (phase !== "idle" && phase !== "complete") {
+        appendSeenIds("playlist", [withSongs.id]);
+        appendSeenIds(
+          "song",
+          entries.map((entry) => entry.id),
+        );
+      }
+      offlineDownloadService.enqueueTracks(entries, "auto");
+    } catch (error) {
+      logError(`Library sync: error refreshing playlist ${playlistId}:`, error);
+    }
+  }
+
+  // Playlist deleted server-side by the user: drop the auto copy right away.
+  // Its tracks stay — they're still part of the library (album collections
+  // keep them; a genuine server deletion is reconciled by the next pass).
+  handlePlaylistDeleted(playlistId: string): void {
+    if (!useLibrarySync.getState().extendedOfflineModeEnabled) return;
+    const offlineStore = useOffline.getState();
+    if (offlineStore.downloadedCollections[playlistId]?.source !== "auto") {
+      return;
+    }
+    offlineStore.removeDownloadedCollection(playlistId);
   }
 
   private beginPass(): void {
@@ -145,8 +234,34 @@ export class LibrarySyncService {
       seenAlbumIds: [],
       seenSongIds: [],
       seenPlaylistIds: [],
+      passStartDownloadedCount: Object.keys(
+        useOffline.getState().downloadedTracks,
+      ).length,
       lastError: null,
     });
+  }
+
+  // The library counts as fully cached once the pass has completed AND its
+  // queued auto downloads have drained (playlists-phase enqueues can outlive
+  // the crawl). Evaluated one-shot per pass; a pass that downloaded nothing (a
+  // delta resync with no server changes) stays silent.
+  private maybeNotifyFullyCached(): void {
+    const sync = useLibrarySync.getState();
+    if (!sync.extendedOfflineModeEnabled) return;
+    if (sync.phase !== "complete") return;
+    if (sync.passStartDownloadedCount === null) return;
+    const offlineStore = useOffline.getState();
+    if (
+      offlineStore.downloadQueue.some(
+        (queued) => queued.offlineSource === "auto",
+      )
+    ) {
+      return;
+    }
+    const downloadedCount = Object.keys(offlineStore.downloadedTracks).length;
+    const didDownload = downloadedCount > sync.passStartDownloadedCount;
+    sync.setCrawl({ passStartDownloadedCount: null });
+    if (didDownload) notifySyncCompleted({ downloadedCount });
   }
 
   private removeAutoContent(): void {
@@ -158,10 +273,8 @@ export class LibrarySyncService {
         offlineStore.removeDownloadedCollection(collection.id);
       }
     }
-    const referencedByUser = new Set(
-      Object.values(useOffline.getState().downloadedCollections).flatMap(
-        (collection) => collection.trackIds,
-      ),
+    const referencedByUser = trackIdsReferencedByCollections(
+      Object.values(useOffline.getState().downloadedCollections),
     );
     for (const track of offlineStore.getDownloadedTracksList()) {
       if (track.source !== "auto" || referencedByUser.has(track.id)) continue;
@@ -207,6 +320,10 @@ export class LibrarySyncService {
     try {
       while (generation === this.generation) {
         if (!this.canProceed()) return;
+        // A pending backoff timer owns the next attempt — queue-drain and
+        // foreground kicks must not step around it and hammer a failing
+        // server; the timer clears itself and kicks when it fires.
+        if (this.retryTimer) return;
         const sync = useLibrarySync.getState();
         if (sync.phase === "idle" || sync.phase === "complete") return;
         if (
@@ -226,13 +343,14 @@ export class LibrarySyncService {
         }
         try {
           await this.step(generation);
+          this.failureCount = 0;
         } catch (error) {
           if (generation !== this.generation) return;
           const current = useLibrarySync.getState();
           // A Subsonic "missing parameter" on the very first page means the
           // server predates OpenSubsonic's empty-query search3 and can't be
-          // crawled at all; anything else is transient and retried on the
-          // next kick (foreground, reconnect, queue drain).
+          // crawled at all; anything else is transient and retried with
+          // backoff (plus the usual foreground/reconnect/queue-drain kicks).
           const unsupported =
             current.phase === "albums" &&
             current.albumOffset === 0 &&
@@ -241,6 +359,7 @@ export class LibrarySyncService {
             lastError: unsupported ? "unsupported" : "syncFailed",
           });
           logError("Library sync: step failed:", error);
+          if (!unsupported) this.scheduleRetry();
           return;
         }
       }
@@ -251,6 +370,19 @@ export class LibrarySyncService {
         this.kick();
       }
     }
+  }
+
+  private scheduleRetry(): void {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    const delay =
+      RETRY_BACKOFF_STEPS_MS[
+        Math.min(this.failureCount, RETRY_BACKOFF_STEPS_MS.length - 1)
+      ];
+    this.failureCount++;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.kick();
+    }, delay);
   }
 
   private async step(generation: number): Promise<void> {
@@ -321,6 +453,15 @@ export class LibrarySyncService {
     const songs = res.searchResult3?.song ?? [];
     offlineDownloadService.enqueueTracks(songs, "auto");
     const offlineStore = useOffline.getState();
+    // Server edits to already-downloaded tracks (retitle, retag, renumber)
+    // refresh the offline copy in place — the file itself is untouched.
+    const refreshedTracks = songs.flatMap((song) => {
+      const existing = offlineStore.downloadedTracks[song.id];
+      if (!existing) return [];
+      const refreshed = refreshedOfflineTrack(existing, song);
+      return refreshed ? [refreshed] : [];
+    });
+    offlineStore.addDownloadedTracks(refreshedTracks);
     const updates: Record<string, string[]> = {};
     for (const [albumId, trackIds] of groupSongIdsByAlbum(songs)) {
       if (offlineStore.downloadedCollections[albumId]?.source === "auto") {
@@ -390,6 +531,9 @@ export class LibrarySyncService {
       lastError: null,
       lastSyncCompletedAt: new Date().toISOString(),
     });
+    // The queue may already be empty (downloads outpaced the crawl) — check
+    // now rather than waiting for a drain event that will never come.
+    this.maybeNotifyFullyCached();
   }
 
   // Runs once at the end of a complete pass. The server is the source of
@@ -470,8 +614,18 @@ export class LibrarySyncService {
   // missing covers from the registered collections after a restart.
   private enqueueArtwork(coverArt?: string): void {
     if (!coverArt) return;
-    if (useOffline.getState().artworkCache[coverArt]) return;
-    if (this.artworkQueue.includes(coverArt)) return;
+    const { artworkCache, artworkCachedAt } = useOffline.getState();
+    // A fresh cache entry is kept; a stale one is re-fetched so covers
+    // replaced on the server propagate even when the coverArt id is stable
+    // (Jellyfin item GUIDs never change when the image does).
+    if (
+      artworkCache[coverArt] &&
+      !isArtworkStale(artworkCachedAt[coverArt], Date.now())
+    ) {
+      return;
+    }
+    if (this.artworkPending.has(coverArt)) return;
+    this.artworkPending.add(coverArt);
     this.artworkQueue.push(coverArt);
     this.processArtworkQueue();
   }
@@ -496,6 +650,7 @@ export class LibrarySyncService {
       this.artworkActive++;
       void this.downloadArtwork(coverArt, this.generation).finally(() => {
         this.artworkActive--;
+        this.artworkPending.delete(coverArt);
         this.processArtworkQueue();
       });
     }
@@ -510,7 +665,10 @@ export class LibrarySyncService {
       if (!serverId || !username) return;
       const dir = this.artworkDir();
       dir.create({ idempotent: true, intermediates: true });
-      const fileName = `${coverArt.replace(/[^a-zA-Z0-9._-]/g, "_")}.jpg`;
+      // Timestamped filename: a refreshed cover must get a NEW file:// URI,
+      // else expo-image's URI-keyed cache keeps showing the old bytes.
+      const fileName = `${coverArt.replace(/[^a-zA-Z0-9._-]/g, "_")}_${Date.now()}.jpg`;
+      const previous = useOffline.getState().artworkCache[coverArt];
       const result = await File.downloadFileAsync(
         artworkUrl(coverArt, ARTWORK_SIZE),
         new File(dir, fileName),
@@ -524,6 +682,12 @@ export class LibrarySyncService {
       }
       if (result.exists) {
         useOffline.getState().addCachedArtwork(coverArt, result.uri);
+        if (previous && previous !== result.uri) {
+          try {
+            const previousFile = new File(previous);
+            if (previousFile.exists) previousFile.delete();
+          } catch {}
+        }
       }
     } catch (error) {
       // Artwork is decorative — a failed cover is retried on the next

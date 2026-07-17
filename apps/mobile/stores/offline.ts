@@ -38,6 +38,10 @@ export type OfflineCollection = {
   owner?: string;
   artist?: string;
   artistId?: string;
+  // Every credited artist (AlbumID3.artists) — a multi-artist album belongs to
+  // all of them, not just the primary artistId, so each stays browsable
+  // offline.
+  artists?: { id: string; name: string }[];
   year?: number;
   savedAt: string;
   source?: OfflineSource;
@@ -67,6 +71,7 @@ interface OfflineStore {
 
   downloadedTracks: Record<string, OfflineTrack>;
   addDownloadedTrack: (track: OfflineTrack) => void;
+  addDownloadedTracks: (tracks: OfflineTrack[]) => void;
   removeDownloadedTrack: (trackId: string) => void;
   clearAllDownloads: () => void;
 
@@ -95,7 +100,10 @@ interface OfflineStore {
 
   // Offline album/playlist covers downloaded by the extended-offline sync,
   // keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
+  // artworkCachedAt records when each cover was fetched so stale covers get
+  // re-fetched (Jellyfin coverArt ids are stable across image changes).
   artworkCache: Record<string, string>;
+  artworkCachedAt: Record<string, string>;
   addCachedArtwork: (coverArtId: string, path: string) => void;
   removeCachedArtwork: (coverArtIds: string[]) => void;
   clearArtworkCache: () => void;
@@ -115,6 +123,7 @@ const initialOfflineState = {
   downloadProgress: {} as Record<string, DownloadProgress>,
   downloadQueue: [] as QueuedTrack[],
   artworkCache: {} as Record<string, string>,
+  artworkCachedAt: {} as Record<string, string>,
 };
 
 const useOfflineBase = create<OfflineStore>()(
@@ -139,6 +148,17 @@ const useOfflineBase = create<OfflineStore>()(
         }));
       },
 
+      addDownloadedTracks: (tracks) => {
+        if (tracks.length === 0) return;
+        set((state) => {
+          const downloadedTracks = { ...state.downloadedTracks };
+          for (const track of tracks) {
+            downloadedTracks[track.id] = track;
+          }
+          return { downloadedTracks };
+        });
+      },
+
       removeDownloadedTrack: (trackId) => {
         set((state) => {
           const { [trackId]: _removed, ...remainingTracks } =
@@ -156,6 +176,7 @@ const useOfflineBase = create<OfflineStore>()(
           downloadProgress: {},
           downloadQueue: [],
           artworkCache: {},
+          artworkCachedAt: {},
         });
       },
 
@@ -165,6 +186,10 @@ const useOfflineBase = create<OfflineStore>()(
             ...state.artworkCache,
             [coverArtId]: path,
           },
+          artworkCachedAt: {
+            ...state.artworkCachedAt,
+            [coverArtId]: new Date().toISOString(),
+          },
         }));
       },
 
@@ -172,15 +197,17 @@ const useOfflineBase = create<OfflineStore>()(
         if (coverArtIds.length === 0) return;
         set((state) => {
           const artworkCache = { ...state.artworkCache };
+          const artworkCachedAt = { ...state.artworkCachedAt };
           for (const coverArtId of coverArtIds) {
             delete artworkCache[coverArtId];
+            delete artworkCachedAt[coverArtId];
           }
-          return { artworkCache };
+          return { artworkCache, artworkCachedAt };
         });
       },
 
       clearArtworkCache: () => {
-        set({ artworkCache: {} });
+        set({ artworkCache: {}, artworkCachedAt: {} });
       },
 
       addDownloadedCollection: (collection) => {
@@ -407,6 +434,7 @@ const useOfflineBase = create<OfflineStore>()(
         downloadQueue: state.downloadQueue,
         downloadProgress: state.downloadProgress,
         artworkCache: state.artworkCache,
+        artworkCachedAt: state.artworkCachedAt,
       }),
     },
   ),

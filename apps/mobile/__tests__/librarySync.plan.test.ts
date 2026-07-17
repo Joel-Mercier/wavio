@@ -1,11 +1,14 @@
 import {
+  ARTWORK_REFRESH_MS,
   advanceCursor,
   albumToAutoCollection,
   groupSongIdsByAlbum,
+  isArtworkStale,
   isSyncStale,
   planServerDeletions,
   playlistToAutoCollection,
   RESYNC_INTERVAL_MS,
+  refreshedOfflineTrack,
   shouldWriteAutoCollection,
 } from "@/services/offline/librarySyncPlan";
 import type {
@@ -111,6 +114,22 @@ describe("albumToAutoCollection", () => {
       year: 2020,
       source: "auto",
     });
+  });
+
+  it("carries every credited artist so multi-artist albums stay browsable", () => {
+    const collection = albumToAutoCollection(
+      makeAlbum("a1", {
+        artists: [
+          { id: "ar-1", name: "Artist" },
+          { id: "ar-2", name: "Second Artist" },
+        ],
+      }),
+      undefined,
+    );
+    expect(collection.artists).toEqual([
+      { id: "ar-1", name: "Artist" },
+      { id: "ar-2", name: "Second Artist" },
+    ]);
   });
 
   it("keeps trackIds and savedAt accumulated by a previous pass", () => {
@@ -308,5 +327,107 @@ describe("planServerDeletions", () => {
       removeTrackIds: [],
       replaceAlbumTrackIds: {},
     });
+  });
+});
+
+describe("refreshedOfflineTrack", () => {
+  const existing: import("@/stores/offline").OfflineTrack = {
+    id: "s1",
+    title: "Old title",
+    artist: "Old artist",
+    album: "Old album",
+    duration: 180,
+    coverArt: "al-1",
+    path: "/tmp/s1.mp3",
+    size: 1000,
+    downloadedAt: "2026-07-01T00:00:00.000Z",
+    source: "auto",
+    track: 1,
+    discNumber: 1,
+  };
+
+  it("returns null when nothing changed", () => {
+    const song = makeSong("s1");
+    expect(
+      refreshedOfflineTrack(existing, {
+        ...song,
+        title: "Old title",
+        artist: "Old artist",
+        album: "Old album",
+        duration: 180,
+        coverArt: "al-1",
+        track: 1,
+        discNumber: 1,
+      }),
+    ).toBeNull();
+  });
+
+  it("applies server edits while keeping file identity fields", () => {
+    const refreshed = refreshedOfflineTrack(existing, {
+      ...makeSong("s1"),
+      title: "New title",
+      artist: "New artist",
+      album: "Old album",
+      duration: 200,
+      coverArt: "al-2",
+      track: 3,
+      discNumber: 2,
+    });
+    expect(refreshed).toMatchObject({
+      id: "s1",
+      title: "New title",
+      artist: "New artist",
+      duration: 200,
+      coverArt: "al-2",
+      track: 3,
+      discNumber: 2,
+      path: "/tmp/s1.mp3",
+      size: 1000,
+      downloadedAt: "2026-07-01T00:00:00.000Z",
+      source: "auto",
+    });
+  });
+
+  it("keeps the stored duration when the server omits it", () => {
+    const refreshed = refreshedOfflineTrack(existing, {
+      ...makeSong("s1"),
+      title: "New title",
+    });
+    expect(refreshed?.duration).toBe(180);
+  });
+
+  it("preserves optional fields a sparse search3 result omits", () => {
+    // Some servers omit track/disc/artist/cover in search results; an
+    // omission must not wipe metadata captured from richer responses.
+    const refreshed = refreshedOfflineTrack(existing, {
+      id: "s1",
+      isDir: false,
+      title: "New title",
+    });
+    expect(refreshed).toMatchObject({
+      title: "New title",
+      artist: "Old artist",
+      album: "Old album",
+      coverArt: "al-1",
+      track: 1,
+      discNumber: 1,
+      duration: 180,
+    });
+  });
+});
+
+describe("isArtworkStale", () => {
+  const now = Date.parse("2026-07-17T12:00:00.000Z");
+
+  it("is stale when never fetched or unparseable", () => {
+    expect(isArtworkStale(undefined, now)).toBe(true);
+    expect(isArtworkStale("nope", now)).toBe(true);
+  });
+
+  it("is fresh within the refresh window and stale past it", () => {
+    const fresh = new Date(now - ARTWORK_REFRESH_MS + 60_000).toISOString();
+    const old = new Date(now - ARTWORK_REFRESH_MS - 60_000).toISOString();
+    expect(isArtworkStale(fresh, now)).toBe(false);
+    expect(isArtworkStale(old, now)).toBe(true);
   });
 });

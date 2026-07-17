@@ -1,6 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { offlineTrackToChild } from "@/services/offline/collections";
+import {
+  collectionArtistCredits,
+  offlineTrackToChild,
+} from "@/services/offline/collections";
 import type {
   AlbumID3,
   AlbumList2,
@@ -90,12 +93,15 @@ export function buildOfflineSearchCorpus(
       duration: 0,
       created: new Date(collection.savedAt),
     });
-    if (collection.artistId) {
-      openableArtistIds.add(collection.artistId);
-      if (!artists.has(collection.artistId)) {
-        artists.set(collection.artistId, {
-          id: collection.artistId,
-          name: collection.artist ?? "",
+    // Every credited artist (not just the primary) is openable offline —
+    // ArtistDetail's collection-derived fallback matches on credits too.
+    for (const credit of collectionArtistCredits(collection)) {
+      if (!credit.id) continue;
+      openableArtistIds.add(credit.id);
+      if (!artists.has(credit.id)) {
+        artists.set(credit.id, {
+          id: credit.id,
+          name: credit.name,
           albumCount: 1,
           coverArt: collection.coverArt,
         });

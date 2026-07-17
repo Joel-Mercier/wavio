@@ -161,7 +161,7 @@ export function hlsStreamUrl(id: string, opts?: StreamOptions): string {
 }
 
 export function downloadUrl(id: string): string {
-  return `${baseUrl()}/Items/${id}/Download?${authParam()}`;
+  return resolveServerBase(`${baseUrl()}/Items/${id}/Download?${authParam()}`);
 }
 
 // Universal-endpoint URL for offline downloads in a non-raw download format,

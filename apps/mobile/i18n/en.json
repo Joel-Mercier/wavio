@@ -626,6 +626,8 @@
 					"extendedOfflinePausedOffline": "Paused — server unreachable",
 					"extendedOfflinePausedWifi": "Paused — waiting for Wi-Fi",
 					"extendedOfflinePausedDisk": "Paused — device storage is almost full",
+					"extendedOfflineSyncError": "Sync error — retrying automatically",
+					"extendedOfflineCompletedToast": "Your library is fully cached — {{count}} tracks available offline",
 					"extendedOfflineUnsupported": "This server doesn't support full library sync",
 					"extendedOfflineDisableConfirmTitle": "Remove cached library?",
 					"extendedOfflineDisableConfirmDescription": "Tracks and covers cached by the library sync will be deleted from this device. Albums, playlists and tracks you saved for offline individually are kept.",

@@ -329,8 +329,11 @@ export default function LibraryScreen() {
       return 0;
     });
     // Pin Favorites + the "all albums/artists" browse entries at the top of the
-    // unfiltered library so the sort never scatters them into the list.
-    if (noFilter && hasServerData) {
+    // unfiltered library so the sort never scatters them into the list. Offline
+    // they stay pinned as long as downloaded collections can back the browse
+    // screens (extended offline mode caches the whole library).
+    const hasOfflineCollections = !isOnline && downloadedCollections.length > 0;
+    if (noFilter && (hasServerData || hasOfflineCollections)) {
       return [favoritesItem, allArtistsItem, allAlbumsItem, ...sorted];
     }
     return sorted;

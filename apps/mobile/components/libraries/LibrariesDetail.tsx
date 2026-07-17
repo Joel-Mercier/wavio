@@ -13,6 +13,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { MusicFolder } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
@@ -50,6 +51,10 @@ export default function LibrariesDetail() {
   const currentFolderId = useCurrentMusicFolderId();
   const setCurrentFolder = useMusicFoldersBase((s) => s.setCurrentFolder);
   const isJellyfin = useAuthBase((s) => s.serverType === "jellyfin");
+  // Switching invalidates and refetches every folder-scoped query, which needs
+  // the server — offline it would just blank the library, so keep the current
+  // selection until the server is reachable again.
+  const isOnline = useIsOnline();
 
   const folders = data?.musicFolders?.musicFolder ?? [];
 
@@ -87,6 +92,7 @@ export default function LibrariesDetail() {
               <LibraryRow
                 label={t("app.libraries.allLibraries")}
                 isSelected={currentFolderId === undefined}
+                disabled={!isOnline}
                 onPress={() => select(undefined)}
               />
             )
@@ -105,6 +111,7 @@ export default function LibrariesDetail() {
                 label={item.name ?? `Library ${item.id}`}
                 isDefault={index === 0}
                 isSelected={currentFolderId === String(item.id)}
+                disabled={!isOnline}
                 onPress={() => select(String(item.id))}
               />
             )

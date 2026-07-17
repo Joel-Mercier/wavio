@@ -1,3 +1,4 @@
+import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import type {
   AlbumID3,
   Child,
@@ -19,10 +20,23 @@ export const QUEUE_LOW_WATER = 50;
 
 export const MIN_FREE_DISK_BYTES = 500 * 1024 * 1024;
 
-// A completed pass is re-run (from offset 0) after this long, picking up
-// content added to the server since. Already-downloaded tracks are skipped, so
-// a resync costs only the enumeration requests.
-export const RESYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+// A completed pass is re-run (from offset 0) once it's older than this,
+// re-checked on every foreground/reconnect — the server is the source of
+// truth, so additions, edits and deletions should reflect shortly after
+// connectivity is established, not a day later. Already-downloaded tracks are
+// skipped, so a resync costs only the enumeration requests; this floor just
+// keeps rapid app-switching from re-crawling in a loop.
+export const RESYNC_INTERVAL_MS = 15 * 60 * 1000;
+
+// Cached covers older than this are re-fetched on the next pass, so a cover
+// replaced on the server propagates even when its coverArt id is stable
+// (Jellyfin item GUIDs; Navidrome ids already embed an updated-at token).
+export const ARTWORK_REFRESH_MS = 24 * 60 * 60 * 1000;
+
+// Backoff before retrying after a failed crawl step, so a failing server
+// isn't hammered while still recovering without user action. Mirrors the
+// offline-mutations replay backoff.
+export const RETRY_BACKOFF_STEPS_MS = [30_000, 60_000, 120_000, 300_000];
 
 export function advanceCursor(
   offset: number,
@@ -56,6 +70,7 @@ export function albumToAutoCollection(
     coverArt: album.coverArt,
     artist: album.artist,
     artistId: album.artistId,
+    artists: album.artists,
     year: album.year,
     savedAt: existing?.savedAt ?? new Date().toISOString(),
     source: "auto",
@@ -91,15 +106,54 @@ export function groupSongIdsByAlbum(songs: Child[]): Map<string, string[]> {
   return byAlbum;
 }
 
-export function isSyncStale(
+function isStale(
+  timestamp: string | null | undefined,
+  now: number,
+  maxAgeMs: number,
+): boolean {
+  if (!timestamp) return true;
+  const time = Date.parse(timestamp);
+  return !Number.isFinite(time) || now - time >= maxAgeMs;
+}
+
+export const isSyncStale = (
   lastSyncCompletedAt: string | null,
   now: number,
-): boolean {
-  if (!lastSyncCompletedAt) return true;
-  const completedAt = Date.parse(lastSyncCompletedAt);
-  return (
-    !Number.isFinite(completedAt) || now - completedAt >= RESYNC_INTERVAL_MS
-  );
+): boolean => isStale(lastSyncCompletedAt, now, RESYNC_INTERVAL_MS);
+
+export const isArtworkStale = (
+  cachedAt: string | undefined,
+  now: number,
+): boolean => isStale(cachedAt, now, ARTWORK_REFRESH_MS);
+
+// Server-side edits to an already-downloaded track (retitle, retag, renumber)
+// must reach the offline copy without re-downloading the file. Returns the
+// updated OfflineTrack, or null when nothing changed. Optional fields fall
+// back to the stored value: some servers omit them from search3 results, and
+// an omission must not wipe metadata captured from richer responses.
+export function refreshedOfflineTrack(
+  existing: OfflineTrack,
+  song: Child,
+): OfflineTrack | null {
+  const updated: OfflineTrack = {
+    ...existing,
+    title: song.title,
+    artist: song.artist ?? existing.artist,
+    album: song.album ?? existing.album,
+    duration: song.duration ?? existing.duration,
+    coverArt: song.coverArt ?? existing.coverArt,
+    track: song.track ?? existing.track,
+    discNumber: song.discNumber ?? existing.discNumber,
+  };
+  const unchanged =
+    updated.title === existing.title &&
+    updated.artist === existing.artist &&
+    updated.album === existing.album &&
+    updated.duration === existing.duration &&
+    updated.coverArt === existing.coverArt &&
+    updated.track === existing.track &&
+    updated.discNumber === existing.discNumber;
+  return unchanged ? null : updated;
 }
 
 export type ServerDeletionPlan = {
@@ -140,14 +194,13 @@ export function planServerDeletions(args: {
 
   const removeCollectionIds: string[] = [];
   const replaceAlbumTrackIds: Record<string, string[]> = {};
-  const referencedByUser = new Set<string>();
+  const referencedByUser = trackIdsReferencedByCollections(
+    Object.values(collections).filter(
+      (collection) => collection.source !== "auto",
+    ),
+  );
   for (const collection of Object.values(collections)) {
-    if (collection.source !== "auto") {
-      for (const trackId of collection.trackIds) {
-        referencedByUser.add(trackId);
-      }
-      continue;
-    }
+    if (collection.source !== "auto") continue;
     const seen =
       collection.kind === "album"
         ? seenAlbumIds.has(collection.id)

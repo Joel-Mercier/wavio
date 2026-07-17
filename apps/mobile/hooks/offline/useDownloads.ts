@@ -113,8 +113,16 @@ export const useDownloadedTracksList = () => {
   return Object.values(downloadedTracks);
 };
 
-export const useDownloadedTracksCount = () =>
-  useOffline((s) => Object.keys(s.downloadedTracks).length);
+// Selects the (referentially stable) map and derives in useMemo so the O(n)
+// work re-runs only when a track is added/removed — not on every store write
+// (progress ticks land several times a second during an active sync).
+export const useDownloadedTracksCount = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(
+    () => Object.keys(downloadedTracks).length,
+    [downloadedTracks],
+  );
+};
 
 // Reactive view of saved offline collections (playlists/albums). Selects the
 // map (stable ref) and derives the list in the hook body so it only changes
@@ -127,10 +135,13 @@ export const useDownloadedCollections = () => {
   );
 };
 
-export const useTotalDownloadSize = () =>
-  useOffline((s) =>
-    Object.values(s.downloadedTracks).reduce((sum, t) => sum + t.size, 0),
+export const useTotalDownloadSize = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(
+    () => Object.values(downloadedTracks).reduce((sum, t) => sum + t.size, 0),
+    [downloadedTracks],
   );
+};
 
 // Per-id reactive progress — scoped to one trackId so a row only re-renders when
 // its own progress changes.

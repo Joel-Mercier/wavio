@@ -1,8 +1,10 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { offlineFileInfo } from "@/services/backend/streaming";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
+import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import { useLibrarySyncBase } from "@/stores/librarySync";
 import useOffline, {
   type DownloadProgress,
   type OfflineSource,
@@ -30,6 +32,19 @@ class DownloadCancelledError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "DownloadCancelledError";
+  }
+}
+
+// Thrown when an in-flight auto download finishes after extended offline mode
+// was disabled: the file is discarded instead of registered. Unlike
+// DownloadCancelledError it must NOT stay queued (processQueue would retry it
+// in a loop against the guard), so executeDownload's failure branch handles it
+// — errorReporting.isExpectedNoise matches this by name to keep it out of
+// Sentry.
+class AutoDownloadDiscardedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AutoDownloadDiscardedError";
   }
 }
 
@@ -344,6 +359,19 @@ export class OfflineDownloadService {
       offlineStore.downloadQueue.find((t) => t.id === track.id)
         ?.offlineSource ?? "user";
 
+    // Extended offline mode was disabled while this auto download was in
+    // flight (removeQueuedAutoDownloads can't cancel active ids): registering
+    // it now would orphan a file the disable sweep already ran past.
+    if (
+      source === "auto" &&
+      !useLibrarySyncBase.getState().extendedOfflineModeEnabled
+    ) {
+      try {
+        downloadResult.delete();
+      } catch {}
+      throw new AutoDownloadDiscardedError("Extended offline mode disabled");
+    }
+
     const offlineTrack: OfflineTrack = {
       id: track.id,
       title: track.title,
@@ -390,10 +418,10 @@ export class OfflineDownloadService {
   // doesn't delete songs shared with another.
   removeCollection(collectionId: string, trackIds: string[]): void {
     const offlineStore = useOffline.getState();
-    const referencedElsewhere = new Set(
-      Object.values(offlineStore.downloadedCollections)
-        .filter((collection) => collection.id !== collectionId)
-        .flatMap((collection) => collection.trackIds),
+    const referencedElsewhere = trackIdsReferencedByCollections(
+      Object.values(offlineStore.downloadedCollections).filter(
+        (collection) => collection.id !== collectionId,
+      ),
     );
 
     for (const trackId of trackIds) {

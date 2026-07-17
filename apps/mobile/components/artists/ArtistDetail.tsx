@@ -120,10 +120,11 @@ export default function ArtistDetail() {
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
   const { data: serverData, isLoading, error } = useArtist(id);
-  const offlineArtistData = useOfflineArtist(id);
   // Offline (or before the server query resolves) fall back to the artist
   // derived from downloaded album collections so extended-offline libraries
-  // keep their artist screens without a cached server response.
+  // keep their artist screens without a cached server response; only derived
+  // while server data is absent.
+  const offlineArtistData = useOfflineArtist(id, serverData == null);
   const data = serverData ?? offlineArtistData;
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
     useArtistInfo2(id, { count: 10 });

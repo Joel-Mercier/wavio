@@ -67,12 +67,19 @@ export default function AllArtistsScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedQuery]);
 
-  const { data: serverData, isLoading, error } = useArtists({ musicFolderId });
-  const offlineArtistsData = useOfflineArtists();
+  const {
+    data: serverData,
+    isLoading: isLoadingServer,
+    error,
+  } = useArtists({ musicFolderId });
   // Offline fall back to artists derived from downloaded album collections so
   // an extended-offline library keeps its artist browse without a cached
-  // server response.
+  // server response; only derived while server data is absent. The fallback
+  // also overrides the loading state — offline the paused server query stays
+  // "pending" and would show skeletons over renderable data forever.
+  const offlineArtistsData = useOfflineArtists(serverData == null);
   const data = serverData ?? offlineArtistsData;
+  const isLoading = isLoadingServer && offlineArtistsData == null;
 
   const allArtists = useMemo<ArtistID3[]>(
     () => data?.artists?.index?.flatMap((i) => i.artist ?? []) ?? [],

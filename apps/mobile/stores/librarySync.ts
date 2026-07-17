@@ -41,6 +41,11 @@ export type LibrarySyncCrawlState = {
   seenAlbumIds: string[];
   seenSongIds: string[];
   seenPlaylistIds: string[];
+  // Downloaded-track count when the pass started; compared on completion to
+  // detect a pass that actually downloaded something (→ "library cached"
+  // toast) vs a no-op resync. Persisted so a sync spanning app restarts still
+  // notifies; null once the completion has been evaluated.
+  passStartDownloadedCount: number | null;
   lastSyncCompletedAt: string | null;
   lastError: LibrarySyncErrorCode | null;
 };
@@ -63,6 +68,7 @@ const initialCrawlState: LibrarySyncCrawlState = {
   seenAlbumIds: [],
   seenSongIds: [],
   seenPlaylistIds: [],
+  passStartDownloadedCount: null,
   lastSyncCompletedAt: null,
   lastError: null,
 };

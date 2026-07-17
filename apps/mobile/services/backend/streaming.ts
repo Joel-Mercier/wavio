@@ -137,7 +137,9 @@ export const downloadUrl = (id: string) => {
   if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
   const { url } = useAuthBase.getState();
-  return `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+  return resolveServerBase(
+    `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`,
+  );
 };
 
 // Where an offline download gets its bytes, and the extension the saved file
@@ -169,7 +171,9 @@ export const offlineFileInfo = (
     ? `&maxBitRate=${downloadMaxBitRate}`
     : "";
   return {
-    url: `${url}/rest/stream?id=${encodeURIComponent(track.id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json&format=${downloadFormat}${bitRateParam}`,
+    url: resolveServerBase(
+      `${url}/rest/stream?id=${encodeURIComponent(track.id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json&format=${downloadFormat}${bitRateParam}`,
+    ),
     suffix: downloadFormat,
   };
 };

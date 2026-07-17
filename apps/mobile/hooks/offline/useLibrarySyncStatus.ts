@@ -1,3 +1,7 @@
+import {
+  useDownloadedTracksCount,
+  useTotalDownloadSize,
+} from "@/hooks/offline/useDownloads";
 import { useConnectionType, useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
 import useLibrarySync from "@/stores/librarySync";
@@ -9,6 +13,7 @@ export type LibrarySyncUiStatus =
   | "pausedOffline"
   | "pausedWifi"
   | "pausedDisk"
+  | "syncError"
   | "unsupported"
   | "upToDate";
 
@@ -20,12 +25,8 @@ export function useLibrarySyncStatus() {
   const phase = useLibrarySync((s) => s.phase);
   const lastError = useLibrarySync((s) => s.lastError);
   const totalSongs = useLibrarySync((s) => s.totalSongs);
-  const downloadedCount = useOffline(
-    (s) => Object.keys(s.downloadedTracks).length,
-  );
-  const size = useOffline((s) =>
-    Object.values(s.downloadedTracks).reduce((sum, t) => sum + t.size, 0),
-  );
+  const downloadedCount = useDownloadedTracksCount();
+  const size = useTotalDownloadSize();
   const queueLength = useOffline((s) => s.downloadQueue.length);
   const isOnline = useIsOnline();
   const connectionType = useConnectionType();
@@ -44,6 +45,8 @@ export function useLibrarySyncStatus() {
     status = "pausedWifi";
   } else if (lastError === "diskFull") {
     status = "pausedDisk";
+  } else if (lastError === "syncFailed") {
+    status = "syncError";
   } else {
     status = "syncing";
   }

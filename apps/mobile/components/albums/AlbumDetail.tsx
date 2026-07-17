@@ -460,6 +460,7 @@ export default function AlbumDetail() {
             coverArt: data.album.coverArt,
             artist: data.album.artist,
             artistId: data.album.artistId,
+            artists: data.album.artists,
             year: data.album.year,
           }
         : undefined,

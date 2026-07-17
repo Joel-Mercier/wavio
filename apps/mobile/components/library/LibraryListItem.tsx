@@ -23,6 +23,8 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useHasOfflineAlbumCollections,
+  useIsArtistAvailableOffline,
   useIsCollectionAvailableOffline,
   useIsDetailCached,
   useOfflineModeEnabled,
@@ -327,10 +329,26 @@ export default function LibraryListItem({
     isCollectionAvailableOffline ||
     (type.id === "favorites" && offlineModeEnabled);
 
+  // The "All albums"/"All artists" browse screens and ArtistDetail fall back
+  // to downloaded album collections (extended offline mode caches the whole
+  // library), so those rows stay tappable offline without a cached list query.
+  const hasOfflineAlbumCollections = useHasOfflineAlbumCollections();
+  const isArtistAvailableOffline = useIsArtistAvailableOffline(
+    type.id === "artist" ? item.id : undefined,
+  );
+  const offlineBrowseAvailable =
+    ((type.id === "allAlbums" || type.id === "allArtists") &&
+      hasOfflineAlbumCollections) ||
+    isArtistAvailableOffline;
+
   return (
     <FadeOutScaleDown
       href={href}
-      disabled={!isDetailCached && !isCollectionAvailableOffline}
+      disabled={
+        !isDetailCached &&
+        !isCollectionAvailableOffline &&
+        !offlineBrowseAvailable
+      }
       // Grid cells use symmetric horizontal padding so every column has the
       // same content width; the parent list offsets its own paddingHorizontal
       // by that amount to keep the outer edge aligned.

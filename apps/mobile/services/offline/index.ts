@@ -3,6 +3,8 @@
 // Connectivity/reachability is a separate concern — see services/network.ts.
 
 export {
+  collectionArtistCredits,
+  collectionCreditsArtist,
   offlineCollectionToAlbum,
   offlineCollectionToPlaylist,
   offlineTrackToChild,

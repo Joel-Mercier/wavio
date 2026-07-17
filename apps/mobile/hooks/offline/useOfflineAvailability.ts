@@ -1,5 +1,5 @@
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   getIsCacheRestoring,
   subscribeCacheRestoring,
@@ -8,6 +8,7 @@ import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { collectionCreditsArtist } from "@/services/offline/collections";
 import type {
   AlbumWithSongsID3,
   Child,
@@ -106,4 +107,34 @@ export function useIsCollectionAvailableOffline(
   }, [queryClient, kind, id]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+// Whether any album collection is downloaded — the extended-offline library
+// sync registers every server album, so this is what makes the "All albums" /
+// "All artists" browse entries reachable offline (their screens fall back to
+// the downloaded collections).
+export function useHasOfflineAlbumCollections(): boolean {
+  const downloadedCollections = useOffline((s) => s.downloadedCollections);
+  return useMemo(
+    () =>
+      Object.values(downloadedCollections).some(
+        (collection) => collection.kind === "album",
+      ),
+    [downloadedCollections],
+  );
+}
+
+// Whether ArtistDetail can render this artist offline from downloaded album
+// collections (useOfflineArtist) — the fallback that makes artist rows
+// tappable without a cached ["artist", id] query.
+export function useIsArtistAvailableOffline(
+  artistId: string | undefined,
+): boolean {
+  const downloadedCollections = useOffline((s) => s.downloadedCollections);
+  return useMemo(() => {
+    if (!artistId) return false;
+    return Object.values(downloadedCollections).some((collection) =>
+      collectionCreditsArtist(collection, artistId),
+    );
+  }, [artistId, downloadedCollections]);
 }

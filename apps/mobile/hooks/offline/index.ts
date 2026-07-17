@@ -23,8 +23,11 @@ export {
   type LibrarySyncUiStatus,
   useLibrarySyncStatus,
 } from "./useLibrarySyncStatus";
+export { useOfflineAlbums } from "./useOfflineAlbums";
 export { useOfflineArtist, useOfflineArtists } from "./useOfflineArtists";
 export {
+  useHasOfflineAlbumCollections,
+  useIsArtistAvailableOffline,
   useIsCollectionAvailableOffline,
   useIsDetailCached,
   useIsTrackAvailableOffline,
