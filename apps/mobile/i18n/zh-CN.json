@@ -1050,7 +1050,7 @@
 				"translationOff": "关闭",
 				"pronunciation": "发音",
 				"showPronunciation": "显示发音",
-				"lyricsUnavailable": "该歌曲暂无匹配的歌词。",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "睡眠定时",
 				"sleepTimerOff": "关闭",
 				"sleepTimerEndOfTrack": "定时到本曲目结束",
