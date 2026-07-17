@@ -56,6 +56,7 @@ import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
 const COVER_SWIPE_THRESHOLD = 80;
@@ -186,7 +187,7 @@ export default function PlayerScreen() {
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
   const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
-  const hasSyncedLyrics = !!lyrics && lyrics.line.length > 0;
+  const hasSyncedLyrics = isSyncedLyrics(lyrics);
   const coverTranslateX = useSharedValue(0);
 
   const coverRowStyle = useAnimatedStyle(() => ({
@@ -420,7 +421,7 @@ export default function PlayerScreen() {
                   onPress={() => {
                     if (sourceHref) router.replace(sourceHref);
                   }}
-                  className="flex-1 grow w-full"
+                  className="w-full"
                 >
                   <MovingText>
                     <Text
@@ -504,9 +505,9 @@ export default function PlayerScreen() {
                 </GestureDetector>
               )}
             </Box>
-            {lyricsSource !== "off" && (
+            {lyricsSource !== "off" && hasSyncedLyrics && (
               <CurrentLyricLine
-                lyrics={hasSyncedLyrics ? lyrics : null}
+                lyrics={lyrics}
                 onPress={() => router.push("/lyrics")}
               />
             )}

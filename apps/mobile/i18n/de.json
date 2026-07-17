@@ -26,6 +26,7 @@
 				"moreFrom": "Mehr von",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internetradiosender",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "Musik",
 					"podcasts": "Podcasts",
@@ -558,6 +559,44 @@
 			},
 			"settings": {
 				"title": "Einstellungen",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "Podcasts",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "Internetradio",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "Sicherung und Wiederherstellung",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "Sicherheit",
+						"description": "Vertrauenswürdige Zertifikate"
+					}
+				},
 				"offlineSettings": {
 					"title": "Offline-Modus",
 					"offlineModeLabel": "Offline-Modus",
@@ -1002,7 +1041,9 @@
 					"artist": "Wiedergabe vom Interpreten",
 					"likedSongs": "Wiedergabe von gemochten Titeln",
 					"folder": "Wiedergabe aus einem Ordner",
-					"similar": "Ähnliche Songs abspielen"
+					"similar": "Ähnliche Songs abspielen",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
 				"playNext": "Nächsten Titel abspielen",
@@ -1022,7 +1063,7 @@
 				"translationOff": "Aus",
 				"pronunciation": "Aussprache",
 				"showPronunciation": "Aussprache anzeigen",
-				"lyricsUnavailable": "Für diesen Titel sind keine synchronisierten Songtexte verfügbar.",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "Sleep-Timer",
 				"sleepTimerOff": "Aus",
 				"sleepTimerEndOfTrack": "Ende des Titels",

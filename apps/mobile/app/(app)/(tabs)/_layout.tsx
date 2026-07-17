@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import Home from "lucide-react-native/dist/esm/icons/house.mjs";
 import Library from "lucide-react-native/dist/esm/icons/library.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
@@ -34,6 +34,8 @@ export default function TabLayout() {
   const isOnline = useIsOnline();
   const isWideLayout = useApp((store) => store.isWideLayout);
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
+  const isOnSearchIndex = segments[segments.length - 1] === "(search)";
 
   const handleAddTabPress = () => {
     addBottomSheetRef.current?.present();
@@ -144,6 +146,18 @@ export default function TabLayout() {
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
+              // Tapping the tab while already sitting on the search index opens
+              // the search field straight away (recent-searches autofocuses its
+              // input); from anywhere deeper in the stack the tap returns to
+              // the index first. `instant` skips the push animation so a double
+              // tap doesn't linger on the index sliding out.
+              if (isOnSearchIndex) {
+                navigation.navigate("(search)", {
+                  screen: "recent-searches",
+                  params: { instant: "1" },
+                });
+                return;
+              }
               navigation.navigate("(search)", { screen: "index" });
             },
           })}

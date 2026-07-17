@@ -26,6 +26,7 @@
 				"moreFrom": "Ещё от",
 				"podcasts": "Подкасты",
 				"internetRadioStations": "Интернет-радио",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "Музыка",
 					"podcasts": "Подкасты",
@@ -570,6 +571,44 @@
 			},
 			"settings": {
 				"title": "Настройки",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "Подкасты",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "Интернет-радио",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "Резервное копирование и восстановление",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "Безопасность",
+						"description": "Доверенные сертификаты"
+					}
+				},
 				"offlineSettings": {
 					"title": "Офлайн",
 					"offlineModeLabel": "Офлайн-режим",
@@ -1028,7 +1067,9 @@
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
 					"folder": "Из папки",
-					"similar": "Похожие треки"
+					"similar": "Похожие треки",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "Добавить в плейлист",
 				"playNext": "Включить следующим",
@@ -1048,7 +1089,7 @@
 				"translationOff": "Выкл.",
 				"pronunciation": "Произношение",
 				"showPronunciation": "Показать произношение",
-				"lyricsUnavailable": "Для этого трека нет синхронизированного текста.",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "Таймер сна",
 				"sleepTimerOff": "Выкл.",
 				"sleepTimerEndOfTrack": "В конце трека",

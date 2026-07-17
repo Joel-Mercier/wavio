@@ -37,6 +37,15 @@ export function findCurrentLineIndex(
   return result;
 }
 
+// A layer can claim `synced` while carrying no usable timestamps (Jellyfin marks
+// synced from a `.some()` over its lines), and findCurrentLineIndex coerces a
+// missing start to 0 — so callers must gate on this rather than on `synced`.
+export function isSyncedLyrics(
+  lyrics: StructuredLyrics | null | undefined,
+): boolean {
+  return !!lyrics?.synced && lyrics.line.some((l) => l.start != null);
+}
+
 export function findCurrentCueIndex(
   cues: LyricCue[],
   positionMs: number,

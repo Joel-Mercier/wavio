@@ -118,6 +118,21 @@ export async function queryTrackById(id: string): Promise<TrackRow | null> {
 }
 
 /**
+ * Which of `ids` are still indexed. Used to prune client-side references to
+ * tracks the scanner has since removed (see services/playHistory/reconcile.ts).
+ */
+export async function queryExistingTrackIds(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const db = await getLocalLibraryDb();
+  const placeholders = ids.map(() => "?").join(",");
+  const rows = await db.getAllAsync<{ id: string }>(
+    `SELECT id FROM tracks WHERE id IN (${placeholders})`,
+    ...ids,
+  );
+  return rows.map((row) => row.id);
+}
+
+/**
  * An artist's tracks ordered by play count (most-played first), used for the
  * "Top songs" surface. Mirrors Subsonic's getTopSongs; ties break on title.
  */

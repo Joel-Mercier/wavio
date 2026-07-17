@@ -1,6 +1,7 @@
-import type { Line } from "@/services/openSubsonic/types";
+import type { Line, StructuredLyrics } from "@/services/openSubsonic/types";
 import {
   findCurrentLineIndex,
+  isSyncedLyrics,
   parseLrcToStructuredLyrics,
   stripLyricTimeTokens,
 } from "@/utils/lyrics";
@@ -37,6 +38,59 @@ describe("findCurrentLineIndex", () => {
 
   it("returns -1 for an empty list", () => {
     expect(findCurrentLineIndex([], 1000)).toBe(-1);
+  });
+
+  // Missing starts coerce to 0, so untimed lines all compare equal and the
+  // search resolves to a real index rather than -1. Callers must gate on
+  // isSyncedLyrics instead of relying on this returning "no active line".
+  it("cannot report the absence of an active line for untimed lines", () => {
+    const lines: Line[] = [{ value: "a" }, { value: "b" }, { value: "c" }];
+    expect(findCurrentLineIndex(lines, 30000)).not.toBe(-1);
+  });
+});
+
+describe("isSyncedLyrics", () => {
+  const build = (lyrics: Partial<StructuredLyrics>): StructuredLyrics => ({
+    lang: "xxx",
+    synced: false,
+    line: [],
+    ...lyrics,
+  });
+
+  it("is true when the layer is synced and carries timestamps", () => {
+    expect(
+      isSyncedLyrics(build({ synced: true, line: [{ value: "a", start: 0 }] })),
+    ).toBe(true);
+  });
+
+  it("is false for an unsynced layer", () => {
+    expect(
+      isSyncedLyrics(build({ synced: false, line: [{ value: "a" }] })),
+    ).toBe(false);
+  });
+
+  it("is false when a layer claims synced but carries no timestamps", () => {
+    expect(
+      isSyncedLyrics(
+        build({ synced: true, line: [{ value: "a" }, { value: "b" }] }),
+      ),
+    ).toBe(false);
+  });
+
+  it("is true when only some lines carry timestamps", () => {
+    expect(
+      isSyncedLyrics(
+        build({
+          synced: true,
+          line: [{ value: "a", start: 500 }, { value: "b" }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("is false for missing lyrics", () => {
+    expect(isSyncedLyrics(null)).toBe(false);
+    expect(isSyncedLyrics(undefined)).toBe(false);
   });
 });
 

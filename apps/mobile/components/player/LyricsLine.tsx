@@ -34,6 +34,7 @@ export default function LyricsLine({
   offsetMs = 0,
   align = "left",
   muted = false,
+  plain = false,
 }: {
   value: string;
   isActive: boolean;
@@ -43,16 +44,22 @@ export default function LyricsLine({
   offsetMs?: number;
   align?: LyricAlign;
   muted?: boolean;
+  plain?: boolean;
 }) {
-  const opacity = useSharedValue(isActive ? 1 : isPast ? 0.6 : 0.8);
-  const scale = useSharedValue(isActive ? 1 : 0.96);
+  const opacity = useSharedValue(plain ? 1 : isActive ? 1 : isPast ? 0.6 : 0.8);
+  const scale = useSharedValue(plain || isActive ? 1 : 0.96);
 
   useEffect(() => {
+    if (plain) {
+      opacity.value = 1;
+      scale.value = 1;
+      return;
+    }
     opacity.value = withTiming(isActive ? 1 : isPast ? 0.6 : 0.8, {
       duration: 250,
     });
     scale.value = withTiming(isActive ? 1 : 0.96, { duration: 250 });
-  }, [isActive, isPast, opacity, scale]);
+  }, [isActive, isPast, plain, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -65,8 +72,9 @@ export default function LyricsLine({
   const inactiveClass = muted
     ? "text-primary-200 text-base"
     : "text-primary-100 text-xl";
+  const plainClass = muted ? "text-primary-100 text-lg" : "text-white text-xl";
   const textClass = cn(
-    isActive ? activeClass : inactiveClass,
+    plain ? plainClass : isActive ? activeClass : inactiveClass,
     ALIGN_TEXT[align],
   );
 
@@ -74,11 +82,12 @@ export default function LyricsLine({
   const content = (
     <Animated.View
       style={[
-        {
-          minHeight: LYRICS_LINE_HEIGHT,
-          justifyContent: "center",
-          alignItems: ALIGN_ITEMS[align],
-        },
+        // The height floor keeps synced auto-scroll targets predictable; plain
+        // lyrics never auto-scroll and would otherwise read as a sparse list.
+        plain
+          ? { paddingVertical: 6 }
+          : { minHeight: LYRICS_LINE_HEIGHT, justifyContent: "center" },
+        { alignItems: ALIGN_ITEMS[align] },
         animatedStyle,
       ]}
     >

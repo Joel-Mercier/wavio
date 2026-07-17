@@ -4,7 +4,14 @@ export default function SearchLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="recent-searches" />
+      <Stack.Screen
+        name="recent-searches"
+        options={({ route }) => ({
+          animation: (route.params as { instant?: string } | undefined)?.instant
+            ? "none"
+            : undefined,
+        })}
+      />
       <Stack.Screen name="search-results" />
       <Stack.Screen name="albums/[id]" />
       <Stack.Screen name="artists/[id]" />

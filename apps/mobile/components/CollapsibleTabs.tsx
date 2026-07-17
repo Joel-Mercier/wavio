@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type LayoutChangeEvent, Pressable, View } from "react-native";
+import { type LayoutChangeEvent, View } from "react-native";
 import PagerView, {
   type PagerViewOnPageSelectedEvent,
 } from "react-native-pager-view";
@@ -20,8 +20,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { scheduleOnUI } from "react-native-worklets";
-import { Text } from "@/components/ui/text";
-import { cn } from "@/utils/tailwind";
+import TabBar from "@/components/TabBar";
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
@@ -198,33 +197,13 @@ export default function CollapsibleTabs({
         ]}
       >
         {renderHeader()}
-        <View
-          style={{ height: tabBarHeight }}
-          className={cn("flex-row bg-black gap-x-4 px-6", tabBarClassName)}
-        >
-          {tabs.map((tab, i) => (
-            <Pressable
-              key={tab.key}
-              onPress={() => handleTabPress(i)}
-              className="items-center justify-center"
-            >
-              <Text
-                className={cn(
-                  "text-white text-md",
-                  activeIndex === i ? "font-bold" : "text-primary-100",
-                )}
-              >
-                {tab.title}
-              </Text>
-              <View
-                className={cn(
-                  "h-0.5 w-full mt-1 rounded-full",
-                  activeIndex === i ? "bg-emerald-500" : "bg-transparent",
-                )}
-              />
-            </Pressable>
-          ))}
-        </View>
+        <TabBar
+          tabs={tabs}
+          activeIndex={activeIndex}
+          onTabPress={handleTabPress}
+          height={tabBarHeight}
+          className={tabBarClassName}
+        />
       </Animated.View>
     </View>
   );

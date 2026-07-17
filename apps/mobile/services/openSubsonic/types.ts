@@ -569,3 +569,13 @@ export interface Agent {
   role: string;
   name?: string;
 }
+
+// Result of an existence probe over a set of track ids. An id the server
+// answered for lands in `present`; one the server explicitly reported as
+// missing lands in `gone`. An id whose probe failed for any other reason (a
+// transport error, a 5xx) appears in NEITHER — "unknown" is not "deleted", and
+// callers must not prune on it.
+export interface SongsExistResult {
+  present: string[];
+  gone: string[];
+}

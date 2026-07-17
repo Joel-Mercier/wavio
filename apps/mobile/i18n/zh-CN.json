@@ -26,6 +26,7 @@
 				"moreFrom": "更多作品来自",
 				"podcasts": "播客",
 				"internetRadioStations": "网络电台",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "音乐",
 					"podcasts": "播客",
@@ -552,6 +553,44 @@
 			},
 			"settings": {
 				"title": "设置",
+				"menu": {
+					"playback": {
+						"title": "Playback & audio",
+						"description": "Audio quality, replay gain, equalizer"
+					},
+					"library": {
+						"title": "Music library",
+						"description": "Scan your library and view its status"
+					},
+					"downloads": {
+						"title": "Downloads & offline",
+						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+					},
+					"appearance": {
+						"title": "Appearance",
+						"description": "Language, home sections, haptics"
+					},
+					"podcasts": {
+						"title": "播客",
+						"description": "Configure the Taddy podcast API"
+					},
+					"radio": {
+						"title": "网络电台",
+						"description": "Enable stations, country, tags"
+					},
+					"storage": {
+						"title": "Storage & data",
+						"description": "Storage usage, cache, recent activity"
+					},
+					"backup": {
+						"title": "备份与恢复",
+						"description": "Export and restore your data"
+					},
+					"security": {
+						"title": "安全",
+						"description": "受信任的证书"
+					}
+				},
 				"offlineSettings": {
 					"title": "离线模式",
 					"offlineModeLabel": "启用离线模式",
@@ -989,7 +1028,9 @@
 					"artist": "播放自艺人",
 					"likedSongs": "播放自喜欢的歌曲",
 					"folder": "播放自文件夹",
-					"similar": "播放自相似歌曲"
+					"similar": "播放自相似歌曲",
+					"albumList": "Playing from albums",
+					"playlistList": "Playing from playlists"
 				},
 				"addToPlaylist": "加入歌单",
 				"playNext": "下一首播放",
@@ -1009,7 +1050,7 @@
 				"translationOff": "关闭",
 				"pronunciation": "发音",
 				"showPronunciation": "显示发音",
-				"lyricsUnavailable": "该歌曲暂无匹配的歌词。",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "睡眠定时",
 				"sleepTimerOff": "关闭",
 				"sleepTimerEndOfTrack": "定时到本曲目结束",
