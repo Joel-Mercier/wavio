@@ -68,6 +68,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
+import { useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -118,7 +119,12 @@ export default function ArtistDetail() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { handleSheetPositionChange } =
     useBottomSheetBackHandler(bottomSheetModalRef);
-  const { data, isLoading, error } = useArtist(id);
+  const { data: serverData, isLoading, error } = useArtist(id);
+  const offlineArtistData = useOfflineArtist(id);
+  // Offline (or before the server query resolves) fall back to the artist
+  // derived from downloaded album collections so extended-offline libraries
+  // keep their artist screens without a cached server response.
+  const data = serverData ?? offlineArtistData;
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
     useArtistInfo2(id, { count: 10 });
   const {

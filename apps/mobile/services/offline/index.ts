@@ -11,3 +11,7 @@ export {
   OfflineDownloadService,
   offlineDownloadService,
 } from "./downloadService";
+export {
+  LibrarySyncService,
+  librarySyncService,
+} from "./librarySyncService";

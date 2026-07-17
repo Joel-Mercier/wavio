@@ -21,6 +21,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useArtists } from "@/hooks/backend/useBrowsing";
+import { useOfflineArtists } from "@/hooks/offline";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
@@ -66,7 +67,12 @@ export default function AllArtistsScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedQuery]);
 
-  const { data, isLoading, error } = useArtists({ musicFolderId });
+  const { data: serverData, isLoading, error } = useArtists({ musicFolderId });
+  const offlineArtistsData = useOfflineArtists();
+  // Offline fall back to artists derived from downloaded album collections so
+  // an extended-offline library keeps its artist browse without a cached
+  // server response.
+  const data = serverData ?? offlineArtistsData;
 
   const allArtists = useMemo<ArtistID3[]>(
     () => data?.artists?.index?.flatMap((i) => i.artist ?? []) ?? [],

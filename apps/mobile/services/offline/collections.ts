@@ -22,6 +22,8 @@ export function offlineTrackToChild(track: OfflineTrack): Child {
     duration: track.duration,
     size: track.size,
     suffix: track.path.split(".").pop(),
+    track: track.track,
+    discNumber: track.discNumber,
   };
 }
 
@@ -58,7 +60,14 @@ export function offlineCollectionToAlbum(
   collection: OfflineCollection,
   downloadedTracks: Record<string, OfflineTrack>,
 ): AlbumWithSongsID3 {
-  const song = collectionTracks(collection, downloadedTracks);
+  // The library sync appends trackIds in crawl order, not album order. Sorting
+  // by disc/track restores it; tracks downloaded before those fields existed
+  // all compare equal, so their saved order is kept (stable sort).
+  const song = collectionTracks(collection, downloadedTracks).sort(
+    (a, b) =>
+      (a.discNumber ?? 0) - (b.discNumber ?? 0) ||
+      (a.track ?? 0) - (b.track ?? 0),
+  );
   return {
     id: collection.id,
     name: collection.name,

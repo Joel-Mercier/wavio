@@ -3,6 +3,8 @@ import {
   JELLYFIN_DEFAULT_TRANSCODE_CODEC,
   downloadUrl as jellyfinDownloadUrl,
   hlsStreamUrl as jellyfinHlsStreamUrl,
+  offlineStreamUrl as jellyfinOfflineStreamUrl,
+  offlineTranscodeSuffix as jellyfinOfflineTranscodeSuffix,
   streamUrl as jellyfinStreamUrl,
   willDirectPlay as jellyfinWillDirectPlay,
 } from "@/services/jellyfin/streaming";
@@ -12,6 +14,7 @@ import {
 } from "@/services/local/keys";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
+import type { Child } from "@/services/openSubsonic/types";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
@@ -135,4 +138,38 @@ export const downloadUrl = (id: string) => {
   if (isJellyfin()) return jellyfinDownloadUrl(id);
   const { url } = useAuthBase.getState();
   return `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+};
+
+// Where an offline download gets its bytes, and the extension the saved file
+// gets. "raw" (the default) downloads the original file; any other
+// downloadFormat asks the server to transcode, driven by the dedicated
+// download settings (stores/app.ts) rather than the streaming ones.
+export const offlineFileInfo = (
+  track: Child,
+): { url: string; suffix: string } => {
+  const original = {
+    url: downloadUrl(track.id),
+    suffix: track.suffix || "mp3",
+  };
+  const { downloadFormat, downloadMaxBitRate } = useAppBase.getState();
+  if (downloadFormat === "raw") return original;
+  if (localFileUrl(track.id) != null) return original;
+  if (isJellyfin()) {
+    return {
+      url: jellyfinOfflineStreamUrl(
+        track.id,
+        downloadFormat,
+        downloadMaxBitRate,
+      ),
+      suffix: jellyfinOfflineTranscodeSuffix(downloadFormat),
+    };
+  }
+  const { url } = useAuthBase.getState();
+  const bitRateParam = downloadMaxBitRate
+    ? `&maxBitRate=${downloadMaxBitRate}`
+    : "";
+  return {
+    url: `${url}/rest/stream?id=${encodeURIComponent(track.id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json&format=${downloadFormat}${bitRateParam}`,
+    suffix: downloadFormat,
+  };
 };

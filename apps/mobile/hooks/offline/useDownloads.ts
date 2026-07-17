@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { offlineDownloadService } from "@/services/offline";
+import { librarySyncService, offlineDownloadService } from "@/services/offline";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
@@ -61,6 +61,9 @@ export const useOfflineDownloads = () => {
   const clearAllDownloads = useCallback(async () => {
     try {
       await offlineDownloadService.clearAllDownloads();
+      // The downloaded state (and cached artwork) is gone; a still-enabled
+      // library sync restarts its crawl from scratch.
+      librarySyncService.handleDownloadsCleared();
     } catch (error) {
       logError("Download Manager: Error clearing all downloads:", error);
       throw error;

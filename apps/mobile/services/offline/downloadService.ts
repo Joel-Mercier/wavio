@@ -1,10 +1,11 @@
 import { Directory, File, Paths } from "expo-file-system";
-import { downloadUrl } from "@/services/backend/streaming";
+import { offlineFileInfo } from "@/services/backend/streaming";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useOffline, {
   type DownloadProgress,
+  type OfflineSource,
   type OfflineTrack,
 } from "@/stores/offline";
 import { logError } from "@/utils/log";
@@ -55,13 +56,28 @@ export class OfflineDownloadService {
     return OfflineDownloadService.instance;
   }
 
-  async downloadTrack(track: Child): Promise<void> {
+  async downloadTrack(
+    track: Child,
+    opts?: { source?: OfflineSource },
+  ): Promise<void> {
     const offlineStore = useOffline.getState();
+    const source = opts?.source ?? "user";
 
-    if (offlineStore.isTrackDownloaded(track.id)) return;
+    if (offlineStore.isTrackDownloaded(track.id)) {
+      // An explicit save of a track the library sync already cached promotes it
+      // to user-owned so it survives disabling extended offline mode.
+      const downloaded = offlineStore.getDownloadedTrack(track.id);
+      if (source === "user" && downloaded?.source === "auto") {
+        offlineStore.addDownloadedTrack({ ...downloaded, source: "user" });
+      }
+      return;
+    }
 
     const existing = this.resolvers.get(track.id);
     if (existing) {
+      if (source === "user") {
+        offlineStore.setQueuedTrackSource(track.id, "user");
+      }
       return new Promise<void>((resolve, reject) => {
         const original = this.resolvers.get(track.id);
         if (!original) {
@@ -81,7 +97,7 @@ export class OfflineDownloadService {
       });
     }
 
-    offlineStore.addToDownloadQueue(track);
+    offlineStore.addToDownloadQueue({ ...track, offlineSource: source });
     offlineStore.setDownloadProgress(track.id, {
       trackId: track.id,
       status: "pending",
@@ -102,6 +118,57 @@ export class OfflineDownloadService {
 
   async downloadAllStarredTracks(starredTracks: Child[]): Promise<void> {
     await this.downloadTracks(starredTracks);
+  }
+
+  // Bulk enqueue for the library sync: one store write for the queue and one
+  // for progress instead of two per track — at a 200-song page each write
+  // re-serializes the whole persisted store. Fire-and-forget (no per-track
+  // resolvers); failures land in downloadProgress like any other download.
+  enqueueTracks(tracks: Child[], source: OfflineSource): void {
+    const offlineStore = useOffline.getState();
+    const queuedIds = new Set(offlineStore.downloadQueue.map((t) => t.id));
+    const toQueue = tracks.filter(
+      (track) =>
+        !offlineStore.isTrackDownloaded(track.id) && !queuedIds.has(track.id),
+    );
+    if (toQueue.length > 0) {
+      offlineStore.addManyToDownloadQueue(
+        toQueue.map((track) => ({ ...track, offlineSource: source })),
+      );
+      offlineStore.setManyDownloadProgress(
+        toQueue.map((track) => ({
+          trackId: track.id,
+          status: "pending" as const,
+          progress: 0,
+        })),
+      );
+    }
+    this.processQueue();
+  }
+
+  // Drops queued auto downloads — all of them when extended offline mode is
+  // disabled, or only `onlyIds` when the library sync reconciles server-side
+  // deletions. Tracks already in flight are left to finish (they can't be
+  // cancelled) — their queue entry still carries source "auto", so a later
+  // disable or resync sweeps them.
+  removeQueuedAutoDownloads(onlyIds?: ReadonlySet<string>): void {
+    const offlineStore = useOffline.getState();
+    const removedIds = offlineStore.downloadQueue
+      .filter(
+        (queued) =>
+          queued.offlineSource === "auto" &&
+          !this.activeIds.has(queued.id) &&
+          (!onlyIds || onlyIds.has(queued.id)),
+      )
+      .map((queued) => queued.id);
+    offlineStore.removeManyFromDownloadQueue(removedIds);
+    for (const trackId of removedIds) {
+      const resolvers = this.resolvers.get(trackId);
+      this.resolvers.delete(trackId);
+      resolvers?.reject(
+        new DownloadCancelledError("Extended offline mode disabled"),
+      );
+    }
   }
 
   resume(): void {
@@ -241,8 +308,8 @@ export class OfflineDownloadService {
     const offlineDir = new Directory(Paths.document, "offline", scope);
     offlineDir.create({ idempotent: true, intermediates: true });
 
-    const url = downloadUrl(track.id);
-    const fileName = `${track.id}.${track.suffix || "mp3"}`;
+    const { url, suffix } = offlineFileInfo(track);
+    const fileName = `${track.id}.${suffix}`;
     const filePath = new File(offlineDir, fileName);
 
     const downloadResult = await File.downloadFileAsync(url, filePath, {
@@ -270,6 +337,13 @@ export class OfflineDownloadService {
       throw new Error("Downloads cleared");
     }
 
+    // Re-read the queue entry: a user save can promote an in-flight auto
+    // download (setQueuedTrackSource), which replaces the queued object this
+    // method holds a stale reference to.
+    const source =
+      offlineStore.downloadQueue.find((t) => t.id === track.id)
+        ?.offlineSource ?? "user";
+
     const offlineTrack: OfflineTrack = {
       id: track.id,
       title: track.title,
@@ -280,6 +354,9 @@ export class OfflineDownloadService {
       path: downloadResult.uri,
       size: downloadResult.size || track.size || 0,
       downloadedAt: new Date().toISOString(),
+      source,
+      track: track.track,
+      discNumber: track.discNumber,
     };
 
     offlineStore.addDownloadedTrack(offlineTrack);

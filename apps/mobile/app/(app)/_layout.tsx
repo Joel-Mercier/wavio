@@ -11,6 +11,7 @@ import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import LibrarySyncController from "@/components/LibrarySyncController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
@@ -25,6 +26,7 @@ import {
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
+import { librarySyncService } from "@/services/offline";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -43,6 +45,7 @@ import useApp from "@/stores/app";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useLibrarySync from "@/stores/librarySync";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -125,6 +128,8 @@ export default function AppLayout() {
       // rehydrate below.
       resetPlayerForScopeChange();
       useOffline.getState().__reset();
+      librarySyncService.reset();
+      useLibrarySync.getState().__reset();
       resetOfflineMutationReplay();
       useOfflineMutations.getState().__reset();
       useLocalLibrary.getState().__reset();
@@ -164,6 +169,7 @@ export default function AppLayout() {
     // persisted). Rehydration is synchronous, so this sees the restored queue.
     rewriteQueueRoutes();
     useOffline.persist.rehydrate();
+    useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
@@ -271,6 +277,7 @@ export default function AppLayout() {
       </AppDrawer>
       <OfflineMutationsSync />
       <OfflineStarredAutoSync />
+      <LibrarySyncController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <JukeboxSheet />

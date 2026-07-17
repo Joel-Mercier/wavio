@@ -164,6 +164,47 @@ export function downloadUrl(id: string): string {
   return `${baseUrl()}/Items/${id}/Download?${authParam()}`;
 }
 
+// Universal-endpoint URL for offline downloads in a non-raw download format,
+// driven by the dedicated download settings rather than the streaming ones.
+// Unlike streamUrl's profiles, the container accept-list and the transcoding
+// container always agree here (aac uses an ADTS `aac` container instead of the
+// streaming path's `ts`), so the saved file's bytes match its extension whether
+// the server direct-plays or transcodes — see offlineTranscodeSuffix.
+export function offlineStreamUrl(
+  id: string,
+  format: StreamFormat,
+  maxBitRate: number | null,
+): string {
+  const profile = formatProfile(format);
+  // aac narrows both to ADTS: the streaming profile's `ts` transcode container
+  // and `m4a|aac` direct-play entries would save bytes that don't match a .aac
+  // extension.
+  const containers = format === "aac" ? "aac" : profile.containers;
+  const transcodingContainer =
+    format === "aac" ? "aac" : profile.transcodingContainer;
+  const parts = [
+    `Container=${containers}`,
+    `AudioCodec=${profile.audioCodec}`,
+    `TranscodingContainer=${transcodingContainer}`,
+  ];
+  if (maxBitRate) {
+    parts.push(`MaxStreamingBitrate=${maxBitRate * 1000}`);
+    parts.push(`AudioBitRate=${maxBitRate * 1000}`);
+  }
+  const userId = useAuthBase.getState().jellyfinUserId ?? "";
+  return resolveServerBase(
+    `${baseUrl()}/Audio/${id}/universal?UserId=${encodeURIComponent(
+      userId,
+    )}&${parts.join("&")}&${authParam()}`,
+  );
+}
+
+// Extension a Jellyfin offline transcode is saved under (opus lands in an ogg
+// container).
+export function offlineTranscodeSuffix(format: StreamFormat): string {
+  return format === "opus" ? "ogg" : format;
+}
+
 export function artworkUrl(id?: string, size?: number): string {
   if (!id) return "";
   const sizeParam = size ? `?maxHeight=${size}&maxWidth=${size}` : "";

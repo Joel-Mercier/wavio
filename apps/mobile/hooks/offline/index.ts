@@ -20,6 +20,11 @@ export {
   useTotalDownloadSize,
 } from "./useDownloads";
 export {
+  type LibrarySyncUiStatus,
+  useLibrarySyncStatus,
+} from "./useLibrarySyncStatus";
+export { useOfflineArtist, useOfflineArtists } from "./useOfflineArtists";
+export {
   useIsCollectionAvailableOffline,
   useIsDetailCached,
   useIsTrackAvailableOffline,
