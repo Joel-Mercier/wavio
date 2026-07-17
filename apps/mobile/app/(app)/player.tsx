@@ -421,7 +421,7 @@ export default function PlayerScreen() {
                   onPress={() => {
                     if (sourceHref) router.replace(sourceHref);
                   }}
-                  className="flex-1 grow w-full"
+                  className="w-full"
                 >
                   <MovingText>
                     <Text
