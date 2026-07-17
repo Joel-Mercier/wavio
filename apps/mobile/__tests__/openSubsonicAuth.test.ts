@@ -7,10 +7,22 @@ jest.mock("expo-crypto", () => ({
   ),
 }));
 
+const authState = {
+  username: "joel",
+  password: "sesame",
+  subsonicSalt: "salt" as string | null,
+  subsonicToken: "tok" as string | null,
+  useTokenAuth: true,
+};
+jest.mock("@/stores/auth", () => ({
+  useAuthBase: { getState: () => authState },
+}));
+
 import {
   computeSubsonicToken,
   encodePasswordParam,
   generateSalt,
+  subsonicAuthQuery,
 } from "@/services/openSubsonic/auth";
 
 describe("openSubsonic auth", () => {
@@ -38,5 +50,33 @@ describe("openSubsonic auth", () => {
   it("encodes spaces and unicode as UTF-8 hex", () => {
     // "é" is two UTF-8 bytes (0xc3 0xa9); a space is 0x20.
     expect(encodePasswordParam("a é")).toBe("enc:6120c3a9");
+  });
+});
+
+describe("subsonicAuthQuery", () => {
+  beforeEach(() => {
+    authState.username = "joel";
+    authState.password = "sesame";
+    authState.subsonicSalt = "salt";
+    authState.subsonicToken = "tok";
+    authState.useTokenAuth = true;
+  });
+
+  it("uses token+salt for token-auth sessions", () => {
+    expect(subsonicAuthQuery()).toBe("u=joel&t=tok&s=salt");
+  });
+
+  it("falls back to enc: password auth when the server rejected token auth", () => {
+    // Password-auth sessions store no token/salt (services/auth/authenticate.ts)
+    // — the query must carry `p`, never a literal t=null&s=null.
+    authState.useTokenAuth = false;
+    authState.subsonicSalt = null;
+    authState.subsonicToken = null;
+    expect(subsonicAuthQuery()).toBe("u=joel&p=enc%3A736573616d65");
+  });
+
+  it("URL-encodes reserved characters in the username", () => {
+    authState.username = "a b&c";
+    expect(subsonicAuthQuery()).toBe("u=a%20b%26c&t=tok&s=salt");
   });
 });

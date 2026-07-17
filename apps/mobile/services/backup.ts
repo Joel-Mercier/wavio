@@ -74,11 +74,60 @@ function collectScopes(): string[] {
   return Array.from(scopes);
 }
 
+// Secrets never travel in a backup file: the export goes out through the OS
+// share sheet (cloud drives, chat apps, email), and restore routes through the
+// re-login flow anyway — readRestoredAuthTarget only needs the identity fields.
+// The active session's password/tokens are blanked and the opt-in saved
+// passwords are dropped from the servers blob. Fails closed: a blob that can't
+// be parsed is omitted rather than exported unsanitized.
+function sanitizeGlobalForBackup(
+  key: string,
+  value: string,
+): string | undefined {
+  if (key !== "auth" && key !== "servers") return value;
+  try {
+    const parsed = JSON.parse(value) as { state?: Record<string, unknown> };
+    if (!parsed?.state || typeof parsed.state !== "object") return undefined;
+    if (key === "auth") {
+      parsed.state = {
+        ...parsed.state,
+        password: "",
+        token: null,
+        subsonicSalt: null,
+        subsonicToken: null,
+        jellyfinAccessToken: null,
+      };
+    } else {
+      const users = parsed.state.users;
+      if (Array.isArray(users)) {
+        parsed.state = {
+          ...parsed.state,
+          users: users.map((user) => {
+            if (user && typeof user === "object") {
+              const { password: _password, ...rest } = user as Record<
+                string,
+                unknown
+              >;
+              return rest;
+            }
+            return user;
+          }),
+        };
+      }
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return undefined;
+  }
+}
+
 export function buildBackup(): BackupFile {
   const global: Record<string, string> = {};
   for (const key of GLOBAL_KEYS) {
     const value = storage.getString(key);
-    if (value !== undefined) global[key] = value;
+    if (value === undefined) continue;
+    const sanitized = sanitizeGlobalForBackup(key, value);
+    if (sanitized !== undefined) global[key] = sanitized;
   }
 
   const allKeys = storage.getAllKeys();

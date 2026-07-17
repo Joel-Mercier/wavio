@@ -26,6 +26,7 @@
 				"moreFrom": "More from",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internet radio stations",
+				"playErrorMessage": "An error occurred while starting playback",
 				"tabs": {
 					"music": "Music",
 					"podcasts": "Podcasts",
@@ -1063,7 +1064,7 @@
 				"translationOff": "Off",
 				"pronunciation": "Pronunciation",
 				"showPronunciation": "Show pronunciation",
-				"lyricsUnavailable": "No synced lyrics available for this track.",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "Sleep timer",
 				"sleepTimerOff": "Off",
 				"sleepTimerEndOfTrack": "End of track",

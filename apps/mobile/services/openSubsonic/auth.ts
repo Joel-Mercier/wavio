@@ -1,4 +1,5 @@
 import * as Crypto from "expo-crypto";
+import { useAuthBase } from "@/stores/auth";
 
 // Subsonic token authentication (API >= 1.13.0): instead of sending the
 // password in cleartext (`p`) on every request, the client sends a random salt
@@ -31,4 +32,19 @@ export function encodePasswordParam(password: string): string {
   let hex = "";
   for (const b of bytes) hex += b.toString(16).padStart(2, "0");
   return `enc:${hex}`;
+}
+
+// Auth query-string fragment for Subsonic URLs built outside the axios
+// instance (stream/download/HLS/cover art). Mirrors the request interceptor:
+// token+salt normally, password auth for servers that rejected token auth at
+// login (useTokenAuth false — those sessions store no token/salt at all, so
+// interpolating them would produce a literal `t=null&s=null`).
+export function subsonicAuthQuery(): string {
+  const { username, password, subsonicSalt, subsonicToken, useTokenAuth } =
+    useAuthBase.getState();
+  const u = `u=${encodeURIComponent(username)}`;
+  if (useTokenAuth === false) {
+    return `${u}&p=${encodeURIComponent(encodePasswordParam(password))}`;
+  }
+  return `${u}&t=${subsonicToken}&s=${subsonicSalt}`;
 }

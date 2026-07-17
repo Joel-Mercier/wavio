@@ -106,6 +106,62 @@ describe("buildBackup", () => {
     expect(entry?.values.offlineMutations).toBeUndefined();
     expect(entry?.values.bookmarks).toBe("b");
   });
+
+  it("strips the active session's secrets but keeps the re-login identity", () => {
+    mockMem.set(
+      "auth",
+      authBlob({
+        serverId: "srv-1",
+        url: LAN,
+        username: "alice",
+        isAuthenticated: true,
+        password: "hunter2",
+        token: "nd-token",
+        subsonicSalt: "salt",
+        subsonicToken: "tok",
+        jellyfinAccessToken: "jf-token",
+      }),
+    );
+    const restored = JSON.parse(buildBackup().global.auth);
+    expect(restored.state).toMatchObject({
+      serverId: "srv-1",
+      username: "alice",
+      isAuthenticated: true,
+      password: "",
+      token: null,
+      subsonicSalt: null,
+      subsonicToken: null,
+      jellyfinAccessToken: null,
+    });
+    expect(restored.version).toBe(4);
+  });
+
+  it("drops opt-in saved passwords from the servers blob", () => {
+    mockMem.set(
+      "servers",
+      JSON.stringify({
+        state: {
+          servers: [server],
+          users: [
+            { serverId: "srv-1", username: "alice", password: "hunter2" },
+            { serverId: "srv-1", username: "bob" },
+          ],
+        },
+        version: 2,
+      }),
+    );
+    const restored = JSON.parse(buildBackup().global.servers);
+    expect(restored.state.users).toEqual([
+      { serverId: "srv-1", username: "alice" },
+      { serverId: "srv-1", username: "bob" },
+    ]);
+    expect(restored.state.servers).toEqual([server]);
+  });
+
+  it("omits an auth blob it cannot parse instead of exporting it raw", () => {
+    mockMem.set("auth", "not json {");
+    expect(buildBackup().global.auth).toBeUndefined();
+  });
 });
 
 describe("restoreBackup", () => {

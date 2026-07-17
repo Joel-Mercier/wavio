@@ -55,6 +55,7 @@ import {
   findCurrentLineIndex,
   getAgentForLine,
   getCueLineForLine,
+  isSyncedLyrics,
   type LyricAlign,
 } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
@@ -88,6 +89,7 @@ function LyricsBody({
   const userScrollingUntilRef = useRef(0);
   const lineLayoutsRef = useRef<{ y: number; height: number }[]>([]);
   const offsetMs = lyrics?.offset ?? 0;
+  const synced = isSyncedLyrics(lyrics);
   const karaokeEnabled = useApp((s) => s.karaokeEnabled);
   const translationLang = useApp((s) => s.lyricsTranslationLang);
   const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
@@ -114,6 +116,12 @@ function LyricsBody({
   }, [lyrics]);
 
   useEffect(() => {
+    // Without timestamps there's no line to follow: keep the sheet static rather
+    // than doing per-tick work to track an index that can't mean anything.
+    if (!synced) {
+      setCurrentIndex(-1);
+      return;
+    }
     const update = () => {
       const { currentTime } = getPlaybackSnapshot();
       const positionMs = (currentTime ?? 0) * 1000 + offsetMs;
@@ -122,7 +130,7 @@ function LyricsBody({
     };
     update();
     return subscribePlaybackProgress(update);
-  }, [lyrics, offsetMs]);
+  }, [lyrics, offsetMs, synced]);
 
   useEffect(() => {
     if (currentIndex < 0) return;
@@ -199,6 +207,7 @@ function LyricsBody({
                   isPast={index < currentIndex}
                   align={align}
                   muted={muted}
+                  plain={!synced}
                   cueLine={
                     karaokeEnabled && index === currentIndex
                       ? getCueLineForLine(lyrics, currentIndex)
@@ -206,7 +215,7 @@ function LyricsBody({
                   }
                   offsetMs={offsetMs}
                   onPress={
-                    lyrics.synced && start != null
+                    synced && start != null
                       ? () => seekTo(Math.max(0, (start - offsetMs) / 1000))
                       : undefined
                   }

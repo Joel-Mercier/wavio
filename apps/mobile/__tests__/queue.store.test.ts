@@ -23,7 +23,7 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-import useQueue, { peekNextTrack } from "@/stores/queue";
+import useQueue, { MAX_QUEUE_TRACKS, peekNextTrack } from "@/stores/queue";
 
 type TestTrack = { id: string; url: string };
 
@@ -673,5 +673,52 @@ describe("queue store - peekNextTrack mirrors next()", () => {
     expect(peekNextTrack()).toBeNull();
     useQueue.setState({ queue: makeTracks(2), currentIndex: null });
     expect(peekNextTrack()).toBeNull();
+  });
+});
+
+describe("queue store - size cap", () => {
+  const CAP = MAX_QUEUE_TRACKS;
+
+  test("setQueue anchors the window at the start track", () => {
+    get().setQueue(makeTracks(CAP + 200), 5);
+    expect(get().queue).toHaveLength(CAP);
+    // The window starts at the tapped track so the full cap of upcoming
+    // tracks survives; entries before it are dropped.
+    expect(get().queue[0].id).toBe("t6");
+    expect(get().currentIndex).toBe(0);
+    expect(get().queue[get().queue.length - 1].id).toBe(`t${CAP + 5}`);
+  });
+
+  test("setQueue windows around a start track beyond the cap", () => {
+    get().setQueue(makeTracks(CAP + 200), CAP + 100);
+    expect(get().queue).toHaveLength(CAP);
+    // Window is pulled back so it stays full; the tapped track is inside it.
+    expect(get().queue[get().currentIndex ?? -1].id).toBe(`t${CAP + 101}`);
+    expect(get().queue[get().queue.length - 1].id).toBe(`t${CAP + 200}`);
+  });
+
+  test("playNow applies the same window", () => {
+    get().playNow(makeTracks(CAP + 50), 10);
+    expect(get().queue).toHaveLength(CAP);
+    expect(get().queue[0].id).toBe("t11");
+    expect(get().currentIndex).toBe(0);
+    expect(get().getCurrent()?.id).toBe("t11");
+  });
+
+  test("enqueueEnd fills only the remaining capacity", () => {
+    get().setQueue(makeTracks(CAP - 2), 0);
+    get().enqueueEnd(makeTracks(5, "n"));
+    expect(get().queue).toHaveLength(CAP);
+    expect(get().queue[CAP - 1].id).toBe("n2");
+    // At capacity, further enqueues are no-ops.
+    get().enqueueEnd(makeTracks(1, "x"));
+    expect(get().queue).toHaveLength(CAP);
+  });
+
+  test("enqueueNext fills only the remaining capacity", () => {
+    get().setQueue(makeTracks(CAP - 1), 0);
+    get().enqueueNext(makeTracks(3, "n"));
+    expect(get().queue).toHaveLength(CAP);
+    expect(get().queue[1].id).toBe("n1");
   });
 });
