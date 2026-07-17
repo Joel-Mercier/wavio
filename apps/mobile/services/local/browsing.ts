@@ -18,6 +18,7 @@ import {
   queryArtistAlbumsByKey,
   queryArtistByKey,
   queryArtists,
+  queryExistingTrackIds,
   queryGenres,
   queryTopSongsByArtist,
   queryTrackById,
@@ -36,6 +37,7 @@ import type {
   Indexes,
   MusicFolder,
   SimilarSongs2,
+  SongsExistResult,
 } from "@/services/openSubsonic/types";
 
 export const getMusicFolders = async () => {
@@ -164,6 +166,17 @@ export const getSong = async (id: string) => {
   const row = await queryTrackById(id);
   if (!row) throw new LocalUnsupportedError(`song "${id}" (not indexed)`);
   return localEnvelope({ song: mapRowToChild(row) });
+};
+
+// One indexed query settles the set; a row the scanner pruned is definitively
+// gone. A db failure throws, leaving every id unclassified.
+export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
+  if (ids.length === 0) return { present: [], gone: [] };
+  const found = new Set(await queryExistingTrackIds(ids));
+  return {
+    present: ids.filter((id) => found.has(id)),
+    gone: ids.filter((id) => !found.has(id)),
+  };
 };
 
 // The on-device index has no acoustic-similarity model, so "similar songs" is

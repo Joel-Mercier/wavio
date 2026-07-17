@@ -25,6 +25,7 @@ export const SCOPED_STORE_NAMES = [
   "playlists",
   "jukeboxStore",
   "activity",
+  "playHistory",
   "recentPlays",
   "recentSearches",
   "bookmarks",

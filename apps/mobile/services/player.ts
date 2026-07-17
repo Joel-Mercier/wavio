@@ -52,6 +52,7 @@ import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
+import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
@@ -191,6 +192,15 @@ function hoistAlbumToRecent(track: QueueTrack) {
   );
 }
 
+// The single "this play is now counted" side effect, called from each site that
+// submits a scrobble. Both the Home carousels and the Queue screen's Recently
+// played tab must reflect a play at the same moment the server does — and never
+// on a quick skip.
+function notePlayCounted(track: QueueTrack) {
+  hoistAlbumToRecent(track);
+  usePlayHistory.getState().recordPlay(track);
+}
+
 // Count a play — and reorder the server's "recently played" — this many seconds
 // into playback, rather than at the classic Last.fm halfway/4-min mark, so the
 // server (and other clients / the widget) reflect it almost immediately. A quick
@@ -220,7 +230,7 @@ function maybeSubmitScrobble(status: AudioStatus) {
     ) {
       const id = current.id;
       submittedScrobbleId = id;
-      hoistAlbumToRecent(current);
+      notePlayCounted(current);
       scrobble(id, {
         submission: true,
         time: scrobbleStartedAt ?? Date.now(),
@@ -238,7 +248,7 @@ function maybeSubmitScrobble(status: AudioStatus) {
   if (duration < 30) return;
   if (position < COUNT_PLAY_AFTER_SECONDS) return;
   submittedScrobbleId = current.id;
-  hoistAlbumToRecent(current);
+  notePlayCounted(current);
   scrobble(current.id, {
     submission: true,
     time: scrobbleStartedAt ?? Date.now(),
@@ -797,7 +807,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       isScrobblable(previous)
     ) {
       submittedScrobbleId = previousId;
-      hoistAlbumToRecent(previous);
+      notePlayCounted(previous);
       scrobble(previousId, {
         submission: true,
         time: scrobbleStartedAt ?? Date.now(),
@@ -1100,6 +1110,32 @@ export function playTracks(
   ) {
     loadAndPlay(current);
   }
+}
+
+// Play `seed` alone, then fill the queue behind it with similar tracks. The
+// seed plays immediately rather than after the fetch, so the tap is never
+// blocked on a round-trip; offline (or on a backend without similarity) the
+// fetch yields nothing and the seed simply plays on its own.
+export async function startTrackRadio(seed: QueueTrack) {
+  playTracks([seed], 0, {
+    source: { type: "similar", name: seed.title ?? "" },
+  });
+  let extras: QueueTrack[] = [];
+  try {
+    extras = await fetchEndlessExtension(seed);
+  } catch (error) {
+    reportError(error, {
+      area: "player",
+      endpoint: "startTrackRadio",
+      extra: { seedId: seed.id },
+    });
+    return;
+  }
+  if (extras.length === 0) return;
+  // The user may have started another radio while this was in flight; those
+  // tracks belong to a queue that no longer exists.
+  if (useQueue.getState().getCurrent()?.id !== seed.id) return;
+  useQueue.getState().enqueueEnd(extras);
 }
 
 // Replace the queue with one restored from the server, positioned at `index`

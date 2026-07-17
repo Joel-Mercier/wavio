@@ -28,6 +28,7 @@ import type {
   MusicFolders,
   SimilarSongs,
   SimilarSongs2,
+  SongsExistResult,
   SonicSimilarTracks,
   TopSongs,
 } from "@/services/openSubsonic/types";
@@ -358,6 +359,19 @@ export const getSong = async (id: string) => {
   );
   const song: Child = mapBaseItemToChild(rsp.data);
   return fakeEnvelope({ song });
+};
+
+// Jellyfin filters /Items?Ids= down to what exists, so one call settles the
+// whole set: anything it doesn't return is gone. A transport failure throws
+// instead, leaving every id unclassified rather than falsely "deleted".
+export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
+  if (ids.length === 0) return { present: [], gone: [] };
+  const items = await fetchItems({ Ids: ids.join(",") });
+  const found = new Set((items.Items ?? []).map((item) => item.Id));
+  return {
+    present: ids.filter((id) => found.has(id)),
+    gone: ids.filter((id) => !found.has(id)),
+  };
 };
 
 export const getTopSongs = async (
