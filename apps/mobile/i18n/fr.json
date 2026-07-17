@@ -26,6 +26,7 @@
 				"moreFrom": "Plus de",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Stations de radio en ligne",
+				"playErrorMessage": "Une erreur s'est produite lors du démarrage de la lecture",
 				"tabs": {
 					"music": "Musique",
 					"podcasts": "Podcasts",
@@ -558,6 +559,44 @@
 			},
 			"settings": {
 				"title": "Paramètres",
+				"menu": {
+					"playback": {
+						"title": "Lecture et audio",
+						"description": "Qualité audio, normalisation du volume, égaliseur"
+					},
+					"library": {
+						"title": "Bibliothèque musicale",
+						"description": "Analyser votre bibliothèque et consulter son état"
+					},
+					"downloads": {
+						"title": "Téléchargements et mode hors ligne",
+						"description": "Mode hors ligne, téléchargements via Wi-Fi, gestion des téléchargements"
+					},
+					"appearance": {
+						"title": "Apparence",
+						"description": "Langue, rubriques d'accueil, retour haptique"
+					},
+					"podcasts": {
+						"title": "Podcasts",
+						"description": "Configurer l'API de podcast Taddy"
+					},
+					"radio": {
+						"title": "Radio en ligne",
+						"description": "Activer les stations, pays, tags"
+					},
+					"storage": {
+						"title": "Stockage et données",
+						"description": "Utilisation de l'espace de stockage, cache, activité récente"
+					},
+					"backup": {
+						"title": "Sauvegarde et restauration",
+						"description": "Exporter et restaurer vos données"
+					},
+					"security": {
+						"title": "Sécurité",
+						"description": "Certificats approuvés"
+					}
+				},
 				"offlineSettings": {
 					"title": "Mode hors ligne",
 					"offlineModeLabel": "Mode hors ligne",
@@ -1002,7 +1041,9 @@
 					"artist": "Lecture depuis l'artiste",
 					"likedSongs": "Lecture depuis les titres aimés",
 					"folder": "Lecture depuis le dossier",
-					"similar": "Lecture depuis les titres similaires"
+					"similar": "Lecture depuis les titres similaires",
+					"albumList": "Lecture à partir d'albums",
+					"playlistList": "Lecture à partir de playlists"
 				},
 				"addToPlaylist": "Ajouter à la playlist",
 				"playNext": "Ajouter à la file d'attente",
@@ -1022,7 +1063,7 @@
 				"translationOff": "Désactivé",
 				"pronunciation": "Prononciation",
 				"showPronunciation": "Afficher la prononciation",
-				"lyricsUnavailable": "Aucune parole synchronisée disponible pour ce titre",
+				"lyricsUnavailable": "No lyrics available for this track.",
 				"sleepTimer": "Minuteur de veille",
 				"sleepTimerOff": "Désactivé",
 				"sleepTimerEndOfTrack": "Fin du titre",
