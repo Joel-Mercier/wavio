@@ -952,7 +952,7 @@
 				"clearHistory": "Cancella cronologia",
 				"clearHistoryConfirmTitle": "Cancellare cronologia?",
 				"clearHistoryConfirmMessage": "Tutti i brani ascoltati di recente verranno rimossi da questo elenco. La tua coda e la riproduzione non subiranno alcuna modifica.",
-				"clearedHistoryMessage": "History cleared",
+				"clearedHistoryMessage": "Cronologia eliminata",
 				"nowPlaying": "In riproduzione",
 				"nextInQueue": "Il prossimo in coda",
 				"removeFromQueue": "Rimuovi dalla coda",
