@@ -98,19 +98,18 @@ export default function PodcastsSection() {
                 {t("app.settings.podcastSettings.configurePodcastsAction")}
               </Text>
             </FadeOutScaleDown>
-            {taddyPodcastApiKey && taddyPodcastUserId && (
-              <FadeOutScaleDown
-                onPress={() => setShowDeletePodcastsAlertDialog(true)}
-                className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+            <FadeOutScaleDown
+              onPress={() => setShowDeletePodcastsAlertDialog(true)}
+              disabled={!(taddyPodcastApiKey && taddyPodcastUserId)}
+              className="flex-1 items-center justify-center py-2 px-8 border border-red-500 bg-red-500 rounded-full"
+            >
+              <Text
+                numberOfLines={1}
+                className="text-primary-800 font-bold text-lg"
               >
-                <Text
-                  numberOfLines={1}
-                  className="text-primary-800 font-bold text-lg"
-                >
-                  {t("app.shared.delete")}
-                </Text>
-              </FadeOutScaleDown>
-            )}
+                {t("app.shared.delete")}
+              </Text>
+            </FadeOutScaleDown>
           </VStack>
         </HStack>
         <HStack className="items-center gap-x-4 py-4 justify-between">

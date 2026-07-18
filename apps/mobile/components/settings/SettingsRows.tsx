@@ -91,7 +91,12 @@ export function SettingsActionRow({
   const buttonTextColor = disabled ? "text-primary-300" : "text-primary-800";
   if (layout === "wide") {
     return (
-      <HStack className="items-center gap-x-4 py-4 justify-between">
+      <HStack
+        className={cn(
+          "items-center gap-x-4 py-4 justify-between",
+          disabled && "opacity-50",
+        )}
+      >
         <VStack className="gap-y-2 w-3/5">
           <Heading className="text-white font-normal" size="md">
             {label}
@@ -101,6 +106,7 @@ export function SettingsActionRow({
         <FadeOutScaleDown
           onPress={onPress}
           disabled={disabled}
+          disabledOpacity={1}
           className={cn(
             "items-center justify-center py-2 px-8 border rounded-full",
             buttonColor,
@@ -114,7 +120,12 @@ export function SettingsActionRow({
     );
   }
   return (
-    <HStack className="items-center gap-x-4 py-4 justify-between flex-1">
+    <HStack
+      className={cn(
+        "items-center gap-x-4 py-4 justify-between flex-1",
+        disabled && "opacity-50",
+      )}
+    >
       <VStack className="gap-y-2 w-1/2">
         <Heading className="text-white font-normal" size="md">
           {label}
@@ -124,6 +135,7 @@ export function SettingsActionRow({
       <FadeOutScaleDown
         onPress={onPress}
         disabled={disabled}
+        disabledOpacity={1}
         className={cn(
           "flex-1 items-center justify-center py-2 px-8 border rounded-full",
           buttonColor,
@@ -184,6 +196,7 @@ export function SettingsStepperRow({
   onDecrement,
   onIncrement,
   valueClassName,
+  disabled = false,
 }: {
   label: string;
   description: string;
@@ -191,9 +204,15 @@ export function SettingsStepperRow({
   onDecrement: () => void;
   onIncrement: () => void;
   valueClassName?: string;
+  disabled?: boolean;
 }) {
   return (
-    <HStack className="items-center gap-x-4 py-4 justify-between">
+    <HStack
+      className={cn(
+        "items-center gap-x-4 py-4 justify-between",
+        disabled && "opacity-50",
+      )}
+    >
       <VStack className="gap-y-2 w-1/2">
         <Heading className="text-white font-normal" size="md">
           {label}
@@ -203,6 +222,8 @@ export function SettingsStepperRow({
       <HStack className="items-center gap-x-3">
         <FadeOutScaleDown
           onPress={onDecrement}
+          disabled={disabled}
+          disabledOpacity={1}
           className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
         >
           <Text className="text-primary-800 font-bold text-lg">-</Text>
@@ -214,6 +235,8 @@ export function SettingsStepperRow({
         </Text>
         <FadeOutScaleDown
           onPress={onIncrement}
+          disabled={disabled}
+          disabledOpacity={1}
           className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
         >
           <Text className="text-primary-800 font-bold text-lg">+</Text>
