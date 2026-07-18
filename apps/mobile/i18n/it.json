@@ -889,7 +889,6 @@
 			"activity": {
 				"title": "Attività",
 				"empty": "Qui non c'è ancora nulla. Gli album, gli artisti e le playlist che ascolti appariranno qui.",
-				"playedAt": "{{distance}} fa",
 				"sections": {
 					"today": "Oggi",
 					"yesterday": "Ieri",
@@ -900,7 +899,9 @@
 					"album": "Album",
 					"artist": "Artista",
 					"playlist": "Playlist"
-				}
+				},
+				"plays_one": "{{count}} track played",
+				"plays_other": "{{count}} tracks played"
 			},
 			"offlineDownloads": {
 				"title": "Download offline",
