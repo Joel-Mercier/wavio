@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -254,8 +253,8 @@ export default function ShareListItem({ share }: { share: Share }) {
             ) : (
               <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
                 {share?.entry &&
-                hasEntries &&
-                share.entry[0].mediaType === "album" ? (
+                  hasEntries &&
+                  share.entry[0].mediaType === "album" ? (
                   <Disc3 size={24} color={white} />
                 ) : (
                   <AudioLines size={24} color={white} />
@@ -276,8 +275,8 @@ export default function ShareListItem({ share }: { share: Share }) {
                     ? t("app.shared.playlist_one")
                     : hasEntries && share?.entry && share.entry[0].mediaType
                       ? t(`app.shares.mediaType_${share.entry[0].mediaType}`, {
-                          defaultValue: share.entry[0].mediaType,
-                        })
+                        defaultValue: share.entry[0].mediaType,
+                      })
                       : t("app.shared.unknown")}
                 </Text>
                 <Text className="text-md text-primary-100">
@@ -300,7 +299,6 @@ export default function ShareListItem({ share }: { share: Share }) {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

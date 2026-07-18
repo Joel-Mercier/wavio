@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
@@ -321,7 +320,6 @@ export default function PodcastsSearchScreen() {
         onChange={handleFiltersSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView showsVerticalScrollIndicator={false}>
           <Box className="p-6 w-full">
@@ -357,8 +355,8 @@ export default function PodcastsSearchScreen() {
                         value={
                           field.state.value
                             ? t(
-                                `app.podcasts.search.sortOrders.${field.state.value}`,
-                              )
+                              `app.podcasts.search.sortOrders.${field.state.value}`,
+                            )
                             : ""
                         }
                       />
@@ -421,8 +419,8 @@ export default function PodcastsSearchScreen() {
                         value={
                           field.state.value
                             ? t(
-                                `app.podcasts.search.matchTypes.${field.state.value}`,
-                              )
+                              `app.podcasts.search.matchTypes.${field.state.value}`,
+                            )
                             : ""
                         }
                       />
@@ -530,8 +528,8 @@ export default function PodcastsSearchScreen() {
                       <Text className="text-md text-white">
                         {field.state.value?.length
                           ? t("app.podcasts.search.selectedCount", {
-                              count: field.state.value.length,
-                            })
+                            count: field.state.value.length,
+                          })
                           : t("app.podcasts.search.languagesPlaceholder")}
                       </Text>
                       <ChevronDownIcon size={18} color={white} />
@@ -555,8 +553,8 @@ export default function PodcastsSearchScreen() {
                       <Text className="text-md text-white">
                         {field.state.value?.length
                           ? t("app.podcasts.search.selectedCount", {
-                              count: field.state.value.length,
-                            })
+                            count: field.state.value.length,
+                          })
                           : t("app.podcasts.search.countriesPlaceholder")}
                       </Text>
                       <ChevronDownIcon size={18} color={white} />
@@ -580,8 +578,8 @@ export default function PodcastsSearchScreen() {
                       <Text className="text-md text-white">
                         {field.state.value?.length
                           ? t("app.podcasts.search.selectedCount", {
-                              count: field.state.value.length,
-                            })
+                            count: field.state.value.length,
+                          })
                           : t("app.podcasts.search.genresPlaceholder")}
                       </Text>
                       <ChevronDownIcon size={18} color={white} />
@@ -810,7 +808,6 @@ function MultiSelectSheet<T extends string>({
       onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <Box className="px-6 pt-2 pb-3">
         <Heading className="text-white mb-3" size="lg">

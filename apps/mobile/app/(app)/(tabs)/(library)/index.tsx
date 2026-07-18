@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -105,10 +104,10 @@ export default function LibraryScreen() {
   const gridColumns =
     layout === "grid"
       ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
+        minItemWidth: 160,
+        minColumns: 3,
+        maxColumns: 5,
+      })
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
@@ -116,14 +115,14 @@ export default function LibraryScreen() {
     useRef<
       FlashListRef<
         Playlist &
-          AlbumID3 &
-          ArtistID3 &
-          Favorites &
-          LibraryPodcast &
-          LibraryFolder &
-          LibraryRadioStation &
-          LibraryAllAlbums &
-          LibraryAllArtists
+        AlbumID3 &
+        ArtistID3 &
+        Favorites &
+        LibraryPodcast &
+        LibraryFolder &
+        LibraryRadioStation &
+        LibraryAllAlbums &
+        LibraryAllArtists
       >
     >(null);
   const { handleSheetPositionChange } =
@@ -220,23 +219,23 @@ export default function LibraryScreen() {
         .map((c) =>
           kind === "playlist"
             ? {
-                id: c.id,
-                name: c.name,
-                songCount: c.songCount,
-                coverArt: c.coverArt,
-                owner: c.owner,
-                created: c.savedAt,
-              }
+              id: c.id,
+              name: c.name,
+              songCount: c.songCount,
+              coverArt: c.coverArt,
+              owner: c.owner,
+              created: c.savedAt,
+            }
             : {
-                id: c.id,
-                name: c.name,
-                songCount: c.songCount,
-                coverArt: c.coverArt,
-                artist: c.artist,
-                artistId: c.artistId,
-                year: c.year,
-                created: c.savedAt,
-              },
+              id: c.id,
+              name: c.name,
+              songCount: c.songCount,
+              coverArt: c.coverArt,
+              artist: c.artist,
+              artistId: c.artistId,
+              year: c.year,
+              created: c.savedAt,
+            },
         ) as unknown as T[];
       return [...serverItems, ...offlineItems];
     };
@@ -542,14 +541,14 @@ export default function LibraryScreen() {
           data={
             (isLoading ? loadingData(16) : (data ?? [])) as Array<
               Playlist &
-                AlbumID3 &
-                ArtistID3 &
-                Favorites &
-                LibraryPodcast &
-                LibraryFolder &
-                LibraryRadioStation &
-                LibraryAllAlbums &
-                LibraryAllArtists
+              AlbumID3 &
+              ArtistID3 &
+              Favorites &
+              LibraryPodcast &
+              LibraryFolder &
+              LibraryRadioStation &
+              LibraryAllAlbums &
+              LibraryAllArtists
             >
           }
           keyExtractor={(item) => item.id}
@@ -594,7 +593,6 @@ export default function LibraryScreen() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

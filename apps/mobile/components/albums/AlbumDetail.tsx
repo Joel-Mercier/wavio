@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -454,14 +453,14 @@ export default function AlbumDetail() {
     () =>
       data?.album
         ? {
-            id,
-            kind: "album",
-            name: data.album.name,
-            coverArt: data.album.coverArt,
-            artist: data.album.artist,
-            artistId: data.album.artistId,
-            year: data.album.year,
-          }
+          id,
+          kind: "album",
+          name: data.album.name,
+          coverArt: data.album.coverArt,
+          artist: data.album.artist,
+          artistId: data.album.artistId,
+          year: data.album.year,
+        }
         : undefined,
     [id, data?.album],
   );
@@ -856,9 +855,9 @@ export default function AlbumDetail() {
                           <Text>{artist.name}</Text>
                         )}
                         {artist.id ===
-                        data?.album?.artists?.[
-                          (data?.album?.artists?.length ?? 0) - 1
-                        ]?.id ? null : (
+                          data?.album?.artists?.[
+                            (data?.album?.artists?.length ?? 0) - 1
+                          ]?.id ? null : (
                           <Text>, </Text>
                         )}
                       </React.Fragment>
@@ -873,8 +872,8 @@ export default function AlbumDetail() {
                       <Text>
                         {data?.album
                           ? data.album.displayArtist ||
-                            data.album.artist ||
-                            t("app.shared.unknownArtist")
+                          data.album.artist ||
+                          t("app.shared.unknownArtist")
                           : ""}
                       </Text>
                     ))}
@@ -883,23 +882,23 @@ export default function AlbumDetail() {
               <HStack className="mt-2 items-center">
                 <Text className="text-primary-100">
                   {data?.album?.releaseTypes &&
-                  data.album.releaseTypes.length > 0
+                    data.album.releaseTypes.length > 0
                     ? formatReleaseTypes(data.album.releaseTypes, t)
                     : data?.album?.isCompilation
                       ? t("app.albums.typeCompilation")
                       : t("app.albums.typeAlbum")}{" "}
                   ⦁{" "}
                   {data?.album?.originalReleaseDate?.day &&
-                  data?.album.originalReleaseDate?.month &&
-                  data?.album.originalReleaseDate?.year
+                    data?.album.originalReleaseDate?.month &&
+                    data?.album.originalReleaseDate?.year
                     ? format(
-                        parse(
-                          `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
-                          "d/M/yyyy",
-                          new Date(),
-                        ),
-                        "dd MMM yyyy",
-                      )
+                      parse(
+                        `${data?.album.originalReleaseDate?.day}/${data?.album.originalReleaseDate?.month}/${data?.album.originalReleaseDate?.year}`,
+                        "d/M/yyyy",
+                        new Date(),
+                      ),
+                      "dd MMM yyyy",
+                    )
                     : data?.album?.year}
                 </Text>
               </HStack>
@@ -1019,20 +1018,20 @@ export default function AlbumDetail() {
                     >
                       {discoverMoreIsLoading
                         ? loadingData(4).map((_, index) => (
-                            <AlbumListItemSkeleton
-                              key={`discover-more-${index}`}
-                              index={index}
-                              layout="horizontal"
-                            />
-                          ))
+                          <AlbumListItemSkeleton
+                            key={`discover-more-${index}`}
+                            index={index}
+                            layout="horizontal"
+                          />
+                        ))
                         : moreAlbums?.map((album, index) => (
-                            <AlbumListItem
-                              key={album.id}
-                              album={album}
-                              index={index}
-                              layout="horizontal"
-                            />
-                          ))}
+                          <AlbumListItem
+                            key={album.id}
+                            album={album}
+                            index={index}
+                            layout="horizontal"
+                          />
+                        ))}
                     </ScrollView>
                   )}
                 </VStack>
@@ -1053,7 +1052,6 @@ export default function AlbumDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -1088,7 +1086,6 @@ export default function AlbumDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

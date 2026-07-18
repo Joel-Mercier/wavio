@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
   useBottomSheetScrollableCreator,
@@ -59,7 +58,6 @@ export default function SearchableSelectSheet({
       onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <Box className="px-6 pt-2 pb-3">
         <Heading className="text-white mb-3" size="lg">

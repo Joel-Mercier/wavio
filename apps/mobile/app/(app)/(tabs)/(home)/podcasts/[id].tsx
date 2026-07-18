@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -344,16 +343,14 @@ export default function PodcastScreen() {
               <AnimatedImage
                 style={artworkStyle}
                 source={{ uri: podcast.imageUrl }}
-                className={`${
-                  isWideLayout ? "w-[45%]" : "w-[70%]"
-                } aspect-square rounded-md`}
+                className={`${isWideLayout ? "w-[45%]" : "w-[70%]"
+                  } aspect-square rounded-md`}
                 alt="Playlist cover"
               />
             ) : (
               <Box
-                className={`${
-                  isWideLayout ? "w-[45%]" : "w-[70%]"
-                } aspect-square rounded-md bg-primary-600 items-center justify-center`}
+                className={`${isWideLayout ? "w-[45%]" : "w-[70%]"
+                  } aspect-square rounded-md bg-primary-600 items-center justify-center`}
               >
                 <ListMusic size={48} color={white} />
               </Box>
@@ -444,7 +441,6 @@ export default function PodcastScreen() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

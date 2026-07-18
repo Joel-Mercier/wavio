@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -614,7 +613,7 @@ export default function ArtistDetail() {
                 className="overflow-hidden mb-4"
                 style={
                   (topSongsData?.topSongs.song?.length || 0) > 5 ||
-                  isLoadingTopSongs
+                    isLoadingTopSongs
                     ? topSongsAnimatedStyle
                     : undefined
                 }
@@ -640,7 +639,7 @@ export default function ArtistDetail() {
                         key={`top-song-skeleton-${
                           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                           index
-                        }`}
+                          }`}
                         index={index}
                         className="px-6"
                       />
@@ -835,7 +834,6 @@ export default function ArtistDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

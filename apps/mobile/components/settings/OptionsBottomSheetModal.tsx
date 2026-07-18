@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
@@ -56,7 +55,6 @@ export default function OptionsBottomSheetModal<
       handleIndicatorStyle={{
         backgroundColor: "#b3b3b3",
       }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">

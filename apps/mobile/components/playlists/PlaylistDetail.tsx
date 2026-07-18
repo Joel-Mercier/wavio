@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -515,10 +514,10 @@ export default function PlaylistDetail() {
     () =>
       playlistData?.playlist
         ? {
-            type: "playlist",
-            name: playlistData.playlist.name,
-            id: playlistData.playlist.id,
-          }
+          type: "playlist",
+          name: playlistData.playlist.name,
+          id: playlistData.playlist.id,
+        }
         : null,
     [playlistData?.playlist],
   );
@@ -527,12 +526,12 @@ export default function PlaylistDetail() {
     () =>
       playlistData?.playlist
         ? {
-            id,
-            kind: "playlist",
-            name: playlistData.playlist.name,
-            coverArt: playlistData.playlist.coverArt,
-            owner: playlistData.playlist.owner,
-          }
+          id,
+          kind: "playlist",
+          name: playlistData.playlist.name,
+          coverArt: playlistData.playlist.coverArt,
+          owner: playlistData.playlist.owner,
+        }
         : undefined,
     [id, playlistData?.playlist],
   );
@@ -873,7 +872,6 @@ export default function PlaylistDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -908,7 +906,6 @@ export default function PlaylistDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -1056,7 +1053,6 @@ export default function PlaylistDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
