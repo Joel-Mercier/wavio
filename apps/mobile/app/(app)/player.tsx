@@ -51,6 +51,7 @@ import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
@@ -71,11 +72,12 @@ function CoverSlot({
   size: number;
 }) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const artwork = useTrackArtwork(track);
   if (!size) return null;
   return (
     <ImageWithFallback
       size="none"
-      source={track?.artwork ? { uri: track.artwork } : undefined}
+      source={artwork ? { uri: artwork } : undefined}
       style={{ width: size, height: size, borderRadius: 6 }}
       contentFit={track?.isRadio ? "contain" : "cover"}
       alt="Track cover"
@@ -112,7 +114,8 @@ export default function PlayerScreen() {
   const jukeboxActive = useJukebox((s) => s.active);
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
-  const colors = useImageColors(playingTrack?.artwork);
+  const playingArtwork = useTrackArtwork(playingTrack);
+  const colors = useImageColors(playingArtwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const repeatMode = useQueue((store) => store.repeatMode);
