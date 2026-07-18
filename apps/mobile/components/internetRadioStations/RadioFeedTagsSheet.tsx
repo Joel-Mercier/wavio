@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
@@ -60,7 +59,6 @@ export default function RadioFeedTagsSheet({
       onChange={onChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView showsVerticalScrollIndicator={false}>
         <Box className="p-6 w-full">

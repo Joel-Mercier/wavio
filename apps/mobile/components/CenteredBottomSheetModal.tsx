@@ -1,4 +1,5 @@
 import {
+  BottomSheetBackdrop,
   BottomSheetModal,
   type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
@@ -32,6 +33,7 @@ const CenteredBottomSheetModal = forwardRef<
         { width: "100%", maxWidth, marginLeft: margin, marginRight: margin },
         style,
       ]}
+      backdropComponent={(props) => <BottomSheetBackdrop appearsOnIndex={0} disappearsOnIndex={-1} {...props} />}
       {...props}
     />
   );
