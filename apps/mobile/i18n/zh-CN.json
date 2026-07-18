@@ -882,7 +882,6 @@
 			"activity": {
 				"title": "播放记录",
 				"empty": "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
-				"playedAt": "{{distance}}前",
 				"sections": {
 					"today": "今天",
 					"yesterday": "昨天",
@@ -893,7 +892,8 @@
 					"album": "专辑",
 					"artist": "艺人",
 					"playlist": "歌单"
-				}
+				},
+				"plays_other": "{{count}} tracks played"
 			},
 			"offlineDownloads": {
 				"title": "离线下载",
