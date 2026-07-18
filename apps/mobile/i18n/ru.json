@@ -914,10 +914,10 @@
 					"artist": "Исполнитель",
 					"playlist": "Плейлист"
 				},
-				"plays_one": "{{count}} track played",
-				"plays_few": "{{count}} tracks played",
-				"plays_many": "{{count}} tracks played",
-				"plays_other": "{{count}} tracks played"
+				"plays_one": "Прослушан {{count}} трек",
+				"plays_few": "Прослушано {{count}} трека",
+				"plays_many": "Прослушано {{count}} треков",
+				"plays_other": "Прослушано {{count}} треков"
 			},
 			"offlineDownloads": {
 				"title": "Оффлайн загрузки",
