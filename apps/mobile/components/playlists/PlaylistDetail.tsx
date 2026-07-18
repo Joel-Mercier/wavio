@@ -85,7 +85,6 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
@@ -157,7 +156,6 @@ export default function PlaylistDetail() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -345,14 +343,8 @@ export default function PlaylistDetail() {
         type: "playlist",
         coverArt: playlistData?.playlist?.coverArt,
       });
-      recordActivity({
-        id,
-        title: playlistData.playlist.name,
-        type: "playlist",
-        coverArt: playlistData.playlist.coverArt,
-      });
     }
-  }, [playlistData?.playlist, id, addRecentPlay, recordActivity]);
+  }, [playlistData?.playlist, id, addRecentPlay]);
 
   useEffect(() => {
     if (clipoardCopyDone) {
@@ -510,6 +502,7 @@ export default function PlaylistDetail() {
             type: "playlist",
             name: playlistData.playlist.name,
             id: playlistData.playlist.id,
+            coverArt: playlistData.playlist.coverArt,
           }
         : null,
     [playlistData?.playlist],
@@ -631,12 +624,6 @@ export default function PlaylistDetail() {
     });
     if (playlistData?.playlist) {
       addRecentPlay({
-        id,
-        title: playlistData.playlist.name,
-        type: "playlist",
-        coverArt: playlistData.playlist.coverArt,
-      });
-      recordActivity({
         id,
         title: playlistData.playlist.name,
         type: "playlist",

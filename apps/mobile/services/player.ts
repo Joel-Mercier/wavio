@@ -52,6 +52,7 @@ import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
+import useActivity from "@/stores/activity";
 import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
@@ -135,6 +136,12 @@ function reportNowPlaying(track: QueueTrack) {
   if (nowPlayingScrobbledId === track.id) return;
   nowPlayingScrobbledId = track.id;
   scrobbleStartedAt = Date.now();
+  // Log every track the user actually starts playing to the Activity feed,
+  // decoupled from the scrobble-count gate below so short/skipped plays (and the
+  // very first track after navigating to a list) still register.
+  if (isScrobblable(track) && !track.isRadio) {
+    useActivity.getState().recordPlay(track, useQueue.getState().source);
+  }
   if (!isScrobblable(track)) return;
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.

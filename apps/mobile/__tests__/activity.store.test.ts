@@ -20,57 +20,98 @@ jest.mock("@/config/storage", () => {
 
 jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
+  currentAuthScope: () => "scope",
 }));
 
 import useActivity from "@/stores/activity";
+import type { QueueSource, QueueTrack } from "@/stores/queue";
 
 const get = () => useActivity.getState();
+
+const track = (id: string, extra: Partial<QueueTrack> = {}): QueueTrack => ({
+  id,
+  url: `file://${id}`,
+  title: `Title ${id}`,
+  artist: "Artist",
+  album: "Album",
+  coverArt: `cover-${id}`,
+  albumId: "al1",
+  artistId: "ar1",
+  ...extra,
+});
+
+const albumSource: QueueSource = {
+  type: "album",
+  id: "al1",
+  name: "DAMN.",
+  coverArt: "album-cover",
+};
 
 beforeEach(() => {
   useActivity.setState({ activity: [] }, false);
 });
 
-describe("activity store", () => {
-  it("recordActivity prepends entry with playedAt timestamp", () => {
-    const before = Date.now();
-    get().recordActivity({ id: "a1", title: "Album", type: "album" });
+describe("activity store — recordPlay", () => {
+  it("prepends a play carrying a normalized album/artist/playlist source", () => {
+    get().recordPlay(track("t1"), albumSource);
     const e = get().activity[0];
-    expect(e.id).toBe("a1");
-    expect(e.playedAt).toBeGreaterThanOrEqual(before);
+    expect(e.trackId).toBe("t1");
+    expect(e.source).toEqual({
+      type: "album",
+      id: "al1",
+      name: "DAMN.",
+      coverArt: "album-cover",
+    });
+    expect(e.playedAt).toBeGreaterThan(0);
   });
 
-  it("dedupes by (id, type) keeping the most recent", () => {
-    get().recordActivity({ id: "a1", title: "Old", type: "album" });
-    get().recordActivity({ id: "x1", title: "Other", type: "artist" });
-    get().recordActivity({ id: "a1", title: "New", type: "album" });
-    const items = get().activity;
-    expect(items).toHaveLength(2);
-    expect(items[0].title).toBe("New");
-    expect(items[0].id).toBe("a1");
-  });
-
-  it("treats different types with same id as distinct entries", () => {
-    get().recordActivity({ id: "shared", title: "Album", type: "album" });
-    get().recordActivity({ id: "shared", title: "Artist", type: "artist" });
-    expect(get().activity).toHaveLength(2);
-  });
-
-  it("caps stored entries at 100", () => {
-    for (let i = 0; i < 110; i++) {
-      get().recordActivity({
-        id: `a${i}`,
-        title: `t${i}`,
-        type: "album",
-      });
+  it("treats non-groupable sources as generic (source = null)", () => {
+    get().recordPlay(track("t1"), { type: "likedSongs", name: "Liked" });
+    get().recordPlay(track("t2"), { type: "folder", name: "F", id: "f1" });
+    // album source missing an id can't be routed → generic
+    get().recordPlay(track("t3"), { type: "album", name: "No id" });
+    for (const e of get().activity) {
+      expect(e.source).toBeNull();
     }
-    expect(get().activity).toHaveLength(100);
-    // newest entry is a109
-    expect(get().activity[0].id).toBe("a109");
+  });
+
+  it("refreshes timestamp instead of duplicating a repeat of the head track under the same source", () => {
+    get().recordPlay(track("t1"), albumSource);
+    const firstAt = get().activity[0].playedAt;
+    get().recordPlay(track("t1"), albumSource);
+    expect(get().activity).toHaveLength(1);
+    expect(get().activity[0].playedAt).toBeGreaterThanOrEqual(firstAt);
+  });
+
+  it("keeps the same track as a new entry when the source differs", () => {
+    get().recordPlay(track("t1"), albumSource);
+    get().recordPlay(track("t1"), {
+      type: "playlist",
+      id: "p1",
+      name: "Mix",
+    });
+    expect(get().activity).toHaveLength(2);
+    expect(get().activity[0].source?.type).toBe("playlist");
+  });
+
+  it("caps stored entries at 200", () => {
+    for (let i = 0; i < 210; i++) {
+      get().recordPlay(track(`t${i}`), albumSource);
+    }
+    expect(get().activity).toHaveLength(200);
+    expect(get().activity[0].trackId).toBe("t209");
   });
 
   it("clearActivity empties the list", () => {
-    get().recordActivity({ id: "a1", title: "A", type: "album" });
+    get().recordPlay(track("t1"), albumSource);
     get().clearActivity();
     expect(get().activity).toEqual([]);
+  });
+
+  it("migrate discards legacy (pre-v1) entries", () => {
+    const migrate = useActivity.persist.getOptions().migrate;
+    expect(migrate).toBeDefined();
+    const migrated = migrate?.({ activity: [{ id: "legacy" }] }, 0);
+    expect(migrated).toEqual({ activity: [] });
   });
 });

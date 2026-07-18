@@ -889,7 +889,8 @@
 			"activity": {
 				"title": "Activity",
 				"empty": "Nothing here yet. Albums, artists and playlists you play will show up here.",
-				"playedAt": "{{distance}} ago",
+				"plays_one": "{{count}} track played",
+				"plays_other": "{{count}} tracks played",
 				"sections": {
 					"today": "Today",
 					"yesterday": "Yesterday",

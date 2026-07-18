@@ -76,7 +76,6 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
@@ -141,7 +140,6 @@ export default function ArtistDetail() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -301,7 +299,12 @@ export default function ArtistDetail() {
   const artistSource = useMemo<QueueSource>(
     () =>
       data?.artist
-        ? { type: "artist", name: data.artist.name, id: data.artist.id }
+        ? {
+            type: "artist",
+            name: data.artist.name,
+            id: data.artist.id,
+            coverArt: data.artist.coverArt,
+          }
         : null,
     [data?.artist],
   );
@@ -346,12 +349,6 @@ export default function ArtistDetail() {
         type: "artist",
         coverArt: data.artist.coverArt,
       });
-      recordActivity({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
-      });
     }
   };
 
@@ -368,12 +365,6 @@ export default function ArtistDetail() {
         title: data?.artist.name,
         type: "artist",
         coverArt: data?.artist?.coverArt,
-      });
-      recordActivity({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
       });
     }
   };

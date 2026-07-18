@@ -59,7 +59,6 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -102,7 +101,6 @@ export default function LikedSongs() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -136,12 +134,6 @@ export default function LikedSongs() {
   const handleTrackPressCallback = () => {
     if (data?.artist) {
       addRecentPlay({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
-      });
-      recordActivity({
         id,
         title: data.artist.name,
         type: "artist",

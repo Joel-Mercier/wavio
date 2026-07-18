@@ -89,7 +89,6 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -153,7 +152,6 @@ export default function AlbumDetail() {
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
@@ -435,7 +433,12 @@ export default function AlbumDetail() {
   const albumSource = useMemo<QueueSource>(
     () =>
       data?.album
-        ? { type: "album", name: data.album.name, id: data.album.id }
+        ? {
+            type: "album",
+            name: data.album.name,
+            id: data.album.id,
+            coverArt: data.album.coverArt,
+          }
         : null,
     [data?.album],
   );
@@ -545,13 +548,6 @@ export default function AlbumDetail() {
         type: "album",
         coverArt: data.album.coverArt,
       });
-      recordActivity({
-        id,
-        title: data.album.name,
-        type: "album",
-        coverArt: data.album.coverArt,
-        artist: data.album.artist,
-      });
     }
   };
 
@@ -570,15 +566,8 @@ export default function AlbumDetail() {
         type: "album",
         coverArt: album.coverArt,
       });
-      recordActivity({
-        id,
-        title: album.name,
-        type: "album",
-        coverArt: album.coverArt,
-        artist: album.artist,
-      });
     }
-  }, [album, id, addRecentPlay, recordActivity]);
+  }, [album, id, addRecentPlay]);
 
   const handleMusicBrainzPress = async () => {
     bottomSheetModalRef.current?.dismiss();
