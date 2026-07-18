@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -1053,7 +1052,6 @@ export default function AlbumDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -1088,7 +1086,6 @@ export default function AlbumDetail() {
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
