@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -12,7 +11,7 @@ import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -22,6 +21,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditTrackItem from "@/components/queue/QueueEditTrackItem";
 import QueuePodcastListItem from "@/components/queue/QueuePodcastListItem";
+import TabBar from "@/components/TabBar";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import {
   AlertDialog,
@@ -42,14 +42,16 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
-import { play as playLocal } from "@/services/player";
+import { play as playLocal, startTrackRadio } from "@/services/player";
+import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
+import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { childToTrack } from "@/utils/childToTrack";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 import { ScrollView } from "../ui/scroll-view";
@@ -59,6 +61,19 @@ const QUEUE_EDIT_ITEM_HEIGHT = 70;
 type QueueRow =
   | { kind: "header"; key: string; label: string }
   | { kind: "track"; key: string; track: QueueTrack; index: number };
+
+const historyEntryToChild = (entry: PlayHistoryEntry): Child =>
+  ({
+    id: entry.id,
+    title: entry.title,
+    artist: entry.artist,
+    album: entry.album,
+    artistId: entry.artistId,
+    albumId: entry.albumId,
+    coverArt: entry.coverArt,
+    duration: entry.duration,
+    contentType: entry.contentType,
+  }) as Child;
 
 const queueTrackToChild = (track: QueueTrack): Child =>
   ({
@@ -93,15 +108,17 @@ export default function QueueDetail() {
   const currentIndex = useQueue((state) => state.currentIndex);
   const setQueue = useQueue((state) => state.setQueue);
   const clearQueue = useQueue((state) => state.clearQueue);
+  const clearHistory = usePlayHistory((state) => state.clearHistory);
 
+  const [activeTab, setActiveTab] = useState<"queue" | "recentlyPlayed">(
+    "queue",
+  );
   const [editMode, setEditMode] = useState(false);
   const [localOrder, setLocalOrder] = useState<QueueTrack[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
 
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSleepSheetPositionChange } =
-    useBottomSheetBackHandler(sleepTimerSheetRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -145,6 +162,24 @@ export default function QueueDetail() {
     return rows;
   }, [queue, currentIndex, hasCurrent, t]);
 
+  // History is its own persisted store, not a slice of the queue: playing a new
+  // album replaces the queue but must not erase what came before.
+  const history = usePlayHistory((state) => state.history);
+  const historyTracks = useMemo(
+    () => history.map(historyEntryToChild),
+    [history],
+  );
+  const handleHistoryPress = useCallback((_index: number, track: Child) => {
+    void startTrackRadio(childToTrack(track));
+  }, []);
+
+  // Prune entries the server has since deleted. Best-effort and self-throttled,
+  // so firing it on every tab switch is fine.
+  useEffect(() => {
+    if (activeTab !== "recentlyPlayed") return;
+    void reconcilePlayHistory();
+  }, [activeTab]);
+
   // Auto-exit edit mode when queue empties.
   useEffect(() => {
     if (queue.length === 0 && editMode) {
@@ -174,6 +209,13 @@ export default function QueueDetail() {
     setLocalOrder([]);
   };
 
+  const handleTabPress = (index: number) => {
+    const tab = index === 0 ? "queue" : "recentlyPlayed";
+    if (tab === activeTab) return;
+    if (editMode) handleExitEdit();
+    setActiveTab(tab);
+  };
+
   const handleListSort = (fromIndex: number, toIndex: number) => {
     setLocalOrder((prev) => {
       const copy = prev.slice();
@@ -187,9 +229,15 @@ export default function QueueDetail() {
     setLocalOrder((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // The Trash action follows the active tab: each list owns its own clear.
+  const isHistoryTab = activeTab === "recentlyPlayed";
   const handleClearPress = () => setShowClearConfirm(true);
   const handleClearConfirm = () => {
-    clearQueue();
+    if (isHistoryTab) {
+      clearHistory();
+    } else {
+      clearQueue();
+    }
     setShowClearConfirm(false);
     toast.show({
       placement: "top",
@@ -197,7 +245,11 @@ export default function QueueDetail() {
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>{t("app.queue.clearedMessage")}</ToastDescription>
+          <ToastDescription>
+            {isHistoryTab
+              ? t("app.queue.clearedHistoryMessage")
+              : t("app.queue.clearedMessage")}
+          </ToastDescription>
         </Toast>
       ),
     });
@@ -220,6 +272,7 @@ export default function QueueDetail() {
   const handleCreatePlaylistPress = () => setShowCreatePlaylist(true);
 
   const isEmpty = queue.length === 0;
+  const clearDisabled = isHistoryTab ? history.length === 0 : isEmpty;
   const iconActiveColor = white;
   const iconDisabledColor = gray500;
 
@@ -250,17 +303,31 @@ export default function QueueDetail() {
             contentContainerStyle={{ paddingHorizontal: 24 }}
           >
             <HStack className="items-center justify-end gap-x-6 mb-4">
-              <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                <HStack className="items-center gap-x-2">
-                  <Timer
-                    size={16}
-                    color={sleepActive ? emerald500 : iconActiveColor}
-                  />
-                  <Text className="text-white font-bold">
-                    {t("app.queue.setTimer")}
-                  </Text>
-                </HStack>
-              </FadeOutScaleDown>
+              {activeTab === "queue" && (
+                <FadeOutScaleDown
+                  onPress={
+                    isEmpty
+                      ? undefined
+                      : editMode
+                        ? handleExitEdit
+                        : handleEnterEdit
+                  }
+                >
+                  <HStack className="items-center gap-x-2">
+                    {editMode ? (
+                      <Check size={16} color={emerald500} />
+                    ) : (
+                      <ListOrdered
+                        size={16}
+                        color={isEmpty ? iconDisabledColor : iconActiveColor}
+                      />
+                    )}
+                    <Text className="text-white font-bold">
+                      {editMode ? t("app.queue.done") : t("app.queue.order")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown
                 onPress={isEmpty ? undefined : handleCreatePlaylistPress}
               >
@@ -275,38 +342,28 @@ export default function QueueDetail() {
                 </HStack>
               </FadeOutScaleDown>
               <FadeOutScaleDown
-                onPress={isEmpty ? undefined : handleClearPress}
+                onPress={clearDisabled ? undefined : handleClearPress}
               >
                 <HStack className="items-center gap-x-2">
                   <Trash2
                     size={16}
-                    color={isEmpty ? iconDisabledColor : iconActiveColor}
+                    color={clearDisabled ? iconDisabledColor : iconActiveColor}
                   />
                   <Text className="text-white font-bold">
-                    {t("app.queue.clear")}
+                    {isHistoryTab
+                      ? t("app.queue.clearHistory")
+                      : t("app.queue.clear")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={
-                  isEmpty
-                    ? undefined
-                    : editMode
-                      ? handleExitEdit
-                      : handleEnterEdit
-                }
-              >
+              <FadeOutScaleDown onPress={handleSleepTimerPress}>
                 <HStack className="items-center gap-x-2">
-                  {editMode ? (
-                    <Check size={16} color={emerald500} />
-                  ) : (
-                    <ListOrdered
-                      size={16}
-                      color={isEmpty ? iconDisabledColor : iconActiveColor}
-                    />
-                  )}
+                  <Timer
+                    size={16}
+                    color={sleepActive ? emerald500 : iconActiveColor}
+                  />
                   <Text className="text-white font-bold">
-                    {editMode ? t("app.queue.done") : t("app.queue.order")}
+                    {t("app.queue.setTimer")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
@@ -339,8 +396,40 @@ export default function QueueDetail() {
             }}
           />
         </Box>
+        <TabBar
+          tabs={[
+            { key: "queue", title: t("app.queue.tabQueue") },
+            { key: "recentlyPlayed", title: t("app.queue.tabRecentlyPlayed") },
+          ]}
+          activeIndex={activeTab === "queue" ? 0 : 1}
+          onTabPress={handleTabPress}
+        />
         <Box className="px-6 flex-1">
-          {isEmpty ? (
+          {activeTab === "recentlyPlayed" ? (
+            historyTracks.length === 0 ? (
+              <VStack className="flex-1 items-center justify-center">
+                <Text className="text-primary-100 text-center">
+                  {t("app.queue.recentlyPlayedEmpty")}
+                </Text>
+              </VStack>
+            ) : (
+              <FlashList
+                data={historyTracks}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingBottom: screenBottomPadding,
+                }}
+                renderItem={({ item, index }) => (
+                  <TrackListItem
+                    track={item}
+                    index={index}
+                    onPress={handleHistoryPress}
+                  />
+                )}
+              />
+            )
+          ) : isEmpty ? (
             <VStack className="flex-1 items-center justify-center">
               <Text className="text-primary-100 text-center">
                 {t("app.queue.empty")}
@@ -445,12 +534,16 @@ export default function QueueDetail() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              {t("app.queue.clearConfirmTitle")}
+              {isHistoryTab
+                ? t("app.queue.clearHistoryConfirmTitle")
+                : t("app.queue.clearConfirmTitle")}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              {t("app.queue.clearConfirmMessage")}
+              {isHistoryTab
+                ? t("app.queue.clearHistoryConfirmMessage")
+                : t("app.queue.clearConfirmMessage")}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
@@ -467,7 +560,9 @@ export default function QueueDetail() {
               className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
             >
               <Text className="text-primary-800 font-bold text-lg">
-                {t("app.queue.clear")}
+                {isHistoryTab
+                  ? t("app.queue.clearHistory")
+                  : t("app.queue.clear")}
               </Text>
             </FadeOutScaleDown>
           </AlertDialogFooter>
@@ -480,10 +575,8 @@ export default function QueueDetail() {
       />
       <CenteredBottomSheetModal
         ref={sleepTimerSheetRef}
-        onChange={handleSleepSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

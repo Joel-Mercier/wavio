@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView,
@@ -55,7 +54,6 @@ import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import {
   Country,
@@ -106,14 +104,6 @@ export default function PodcastsSearchScreen() {
   const languagesSheetRef = useRef<BottomSheetModal>(null);
   const countriesSheetRef = useRef<BottomSheetModal>(null);
   const genresSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleFiltersSheetPositionChange } =
-    useBottomSheetBackHandler(filtersSheetRef);
-  const { handleSheetPositionChange: handleLanguagesSheetPositionChange } =
-    useBottomSheetBackHandler(languagesSheetRef);
-  const { handleSheetPositionChange: handleCountriesSheetPositionChange } =
-    useBottomSheetBackHandler(countriesSheetRef);
-  const { handleSheetPositionChange: handleGenresSheetPositionChange } =
-    useBottomSheetBackHandler(genresSheetRef);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
@@ -318,10 +308,8 @@ export default function PodcastsSearchScreen() {
       <CenteredBottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["85%"]}
-        onChange={handleFiltersSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView showsVerticalScrollIndicator={false}>
           <Box className="p-6 w-full">
@@ -725,7 +713,6 @@ export default function PodcastsSearchScreen() {
 
       <MultiSelectSheet
         ref={languagesSheetRef}
-        onSheetPositionChange={handleLanguagesSheetPositionChange}
         title={t("app.podcasts.search.languagesLabel")}
         options={languageEntries}
         selected={values.filterForLanguages}
@@ -741,7 +728,6 @@ export default function PodcastsSearchScreen() {
       />
       <MultiSelectSheet
         ref={countriesSheetRef}
-        onSheetPositionChange={handleCountriesSheetPositionChange}
         title={t("app.podcasts.search.countriesLabel")}
         options={countryEntries}
         selected={values.filterForCountries}
@@ -757,7 +743,6 @@ export default function PodcastsSearchScreen() {
       />
       <MultiSelectSheet
         ref={genresSheetRef}
-        onSheetPositionChange={handleGenresSheetPositionChange}
         title={t("app.podcasts.search.genresLabel")}
         options={genreEntries}
         selected={values.filterForGenres}
@@ -773,7 +758,6 @@ export default function PodcastsSearchScreen() {
 
 type MultiSelectSheetProps<T extends string> = {
   ref: React.RefObject<BottomSheetModal | null>;
-  onSheetPositionChange: NonNullable<BottomSheetModalProps["onChange"]>;
   title: string;
   options: T[];
   selected: T[] | undefined;
@@ -784,7 +768,6 @@ type MultiSelectSheetProps<T extends string> = {
 
 function MultiSelectSheet<T extends string>({
   ref,
-  onSheetPositionChange,
   title,
   options,
   selected,
@@ -807,10 +790,8 @@ function MultiSelectSheet<T extends string>({
       snapPoints={["75%"]}
       enableDynamicSizing={false}
       stackBehavior="push"
-      onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <Box className="px-6 pt-2 pb-3">
         <Heading className="text-white mb-3" size="lg">

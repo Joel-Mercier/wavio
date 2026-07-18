@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -36,7 +35,6 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
@@ -105,8 +103,6 @@ export default function InternetRadioStationDetail() {
   const router = useRouter();
   const toast = useToast();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const scope = useCurrentAuthScope();
   // Server-assigned station ids can collide across servers — only a favorite
@@ -358,14 +354,12 @@ export default function InternetRadioStationDetail() {
       </ScrollView>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

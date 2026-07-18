@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -20,7 +19,6 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { logError } from "@/utils/log";
 
 export default function ShareLinkSheet({
@@ -37,7 +35,6 @@ export default function ShareLinkSheet({
   const { t } = useTranslation();
   const toast = useToast();
   const [copyDone, setCopyDone] = useState(false);
-  const { handleSheetPositionChange } = useBottomSheetBackHandler(sheetRef);
 
   useEffect(() => {
     if (copyDone) {
@@ -88,14 +85,12 @@ export default function ShareLinkSheet({
   return (
     <BottomSheetModalComponent
       ref={sheetRef}
-      onChange={handleSheetPositionChange}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}
       handleIndicatorStyle={{
         backgroundColor: "#b3b3b3",
       }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">

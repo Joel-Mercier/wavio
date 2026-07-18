@@ -17,6 +17,9 @@ export type QueueSource = {
   name: string;
   // Present for navigable sources (album/playlist/artist/folder)
   id?: string;
+  // The source's own cover art id (artist image / album / playlist cover), used
+  // by the Activity screen's group headers.
+  coverArt?: string;
 } | null;
 
 export type QueueTrack = {

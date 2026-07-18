@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -79,7 +78,6 @@ import {
   useOfflinePlaylist,
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -87,7 +85,6 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePlaylists from "@/stores/playlists";
@@ -142,14 +139,8 @@ export default function PlaylistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSortSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetSortModalRef);
   const { data: serverPlaylistData, isLoading, error } = usePlaylist(id);
   const offlinePlaylistData = useOfflinePlaylist(id);
   // Offline (or before the server query resolves) fall back to the downloaded
@@ -165,7 +156,6 @@ export default function PlaylistDetail() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -353,14 +343,8 @@ export default function PlaylistDetail() {
         type: "playlist",
         coverArt: playlistData?.playlist?.coverArt,
       });
-      recordActivity({
-        id,
-        title: playlistData.playlist.name,
-        type: "playlist",
-        coverArt: playlistData.playlist.coverArt,
-      });
     }
-  }, [playlistData?.playlist, id, addRecentPlay, recordActivity]);
+  }, [playlistData?.playlist, id, addRecentPlay]);
 
   useEffect(() => {
     if (clipoardCopyDone) {
@@ -518,6 +502,7 @@ export default function PlaylistDetail() {
             type: "playlist",
             name: playlistData.playlist.name,
             id: playlistData.playlist.id,
+            coverArt: playlistData.playlist.coverArt,
           }
         : null,
     [playlistData?.playlist],
@@ -639,12 +624,6 @@ export default function PlaylistDetail() {
     });
     if (playlistData?.playlist) {
       addRecentPlay({
-        id,
-        title: playlistData.playlist.name,
-        type: "playlist",
-        coverArt: playlistData.playlist.coverArt,
-      });
-      recordActivity({
         id,
         title: playlistData.playlist.name,
         type: "playlist",
@@ -866,14 +845,12 @@ export default function PlaylistDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -901,14 +878,12 @@ export default function PlaylistDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -1049,14 +1024,12 @@ export default function PlaylistDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
-        onChange={handleSortSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

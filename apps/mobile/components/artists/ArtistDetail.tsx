@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -69,7 +68,6 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -78,7 +76,6 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
@@ -116,8 +113,6 @@ export default function ArtistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
     useArtistInfo2(id, { count: 10 });
@@ -145,7 +140,6 @@ export default function ArtistDetail() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -305,7 +299,12 @@ export default function ArtistDetail() {
   const artistSource = useMemo<QueueSource>(
     () =>
       data?.artist
-        ? { type: "artist", name: data.artist.name, id: data.artist.id }
+        ? {
+            type: "artist",
+            name: data.artist.name,
+            id: data.artist.id,
+            coverArt: data.artist.coverArt,
+          }
         : null,
     [data?.artist],
   );
@@ -350,12 +349,6 @@ export default function ArtistDetail() {
         type: "artist",
         coverArt: data.artist.coverArt,
       });
-      recordActivity({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
-      });
     }
   };
 
@@ -372,12 +365,6 @@ export default function ArtistDetail() {
         title: data?.artist.name,
         type: "artist",
         coverArt: data?.artist?.coverArt,
-      });
-      recordActivity({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
       });
     }
   };
@@ -828,14 +815,12 @@ export default function ArtistDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

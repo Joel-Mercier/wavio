@@ -46,6 +46,7 @@ import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
+import usePlayHistory from "@/stores/playHistory";
 import usePlaylists from "@/stores/playlists";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -118,6 +119,7 @@ export default function AppLayout() {
       useRecentPlays.getState().__reset();
       useRecentSearches.getState().__reset();
       useActivity.getState().__reset();
+      usePlayHistory.getState().__reset();
       useQueue.getState().__reset();
       // Mirror cold-start hydration on the player so the new scope's restored
       // queue loads silently instead of auto-playing. Must run after the queue
@@ -158,6 +160,7 @@ export default function AppLayout() {
     useRecentSearches.persist.rehydrate();
     usePlaylists.persist.rehydrate();
     useActivity.persist.rehydrate();
+    usePlayHistory.persist.rehydrate();
     useQueue.persist.rehydrate();
     // The queue bakes absolute URLs, and the session may have cold-started on a
     // different route than the one it was saved under (the active route is

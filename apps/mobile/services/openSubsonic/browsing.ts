@@ -1,5 +1,6 @@
 import openSubsonicApiInstance, {
   folderScopedRequest,
+  isSubsonicDataNotFound,
   type OpenSubsonicResponse,
   subsonicRequest,
 } from "@/services/openSubsonic/index";
@@ -20,11 +21,13 @@ import type {
   PodcastEpisode,
   SimilarSongs,
   SimilarSongs2,
+  SongsExistResult,
   SonicSimilarTracks,
   TopSongs,
   VideoInfo,
   Videos,
 } from "@/services/openSubsonic/types";
+import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 
 export const getMusicFolders = async () =>
   subsonicRequest<{ musicFolders: MusicFolders }>("/rest/getMusicFolders");
@@ -132,6 +135,39 @@ export const getSonicSimilarTracks = async (
 
 export const getSong = async (id: string) =>
   subsonicRequest<{ song: Child }>("/rest/getSong", { id });
+
+// Subsonic has no batch existence endpoint, so probe one id at a time.
+// `notFoundIsExpected` keeps a deleted track — the whole point of the probe —
+// out of Sentry.
+const SONGS_EXIST_CONCURRENCY = 4;
+
+export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
+  const verdicts = await mapWithConcurrency(
+    ids,
+    SONGS_EXIST_CONCURRENCY,
+    async (id) => {
+      try {
+        await subsonicRequest<{ song: Child }>(
+          "/rest/getSong",
+          { id },
+          {},
+          { notFoundIsExpected: true },
+        );
+        return "present" as const;
+      } catch (error) {
+        // Only the server saying "no such data" proves deletion. A transport
+        // failure or 5xx leaves the id unclassified.
+        return isSubsonicDataNotFound(error)
+          ? ("gone" as const)
+          : ("unknown" as const);
+      }
+    },
+  );
+  return {
+    present: ids.filter((_, i) => verdicts[i] === "present"),
+    gone: ids.filter((_, i) => verdicts[i] === "gone"),
+  };
+};
 
 export const getTopSongs = async (
   artist: string,

@@ -889,7 +889,8 @@
 			"activity": {
 				"title": "Activity",
 				"empty": "Nothing here yet. Albums, artists and playlists you play will show up here.",
-				"playedAt": "{{distance}} ago",
+				"plays_one": "{{count}} track played",
+				"plays_other": "{{count}} tracks played",
 				"sections": {
 					"today": "Today",
 					"yesterday": "Yesterday",
@@ -937,6 +938,9 @@
 			"queue": {
 				"title": "Queue",
 				"empty": "The queue is empty.",
+				"tabQueue": "Queue",
+				"tabRecentlyPlayed": "Recently played",
+				"recentlyPlayedEmpty": "No tracks played yet.",
 				"edit": "Edit",
 				"done": "Done",
 				"order": "Order",
@@ -946,6 +950,10 @@
 				"clearConfirmTitle": "Clear queue?",
 				"clearConfirmMessage": "All tracks will be removed from the queue and playback will stop.",
 				"clearedMessage": "Queue cleared",
+				"clearHistory": "Clear history",
+				"clearHistoryConfirmTitle": "Clear history?",
+				"clearHistoryConfirmMessage": "All recently played tracks will be removed from this list. Your queue and playback are unaffected.",
+				"clearedHistoryMessage": "History cleared",
 				"nowPlaying": "Now playing",
 				"nextInQueue": "Next in queue",
 				"removeFromQueue": "Remove from queue",

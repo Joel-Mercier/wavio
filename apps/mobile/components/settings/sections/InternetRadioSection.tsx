@@ -11,7 +11,6 @@ import {
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { VStack } from "@/components/ui/vstack";
 import { useRadioCountries } from "@/hooks/radioBrowser/useRadioBrowser";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useApp from "@/stores/app";
 
 export default function InternetRadioSection() {
@@ -20,11 +19,7 @@ export default function InternetRadioSection() {
     "--color-emerald-500",
   ]) as string[];
   const bottomSheetRadioCountryModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleRadioCountrySheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetRadioCountryModalRef);
   const bottomSheetRadioTagsModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleRadioTagsSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetRadioTagsModalRef);
 
   const internetRadioCountryCode = useApp(
     (store) => store.internetRadioCountryCode,
@@ -63,7 +58,6 @@ export default function InternetRadioSection() {
         <>
           <SearchableSelectSheet
             ref={bottomSheetRadioCountryModalRef}
-            onSheetPositionChange={handleRadioCountrySheetPositionChange}
             title={t("app.settings.internetRadioStationsSettings.countryLabel")}
             anyLabel={t(
               "app.settings.internetRadioStationsSettings.countryAutomatic",
@@ -76,10 +70,7 @@ export default function InternetRadioSection() {
             }}
             emerald={emerald500}
           />
-          <RadioFeedTagsSheet
-            modalRef={bottomSheetRadioTagsModalRef}
-            onChange={handleRadioTagsSheetPositionChange}
-          />
+          <RadioFeedTagsSheet modalRef={bottomSheetRadioTagsModalRef} />
         </>
       }
     >

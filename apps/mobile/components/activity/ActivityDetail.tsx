@@ -1,17 +1,10 @@
-import { isThisWeek } from "date-fns/isThisWeek";
-import { isToday } from "date-fns/isToday";
-import { isYesterday } from "date-fns/isYesterday";
+import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SectionList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Uniwind } from "uniwind";
-import ActivityListItem from "@/components/activity/ActivityListItem";
+import ActivityGroupItem from "@/components/activity/ActivityGroupItem";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -19,48 +12,19 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import useActivity, {
-  type ActivityEntry,
-  type ActivityType,
-} from "@/stores/activity";
+import useActivity, { type ActivitySource } from "@/stores/activity";
 import useApp from "@/stores/app";
+import {
+  type ActivityGroup,
+  type ActivitySectionKey,
+  groupActivity,
+} from "@/utils/activityGrouping";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
-type SectionKey = "today" | "yesterday" | "thisWeek" | "older";
-
-const groupEntries = (
-  entries: ActivityEntry[],
-): { key: SectionKey; data: ActivityEntry[] }[] => {
-  const buckets: Record<SectionKey, ActivityEntry[]> = {
-    today: [],
-    yesterday: [],
-    thisWeek: [],
-    older: [],
-  };
-  for (const entry of entries) {
-    const date = new Date(entry.playedAt);
-    if (isToday(date)) buckets.today.push(entry);
-    else if (isYesterday(date)) buckets.yesterday.push(entry);
-    else if (isThisWeek(date, { weekStartsOn: 1 }))
-      buckets.thisWeek.push(entry);
-    else buckets.older.push(entry);
-  }
-  const order: SectionKey[] = ["today", "yesterday", "thisWeek", "older"];
-  return order
-    .filter((key) => buckets[key].length > 0)
-    .map((key) => ({ key, data: buckets[key] }));
-};
-
-const routeFor = (entry: ActivityEntry) =>
-  `/${entry.type}s/${entry.id}` as const;
-
-const TypeIcon = ({ type }: { type: ActivityType }) => {
-  const [color] = Uniwind.getCSSVariable(["--color-primary-100"]) as string[];
-  if (type === "album") return <Disc3 size={14} color={color} />;
-  if (type === "artist") return <Mic2 size={14} color={color} />;
-  return <ListMusic size={14} color={color} />;
-};
+type Row =
+  | { kind: "sectionHeader"; key: string; sectionKey: ActivitySectionKey }
+  | { kind: "group"; key: string; group: ActivityGroup };
 
 export default function ActivityDetail() {
   const { t } = useTranslation();
@@ -70,11 +34,48 @@ export default function ActivityDetail() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const activity = useActivity((store) => store.activity);
 
-  const sections = useMemo(() => groupEntries(activity), [activity]);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const handlePress = (entry: ActivityEntry) => {
-    router.navigate(routeFor(entry));
-  };
+  const rows = useMemo<Row[]>(() => {
+    const out: Row[] = [];
+    for (const section of groupActivity(activity)) {
+      out.push({
+        kind: "sectionHeader",
+        key: `header:${section.key}`,
+        sectionKey: section.key,
+      });
+      for (const group of section.groups) {
+        out.push({ kind: "group", key: group.key, group });
+      }
+    }
+    return out;
+  }, [activity]);
+
+  const toggle = useCallback((key: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const handlePressSource = useCallback(
+    (source: NonNullable<ActivitySource>) => {
+      switch (source.type) {
+        case "album":
+          router.navigate(`/albums/${source.id}`);
+          break;
+        case "artist":
+          router.navigate(`/artists/${source.id}`);
+          break;
+        case "playlist":
+          router.navigate(`/playlists/${source.id}`);
+          break;
+      }
+    },
+    [router],
+  );
 
   return (
     <Box className="h-full">
@@ -98,22 +99,31 @@ export default function ActivityDetail() {
             </Text>
           </VStack>
         ) : (
-          <SectionList
-            sections={sections}
-            keyExtractor={(item) => `${item.type}:${item.id}:${item.playedAt}`}
+          <FlashList
+            data={rows}
+            extraData={expanded}
+            keyExtractor={(row) => row.key}
+            getItemType={(row) =>
+              row.kind === "sectionHeader"
+                ? "header"
+                : `group-${expanded.has(row.group.key)}`
+            }
             showsVerticalScrollIndicator={false}
-            stickySectionHeadersEnabled={false}
-            contentContainerStyle={{
-              paddingBottom: screenBottomPadding,
-            }}
-            renderSectionHeader={({ section }) => (
-              <Heading className="text-white mt-6 mb-2" size="md">
-                {t(`app.activity.sections.${section.key}`)}
-              </Heading>
-            )}
-            renderItem={({ item }) => (
-              <ActivityListItem item={item} onPress={handlePress} />
-            )}
+            contentContainerStyle={{ paddingBottom: screenBottomPadding }}
+            renderItem={({ item }) =>
+              item.kind === "sectionHeader" ? (
+                <Heading className="text-white mt-6 mb-2" size="md">
+                  {t(`app.activity.sections.${item.sectionKey}`)}
+                </Heading>
+              ) : (
+                <ActivityGroupItem
+                  group={item.group}
+                  isExpanded={expanded.has(item.group.key)}
+                  onToggle={() => toggle(item.group.key)}
+                  onPressSource={handlePressSource}
+                />
+              )
+            }
           />
         )}
       </Box>

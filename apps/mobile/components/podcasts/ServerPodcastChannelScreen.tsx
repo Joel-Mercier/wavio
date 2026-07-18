@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -61,7 +60,6 @@ import {
   useIsTrackAvailableOffline,
 } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
@@ -144,8 +142,6 @@ export default function ServerPodcastChannelScreen() {
   const doDeletePodcastEpisode = useDeletePodcastEpisode();
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [episodePendingDelete, setEpisodePendingDelete] =
     useState<PodcastEpisode | null>(null);
@@ -471,10 +467,8 @@ export default function ServerPodcastChannelScreen() {
       </Box>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

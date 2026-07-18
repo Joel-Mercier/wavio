@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -84,14 +83,12 @@ import {
   useOfflineAlbum,
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -129,11 +126,7 @@ export default function AlbumDetail() {
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
@@ -159,7 +152,6 @@ export default function AlbumDetail() {
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const recordActivity = useActivity((store) => store.recordActivity);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
@@ -441,7 +433,12 @@ export default function AlbumDetail() {
   const albumSource = useMemo<QueueSource>(
     () =>
       data?.album
-        ? { type: "album", name: data.album.name, id: data.album.id }
+        ? {
+            type: "album",
+            name: data.album.name,
+            id: data.album.id,
+            coverArt: data.album.coverArt,
+          }
         : null,
     [data?.album],
   );
@@ -551,13 +548,6 @@ export default function AlbumDetail() {
         type: "album",
         coverArt: data.album.coverArt,
       });
-      recordActivity({
-        id,
-        title: data.album.name,
-        type: "album",
-        coverArt: data.album.coverArt,
-        artist: data.album.artist,
-      });
     }
   };
 
@@ -576,15 +566,8 @@ export default function AlbumDetail() {
         type: "album",
         coverArt: album.coverArt,
       });
-      recordActivity({
-        id,
-        title: album.name,
-        type: "album",
-        coverArt: album.coverArt,
-        artist: album.artist,
-      });
     }
-  }, [album, id, addRecentPlay, recordActivity]);
+  }, [album, id, addRecentPlay]);
 
   const handleMusicBrainzPress = async () => {
     bottomSheetModalRef.current?.dismiss();
@@ -1046,14 +1029,12 @@ export default function AlbumDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -1081,14 +1062,12 @@ export default function AlbumDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

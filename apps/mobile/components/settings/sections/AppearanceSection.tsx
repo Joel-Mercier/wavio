@@ -16,7 +16,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { LanguageNames, SupportedLanguages } from "@/config/i18n";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useApp, { type SwipeAction } from "@/stores/app";
 import { HOME_SECTION_CATALOG } from "@/utils/homeFeed";
@@ -40,18 +39,9 @@ export default function AppearanceSection() {
   const { t } = useTranslation();
   const capabilities = useCapabilities();
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } = useBottomSheetBackHandler(
-    bottomSheetLanguageModalRef,
-  );
   const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleLyricsSourceSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetLyricsSourceModalRef);
   const bottomSheetSwipeActionModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSwipeActionSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetSwipeActionModalRef);
   const bottomSheetHomeSectionsModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleHomeSectionsSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetHomeSectionsModalRef);
 
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
@@ -87,7 +77,6 @@ export default function AppearanceSection() {
         <>
           <OptionsBottomSheetModal
             modalRef={bottomSheetLanguageModalRef}
-            onChange={handleSheetPositionChange}
             header={t("app.settings.displaySettings.languageLabel")}
             headerDescription={t(
               "app.settings.displaySettings.languageDescription",
@@ -101,7 +90,6 @@ export default function AppearanceSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetLyricsSourceModalRef}
-            onChange={handleLyricsSourceSheetPositionChange}
             header={t("app.settings.displaySettings.lyricsSourceLabel")}
             headerDescription={t(
               "app.settings.displaySettings.lyricsSourceDescription",
@@ -118,7 +106,6 @@ export default function AppearanceSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetSwipeActionModalRef}
-            onChange={handleSwipeActionSheetPositionChange}
             header={t("app.settings.displaySettings.swipeActionLabel")}
             headerDescription={t(
               "app.settings.displaySettings.swipeActionDescription",
@@ -133,10 +120,7 @@ export default function AppearanceSection() {
             onSelect={setSwipeLeftAction}
             dismissOnSelect
           />
-          <HomeSectionsSheet
-            modalRef={bottomSheetHomeSectionsModalRef}
-            onChange={handleHomeSectionsSheetPositionChange}
-          />
+          <HomeSectionsSheet modalRef={bottomSheetHomeSectionsModalRef} />
         </>
       }
     >

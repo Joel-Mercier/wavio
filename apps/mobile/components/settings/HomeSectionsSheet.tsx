@@ -1,7 +1,5 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import type { RefObject } from "react";
@@ -21,10 +19,8 @@ import { cn } from "@/utils/tailwind";
 /** Multi-select of the sections shown on the home screen. */
 export default function HomeSectionsSheet({
   modalRef,
-  onChange,
 }: {
   modalRef: RefObject<BottomSheetModal | null>;
-  onChange: BottomSheetModalProps["onChange"];
 }) {
   const { t } = useTranslation();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
@@ -48,10 +44,8 @@ export default function HomeSectionsSheet({
       ref={modalRef}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
-      onChange={onChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView showsVerticalScrollIndicator={false}>
         <Box className="p-6 w-full">
