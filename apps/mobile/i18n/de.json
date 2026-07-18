@@ -889,7 +889,6 @@
 			"activity": {
 				"title": "Aktivität",
 				"empty": "Hier ist noch nichts zu sehen. Alben, Interpreten und Wiedergabelisten, die Du abspielst, werden hier angezeigt.",
-				"playedAt": "Vor {{distance}}",
 				"sections": {
 					"today": "Heute",
 					"yesterday": "Gestern",
@@ -900,7 +899,9 @@
 					"album": "Album",
 					"artist": "Interpret",
 					"playlist": "Wiedergabeliste"
-				}
+				},
+				"plays_one": "{{count}} track played",
+				"plays_other": "{{count}} tracks played"
 			},
 			"offlineDownloads": {
 				"title": "Offline-Downloads",
