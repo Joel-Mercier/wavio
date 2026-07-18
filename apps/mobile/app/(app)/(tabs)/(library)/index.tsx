@@ -44,7 +44,6 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useDownloadedCollections } from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import {
@@ -125,10 +124,6 @@ export default function LibraryScreen() {
           LibraryAllArtists
       >
     >(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
-  const { handleSheetPositionChange: handleSheetPositionChangeSort } =
-    useBottomSheetBackHandler(bottomSheetModalSortRef);
   const musicFolderId = useCurrentMusicFolderId();
   const isOnline = useIsOnline();
   const downloadedCollections = useDownloadedCollections();
@@ -580,13 +575,9 @@ export default function LibraryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-      <AddBottomSheet
-        ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
-      />
+      <AddBottomSheet ref={bottomSheetModalRef} />
       <CenteredBottomSheetModal
         ref={bottomSheetModalSortRef}
-        onChange={handleSheetPositionChangeSort}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

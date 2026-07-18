@@ -1,6 +1,5 @@
 import {
   type BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import type { RefObject } from "react";
@@ -22,10 +21,8 @@ import { cn } from "@/utils/tailwind";
 /** Multi-select of the genre tag rows shown on the radio stations home screen. */
 export default function RadioFeedTagsSheet({
   modalRef,
-  onChange,
 }: {
   modalRef: RefObject<BottomSheetModal | null>;
-  onChange: BottomSheetModalProps["onChange"];
 }) {
   const { t } = useTranslation();
   const selectedTags = useApp((store) => store.internetRadioFeedTags);
@@ -56,7 +53,6 @@ export default function RadioFeedTagsSheet({
       ref={modalRef}
       snapPoints={["75%"]}
       enableDynamicSizing={false}
-      onChange={onChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
     >

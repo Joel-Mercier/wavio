@@ -68,7 +68,6 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -115,8 +114,6 @@ export default function ArtistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const { data, isLoading, error } = useArtist(id);
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
     useArtistInfo2(id, { count: 10 });
@@ -827,7 +824,6 @@ export default function ArtistDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

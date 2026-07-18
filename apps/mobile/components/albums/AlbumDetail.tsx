@@ -83,7 +83,6 @@ import {
   useOfflineAlbum,
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -128,11 +127,7 @@ export default function AlbumDetail() {
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
@@ -1045,7 +1040,6 @@ export default function AlbumDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
@@ -1079,7 +1073,6 @@ export default function AlbumDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

@@ -1,6 +1,5 @@
 import {
   type BottomSheetModal,
-  type BottomSheetModalProps,
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
@@ -21,7 +20,6 @@ export interface SelectOption {
 
 type SearchableSelectSheetProps = {
   ref: React.RefObject<BottomSheetModal | null>;
-  onSheetPositionChange: NonNullable<BottomSheetModalProps["onChange"]>;
   title: string;
   anyLabel: string;
   options: SelectOption[];
@@ -33,7 +31,6 @@ type SearchableSelectSheetProps = {
 /** Single-select picker with a search box and an "any" header row. */
 export default function SearchableSelectSheet({
   ref,
-  onSheetPositionChange,
   title,
   anyLabel,
   options,
@@ -55,7 +52,6 @@ export default function SearchableSelectSheet({
       snapPoints={["75%"]}
       enableDynamicSizing={false}
       stackBehavior="push"
-      onChange={onSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
     >

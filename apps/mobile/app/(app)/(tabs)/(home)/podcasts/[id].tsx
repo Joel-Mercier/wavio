@@ -46,7 +46,6 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -98,8 +97,6 @@ export default function PodcastScreen() {
   );
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -436,7 +433,6 @@ export default function PodcastScreen() {
       </Animated.ScrollView>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

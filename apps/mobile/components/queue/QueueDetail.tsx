@@ -42,7 +42,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -120,8 +119,6 @@ export default function QueueDetail() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
 
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSleepSheetPositionChange } =
-    useBottomSheetBackHandler(sleepTimerSheetRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -578,7 +575,6 @@ export default function QueueDetail() {
       />
       <CenteredBottomSheetModal
         ref={sleepTimerSheetRef}
-        onChange={handleSleepSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >

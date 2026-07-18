@@ -71,7 +71,6 @@ import {
   useIsDetailCached,
   useOfflineDownloads,
 } from "@/hooks/offline";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
@@ -149,14 +148,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetArtistsModalRef);
 
   const open = useCallback(
     (nextTrack: Child, nextCtx: TrackActionsContextValue = {}) => {
@@ -648,7 +641,6 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       {children}
       <CenteredBottomSheetModal
         ref={bottomSheetArtistsModalRef}
-        onChange={handleArtistsSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
@@ -677,7 +669,6 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
@@ -708,7 +699,6 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >

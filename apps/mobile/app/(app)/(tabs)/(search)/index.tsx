@@ -32,7 +32,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useGenres } from "@/hooks/backend/useBrowsing";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp, { type GenresSort } from "@/stores/app";
@@ -81,8 +80,6 @@ export default function SearchScreen() {
   });
 
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSheetPositionChangeSort } =
-    useBottomSheetBackHandler(bottomSheetModalSortRef);
   const listRef = useRef<FlashListRef<Genre>>(null);
 
   const titleHeight = useSharedValue(0);
@@ -261,7 +258,6 @@ export default function SearchScreen() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalSortRef}
-        onChange={handleSheetPositionChangeSort}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

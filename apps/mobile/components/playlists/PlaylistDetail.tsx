@@ -78,7 +78,6 @@ import {
   useOfflinePlaylist,
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -141,14 +140,8 @@ export default function PlaylistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleShareSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetShareModalRef);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSortSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetSortModalRef);
   const { data: serverPlaylistData, isLoading, error } = usePlaylist(id);
   const offlinePlaylistData = useOfflinePlaylist(id);
   // Offline (or before the server query resolves) fall back to the downloaded
@@ -865,7 +858,6 @@ export default function PlaylistDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
-        onChange={handleShareSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
@@ -899,7 +891,6 @@ export default function PlaylistDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
@@ -1046,7 +1037,6 @@ export default function PlaylistDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
-        onChange={handleSortSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

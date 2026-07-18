@@ -30,7 +30,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
 
@@ -82,8 +81,6 @@ export function PodcastEpisodeActionsProvider({
   );
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
 
   const open = useCallback((next: PodcastEpisodeActionsTarget) => {
     setEpisode(next);
@@ -154,7 +151,6 @@ export function PodcastEpisodeActionsProvider({
       {children}
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >

@@ -13,7 +13,6 @@ import {
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import {
@@ -52,22 +51,10 @@ export default function PlaybackAudioSection() {
   const isLocal = useAuthBase((store) => store.serverType === "local");
 
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleBitRateSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetBitRateModalRef);
   const bottomSheetCellularBitRateModalRef = useRef<BottomSheetModal>(null);
-  const {
-    handleSheetPositionChange: handleCellularBitRateSheetPositionChange,
-  } = useBottomSheetBackHandler(bottomSheetCellularBitRateModalRef);
   const bottomSheetStreamingFormatModalRef = useRef<BottomSheetModal>(null);
-  const {
-    handleSheetPositionChange: handleStreamingFormatSheetPositionChange,
-  } = useBottomSheetBackHandler(bottomSheetStreamingFormatModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleQueueSyncSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetQueueSyncModalRef);
 
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
@@ -115,7 +102,6 @@ export default function PlaybackAudioSection() {
         <>
           <OptionsBottomSheetModal
             modalRef={bottomSheetQueueSyncModalRef}
-            onChange={handleQueueSyncSheetPositionChange}
             header={t("app.settings.playbackSettings.queueSyncLabel")}
             headerDescription={t(
               "app.settings.playbackSettings.queueSyncDescription",
@@ -135,7 +121,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetBitRateModalRef}
-            onChange={handleBitRateSheetPositionChange}
             header={t("app.settings.streamingSettings.audioQualityLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.audioQualityDescription",
@@ -149,7 +134,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetCellularBitRateModalRef}
-            onChange={handleCellularBitRateSheetPositionChange}
             header={t(
               "app.settings.streamingSettings.cellularAudioQualityLabel",
             )}
@@ -165,7 +149,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetStreamingFormatModalRef}
-            onChange={handleStreamingFormatSheetPositionChange}
             header={t("app.settings.streamingSettings.streamingFormatLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.streamingFormatDescription",
@@ -182,7 +165,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetReplayGainModalRef}
-            onChange={handleReplayGainSheetPositionChange}
             header={t("app.settings.streamingSettings.replayGainLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.replayGainDescription",

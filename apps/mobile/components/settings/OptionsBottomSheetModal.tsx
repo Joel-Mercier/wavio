@@ -1,6 +1,5 @@
 import {
   type BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
@@ -25,7 +24,6 @@ export default function OptionsBottomSheetModal<
   T extends string | number | null,
 >({
   modalRef,
-  onChange,
   options,
   selectedValue,
   onSelect,
@@ -34,7 +32,6 @@ export default function OptionsBottomSheetModal<
   dismissOnSelect = false,
 }: {
   modalRef: RefObject<BottomSheetModal | null>;
-  onChange: BottomSheetModalProps["onChange"];
   options: SheetOption<T>[];
   selectedValue: T | null;
   onSelect: (value: T) => void;
@@ -48,7 +45,6 @@ export default function OptionsBottomSheetModal<
   return (
     <CenteredBottomSheetModal
       ref={modalRef}
-      onChange={onChange}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}

@@ -53,7 +53,6 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -89,8 +88,6 @@ export default function LikedSongs() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const { data } = useArtist(id);
   const musicFolderId = useCurrentMusicFolderId();
   const { data: starredData } = useStarred2({ musicFolderId });
@@ -526,7 +523,6 @@ export default function LikedSongs() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

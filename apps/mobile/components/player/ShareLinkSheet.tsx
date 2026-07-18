@@ -19,7 +19,6 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { logError } from "@/utils/log";
 
 export default function ShareLinkSheet({
@@ -36,7 +35,6 @@ export default function ShareLinkSheet({
   const { t } = useTranslation();
   const toast = useToast();
   const [copyDone, setCopyDone] = useState(false);
-  const { handleSheetPositionChange } = useBottomSheetBackHandler(sheetRef);
 
   useEffect(() => {
     if (copyDone) {
@@ -87,7 +85,6 @@ export default function ShareLinkSheet({
   return (
     <BottomSheetModalComponent
       ref={sheetRef}
-      onChange={handleSheetPositionChange}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}
