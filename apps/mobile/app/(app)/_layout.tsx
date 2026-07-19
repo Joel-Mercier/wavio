@@ -23,6 +23,7 @@ import {
   queryClient,
   setCacheRestoring,
 } from "@/config/queryClient";
+import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
@@ -117,25 +118,31 @@ export default function AppLayout() {
     lastHydratedScope = scope;
     if (__DEV__) console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
-      stopPlayQueueSync();
-      useRecentPlays.getState().__reset();
-      useRecentSearches.getState().__reset();
-      useActivity.getState().__reset();
-      usePlayHistory.getState().__reset();
-      useQueue.getState().__reset();
-      // Mirror cold-start hydration on the player so the new scope's restored
-      // queue loads silently instead of auto-playing. Must run after the queue
-      // __reset above (so the store reports not-hydrated) and before the
-      // rehydrate below.
-      resetPlayerForScopeChange();
-      useOffline.getState().__reset();
-      resetOfflineMutationReplay();
-      useOfflineMutations.getState().__reset();
-      useLocalLibrary.getState().__reset();
-      useBookmarks.getState().__reset();
-      useCapabilityOverrides.getState().__reset();
-      useLidarr.getState().__reset();
-      useServerExtensionsBase.getState().reset();
+      // Suspended writes: these resets clear the previous scope's data from
+      // memory, but persist would flush the resulting initial state straight
+      // into the *incoming* scope's bucket, wiping what the rehydrate below is
+      // about to read. See withScopedWritesSuspended.
+      withScopedWritesSuspended(() => {
+        stopPlayQueueSync();
+        useRecentPlays.getState().__reset();
+        useRecentSearches.getState().__reset();
+        useActivity.getState().__reset();
+        usePlayHistory.getState().__reset();
+        useQueue.getState().__reset();
+        // Mirror cold-start hydration on the player so the new scope's restored
+        // queue loads silently instead of auto-playing. Must run after the queue
+        // __reset above (so the store reports not-hydrated) and before the
+        // rehydrate below.
+        resetPlayerForScopeChange();
+        useOffline.getState().__reset();
+        resetOfflineMutationReplay();
+        useOfflineMutations.getState().__reset();
+        useLocalLibrary.getState().__reset();
+        useBookmarks.getState().__reset();
+        useCapabilityOverrides.getState().__reset();
+        useLidarr.getState().__reset();
+        useServerExtensionsBase.getState().reset();
+      });
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
       resetServerReachable();
