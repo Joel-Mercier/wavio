@@ -1,3 +1,7 @@
+// Hermes ships without a usable Intl.PluralRules; i18next then silently
+// degrades to English-style one/other, breaking ru (_few/_many) and zh-CN
+// (_other only). Must be imported before i18n.init.
+import "intl-pluralrules";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import * as z from "zod";

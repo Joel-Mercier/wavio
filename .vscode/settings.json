@@ -3,5 +3,9 @@
     "source.fixAll.biome": "explicit"
   },
   "editor.defaultFormatter": "biomejs.biome",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  // biome.json lives in apps/mobile, not here. Without this, an extension
+  // instance rooted at the repo root finds no config and formats with Biome's
+  // built-in defaults (tabs), silently reindenting whole files on save.
+  "biome.requireConfiguration": true
 }
