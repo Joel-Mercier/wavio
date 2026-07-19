@@ -3,6 +3,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
+import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
@@ -20,6 +21,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useAuth from "@/stores/auth";
+import useLidarr from "@/stores/lidarr";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 
 const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
@@ -30,6 +32,9 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const serverVersion = useAuth((s) => s.serverVersion);
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  // Any configured downloader (only Lidarr today) surfaces the entry; it leads
+  // to the downloaders list so the user picks which one to add from.
+  const hasDownloader = useLidarr((s) => s.isConnected);
   const showSmartPlaylist =
     capabilities.smartPlaylists &&
     hasNavidromeNative &&
@@ -59,6 +64,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const handleCreatePodcastChannelPress = () => {
     dismiss();
     router.navigate("/podcast-channels/new");
+  };
+
+  const handleAddMusicPress = () => {
+    dismiss();
+    router.navigate("/settings/downloaders");
   };
 
   return (
@@ -140,6 +150,24 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                     </Heading>
                     <Text className="text-md text-gray-200 flex-1">
                       {t("app.create.podcastChannelDescription")}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
+            {hasDownloader && (
+              <FadeOutScaleDown
+                onPress={handleAddMusicPress}
+                disabled={!isOnline}
+              >
+                <HStack className="items-center">
+                  <CloudDownload size={32} color={gray200} />
+                  <VStack className="ml-4 flex-1">
+                    <Heading numberOfLines={1} className="text-white">
+                      {t("app.create.downloaderTitle")}
+                    </Heading>
+                    <Text className="text-md text-gray-200 flex-1">
+                      {t("app.create.downloaderDescription")}
                     </Text>
                   </VStack>
                 </HStack>

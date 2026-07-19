@@ -30,12 +30,14 @@ export function SettingsToggleRow({
   value,
   onToggle,
   children,
+  disabled = false,
 }: {
   label: string;
   description: string;
   value: boolean;
   onToggle: (value: boolean) => void;
   children?: ReactNode;
+  disabled?: boolean;
 }) {
   const [gray500, emerald500, white] = Uniwind.getCSSVariable([
     "--color-gray-500",
@@ -43,7 +45,12 @@ export function SettingsToggleRow({
     "--color-white",
   ]) as string[];
   return (
-    <HStack className="items-center gap-x-4 py-4 justify-between">
+    <HStack
+      className={cn(
+        "items-center gap-x-4 py-4 justify-between",
+        disabled && "opacity-50",
+      )}
+    >
       <VStack className="gap-y-2 w-3/5">
         <Heading className="text-white font-normal" size="md">
           {label}
@@ -53,6 +60,7 @@ export function SettingsToggleRow({
       </VStack>
       <Switch
         size="md"
+        isDisabled={disabled}
         trackColor={{
           false: gray500,
           true: emerald500,

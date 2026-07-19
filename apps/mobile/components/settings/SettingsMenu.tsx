@@ -1,6 +1,7 @@
 import type { Href } from "expo-router";
 import Archive from "lucide-react-native/dist/esm/icons/archive.mjs";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import HardDrive from "lucide-react-native/dist/esm/icons/hard-drive.mjs";
 import Library from "lucide-react-native/dist/esm/icons/library.mjs";
@@ -30,6 +31,7 @@ const MENU_ENTRIES: {
   { key: "podcasts", icon: Podcast },
   { key: "radio", icon: Radio },
   { key: "storage", icon: HardDrive },
+  { key: "downloaders", icon: CloudDownload, hideForLocal: true },
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
 ];
