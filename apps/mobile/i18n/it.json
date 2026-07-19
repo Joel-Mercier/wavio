@@ -79,8 +79,8 @@
 				"internetRadioStationDescription": "Crea una stazione radio online che puoi ascoltare in streaming dall'app",
 				"podcastChannelTitle": "Canale podcast",
 				"podcastChannelDescription": "Iscrivi il server a un podcast tramite il relativo feed RSS",
-				"downloaderTitle": "Add music",
-				"downloaderDescription": "Search and download music to your server"
+				"downloaderTitle": "Aggiungi Musica",
+				"downloaderDescription": "Cerca e scarica musica dal tuo server"
 			},
 			"carAuto": {
 				"home": "Home",
@@ -576,7 +576,7 @@
 					},
 					"downloaders": {
 						"title": "Downloaders",
-						"description": "Add music to your server via Lidarr"
+						"description": "Aggiungi musica al tuo server tramite Lidarr"
 					},
 					"appearance": {
 						"title": "Aspetto",
@@ -604,30 +604,30 @@
 					}
 				},
 				"downloaders": {
-					"description": "Connect a downloader to add music that isn't on your server yet. It's fetched into your library and appears after the next scan.",
-					"comingSoon": "Coming soon.",
+					"description": "Collega un downloader per aggiungere musica al tuo server. I brani verranno scaricati nella tua libreria e saranno disponibili alla successiva scansione della libreria.",
+					"comingSoon": "In arrivo prossimamente",
 					"statuses": {
 						"active": "Attivo",
 						"inactive": "Inattivo"
 					},
 					"lidarr": {
 						"title": "Lidarr",
-						"description": "Search and download albums through your Lidarr instance",
-						"getApiKeyAction": "Where do I find my API key?",
+						"description": "Cerca e scarica album attraverso la tua istanza Lidarr",
+						"getApiKeyAction": "Dove trovo la mia Chiave API?",
 						"serverUrlLabel": "Server URL",
 						"apiKeyLabel": "Chiave API",
-						"apiKeyPlaceholder": "Your Lidarr API key",
-						"testAndSaveAction": "Test & save",
-						"connectionSuccess": "Connected to Lidarr",
-						"connectionFailed": "Couldn't connect. Check the URL and API key.",
-						"removedMessage": "Lidarr configuration removed",
-						"autoScanLabel": "Scan library after download",
-						"autoScanDescription": "Rescan your server when a download finishes so new albums show up automatically"
+						"apiKeyPlaceholder": "La tua Chiave API Lidarr",
+						"testAndSaveAction": "Testa & salva",
+						"connectionSuccess": "Connettiti a Lidarr",
+						"connectionFailed": "Impossibile connettersi. Controlla il tuo collegamento URL e la Chiave API",
+						"removedMessage": "Configurazione Lidarr rimossa",
+						"autoScanLabel": "Scansiona la libreria dopo il download",
+						"autoScanDescription": "Esegui una nuova scansione del server al termine di un download, in modo che i nuovi album vengano visualizzati automaticamente"
 					},
 					"discovery": {
-						"title": "Discovery",
-						"description": "Search for artists and albums to add",
-						"inputPlaceholder": "Search artists and albums",
+						"title": "Scopri",
+						"description": "Cerca artisti e album da aggiungere",
+						"inputPlaceholder": "Cerca artisti e album",
 						"emptyPrompt": "Search for an artist or album to add to your library.",
 						"album": "Album",
 						"artist": "Artista",
