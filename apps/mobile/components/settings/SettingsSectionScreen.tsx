@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import AppearanceSection from "@/components/settings/sections/AppearanceSection";
 import BackupRestoreSection from "@/components/settings/sections/BackupRestoreSection";
+import DownloadersSection from "@/components/settings/sections/DownloadersSection";
 import DownloadsOfflineSection from "@/components/settings/sections/DownloadsOfflineSection";
 import InternetRadioSection from "@/components/settings/sections/InternetRadioSection";
 import MusicLibrarySection from "@/components/settings/sections/MusicLibrarySection";
@@ -14,6 +15,7 @@ const SECTIONS: Record<string, React.ComponentType> = {
   playback: PlaybackAudioSection,
   library: MusicLibrarySection,
   downloads: DownloadsOfflineSection,
+  downloaders: DownloadersSection,
   appearance: AppearanceSection,
   podcasts: PodcastsSection,
   radio: InternetRadioSection,

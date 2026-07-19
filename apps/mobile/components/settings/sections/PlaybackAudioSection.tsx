@@ -38,6 +38,12 @@ const replayGainOptions: ("off" | "track" | "album")[] = [
   "album",
 ];
 
+const lyricsSourceOptions: ("off" | "server" | "all")[] = [
+  "off",
+  "server",
+  "all",
+];
+
 const queueSyncOptions: ("server" | "local" | "off")[] = [
   "server",
   "local",
@@ -55,6 +61,7 @@ export default function PlaybackAudioSection() {
   const bottomSheetStreamingFormatModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
 
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
@@ -74,6 +81,8 @@ export default function PlaybackAudioSection() {
   );
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
+  const lyricsSource = useApp((store) => store.lyricsSource);
+  const setLyricsSource = useApp((store) => store.setLyricsSource);
 
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
@@ -117,6 +126,22 @@ export default function PlaybackAudioSection() {
             }))}
             selectedValue={queueSyncPriority}
             onSelect={setQueueSyncPriority}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
+            modalRef={bottomSheetLyricsSourceModalRef}
+            header={t("app.settings.displaySettings.lyricsSourceLabel")}
+            headerDescription={t(
+              "app.settings.displaySettings.lyricsSourceDescription",
+            )}
+            options={lyricsSourceOptions.map((option) => ({
+              value: option,
+              label: t(
+                `app.settings.displaySettings.lyricsSourceOptions.${option}`,
+              ),
+            }))}
+            selectedValue={lyricsSource}
+            onSelect={setLyricsSource}
             dismissOnSelect
           />
           <OptionsBottomSheetModal
@@ -216,6 +241,16 @@ export default function PlaybackAudioSection() {
             onPress={() => bottomSheetQueueSyncModalRef.current?.present()}
           />
         )}
+        <SettingsSelectRow
+          label={t("app.settings.displaySettings.lyricsSourceLabel")}
+          description={t(
+            "app.settings.displaySettings.lyricsSourceDescription",
+          )}
+          badgeText={t(
+            `app.settings.displaySettings.lyricsSourceOptions.${lyricsSource}`,
+          )}
+          onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
+        />
         <Divider className="bg-primary-400" />
         <SettingsSectionTitle
           title={t("app.settings.streamingSettings.title")}
@@ -270,7 +305,7 @@ export default function PlaybackAudioSection() {
             onPress={() => bottomSheetReplayGainModalRef.current?.present()}
           />
         )}
-        {capabilities.replayGain && replayGainMode !== "off" && (
+        {capabilities.replayGain && (
           <SettingsStepperRow
             label={t("app.settings.streamingSettings.replayGainPreampLabel")}
             description={t(
@@ -288,6 +323,7 @@ export default function PlaybackAudioSection() {
             valueClassName="w-16"
             onDecrement={() => adjustPreamp(-1)}
             onIncrement={() => adjustPreamp(1)}
+            disabled={replayGainMode === "off"}
           />
         )}
       </VStack>

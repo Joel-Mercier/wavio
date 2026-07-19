@@ -43,37 +43,41 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 ## Features
 
 - Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library
-- Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random and internet radio stations sections
+- Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random, most played tracks, playlists, decades, genres, artist spotlights and internet radio stations sections
+- Customize your home feed experience by toggling sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums
 - Playlist screen with songs list and editing
 - Search screen with genres, artists, albums, and songs
 - Recent searches history
-- Library screen with starred, playlists, albums, and artists
+- Library screen with starred playlists, albums, and artists
 - Liked songs screen
-- Player screen with audio controls and synchronized lyrics
+- Player screen with audio controls, navigation gestures, transcoding info and current lyric line
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
 - [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity. (Navidrome and Jellyfin only)
 - [Octo-Fiesta](https://github.com/V1ck3s/octo-fiesta) proxy server support. Automatically fetch songs not in your library. (Navidrome and OpenSubsonic only)
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
+- Add your own favorite podcasts through RSS feeds
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs, downloads management screen, queued changes screen
 - Music folders (libraries) discovery and filtering across home, search, and library
-- Activity screen with now playing users
-- Share screen with shareable links
-- Servers screen with multiple servers support
-- Settings screen with server scanning, offline downloads, playback, content, display and backup settings
+- Activity screen, recently played tracks grouped by source
+- Share screen with shareable links (Navidrome only)
+- Servers screen with multiple servers support, advanced server settings like fallback URL and mTLS support
+- Settings screen with server scanning, offline downloads, playback, content, display, backup and security settings
 - Audio quality settings, endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
-- Synced lyrics support and retrieval through lrclib.net
+- Synced lyrics support and retrieval through lrclib.net. Navidrome word-by-word karoake style lyrics support with multiple voices, pronunciation and translation support.
+- Downloaders section with [Lidarr](https://lidarr.audio/) integration. Search and add content to your music library directly from the app. See downloads progress and history.
 - Bookmarks support. Easy access to a song or podcast favorite parts
+- Customizable swipe gestures for tracks
 - Landscape mode support
 - Android homescreen widgets
 - Android Auto support
-- Navidrome smart playlists beta support
+- Navidrome smart playlists support
 - Navidrome/Opensubsonic jukebox mode support
 - Backup and restore
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics

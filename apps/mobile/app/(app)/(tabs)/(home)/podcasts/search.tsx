@@ -1,19 +1,16 @@
 import {
   type BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
-  useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -27,7 +24,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { handleFieldBlur, showFieldError } from "@/components/forms/FieldError";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
 import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
-import SheetSearchInput from "@/components/SheetSearchInput";
+import SelectBottomSheet from "@/components/SelectBottomSheet";
 import { Box } from "@/components/ui/box";
 import {
   FormControl,
@@ -711,109 +708,60 @@ export default function PodcastsSearchScreen() {
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
 
-      <MultiSelectSheet
-        ref={languagesSheetRef}
+      <SelectBottomSheet
+        sheetRef={languagesSheetRef}
         title={t("app.podcasts.search.languagesLabel")}
-        options={languageEntries}
-        selected={values.filterForLanguages}
-        labelFor={(value) => value.replaceAll("_", " ")}
-        onToggle={(value) =>
+        multiple
+        searchable
+        options={languageEntries.map((value) => ({
+          label: value.replaceAll("_", " "),
+          value,
+        }))}
+        selectedValues={values.filterForLanguages ?? []}
+        onSelect={(value) =>
           toggleArrayValue(
             "filterForLanguages",
             values.filterForLanguages,
-            value,
+            value as keyof typeof Language,
           )
         }
-        emerald={emerald500}
       />
-      <MultiSelectSheet
-        ref={countriesSheetRef}
+      <SelectBottomSheet
+        sheetRef={countriesSheetRef}
         title={t("app.podcasts.search.countriesLabel")}
-        options={countryEntries}
-        selected={values.filterForCountries}
-        labelFor={(value) => value.replaceAll("_", " ")}
-        onToggle={(value) =>
+        multiple
+        searchable
+        options={countryEntries.map((value) => ({
+          label: value.replaceAll("_", " "),
+          value,
+        }))}
+        selectedValues={values.filterForCountries ?? []}
+        onSelect={(value) =>
           toggleArrayValue(
             "filterForCountries",
             values.filterForCountries,
-            value,
+            value as keyof typeof Country,
           )
         }
-        emerald={emerald500}
       />
-      <MultiSelectSheet
-        ref={genresSheetRef}
+      <SelectBottomSheet
+        sheetRef={genresSheetRef}
         title={t("app.podcasts.search.genresLabel")}
-        options={genreEntries}
-        selected={values.filterForGenres}
-        labelFor={(value) => t(`app.podcasts.genres.${value}`, value)}
-        onToggle={(value) =>
-          toggleArrayValue("filterForGenres", values.filterForGenres, value)
+        multiple
+        searchable
+        options={genreEntries.map((value) => ({
+          label: t(`app.podcasts.genres.${value}`, value),
+          value,
+        }))}
+        selectedValues={values.filterForGenres ?? []}
+        onSelect={(value) =>
+          toggleArrayValue(
+            "filterForGenres",
+            values.filterForGenres,
+            value as keyof typeof Genre,
+          )
         }
-        emerald={emerald500}
       />
     </Box>
-  );
-}
-
-type MultiSelectSheetProps<T extends string> = {
-  ref: React.RefObject<BottomSheetModal | null>;
-  title: string;
-  options: T[];
-  selected: T[] | undefined;
-  labelFor: (value: T) => string;
-  onToggle: (value: T) => void;
-  emerald: string;
-};
-
-function MultiSelectSheet<T extends string>({
-  ref,
-  title,
-  options,
-  selected,
-  labelFor,
-  onToggle,
-  emerald,
-}: MultiSelectSheetProps<T>) {
-  const [query, setQuery] = useState("");
-  const selectedSet = new Set(selected ?? []);
-  const renderScrollComponent = useBottomSheetScrollableCreator();
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((item) => labelFor(item).toLowerCase().includes(q));
-  }, [query, options, labelFor]);
-
-  return (
-    <CenteredBottomSheetModal
-      ref={ref}
-      snapPoints={["75%"]}
-      enableDynamicSizing={false}
-      stackBehavior="push"
-      backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
-      handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-    >
-      <Box className="px-6 pt-2 pb-3">
-        <Heading className="text-white mb-3" size="lg">
-          {title}
-        </Heading>
-        <SheetSearchInput onChangeText={setQuery} />
-      </Box>
-      <FlashList
-        data={filtered}
-        keyExtractor={(item) => item}
-        renderScrollComponent={renderScrollComponent}
-        renderItem={({ item }) => (
-          <FadeOutScaleDown onPress={() => onToggle(item)}>
-            <HStack className="items-center justify-between px-6 py-3">
-              <Text className="text-md text-white flex-1 pr-4">
-                {labelFor(item)}
-              </Text>
-              {selectedSet.has(item) && <Check size={20} color={emerald} />}
-            </HStack>
-          </FadeOutScaleDown>
-        )}
-      />
-    </CenteredBottomSheetModal>
   );
 }

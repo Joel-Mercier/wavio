@@ -10,6 +10,7 @@ import { Drawer } from "react-native-drawer-layout";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
+import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
@@ -43,6 +44,7 @@ import useApp from "@/stores/app";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useLidarr from "@/stores/lidarr";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -132,6 +134,7 @@ export default function AppLayout() {
       useLocalLibrary.getState().__reset();
       useBookmarks.getState().__reset();
       useCapabilityOverrides.getState().__reset();
+      useLidarr.getState().__reset();
       useServerExtensionsBase.getState().reset();
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
@@ -169,6 +172,7 @@ export default function AppLayout() {
     useOffline.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
+    useLidarr.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });
@@ -273,6 +277,7 @@ export default function AppLayout() {
         <FloatingPlayer />
       </AppDrawer>
       <OfflineMutationsSync />
+      <LidarrDownloadsWatcher />
       <OfflineStarredAutoSync />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />

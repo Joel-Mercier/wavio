@@ -77,18 +77,15 @@ export default function DownloadsOfflineSection() {
           value={autoSignOutOnServerUnreachable}
           onToggle={(value) => setAutoSignOutOnServerUnreachable(value)}
         />
-        {offlineModeEnabled && downloadedTracksList.length > 0 && (
-          <SettingsActionRow
-            label={t("app.settings.offlineSettings.manageDownloadsLabel")}
-            description={t(
-              "app.settings.offlineSettings.manageDownloadsDescription",
-            )}
-            actionLabel={t(
-              "app.settings.offlineSettings.manageDownloadsAction",
-            )}
-            onPress={() => router.navigate("/offline-downloads")}
-          />
-        )}
+        <SettingsActionRow
+          label={t("app.settings.offlineSettings.manageDownloadsLabel")}
+          description={t(
+            "app.settings.offlineSettings.manageDownloadsDescription",
+          )}
+          actionLabel={t("app.settings.offlineSettings.manageDownloadsAction")}
+          onPress={() => router.navigate("/offline-downloads")}
+          disabled={!offlineModeEnabled || downloadedTracksList.length === 0}
+        />
         {pendingChangesCount > 0 && (
           <SettingsActionRow
             label={t("app.settings.offlineSettings.pendingChangesLabel")}
