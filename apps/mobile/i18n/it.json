@@ -78,7 +78,9 @@
 				"internetRadioStationTitle": "Stazione radio su Internet",
 				"internetRadioStationDescription": "Crea una stazione radio online che puoi ascoltare in streaming dall'app",
 				"podcastChannelTitle": "Canale podcast",
-				"podcastChannelDescription": "Iscrivi il server a un podcast tramite il relativo feed RSS"
+				"podcastChannelDescription": "Iscrivi il server a un podcast tramite il relativo feed RSS",
+				"downloaderTitle": "Add music",
+				"downloaderDescription": "Search and download music to your server"
 			},
 			"carAuto": {
 				"home": "Home",
@@ -572,6 +574,10 @@
 						"title": "Download & offline",
 						"description": "Modalità offline, download via Wi-Fi, gestione download"
 					},
+					"downloaders": {
+						"title": "Downloaders",
+						"description": "Add music to your server via Lidarr"
+					},
 					"appearance": {
 						"title": "Aspetto",
 						"description": "Lingua, selezione home, feedback aptico"
@@ -595,6 +601,82 @@
 					"security": {
 						"title": "Sicurezza",
 						"description": "Certificati affidabili"
+					}
+				},
+				"downloaders": {
+					"description": "Connect a downloader to add music that isn't on your server yet. It's fetched into your library and appears after the next scan.",
+					"comingSoon": "Coming soon.",
+					"statuses": {
+						"active": "Attivo",
+						"inactive": "Inattivo"
+					},
+					"lidarr": {
+						"title": "Lidarr",
+						"description": "Search and download albums through your Lidarr instance",
+						"getApiKeyAction": "Where do I find my API key?",
+						"serverUrlLabel": "Server URL",
+						"apiKeyLabel": "Chiave API",
+						"apiKeyPlaceholder": "Your Lidarr API key",
+						"testAndSaveAction": "Test & save",
+						"connectionSuccess": "Connected to Lidarr",
+						"connectionFailed": "Couldn't connect. Check the URL and API key.",
+						"removedMessage": "Lidarr configuration removed",
+						"autoScanLabel": "Scan library after download",
+						"autoScanDescription": "Rescan your server when a download finishes so new albums show up automatically"
+					},
+					"discovery": {
+						"title": "Discovery",
+						"description": "Search for artists and albums to add",
+						"inputPlaceholder": "Search artists and albums",
+						"emptyPrompt": "Search for an artist or album to add to your library.",
+						"album": "Album",
+						"artist": "Artista",
+						"filtersTitle": "Add options",
+						"filtersDescription": "These apply when you add an album to Lidarr.",
+						"qualityProfile": "Quality profile",
+						"metadataProfile": "Metadata profile",
+						"rootFolder": "Root folder",
+						"monitor": "Monitor added albums",
+						"selectPlaceholder": "Select"
+					},
+					"album": {
+						"addAction": "Add to library",
+						"downloadAction": "Scarica",
+						"downloading": "Downloading… {{percent}}%",
+						"addedMessage": "Added to Lidarr. Searching for a release…",
+						"searchStartedMessage": "Searching for a release…",
+						"addFailed": "Couldn't add this album.",
+						"inLibrary": "In your library",
+						"noRootFolder": "No Lidarr root folder is configured.",
+						"chooseReleaseAction": "Choose release",
+						"trackCount_one": "{{count}} brano",
+						"trackCount_other": "{{count}} brani"
+					},
+					"release": {
+						"title": "Choose a release",
+						"description": "Pick a specific release to download.",
+						"searching": "Searching indexers…",
+						"grabbedMessage": "Release sent to your download client.",
+						"grabFailed": "Couldn't grab this release.",
+						"seeders_one": "{{count}} seeder",
+						"seeders_other": "{{count}} seeders"
+					},
+					"downloads": {
+						"title": "Download progress",
+						"description": "Track in-progress downloads and history",
+						"inProgressTitle": "In progress",
+						"historyTitle": "Storia",
+						"emptyQueue": "Nothing downloading right now.",
+						"emptyHistory": "No download history yet.",
+						"cancelFailed": "Couldn't cancel this download.",
+						"events": {
+							"grabbed": "Grabbed",
+							"downloadImported": "Imported",
+							"trackFileImported": "Imported",
+							"albumImportIncomplete": "Incomplete",
+							"downloadFailed": "Failed",
+							"downloadIgnored": "Ignored"
+						}
 					}
 				},
 				"offlineSettings": {
@@ -889,7 +971,6 @@
 			"activity": {
 				"title": "Attività",
 				"empty": "Qui non c'è ancora nulla. Gli album, gli artisti e le playlist che ascolti appariranno qui.",
-				"playedAt": "{{distance}} fa",
 				"sections": {
 					"today": "Oggi",
 					"yesterday": "Ieri",
@@ -900,7 +981,9 @@
 					"album": "Album",
 					"artist": "Artista",
 					"playlist": "Playlist"
-				}
+				},
+				"plays_one": "{{count}} track played",
+				"plays_other": "{{count}} tracks played"
 			},
 			"offlineDownloads": {
 				"title": "Download offline",
@@ -937,6 +1020,9 @@
 			"queue": {
 				"title": "Coda",
 				"empty": "La coda è vuota.",
+				"tabQueue": "Coda",
+				"tabRecentlyPlayed": "Ascoltati di recente",
+				"recentlyPlayedEmpty": "Nessuna traccia riprodotta di recente.",
 				"edit": "Modifica",
 				"done": "Fatto",
 				"order": "Ordine",
@@ -946,6 +1032,10 @@
 				"clearConfirmTitle": "Cancellare la coda?",
 				"clearConfirmMessage": "Tutti i brani verranno rimossi dalla coda e la riproduzione si interromperà.",
 				"clearedMessage": "Coda svuotata",
+				"clearHistory": "Cancella cronologia",
+				"clearHistoryConfirmTitle": "Cancellare cronologia?",
+				"clearHistoryConfirmMessage": "Tutti i brani ascoltati di recente verranno rimossi da questo elenco. La tua coda e la riproduzione non subiranno alcuna modifica.",
+				"clearedHistoryMessage": "Cronologia eliminata",
 				"nowPlaying": "In riproduzione",
 				"nextInQueue": "Il prossimo in coda",
 				"removeFromQueue": "Rimuovi dalla coda",
@@ -1063,7 +1153,7 @@
 				"translationOff": "Spento",
 				"pronunciation": "Pronuncia",
 				"showPronunciation": "Mostra la pronuncia",
-				"lyricsUnavailable": "No lyrics available for this track.",
+				"lyricsUnavailable": "Nessun testo disponibile per questo brano.",
 				"sleepTimer": "Timer di spegnimento",
 				"sleepTimerOff": "Spento",
 				"sleepTimerEndOfTrack": "Fine del brano",
@@ -1174,6 +1264,7 @@
 				},
 				"favorites": "Preferiti",
 				"save": "Salva",
+				"done": "Fatto",
 				"seeMore": "Scopri di più",
 				"seeLess": "Nascondi",
 				"seeAll": "Vedi tutto",
