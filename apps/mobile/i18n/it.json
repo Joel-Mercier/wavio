@@ -766,8 +766,8 @@
 						"server": "Solo server",
 						"all": "Server + lrclib.net"
 					},
-					"lyricsKeepScreenOnLabel": "Keep screen on for lyrics",
-					"lyricsKeepScreenOnDescription": "Stop the screen from dimming while the lyrics screen is open and a track is playing. Uses more battery.",
+					"lyricsKeepScreenOnLabel": "Tieni lo schermo acceso per il testo",
+					"lyricsKeepScreenOnDescription": "Ferma l'oscuramento dello schermo mentre la schermata del testo è aperta e una traccia è in riproduzione. Utilizza più batteria.",
 					"swipeActionLabel": "Azione Swipe",
 					"swipeActionDescription": "Azione che viene eseguita quando si effettua uno swipe (trascinamento) di un brano verso destra in un elenco",
 					"swipeActionOptions": {
