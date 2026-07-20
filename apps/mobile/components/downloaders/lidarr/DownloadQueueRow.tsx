@@ -10,7 +10,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCancelDownload } from "@/hooks/lidarr/useLidarrDownloads";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
-import type { LidarrQueueItem } from "@/services/lidarr";
+import type { LidarrQueueItem } from "@/services/lidarr/queue";
 import { niceBytes } from "@/utils/fileSize";
 
 export default function DownloadQueueRow({ item }: { item: LidarrQueueItem }) {

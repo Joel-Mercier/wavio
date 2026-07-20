@@ -44,6 +44,7 @@ import {
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { seekTo, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
@@ -269,11 +270,13 @@ export default function LyricsScreen() {
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
   const isPlaying = useIsPlaying();
+  const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
   const playingTrack = usePlayingTrack();
   const colors = useImageColors(playingTrack?.artwork);
   const { lyrics, hasKaraoke, layers, hasTranslations, hasPronunciation } =
     useSyncedLyrics(playingTrack);
   const hasLayers = hasTranslations || hasPronunciation;
+  useKeepScreenAwake(lyricsKeepScreenOn && isPlaying, "lyrics");
   const castSession = useCastSession();
   const doShare = useCreateShare();
   const isRadio = !!playingTrack?.isRadio;

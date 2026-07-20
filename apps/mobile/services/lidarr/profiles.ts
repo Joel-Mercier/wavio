@@ -1,4 +1,4 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
 import type {
   LidarrMetadataProfile,
   LidarrQualityProfile,

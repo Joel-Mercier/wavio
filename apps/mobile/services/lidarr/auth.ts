@@ -1,4 +1,4 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
 import type { LidarrConfig, LidarrSystemStatus } from "@/services/lidarr/types";
 
 // Verifies the server URL + API key by hitting /system/status. Throws on any

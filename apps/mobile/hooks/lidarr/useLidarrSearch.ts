@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  type LidarrAlbum,
   lookupAlbum,
   lookupAlbumsByArtist,
   search,
-} from "@/services/lidarr";
+} from "@/services/lidarr/search";
+import type { LidarrAlbum } from "@/services/lidarr/types";
 import useLidarr from "@/stores/lidarr";
 
 const MIN_QUERY_LENGTH = 2;

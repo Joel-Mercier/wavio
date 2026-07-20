@@ -1,4 +1,4 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
 
 // One interactive-search result (a specific release from an indexer). Only the
 // fields the picker shows or needs to grab are modelled.

@@ -4,7 +4,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import type { LidarrHistoryItem } from "@/services/lidarr";
+import type { LidarrHistoryItem } from "@/services/lidarr/history";
 
 export default function DownloadHistoryRow({
   item,
