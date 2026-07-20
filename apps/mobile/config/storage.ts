@@ -31,6 +31,23 @@ export const createScopedStorage = (scope: string): StateStorage => ({
   },
 });
 
+// On a (server, user) switch the app resets every scoped store in memory before
+// rehydrating it from the incoming scope's bucket. zustand's persist middleware
+// writes on *every* `set`, so those resets would flush initial state into the
+// incoming scope's key — destroying the very data the rehydrate that follows is
+// about to read (rehydrate itself only reads, so it never gets it back). Writes
+// are suspended for the duration of the reset pass instead; reads stay live.
+let scopedWritesSuspended = false;
+
+export const withScopedWritesSuspended = <T>(reset: () => T): T => {
+  scopedWritesSuspended = true;
+  try {
+    return reset();
+  } finally {
+    scopedWritesSuspended = false;
+  }
+};
+
 // Resolves the scope on every call so persisted stores follow the active
 // server. createJSONStorage caches its storage instance, so a one-shot
 // `createScopedStorage(scope)` snapshots whichever scope was active at
@@ -40,6 +57,7 @@ export const createDynamicScopedStorage = (
   getScope: () => string,
 ): StateStorage => ({
   setItem: (name, value) => {
+    if (scopedWritesSuspended) return;
     return storage.set(`${getScope()}:${name}`, value);
   },
   getItem: (name) => {
@@ -47,6 +65,7 @@ export const createDynamicScopedStorage = (
     return value ?? null;
   },
   removeItem: (name) => {
+    if (scopedWritesSuspended) return;
     return storage.remove(`${getScope()}:${name}`);
   },
 });

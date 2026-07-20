@@ -75,6 +75,11 @@ const mmkvQueryPersisterStorage = {
   getItem: (key: string): Promise<string | null> =>
     Promise.resolve(storage.getString(`${currentAuthScope()}:${key}`) ?? null),
   setItem: (key: string, value: string): Promise<void> => {
+    // A restore is preceded by `queryClient.clear()`, whose cache events reach
+    // the throttled persister *after* the scope has already flipped — writing
+    // the emptied cache into the incoming scope's blob, which restore is about
+    // to read. Nothing worth persisting exists until the restore lands.
+    if (cacheRestoring) return Promise.resolve();
     storage.set(`${currentAuthScope()}:${key}`, value);
     return Promise.resolve();
   },
