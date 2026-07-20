@@ -28,7 +28,7 @@ import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
-import { librarySyncService } from "@/services/offline";
+import { librarySyncService, offlineDownloadService } from "@/services/offline";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -182,6 +182,11 @@ export default function AppLayout() {
     // persisted). Rehydration is synchronous, so this sees the restored queue.
     rewriteQueueRoutes();
     useOffline.persist.rehydrate();
+    // Rehydration is synchronous, so the restored queue is visible here: pick
+    // up downloads interrupted by an app kill (or left queued by the previous
+    // scope's sign-out) instead of waiting for a connectivity change to
+    // incidentally kick the queue.
+    offlineDownloadService.resume();
     useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();

@@ -265,7 +265,7 @@ function TrackListItem({
           >
             {track.title}
           </Heading>
-          <HStack className="items-center">
+          <HStack className="items-center flex-1">
             {isTrackDownloaded && <DownloadedBadge className="mr-2" />}
             {track.explicitStatus === "explicit" && (
               <Box className="flex items-center justify-center rounded-sm bg-primary-100 px-1 py-0.5 mr-2">

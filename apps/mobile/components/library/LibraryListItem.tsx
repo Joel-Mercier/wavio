@@ -29,6 +29,7 @@ import {
   useIsDetailCached,
   useOfflineModeEnabled,
 } from "@/hooks/offline";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
@@ -127,6 +128,7 @@ export default function LibraryListItem({
     "--color-emerald-500",
   ]) as string[];
   const { t, i18n } = useTranslation();
+  const isOnline = useIsOnline();
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderId = useCurrentMusicFolderId();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -366,8 +368,13 @@ export default function LibraryListItem({
                   uri:
                     radioImage ||
                     item.imageUrl ||
-                    item.artistImageUrl ||
-                    artworkUrl(item.coverArt),
+                    // artistImageUrl points at a third-party image host
+                    // (last.fm and friends), which is unreachable offline —
+                    // only the server's own cover goes through the offline
+                    // artwork cache, so it wins while offline.
+                    (isOnline
+                      ? item.artistImageUrl || artworkUrl(item.coverArt)
+                      : artworkUrl(item.coverArt) || item.artistImageUrl),
                 }
               : undefined
           }

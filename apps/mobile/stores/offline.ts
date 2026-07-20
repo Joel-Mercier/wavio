@@ -98,14 +98,23 @@ interface OfflineStore {
   removeManyFromDownloadQueue: (trackIds: string[]) => void;
   clearDownloadQueue: () => void;
 
-  // Offline album/playlist covers downloaded by the extended-offline sync,
-  // keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
+  // Offline album/playlist/artist covers downloaded by the extended-offline
+  // sync, keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
   // artworkCachedAt records when each cover was fetched so stale covers get
   // re-fetched (Jellyfin coverArt ids are stable across image changes).
   artworkCache: Record<string, string>;
   artworkCachedAt: Record<string, string>;
+  // Cover ids that have no file of their own but resolve to one that does: a
+  // track's per-file cover id → its album's, an artist id → the artist's cover
+  // id. Covers are cached once per album/playlist/artist (a library's worth of
+  // per-track covers would be thousands of downloads of the same images), so
+  // without this every track row and artist avatar dead-ends on the server
+  // while offline.
+  artworkAliases: Record<string, string>;
   addCachedArtwork: (coverArtId: string, path: string) => void;
   removeCachedArtwork: (coverArtIds: string[]) => void;
+  addArtworkAliases: (aliases: Record<string, string>) => void;
+  pruneArtworkAliases: () => void;
   clearArtworkCache: () => void;
 
   isTrackDownloaded: (trackId: string) => boolean;
@@ -124,6 +133,7 @@ const initialOfflineState = {
   downloadQueue: [] as QueuedTrack[],
   artworkCache: {} as Record<string, string>,
   artworkCachedAt: {} as Record<string, string>,
+  artworkAliases: {} as Record<string, string>,
 };
 
 const useOfflineBase = create<OfflineStore>()(
@@ -177,6 +187,7 @@ const useOfflineBase = create<OfflineStore>()(
           downloadQueue: [],
           artworkCache: {},
           artworkCachedAt: {},
+          artworkAliases: {},
         });
       },
 
@@ -206,8 +217,37 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
+      addArtworkAliases: (aliases) => {
+        set((state) => {
+          const artworkAliases = { ...state.artworkAliases };
+          let changed = false;
+          for (const [coverArtId, target] of Object.entries(aliases)) {
+            if (artworkAliases[coverArtId] === target) continue;
+            artworkAliases[coverArtId] = target;
+            changed = true;
+          }
+          return changed ? { artworkAliases } : state;
+        });
+      },
+
+      // An alias is only ever a pointer at a cached cover, so one whose target
+      // is gone (its album was deleted server-side) goes with it.
+      pruneArtworkAliases: () => {
+        set((state) => {
+          const artworkAliases: Record<string, string> = {};
+          let removed = 0;
+          for (const [coverArtId, target] of Object.entries(
+            state.artworkAliases,
+          )) {
+            if (state.artworkCache[target]) artworkAliases[coverArtId] = target;
+            else removed++;
+          }
+          return removed > 0 ? { artworkAliases } : state;
+        });
+      },
+
       clearArtworkCache: () => {
-        set({ artworkCache: {}, artworkCachedAt: {} });
+        set({ artworkCache: {}, artworkCachedAt: {}, artworkAliases: {} });
       },
 
       addDownloadedCollection: (collection) => {
@@ -435,6 +475,7 @@ const useOfflineBase = create<OfflineStore>()(
         downloadProgress: state.downloadProgress,
         artworkCache: state.artworkCache,
         artworkCachedAt: state.artworkCachedAt,
+        artworkAliases: state.artworkAliases,
       }),
     },
   ),

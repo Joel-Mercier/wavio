@@ -65,8 +65,16 @@ const pausedStatusKeys = {
 
 function LibrarySyncStatusLine() {
   const { t } = useTranslation();
-  const { status, downloadedCount, total, size, progress } =
-    useLibrarySyncStatus();
+  const {
+    status,
+    downloadedCount,
+    total,
+    size,
+    progress,
+    artworkDone,
+    artworkTotal,
+    artworkPending,
+  } = useLibrarySyncStatus();
   if (status === "off") return null;
   const statusText =
     status === "syncing"
@@ -75,24 +83,43 @@ function LibrarySyncStatusLine() {
           total,
           size: niceBytes(size),
         })
-      : status === "upToDate"
-        ? t("app.settings.offlineSettings.extendedOfflineComplete", {
-            count: downloadedCount,
-            size: niceBytes(size),
+      : status === "cachingArtwork"
+        ? t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
+            count: artworkDone,
+            total: artworkTotal,
           })
-        : t(pausedStatusKeys[status]);
+        : status === "upToDate"
+          ? t("app.settings.offlineSettings.extendedOfflineComplete", {
+              count: downloadedCount,
+              size: niceBytes(size),
+            })
+          : t(pausedStatusKeys[status]);
   return (
     <VStack className="gap-y-2">
       <Text
         className={
-          status === "syncing" || status === "upToDate"
+          status === "syncing" ||
+          status === "cachingArtwork" ||
+          status === "upToDate"
             ? "text-emerald-400 text-sm"
             : "text-orange-400 text-sm"
         }
       >
         {statusText}
       </Text>
+      {/* Covers usually finish well before the tracks do, so the artwork-only
+          status never gets a turn on a small library. Report it alongside the
+          track count instead of leaving it invisible. */}
+      {artworkPending > 0 && status !== "cachingArtwork" && (
+        <Text className="text-emerald-400 text-sm">
+          {t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
+            count: artworkDone,
+            total: artworkTotal,
+          })}
+        </Text>
+      )}
       {(status === "syncing" ||
+        status === "cachingArtwork" ||
         status === "pausedOffline" ||
         status === "pausedWifi" ||
         status === "pausedDisk" ||
@@ -100,7 +127,13 @@ function LibrarySyncStatusLine() {
         <Box className="h-1.5 rounded-full bg-primary-400 overflow-hidden">
           <Box
             className="h-full rounded-full bg-emerald-500"
-            style={{ width: `${Math.round(progress * 100)}%` }}
+            style={{
+              width: `${Math.round(
+                (status === "cachingArtwork" && artworkTotal > 0
+                  ? artworkDone / artworkTotal
+                  : progress) * 100,
+              )}%`,
+            }}
           />
         </Box>
       )}

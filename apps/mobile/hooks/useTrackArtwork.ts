@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useOffline from "@/stores/offline";
+import { resolveCachedArtwork } from "@/utils/artwork";
 
 type ArtworkTrack =
   | {
@@ -19,13 +20,19 @@ type ArtworkTrack =
 export function useTrackArtwork(track: ArtworkTrack): string | undefined {
   const isOnline = useIsOnline();
   const artworkCache = useOffline((s) => s.artworkCache);
+  const artworkAliases = useOffline((s) => s.artworkAliases);
   const downloadedCollections = useOffline((s) => s.downloadedCollections);
   return useMemo(() => {
     if (!track) return undefined;
     if (isOnline) return track.artwork;
-    if (track.coverArt && artworkCache[track.coverArt]) {
-      return artworkCache[track.coverArt];
-    }
+    const cached = resolveCachedArtwork(
+      track.coverArt,
+      artworkCache,
+      artworkAliases,
+    );
+    if (cached) return cached;
+    // Backstop for a track the sync never enumerated (so it has no alias) but
+    // whose album collection is registered.
     const albumCoverArt = track.albumId
       ? downloadedCollections[track.albumId]?.coverArt
       : undefined;
@@ -33,5 +40,5 @@ export function useTrackArtwork(track: ArtworkTrack): string | undefined {
       return artworkCache[albumCoverArt];
     }
     return track.artwork;
-  }, [track, isOnline, artworkCache, downloadedCollections]);
+  }, [track, isOnline, artworkCache, artworkAliases, downloadedCollections]);
 }

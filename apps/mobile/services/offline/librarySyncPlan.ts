@@ -1,10 +1,12 @@
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import type {
   AlbumID3,
+  ArtistID3,
   Child,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
 import type { OfflineCollection, OfflineTrack } from "@/stores/offline";
+import { artworkCacheKey } from "@/utils/artworkCacheKey";
 
 // Pure crawl logic for the extended-offline library sync, kept free of stores
 // and I/O so it can be unit-tested (see __tests__/librarySync.plan.test.ts).
@@ -37,6 +39,30 @@ export const ARTWORK_REFRESH_MS = 24 * 60 * 60 * 1000;
 // isn't hammered while still recovering without user action. Mirrors the
 // offline-mutations replay backoff.
 export const RETRY_BACKOFF_STEPS_MS = [30_000, 60_000, 120_000, 300_000];
+
+// Tolerance for the songs-phase completeness check. The albums phase's Σ
+// songCount is an independent estimate of the library size, so enumerating far
+// fewer songs than that means pages were truncated — the pass has gaps and must
+// not reconcile deletions. It's a tolerance rather than an equality because a
+// server's per-album songCount can legitimately disagree by a track or two
+// (a file removed from disk but still counted in the album row). Undercounting
+// the other way is fine: orphan songs outside any album push the ratio above 1.
+export const SONG_ENUMERATION_MIN_RATIO = 0.95;
+
+// Whether the songs phase enumerated enough of the library to be trusted with
+// deletions. No album estimate (an empty or non-reporting server) means there's
+// nothing to cross-check against, so the pass is taken at face value — the
+// anomaly guard in planServerDeletions still backstops the degenerate cases.
+export function isSongEnumerationComplete(
+  uniqueSeenSongs: number,
+  albumSongEstimate: number,
+): boolean {
+  if (albumSongEstimate <= 0) return true;
+  return (
+    uniqueSeenSongs >=
+    Math.floor(albumSongEstimate * SONG_ENUMERATION_MIN_RATIO)
+  );
+}
 
 export function advanceCursor(
   offset: number,
@@ -93,6 +119,73 @@ export function playlistToAutoCollection(
     savedAt: existing?.savedAt ?? new Date().toISOString(),
     source: "auto",
   };
+}
+
+// Covers are cached once per album/playlist/artist, never per track — a
+// library's worth of per-file covers would be thousands of downloads of the
+// same images. Track cover ids therefore need an alias onto the album cover
+// that was actually cached; the two differ on most backends (Navidrome's
+// `mf-*` vs `al-*`), so without it every track row falls back to its icon
+// offline. Songs whose album isn't registered (orphans) get no alias.
+export function buildTrackArtworkAliases(
+  songs: Child[],
+  collections: Record<string, OfflineCollection>,
+): Record<string, string> {
+  const aliases: Record<string, string> = {};
+  for (const song of songs) {
+    if (!song.coverArt || !song.albumId) continue;
+    const albumCoverArt = collections[song.albumId]?.coverArt;
+    if (!albumCoverArt) continue;
+    const from = artworkCacheKey(song.coverArt);
+    const to = artworkCacheKey(albumCoverArt);
+    if (from === to) continue;
+    aliases[from] = to;
+  }
+  return aliases;
+}
+
+// Artist avatars are rendered from the artist's cover id in some places
+// (ArtistDetail, ArtistListItem) and from the artist *id* in others (the
+// AlbumDetail header, where Subsonic's getCoverArt accepts either), so both
+// must resolve to the one cached file.
+export function buildArtistArtworkAliases(
+  artists: ArtistID3[],
+): Record<string, string> {
+  const aliases: Record<string, string> = {};
+  for (const artist of artists) {
+    if (!artist.coverArt) continue;
+    const from = artworkCacheKey(artist.id);
+    const to = artworkCacheKey(artist.coverArt);
+    if (from === to) continue;
+    aliases[from] = to;
+  }
+  return aliases;
+}
+
+// Cover ids that must survive a prune: every collection's own cover, plus the
+// cover of every artist still credited on a registered album. Aliases are
+// pointers, so an artist stays cached exactly as long as one of their albums
+// does — no separate artist inventory to reconcile.
+export function referencedArtworkIds(
+  collections: OfflineCollection[],
+  artworkAliases: Record<string, string>,
+): Set<string> {
+  const referenced = new Set<string>();
+  for (const collection of collections) {
+    if (collection.coverArt) {
+      referenced.add(artworkCacheKey(collection.coverArt));
+    }
+    const artistIds = [
+      collection.artistId,
+      ...(collection.artists ?? []).map((artist) => artist.id),
+    ];
+    for (const artistId of artistIds) {
+      if (!artistId) continue;
+      const key = artworkCacheKey(artistId);
+      referenced.add(artworkAliases[key] ?? key);
+    }
+  }
+  return referenced;
 }
 
 export function groupSongIdsByAlbum(songs: Child[]): Map<string, string[]> {
@@ -181,10 +274,14 @@ export function planServerDeletions(args: {
   const { collections, tracks, seenAlbumIds, seenSongIds, seenPlaylistIds } =
     args;
 
-  // A pass that saw no albums and no songs at all is far more likely a
-  // misbehaving server (a proxy answering empty 200s) than a genuinely emptied
-  // library — don't let it wipe every download.
-  if (seenAlbumIds.size === 0 && seenSongIds.size === 0) {
+  // A pass that enumerated no albums *or* no songs is far more likely a
+  // misbehaving server (a proxy answering empty 200s, a backend still warming
+  // up) than a genuinely emptied library — don't let it wipe every download.
+  // The two must be checked independently: a library with songs always has
+  // albums, so an empty album inventory alongside a non-empty song inventory
+  // is a broken pass, and treating it as truth would delete *every* auto album
+  // collection. An actually-empty library needs no reconciliation anyway.
+  if (seenAlbumIds.size === 0 || seenSongIds.size === 0) {
     return {
       removeCollectionIds: [],
       removeTrackIds: [],

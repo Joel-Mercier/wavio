@@ -704,6 +704,7 @@
 					"extendedOfflineLabel": "Cache entire library",
 					"extendedOfflineDescription": "Progressively download everything on this server so the whole library stays browsable and playable offline",
 					"extendedOfflineSyncing": "Syncing library — {{count}}/{{total}} tracks ({{size}})",
+					"extendedOfflineCachingArtwork": "Caching artwork — {{count}}/{{total}} covers",
 					"extendedOfflineComplete": "Library up to date — {{count}} tracks ({{size}})",
 					"extendedOfflinePausedOffline": "Paused — server unreachable",
 					"extendedOfflinePausedWifi": "Paused — waiting for Wi-Fi",

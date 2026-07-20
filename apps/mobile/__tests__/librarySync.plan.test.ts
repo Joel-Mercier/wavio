@@ -2,12 +2,16 @@ import {
   ARTWORK_REFRESH_MS,
   advanceCursor,
   albumToAutoCollection,
+  buildArtistArtworkAliases,
+  buildTrackArtworkAliases,
   groupSongIdsByAlbum,
   isArtworkStale,
+  isSongEnumerationComplete,
   isSyncStale,
   planServerDeletions,
   playlistToAutoCollection,
   RESYNC_INTERVAL_MS,
+  referencedArtworkIds,
   refreshedOfflineTrack,
   shouldWriteAutoCollection,
 } from "@/services/offline/librarySyncPlan";
@@ -17,6 +21,7 @@ import type {
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
 import type { OfflineCollection } from "@/stores/offline";
+import { artworkCacheKey } from "@/utils/artworkCacheKey";
 
 const makeAlbum = (
   id: string,
@@ -201,6 +206,29 @@ describe("isSyncStale", () => {
   });
 });
 
+describe("isSongEnumerationComplete", () => {
+  it("trusts a pass that enumerated the whole album estimate", () => {
+    expect(isSongEnumerationComplete(47, 47)).toBe(true);
+  });
+
+  it("trusts a pass that exceeds the estimate (orphan songs outside albums)", () => {
+    expect(isSongEnumerationComplete(60, 47)).toBe(true);
+  });
+
+  it("tolerates a small disagreement in per-album songCount", () => {
+    expect(isSongEnumerationComplete(96, 100)).toBe(true);
+  });
+
+  it("distrusts a pass that enumerated far fewer songs than the estimate", () => {
+    expect(isSongEnumerationComplete(16, 47)).toBe(false);
+    expect(isSongEnumerationComplete(0, 47)).toBe(false);
+  });
+
+  it("trusts the pass when there is no album estimate to check against", () => {
+    expect(isSongEnumerationComplete(0, 0)).toBe(true);
+  });
+});
+
 describe("planServerDeletions", () => {
   const makeOfflineTrack = (
     id: string,
@@ -328,6 +356,44 @@ describe("planServerDeletions", () => {
       replaceAlbumTrackIds: {},
     });
   });
+
+  // A pass whose album page came back empty while songs enumerated fine used to
+  // sail past the anomaly guard and delete every auto album collection.
+  it("plans nothing when the pass saw songs but no albums", () => {
+    const result = plan({
+      collections: {
+        a1: makeCollection({ id: "a1", source: "auto", trackIds: ["s1"] }),
+        a2: makeCollection({ id: "a2", source: "auto" }),
+      },
+      tracks: {
+        s1: makeOfflineTrack("s1", "auto"),
+        s2: makeOfflineTrack("s2", "auto"),
+      },
+      seenAlbums: [],
+      seenSongs: ["s1"],
+    });
+    expect(result).toEqual({
+      removeCollectionIds: [],
+      removeTrackIds: [],
+      replaceAlbumTrackIds: {},
+    });
+  });
+
+  it("plans nothing when the pass saw albums but no songs", () => {
+    const result = plan({
+      collections: {
+        a1: makeCollection({ id: "a1", source: "auto", trackIds: ["s1"] }),
+      },
+      tracks: { s1: makeOfflineTrack("s1", "auto") },
+      seenAlbums: ["a1"],
+      seenSongs: [],
+    });
+    expect(result).toEqual({
+      removeCollectionIds: [],
+      removeTrackIds: [],
+      replaceAlbumTrackIds: {},
+    });
+  });
 });
 
 describe("refreshedOfflineTrack", () => {
@@ -429,5 +495,102 @@ describe("isArtworkStale", () => {
     const old = new Date(now - ARTWORK_REFRESH_MS - 60_000).toISOString();
     expect(isArtworkStale(fresh, now)).toBe(false);
     expect(isArtworkStale(old, now)).toBe(true);
+  });
+});
+
+describe("buildTrackArtworkAliases", () => {
+  const collections = {
+    a1: makeCollection({ id: "a1", coverArt: "al-a1" }),
+    a2: makeCollection({ id: "a2", coverArt: undefined }),
+  };
+
+  it("points a track cover at its album's cached cover", () => {
+    const songs = [
+      { ...makeSong("s1", "a1"), coverArt: "mf-s1" },
+      { ...makeSong("s2", "a1"), coverArt: "mf-s2" },
+    ];
+    expect(buildTrackArtworkAliases(songs, collections)).toEqual({
+      "mf-s1": "al-a1",
+      "mf-s2": "al-a1",
+    });
+  });
+
+  it("skips tracks with no album, no cover, an uncached album cover, or an identical id", () => {
+    const songs = [
+      { ...makeSong("s1"), coverArt: "mf-s1" },
+      makeSong("s2", "a1"),
+      { ...makeSong("s3", "a2"), coverArt: "mf-s3" },
+      { ...makeSong("s4", "a1"), coverArt: "al-a1" },
+      { ...makeSong("s5", "missing"), coverArt: "mf-s5" },
+    ];
+    expect(buildTrackArtworkAliases(songs, collections)).toEqual({});
+  });
+});
+
+describe("buildArtistArtworkAliases", () => {
+  it("maps artist ids onto their cover ids, skipping identical or missing ones", () => {
+    expect(
+      buildArtistArtworkAliases([
+        { id: "ar-1", name: "One", albumCount: 2, coverArt: "ar-cover-1" },
+        { id: "ar-2", name: "Two", albumCount: 1, coverArt: "ar-2" },
+        { id: "ar-3", name: "Three", albumCount: 1 },
+      ]),
+    ).toEqual({ "ar-1": "ar-cover-1" });
+  });
+});
+
+describe("referencedArtworkIds", () => {
+  it("keeps collection covers and the covers of their credited artists", () => {
+    const referenced = referencedArtworkIds(
+      [
+        makeCollection({ id: "a1", coverArt: "al-a1", artistId: "ar-1" }),
+        makeCollection({
+          id: "a2",
+          coverArt: "al-a2",
+          artistId: "ar-1",
+          artists: [
+            { id: "ar-1", name: "One" },
+            { id: "ar-2", name: "Two" },
+          ],
+        }),
+      ],
+      { "ar-1": "ar-cover-1" },
+    );
+    expect(referenced).toEqual(
+      new Set(["al-a1", "al-a2", "ar-cover-1", "ar-2"]),
+    );
+  });
+
+  it("drops the cover of an artist whose albums are all gone", () => {
+    const referenced = referencedArtworkIds([], { "ar-1": "ar-cover-1" });
+    expect(referenced.has("ar-cover-1")).toBe(false);
+  });
+});
+
+describe("artworkCacheKey", () => {
+  it("strips Navidrome's updated-at token so a re-evaluated entity keeps its cover", () => {
+    expect(artworkCacheKey("pl-abc123_1752710400")).toBe("pl-abc123");
+    expect(artworkCacheKey("al-abc123_1752710400")).toBe("al-abc123");
+    expect(artworkCacheKey("ar-abc123_1752710400")).toBe("ar-abc123");
+    expect(artworkCacheKey("mf-abc123_1752710400")).toBe("mf-abc123");
+  });
+
+  it("strips the token whatever its encoding (hex unix time, or a bare 0)", () => {
+    expect(artworkCacheKey("al-0r5mStvRua5Uzh2XlXeHiV_68e67692")).toBe(
+      "al-0r5mStvRua5Uzh2XlXeHiV",
+    );
+    expect(artworkCacheKey("ar-5uciksYRLuOaA9qD3plrp5_0")).toBe(
+      "ar-5uciksYRLuOaA9qD3plrp5",
+    );
+    expect(artworkCacheKey("mf-K4YKRIwVNEsQLiS5jJwmf3_68baadab")).toBe(
+      "mf-K4YKRIwVNEsQLiS5jJwmf3",
+    );
+  });
+
+  it("leaves ids that don't carry a token alone", () => {
+    expect(artworkCacheKey("al-abc123")).toBe("al-abc123");
+    expect(artworkCacheKey("8f3c1e2a4b5d6f7a")).toBe("8f3c1e2a4b5d6f7a");
+    expect(artworkCacheKey("song_12345")).toBe("song_12345");
+    expect(artworkCacheKey("pl-abc123")).toBe("pl-abc123");
   });
 });

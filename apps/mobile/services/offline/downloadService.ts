@@ -1,6 +1,11 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { offlineFileInfo } from "@/services/backend/streaming";
-import { getConnectionType, subscribeConnectionType } from "@/services/network";
+import {
+  getConnectionType,
+  getIsEffectivelyOnline,
+  subscribeConnectionType,
+  subscribeEffectiveOnline,
+} from "@/services/network";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
@@ -14,6 +19,22 @@ import { logError } from "@/utils/log";
 import type { Child } from "../openSubsonic/types";
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
+
+// A track is retried this many times before being given up on. Connectivity
+// state can't classify a failure on its own: NetInfo holds an OFFLINE_GRACE_MS
+// window before committing to "offline", and downloads fail *instantly* with no
+// network, so a drop produces a burst of failures while the app still believes
+// it's online. Retrying rather than dequeuing means that window costs attempts,
+// not tracks.
+const MAX_TRACK_ATTEMPTS = 3;
+
+// Consecutive failures (across any tracks) that trip the circuit breaker. The
+// cascade itself is the signal something environmental is wrong: each failure
+// re-enters processQueue, so without this the whole queue burns down at network
+// speed. Draining stops and resumes on backoff or a connectivity recovery.
+const FAILURE_CIRCUIT_BREAK = 3;
+
+const QUEUE_RETRY_BACKOFF_STEPS_MS = [5_000, 15_000, 60_000, 300_000];
 
 // Subsonic reports API errors as HTTP 200 with a JSON/XML envelope (and a
 // misconfigured reverse proxy can 200 an HTML page), so a "successful" download
@@ -55,13 +76,48 @@ export class OfflineDownloadService {
   // Bumped by clearAllDownloads so in-flight downloads from before the clear
   // discard their result instead of re-registering into the wiped store.
   private generation = 0;
+  // Failed attempts per queued track, so a track is retried across transient
+  // failures instead of being dropped on the first one. Cleared on success.
+  private attempts: Map<string, number> = new Map();
+  private consecutiveFailures = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   private constructor() {
-    // Drain any persisted queue from a previous session and reconcile stale state.
-    queueMicrotask(() => this.resume());
     subscribeConnectionType((type) => {
-      if (type === "wifi") this.processQueue();
+      if (type === "wifi") this.resumeAfterFailures();
     });
+    // Connectivity alone isn't enough: a cellular→offline→cellular round trip
+    // never reports type "wifi", and a server that stops answering while the
+    // device stays online doesn't change the connection type at all. Both leave
+    // a queue that only the effective-online signal can restart.
+    subscribeEffectiveOnline(() => {
+      if (getIsEffectivelyOnline()) this.resumeAfterFailures();
+    });
+  }
+
+  // Connectivity came back: the reason the breaker tripped is gone, so drop the
+  // backoff and drain now rather than making the user wait out a timer that was
+  // sized for an unknown fault.
+  private resumeAfterFailures(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.consecutiveFailures = 0;
+    this.processQueue();
+  }
+
+  private scheduleQueueRetry(): void {
+    if (this.retryTimer) return;
+    const step = Math.min(
+      this.consecutiveFailures - FAILURE_CIRCUIT_BREAK,
+      QUEUE_RETRY_BACKOFF_STEPS_MS.length - 1,
+    );
+    const delay = QUEUE_RETRY_BACKOFF_STEPS_MS[Math.max(0, step)];
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.processQueue();
+    }, delay);
   }
 
   static getInstance(): OfflineDownloadService {
@@ -178,6 +234,7 @@ export class OfflineDownloadService {
       .map((queued) => queued.id);
     offlineStore.removeManyFromDownloadQueue(removedIds);
     for (const trackId of removedIds) {
+      this.attempts.delete(trackId);
       const resolvers = this.resolvers.get(trackId);
       this.resolvers.delete(trackId);
       resolvers?.reject(
@@ -186,8 +243,21 @@ export class OfflineDownloadService {
     }
   }
 
+  // Drains the queue persisted by a previous session and reconciles stale
+  // progress. Must be called *after* the offline store has rehydrated (the
+  // store is scoped and uses skipHydration), so the app layout drives it on
+  // every scope hydration — a constructor call would run at module-eval time
+  // against an empty queue and leave interrupted downloads stranded.
   resume(): void {
     const offlineStore = useOffline.getState();
+    // Fresh session or incoming scope: don't inherit the previous queue's
+    // failure history, and never start out tripped.
+    this.attempts.clear();
+    this.consecutiveFailures = 0;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
 
     for (const track of offlineStore.getDownloadedTracksList()) {
       if (track.size > 0) continue;
@@ -237,6 +307,16 @@ export class OfflineDownloadService {
     const { url: authUrl, username } = useAuthBase.getState();
     if (!authUrl || !username) return;
 
+    // Offline (no network, or the server stopped answering): leave the queue
+    // untouched. Draining it now would fail every item against a dead network
+    // in seconds, and executeDownload's permanent-failure branch would dequeue
+    // the lot. subscribeEffectiveOnline above restarts it on recovery.
+    if (!getIsEffectivelyOnline()) return;
+
+    // The circuit breaker owns the next attempt — it must not be stepped around
+    // by a drain kicked from executeDownload's finally.
+    if (this.retryTimer) return;
+
     if (downloadsWifiOnly && getConnectionType() !== "wifi") {
       for (const track of offlineStore.downloadQueue) {
         if (this.activeIds.has(track.id)) continue;
@@ -270,11 +350,24 @@ export class OfflineDownloadService {
     try {
       await this.writeTrackToDisk(track, generation);
       offlineStore.removeFromDownloadQueue(track.id);
+      this.attempts.delete(track.id);
+      this.consecutiveFailures = 0;
       resolvers?.resolve();
     } catch (error) {
-      if (error instanceof DownloadCancelledError) {
-        // Logged out / switched servers mid-download. Keep the item queued (it
-        // resumes on next login), reflect that it's waiting, and don't report it.
+      const attempts = (this.attempts.get(track.id) ?? 0) + 1;
+      this.attempts.set(track.id, attempts);
+      this.consecutiveFailures++;
+      const retryable =
+        error instanceof DownloadCancelledError ||
+        !getIsEffectivelyOnline() ||
+        attempts < MAX_TRACK_ATTEMPTS;
+      if (retryable) {
+        // Logged out / switched servers, connectivity dropped under it, or a
+        // failure we haven't yet seen enough of to call permanent. Keep the item
+        // queued so it resumes (next login, connectivity recovery, or backoff),
+        // reflect that it's waiting, and don't report it. Dequeuing here is what
+        // let a 2.5s connectivity blip burn down the whole queue: every failure
+        // re-enters processQueue, and with no network they fail instantly.
         offlineStore.setDownloadProgress(track.id, {
           trackId: track.id,
           status: "pending",
@@ -282,6 +375,7 @@ export class OfflineDownloadService {
         });
       } else if (generation === this.generation) {
         offlineStore.removeFromDownloadQueue(track.id);
+        this.attempts.delete(track.id);
         offlineStore.setDownloadProgress(track.id, {
           trackId: track.id,
           status: "failed",
@@ -289,7 +383,7 @@ export class OfflineDownloadService {
           error: error instanceof Error ? error.message : "Unknown error",
         });
         logError(
-          `Download Manager: Error downloading track ${track.id}:`,
+          `Download Manager: Error downloading track ${track.id} after ${attempts} attempts:`,
           error,
         );
       }
@@ -297,7 +391,11 @@ export class OfflineDownloadService {
     } finally {
       this.activeIds.delete(track.id);
       this.resolvers.delete(track.id);
-      this.processQueue();
+      if (this.consecutiveFailures >= FAILURE_CIRCUIT_BREAK) {
+        this.scheduleQueueRetry();
+      } else {
+        this.processQueue();
+      }
     }
   }
 
@@ -473,6 +571,12 @@ export class OfflineDownloadService {
 
       this.generation++;
       this.activeIds.clear();
+      this.attempts.clear();
+      this.consecutiveFailures = 0;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
       for (const { reject } of this.resolvers.values()) {
         reject(new Error("Downloads cleared"));
       }
