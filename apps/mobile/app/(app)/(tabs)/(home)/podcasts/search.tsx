@@ -1,20 +1,16 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
-  type BottomSheetModalProps,
   BottomSheetScrollView,
-  useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -28,7 +24,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { handleFieldBlur, showFieldError } from "@/components/forms/FieldError";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
 import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
-import SheetSearchInput from "@/components/SheetSearchInput";
+import SelectBottomSheet from "@/components/SelectBottomSheet";
 import { Box } from "@/components/ui/box";
 import {
   FormControl,
@@ -55,7 +51,6 @@ import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteSearchPodcasts } from "@/hooks/taddyPodcasts/usePodcasts";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import {
   Country,
@@ -106,14 +101,6 @@ export default function PodcastsSearchScreen() {
   const languagesSheetRef = useRef<BottomSheetModal>(null);
   const countriesSheetRef = useRef<BottomSheetModal>(null);
   const genresSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleFiltersSheetPositionChange } =
-    useBottomSheetBackHandler(filtersSheetRef);
-  const { handleSheetPositionChange: handleLanguagesSheetPositionChange } =
-    useBottomSheetBackHandler(languagesSheetRef);
-  const { handleSheetPositionChange: handleCountriesSheetPositionChange } =
-    useBottomSheetBackHandler(countriesSheetRef);
-  const { handleSheetPositionChange: handleGenresSheetPositionChange } =
-    useBottomSheetBackHandler(genresSheetRef);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
@@ -318,10 +305,8 @@ export default function PodcastsSearchScreen() {
       <CenteredBottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["85%"]}
-        onChange={handleFiltersSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView showsVerticalScrollIndicator={false}>
           <Box className="p-6 w-full">
@@ -723,116 +708,60 @@ export default function PodcastsSearchScreen() {
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
 
-      <MultiSelectSheet
-        ref={languagesSheetRef}
-        onSheetPositionChange={handleLanguagesSheetPositionChange}
+      <SelectBottomSheet
+        sheetRef={languagesSheetRef}
         title={t("app.podcasts.search.languagesLabel")}
-        options={languageEntries}
-        selected={values.filterForLanguages}
-        labelFor={(value) => value.replaceAll("_", " ")}
-        onToggle={(value) =>
+        multiple
+        searchable
+        options={languageEntries.map((value) => ({
+          label: value.replaceAll("_", " "),
+          value,
+        }))}
+        selectedValues={values.filterForLanguages ?? []}
+        onSelect={(value) =>
           toggleArrayValue(
             "filterForLanguages",
             values.filterForLanguages,
-            value,
+            value as keyof typeof Language,
           )
         }
-        emerald={emerald500}
       />
-      <MultiSelectSheet
-        ref={countriesSheetRef}
-        onSheetPositionChange={handleCountriesSheetPositionChange}
+      <SelectBottomSheet
+        sheetRef={countriesSheetRef}
         title={t("app.podcasts.search.countriesLabel")}
-        options={countryEntries}
-        selected={values.filterForCountries}
-        labelFor={(value) => value.replaceAll("_", " ")}
-        onToggle={(value) =>
+        multiple
+        searchable
+        options={countryEntries.map((value) => ({
+          label: value.replaceAll("_", " "),
+          value,
+        }))}
+        selectedValues={values.filterForCountries ?? []}
+        onSelect={(value) =>
           toggleArrayValue(
             "filterForCountries",
             values.filterForCountries,
-            value,
+            value as keyof typeof Country,
           )
         }
-        emerald={emerald500}
       />
-      <MultiSelectSheet
-        ref={genresSheetRef}
-        onSheetPositionChange={handleGenresSheetPositionChange}
+      <SelectBottomSheet
+        sheetRef={genresSheetRef}
         title={t("app.podcasts.search.genresLabel")}
-        options={genreEntries}
-        selected={values.filterForGenres}
-        labelFor={(value) => t(`app.podcasts.genres.${value}`, value)}
-        onToggle={(value) =>
-          toggleArrayValue("filterForGenres", values.filterForGenres, value)
+        multiple
+        searchable
+        options={genreEntries.map((value) => ({
+          label: t(`app.podcasts.genres.${value}`, value),
+          value,
+        }))}
+        selectedValues={values.filterForGenres ?? []}
+        onSelect={(value) =>
+          toggleArrayValue(
+            "filterForGenres",
+            values.filterForGenres,
+            value as keyof typeof Genre,
+          )
         }
-        emerald={emerald500}
       />
     </Box>
-  );
-}
-
-type MultiSelectSheetProps<T extends string> = {
-  ref: React.RefObject<BottomSheetModal | null>;
-  onSheetPositionChange: NonNullable<BottomSheetModalProps["onChange"]>;
-  title: string;
-  options: T[];
-  selected: T[] | undefined;
-  labelFor: (value: T) => string;
-  onToggle: (value: T) => void;
-  emerald: string;
-};
-
-function MultiSelectSheet<T extends string>({
-  ref,
-  onSheetPositionChange,
-  title,
-  options,
-  selected,
-  labelFor,
-  onToggle,
-  emerald,
-}: MultiSelectSheetProps<T>) {
-  const [query, setQuery] = useState("");
-  const selectedSet = new Set(selected ?? []);
-  const renderScrollComponent = useBottomSheetScrollableCreator();
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((item) => labelFor(item).toLowerCase().includes(q));
-  }, [query, options, labelFor]);
-
-  return (
-    <CenteredBottomSheetModal
-      ref={ref}
-      snapPoints={["75%"]}
-      enableDynamicSizing={false}
-      stackBehavior="push"
-      onChange={onSheetPositionChange}
-      backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
-      handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
-    >
-      <Box className="px-6 pt-2 pb-3">
-        <Heading className="text-white mb-3" size="lg">
-          {title}
-        </Heading>
-        <SheetSearchInput onChangeText={setQuery} />
-      </Box>
-      <FlashList
-        data={filtered}
-        keyExtractor={(item) => item}
-        renderScrollComponent={renderScrollComponent}
-        renderItem={({ item }) => (
-          <FadeOutScaleDown onPress={() => onToggle(item)}>
-            <HStack className="items-center justify-between px-6 py-3">
-              <Text className="text-md text-white flex-1 pr-4">
-                {labelFor(item)}
-              </Text>
-              {selectedSet.has(item) && <Check size={20} color={emerald} />}
-            </HStack>
-          </FadeOutScaleDown>
-        )}
-      />
-    </CenteredBottomSheetModal>
   );
 }

@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -39,7 +38,6 @@ import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -72,8 +70,6 @@ export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleSortSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetSortModalRef);
   const musicFolderId = useCurrentMusicFolderId();
   const {
     data: starredData,
@@ -363,14 +359,12 @@ export default function FavoritesScreen() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
-        onChange={handleSortSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

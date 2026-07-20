@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -15,7 +14,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 
@@ -49,17 +47,14 @@ export default function LyricsLayersSheet({
   const setTranslationLang = useApp((s) => s.setLyricsTranslationLang);
   const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
   const setShowPronunciation = useApp((s) => s.setLyricsShowPronunciation);
-  const { handleSheetPositionChange } = useBottomSheetBackHandler(sheetRef);
 
   const langs = translations.map((l) => l.lang);
 
   return (
     <BottomSheetModalComponent
       ref={sheetRef}
-      onChange={handleSheetPositionChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">

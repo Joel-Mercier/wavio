@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -41,7 +40,6 @@ import {
   useRadioLanguages,
   useRadioTags,
 } from "@/hooks/radioBrowser/useRadioBrowser";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { RadioBrowserStation } from "@/services/radioBrowser/types";
@@ -72,12 +70,6 @@ export default function InternetRadioStationsSearchScreen() {
   const filtersSheetRef = useRef<BottomSheetModal>(null);
   const countrySheetRef = useRef<BottomSheetModal>(null);
   const languageSheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleFiltersSheetPositionChange } =
-    useBottomSheetBackHandler(filtersSheetRef);
-  const { handleSheetPositionChange: handleCountrySheetPositionChange } =
-    useBottomSheetBackHandler(countrySheetRef);
-  const { handleSheetPositionChange: handleLanguageSheetPositionChange } =
-    useBottomSheetBackHandler(languageSheetRef);
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
@@ -252,10 +244,8 @@ export default function InternetRadioStationsSearchScreen() {
       <CenteredBottomSheetModal
         ref={filtersSheetRef}
         snapPoints={["75%"]}
-        onChange={handleFiltersSheetPositionChange}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView showsVerticalScrollIndicator={false}>
           <Box className="p-6 w-full">
@@ -350,7 +340,6 @@ export default function InternetRadioStationsSearchScreen() {
 
       <SearchableSelectSheet
         ref={countrySheetRef}
-        onSheetPositionChange={handleCountrySheetPositionChange}
         title={t("app.internetRadioStations.search.country")}
         anyLabel={t("app.internetRadioStations.search.any")}
         options={countryOptions}
@@ -363,7 +352,6 @@ export default function InternetRadioStationsSearchScreen() {
       />
       <SearchableSelectSheet
         ref={languageSheetRef}
-        onSheetPositionChange={handleLanguageSheetPositionChange}
         title={t("app.internetRadioStations.search.language")}
         anyLabel={t("app.internetRadioStations.search.any")}
         options={languageOptions}

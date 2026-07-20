@@ -30,7 +30,6 @@ import {
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { librarySyncService } from "@/services/offline";
 import useApp, { type StreamFormat } from "@/stores/app";
@@ -146,12 +145,7 @@ export default function DownloadsOfflineSection() {
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const bottomSheetDownloadFormatModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleDownloadFormatSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetDownloadFormatModalRef);
   const bottomSheetDownloadBitRateModalRef = useRef<BottomSheetModal>(null);
-  const {
-    handleSheetPositionChange: handleDownloadBitRateSheetPositionChange,
-  } = useBottomSheetBackHandler(bottomSheetDownloadBitRateModalRef);
 
   const handleExtendedOfflineToggle = (value: boolean) => {
     if (value) {
@@ -181,7 +175,6 @@ export default function DownloadsOfflineSection() {
         <>
           <OptionsBottomSheetModal
             modalRef={bottomSheetDownloadFormatModalRef}
-            onChange={handleDownloadFormatSheetPositionChange}
             header={t("app.settings.offlineSettings.downloadFormatLabel")}
             headerDescription={t(
               "app.settings.offlineSettings.downloadFormatDescription",
@@ -198,7 +191,6 @@ export default function DownloadsOfflineSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetDownloadBitRateModalRef}
-            onChange={handleDownloadBitRateSheetPositionChange}
             header={t("app.settings.offlineSettings.downloadBitRateLabel")}
             headerDescription={t(
               "app.settings.offlineSettings.downloadBitRateDescription",
@@ -283,19 +275,18 @@ export default function DownloadsOfflineSection() {
           value={autoSignOutOnServerUnreachable}
           onToggle={(value) => setAutoSignOutOnServerUnreachable(value)}
         />
-        {(offlineModeEnabled || extendedOfflineModeEnabled) &&
-          downloadedTracksList.length > 0 && (
-            <SettingsActionRow
-              label={t("app.settings.offlineSettings.manageDownloadsLabel")}
-              description={t(
-                "app.settings.offlineSettings.manageDownloadsDescription",
-              )}
-              actionLabel={t(
-                "app.settings.offlineSettings.manageDownloadsAction",
-              )}
-              onPress={() => router.navigate("/offline-downloads")}
-            />
+        <SettingsActionRow
+          label={t("app.settings.offlineSettings.manageDownloadsLabel")}
+          description={t(
+            "app.settings.offlineSettings.manageDownloadsDescription",
           )}
+          actionLabel={t("app.settings.offlineSettings.manageDownloadsAction")}
+          onPress={() => router.navigate("/offline-downloads")}
+          disabled={
+            (!offlineModeEnabled && !extendedOfflineModeEnabled) ||
+            downloadedTracksList.length === 0
+          }
+        />
         {pendingChangesCount > 0 && (
           <SettingsActionRow
             label={t("app.settings.offlineSettings.pendingChangesLabel")}

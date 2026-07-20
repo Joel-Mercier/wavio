@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -57,7 +56,6 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useDeleteShare, useUpdateShare } from "@/hooks/backend/useSharing";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
@@ -83,8 +81,6 @@ export default function ShareListItem({ share }: { share: Share }) {
   const [showEditAlertDialog, setShowEditAlertDialog] =
     useState<boolean>(false);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const doDeleteShare = useDeleteShare();
   const doUpdateShare = useUpdateShare();
   const toast = useToast();
@@ -293,14 +289,12 @@ export default function ShareListItem({ share }: { share: Share }) {
       </Card>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

@@ -33,6 +33,7 @@ export const SCOPED_STORE_NAMES = [
   "capabilityOverridesStore",
   "offlineMutations",
   "librarySyncStore",
+  "lidarrStore",
 ] as const;
 
 // Scoped stores that must NOT travel in a backup file. The offline-mutations

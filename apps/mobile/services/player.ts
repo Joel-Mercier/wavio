@@ -25,7 +25,11 @@ import {
   getServerReachable,
   probeServer,
 } from "@/services/network";
-import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
+import type {
+  AlbumID3,
+  AlbumList2,
+  Child,
+} from "@/services/openSubsonic/types";
 import {
   playbackReportEnabled,
   reportPaused,
@@ -48,6 +52,7 @@ import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
+import useActivity from "@/stores/activity";
 import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
@@ -131,6 +136,12 @@ function reportNowPlaying(track: QueueTrack) {
   if (nowPlayingScrobbledId === track.id) return;
   nowPlayingScrobbledId = track.id;
   scrobbleStartedAt = Date.now();
+  // Log every track the user actually starts playing to the Activity feed,
+  // decoupled from the scrobble-count gate below so short/skipped plays (and the
+  // very first track after navigating to a list) still register.
+  if (isScrobblable(track) && !track.isRadio) {
+    useActivity.getState().recordPlay(track, useQueue.getState().source);
+  }
   if (!isScrobblable(track)) return;
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.
@@ -192,12 +203,56 @@ function hoistAlbumToRecent(track: QueueTrack) {
   );
 }
 
+// Optimistically bump the played track's playCount in the cached "most played
+// tracks" lists and re-sort, so the Home carousel reorders in the same tick the
+// server does (a track tied on play count visibly moves up without a refetch).
+// A track not already in the cached list is left to the invalidation refetch in
+// scheduleRecentlyPlayedRefresh to pull in.
+function bumpMostPlayedTracks(trackId: string) {
+  const bump = (song: Child[]): Child[] | null => {
+    if (!song.some((s) => s.id === trackId)) return null;
+    return song
+      .map((s) =>
+        s.id === trackId ? { ...s, playCount: (s.playCount ?? 0) + 1 } : s,
+      )
+      .sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0));
+  };
+
+  queryClient.setQueriesData<{ songs?: { song?: Child[] } }>(
+    { predicate: (query) => query.queryKey[0] === "mostPlayedSongs" },
+    (old) => {
+      const bumped = old?.songs?.song && bump(old.songs.song);
+      if (!bumped) return old;
+      return { ...old, songs: { ...old?.songs, song: bumped } };
+    },
+  );
+
+  queryClient.setQueriesData<{
+    pages: { songs?: { song?: Child[] } }[];
+    pageParams: unknown[];
+  }>(
+    { predicate: (query) => query.queryKey[0] === "mostPlayedSongs:infinite" },
+    (old) => {
+      if (!old) return old;
+      let changed = false;
+      const pages = old.pages.map((page) => {
+        const bumped = page?.songs?.song && bump(page.songs.song);
+        if (!bumped) return page;
+        changed = true;
+        return { ...page, songs: { ...page.songs, song: bumped } };
+      });
+      return changed ? { ...old, pages } : old;
+    },
+  );
+}
+
 // The single "this play is now counted" side effect, called from each site that
 // submits a scrobble. Both the Home carousels and the Queue screen's Recently
 // played tab must reflect a play at the same moment the server does — and never
 // on a quick skip.
 function notePlayCounted(track: QueueTrack) {
   hoistAlbumToRecent(track);
+  bumpMostPlayedTracks(track.id);
   usePlayHistory.getState().recordPlay(track);
 }
 
@@ -282,9 +337,11 @@ function resetScrobbleState() {
 }
 
 // A counted play bumps Navidrome's play_date/play_count, which reorders the
-// server-side "recent" and "frequent" album lists. Those back both the Home
-// carousels and the home-screen widget's recent strip, so nudge React Query to
-// refetch them. Debounced so a burst of skips coalesces into one refetch, and
+// server-side "recent"/"frequent" album lists and the "most played tracks" list.
+// Those back both the Home carousels and the home-screen widget's recent strip,
+// so nudge React Query to refetch them — reconciling the optimistic track bump in
+// bumpMostPlayedTracks with server truth (new entrants, exact counts). Debounced
+// so a burst of skips coalesces into one refetch, and
 // `refetchType: "all"` so the widget's observer-less cache entry refetches too
 // (the default "active" would skip it) — that refetch drives the widget's cache
 // subscription in services/widget.ts.
@@ -300,6 +357,9 @@ function scheduleRecentlyPlayedRefresh() {
           string,
           { type?: string } | undefined,
         ];
+        if (name === "mostPlayedSongs" || name === "mostPlayedSongs:infinite") {
+          return true;
+        }
         if (name !== "albumList2" && name !== "albumList2:infinite") {
           return false;
         }

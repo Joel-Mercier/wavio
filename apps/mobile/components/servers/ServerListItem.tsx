@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -52,7 +51,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -86,8 +84,6 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     username?: string;
   } | null>(null);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetModalRef);
   const toast = useToast();
   const editServer = useServers((store) => store.editServer);
   const removeServer = useServers((store) => store.removeServer);
@@ -242,14 +238,12 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       </VStack>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">

@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -24,7 +23,6 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import {
   activate as activateJukebox,
   jukeboxReconcileFromServer,
@@ -52,7 +50,6 @@ export default function JukeboxSheet() {
     "--color-gray-200",
   ]) as string[];
   const sheetRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } = useBottomSheetBackHandler(sheetRef);
   const jukeboxActive = useJukebox((s) => s.active);
   const jukeboxGain = useJukebox((s) => s.gain);
   const jukeboxStatus = useJukebox((s) => s.status);
@@ -103,17 +100,13 @@ export default function JukeboxSheet() {
   // Ping the server for live jukebox state whenever the sheet opens, rather than
   // relying on stale cached status. When a session is active, also pull the
   // playlist so another device's changes are reflected.
-  const handleSheetChange = useCallback(
-    (...args: Parameters<typeof handleSheetPositionChange>) => {
-      handleSheetPositionChange(...args);
-      if (args[0] < 0) return;
-      jukeboxRefreshStatus().catch(() => {});
-      if (useJukebox.getState().active) {
-        jukeboxReconcileFromServer().catch(() => {});
-      }
-    },
-    [handleSheetPositionChange],
-  );
+  const handleSheetChange = useCallback((index: number) => {
+    if (index < 0) return;
+    jukeboxRefreshStatus().catch(() => {});
+    if (useJukebox.getState().active) {
+      jukeboxReconcileFromServer().catch(() => {});
+    }
+  }, []);
 
   const selectJukeboxDevice = (device: "local" | "jukebox") => {
     if ((device === "jukebox") === jukeboxActive) return;
@@ -126,7 +119,6 @@ export default function JukeboxSheet() {
       onChange={handleSheetChange}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
     >
       <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
         <Box className="p-6 w-full mb-12">

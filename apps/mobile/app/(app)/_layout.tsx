@@ -10,6 +10,7 @@ import { Drawer } from "react-native-drawer-layout";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
+import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
@@ -23,6 +24,7 @@ import {
   queryClient,
   setCacheRestoring,
 } from "@/config/queryClient";
+import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
@@ -46,6 +48,7 @@ import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLibrarySync from "@/stores/librarySync";
+import useLidarr from "@/stores/lidarr";
 import useLocalLibrary from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -118,26 +121,33 @@ export default function AppLayout() {
     lastHydratedScope = scope;
     if (__DEV__) console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
-      stopPlayQueueSync();
-      useRecentPlays.getState().__reset();
-      useRecentSearches.getState().__reset();
-      useActivity.getState().__reset();
-      usePlayHistory.getState().__reset();
-      useQueue.getState().__reset();
-      // Mirror cold-start hydration on the player so the new scope's restored
-      // queue loads silently instead of auto-playing. Must run after the queue
-      // __reset above (so the store reports not-hydrated) and before the
-      // rehydrate below.
-      resetPlayerForScopeChange();
-      useOffline.getState().__reset();
-      librarySyncService.reset();
-      useLibrarySync.getState().__reset();
-      resetOfflineMutationReplay();
-      useOfflineMutations.getState().__reset();
-      useLocalLibrary.getState().__reset();
-      useBookmarks.getState().__reset();
-      useCapabilityOverrides.getState().__reset();
-      useServerExtensionsBase.getState().reset();
+      // Suspended writes: these resets clear the previous scope's data from
+      // memory, but persist would flush the resulting initial state straight
+      // into the *incoming* scope's bucket, wiping what the rehydrate below is
+      // about to read. See withScopedWritesSuspended.
+      withScopedWritesSuspended(() => {
+        stopPlayQueueSync();
+        useRecentPlays.getState().__reset();
+        useRecentSearches.getState().__reset();
+        useActivity.getState().__reset();
+        usePlayHistory.getState().__reset();
+        useQueue.getState().__reset();
+        // Mirror cold-start hydration on the player so the new scope's restored
+        // queue loads silently instead of auto-playing. Must run after the queue
+        // __reset above (so the store reports not-hydrated) and before the
+        // rehydrate below.
+        resetPlayerForScopeChange();
+        useOffline.getState().__reset();
+        librarySyncService.reset();
+        useLibrarySync.getState().__reset();
+        resetOfflineMutationReplay();
+        useOfflineMutations.getState().__reset();
+        useLocalLibrary.getState().__reset();
+        useBookmarks.getState().__reset();
+        useCapabilityOverrides.getState().__reset();
+        useLidarr.getState().__reset();
+        useServerExtensionsBase.getState().reset();
+      });
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
       resetServerReachable();
@@ -175,6 +185,7 @@ export default function AppLayout() {
     useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
+    useLidarr.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });
@@ -279,6 +290,7 @@ export default function AppLayout() {
         <FloatingPlayer />
       </AppDrawer>
       <OfflineMutationsSync />
+      <LidarrDownloadsWatcher />
       <OfflineStarredAutoSync />
       <LibrarySyncController />
       <ServerExtensionsSync />

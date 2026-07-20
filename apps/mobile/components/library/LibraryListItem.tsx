@@ -422,7 +422,7 @@ export default function LibraryListItem({
         >
           <Heading
             numberOfLines={layout === "grid" ? 2 : 1}
-            className="text-white text-md font-normal capitalize"
+            className="text-white text-md font-normal"
           >
             {item.isFavorites || item.isAllAlbums || item.isAllArtists
               ? type.label

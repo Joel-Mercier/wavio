@@ -136,11 +136,11 @@
             android:layout_marginEnd="6dp">
             <ImageView
                 android:id="@+id/cover_0"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 
 
@@ -152,11 +152,11 @@
             android:layout_marginEnd="6dp">
             <ImageView
                 android:id="@+id/cover_1"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 
 
@@ -168,11 +168,11 @@
             android:layout_marginEnd="6dp">
             <ImageView
                 android:id="@+id/cover_2"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 
 
@@ -184,11 +184,11 @@
             android:layout_marginEnd="6dp">
             <ImageView
                 android:id="@+id/cover_3"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 
 
@@ -200,11 +200,11 @@
             android:layout_marginEnd="0dp">
             <ImageView
                 android:id="@+id/cover_4"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 
             </LinearLayout>

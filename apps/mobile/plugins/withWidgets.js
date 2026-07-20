@@ -179,11 +179,11 @@ function recentCellXml(idx) {
             android:layout_marginEnd="${idx === 4 ? "0dp" : "6dp"}">
             <ImageView
                 android:id="@+id/cover_${idx}"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@null"
-                android:background="#22FFFFFF" />
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:contentDescription="@null" />
         </FrameLayout>
 `;
 }
@@ -477,6 +477,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.RemoteViews
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ${PACKAGE}.R
@@ -547,6 +548,7 @@ object WidgetRenderer {
         url: String?,
         circle: Boolean = false,
         rounded: Boolean = false,
+        sizeDp: Int = 56,
         onReady: (android.graphics.Bitmap?) -> Unit
     ) {
         if (url.isNullOrEmpty()) {
@@ -555,14 +557,21 @@ object WidgetRenderer {
         }
         executor.execute {
             val bmp = try {
+                val density = ctx.resources.displayMetrics.density
+                val sizePx = (sizeDp * density).toInt()
+                // Round proportionally (8dp at the 56dp tile size) so the shape is
+                // baked into the bitmap and survives being displayed 1:1 (fitXY),
+                // matching the favorites tile's 8dp corners.
+                val radiusPx = (sizePx * 8f / 56f).toInt()
                 var request = Glide.with(ctx.applicationContext).asBitmap().load(url)
-                if (circle) {
-                    request = request.transform(CircleCrop())
+                request = if (circle) {
+                    request.transform(CircleCrop())
                 } else if (rounded) {
-                    val radius = (8 * ctx.resources.displayMetrics.density).toInt()
-                    request = request.transform(RoundedCorners(radius))
+                    request.transform(CenterCrop(), RoundedCorners(radiusPx))
+                } else {
+                    request
                 }
-                request.submit(256, 256).get()
+                request.submit(sizePx, sizePx).get()
             } catch (e: Exception) {
                 null
             }
@@ -575,7 +584,7 @@ object WidgetRenderer {
             val views = RemoteViews(ctx.packageName, R.layout.widget_now_playing)
             applyTopStrip(ctx, views)
             mgr.updateAppWidget(id, views)
-            loadCoverAsync(ctx, WidgetState.getNowPlaying(ctx).coverUrl) { bmp ->
+            loadCoverAsync(ctx, WidgetState.getNowPlaying(ctx).coverUrl, rounded = true, sizeDp = 128) { bmp ->
                 if (bmp != null) {
                     val v2 = RemoteViews(ctx.packageName, R.layout.widget_now_playing)
                     applyTopStrip(ctx, v2)
@@ -608,7 +617,7 @@ object WidgetRenderer {
             }
             mgr.updateAppWidget(id, views)
             // Load now-playing cover
-            loadCoverAsync(ctx, WidgetState.getNowPlaying(ctx).coverUrl) { bmp ->
+            loadCoverAsync(ctx, WidgetState.getNowPlaying(ctx).coverUrl, rounded = true, sizeDp = 128) { bmp ->
                 if (bmp != null) {
                     val v2 = RemoteViews(ctx.packageName, R.layout.widget_recent)
                     applyTopStrip(ctx, v2)

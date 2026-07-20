@@ -78,7 +78,9 @@
 				"internetRadioStationTitle": "Station de radio en ligne",
 				"internetRadioStationDescription": "Créer une station de radio en ligne que vous pouvez diffuser depuis l'application",
 				"podcastChannelTitle": "Chaîne de podcast",
-				"podcastChannelDescription": "Abonner le serveur à un podcast à partir de son flux RSS"
+				"podcastChannelDescription": "Abonner le serveur à un podcast à partir de son flux RSS",
+				"downloaderTitle": "Ajouter de la musique",
+				"downloaderDescription": "Rechercher et télécharger de la musique sur votre serveur"
 			},
 			"carAuto": {
 				"home": "Accueil",
@@ -572,6 +574,10 @@
 						"title": "Téléchargements et mode hors ligne",
 						"description": "Mode hors ligne, téléchargements via Wi-Fi, gestion des téléchargements"
 					},
+					"downloaders": {
+						"title": "Outils de téléchargement",
+						"description": "Ajoutez de la musique à votre serveur via Lidarr"
+					},
 					"appearance": {
 						"title": "Apparence",
 						"description": "Langue, rubriques d'accueil, retour haptique"
@@ -595,6 +601,82 @@
 					"security": {
 						"title": "Sécurité",
 						"description": "Certificats approuvés"
+					}
+				},
+				"downloaders": {
+					"description": "Connectez un outil de téléchargement pour ajouter de la musique qui ne figure pas encore sur votre serveur. Elle sera importée dans votre bibliothèque et apparaîtra après la prochaine analyse.",
+					"comingSoon": "Prochainement",
+					"statuses": {
+						"active": "Actif",
+						"inactive": "Inactif"
+					},
+					"lidarr": {
+						"title": "Lidarr",
+						"description": "Recherchez et téléchargez des albums via votre instance Lidarr",
+						"getApiKeyAction": "Où puis-je trouver ma clé API ?",
+						"serverUrlLabel": "URL du serveur",
+						"apiKeyLabel": "Clé API",
+						"apiKeyPlaceholder": "Votre clé API Lidarr",
+						"testAndSaveAction": "Tester et enregistrer",
+						"connectionSuccess": "Connecté à Lidarr",
+						"connectionFailed": "Impossible d'établir la connexion. Vérifiez l'URL et la clé API.",
+						"removedMessage": "Configuration de Lidarr supprimée",
+						"autoScanLabel": "Analyser la bibliothèque après le téléchargement",
+						"autoScanDescription": "Réactualisez votre serveur une fois le téléchargement terminé afin que les nouveaux albums s'affichent automatiquement"
+					},
+					"discovery": {
+						"title": "Découverte",
+						"description": "Rechercher des artistes et des albums à ajouter",
+						"inputPlaceholder": "Rechercher des artistes et des albums",
+						"emptyPrompt": "Recherchez un artiste ou un album à ajouter à votre bibliothèque.",
+						"album": "Album",
+						"artist": "Artiste",
+						"filtersTitle": "Ajouter des options",
+						"filtersDescription": "Ces règles s'appliquent lorsque vous ajoutez un album à Lidarr.",
+						"qualityProfile": "Profil de qualité",
+						"metadataProfile": "Profil de métadonnées",
+						"rootFolder": "Dossier racine",
+						"monitor": "Surveiller les albums ajoutés",
+						"selectPlaceholder": "Sélectionner"
+					},
+					"album": {
+						"addAction": "Ajouter à la bibliothèque",
+						"downloadAction": "Téléchargement",
+						"downloading": "{{percent}}% téléchargé",
+						"addedMessage": "Ajouté à Lidarr. Recherche d'une publication…",
+						"searchStartedMessage": "Recherche d'une publication…",
+						"addFailed": "Impossible d'ajouter cet album.",
+						"inLibrary": "Dans votre bibliothèque",
+						"noRootFolder": "Aucun dossier racine Lidarr n'est configuré.",
+						"chooseReleaseAction": "Choisir une publication",
+						"trackCount_one": "{{count}} titre",
+						"trackCount_other": "{{count}} titres"
+					},
+					"release": {
+						"title": "Choisissez une publication",
+						"description": "Choisissez une publication spécifique à télécharger.",
+						"searching": "Recherche des indexeurs…",
+						"grabbedMessage": "La publication a été envoyée à votre client de téléchargement.",
+						"grabFailed": "Impossible de récupérer cette publication.",
+						"seeders_one": "{{count}} seeder",
+						"seeders_other": "{{count}} seeders"
+					},
+					"downloads": {
+						"title": "Progression du téléchargement",
+						"description": "Suivre les téléchargements en cours et l'historique",
+						"inProgressTitle": "En cours",
+						"historyTitle": "Histoire",
+						"emptyQueue": "Aucun téléchargement en cours pour le moment.",
+						"emptyHistory": "Aucun historique de téléchargement pour l'instant.",
+						"cancelFailed": "Impossible d'annuler ce téléchargement.",
+						"events": {
+							"grabbed": "Récupéré",
+							"downloadImported": "Importé",
+							"trackFileImported": "Importé",
+							"albumImportIncomplete": "Incomplet",
+							"downloadFailed": "Échoué",
+							"downloadIgnored": "Ignoré"
+						}
 					}
 				},
 				"offlineSettings": {
@@ -857,7 +939,7 @@
 					"tags": "Genres et tags",
 					"any": "Tous",
 					"reset": "Réinitialiser",
-					"done": "Terminé"
+					"done": "Appliquer"
 				},
 				"topVoted": "Les plus votées",
 				"popular": "Populaires",
@@ -889,7 +971,6 @@
 			"activity": {
 				"title": "Activité",
 				"empty": "Rien ici pour l'instant. Les albums, artistes et playlists que vous écoutez apparaîtront ici.",
-				"playedAt": "il y a {{distance}}",
 				"sections": {
 					"today": "Aujourd'hui",
 					"yesterday": "Hier",
@@ -900,7 +981,9 @@
 					"album": "Album",
 					"artist": "Artiste",
 					"playlist": "Playlist"
-				}
+				},
+				"plays_one": "{{count}} titre lu",
+				"plays_other": "{{count}} titres lus"
 			},
 			"offlineDownloads": {
 				"title": "Téléchargements hors ligne",
@@ -937,6 +1020,9 @@
 			"queue": {
 				"title": "File d'attente",
 				"empty": "La file d'attente est vide",
+				"tabQueue": "File d'attente",
+				"tabRecentlyPlayed": "Joués récemment",
+				"recentlyPlayedEmpty": "Aucune piste n'a encore été lue.",
 				"edit": "Modifier",
 				"done": "Terminer",
 				"order": "Trier",
@@ -946,6 +1032,10 @@
 				"clearConfirmTitle": "Vider la file ?",
 				"clearConfirmMessage": "Tous les morceaux seront retirés de la file et la lecture s'arrêtera",
 				"clearedMessage": "File vidée",
+				"clearHistory": "Effacer l'historique",
+				"clearHistoryConfirmTitle": "Effacer l'historique ?",
+				"clearHistoryConfirmMessage": "Tous les titres écoutés récemment seront supprimés de cette liste. Cela n'aura aucune incidence sur votre file d'attente ni sur la lecture en cours.",
+				"clearedHistoryMessage": "Historique effacé",
 				"nowPlaying": "En cours de lecture",
 				"nextInQueue": "À suivre",
 				"removeFromQueue": "Retirer de la file",
@@ -1063,7 +1153,7 @@
 				"translationOff": "Désactivé",
 				"pronunciation": "Prononciation",
 				"showPronunciation": "Afficher la prononciation",
-				"lyricsUnavailable": "No lyrics available for this track.",
+				"lyricsUnavailable": "Les paroles de ce morceau ne sont pas disponibles.",
 				"sleepTimer": "Minuteur de veille",
 				"sleepTimerOff": "Désactivé",
 				"sleepTimerEndOfTrack": "Fin du titre",
@@ -1174,6 +1264,7 @@
 				},
 				"favorites": "Favoris",
 				"save": "Enregistrer",
+				"done": "Appliquer",
 				"seeMore": "Voir plus",
 				"seeLess": "Voir moins",
 				"seeAll": "Voir tout",

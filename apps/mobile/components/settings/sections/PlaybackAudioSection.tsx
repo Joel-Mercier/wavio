@@ -13,7 +13,6 @@ import {
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import {
@@ -39,6 +38,12 @@ const replayGainOptions: ("off" | "track" | "album")[] = [
   "album",
 ];
 
+const lyricsSourceOptions: ("off" | "server" | "all")[] = [
+  "off",
+  "server",
+  "all",
+];
+
 const queueSyncOptions: ("server" | "local" | "off")[] = [
   "server",
   "local",
@@ -52,22 +57,11 @@ export default function PlaybackAudioSection() {
   const isLocal = useAuthBase((store) => store.serverType === "local");
 
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleBitRateSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetBitRateModalRef);
   const bottomSheetCellularBitRateModalRef = useRef<BottomSheetModal>(null);
-  const {
-    handleSheetPositionChange: handleCellularBitRateSheetPositionChange,
-  } = useBottomSheetBackHandler(bottomSheetCellularBitRateModalRef);
   const bottomSheetStreamingFormatModalRef = useRef<BottomSheetModal>(null);
-  const {
-    handleSheetPositionChange: handleStreamingFormatSheetPositionChange,
-  } = useBottomSheetBackHandler(bottomSheetStreamingFormatModalRef);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleReplayGainSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetReplayGainModalRef);
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange: handleQueueSyncSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetQueueSyncModalRef);
+  const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
 
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
@@ -87,6 +81,8 @@ export default function PlaybackAudioSection() {
   );
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
+  const lyricsSource = useApp((store) => store.lyricsSource);
+  const setLyricsSource = useApp((store) => store.setLyricsSource);
 
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
@@ -115,7 +111,6 @@ export default function PlaybackAudioSection() {
         <>
           <OptionsBottomSheetModal
             modalRef={bottomSheetQueueSyncModalRef}
-            onChange={handleQueueSyncSheetPositionChange}
             header={t("app.settings.playbackSettings.queueSyncLabel")}
             headerDescription={t(
               "app.settings.playbackSettings.queueSyncDescription",
@@ -134,8 +129,23 @@ export default function PlaybackAudioSection() {
             dismissOnSelect
           />
           <OptionsBottomSheetModal
+            modalRef={bottomSheetLyricsSourceModalRef}
+            header={t("app.settings.displaySettings.lyricsSourceLabel")}
+            headerDescription={t(
+              "app.settings.displaySettings.lyricsSourceDescription",
+            )}
+            options={lyricsSourceOptions.map((option) => ({
+              value: option,
+              label: t(
+                `app.settings.displaySettings.lyricsSourceOptions.${option}`,
+              ),
+            }))}
+            selectedValue={lyricsSource}
+            onSelect={setLyricsSource}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
             modalRef={bottomSheetBitRateModalRef}
-            onChange={handleBitRateSheetPositionChange}
             header={t("app.settings.streamingSettings.audioQualityLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.audioQualityDescription",
@@ -149,7 +159,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetCellularBitRateModalRef}
-            onChange={handleCellularBitRateSheetPositionChange}
             header={t(
               "app.settings.streamingSettings.cellularAudioQualityLabel",
             )}
@@ -165,7 +174,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetStreamingFormatModalRef}
-            onChange={handleStreamingFormatSheetPositionChange}
             header={t("app.settings.streamingSettings.streamingFormatLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.streamingFormatDescription",
@@ -182,7 +190,6 @@ export default function PlaybackAudioSection() {
           />
           <OptionsBottomSheetModal
             modalRef={bottomSheetReplayGainModalRef}
-            onChange={handleReplayGainSheetPositionChange}
             header={t("app.settings.streamingSettings.replayGainLabel")}
             headerDescription={t(
               "app.settings.streamingSettings.replayGainDescription",
@@ -234,6 +241,16 @@ export default function PlaybackAudioSection() {
             onPress={() => bottomSheetQueueSyncModalRef.current?.present()}
           />
         )}
+        <SettingsSelectRow
+          label={t("app.settings.displaySettings.lyricsSourceLabel")}
+          description={t(
+            "app.settings.displaySettings.lyricsSourceDescription",
+          )}
+          badgeText={t(
+            `app.settings.displaySettings.lyricsSourceOptions.${lyricsSource}`,
+          )}
+          onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
+        />
         <Divider className="bg-primary-400" />
         <SettingsSectionTitle
           title={t("app.settings.streamingSettings.title")}
@@ -288,7 +305,7 @@ export default function PlaybackAudioSection() {
             onPress={() => bottomSheetReplayGainModalRef.current?.present()}
           />
         )}
-        {capabilities.replayGain && replayGainMode !== "off" && (
+        {capabilities.replayGain && (
           <SettingsStepperRow
             label={t("app.settings.streamingSettings.replayGainPreampLabel")}
             description={t(
@@ -306,6 +323,7 @@ export default function PlaybackAudioSection() {
             valueClassName="w-16"
             onDecrement={() => adjustPreamp(-1)}
             onIncrement={() => adjustPreamp(1)}
+            disabled={replayGainMode === "off"}
           />
         )}
       </VStack>

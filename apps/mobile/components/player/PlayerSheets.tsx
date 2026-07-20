@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
@@ -52,7 +51,6 @@ import {
   useIsDetailCached,
 } from "@/hooks/offline";
 import { usePlaybackProgress } from "@/hooks/player";
-import { useBottomSheetBackHandler } from "@/hooks/useBottomSheetBackHandler";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { getCurrentTime } from "@/services/player";
@@ -117,12 +115,6 @@ export default function PlayerSheets({
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const { handleSheetPositionChange } =
-    useBottomSheetBackHandler(actionsSheetRef);
-  const { handleSheetPositionChange: handleSleepSheetPositionChange } =
-    useBottomSheetBackHandler(sleepTimerSheetRef);
-  const { handleSheetPositionChange: handleArtistsSheetPositionChange } =
-    useBottomSheetBackHandler(bottomSheetArtistsModalRef);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
   const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
   const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
@@ -487,14 +479,12 @@ export default function PlayerSheets({
     <>
       <BottomSheetModalComponent
         ref={actionsSheetRef}
-        onChange={handleSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -791,14 +781,12 @@ export default function PlayerSheets({
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={sleepTimerSheetRef}
-        onChange={handleSleepSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
@@ -860,14 +848,12 @@ export default function PlayerSheets({
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={bottomSheetArtistsModalRef}
-        onChange={handleArtistsSheetPositionChange}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
         handleIndicatorStyle={{
           backgroundColor: "#b3b3b3",
         }}
-        backdropComponent={(props) => <BottomSheetBackdrop {...props} />}
       >
         <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
           <Box className="p-6 w-full mb-12">
