@@ -79,8 +79,8 @@
 				"internetRadioStationDescription": "Добавь радиостанцию, которую можно слушать прямо из приложения",
 				"podcastChannelTitle": "Подкаст",
 				"podcastChannelDescription": "Подпиши сервер на подкаст через RSS-ленту",
-				"downloaderTitle": "Add music",
-				"downloaderDescription": "Search and download music to your server"
+				"downloaderTitle": "Добавить музыку",
+				"downloaderDescription": "Поиск и загрузка музыки на сервер"
 			},
 			"carAuto": {
 				"home": "Главная",
@@ -587,8 +587,8 @@
 						"description": "Офлайн-режим, скачивание по Wi-Fi, управление загрузками"
 					},
 					"downloaders": {
-						"title": "Downloaders",
-						"description": "Add music to your server via Lidarr"
+						"title": "Загрузчики",
+						"description": "Добавь музыку на свой сервер через Lidarr"
 					},
 					"appearance": {
 						"title": "Внешний вид",
@@ -616,25 +616,25 @@
 					}
 				},
 				"downloaders": {
-					"description": "Connect a downloader to add music that isn't on your server yet. It's fetched into your library and appears after the next scan.",
-					"comingSoon": "Coming soon.",
+					"description": "Подключи загрузчик, чтобы добавить музыку, которой еще нет на сервере. Она будет скачана в твою медиатеку и появится после следующего скана.",
+					"comingSoon": "Скоро.",
 					"statuses": {
 						"active": "Активен",
 						"inactive": "Неактивен"
 					},
 					"lidarr": {
 						"title": "Lidarr",
-						"description": "Search and download albums through your Lidarr instance",
-						"getApiKeyAction": "Where do I find my API key?",
-						"serverUrlLabel": "Server URL",
+						"description": "Поиск и загрузка альбомов через ваш инстанс Lidarr",
+						"getApiKeyAction": "Где я могу найти свой ключ API?",
+						"serverUrlLabel": "URL сервера",
 						"apiKeyLabel": "API-ключ",
-						"apiKeyPlaceholder": "Your Lidarr API key",
-						"testAndSaveAction": "Test & save",
-						"connectionSuccess": "Connected to Lidarr",
-						"connectionFailed": "Couldn't connect. Check the URL and API key.",
-						"removedMessage": "Lidarr configuration removed",
-						"autoScanLabel": "Scan library after download",
-						"autoScanDescription": "Rescan your server when a download finishes so new albums show up automatically"
+						"apiKeyPlaceholder": "Твой ключ Lidarr API",
+						"testAndSaveAction": "Проверить и сохранить",
+						"connectionSuccess": "Подключено к Lidarr",
+						"connectionFailed": "Не удалось соединиться. Проверь URL и ключ API.",
+						"removedMessage": "Настройки Lidarr удалены",
+						"autoScanLabel": "Просканировать медиатеку после загрузки",
+						"autoScanDescription": "Обновлять сервер после загрузки, чтобы новые альбомы появлялись автоматически"
 					},
 					"discovery": {
 						"title": "Discovery",
