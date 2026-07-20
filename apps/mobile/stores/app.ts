@@ -85,6 +85,8 @@ interface AppStore {
   setLyricsTranslationLang: (lyricsTranslationLang: string | null) => void;
   lyricsShowPronunciation: boolean;
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
+  lyricsKeepScreenOn: boolean;
+  setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
   librarySort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -206,6 +208,10 @@ export const useAppBase = create<AppStore>()(
       lyricsShowPronunciation: false,
       setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => {
         set({ lyricsShowPronunciation });
+      },
+      lyricsKeepScreenOn: false,
+      setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => {
+        set({ lyricsKeepScreenOn });
       },
       librarySort: "addedAtAsc",
       setLibrarySort: (
