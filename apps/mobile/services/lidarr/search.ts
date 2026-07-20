@@ -1,4 +1,4 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
 import type { LidarrAlbum, LidarrSearchResult } from "@/services/lidarr/types";
 
 // Unified search: returns a mixed list of artist and album matches from

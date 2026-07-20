@@ -3,7 +3,7 @@ import {
   getMetadataProfiles,
   getQualityProfiles,
   getRootFolders,
-} from "@/services/lidarr";
+} from "@/services/lidarr/profiles";
 import useLidarr from "@/stores/lidarr";
 
 // Loads the quality/metadata profiles and root folders used by the discovery

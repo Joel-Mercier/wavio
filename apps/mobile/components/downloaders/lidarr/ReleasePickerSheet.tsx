@@ -18,7 +18,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useGrabRelease, useReleases } from "@/hooks/lidarr/useReleases";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
-import type { LidarrRelease } from "@/services/lidarr";
+import type { LidarrRelease } from "@/services/lidarr/releases";
 import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 import { niceBytes } from "@/utils/fileSize";
 import { cn } from "@/utils/tailwind";

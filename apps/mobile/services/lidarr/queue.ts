@@ -1,4 +1,5 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
+import { coverUrlFromImages } from "@/services/lidarr/images";
 import type { LidarrMediaCover } from "@/services/lidarr/types";
 
 interface LidarrQueueRecordRaw {
@@ -40,12 +41,6 @@ export interface LidarrQueueItem {
   errorMessage?: string;
 }
 
-function coverFrom(images: LidarrMediaCover[] | undefined): string | undefined {
-  if (!images?.length) return undefined;
-  const cover = images.find((i) => i.coverType === "cover");
-  return (cover ?? images[0])?.remoteUrl || undefined;
-}
-
 function groupByAlbum(records: LidarrQueueRecordRaw[]): LidarrQueueItem[] {
   const byKey = new Map<string, LidarrQueueRecordRaw[]>();
   for (const r of records) {
@@ -67,7 +62,7 @@ function groupByAlbum(records: LidarrQueueRecordRaw[]): LidarrQueueItem[] {
       albumId: first.albumId,
       albumTitle: first.album?.title || first.title || "Unknown album",
       artistName: first.artist?.artistName || "Unknown artist",
-      coverUrl: coverFrom(first.album?.images),
+      coverUrl: coverUrlFromImages(first.album?.images),
       size,
       sizeleft: Math.min(sizeleft, size),
       percentComplete,
