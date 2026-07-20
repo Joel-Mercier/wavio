@@ -614,10 +614,10 @@
 						"title": "Lidarr",
 						"description": "Cerca e scarica album attraverso la tua istanza Lidarr",
 						"getApiKeyAction": "Dove trovo la mia Chiave API?",
-						"apiKeyHelpTitle": "Finding your API key",
-						"apiKeyHelpStep1": "Open Lidarr in a web browser. It usually runs at http://<ip-address>:8686.",
-						"apiKeyHelpStep2": "Go to Settings > General.",
-						"apiKeyHelpStep3": "Scroll to the Security section and copy the API Key value.",
+						"apiKeyHelpTitle": "Trova la tua chiave API",
+						"apiKeyHelpStep1": "Apri Lidarr in un browser web. Di solito è accessibile all'indirizzo http://<ip-address>:8686.",
+						"apiKeyHelpStep2": "Vai su Impostazioni > Generali.",
+						"apiKeyHelpStep3": "Scorri fino alla sezione \"Sicurezza\" e copia il valore della chiave API.",
 						"apiKeyHelpClose": "Capito",
 						"serverUrlLabel": "Server URL",
 						"apiKeyLabel": "Chiave API",
@@ -766,6 +766,8 @@
 						"server": "Solo server",
 						"all": "Server + lrclib.net"
 					},
+					"lyricsKeepScreenOnLabel": "Keep screen on for lyrics",
+					"lyricsKeepScreenOnDescription": "Stop the screen from dimming while the lyrics screen is open and a track is playing. Uses more battery.",
 					"swipeActionLabel": "Azione Swipe",
 					"swipeActionDescription": "Azione che viene eseguita quando si effettua uno swipe (trascinamento) di un brano verso destra in un elenco",
 					"swipeActionOptions": {
