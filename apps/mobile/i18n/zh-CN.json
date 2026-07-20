@@ -608,6 +608,11 @@
 						"title": "Lidarr",
 						"description": "Search and download albums through your Lidarr instance",
 						"getApiKeyAction": "Where do I find my API key?",
+						"apiKeyHelpTitle": "Finding your API key",
+						"apiKeyHelpStep1": "Open Lidarr in a web browser. It usually runs at http://<ip-address>:8686.",
+						"apiKeyHelpStep2": "Go to Settings > General.",
+						"apiKeyHelpStep3": "Scroll to the Security section and copy the API Key value.",
+						"apiKeyHelpClose": "我知道了",
 						"serverUrlLabel": "Server URL",
 						"apiKeyLabel": "API key",
 						"apiKeyPlaceholder": "Your Lidarr API key",
@@ -752,6 +757,8 @@
 						"server": "仅服务器",
 						"all": "服务器 + lrclib.net"
 					},
+					"lyricsKeepScreenOnLabel": "Keep screen on for lyrics",
+					"lyricsKeepScreenOnDescription": "Stop the screen from dimming while the lyrics screen is open and a track is playing. Uses more battery.",
 					"swipeActionLabel": "Swipe action",
 					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
 					"swipeActionOptions": {

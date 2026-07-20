@@ -614,6 +614,11 @@
 						"title": "Lidarr",
 						"description": "Recherchez et téléchargez des albums via votre instance Lidarr",
 						"getApiKeyAction": "Où puis-je trouver ma clé API ?",
+						"apiKeyHelpTitle": "Finding your API key",
+						"apiKeyHelpStep1": "Open Lidarr in a web browser. It usually runs at http://<ip-address>:8686.",
+						"apiKeyHelpStep2": "Go to Settings > General.",
+						"apiKeyHelpStep3": "Scroll to the Security section and copy the API Key value.",
+						"apiKeyHelpClose": "J'ai compris",
 						"serverUrlLabel": "URL du serveur",
 						"apiKeyLabel": "Clé API",
 						"apiKeyPlaceholder": "Votre clé API Lidarr",
@@ -761,6 +766,8 @@
 						"server": "Serveur uniquement",
 						"all": "Serveur + lrclib.net"
 					},
+					"lyricsKeepScreenOnLabel": "Keep screen on for lyrics",
+					"lyricsKeepScreenOnDescription": "Stop the screen from dimming while the lyrics screen is open and a track is playing. Uses more battery.",
 					"swipeActionLabel": "Action de balayage",
 					"swipeActionDescription": "Action déclenchée lors du glissement d'une piste vers la droite dans une liste",
 					"swipeActionOptions": {
