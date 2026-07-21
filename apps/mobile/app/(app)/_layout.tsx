@@ -47,6 +47,7 @@ import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLidarr from "@/stores/lidarr";
 import useLocalLibrary from "@/stores/localLibrary";
+import useMusicBrainz from "@/stores/musicbrainz";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
 import usePlayHistory from "@/stores/playHistory";
@@ -141,6 +142,7 @@ export default function AppLayout() {
         useBookmarks.getState().__reset();
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
+        useMusicBrainz.getState().__reset();
         useServerExtensionsBase.getState().reset();
       });
       // Clear the previous server's reachability state so the new server starts
@@ -180,6 +182,7 @@ export default function AppLayout() {
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
+    useMusicBrainz.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });

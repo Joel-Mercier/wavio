@@ -5,6 +5,7 @@ import { logError } from "@/utils/log";
 import { getLocalLibraryDb } from "./db";
 import { deriveTrackTags } from "./deriveTags";
 import { albumKey, localTrackId, normalizeKey } from "./keys";
+import { reapplyOverridesAfterIndexing } from "./tagOverrides";
 
 // The scanner. Walks the user-selected source folders, calls the native
 // `audio-metadata` module per file and writes a normalized row into the
@@ -275,11 +276,24 @@ export async function scanLibrary(
         for (const id of removable) {
           await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
           await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", id);
+          // Unlike track_stats (which is left dangling so a returning file keeps
+          // its play count), a tag correction is meaningless without the file it
+          // corrects — and leaving it would silently re-apply to a *different*
+          // file that later hashes to the same URI-derived id.
+          await db.runAsync(
+            "DELETE FROM track_tag_overrides WHERE track_id = ?",
+            id,
+          );
         }
       });
       result.removed = removable.length;
     }
   }
+
+  // Every track written above had its FTS row rebuilt from the tags read off the
+  // file, so any correction on a re-indexed track was just reverted. Restore
+  // them before reporting the scan done.
+  await reapplyOverridesAfterIndexing();
 
   onProgress?.({
     phase: "done",
@@ -431,14 +445,17 @@ INSERT OR REPLACE INTO tracks (
   composer, genre, year, track_number, track_total, disc_number, disc_total,
   duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path,
   artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json,
-  release_types_json, album_key, artist_key, indexed_at
+  release_types_json, album_key, artist_key, indexed_at,
+  -- Seeded from the scanned keys. A track carrying a correction has these put
+  -- back by reapplyOverridesAfterIndexing once the scan finishes.
+  resolved_album_key, resolved_artist_key
 ) VALUES (
   $id, $uri, $path, $folder, $size, $mtime, $title, $artist, $album,
   $album_artist, $composer, $genre, $year, $track_number, $track_total,
   $disc_number, $disc_total, $duration_ms, $bitrate, $sample_rate,
   $is_compilation, $suffix, $artwork_path, $artwork_mime, $lyrics,
   $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
-  $album_key, $artist_key, $indexed_at
+  $album_key, $artist_key, $indexed_at, $album_key, $artist_key
 )`;
 
 async function writeTrack(

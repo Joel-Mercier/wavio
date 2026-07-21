@@ -1,0 +1,35 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.audiotagger'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.audiotagger"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+  buildFeatures {
+    buildConfig true
+  }
+  // No externalNativeBuild: libaudiotagger.so is prebuilt and committed under
+  // jniLibs (rebuild with native/build.sh). Gradle only packages it, so app
+  // builds, `expo prebuild` and EAS builds need no NDK or CMake.
+  sourceSets {
+    main {
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+}

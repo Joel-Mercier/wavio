@@ -9,12 +9,15 @@ import Palette from "lucide-react-native/dist/esm/icons/palette.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
+import Workflow from "lucide-react-native/dist/esm/icons/workflow.mjs";
 import type { ComponentType } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import SettingsLinkRow from "@/components/settings/SettingsLinkRow";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { VStack } from "@/components/ui/vstack";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import type { BackendCapabilities } from "@/services/backend/capabilities";
 import { useAuthBase } from "@/stores/auth";
 
 type IconProps = { size?: number; color?: string };
@@ -23,6 +26,9 @@ const MENU_ENTRIES: {
   key: string;
   icon: ComponentType<IconProps>;
   hideForLocal?: boolean;
+  // Hidden unless the active backend advertises this capability, so a section
+  // never opens onto features the server can't honour.
+  requiresCapability?: keyof BackendCapabilities;
 }[] = [
   { key: "playback", icon: AudioLines },
   { key: "library", icon: Library },
@@ -32,6 +38,7 @@ const MENU_ENTRIES: {
   { key: "radio", icon: Radio },
   { key: "storage", icon: HardDrive },
   { key: "downloaders", icon: CloudDownload, hideForLocal: true },
+  { key: "integrations", icon: Workflow, requiresCapability: "tagWriting" },
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
 ];
@@ -42,24 +49,28 @@ export default function SettingsMenu() {
   // The on-device library reads straight off the filesystem: offline downloads
   // don't apply, so that entry is hidden for it.
   const isLocal = useAuthBase((store) => store.serverType === "local");
+  const capabilities = useCapabilities();
 
   return (
     <SettingsScreenScaffold title={t("app.settings.title")}>
       <VStack>
-        {MENU_ENTRIES.filter((entry) => !(entry.hideForLocal && isLocal)).map(
-          (entry) => {
-            const Icon = entry.icon;
-            return (
-              <SettingsLinkRow
-                key={entry.key}
-                icon={<Icon size={24} color={white} />}
-                title={t(`app.settings.menu.${entry.key}.title`)}
-                description={t(`app.settings.menu.${entry.key}.description`)}
-                href={`/settings/${entry.key}` as Href}
-              />
-            );
-          },
-        )}
+        {MENU_ENTRIES.filter(
+          (entry) =>
+            !(entry.hideForLocal && isLocal) &&
+            (!entry.requiresCapability ||
+              capabilities[entry.requiresCapability]),
+        ).map((entry) => {
+          const Icon = entry.icon;
+          return (
+            <SettingsLinkRow
+              key={entry.key}
+              icon={<Icon size={24} color={white} />}
+              title={t(`app.settings.menu.${entry.key}.title`)}
+              description={t(`app.settings.menu.${entry.key}.description`)}
+              href={`/settings/${entry.key}` as Href}
+            />
+          );
+        })}
       </VStack>
     </SettingsScreenScaffold>
   );

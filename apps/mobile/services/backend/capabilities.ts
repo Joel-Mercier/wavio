@@ -45,6 +45,11 @@ export type BackendCapabilities = {
   // it onto the universal endpoint's AudioCodec/TranscodingContainer. The local
   // library plays files off disk, so it exposes no client-pickable format.
   streamFormatSelection: boolean;
+  // Correcting the library's tags from MusicBrainz. Only the on-device library
+  // owns its files: Navidrome refuses to write to the music folder by design,
+  // and Jellyfin's item-update API edits its own database rather than the files,
+  // so neither can be tagged from here. See services/musicbrainz/.
+  tagWriting: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -68,6 +73,7 @@ const SUBSONIC: BackendCapabilities = {
   offlineDownload: true,
   extendedMetadata: true,
   streamFormatSelection: true,
+  tagWriting: false,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -114,6 +120,7 @@ const JELLYFIN: BackendCapabilities = {
   // AudioCodec/TranscodingContainer, so the format picker maps onto it just like
   // Subsonic's `format=` param (see services/jellyfin/streaming.ts).
   streamFormatSelection: true,
+  tagWriting: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -148,6 +155,8 @@ const LOCAL: BackendCapabilities = {
   offlineDownload: false,
   extendedMetadata: false,
   streamFormatSelection: false,
+  // The only backend that owns its files, so the only one that can be tagged.
+  tagWriting: true,
 };
 
 // A few capabilities depend on per-server *config*, not just the server type:

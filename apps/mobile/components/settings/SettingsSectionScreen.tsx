@@ -4,6 +4,7 @@ import AppearanceSection from "@/components/settings/sections/AppearanceSection"
 import BackupRestoreSection from "@/components/settings/sections/BackupRestoreSection";
 import DownloadersSection from "@/components/settings/sections/DownloadersSection";
 import DownloadsOfflineSection from "@/components/settings/sections/DownloadsOfflineSection";
+import IntegrationsSection from "@/components/settings/sections/IntegrationsSection";
 import InternetRadioSection from "@/components/settings/sections/InternetRadioSection";
 import MusicLibrarySection from "@/components/settings/sections/MusicLibrarySection";
 import PlaybackAudioSection from "@/components/settings/sections/PlaybackAudioSection";
@@ -16,6 +17,7 @@ const SECTIONS: Record<string, React.ComponentType> = {
   library: MusicLibrarySection,
   downloads: DownloadsOfflineSection,
   downloaders: DownloadersSection,
+  integrations: IntegrationsSection,
   appearance: AppearanceSection,
   podcasts: PodcastsSection,
   radio: InternetRadioSection,

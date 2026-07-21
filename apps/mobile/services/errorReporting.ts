@@ -41,7 +41,12 @@ export type ReportArea =
 
 export type ReportBackend = "subsonic" | "jellyfin" | "local";
 
-export type ReportApi = "taddy" | "radio-browser" | "lrclib" | "lidarr";
+export type ReportApi =
+  | "taddy"
+  | "radio-browser"
+  | "lrclib"
+  | "lidarr"
+  | "musicbrainz";
 
 export type ReportContext = {
   /** Coarse subsystem the failure came from; becomes the `area` tag. */
