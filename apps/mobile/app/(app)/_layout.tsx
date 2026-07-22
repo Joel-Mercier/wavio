@@ -47,7 +47,7 @@ import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLidarr from "@/stores/lidarr";
-import useLocalLibrary from "@/stores/localLibrary";
+import useLocalLibrary, { consumeLocalRescanFlag } from "@/stores/localLibrary";
 import useMusicBrainz from "@/stores/musicbrainz";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -62,6 +62,12 @@ import { logError } from "@/utils/log";
 // Module-level so it survives AppLayout unmount/remount during the
 // logout → login flow used by switchToServer.
 let lastHydratedScope: string | null = null;
+// Set on logout so the next login re-runs the hydration pass even when the scope
+// is unchanged (e.g. sign out of the local library, change its folders on the
+// login screen, sign back in). Without it the `lastHydratedScope === scope`
+// guard would skip rehydration — and the local-library rescan flag consumption
+// below — leaving the previous library's index and scan stamp in place.
+let needsRehydrate = false;
 
 // Isolates the drawer's open-state subscription so toggling it re-renders only
 // this wrapper — not AppLayout, whose re-render would recreate the whole Stack
@@ -111,12 +117,16 @@ export default function AppLayout() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const scope = currentAuthScope();
-    if (lastHydratedScope === scope) return;
-    // Only reset when switching to a different (server, user) scope. On the
+    if (lastHydratedScope === scope && !needsRehydrate) return;
+    needsRehydrate = false;
+    // Only reset when switching to a *different* (server, user) scope. On the
     // initial hydration after app start the in-memory state is already the
     // initial defaults, and a reset here would race the async rehydrate and
-    // wipe data that's about to be restored from storage.
-    const isScopeChange = lastHydratedScope !== null;
+    // wipe data that's about to be restored from storage. A same-scope re-login
+    // (needsRehydrate) also isn't a scope change — the memory already holds this
+    // scope's data — so it must not reset either.
+    const isScopeChange =
+      lastHydratedScope !== null && lastHydratedScope !== scope;
     lastHydratedScope = scope;
     if (__DEV__) console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
@@ -189,8 +199,13 @@ export default function AppLayout() {
     });
     useOfflineMutations.persist.rehydrate();
     // Flag the local-library store ready once its saved scan summary is back, so
-    // the first-login indexing gate below can trust `lastScanAt`.
+    // the first-login indexing gate below can trust `lastScanAt`. If the source
+    // folders changed on the login screen, force a rescan now (post-hydration,
+    // so favourites aren't clobbered) by clearing the restored `lastScanAt`.
     void Promise.resolve(useLocalLibrary.persist.rehydrate()).then(() => {
+      if (consumeLocalRescanFlag()) {
+        useLocalLibrary.getState().requestRescan(false);
+      }
       useLocalLibrary.getState().setReady();
     });
 
@@ -222,6 +237,10 @@ export default function AppLayout() {
   // Tear down sync subscriptions on sign-out so a fresh login re-initialises.
   useEffect(() => {
     if (isAuthenticated) return;
+    // Force the hydration pass to run on the next login even if the scope is
+    // unchanged, so a same-scope re-sign-in still rehydrates and consumes the
+    // local-library rescan flag.
+    needsRehydrate = true;
     stopPlayQueueSync();
     stopOfflineMutationReplay();
   }, [isAuthenticated]);

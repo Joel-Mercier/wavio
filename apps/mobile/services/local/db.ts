@@ -85,12 +85,16 @@ export async function closeLocalLibraryDb(): Promise<void> {
 }
 
 /**
- * Drop the active scope's entire on-device index (and its file). Used by a
- * "clear local library" action. Re-opens lazily on the next query.
+ * Drop a scope's entire on-device index (and its file). Defaults to the active
+ * scope; pass an explicit `scope` to target another (e.g. deleting the local
+ * server while a different server is the active session — its file is keyed on
+ * `LOCAL_AUTH_SCOPE`, not the active one). Only the open handle is closed, and
+ * only when it belongs to the targeted scope. Re-opens lazily on the next query.
  */
-export async function deleteLocalLibraryDb(): Promise<void> {
-  const scope = currentScope();
-  await closeLocalLibraryDb();
+export async function deleteLocalLibraryDb(
+  scope: string = currentScope(),
+): Promise<void> {
+  if (current?.scope === scope) await closeLocalLibraryDb();
   try {
     await deleteDatabaseAsync(dbNameForScope(scope));
   } catch (error) {
@@ -136,6 +140,7 @@ CREATE TABLE IF NOT EXISTS tracks (
   release_types_json TEXT,
   album_key     TEXT,
   artist_key    TEXT,
+  source_folder TEXT,
   indexed_at    INTEGER NOT NULL
 );
 -- This table deliberately carries no secondary indexes: every read goes through
@@ -428,6 +433,13 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   // table that already exists from an earlier schema, so add later columns with
   // an idempotent ALTER. Cheap and self-healing on every open.
   await ensureColumn(db, "tracks", "release_types_json", "TEXT");
+  // `source_folder` records the configured root each track was indexed under, so
+  // dropping a folder from the library can delete exactly its tracks. Added after
+  // the table shipped, so backfill it on existing on-device indexes the same way.
+  await ensureColumn(db, "tracks", "source_folder", "TEXT");
+  await db.execAsync(
+    "CREATE INDEX IF NOT EXISTS idx_tracks_source_folder ON tracks(source_folder)",
+  );
   // `podcast_channels.author` was added after the table shipped (still v4), so
   // existing on-device indexes need the column backfilled the same way.
   await ensureColumn(db, "podcast_channels", "author", "TEXT");
@@ -542,6 +554,7 @@ export type TrackRow = {
   replay_gain_json: string | null;
   album_key: string | null;
   artist_key: string | null;
+  source_folder: string | null;
   indexed_at: number;
   // Joined from `track_stats` (LEFT JOIN): play_count defaults to 0 and
   // last_played_at is null when the track has never been played.

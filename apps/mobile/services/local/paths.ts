@@ -8,6 +8,22 @@ export function localFolders(): string[] {
   return server?.type === "local" ? (server.paths ?? []) : [];
 }
 
+// Order-insensitive equality of two folder lists. Used to tell whether the
+// configured source folders changed (and thus need a rescan).
+export function samePaths(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((p) => set.has(p));
+}
+
+// True when any folder in `previous` is absent from `next` — i.e. a source
+// folder was dropped, so its albums get pruned and any home shortcut pointing at
+// them goes stale. A pure addition leaves existing albums (and shortcuts) valid.
+export function foldersRemoved(previous: string[], next: string[]): boolean {
+  const nextSet = new Set(next);
+  return previous.some((f) => !nextSet.has(f));
+}
+
 // Turn an Android Storage Access Framework tree URI into a readable folder path.
 // e.g. content://com.android.externalstorage.documents/tree/primary%3AMusic%2FRock
 // -> "Music/Rock". Non-SAF entries (legacy plain paths) just drop the scheme.
