@@ -615,8 +615,8 @@
 						"description": "Доверенные сертификаты"
 					},
 					"updates": {
-						"title": "Updates",
-						"description": "Check for and install app updates"
+						"title": "Обновления",
+						"description": "Проверка обновлений приложения"
 					}
 				},
 				"downloaders": {
@@ -730,16 +730,16 @@
 					"pendingChangesDescription_other": "{{count}} изменения, сделанные офлайн, ожидают синхронизации"
 				},
 				"updatesSettings": {
-					"title": "Updates",
-					"autoCheckLabel": "Check for updates automatically",
-					"autoCheckDescription": "Check for a new version on launch and let you know when one is available",
-					"checkNowLabel": "Check for updates",
-					"checkNowDescription": "Look for a newer version now",
-					"checkNowAction": "Check",
-					"checking": "Checking…",
-					"upToDate": "You're on the latest version",
-					"checkFailed": "Couldn't check for updates. Check your connection and try again.",
-					"currentVersionLabel": "Current version"
+					"title": "Обновления",
+					"autoCheckLabel": "Проверять автоматически",
+					"autoCheckDescription": "Проверять обновления при запуске приложения",
+					"checkNowLabel": "Проверить сейчас",
+					"checkNowDescription": "Поиск обновления вручную",
+					"checkNowAction": "Проверить",
+					"checking": "Проверяем...",
+					"upToDate": "Вы используете последнюю версию",
+					"checkFailed": "Не удалось проверить наличие обновлений. Проверьте ваше соединение и попробуйте снова.",
+					"currentVersionLabel": "Текущая версия"
 				},
 				"storageSettings": {
 					"title": "Хранилище",
@@ -1284,13 +1284,13 @@
 				"switchConfirm": "Сменить"
 			},
 			"update": {
-				"title": "Update available (v{{version}})",
-				"description": "A new version of Wavio is available. Update now to get the latest features and fixes.",
-				"viewFullRelease": "View full release notes",
-				"later": "Later",
-				"update": "Update",
+				"title": "Доступно обновление (v{{version}})",
+				"description": "Доступна новая версия Wavio. Обнови, чтобы получить последние функции и фиксы.",
+				"viewFullRelease": "Посмотреть изменения",
+				"later": "Позже",
+				"update": "Обновить",
 				"downloading": "Загрузка… {{percent}}%",
-				"installing": "Opening the installer…",
+				"installing": "Открываем установщик...…",
 				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
 				"retry": "Повторить",
 				"openBrowser": "Open in browser"
