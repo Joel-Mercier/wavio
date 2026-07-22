@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
 import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
@@ -311,7 +311,7 @@ export default function EditProfileScreen() {
     },
   });
 
-  const [isDirty, isSubmitting] = useStore(form.store, (state) => [
+  const [isDirty, isSubmitting] = useSelector(form.store, (state) => [
     state.isDirty,
     state.isSubmitting,
   ]);

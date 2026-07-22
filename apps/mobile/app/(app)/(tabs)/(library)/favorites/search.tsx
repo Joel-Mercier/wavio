@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import type { FuseResult } from "fuse.js";
 import Fuse from "fuse.js";
@@ -46,7 +46,7 @@ export default function FavoritesSearch() {
       query: "",
     },
   });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
   };

@@ -3,7 +3,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -127,7 +127,7 @@ export default function PodcastsSearchScreen() {
       filtersSheetRef.current?.dismiss();
     },
   });
-  const values = useStore(form.store, (state) => state.values);
+  const values = useSelector(form.store, (state) => state.values);
 
   const {
     data,

@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
@@ -170,7 +170,7 @@ export default function ServersDetail() {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
 
   // The local library is a singleton (fixed `local` URL + scope), so only offer
   // it when none exists yet; an existing one is managed from its list entry.

@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -47,7 +47,7 @@ export default function PlaylistDetailSearch() {
       query: "",
     },
   });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
   };
