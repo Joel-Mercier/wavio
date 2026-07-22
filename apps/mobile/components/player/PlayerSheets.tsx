@@ -781,6 +781,7 @@ export default function PlayerSheets({
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={sleepTimerSheetRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
@@ -848,6 +849,7 @@ export default function PlayerSheets({
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
         ref={bottomSheetArtistsModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

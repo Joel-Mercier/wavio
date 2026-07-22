@@ -46,7 +46,8 @@ export type ReportApi =
   | "radio-browser"
   | "lrclib"
   | "lidarr"
-  | "musicbrainz";
+  | "musicbrainz"
+  | "github";
 
 export type ReportContext = {
   /** Coarse subsystem the failure came from; becomes the `area` tag. */

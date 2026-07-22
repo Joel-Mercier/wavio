@@ -8,10 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1700C54848B891681F1961A2 /* libPods-Wavio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F8A7478091756CFCB9BA2D8 /* libPods-Wavio.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4118D5BB6C1BDBDC09995EDB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A0BF0E44FB3000EABE4F879F /* PrivacyInfo.xcprivacy */; };
-		6D4129E2FC8C3D1C8C0CAD22 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED33F1B2AE0E3531D4AE8833 /* ExpoModulesProvider.swift */; };
-		8BDC02CCF8BBBF836ACDE33D /* libPods-Wavio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A168526AE4253A7D21453E04 /* libPods-Wavio.a */; };
+		48C13485024A30688DDBAD2F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4BD08657066702248ABF71EA /* PrivacyInfo.xcprivacy */; };
+		5AEE6DFDEFB95D94FED5DD63 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0DC57623F07BEEB4E0A0EA /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -20,14 +20,14 @@
 		13B07F961A680F5B00A75B9A /* Wavio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wavio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Wavio/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Wavio/Info.plist; sourceTree = "<group>"; };
-		923A23A72F34842120324585 /* Pods-Wavio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.release.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.release.xcconfig"; sourceTree = "<group>"; };
-		9958A43514FCCBABD9414893 /* Pods-Wavio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.debug.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.debug.xcconfig"; sourceTree = "<group>"; };
-		A0BF0E44FB3000EABE4F879F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Wavio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		A168526AE4253A7D21453E04 /* libPods-Wavio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Wavio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		48A052121DE352B949945C91 /* Pods-Wavio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.release.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.release.xcconfig"; sourceTree = "<group>"; };
+		4BD08657066702248ABF71EA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Wavio/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5C0DC57623F07BEEB4E0A0EA /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		8F8A7478091756CFCB9BA2D8 /* libPods-Wavio.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Wavio.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Wavio/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		E2688EF6C29EFA8A0628898A /* Pods-Wavio.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Wavio.debug.xcconfig"; path = "Target Support Files/Pods-Wavio/Pods-Wavio.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		ED33F1B2AE0E3531D4AE8833 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Wavio/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Wavio-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Wavio-Bridging-Header.h"; path = "Wavio/Wavio-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -37,13 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8BDC02CCF8BBBF836ACDE33D /* libPods-Wavio.a in Frameworks */,
+				1700C54848B891681F1961A2 /* libPods-Wavio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0CDF768C29781110353F822A /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				BAC51ABB9CB1D5FE23628AC3 /* Wavio */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Wavio */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,34 +61,28 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				A0BF0E44FB3000EABE4F879F /* PrivacyInfo.xcprivacy */,
+				4BD08657066702248ABF71EA /* PrivacyInfo.xcprivacy */,
 			);
 			name = Wavio;
-			sourceTree = "<group>";
-		};
-		19F01EE90629E24CB7C6A969 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				569D069D88B55FFD8ABA327B /* Wavio */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				A168526AE4253A7D21453E04 /* libPods-Wavio.a */,
+				8F8A7478091756CFCB9BA2D8 /* libPods-Wavio.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		569D069D88B55FFD8ABA327B /* Wavio */ = {
+		2E26A0828DBC451DA4A0496B /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				ED33F1B2AE0E3531D4AE8833 /* ExpoModulesProvider.swift */,
+				E2688EF6C29EFA8A0628898A /* Pods-Wavio.debug.xcconfig */,
+				48A052121DE352B949945C91 /* Pods-Wavio.release.xcconfig */,
 			);
-			name = Wavio;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -97,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				FA0F04B1FA5A52C92143A67B /* Pods */,
-				19F01EE90629E24CB7C6A969 /* ExpoModulesProviders */,
+				2E26A0828DBC451DA4A0496B /* Pods */,
+				0CDF768C29781110353F822A /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -113,6 +115,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BAC51ABB9CB1D5FE23628AC3 /* Wavio */ = {
+			isa = PBXGroup;
+			children = (
+				5C0DC57623F07BEEB4E0A0EA /* ExpoModulesProvider.swift */,
+			);
+			name = Wavio;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -120,16 +130,6 @@
 			);
 			name = Supporting;
 			path = Wavio/Supporting;
-			sourceTree = "<group>";
-		};
-		FA0F04B1FA5A52C92143A67B /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				9958A43514FCCBABD9414893 /* Pods-Wavio.debug.xcconfig */,
-				923A23A72F34842120324585 /* Pods-Wavio.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,15 +140,15 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Wavio" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				165742CC074DD6054E9B1B9A /* [Expo] Configure project */,
+				98444530A145328544950F3E /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				26881466504E4B979B5528E2 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
-				01D2C27237FB4C729676055F /* Upload Debug Symbols to Sentry */,
-				097A681BB42E94E7A260AB8A /* [CP] Embed Pods Frameworks */,
+				B373C75EB1F848F39E7CD608 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
+				78DFA37057304DACA1518594 /* Upload Debug Symbols to Sentry */,
+				AA643F92A9EA22AE0776834C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -198,7 +198,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				4118D5BB6C1BDBDC09995EDB /* PrivacyInfo.xcprivacy in Resources */,
+				48C13485024A30688DDBAD2F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,20 +222,6 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n/bin/sh `\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode.sh'\"` `\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		01D2C27237FB4C729676055F /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Upload Debug Symbols to Sentry";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh `${NODE_BINARY:-node} --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\"`";
-		};
 		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -258,7 +244,107 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		097A681BB42E94E7A260AB8A /* [CP] Embed Pods Frameworks */ = {
+		78DFA37057304DACA1518594 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh `${NODE_BINARY:-node} --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\"`";
+		};
+		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoLocalization/ExpoLocalization_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-timing/React-timing_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastCoreResources.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastUIResources.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastOptionalUIResources.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/MaterialDialogs.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansBold.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansMedium.bundle",
+				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansRegular.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/google-cast-sdk/GoogleCast.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoLocalization_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-timing_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastCoreResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastUIResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastOptionalUIResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MaterialDialogs.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansBold.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansMedium.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansRegular.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCast.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		98444530A145328544950F3E /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Wavio/Wavio.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Wavio/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Wavio/expo-configure-project.sh\"\n";
+		};
+		AA643F92A9EA22AE0776834C /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -304,31 +390,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		165742CC074DD6054E9B1B9A /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/Wavio/Wavio.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Wavio/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Wavio/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Wavio/expo-configure-project.sh\"\n";
-		};
-		26881466504E4B979B5528E2 /* [Expo Dev Launcher] Strip Local Network Keys for Release */ = {
+		B373C75EB1F848F39E7CD608 /* [Expo Dev Launcher] Strip Local Network Keys for Release */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -342,66 +404,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# Strip dev-launcher-specific local network permission keys from non-Debug builds\n# This only removes _expo._tcp Bonjour services and the dev-launcher usage description.\n# Other Bonjour services and custom descriptions are preserved for production use.\n\nif [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  PLIST_PATH=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n  if [ -f \"$PLIST_PATH\" ]; then\n    # Check if NSBonjourServices exists\n    if /usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" >/dev/null 2>&1; then\n      # Get the count of services\n      COUNT=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n\n      # Remove _expo._tcp\n      for ((i=COUNT-1; i>=0; i--)); do\n        SERVICE=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n        if echo \"$SERVICE\" | grep -q \"_expo._tcp\"; then\n          /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices:$i\" \"$PLIST_PATH\" 2>/dev/null || true\n        fi\n      done\n\n      # If the array is now empty, remove it entirely\n      REMAINING=$(/usr/libexec/PlistBuddy -c \"Print :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null | grep \"^    \" | wc -l | tr -d ' ')\n      if [ \"$REMAINING\" -eq \"0\" ]; then\n        /usr/libexec/PlistBuddy -c \"Delete :NSBonjourServices\" \"$PLIST_PATH\" 2>/dev/null || true\n      fi\n    fi\n\n    # Only delete the description if it matches the dev-launcher default text\n    DESC=$(/usr/libexec/PlistBuddy -c \"Print :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || echo \"\")\n    if echo \"$DESC\" | grep -q \"Expo Dev Launcher\"; then\n      /usr/libexec/PlistBuddy -c \"Delete :NSLocalNetworkUsageDescription\" \"$PLIST_PATH\" 2>/dev/null || true\n    fi\n  fi\nfi\n";
 		};
-		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoLocalization/ExpoLocalization_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoMediaLibrary/ExpoMediaLibrary_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-timing/React-timing_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastCoreResources.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastUIResources.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleCastOptionalUIResources.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/MaterialDialogs.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansBold.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansMedium.bundle",
-				"${PODS_ROOT}/google-cast-sdk/GoogleCastSDK-ios-4.8.4_static_xcframework/GoogleCast.xcframework/ios-arm64/GoogleCast.framework/GoogleSansRegular.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/google-cast-sdk/GoogleCast.bundle",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoLocalization_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoMediaLibrary_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-timing_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastCoreResources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastUIResources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCastOptionalUIResources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MaterialDialogs.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansBold.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansMedium.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSansRegular.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleCast.bundle",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Wavio/Pods-Wavio-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -410,7 +412,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				6D4129E2FC8C3D1C8C0CAD22 /* ExpoModulesProvider.swift in Sources */,
+				5AEE6DFDEFB95D94FED5DD63 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,7 +421,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9958A43514FCCBABD9414893 /* Pods-Wavio.debug.xcconfig */;
+			baseConfigurationReference = E2688EF6C29EFA8A0628898A /* Pods-Wavio.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -456,7 +458,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 923A23A72F34842120324585 /* Pods-Wavio.release.xcconfig */;
+			baseConfigurationReference = 48A052121DE352B949945C91 /* Pods-Wavio.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

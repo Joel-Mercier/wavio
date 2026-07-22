@@ -1029,6 +1029,7 @@ export default function AlbumDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

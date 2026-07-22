@@ -18,6 +18,7 @@ import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import JukeboxSheet from "@/components/player/JukeboxSheet";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
+import UpdateGate from "@/components/update/UpdateGate";
 import {
   persistOptions,
   queryClient,
@@ -292,6 +293,7 @@ export default function AppLayout() {
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <JukeboxSheet />
+      <UpdateGate />
     </>
   );
 }
