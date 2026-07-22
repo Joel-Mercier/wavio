@@ -613,6 +613,10 @@
 					"security": {
 						"title": "Безопасность",
 						"description": "Доверенные сертификаты"
+					},
+					"updates": {
+						"title": "Updates",
+						"description": "Check for and install app updates"
 					}
 				},
 				"downloaders": {
@@ -724,6 +728,18 @@
 					"pendingChangesDescription_few": "{{count}} изменения, сделанные офлайн, ожидают синхронизации",
 					"pendingChangesDescription_many": "{{count}} изменений, сделанных офлайн, ожидают синхронизации",
 					"pendingChangesDescription_other": "{{count}} изменения, сделанные офлайн, ожидают синхронизации"
+				},
+				"updatesSettings": {
+					"title": "Updates",
+					"autoCheckLabel": "Check for updates automatically",
+					"autoCheckDescription": "Check for a new version on launch and let you know when one is available",
+					"checkNowLabel": "Check for updates",
+					"checkNowDescription": "Look for a newer version now",
+					"checkNowAction": "Check",
+					"checking": "Checking…",
+					"upToDate": "You're on the latest version",
+					"checkFailed": "Couldn't check for updates. Check your connection and try again.",
+					"currentVersionLabel": "Current version"
 				},
 				"storageSettings": {
 					"title": "Хранилище",
@@ -1266,6 +1282,18 @@
 				"switchServerConfirmTitle": "Сменить сервер?",
 				"switchServerConfirmDescription": "Ты выйдешь из системы и вернешься на экран входа.",
 				"switchConfirm": "Сменить"
+			},
+			"update": {
+				"title": "Update available (v{{version}})",
+				"description": "A new version of Wavio is available. Update now to get the latest features and fixes.",
+				"viewFullRelease": "View full release notes",
+				"later": "Later",
+				"update": "Update",
+				"downloading": "Загрузка… {{percent}}%",
+				"installing": "Opening the installer…",
+				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
+				"retry": "Повторить",
+				"openBrowser": "Open in browser"
 			},
 			"shared": {
 				"advancedSettings": "Расширенные настройки",
