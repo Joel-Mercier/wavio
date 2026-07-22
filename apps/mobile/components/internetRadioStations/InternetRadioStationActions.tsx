@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
@@ -136,7 +136,7 @@ export default function InternetRadioStationActions({
     },
   });
 
-  const [isDirty, isSubmitting] = useStore(form.store, (state) => [
+  const [isDirty, isSubmitting] = useSelector(form.store, (state) => [
     state.isDirty,
     state.isSubmitting,
   ]);

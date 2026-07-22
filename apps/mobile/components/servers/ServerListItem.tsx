@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
@@ -151,7 +151,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();

@@ -1,5 +1,5 @@
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,7 +20,7 @@ export default function SheetSearchInput({
     "--color-white",
   ]) as string[];
   const form = useForm({ defaultValues: { query: "" } });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
 
   useEffect(() => {
     onChangeText(query);

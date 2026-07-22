@@ -1,5 +1,5 @@
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -54,7 +54,7 @@ export default function AllAlbumsScreen() {
         })
       : 1;
   const form = useForm({ defaultValues: { query: "" } });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const listRef = useRef<FlashListRef<AlbumID3>>(null);
