@@ -624,7 +624,7 @@
 						"writeMode": {
 							"title": "Where corrections go",
 							"label": "Write tags into files",
-							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too.",
+							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too. Because writes are permanent, auto-approval is turned off in this mode: every match waits in the review queue and nothing is written to a file until you approve it.",
 							"unavailable": "Not available on this device. Corrections are stored in Wavio only, and can be undone at any time."
 						},
 						"automation": {
