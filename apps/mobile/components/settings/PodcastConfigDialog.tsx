@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useState } from "react";
@@ -66,7 +66,7 @@ function SelectSearchInput({
     "--color-primary-50",
   ]) as string[];
   const form = useForm({ defaultValues: { query: "" } });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
 
   useEffect(() => {
     onChangeText(query);
@@ -186,11 +186,11 @@ export default function PodcastConfigDialog({
     },
   });
 
-  const isPodcastConfigDirty = useStore(
+  const isPodcastConfigDirty = useSelector(
     podcastConfigForm.store,
     (state) => state.isDirty,
   );
-  const isValidating = useStore(
+  const isValidating = useSelector(
     podcastConfigForm.store,
     (state) => state.isSubmitting,
   );

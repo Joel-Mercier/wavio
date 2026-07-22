@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import type { Href } from "expo-router";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import Compass from "lucide-react-native/dist/esm/icons/compass.mjs";
@@ -122,7 +122,7 @@ export default function LidarrConfigScreen() {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
 
   const handleRemove = () => {
     clearConfig();

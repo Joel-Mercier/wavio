@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import * as Clipboard from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
@@ -135,7 +135,7 @@ export default function ShareListItem({ share }: { share: Share }) {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
 
   const handleCloseAlertDialog = () => setShowAlertDialog(false);
 
