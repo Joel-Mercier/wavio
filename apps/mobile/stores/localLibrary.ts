@@ -54,6 +54,10 @@ interface LocalLibraryStore {
   // can tell "first login, never scanned" (`ready && lastScanAt === undefined`)
   // apart from "still loading the saved scan summary".
   ready: boolean;
+  // Whether the next gate scan should force a full re-extraction (explicit
+  // settings "rescan") vs an incremental one (a folder change only needs new
+  // files indexed). Ephemeral — reset per app start.
+  forceNextScan: boolean;
 
   setStatus: (status: ScanStatus) => void;
   setScanFinished: (result: ScanResult) => void;
@@ -61,13 +65,22 @@ interface LocalLibraryStore {
   /**
    * Clear the last-scan stamp so the full-screen indexing gate
    * (components/local/LocalLibraryIndexing) re-opens and runs a fresh scan.
-   * Used by the settings "rescan" action in local mode.
+   * Used by the settings "rescan" action and whenever the source folders change.
+   * `force` re-extracts every file (settings rescan); the default incremental
+   * scan only indexes new/changed files (a folder add/remove).
    */
-  requestRescan: () => void;
+  requestRescan: (force?: boolean) => void;
   star: (target: StarTarget) => void;
   unstar: (target: StarTarget) => void;
   /** Set a 1–5 rating for a local id; a rating of 0 clears it (Subsonic). */
   setRating: (id: string, rating: number) => void;
+  /**
+   * Wipe this scope's favourites/ratings and scan stamp (keeping `ready`) when
+   * the local server is deleted, so a re-added local library starts clean. Kept
+   * separate from `__reset` because that also clears `ready`, which would strand
+   * the indexing gate on a same-scope re-login that skips rehydration.
+   */
+  clearLocalLibraryData: () => void;
   __reset: () => void;
 }
 
@@ -80,6 +93,7 @@ const initialState = {
   ratings: {} as RatingMap,
   status: idleStatus,
   ready: false,
+  forceNextScan: false,
 };
 
 const useLocalLibraryBase = create<LocalLibraryStore>()(
@@ -99,8 +113,12 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
         set({ ready: true });
       },
 
-      requestRescan: () => {
-        set({ lastScanAt: undefined, lastScanResult: undefined });
+      requestRescan: (force = false) => {
+        set({
+          lastScanAt: undefined,
+          lastScanResult: undefined,
+          forceNextScan: force,
+        });
       },
 
       setScanFinished: (result) => {
@@ -108,6 +126,18 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           status: idleStatus,
           lastScanAt: Date.now(),
           lastScanResult: result,
+          forceNextScan: false,
+        });
+      },
+
+      clearLocalLibraryData: () => {
+        set({
+          lastScanAt: undefined,
+          lastScanResult: undefined,
+          favoriteTracks: {},
+          favoriteAlbums: {},
+          favoriteArtists: {},
+          ratings: {},
         });
       },
 
@@ -174,3 +204,19 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
 const useLocalLibrary = createSelectors(useLocalLibraryBase);
 
 export default useLocalLibrary;
+
+// One-shot signal that the source folders changed on the login screen, so the
+// app layout should force a rescan once the local-library store has rehydrated.
+// Module-level (not store state) so a scope-change `__reset` can't wipe it
+// between login and the post-hydration consumer in app/(app)/_layout.tsx.
+let pendingLocalRescan = false;
+
+export function flagLocalRescanOnEntry(): void {
+  pendingLocalRescan = true;
+}
+
+export function consumeLocalRescanFlag(): boolean {
+  const pending = pendingLocalRescan;
+  pendingLocalRescan = false;
+  return pending;
+}

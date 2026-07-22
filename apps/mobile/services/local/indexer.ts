@@ -85,7 +85,15 @@ export function createScanController(): ScanController {
   };
 }
 
-type ScannedFile = { uri: string; name: string; size: number; mtime: number };
+type ScannedFile = {
+  uri: string;
+  name: string;
+  size: number;
+  mtime: number;
+  // The configured root (as it appears in Server.paths) this file was found
+  // under. First folder to reach a URI wins, matching the URI de-dup below.
+  sourceFolder: string;
+};
 
 type ExistingRow = { id: string; mtime: number | null; size: number | null };
 
@@ -142,7 +150,7 @@ export async function scanLibrary(
         ? folder
         : `file://${folder}`;
       const dir = new Directory(normalized);
-      if (dir.exists) await collectAudioFiles(dir, seen, 0, listed);
+      if (dir.exists) await collectAudioFiles(dir, seen, 0, listed, folder);
     } catch (error) {
       logError(`[localLibrary] Failed to list folder ${folder}`, error);
     }
@@ -289,6 +297,33 @@ export async function scanLibrary(
   return result;
 }
 
+/**
+ * Delete every indexed track whose `source_folder` is one of `folders` (and its
+ * FTS shadow row). Used when a folder is dropped from the library config so its
+ * tracks are removed directly, without re-walking the folders that remain.
+ * No-op for an empty list.
+ */
+export async function deleteTracksByFolders(
+  db: Awaited<ReturnType<typeof getLocalLibraryDb>>,
+  folders: string[],
+): Promise<number> {
+  if (folders.length === 0) return 0;
+  const placeholders = folders.map(() => "?").join(", ");
+  let removed = 0;
+  await db.withTransactionAsync(async () => {
+    const ids = await db.getAllAsync<{ id: string }>(
+      `SELECT id FROM tracks WHERE source_folder IN (${placeholders})`,
+      ...folders,
+    );
+    for (const { id } of ids) {
+      await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
+      await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", id);
+    }
+    removed = ids.length;
+  });
+  return removed;
+}
+
 // --- internals -------------------------------------------------------------
 
 async function collectAudioFiles(
@@ -296,6 +331,7 @@ async function collectAudioFiles(
   out: Map<string, ScannedFile>,
   depth: number,
   listed: { dirs: number },
+  sourceFolder: string,
 ): Promise<void> {
   if (depth > MAX_DEPTH) return;
   if (++listed.dirs % LIST_YIELD_EVERY === 0) {
@@ -311,14 +347,16 @@ async function collectAudioFiles(
   for (const entry of entries) {
     if (entry instanceof File) {
       if (!isAudioFile(entry.name)) continue;
+      if (out.has(entry.uri)) continue;
       out.set(entry.uri, {
         uri: entry.uri,
         name: entry.name,
         size: entry.size ?? 0,
         mtime: entry.modificationTime ?? 0,
+        sourceFolder,
       });
     } else {
-      await collectAudioFiles(entry, out, depth + 1, listed);
+      await collectAudioFiles(entry, out, depth + 1, listed, sourceFolder);
     }
   }
 }
@@ -372,6 +410,7 @@ type TrackInsert = {
   release_types_json: string | null;
   album_key: string;
   artist_key: string;
+  source_folder: string;
   indexed_at: number;
 };
 
@@ -421,6 +460,7 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
       : null,
     album_key: albumKey(derived.album, albumArtist, artist),
     artist_key: normalizeKey(albumArtist || artist),
+    source_folder: file.sourceFolder,
     indexed_at: Date.now(),
   };
 }
@@ -431,14 +471,14 @@ INSERT OR REPLACE INTO tracks (
   composer, genre, year, track_number, track_total, disc_number, disc_total,
   duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path,
   artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json,
-  release_types_json, album_key, artist_key, indexed_at
+  release_types_json, album_key, artist_key, source_folder, indexed_at
 ) VALUES (
   $id, $uri, $path, $folder, $size, $mtime, $title, $artist, $album,
   $album_artist, $composer, $genre, $year, $track_number, $track_total,
   $disc_number, $disc_total, $duration_ms, $bitrate, $sample_rate,
   $is_compilation, $suffix, $artwork_path, $artwork_mime, $lyrics,
   $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
-  $album_key, $artist_key, $indexed_at
+  $album_key, $artist_key, $source_folder, $indexed_at
 )`;
 
 async function writeTrack(
@@ -480,6 +520,7 @@ async function writeTrack(
     $release_types_json: row.release_types_json,
     $album_key: row.album_key,
     $artist_key: row.artist_key,
+    $source_folder: row.source_folder,
     $indexed_at: row.indexed_at,
   });
   await db.runAsync(

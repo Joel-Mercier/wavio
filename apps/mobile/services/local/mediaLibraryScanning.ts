@@ -1,5 +1,7 @@
+import { getLocalLibraryDb } from "@/services/local/db";
 import {
   createScanController,
+  deleteTracksByFolders,
   type ScanController,
   scanLibrary,
 } from "@/services/local/indexer";
@@ -70,6 +72,30 @@ export const startScan = async (force = false) => {
   }
   const scanStatus: ScanStatus = { scanning: true };
   return localEnvelope({ scanStatus });
+};
+
+/**
+ * Reconcile the index with the configured source folders, then scan. Folders no
+ * longer configured have their tracks deleted directly (by `source_folder`);
+ * `startScan` then indexes added/changed files under the remaining folders. This
+ * is the gate's entry point so both a folder change and a first login funnel
+ * through the same path. `force` re-extracts every file (settings "rescan").
+ */
+export const runLibraryReconcileScan = async (force = false) => {
+  try {
+    const configured = new Set(localFolders());
+    const db = await getLocalLibraryDb();
+    const rows = await db.getAllAsync<{ source_folder: string | null }>(
+      "SELECT DISTINCT source_folder FROM tracks WHERE source_folder IS NOT NULL",
+    );
+    const removed = rows
+      .map((r) => r.source_folder as string)
+      .filter((folder) => !configured.has(folder));
+    await deleteTracksByFolders(db, removed);
+  } catch (error) {
+    logError("[local] Failed to reconcile removed folders", error);
+  }
+  return startScan(force);
 };
 
 export const getScanStatus = async () => {

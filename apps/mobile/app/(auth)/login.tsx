@@ -76,8 +76,11 @@ import {
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 import { reportError, scrubUrl } from "@/services/errorReporting";
+import { foldersRemoved, samePaths } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
+import { flagLocalRescanOnEntry } from "@/stores/localLibrary";
+import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   cleanOptionalUrl,
   type Server,
@@ -224,6 +227,16 @@ export default function LoginScreen() {
           // Single local server (no remote URL, no multiple accounts): a fixed
           // sentinel URL/username so the per-(server,user) scope is stable.
           const existing = servers.find((s) => s.type === "local");
+          const localPathsChanged =
+            !!existing && !samePaths(existing.paths ?? [], paths);
+          const localFoldersRemoved =
+            !!existing && foldersRemoved(existing.paths ?? [], paths);
+          // Folders changed since the last session: flag a rescan so the app
+          // layout re-opens the indexing gate once the store rehydrates (doing
+          // it here, pre-hydration, would clobber the persisted favourites).
+          if (localPathsChanged) {
+            flagLocalRescanOnEntry();
+          }
           const server = addServer({
             name: existing?.name ?? t("auth.login.localLibraryName"),
             url: "local",
@@ -238,6 +251,12 @@ export default function LoginScreen() {
             password: "",
             serverType: "local",
           });
+          // A dropped folder prunes its albums, so home shortcuts pointing at
+          // them go stale. Clear now that the scope is `local` (post-login);
+          // clearing over stale/empty is the intent, so hydration timing is moot.
+          if (localFoldersRemoved) {
+            useRecentPlays.getState().clearRecentPlays();
+          }
         } else {
           const mtlsAlias = value.mtlsAlias?.trim() || undefined;
           const fallbackUrl = cleanOptionalUrl(value.fallbackUrl);

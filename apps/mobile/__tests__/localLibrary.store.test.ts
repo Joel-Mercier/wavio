@@ -69,3 +69,61 @@ describe("localLibrary store — favourites still work alongside ratings", () =>
     expect(get().ratings["local-album:a"]).toBe(4);
   });
 });
+
+describe("localLibrary store — rescan control", () => {
+  it("requestRescan clears the scan stamp and defaults to incremental", () => {
+    get().setScanFinished({
+      indexed: 1,
+      skipped: 0,
+      removed: 0,
+      failed: 0,
+      cancelled: false,
+    });
+    expect(get().lastScanAt).toBeDefined();
+    get().requestRescan();
+    expect(get().lastScanAt).toBeUndefined();
+    expect(get().forceNextScan).toBe(false);
+  });
+
+  it("requestRescan(true) marks the next scan as forced", () => {
+    get().requestRescan(true);
+    expect(get().forceNextScan).toBe(true);
+  });
+
+  it("setScanFinished resets the force flag", () => {
+    get().requestRescan(true);
+    get().setScanFinished({
+      indexed: 0,
+      skipped: 0,
+      removed: 0,
+      failed: 0,
+      cancelled: false,
+    });
+    expect(get().forceNextScan).toBe(false);
+  });
+});
+
+describe("localLibrary store — clearLocalLibraryData (server deletion)", () => {
+  it("wipes favourites, ratings and the scan stamp but keeps ready", () => {
+    get().setReady();
+    get().star({ id: "local-track:x" });
+    get().star({ albumId: "local-album:a" });
+    get().setRating("local-album:a", 4);
+    get().setScanFinished({
+      indexed: 2,
+      skipped: 0,
+      removed: 0,
+      failed: 0,
+      cancelled: false,
+    });
+
+    get().clearLocalLibraryData();
+
+    expect(get().favoriteTracks).toEqual({});
+    expect(get().favoriteAlbums).toEqual({});
+    expect(get().ratings).toEqual({});
+    expect(get().lastScanAt).toBeUndefined();
+    expect(get().lastScanResult).toBeUndefined();
+    expect(get().ready).toBe(true);
+  });
+});

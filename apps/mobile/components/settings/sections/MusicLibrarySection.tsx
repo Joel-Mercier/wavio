@@ -41,7 +41,7 @@ export default function MusicLibrarySection() {
     // full re-extraction (with live progress) rather than the background
     // incremental scan — so new tag fields land on already-indexed files.
     if (isLocal) {
-      useLocalLibrary.getState().requestRescan();
+      useLocalLibrary.getState().requestRescan(true);
       return;
     }
     doStartScan.mutate(undefined, {
