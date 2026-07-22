@@ -9,7 +9,7 @@ import { Heading } from "@/components/ui/heading";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { startScan } from "@/services/local/mediaLibraryScanning";
+import { runLibraryReconcileScan } from "@/services/local/mediaLibraryScanning";
 import useLocalLibrary, { type ScanStatus } from "@/stores/localLibrary";
 
 // Full-screen first-login gate for the local-library backend. Kicks off the
@@ -44,16 +44,16 @@ export default function LocalLibraryIndexing() {
   const status = useLocalLibrary((s) => s.status);
   const queryClient = useQueryClient();
 
-  // This gate only ever runs a *complete* scan — either first login (empty
-  // index) or an explicit rescan (lastScanAt cleared via `requestRescan`). Force
-  // a full re-extraction so a rescan picks up new tag fields on files the
-  // incremental scan would otherwise skip as unchanged.
-  // Start the scan once the store is hydrated and we've confirmed it's never
-  // been scanned. Deps stay stable across the scan (lastScanAt only flips when
-  // it finishes), so this fires exactly once; `startScan` also self-guards.
+  // The gate opens on first login (empty index), an explicit rescan, or a folder
+  // change (all clear `lastScanAt` via `requestRescan`). `runLibraryReconcileScan`
+  // deletes tracks under removed folders and indexes the rest; `forceNextScan`
+  // (set by the settings rescan) forces a full re-extraction, otherwise it's
+  // incremental. Start once the store is hydrated and confirmed unscanned. Deps
+  // stay stable across the scan (lastScanAt only flips when it finishes), so this
+  // fires exactly once; `startScan` also self-guards.
   useEffect(() => {
     if (ready && lastScanAt === undefined) {
-      void startScan(true);
+      void runLibraryReconcileScan(useLocalLibrary.getState().forceNextScan);
     }
   }, [ready, lastScanAt]);
 
@@ -73,7 +73,7 @@ export default function LocalLibraryIndexing() {
       processed: 0,
       total: 0,
     });
-    void startScan(true);
+    void runLibraryReconcileScan(useLocalLibrary.getState().forceNextScan);
   };
 
   const skip = () => {
