@@ -193,7 +193,7 @@ export default function EditSmartPlaylistScreen() {
         <ErrorDisplay error={error as Error} />
       ) : isLoading && !hydrated ? (
         <Box className="flex-1 items-center justify-center">
-          <Spinner />
+          <Spinner color={emerald500} />
         </Box>
       ) : (
         <KeyboardAwareScrollView

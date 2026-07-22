@@ -28,8 +28,8 @@ import { AbortedError } from "@/utils/rateLimitedQueue";
 export default function AlbumMatchScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [primary800] = Uniwind.getCSSVariable([
-    "--color-primary-800",
+  const [emerald500] = Uniwind.getCSSVariable([
+    "--color-emerald-500",
   ]) as string[];
   // The route carries the hex-encoded album id (see services/local/keys.ts),
   // which survives expo-router's decodeURIComponent pass intact — a raw album
@@ -119,7 +119,7 @@ export default function AlbumMatchScreen() {
     return (
       <SettingsScreenScaffold title={title}>
         <Box className="py-12 items-center">
-          <Spinner />
+          <Spinner color={emerald500} />
         </Box>
       </SettingsScreenScaffold>
     );
@@ -218,7 +218,7 @@ export default function AlbumMatchScreen() {
                 button reads as unresponsive and invites a second tap. */}
             {applying ? (
               <HStack className="items-center gap-x-2">
-                <Spinner size="small" color={primary800} />
+                <Spinner size="small" color={emerald500} />
                 <Text className="text-primary-800 font-bold text-lg">
                   {t("app.settings.integrations.musicbrainz.album.applying")}
                 </Text>

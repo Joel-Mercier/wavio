@@ -621,6 +621,9 @@
 						"title": "MusicBrainz",
 						"description": "Match your albums and correct their tags",
 						"intro": "Matches each album in your local library against MusicBrainz and corrects its tags. MusicBrainz allows one request per second, so a large library takes a few minutes.",
+						"tabs": {
+							"setup": "Setup"
+						},
 						"writeMode": {
 							"title": "Where corrections go",
 							"label": "Write tags into files",
