@@ -737,8 +737,8 @@
 					"checkNowDescription": "Поиск обновления вручную",
 					"checkNowAction": "Проверить",
 					"checking": "Проверяем...",
-					"upToDate": "Вы используете последнюю версию",
-					"checkFailed": "Не удалось проверить наличие обновлений. Проверьте ваше соединение и попробуйте снова.",
+					"upToDate": "Установлена последняя версия",
+					"checkFailed": "Не удалось проверить наличие обновлений. Проверь интернет соединение и попробуй снова.",
 					"currentVersionLabel": "Текущая версия"
 				},
 				"storageSettings": {
@@ -1222,7 +1222,7 @@
 				"jukeboxStatus": "{{state}} · {{index}}/{{total}}",
 				"jukeboxStatePlaying": "Воспроизведение",
 				"jukeboxStatePaused": "Пауза",
-				"jukeboxErrorMessage": "Не удалось подключиться к Jukebox на сервере. Проверьте права доступа.",
+				"jukeboxErrorMessage": "Не удалось подключиться к Jukebox на сервере. Проверь права доступа.",
 				"jukeboxResumeTitle": "Возобновить работу Jukebox?",
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
@@ -1291,9 +1291,9 @@
 				"update": "Обновить",
 				"downloading": "Загрузка… {{percent}}%",
 				"installing": "Открываем установщик...…",
-				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
+				"errorDescription": "Не удалось загрузить обновление. Проверь соединение с интернетом и попробуй позже. Или скачай новую версию с Github.",
 				"retry": "Повторить",
-				"openBrowser": "Open in browser"
+				"openBrowser": "Открыть в браузере"
 			},
 			"shared": {
 				"advancedSettings": "Расширенные настройки",
@@ -1466,7 +1466,7 @@
 				"choice": "Или введите данные сервера вручную",
 				"login": "Продолжить",
 				"loginSuccessMessage": "Успешный вход",
-				"loginErrorMessage": "Не удалось подключиться к серверу. Проверьте данные сервера и попробуйте снова.",
+				"loginErrorMessage": "Не удалось подключиться к серверу. Проверь данные сервера и попробуй снова",
 				"serverAlreadyExists": "Сервер уже добавлен",
 				"showPassword": "Показать пароль",
 				"hidePassword": "Скрыть пароль",
