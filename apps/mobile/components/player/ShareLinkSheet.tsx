@@ -85,6 +85,7 @@ export default function ShareLinkSheet({
   return (
     <BottomSheetModalComponent
       ref={sheetRef}
+      enableHalfExpand={false}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}

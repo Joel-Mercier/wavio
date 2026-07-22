@@ -117,6 +117,7 @@ export default function JukeboxSheet() {
     <BottomSheetModalComponent
       ref={sheetRef}
       onChange={handleSheetChange}
+      enableHalfExpand={false}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
     >

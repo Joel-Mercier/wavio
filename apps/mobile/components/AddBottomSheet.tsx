@@ -75,6 +75,7 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
     <CenteredBottomSheetModal
       ref={ref}
       enablePanDownToClose={true}
+      enableHalfExpand={false}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}

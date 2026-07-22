@@ -53,6 +53,7 @@ export default function LyricsLayersSheet({
   return (
     <BottomSheetModalComponent
       ref={sheetRef}
+      enableHalfExpand={false}
       backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
       handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
     >

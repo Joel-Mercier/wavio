@@ -289,6 +289,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       </Card>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
