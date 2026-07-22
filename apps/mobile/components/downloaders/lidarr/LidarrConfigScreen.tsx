@@ -5,9 +5,9 @@ import Compass from "lucide-react-native/dist/esm/icons/compass.mjs";
 import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking } from "react-native";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
+import LidarrApiKeyHelpDialog from "@/components/downloaders/lidarr/LidarrApiKeyHelpDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FieldError, {
   handleFieldBlur,
@@ -27,7 +27,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCanStartScan } from "@/hooks/useCanStartScan";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
-import { testConnection } from "@/services/lidarr";
+import { testConnection } from "@/services/lidarr/auth";
 import useLidarr from "@/stores/lidarr";
 import { cn } from "@/utils/tailwind";
 
@@ -92,6 +92,7 @@ export default function LidarrConfigScreen() {
   const clearConfig = useLidarr((store) => store.clearConfig);
 
   const [isTesting, setIsTesting] = useState(false);
+  const [isApiKeyHelpOpen, setIsApiKeyHelpOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -158,14 +159,14 @@ export default function LidarrConfigScreen() {
           </Badge>
         </HStack>
 
-        <Text
-          className="text-emerald-400 text-sm underline"
-          onPress={() =>
-            Linking.openURL("https://wiki.servarr.com/lidarr/settings#general")
-          }
+        <FadeOutScaleDown
+          onPress={() => setIsApiKeyHelpOpen(true)}
+          className="self-start"
         >
-          {t("app.settings.downloaders.lidarr.getApiKeyAction")}
-        </Text>
+          <Text className="text-emerald-400 text-sm underline">
+            {t("app.settings.downloaders.lidarr.getApiKeyAction")}
+          </Text>
+        </FadeOutScaleDown>
 
         <form.Field name="serverUrl">
           {(field) => (
@@ -266,6 +267,10 @@ export default function LidarrConfigScreen() {
           disabled={!canStartScan}
         />
       </VStack>
+      <LidarrApiKeyHelpDialog
+        isOpen={isApiKeyHelpOpen}
+        onClose={() => setIsApiKeyHelpOpen(false)}
+      />
     </SettingsScreenScaffold>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLidarrQueue } from "@/hooks/lidarr/useLidarrDownloads";
 import { useCanStartScan } from "@/hooks/useCanStartScan";
 import { startScan } from "@/services/backend/mediaLibraryScanning";
-import { detectFinishedQueueItems } from "@/services/lidarr";
+import { detectFinishedQueueItems } from "@/services/lidarr/queue";
 import useLidarr from "@/stores/lidarr";
 import { logError } from "@/utils/log";
 

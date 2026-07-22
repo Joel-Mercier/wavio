@@ -85,6 +85,8 @@ interface AppStore {
   setLyricsTranslationLang: (lyricsTranslationLang: string | null) => void;
   lyricsShowPronunciation: boolean;
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
+  lyricsKeepScreenOn: boolean;
+  setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
   librarySort:
     | "addedAtAsc"
     | "addedAtDesc"
@@ -162,6 +164,17 @@ interface AppStore {
   setInternetRadioCountryCode: (countryCode: string | null) => void;
   internetRadioFeedTags: string[];
   setInternetRadioFeedTags: (tags: string[]) => void;
+  // In-app updater (see services/appUpdate). When on, github builds check
+  // GitHub releases on launch. `lastDismissedUpdateVersion` suppresses the
+  // "update available" dialog for a version the user tapped "Later" on (still
+  // re-prompts for a newer one). `lastUpdateCheckAt` throttles the auto-check
+  // (GitHub's 60 req/h unauthenticated limit).
+  autoUpdateCheckEnabled: boolean;
+  setAutoUpdateCheckEnabled: (enabled: boolean) => void;
+  lastDismissedUpdateVersion: string | null;
+  setLastDismissedUpdateVersion: (version: string | null) => void;
+  lastUpdateCheckAt: number | null;
+  setLastUpdateCheckAt: (timestamp: number | null) => void;
   // Live device orientation + window width, kept in sync by
   // services/orientation.ts. Transient device state (not persisted) — exposed
   // here so any screen can branch its layout on `isWideLayout` without each one
@@ -213,6 +226,10 @@ export const useAppBase = create<AppStore>()(
       lyricsShowPronunciation: false,
       setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => {
         set({ lyricsShowPronunciation });
+      },
+      lyricsKeepScreenOn: false,
+      setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => {
+        set({ lyricsKeepScreenOn });
       },
       librarySort: "addedAtAsc",
       setLibrarySort: (
@@ -320,6 +337,20 @@ export const useAppBase = create<AppStore>()(
       internetRadioFeedTags: DEFAULT_INTERNET_RADIO_FEED_TAGS,
       setInternetRadioFeedTags: (internetRadioFeedTags: string[]) => {
         set({ internetRadioFeedTags });
+      },
+      autoUpdateCheckEnabled: true,
+      setAutoUpdateCheckEnabled: (autoUpdateCheckEnabled: boolean) => {
+        set({ autoUpdateCheckEnabled });
+      },
+      lastDismissedUpdateVersion: null,
+      setLastDismissedUpdateVersion: (
+        lastDismissedUpdateVersion: string | null,
+      ) => {
+        set({ lastDismissedUpdateVersion });
+      },
+      lastUpdateCheckAt: null,
+      setLastUpdateCheckAt: (lastUpdateCheckAt: number | null) => {
+        set({ lastUpdateCheckAt });
       },
       orientation: Orientation.PORTRAIT_UP,
       windowWidth: Dimensions.get("window").width,

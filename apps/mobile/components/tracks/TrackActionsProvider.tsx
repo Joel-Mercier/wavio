@@ -641,6 +641,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       {children}
       <CenteredBottomSheetModal
         ref={bottomSheetArtistsModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
@@ -669,6 +670,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
@@ -804,6 +806,46 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {capabilities.offlineDownload &&
+                  !isTrackDownloading(track.id) &&
+                  !isTrackDownloaded(track.id) && (
+                    <FadeOutScaleDown
+                      onPress={handleOfflineDownloadPress}
+                      disabled={!isOnline}
+                    >
+                      <HStack className="items-center">
+                        <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                          <ArrowDown size={20} color={black} />
+                        </Box>
+                        <Text className="ml-4 text-lg text-emerald-400">
+                          {t("app.tracks.downloadForOffline")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                  )}
+                {capabilities.offlineDownload &&
+                  isTrackDownloading(track.id) && (
+                    <HStack className="items-center">
+                      <Download size={24} color={gray400} />
+                      <Text className="ml-4 text-lg text-gray-400">
+                        {t("app.tracks.downloadingForOffline")} (
+                        {getDownloadProgress(track.id)?.progress || 0}%)
+                      </Text>
+                    </HStack>
+                  )}
+                {capabilities.offlineDownload &&
+                  isTrackDownloaded(track.id) && (
+                    <FadeOutScaleDown
+                      onPress={handleRemoveOfflineDownloadPress}
+                    >
+                      <HStack className="items-center">
+                        <X size={24} color={red500} />
+                        <Text className="ml-4 text-lg text-red-400">
+                          {t("app.tracks.removeOfflineDownload")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                  )}
                 {capabilities.setRating && (
                   <FadeOutScaleDown onPress={handleRatingPress}>
                     <HStack className="items-center justify-between">
@@ -868,46 +910,6 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                {capabilities.offlineDownload &&
-                  !isTrackDownloading(track.id) &&
-                  !isTrackDownloaded(track.id) && (
-                    <FadeOutScaleDown
-                      onPress={handleOfflineDownloadPress}
-                      disabled={!isOnline}
-                    >
-                      <HStack className="items-center">
-                        <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                          <ArrowDown size={20} color={black} />
-                        </Box>
-                        <Text className="ml-4 text-lg text-emerald-400">
-                          {t("app.tracks.downloadForOffline")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
-                {capabilities.offlineDownload &&
-                  isTrackDownloading(track.id) && (
-                    <HStack className="items-center">
-                      <Download size={24} color={gray400} />
-                      <Text className="ml-4 text-lg text-gray-400">
-                        {t("app.tracks.downloadingForOffline")} (
-                        {getDownloadProgress(track.id)?.progress || 0}%)
-                      </Text>
-                    </HStack>
-                  )}
-                {capabilities.offlineDownload &&
-                  isTrackDownloaded(track.id) && (
-                    <FadeOutScaleDown
-                      onPress={handleRemoveOfflineDownloadPress}
-                    >
-                      <HStack className="items-center">
-                        <X size={24} color={red500} />
-                        <Text className="ml-4 text-lg text-red-400">
-                          {t("app.tracks.removeOfflineDownload")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
                 {hasCredits && (
                   <FadeOutScaleDown onPress={handleCreditsPress}>
                     <HStack className="items-center">

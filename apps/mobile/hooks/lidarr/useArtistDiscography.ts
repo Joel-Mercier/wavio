@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { ensureArtistForBrowsing, getArtistAlbums } from "@/services/lidarr";
+import {
+  ensureArtistForBrowsing,
+  getArtistAlbums,
+} from "@/services/lidarr/library";
 import useLidarr from "@/stores/lidarr";
 import { useResolvedAddDefaults } from "./useAddAlbum";
 

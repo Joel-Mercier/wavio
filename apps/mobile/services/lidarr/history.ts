@@ -1,4 +1,5 @@
-import { lidarrRequest } from "@/services/lidarr/client";
+import { lidarrRequest } from "@/services/lidarr";
+import { coverUrlFromImages } from "@/services/lidarr/images";
 import type { LidarrMediaCover } from "@/services/lidarr/types";
 
 interface LidarrHistoryRecordRaw {
@@ -38,12 +39,6 @@ const RELEVANT_EVENTS = new Set([
   "downloadIgnored",
 ]);
 
-function coverFrom(images: LidarrMediaCover[] | undefined): string | undefined {
-  if (!images?.length) return undefined;
-  const cover = images.find((i) => i.coverType === "cover");
-  return (cover ?? images[0])?.remoteUrl || undefined;
-}
-
 export async function fetchHistory(): Promise<LidarrHistoryItem[]> {
   const data = await lidarrRequest<LidarrHistoryResponse>("/history", {
     params: {
@@ -66,6 +61,6 @@ export async function fetchHistory(): Promise<LidarrHistoryItem[]> {
       trackTitle: r.track?.title,
       artistName: r.artist?.artistName || "Unknown artist",
       sourceTitle: r.sourceTitle,
-      coverUrl: coverFrom(r.album?.images),
+      coverUrl: coverUrlFromImages(r.album?.images),
     }));
 }

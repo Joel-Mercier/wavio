@@ -4,9 +4,8 @@ import {
   addAlbum,
   downloadAddedAlbum,
   getAddedAlbum,
-  type LidarrAddDefaults,
-  type LidarrAlbum,
-} from "@/services/lidarr";
+} from "@/services/lidarr/library";
+import type { LidarrAddDefaults, LidarrAlbum } from "@/services/lidarr/types";
 import useLidarr from "@/stores/lidarr";
 import { useLidarrProfiles } from "./useLidarrProfiles";
 

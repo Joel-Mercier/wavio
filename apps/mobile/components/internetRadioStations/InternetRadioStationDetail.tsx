@@ -354,6 +354,7 @@ export default function InternetRadioStationDetail() {
       </ScrollView>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

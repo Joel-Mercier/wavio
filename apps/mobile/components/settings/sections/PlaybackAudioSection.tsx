@@ -83,6 +83,8 @@ export default function PlaybackAudioSection() {
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const lyricsSource = useApp((store) => store.lyricsSource);
   const setLyricsSource = useApp((store) => store.setLyricsSource);
+  const lyricsKeepScreenOn = useApp((store) => store.lyricsKeepScreenOn);
+  const setLyricsKeepScreenOn = useApp((store) => store.setLyricsKeepScreenOn);
 
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
@@ -250,6 +252,15 @@ export default function PlaybackAudioSection() {
             `app.settings.displaySettings.lyricsSourceOptions.${lyricsSource}`,
           )}
           onPress={() => bottomSheetLyricsSourceModalRef.current?.present()}
+        />
+        <SettingsToggleRow
+          label={t("app.settings.displaySettings.lyricsKeepScreenOnLabel")}
+          description={t(
+            "app.settings.displaySettings.lyricsKeepScreenOnDescription",
+          )}
+          value={lyricsKeepScreenOn}
+          onToggle={(value) => setLyricsKeepScreenOn(value)}
+          disabled={lyricsSource === "off"}
         />
         <Divider className="bg-primary-400" />
         <SettingsSectionTitle

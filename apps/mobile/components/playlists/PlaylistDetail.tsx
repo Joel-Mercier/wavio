@@ -845,6 +845,7 @@ export default function PlaylistDetail() {
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}
@@ -1024,6 +1025,7 @@ export default function PlaylistDetail() {
       </CenteredBottomSheetModal>
       <CenteredBottomSheetModal
         ref={bottomSheetSortModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

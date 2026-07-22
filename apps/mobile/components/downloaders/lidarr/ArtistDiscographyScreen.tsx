@@ -15,7 +15,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { useArtistDiscography } from "@/hooks/lidarr/useArtistDiscography";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import { deleteArtist, getArtistAlbums } from "@/services/lidarr";
+import { deleteArtist, getArtistAlbums } from "@/services/lidarr/library";
 import type { LidarrAlbum } from "@/services/lidarr/types";
 import useLidarr from "@/stores/lidarr";
 import { goBackOrHome } from "@/utils/navigation";

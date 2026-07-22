@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchHistory } from "@/services/lidarr/history";
 import {
   cancelQueueItem,
-  fetchHistory,
   fetchQueue,
   type LidarrQueueItem,
-} from "@/services/lidarr";
+} from "@/services/lidarr/queue";
 import useLidarr from "@/stores/lidarr";
 
 // Polls the Lidarr download queue. Shared by the downloads screen and the

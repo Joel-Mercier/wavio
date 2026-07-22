@@ -45,6 +45,7 @@ export default function OptionsBottomSheetModal<
   return (
     <CenteredBottomSheetModal
       ref={modalRef}
+      enableHalfExpand={false}
       backgroundStyle={{
         backgroundColor: "rgb(41, 41, 41)",
       }}

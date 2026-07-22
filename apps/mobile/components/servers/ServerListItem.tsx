@@ -238,6 +238,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       </VStack>
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}
+        enableHalfExpand={false}
         backgroundStyle={{
           backgroundColor: "rgb(41, 41, 41)",
         }}

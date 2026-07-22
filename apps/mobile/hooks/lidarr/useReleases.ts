@@ -3,7 +3,7 @@ import {
   getReleases,
   grabRelease,
   type LidarrRelease,
-} from "@/services/lidarr";
+} from "@/services/lidarr/releases";
 import useLidarr from "@/stores/lidarr";
 
 // Interactive release search for an album already in Lidarr. Disabled until an
