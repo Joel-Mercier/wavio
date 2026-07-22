@@ -601,6 +601,10 @@
 					"security": {
 						"title": "Sicurezza",
 						"description": "Certificati affidabili"
+					},
+					"updates": {
+						"title": "Updates",
+						"description": "Check for and install app updates"
 					}
 				},
 				"downloaders": {
@@ -706,6 +710,18 @@
 					"pendingChangesAction": "Visualizza",
 					"pendingChangesDescription_one": "{{count}} modifica effettuata offline in attesa di sincronizzazione",
 					"pendingChangesDescription_other": "{{count}} modifiche apportate offline in attesa di sincronizzazione"
+				},
+				"updatesSettings": {
+					"title": "Updates",
+					"autoCheckLabel": "Check for updates automatically",
+					"autoCheckDescription": "Check for a new version on launch and let you know when one is available",
+					"checkNowLabel": "Check for updates",
+					"checkNowDescription": "Look for a newer version now",
+					"checkNowAction": "Check",
+					"checking": "Checking…",
+					"upToDate": "You're on the latest version",
+					"checkFailed": "Couldn't check for updates. Check your connection and try again.",
+					"currentVersionLabel": "Current version"
 				},
 				"storageSettings": {
 					"title": "Archiviazione",
@@ -1232,6 +1248,18 @@
 				"switchServerConfirmTitle": "Cambiare server?",
 				"switchServerConfirmDescription": "Verrai disconnesso e reindirizzato alla schermata di accesso.",
 				"switchConfirm": "Cambia"
+			},
+			"update": {
+				"title": "Update available (v{{version}})",
+				"description": "A new version of Wavio is available. Update now to get the latest features and fixes.",
+				"viewFullRelease": "View full release notes",
+				"later": "Later",
+				"update": "Update",
+				"downloading": "Download in corso… {{percent}}%",
+				"installing": "Opening the installer…",
+				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
+				"retry": "Riprova",
+				"openBrowser": "Open in browser"
 			},
 			"shared": {
 				"advancedSettings": "Impostazioni avanzate",
