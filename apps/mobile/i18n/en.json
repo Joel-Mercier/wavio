@@ -601,6 +601,10 @@
 					"security": {
 						"title": "Security",
 						"description": "Trusted certificates"
+					},
+					"updates": {
+						"title": "Updates",
+						"description": "Check for and install app updates"
 					}
 				},
 				"downloaders": {
@@ -706,6 +710,18 @@
 					"pendingChangesDescription_one": "{{count}} change made offline waiting to sync",
 					"pendingChangesDescription_other": "{{count}} changes made offline waiting to sync",
 					"pendingChangesAction": "View"
+				},
+				"updatesSettings": {
+					"title": "Updates",
+					"autoCheckLabel": "Check for updates automatically",
+					"autoCheckDescription": "Check for a new version on launch and let you know when one is available",
+					"checkNowLabel": "Check for updates",
+					"checkNowDescription": "Look for a newer version now",
+					"checkNowAction": "Check",
+					"checking": "Checking…",
+					"upToDate": "You're on the latest version",
+					"checkFailed": "Couldn't check for updates. Check your connection and try again.",
+					"currentVersionLabel": "Current version"
 				},
 				"storageSettings": {
 					"title": "Storage",
@@ -1233,6 +1249,18 @@
 				"switchServerConfirmTitle": "Switch server?",
 				"switchServerConfirmDescription": "You will be logged out and redirected to the sign-in screen.",
 				"switchConfirm": "Switch"
+			},
+			"update": {
+				"title": "Update available (v{{version}})",
+				"description": "A new version of Wavio is available. Update now to get the latest features and fixes.",
+				"viewFullRelease": "View full release notes",
+				"later": "Later",
+				"update": "Update",
+				"downloading": "Downloading… {{percent}}%",
+				"installing": "Opening the installer…",
+				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
+				"retry": "Retry",
+				"openBrowser": "Open in browser"
 			},
 			"shared": {
 				"advancedSettings": "Advanced settings",

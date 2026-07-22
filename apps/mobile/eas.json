@@ -11,7 +11,8 @@
       "env": {
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "development"
+        "EXPO_PUBLIC_ENV": "development",
+        "EXPO_PUBLIC_DISTRIBUTION": "github"
       }
     },
     "preview": {
@@ -24,7 +25,8 @@
       "env": {
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "preview"
+        "EXPO_PUBLIC_ENV": "preview",
+        "EXPO_PUBLIC_DISTRIBUTION": "github"
       }
     },
     "production": {
@@ -33,7 +35,8 @@
       "env": {
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
-        "EXPO_PUBLIC_ENV": "production"
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_DISTRIBUTION": "store"
       }
     },
     "production-apk": {
@@ -44,7 +47,8 @@
         "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
       },
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_DISTRIBUTION": "github"
       }
     },
     "production-apk-armv7": {

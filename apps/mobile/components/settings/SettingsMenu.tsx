@@ -8,6 +8,7 @@ import Library from "lucide-react-native/dist/esm/icons/library.mjs";
 import Palette from "lucide-react-native/dist/esm/icons/palette.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
+import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
 import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
 import type { ComponentType } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,6 +35,7 @@ const MENU_ENTRIES: {
   { key: "downloaders", icon: CloudDownload, hideForLocal: true },
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
+  { key: "updates", icon: RefreshCw },
 ];
 
 export default function SettingsMenu() {

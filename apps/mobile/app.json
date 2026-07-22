@@ -13,7 +13,8 @@
       "supportsTablet": true,
       "requireFullScreen": true,
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": ["audio"],
+        "AppStoreID": ""
       },
       "icon": {
         "dark": "./assets/images/ios-dark.png",
@@ -92,6 +93,7 @@
       "./plugins/withWidgets",
       "./plugins/withDependenciesInfo",
       "./plugins/withSslTrust",
+      "./plugins/withInstallApkPermission",
       [
         "@sentry/react-native/expo",
         {
