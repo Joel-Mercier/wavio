@@ -63,7 +63,7 @@
 				"alphabeticalSort": "Ordine alfabetico",
 				"artistSort": "Artista",
 				"albumSort": "Album",
-				"sizeSort": "File size",
+				"sizeSort": "Dimensione del file",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
 				"search": {
@@ -580,8 +580,8 @@
 						"description": "Aggiungi musica al tuo server tramite Lidarr"
 					},
 					"integrations": {
-						"title": "Integrations",
-						"description": "Correct your library's tags with MusicBrainz"
+						"title": "Integrazioni",
+						"description": "Correggi i tag della tua libreria con MusicBrainz"
 					},
 					"appearance": {
 						"title": "Aspetto",
@@ -608,44 +608,44 @@
 						"description": "Certificati affidabili"
 					},
 					"updates": {
-						"title": "Updates",
-						"description": "Check for and install app updates"
+						"title": "Aggiornamenti",
+						"description": "Verifica la disponibilità di aggiornamenti per le app e installali"
 					}
 				},
 				"integrations": {
-					"description": "Connect external music databases to enrich and correct your library.",
+					"description": "Collega database musicali esterni per arricchire e correggere la tua libreria.",
 					"statuses": {
 						"configured": "Attivo",
-						"notConfigured": "Not set up"
+						"notConfigured": "Non configurato"
 					},
 					"musicbrainz": {
 						"title": "MusicBrainz",
-						"description": "Match your albums and correct their tags",
-						"intro": "Matches each album in your local library against MusicBrainz and corrects its tags. MusicBrainz allows one request per second, so a large library takes a few minutes.",
+						"description": "Abbina i tuoi album e correggi i tag",
+						"intro": "Confronta ogni album presente nella tua libreria locale con MusicBrainz e ne corregge i tag. MusicBrainz consente una richiesta al secondo, quindi per una libreria di grandi dimensioni l'operazione richiede alcuni minuti.",
 						"tabs": {
-							"setup": "Setup"
+							"setup": "Configurazione"
 						},
 						"writeMode": {
-							"title": "Where corrections go",
-							"label": "Write tags into files",
-							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too. Because writes are permanent, auto-approval is turned off in this mode: every match waits in the review queue and nothing is written to a file until you approve it.",
-							"unavailable": "Not available on this device. Corrections are stored in Wavio only, and can be undone at any time."
+							"title": "Dove finiscono le correzioni",
+							"label": "Scrivere i tag nei file",
+							"description": "Le correzioni vengono scritte direttamente nei file audio, quindi sono permanenti e visibili ad altre app. Questa operazione non può essere annullata. Anche la copertina è incorporata nel file. Poiché le modifiche sono permanenti, in questa modalità l'approvazione automatica è disattivata: ogni corrispondenza rimane in coda di revisione e nulla viene scritto nel file finché non lo approvi.",
+							"unavailable": "Non disponibile su questo dispositivo. Le correzioni vengono salvate solo su Wavio e possono essere annullate in qualsiasi momento."
 						},
 						"automation": {
-							"title": "Automation"
+							"title": "Automazione"
 						},
 						"autoApply": {
-							"label": "Apply confident matches automatically",
-							"description": "Matches above the confidence threshold are applied without asking. Everything else waits for your review.",
-							"filesDescription": "Unavailable while writing to files, since a wrong match cannot be undone. Every match is reviewed first."
+							"label": "Applica automaticamente le corrispondenze sicure",
+							"description": "I risultati che superano la soglia di affidabilità vengono applicati automaticamente. Tutti gli altri rimangono in attesa della tua verifica.",
+							"filesDescription": "Non disponibile durante la scrittura sui file, poiché una corrispondenza errata non può essere annullata. Ogni corrispondenza viene prima verificata."
 						},
 						"threshold": {
-							"label": "Confidence threshold",
-							"description": "How certain a match must be before it is applied automatically. Only used when the setting above is on."
+							"label": "Soglia di confidenza",
+							"description": "Quanto deve essere certa una corrispondenza affinché venga applicata automaticamente. Utilizzato solo quando l'impostazione sopra indicata è attiva."
 						},
 						"fields": {
-							"title": "Fields to correct",
-							"description": "Only the selected fields are changed. Everything else keeps the value read from your files. Cover art is only added to tracks that have none — artwork already in your files is left alone.",
+							"title": "Campi da correggere",
+							"description": "Vengono modificati solo i campi selezionati. Tutto il resto mantiene il valore letto dai tuoi file. La copertina viene aggiunta solo ai brani che ne sono sprovvisti; le copertine già presenti nei tuoi file rimangono invariate.",
 							"labels": {
 								"title": "Titolo",
 								"artist": "Artista",
@@ -658,44 +658,44 @@
 							}
 						},
 						"scan": {
-							"title": "Match library",
-							"label": "Scan for matches",
-							"description": "Looks up every album in your library on MusicBrainz.",
+							"title": "Libreria delle partite",
+							"label": "Cerca corrispondenze",
+							"description": "Cerca su MusicBrainz tutti gli album presenti nella tua libreria.",
 							"start": "Scansione",
 							"cancel": "Annulla",
-							"progress": "{{processed}} of {{total}} — {{album}}",
-							"summary": "{{applied}} applied, {{pending}} awaiting review, {{unmatched}} without a match.",
-							"cancelledSummary": "Cancelled after {{processed}} of {{total}} albums. {{applied}} applied, {{pending}} awaiting review.",
-							"failedSummary": "The scan stopped after {{processed}} of {{total}} albums. Matches found before it stopped were kept, run it again to carry on."
+							"progress": "{{processed}} da {{total}} — {{album}}",
+							"summary": "{{applied}} applicato, {{pending}} in attesa di revisione, {{unmatched}} senza corrispondenze.",
+							"cancelledSummary": "Annullati dopo {{processed}} degli {{total}} album. {{applied}} inviati, {{pending}} in attesa di revisione.",
+							"failedSummary": "La scansione si è interrotta dopo aver analizzato {{processed}} degli album presenti su {{total}} . I risultati trovati prima dell'interruzione sono stati salvati; esegui nuovamente la scansione per continuare."
 						},
 						"reset": {
-							"label": "Reset corrections",
-							"description": "Discards every correction stored in Wavio and empties the review queue. Tags already written into files are not affected.",
+							"label": "Reimposta le correzioni",
+							"description": "Elimina tutte le correzioni salvate in Wavio e svuota la coda di revisione. I tag già inseriti nei file non vengono modificati.",
 							"action": "Reimposta"
 						},
 						"review": {
-							"title": "Awaiting review ({{count}})",
-							"confidence": "{{confidence}}% match"
+							"title": "In attesa di revisione ({{count}})",
+							"confidence": "{{confidence}}% di corrispondenza"
 						},
 						"unmatched": {
-							"title": "No match found ({{count}})",
-							"description": "These could not be identified. Tracks without an album tag are matched one by one instead, which needs a recognisable title.",
+							"title": "Nessun risultato trovato ({{count}})",
+							"description": "Questi non sono stati identificati. I brani privi del tag “album” vengono invece abbinati uno per uno, il che richiede un titolo riconoscibile.",
 							"reasons": {
-								"no-album-tag": "No album tag, and no track could be identified on its own",
-								"no-results": "Nothing found on MusicBrainz",
-								"low-confidence": "Results found, but none close enough to trust"
+								"no-album-tag": "Non è presente alcun tag relativo all'album e non è stato possibile identificare alcun brano singolarmente",
+								"no-results": "Nessun risultato trovato su MusicBrainz",
+								"low-confidence": "Sono stati trovati dei risultati, ma nessuno abbastanza vicino da essere attendibile"
 							}
 						},
 						"album": {
-							"noMatch": "No MusicBrainz release matched this album.",
-							"summary": "{{confidence}}% match across {{tracks}} tracks",
-							"summaryTracks": "{{tracks}} tracks matched individually, {{confidence}}% average",
-							"changes": "Proposed changes",
-							"noChanges": "This album already matches MusicBrainz.",
-							"dismiss": "Dismiss",
+							"noMatch": "Nessuna pubblicazione su MusicBrainz corrisponde a questo album.",
+							"summary": "{{confidence}}Percentuale di corrispondenza tra i brani di “ {{tracks}}”",
+							"summaryTracks": "{{tracks}} brani abbinati singolarmente, {{confidence}}% in media",
+							"changes": "Modifiche proposte",
+							"noChanges": "Questo album è già sincronizzato con MusicBrainz.",
+							"dismiss": "Ignora",
 							"apply": "Candidati",
-							"applyToFiles": "Write to files",
-							"applying": "Writing"
+							"applyToFiles": "Scrivere su file",
+							"applying": "Scrittura"
 						}
 					}
 				},
@@ -800,38 +800,38 @@
 					"autoSignOutDescription": "Disconnettiti automaticamente quando il server non è raggiungibile ma la connessione a Internet funziona. Disattiva questa opzione per rimanere connesso e continuare a sfogliare i brani scaricati.",
 					"pendingChangesLabel": "Modifiche in sospeso",
 					"pendingChangesAction": "Visualizza",
-					"extendedOfflineLabel": "Cache entire library",
-					"extendedOfflineDescription": "Progressively download everything on this server so the whole library stays browsable and playable offline",
-					"extendedOfflineSyncing": "Syncing library — {{count}}/{{total}} tracks ({{size}})",
-					"extendedOfflineCachingArtwork": "Caching artwork — {{count}}/{{total}} covers",
-					"extendedOfflineComplete": "Library up to date — {{count}} tracks ({{size}})",
-					"extendedOfflinePausedOffline": "Paused — server unreachable",
-					"extendedOfflinePausedWifi": "Paused — waiting for Wi-Fi",
-					"extendedOfflinePausedDisk": "Paused — device storage is almost full",
-					"extendedOfflineSyncError": "Sync error — retrying automatically",
-					"extendedOfflineCompletedToast": "Your library is fully cached — {{count}} tracks available offline",
-					"extendedOfflineUnsupported": "This server doesn't support full library sync",
-					"extendedOfflineDisableConfirmTitle": "Remove cached library?",
-					"extendedOfflineDisableConfirmDescription": "Tracks and covers cached by the library sync will be deleted from this device. Albums, playlists and tracks you saved for offline individually are kept.",
-					"extendedOfflineDeleting": "Deleting {{done}} / {{total}}",
-					"downloadFormatLabel": "Download format",
-					"downloadFormatDescription": "Format offline downloads are stored in. Original keeps the exact file from the server; other formats are transcoded to save space.",
-					"downloadBitRateLabel": "Download quality",
-					"downloadBitRateDescription": "Maximum bitrate for transcoded downloads",
+					"extendedOfflineLabel": "Memorizza l'intera libreria nella cache",
+					"extendedOfflineDescription": "Scarica gradualmente tutti i contenuti presenti su questo server, in modo che l'intera libreria rimanga consultabile e riproducibile offline",
+					"extendedOfflineSyncing": "Sincronizzazione della libreria — brani di {{count}}/{{total}} ({{size}})",
+					"extendedOfflineCachingArtwork": "Immagini in cache — {{count}}/{{total}} copertine",
+					"extendedOfflineComplete": "Libreria aggiornata — {{count}} tracce ({{size}})",
+					"extendedOfflinePausedOffline": "In pausa — server non raggiungibile",
+					"extendedOfflinePausedWifi": "In pausa — in attesa della connessione Wi-Fi",
+					"extendedOfflinePausedDisk": "In pausa — lo spazio di archiviazione del dispositivo è quasi pieno",
+					"extendedOfflineSyncError": "Errore di sincronizzazione — si riprova automaticamente",
+					"extendedOfflineCompletedToast": "La tua libreria è completamente memorizzata nella cache — {{count}} tiene traccia dei contenuti disponibili offline",
+					"extendedOfflineUnsupported": "Questo server non supporta la sincronizzazione completa della libreria",
+					"extendedOfflineDisableConfirmTitle": "Rimuovere la libreria memorizzata nella cache?",
+					"extendedOfflineDisableConfirmDescription": "I brani e le copertine memorizzati nella cache tramite la sincronizzazione della libreria verranno eliminati da questo dispositivo. Gli album, le playlist e i brani salvati singolarmente per l'ascolto offline verranno conservati.",
+					"extendedOfflineDeleting": "Eliminazione di {{done}} / {{total}}",
+					"downloadFormatLabel": "Formato di download",
+					"downloadFormatDescription": "Formato in cui vengono salvati i download offline. L'opzione \"Originale\" conserva il file esatto proveniente dal server; gli altri formati vengono transcodificati per risparmiare spazio.",
+					"downloadBitRateLabel": "Qualità del download",
+					"downloadBitRateDescription": "Bitrate massimo per i download transcodificati",
 					"pendingChangesDescription_one": "{{count}} modifica effettuata offline in attesa di sincronizzazione",
 					"pendingChangesDescription_other": "{{count}} modifiche apportate offline in attesa di sincronizzazione"
 				},
 				"updatesSettings": {
-					"title": "Updates",
-					"autoCheckLabel": "Check for updates automatically",
-					"autoCheckDescription": "Check for a new version on launch and let you know when one is available",
-					"checkNowLabel": "Check for updates",
-					"checkNowDescription": "Look for a newer version now",
-					"checkNowAction": "Check",
-					"checking": "Checking…",
-					"upToDate": "You're on the latest version",
-					"checkFailed": "Couldn't check for updates. Check your connection and try again.",
-					"currentVersionLabel": "Current version"
+					"title": "Aggiornamenti",
+					"autoCheckLabel": "Verifica automaticamente la disponibilità di aggiornamenti",
+					"autoCheckDescription": "Verificherà la presenza di una nuova versione all'avvio e ti avviserà quando ne sarà disponibile una",
+					"checkNowLabel": "Verifica la disponibilità di aggiornamenti",
+					"checkNowDescription": "Cerca subito una versione più recente",
+					"checkNowAction": "Controlla",
+					"checking": "Controllo di…",
+					"upToDate": "Stai utilizzando l'ultima versione",
+					"checkFailed": "Impossibile verificare la disponibilità di aggiornamenti. Controlla la connessione e riprova.",
+					"currentVersionLabel": "Versione attuale"
 				},
 				"storageSettings": {
 					"title": "Archiviazione",
@@ -1123,8 +1123,8 @@
 				"empty": "Non sono stati scaricati brani.",
 				"totalSize": "Dimensioni totali: {{size}}",
 				"clearAll": "Cancella tutto",
-				"searchPlaceholder": "Search downloads",
-				"deleting": "Deleting {{done}} / {{total}}",
+				"searchPlaceholder": "Cerca i download",
+				"deleting": "Eliminazione di {{done}} / {{total}}",
 				"totalTracks_one": "{{count}} brano",
 				"totalTracks_other": "{{count}} brani"
 			},
@@ -1362,16 +1362,16 @@
 				"switchConfirm": "Cambia"
 			},
 			"update": {
-				"title": "Update available (v{{version}})",
-				"description": "A new version of Wavio is available. Update now to get the latest features and fixes.",
-				"viewFullRelease": "View full release notes",
-				"later": "Later",
-				"update": "Update",
+				"title": "È disponibile un aggiornamento (v{{version}})",
+				"description": "È disponibile una nuova versione di Wavio. Effettua subito l'aggiornamento per usufruire delle ultime funzionalità e correzioni.",
+				"viewFullRelease": "Visualizza le note di rilascio complete",
+				"later": "Più tardi",
+				"update": "Aggiornamento",
 				"downloading": "Download in corso… {{percent}}%",
-				"installing": "Opening the installer…",
-				"errorDescription": "The update couldn't be downloaded. Check your connection and try again, or download it from the releases page.",
+				"installing": "Aprire il programma di installazione…",
+				"errorDescription": "Non è stato possibile scaricare l'aggiornamento. Verifica la connessione e riprova, oppure scaricalo dalla pagina delle versioni.",
 				"retry": "Riprova",
-				"openBrowser": "Open in browser"
+				"openBrowser": "Apri nel browser"
 			},
 			"shared": {
 				"advancedSettings": "Impostazioni avanzate",
@@ -1537,7 +1537,7 @@
 				"localInfoMetadataTitle": "Come vengono letti i metadati",
 				"localInfoMetadata": "Titolo, artista, album, numero della traccia, copertina e altre informazioni vengono ricavate dai tag incorporati in ciascun file. I file privi di tag utilizzano il nome del file come alternativa, pertanto i file correttamente taggati garantiscono i risultati migliori.",
 				"localInfoTaggingTitle": "Aggiungere tag alla tua libreria",
-				"localInfoTagging": "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them. Wavio also has a built-in MusicBrainz integration that can match your albums and tag the files directly on your device.",
+				"localInfoTagging": "Per garantire una libreria ordinata e coerente, ti consigliamo di taggare i tuoi file con MusicBrainz Picard prima di aggiungerli. Wavio dispone inoltre di un'integrazione con MusicBrainz che consente di abbinare i tuoi album e taggare i file direttamente sul tuo dispositivo.",
 				"localInfoTaggingLink": "Scarica MusicBrainz Picard",
 				"localInfoClose": "Capito"
 			},
