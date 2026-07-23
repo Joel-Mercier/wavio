@@ -34,6 +34,7 @@ export const SCOPED_STORE_NAMES = [
   "offlineMutations",
   "librarySyncStore",
   "lidarrStore",
+  "musicBrainzStore",
 ] as const;
 
 // Scoped stores that must NOT travel in a backup file — both hold state that is

@@ -170,6 +170,12 @@ export class LibrarySyncService {
   // reconnection). Starts a fresh pass when idle, restarts a stale completed
   // pass (delta resync), otherwise resumes from the persisted cursor.
   startIfNeeded(): void {
+    // The local backend has no server to crawl and its covers are already
+    // file:// URIs on disk — feeding one to downloadFileAsync throws
+    // "URI is not absolute". The crawl loop guards this via canProceed(), but
+    // backfillArtworkQueue() below runs before it, so gate here too.
+    const { url, username, serverType } = useAuthBase.getState();
+    if (!url || !username || serverType === "local") return;
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return;
     if (sync.phase === "idle") {

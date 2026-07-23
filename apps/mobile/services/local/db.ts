@@ -16,7 +16,7 @@ import { logError } from "@/utils/log";
 // never mixes one account's local library into another's. The handle follows the
 // active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 6;
 
 const currentScope = currentAuthScope;
 
@@ -143,10 +143,15 @@ CREATE TABLE IF NOT EXISTS tracks (
   source_folder TEXT,
   indexed_at    INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_tracks_album_key ON tracks(album_key);
-CREATE INDEX IF NOT EXISTS idx_tracks_artist_key ON tracks(artist_key);
-CREATE INDEX IF NOT EXISTS idx_tracks_genre ON tracks(genre);
-CREATE INDEX IF NOT EXISTS idx_tracks_title ON tracks(title);
+-- This table deliberately carries no secondary indexes: every read goes through
+-- the tracks_resolved view, which seeks on the resolved_* columns instead (see
+-- SCHEMA_V6). The scanned album_key/artist_key/genre/title columns are only
+-- ever read as fallback values, never used as predicates, so indexing them
+-- bought nothing and cost four b-tree updates per indexed track.
+--
+-- Don't re-add one here without also removing its DROP from SCHEMA_V6: both
+-- blocks run on every open, so a CREATE here and a DROP there would rebuild and
+-- discard the whole index every time the database is opened.
 
 CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
   id UNINDEXED,
@@ -250,6 +255,153 @@ CREATE INDEX IF NOT EXISTS idx_podcast_episodes_channel
   ON podcast_episodes(channel_id, publish_date DESC);
 `;
 
+// MusicBrainz tag corrections. Kept in their own table rather than as columns on
+// `tracks` for the same reason as `track_stats`: the indexer rewrites track rows
+// with INSERT OR REPLACE on every re-index, which would wipe them. Keyed by
+// `tracks.id`, which is URI-derived and therefore stable across rescans, so a
+// correction survives any number of rescans of the same file. Unlike
+// `track_stats` these *are* pruned when their file vanishes (see indexer.ts):
+// a correction is meaningless without the file it corrects.
+//
+// `album_key` / `artist_key` are stored rather than derived because album and
+// artist ids are computed *from* those keys (services/local/keys.ts). Correcting
+// an album's title without also carrying its recomputed key would leave the
+// album grouped — and addressable — under its old, wrong name. They're written
+// with the same albumKey()/normalizeKey() helpers the indexer uses.
+//
+// `written_to_file` records that the correction was also flushed into the file's
+// own tags, so re-scanning picks it up from the file itself.
+const SCHEMA_V5 = `
+CREATE TABLE IF NOT EXISTS track_tag_overrides (
+  track_id            TEXT PRIMARY KEY NOT NULL,
+  title               TEXT,
+  artist              TEXT,
+  album               TEXT,
+  album_artist        TEXT,
+  genre               TEXT,
+  year                INTEGER,
+  track_number        INTEGER,
+  disc_number         INTEGER,
+  artists_json        TEXT,
+  music_brainz_id     TEXT,
+  artwork_path        TEXT,
+  album_key           TEXT,
+  artist_key          TEXT,
+  mb_recording_id     TEXT,
+  mb_release_id       TEXT,
+  mb_release_group_id TEXT,
+  mb_artist_id        TEXT,
+  source              TEXT NOT NULL,
+  applied_at          INTEGER NOT NULL,
+  written_to_file     INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_track_tag_overrides_album_key
+  ON track_tag_overrides(album_key);
+
+CREATE TABLE IF NOT EXISTS album_tag_matches (
+  album_key       TEXT PRIMARY KEY NOT NULL,
+  mb_release_id   TEXT,
+  confidence      REAL,
+  status          TEXT NOT NULL,
+  candidates_json TEXT,
+  matched_at      INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_album_tag_matches_status
+  ON album_tag_matches(status);
+`;
+
+// Indexes over the stored grouping keys the `tracks_resolved` view reads. These
+// are what album and artist lookups actually seek on; the equivalents on
+// `tracks.album_key` / `tracks.artist_key` only serve the raw scanned values,
+// which nothing queries by any more.
+//
+// Separate from SCHEMA_V5 because the columns they cover are added by
+// `ensureColumn` — `tracks` predates them, so `CREATE TABLE IF NOT EXISTS`
+// would never add them to an existing index.
+const SCHEMA_V6 = `
+CREATE INDEX IF NOT EXISTS idx_tracks_resolved_album_key
+  ON tracks(resolved_album_key);
+CREATE INDEX IF NOT EXISTS idx_tracks_resolved_artist_key
+  ON tracks(resolved_artist_key);
+
+-- The indexes these replace. Every read moved onto the view, whose grouping
+-- keys come from the columns above and whose genre/title are COALESCE
+-- expressions no index can serve, so nothing queries the scanned columns by
+-- value any more — they were pure write overhead on every indexed track.
+-- Dropped here rather than simply removed from SCHEMA_V1 because existing
+-- on-device databases already have them.
+DROP INDEX IF EXISTS idx_tracks_album_key;
+DROP INDEX IF EXISTS idx_tracks_artist_key;
+DROP INDEX IF EXISTS idx_tracks_genre;
+DROP INDEX IF EXISTS idx_tracks_title;
+`;
+
+// Recomputes both stored grouping keys for one track from whatever the override
+// table currently says. Correct in both directions — a correction applied and a
+// correction cleared both just re-run it — which is why every writer shares this
+// one statement instead of maintaining the columns itself.
+export const REFRESH_RESOLVED_KEYS_SQL = `
+UPDATE tracks SET
+  resolved_album_key = COALESCE(
+    (SELECT o.album_key FROM track_tag_overrides o WHERE o.track_id = tracks.id),
+    album_key
+  ),
+  resolved_artist_key = COALESCE(
+    (SELECT o.artist_key FROM track_tag_overrides o WHERE o.track_id = tracks.id),
+    artist_key
+  )
+WHERE id = ?`;
+
+// Every read goes through this view instead of `tracks`, so a correction is
+// applied in exactly one place and shows up everywhere — browse, search, player,
+// Android Auto, the widget — without any call site knowing overrides exist. A
+// null override column falls back to the scanned tag, so a partial match only
+// replaces the fields it actually resolved.
+//
+// Writes still target `tracks` directly (SQLite views are read-only) — the
+// indexer is unaffected.
+//
+// The two grouping keys are the exception: they read a *stored* column on
+// `tracks` rather than COALESCEing here. `WHERE album_key = ?` against a
+// COALESCE is a predicate on an expression, which no index can serve, so every
+// album and artist screen degraded into a full scan of `tracks`
+// (`EXPLAIN QUERY PLAN` → `SCAN t`). Reading a plain column restores the index
+// seek — and lets GROUP BY stream in index order instead of building a temp
+// b-tree. Only the keys are denormalised: the displayed tags stay COALESCEd
+// here, so a sync bug can misplace an album but can never show a wrong tag.
+// See `refreshResolvedKeys` for the single statement that maintains them.
+//
+// Recreated on every open rather than migrated: a view holds no data, so
+// DROP + CREATE is both idempotent and self-healing if its definition changes.
+const SCHEMA_TRACKS_VIEW = `
+DROP VIEW IF EXISTS tracks_resolved;
+CREATE VIEW tracks_resolved AS
+SELECT
+  t.id, t.uri, t.path, t.folder, t.size, t.mtime,
+  COALESCE(o.title, t.title)               AS title,
+  COALESCE(o.artist, t.artist)             AS artist,
+  COALESCE(o.album, t.album)               AS album,
+  COALESCE(o.album_artist, t.album_artist) AS album_artist,
+  t.composer,
+  COALESCE(o.genre, t.genre)               AS genre,
+  COALESCE(o.year, t.year)                 AS year,
+  COALESCE(o.track_number, t.track_number) AS track_number,
+  t.track_total,
+  COALESCE(o.disc_number, t.disc_number)   AS disc_number,
+  t.disc_total, t.duration_ms, t.bitrate, t.sample_rate,
+  t.is_compilation, t.suffix,
+  COALESCE(o.artwork_path, t.artwork_path)  AS artwork_path,
+  t.artwork_mime, t.lyrics,
+  COALESCE(o.music_brainz_id, t.music_brainz_id) AS music_brainz_id,
+  COALESCE(o.artists_json, t.artists_json) AS artists_json,
+  t.replay_gain_json, t.release_types_json,
+  t.resolved_album_key                     AS album_key,
+  t.resolved_artist_key                    AS artist_key,
+  t.indexed_at
+FROM tracks t
+LEFT JOIN track_tag_overrides o ON o.track_id = t.id;
+`;
+
 /** Add `column` to `table` if it isn't already there. SQLite has no
  *  `ADD COLUMN IF NOT EXISTS`, so probe `table_info` first. */
 async function ensureColumn(
@@ -275,6 +427,7 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(SCHEMA_V2);
   await db.execAsync(SCHEMA_STATS);
   await db.execAsync(SCHEMA_V4);
+  await db.execAsync(SCHEMA_V5);
 
   // SCHEMA_V1's `CREATE TABLE IF NOT EXISTS` won't add a column to a `tracks`
   // table that already exists from an earlier schema, so add later columns with
@@ -290,6 +443,17 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   // `podcast_channels.author` was added after the table shipped (still v4), so
   // existing on-device indexes need the column backfilled the same way.
   await ensureColumn(db, "podcast_channels", "author", "TEXT");
+  // Added after album_tag_matches shipped (still v5).
+  await ensureColumn(db, "album_tag_matches", "reason", "TEXT");
+  // v6: the grouping keys the view reads. Added before the view is created,
+  // since CREATE VIEW resolves its column references immediately and would
+  // fail on a database that doesn't have them yet.
+  await ensureColumn(db, "tracks", "resolved_album_key", "TEXT");
+  await ensureColumn(db, "tracks", "resolved_artist_key", "TEXT");
+
+  await db.execAsync(SCHEMA_V6);
+  // Last: the view reads from `track_tag_overrides` and from the columns above.
+  await db.execAsync(SCHEMA_TRACKS_VIEW);
 
   const row = await db.getFirstAsync<{ user_version: number }>(
     "PRAGMA user_version",
@@ -326,6 +490,24 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
           r.id,
         );
       }
+    }
+    if (version < 6) {
+      // v6: populate the stored grouping keys for every existing track. One
+      // set-based statement rather than a row loop — this runs over the whole
+      // library, and on a big index the difference is seconds. Tracks written
+      // after this carry the columns from the start (see indexer.writeTrack).
+      await txn.execAsync(`
+        UPDATE tracks SET
+          resolved_album_key = COALESCE(
+            (SELECT o.album_key FROM track_tag_overrides o
+              WHERE o.track_id = tracks.id),
+            album_key
+          ),
+          resolved_artist_key = COALESCE(
+            (SELECT o.artist_key FROM track_tag_overrides o
+              WHERE o.track_id = tracks.id),
+            artist_key
+          )`);
     }
     await txn.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   });
@@ -378,6 +560,58 @@ export type TrackRow = {
   // last_played_at is null when the track has never been played.
   play_count: number;
   last_played_at: number | null;
+};
+
+// The tag fields a MusicBrainz match can correct. Null means "no correction for
+// this field", which read queries COALESCE back to the scanned value — so a
+// partial match only overrides what it actually knows.
+export type TrackTagOverrideRow = {
+  track_id: string;
+  title: string | null;
+  artist: string | null;
+  album: string | null;
+  album_artist: string | null;
+  genre: string | null;
+  year: number | null;
+  track_number: number | null;
+  disc_number: number | null;
+  artists_json: string | null;
+  music_brainz_id: string | null;
+  // A cover downloaded from the Cover Art Archive, replacing the artwork the
+  // indexer extracted from the file (or supplying one where there was none).
+  artwork_path: string | null;
+  album_key: string | null;
+  artist_key: string | null;
+  mb_recording_id: string | null;
+  mb_release_id: string | null;
+  mb_release_group_id: string | null;
+  mb_artist_id: string | null;
+  source: string;
+  applied_at: number;
+  written_to_file: number;
+};
+
+export type AlbumTagMatchStatus =
+  | "pending"
+  | "applied"
+  | "dismissed"
+  // Nothing usable was found. Kept as a row (rather than simply omitted) so the
+  // UI can explain *why* — an album that silently vanishes from every list is
+  // indistinguishable from one that was never scanned.
+  | "unmatched";
+
+// Review-queue state for one local album. `candidates_json` holds the ranked
+// candidates from the last scan so reopening the review screen doesn't re-spend
+// the MusicBrainz rate budget.
+export type AlbumTagMatchRow = {
+  album_key: string;
+  mb_release_id: string | null;
+  confidence: number | null;
+  status: AlbumTagMatchStatus;
+  candidates_json: string | null;
+  matched_at: number;
+  /** Why an `unmatched` row failed — a MatchFailure code, shown in the UI. */
+  reason: string | null;
 };
 
 // Shape of an `internet_radio_stations` row. Read queries adapt this to
