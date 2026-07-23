@@ -2,6 +2,7 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { type Href, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
@@ -20,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
+import { Progress, ProgressFilledTrack } from "@/components/ui/progress";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
@@ -142,6 +145,9 @@ function LibrarySyncStatusLine() {
 }
 
 export default function DownloadsOfflineSection() {
+  const [primary800] = Uniwind.getCSSVariable([
+    "--color-primary-800",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const capabilities = useCapabilities();
@@ -176,6 +182,11 @@ export default function DownloadsOfflineSection() {
   const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [isDisabling, setIsDisabling] = useState(false);
+  const [disableProgress, setDisableProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
 
   const bottomSheetDownloadFormatModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetDownloadBitRateModalRef = useRef<BottomSheetModal>(null);
@@ -189,9 +200,18 @@ export default function DownloadsOfflineSection() {
     }
   };
 
-  const handleDisableConfirmPress = () => {
-    setShowDisableConfirm(false);
-    librarySyncService.disable();
+  const handleDisableConfirmPress = async () => {
+    setIsDisabling(true);
+    setDisableProgress({ done: 0, total: 0 });
+    try {
+      await librarySyncService.disable((done, total) =>
+        setDisableProgress({ done, total }),
+      );
+    } finally {
+      setIsDisabling(false);
+      setDisableProgress(null);
+      setShowDisableConfirm(false);
+    }
   };
 
   const formatBitRate = (value: number | null) =>
@@ -334,7 +354,10 @@ export default function DownloadsOfflineSection() {
       </VStack>
       <AlertDialog
         isOpen={showDisableConfirm}
-        onClose={() => setShowDisableConfirm(false)}
+        onClose={() => {
+          if (isDisabling) return;
+          setShowDisableConfirm(false);
+        }}
         size="md"
       >
         <AlertDialogBackdrop />
@@ -353,24 +376,56 @@ export default function DownloadsOfflineSection() {
               )}
             </Text>
           </AlertDialogBody>
-          <AlertDialogFooter className="items-center justify-center">
-            <FadeOutScaleDown
-              onPress={() => setShowDisableConfirm(false)}
-              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-            >
-              <Text className="text-white font-bold text-lg">
-                {t("app.shared.cancel")}
-              </Text>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              onPress={handleDisableConfirmPress}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-            >
-              <Text className="text-primary-800 font-bold text-lg">
-                {t("app.shared.delete")}
-              </Text>
-            </FadeOutScaleDown>
-          </AlertDialogFooter>
+          <VStack className="gap-y-4">
+            {isDisabling && (
+              <VStack className="gap-y-2">
+                <Text className="text-primary-100 text-sm text-center">
+                  {t("app.settings.offlineSettings.extendedOfflineDeleting", {
+                    done: disableProgress?.done ?? 0,
+                    total: disableProgress?.total ?? 0,
+                  })}
+                </Text>
+                <Progress
+                  value={
+                    disableProgress && disableProgress.total > 0
+                      ? Math.round(
+                          (disableProgress.done / disableProgress.total) * 100,
+                        )
+                      : 0
+                  }
+                  className="bg-primary-600"
+                >
+                  <ProgressFilledTrack className="bg-emerald-500" />
+                </Progress>
+              </VStack>
+            )}
+            <AlertDialogFooter className="items-center justify-center">
+              <FadeOutScaleDown
+                onPress={
+                  isDisabling ? undefined : () => setShowDisableConfirm(false)
+                }
+                className={`items-center justify-center py-3 px-8 border border-white rounded-full mr-4${
+                  isDisabling ? " opacity-50" : ""
+                }`}
+              >
+                <Text className="text-white font-bold text-lg">
+                  {t("app.shared.cancel")}
+                </Text>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={isDisabling ? undefined : handleDisableConfirmPress}
+                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+              >
+                {isDisabling ? (
+                  <Spinner color={primary800} />
+                ) : (
+                  <Text className="text-primary-800 font-bold text-lg">
+                    {t("app.shared.delete")}
+                  </Text>
+                )}
+              </FadeOutScaleDown>
+            </AlertDialogFooter>
+          </VStack>
         </AlertDialogContent>
       </AlertDialog>
     </SettingsScreenScaffold>

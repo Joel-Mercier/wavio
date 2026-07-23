@@ -37,6 +37,16 @@ export type GenresSort =
   | "albumCountAsc"
   | "albumCountDesc";
 
+export type DownloadsSort =
+  | "alphabeticalAsc"
+  | "alphabeticalDesc"
+  | "artistAsc"
+  | "artistDesc"
+  | "albumAsc"
+  | "albumDesc"
+  | "sizeAsc"
+  | "sizeDesc";
+
 export type LibraryFilter =
   | "artists"
   | "albums"
@@ -127,6 +137,8 @@ interface AppStore {
       | "albumAsc"
       | "albumDesc",
   ) => void;
+  downloadsSort: DownloadsSort;
+  setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
   setMaxBitRate: (maxBitRate: number | null) => void;
   cellularMaxBitRate: number | null;
@@ -271,6 +283,10 @@ export const useAppBase = create<AppStore>()(
           | "albumDesc",
       ) => {
         set({ favoritesSort });
+      },
+      downloadsSort: "alphabeticalAsc",
+      setDownloadsSort: (downloadsSort: DownloadsSort) => {
+        set({ downloadsSort });
       },
       maxBitRate: null,
       setMaxBitRate: (maxBitRate: number | null) => {

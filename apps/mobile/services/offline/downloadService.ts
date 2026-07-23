@@ -18,6 +18,16 @@ import useOffline, {
 import { logError } from "@/utils/log";
 import type { Child } from "../openSubsonic/types";
 
+// Bulk deletions loop over every downloaded track and delete files
+// synchronously. On a large library that blocks the JS thread for seconds with
+// no feedback, so callers get an optional progress callback and the loops yield
+// to the event loop every DELETE_CHUNK tracks — letting a spinner/progress bar
+// render while the work drains.
+export type DeleteProgress = (done: number, total: number) => void;
+export const DELETE_CHUNK = 25;
+export const yieldToEventLoop = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, 0));
+
 const MAX_CONCURRENT_DOWNLOADS = 3;
 
 // A track is retried this many times before being given up on. Connectivity
@@ -540,7 +550,7 @@ export class OfflineDownloadService {
   // Clears downloads for the currently active server only. The offline store
   // is scoped per (server, user), so this only touches the current scope's
   // state — but we also need to wipe the per-scope file directory.
-  clearAllDownloads(): void {
+  async clearAllDownloads(onProgress?: DeleteProgress): Promise<void> {
     const offlineStore = useOffline.getState();
     const tracks = offlineStore.getDownloadedTracksList();
     const { serverId, username } = useAuthBase.getState();
@@ -550,6 +560,9 @@ export class OfflineDownloadService {
     const scope = serverId && username ? currentAuthScope() : null;
 
     try {
+      const total = tracks.length;
+      onProgress?.(0, total);
+      let done = 0;
       for (const track of tracks) {
         try {
           const file = new File(track.path);
@@ -562,7 +575,13 @@ export class OfflineDownloadService {
             error,
           );
         }
+        done++;
+        if (done % DELETE_CHUNK === 0) {
+          onProgress?.(done, total);
+          await yieldToEventLoop();
+        }
       }
+      onProgress?.(total, total);
 
       if (scope) {
         const scopedDir = new Directory(Paths.document, "offline", scope);

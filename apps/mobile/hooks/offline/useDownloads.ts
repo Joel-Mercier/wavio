@@ -1,5 +1,9 @@
 import { useCallback, useMemo } from "react";
-import { librarySyncService, offlineDownloadService } from "@/services/offline";
+import {
+  type DeleteProgress,
+  librarySyncService,
+  offlineDownloadService,
+} from "@/services/offline";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
@@ -58,9 +62,9 @@ export const useOfflineDownloads = () => {
     }
   }, []);
 
-  const clearAllDownloads = useCallback(async () => {
+  const clearAllDownloads = useCallback(async (onProgress?: DeleteProgress) => {
     try {
-      await offlineDownloadService.clearAllDownloads();
+      await offlineDownloadService.clearAllDownloads(onProgress);
       // The downloaded state (and cached artwork) is gone; a still-enabled
       // library sync restarts its crawl from scratch.
       librarySyncService.handleDownloadsCleared();

@@ -10,6 +10,7 @@ export {
   offlineTrackToChild,
 } from "./collections";
 export {
+  type DeleteProgress,
   OfflineDownloadService,
   offlineDownloadService,
 } from "./downloadService";

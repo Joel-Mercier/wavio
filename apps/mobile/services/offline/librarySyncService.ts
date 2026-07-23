@@ -9,7 +9,12 @@ import {
   subscribeEffectiveOnline,
 } from "@/services/network";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
-import { offlineDownloadService } from "@/services/offline/downloadService";
+import {
+  DELETE_CHUNK,
+  type DeleteProgress,
+  offlineDownloadService,
+  yieldToEventLoop,
+} from "@/services/offline/downloadService";
 import {
   ALBUM_PAGE_SIZE,
   advanceCursor,
@@ -194,11 +199,11 @@ export class LibrarySyncService {
 
   // Toggle-off: stop the crawl and remove everything the sync downloaded,
   // keeping user-saved collections/tracks (and auto tracks they reference).
-  disable(): void {
+  async disable(onProgress?: DeleteProgress): Promise<void> {
     this.reset();
     useLibrarySync.getState().__reset();
     offlineDownloadService.removeQueuedAutoDownloads();
-    this.removeAutoContent();
+    await this.removeAutoContent(onProgress);
   }
 
   // After "clear all downloads": the downloaded state is gone, so a still
@@ -305,7 +310,7 @@ export class LibrarySyncService {
     if (didDownload) notifySyncCompleted({ downloadedCount });
   }
 
-  private removeAutoContent(): void {
+  private async removeAutoContent(onProgress?: DeleteProgress): Promise<void> {
     const offlineStore = useOffline.getState();
     for (const collection of Object.values(
       offlineStore.downloadedCollections,
@@ -317,14 +322,27 @@ export class LibrarySyncService {
     const referencedByUser = trackIdsReferencedByCollections(
       Object.values(useOffline.getState().downloadedCollections),
     );
-    for (const track of offlineStore.getDownloadedTracksList()) {
-      if (track.source !== "auto" || referencedByUser.has(track.id)) continue;
+    const autoTracks = offlineStore
+      .getDownloadedTracksList()
+      .filter(
+        (track) => track.source === "auto" && !referencedByUser.has(track.id),
+      );
+    const total = autoTracks.length;
+    onProgress?.(0, total);
+    let done = 0;
+    for (const track of autoTracks) {
       try {
         offlineDownloadService.removeDownloadedTrack(track.id);
       } catch (error) {
         logError(`Library sync: error removing auto track ${track.id}:`, error);
       }
+      done++;
+      if (done % DELETE_CHUNK === 0) {
+        onProgress?.(done, total);
+        await yieldToEventLoop();
+      }
     }
+    onProgress?.(total, total);
     const { serverId, username } = useAuthBase.getState();
     if (serverId && username) {
       try {
