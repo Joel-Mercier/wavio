@@ -574,8 +574,8 @@
 						"description": "通过 Lidarr 为您的服务器添加音乐"
 					},
 					"integrations": {
-						"title": "Integrations",
-						"description": "Correct your library's tags with MusicBrainz"
+						"title": "集成",
+						"description": "使用 MusicBrainz 修正您的音乐库中的标签"
 					},
 					"appearance": {
 						"title": "外观",
@@ -607,39 +607,39 @@
 					}
 				},
 				"integrations": {
-					"description": "Connect external music databases to enrich and correct your library.",
+					"description": "连接外部音乐数据库，以丰富和修正您的音乐库。",
 					"statuses": {
 						"configured": "已连接",
-						"notConfigured": "Not set up"
+						"notConfigured": "未设置"
 					},
 					"musicbrainz": {
 						"title": "MusicBrainz",
-						"description": "Match your albums and correct their tags",
-						"intro": "Matches each album in your local library against MusicBrainz and corrects its tags. MusicBrainz allows one request per second, so a large library takes a few minutes.",
+						"description": "匹配您的专辑并修正其标签",
+						"intro": "将您本地音乐库中的每张专辑与 MusicBrainz 进行比对，并修正其标签。MusicBrainz 每秒仅允许一次请求，因此处理大型音乐库需要几分钟时间。",
 						"tabs": {
-							"setup": "Setup"
+							"setup": "设置"
 						},
 						"writeMode": {
-							"title": "Where corrections go",
-							"label": "Write tags into files",
-							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too. Because writes are permanent, auto-approval is turned off in this mode: every match waits in the review queue and nothing is written to a file until you approve it.",
-							"unavailable": "Not available on this device. Corrections are stored in Wavio only, and can be undone at any time."
+							"title": "更正内容去向",
+							"label": "将标签写入文件",
+							"description": "更正内容会直接写入音频文件中，因此这些更改是永久性的，其他应用也能看到。此操作无法撤销。封面图也会嵌入到文件中。由于写入操作是永久性的，因此在此模式下会关闭自动批准功能：每个匹配结果都会进入审核队列，在您批准之前，任何内容都不会写入文件。",
+							"unavailable": "此设备不支持该功能。更正内容仅存储在 Wavio 中，且可随时撤销。"
 						},
 						"automation": {
-							"title": "Automation"
+							"title": "自动化"
 						},
 						"autoApply": {
-							"label": "Apply confident matches automatically",
-							"description": "Matches above the confidence threshold are applied without asking. Everything else waits for your review.",
-							"filesDescription": "Unavailable while writing to files, since a wrong match cannot be undone. Every match is reviewed first."
+							"label": "自动应用确信的匹配结果",
+							"description": "超过置信阈值的匹配结果将自动应用，无需征得您的同意。其余结果则需等待您审核。",
+							"filesDescription": "在写入文件时不可用，因为错误的匹配无法撤销。每次匹配都会先进行审核。"
 						},
 						"threshold": {
-							"label": "Confidence threshold",
-							"description": "How certain a match must be before it is applied automatically. Only used when the setting above is on."
+							"label": "置信阈值",
+							"description": "匹配程度需要达到多高，系统才会自动应用该匹配结果。仅在启用上述设置时使用。"
 						},
 						"fields": {
-							"title": "Fields to correct",
-							"description": "Only the selected fields are changed. Everything else keeps the value read from your files. Cover art is only added to tracks that have none — artwork already in your files is left alone.",
+							"title": "需要更正的字段",
+							"description": "仅对选中的字段进行修改。其余内容均保留从文件中读取的值。封面图片仅添加到没有封面图片的曲目中——文件中已有的封面图片将保持不变。",
 							"labels": {
 								"title": "歌名",
 								"artist": "艺人",
@@ -652,44 +652,44 @@
 							}
 						},
 						"scan": {
-							"title": "Match library",
-							"label": "Scan for matches",
-							"description": "Looks up every album in your library on MusicBrainz.",
+							"title": "匹配库",
+							"label": "扫描以查找匹配项",
+							"description": "在 MusicBrainz 上查询您音乐库中的每张专辑。",
 							"start": "扫描",
 							"cancel": "取消",
-							"progress": "{{processed}} of {{total}} — {{album}}",
-							"summary": "{{applied}} applied, {{pending}} awaiting review, {{unmatched}} without a match.",
-							"cancelledSummary": "Cancelled after {{processed}} of {{total}} albums. {{applied}} applied, {{pending}} awaiting review.",
-							"failedSummary": "The scan stopped after {{processed}} of {{total}} albums. Matches found before it stopped were kept, run it again to carry on."
+							"progress": "{{processed}} 来自 {{total}} —— {{album}}",
+							"summary": "{{applied}} 已提交， {{pending}} 待审核， {{unmatched}} 未找到匹配项。",
+							"cancelledSummary": "在播放了 {{processed}} 张 {{total}} 专辑后取消。已应用 {{applied}} ， {{pending}} 正在等待审核。",
+							"failedSummary": "在扫描了 {{processed}} 张 {{total}} 专辑后，扫描停止。停止前找到的匹配结果已被保留，请重新运行以继续扫描。"
 						},
 						"reset": {
-							"label": "Reset corrections",
-							"description": "Discards every correction stored in Wavio and empties the review queue. Tags already written into files are not affected.",
+							"label": "重置更正",
+							"description": "清除 Wavio 中存储的所有修改，并清空审阅队列。已写入文件的标签不受影响。",
 							"action": "重置"
 						},
 						"review": {
-							"title": "Awaiting review ({{count}})",
-							"confidence": "{{confidence}}% match"
+							"title": "待审核（{{count}}）",
+							"confidence": "{{confidence}}% 匹配"
 						},
 						"unmatched": {
-							"title": "No match found ({{count}})",
-							"description": "These could not be identified. Tracks without an album tag are matched one by one instead, which needs a recognisable title.",
+							"title": "未找到匹配结果（{{count}}）",
+							"description": "无法识别这些歌曲。对于没有专辑标签的曲目，系统会逐一进行匹配，这需要歌曲名称能够被识别。",
 							"reasons": {
-								"no-album-tag": "No album tag, and no track could be identified on its own",
-								"no-results": "Nothing found on MusicBrainz",
-								"low-confidence": "Results found, but none close enough to trust"
+								"no-album-tag": "没有专辑标签，且无法单独识别出任何曲目",
+								"no-results": "在 MusicBrainz 上未找到相关内容",
+								"low-confidence": "找到了结果，但都没有足够接近，无法作为依据"
 							}
 						},
 						"album": {
-							"noMatch": "No MusicBrainz release matched this album.",
-							"summary": "{{confidence}}% match across {{tracks}} tracks",
-							"summaryTracks": "{{tracks}} tracks matched individually, {{confidence}}% average",
-							"changes": "Proposed changes",
-							"noChanges": "This album already matches MusicBrainz.",
-							"dismiss": "Dismiss",
+							"noMatch": "MusicBrainz 中没有与该专辑匹配的发行记录。",
+							"summary": "{{confidence}} {{tracks}} 各曲目中的匹配百分比",
+							"summaryTracks": "{{tracks}} 逐首匹配的曲目， {{confidence}}% 平均值",
+							"changes": "拟议的修改",
+							"noChanges": "这张专辑已与 MusicBrainz 匹配。",
+							"dismiss": "关闭",
 							"apply": "应用",
-							"applyToFiles": "Write to files",
-							"applying": "Writing"
+							"applyToFiles": "向文件写入数据",
+							"applying": "写作"
 						}
 					}
 				},
@@ -1506,7 +1506,7 @@
 				"localInfoMetadataTitle": "元数据读取方式",
 				"localInfoMetadata": "标题、艺人、专辑、曲目编号、专辑封面等均从每个文件的嵌入式标签中读取。未标记的文件将从文件名中读取可用数据，因此正确标记文件能获得最佳效果。",
 				"localInfoTaggingTitle": "标记音乐库",
-				"localInfoTagging": "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them. Wavio also has a built-in MusicBrainz integration that can match your albums and tag the files directly on your device.",
+				"localInfoTagging": "为了保持音乐库的整洁和一致性，我们建议您在添加文件前使用 MusicBrainz Picard 为文件添加标签。Wavio 还内置了 MusicBrainz 集成功能，可匹配您的专辑并在设备上直接为文件添加标签。",
 				"localInfoTaggingLink": "获取 MusicBrainz Picard",
 				"localInfoClose": "我知道了"
 			},
