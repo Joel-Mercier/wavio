@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wavio",
     "slug": "wavio",
-    "version": "1.0.8",
+    "version": "1.1.0",
     "orientation": "default",
     "icon": "./assets/images/splash-icon-dark.png",
     "scheme": "wavio",
