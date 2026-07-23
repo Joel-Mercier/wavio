@@ -44,6 +44,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
+import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -65,6 +66,10 @@ export default function ServersDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  // Adding a remote server requires authenticating against it — pointless with
+  // no connectivity at all (device-online, not current-server reachability, so
+  // an unreachable *current* server doesn't block adding a reachable one).
+  const isDeviceOnline = useIsDeviceOnline();
   const servers = useServers((store) => store.servers);
   const addServer = useServers((store) => store.addServer);
   const syncServerUsers = useServers((store) => store.syncServerUsers);
@@ -217,7 +222,10 @@ export default function ServersDetail() {
           <Heading className="text-white text-center flex-1" size="lg">
             {t("app.servers.title")}
           </Heading>
-          <FadeOutScaleDown onPress={handleAddServerPress}>
+          <FadeOutScaleDown
+            onPress={handleAddServerPress}
+            disabled={!isDeviceOnline && hasLocalServer}
+          >
             <Plus size={24} color="white" />
           </FadeOutScaleDown>
         </HStack>

@@ -53,6 +53,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { createScopedStorage } from "@/config/storage";
+import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
 import { foldersRemoved } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -206,12 +207,19 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const visibleUsers = users.slice(0, MAX_VISIBLE_AVATARS);
   const overflowCount = users.length - visibleUsers.length;
 
+  // Switching to a remote server re-authenticates against it, which needs
+  // connectivity; the local library works without any network. Device-online
+  // (not current-server reachability) so an unreachable current server doesn't
+  // block switching to a reachable one on the same LAN.
+  const isDeviceOnline = useIsDeviceOnline();
+  const switchDisabled = !isDeviceOnline && server.type !== "local";
+
   return (
     <FadeOutScaleDown
       className="mb-4"
       onPress={handleCardPress}
-      disabled={server.current}
-      disabledOpacity={1}
+      disabled={server.current || switchDisabled}
+      disabledOpacity={server.current ? 1 : undefined}
     >
       <VStack
         className={cn(
@@ -243,6 +251,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   <FadeOutScaleDown
                     key={`${u.serverId}:${u.username}`}
                     onPress={() => handleAvatarPress(u.username)}
+                    disabled={switchDisabled}
                   >
                     <Avatar size="sm" className="bg-primary-400 w-8 h-8">
                       <AvatarFallbackText>{u.username}</AvatarFallbackText>

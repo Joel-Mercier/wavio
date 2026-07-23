@@ -8,7 +8,10 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useIsDetailCached } from "@/hooks/offline";
+import {
+  useIsArtistAvailableOffline,
+  useIsDetailCached,
+} from "@/hooks/offline";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -29,10 +32,14 @@ function ArtistListItem({
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const isReachableOffline = useIsDetailCached(["artist", artist.id]);
+  // ArtistDetail also renders offline from downloaded album collections
+  // (useOfflineArtist), so an extended-offline library keeps its artist rows
+  // tappable without a cached detail query.
+  const isAvailableFromCollections = useIsArtistAvailableOffline(artist.id);
   return (
     <FadeOutScaleDown
       href={`/artists/${artist.id}`}
-      disabled={!isReachableOffline}
+      disabled={!isReachableOffline && !isAvailableFromCollections}
       className={cn(className, {
         "mt-0": layout === "vertical" && index === 0,
         "pt-4": layout === "vertical" && index !== 0,

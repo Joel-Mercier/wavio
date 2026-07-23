@@ -7,6 +7,7 @@ import {
   updatePlaylist,
 } from "@/services/backend/playlists";
 import { getIsEffectivelyOnline } from "@/services/network";
+import { librarySyncService } from "@/services/offline";
 import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
 import type { PlaylistWithSongs } from "@/services/openSubsonic/types";
 import type { OfflineAction } from "@/stores/offlineMutations";
@@ -103,13 +104,17 @@ export const useUpdatePlaylist = () => {
         }
         return { queued: true } as const;
       }
-      return updatePlaylist(id, {
+      const result = await updatePlaylist(id, {
         name,
         comment,
         isPublic,
         songIdToAdd,
         songIndexToRemove,
       });
+      // Keep the extended-offline auto copy in step with the edit instead of
+      // waiting for the next library pass.
+      void librarySyncService.refreshPlaylist(id);
+      return result;
     },
   });
 
@@ -128,7 +133,9 @@ export const useDeletePlaylist = () => {
           playlistId: id,
         });
       }
-      return deletePlaylist(id);
+      const result = await deletePlaylist(id);
+      librarySyncService.handlePlaylistDeleted(id);
+      return result;
     },
   });
 

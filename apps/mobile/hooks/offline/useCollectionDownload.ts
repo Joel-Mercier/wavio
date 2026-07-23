@@ -21,6 +21,7 @@ export type DownloadCollectionMeta = {
   owner?: string;
   artist?: string;
   artistId?: string;
+  artists?: { id: string; name: string }[];
   year?: number;
 };
 

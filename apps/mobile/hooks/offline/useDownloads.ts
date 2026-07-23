@@ -1,5 +1,9 @@
 import { useCallback, useMemo } from "react";
-import { offlineDownloadService } from "@/services/offline";
+import {
+  type DeleteProgress,
+  librarySyncService,
+  offlineDownloadService,
+} from "@/services/offline";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
@@ -58,9 +62,12 @@ export const useOfflineDownloads = () => {
     }
   }, []);
 
-  const clearAllDownloads = useCallback(async () => {
+  const clearAllDownloads = useCallback(async (onProgress?: DeleteProgress) => {
     try {
-      await offlineDownloadService.clearAllDownloads();
+      await offlineDownloadService.clearAllDownloads(onProgress);
+      // The downloaded state (and cached artwork) is gone; a still-enabled
+      // library sync restarts its crawl from scratch.
+      librarySyncService.handleDownloadsCleared();
     } catch (error) {
       logError("Download Manager: Error clearing all downloads:", error);
       throw error;
@@ -110,8 +117,16 @@ export const useDownloadedTracksList = () => {
   return Object.values(downloadedTracks);
 };
 
-export const useDownloadedTracksCount = () =>
-  useOffline((s) => Object.keys(s.downloadedTracks).length);
+// Selects the (referentially stable) map and derives in useMemo so the O(n)
+// work re-runs only when a track is added/removed — not on every store write
+// (progress ticks land several times a second during an active sync).
+export const useDownloadedTracksCount = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(
+    () => Object.keys(downloadedTracks).length,
+    [downloadedTracks],
+  );
+};
 
 // Reactive view of saved offline collections (playlists/albums). Selects the
 // map (stable ref) and derives the list in the hook body so it only changes
@@ -124,10 +139,13 @@ export const useDownloadedCollections = () => {
   );
 };
 
-export const useTotalDownloadSize = () =>
-  useOffline((s) =>
-    Object.values(s.downloadedTracks).reduce((sum, t) => sum + t.size, 0),
+export const useTotalDownloadSize = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(
+    () => Object.values(downloadedTracks).reduce((sum, t) => sum + t.size, 0),
+    [downloadedTracks],
   );
+};
 
 // Per-id reactive progress — scoped to one trackId so a row only re-renders when
 // its own progress changes.

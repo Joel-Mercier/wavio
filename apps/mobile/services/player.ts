@@ -379,6 +379,14 @@ function getReplayGainFactor(track: QueueTrack): number {
 // queue, and one retry per track keeps a genuinely broken source from looping.
 const transcodeRetriedIds = new Set<string>();
 
+// Track ids whose *downloaded* file failed to decode on this device (e.g. an
+// ALAC file saved before the download path learned to transcode it) and have
+// since been forced to stream through a server transcode instead of playing off
+// disk. Only meaningful while online; the download itself is corrected
+// separately (offlineFileInfo transcodes such codecs), so this just bridges
+// already-downloaded raw files.
+const streamOverOfflineIds = new Set<string>();
+
 // Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
 // on. Jellyfin negotiates its own profile and local files play off disk, so a
 // retry there would just reload the identical URL.
@@ -412,7 +420,11 @@ function isServerTranscodeBackend(): boolean {
 function isTranscodedStream(track: QueueTrack): boolean {
   if (track.isRadio || track.source === "podcast") return false;
   if (!isServerTranscodeBackend()) return false;
-  if (useOffline.getState().getDownloadedTrack(track.id)) return false;
+  if (
+    useOffline.getState().getDownloadedTrack(track.id) &&
+    !streamOverOfflineIds.has(track.id)
+  )
+    return false;
   if (transcodeRetriedIds.has(track.id)) return true;
   return trackTranscodeInfo(track).active;
 }
@@ -447,7 +459,8 @@ function resolveTrackUrl(
   // /stream?id endpoint for it, and it's never an offline download.
   if (track.isRadio && track.url) return { url: track.url, isOffline: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
-  if (downloaded) return { url: downloaded.path, isOffline: true };
+  if (downloaded && !streamOverOfflineIds.has(track.id))
+    return { url: downloaded.path, isOffline: true };
   if (track.source === "podcast" && track.url)
     return { url: track.url, isOffline: false };
   return {
@@ -709,13 +722,19 @@ function handlePlaybackStatus(status: AudioStatus) {
     const current = useQueue.getState().getCurrent();
     const resolved = current ? resolveTrackUrl(current) : null;
     const needsNetwork = resolved ? !resolved.isOffline : true;
-    // A device that can't decode the raw source (e.g. ALAC ExoPlayer
-    // advertises but fails to decode) — re-arm this track to stream through a
-    // server transcode and reload it once, before treating it as a failure.
+    // A device that can't decode the source (e.g. ALAC ExoPlayer advertises but
+    // fails to decode) — re-arm this track to stream through a server transcode
+    // and reload it once, before treating it as a failure. A downloaded file
+    // can hit the same wall (a raw ALAC saved before the download path learned
+    // to transcode it): when the device is online it too can recover by
+    // streaming the transcode over the disk file, so allow the fallback for an
+    // offline source as long as we still have network to reach the server.
+    const canRecoverOfflineViaStream =
+      !!resolved?.isOffline && getIsOnline() && getServerReachable();
     if (
       current &&
       resolved &&
-      !resolved.isOffline &&
+      (!resolved.isOffline || canRecoverOfflineViaStream) &&
       !current.isRadio &&
       current.source !== "podcast" &&
       isDecodeError(status.error) &&
@@ -723,9 +742,11 @@ function handlePlaybackStatus(status: AudioStatus) {
       !transcodeRetriedIds.has(current.id)
     ) {
       transcodeRetriedIds.add(current.id);
+      if (resolved.isOffline) streamOverOfflineIds.add(current.id);
       reportBreadcrumb("player", "transcode-fallback", {
         trackId: current.id,
         error: status.error,
+        wasOffline: resolved.isOffline,
       });
       loadTrack(current, true);
       return;

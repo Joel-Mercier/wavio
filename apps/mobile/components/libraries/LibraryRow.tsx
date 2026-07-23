@@ -12,6 +12,7 @@ interface LibraryRowProps {
   label: string;
   isSelected: boolean;
   isDefault?: boolean;
+  disabled?: boolean;
   onPress: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function LibraryRow({
   label,
   isSelected,
   isDefault,
+  disabled = false,
   onPress,
 }: LibraryRowProps) {
   const [white, emerald500] = Uniwind.getCSSVariable([
@@ -27,7 +29,7 @@ export default function LibraryRow({
   ]) as string[];
   const { t } = useTranslation();
   return (
-    <FadeOutScaleDown className="mb-3" onPress={onPress}>
+    <FadeOutScaleDown className="mb-3" onPress={onPress} disabled={disabled}>
       <HStack
         className={cn(
           "bg-primary-600 p-4 rounded-md border border-primary-600 items-center justify-between",

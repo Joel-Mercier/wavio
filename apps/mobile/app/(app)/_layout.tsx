@@ -12,6 +12,7 @@ import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
+import LibrarySyncController from "@/components/LibrarySyncController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
@@ -28,6 +29,7 @@ import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
+import { librarySyncService, offlineDownloadService } from "@/services/offline";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -46,6 +48,7 @@ import useApp from "@/stores/app";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useLibrarySync from "@/stores/librarySync";
 import useLidarr from "@/stores/lidarr";
 import useLocalLibrary, { consumeLocalRescanFlag } from "@/stores/localLibrary";
 import useOffline from "@/stores/offline";
@@ -146,6 +149,8 @@ export default function AppLayout() {
         // rehydrate below.
         resetPlayerForScopeChange();
         useOffline.getState().__reset();
+        librarySyncService.reset();
+        useLibrarySync.getState().__reset();
         resetOfflineMutationReplay();
         useOfflineMutations.getState().__reset();
         useLocalLibrary.getState().__reset();
@@ -188,6 +193,12 @@ export default function AppLayout() {
     // persisted). Rehydration is synchronous, so this sees the restored queue.
     rewriteQueueRoutes();
     useOffline.persist.rehydrate();
+    // Rehydration is synchronous, so the restored queue is visible here: pick
+    // up downloads interrupted by an app kill (or left queued by the previous
+    // scope's sign-out) instead of waiting for a connectivity change to
+    // incidentally kick the queue.
+    offlineDownloadService.resume();
+    useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
@@ -306,6 +317,7 @@ export default function AppLayout() {
       <OfflineMutationsSync />
       <LidarrDownloadsWatcher />
       <OfflineStarredAutoSync />
+      <LibrarySyncController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <JukeboxSheet />
