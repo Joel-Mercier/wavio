@@ -580,8 +580,8 @@
 						"description": "Fügen Sie Ihrem Server über Lidarr Musik hinzu"
 					},
 					"integrations": {
-						"title": "Integrations",
-						"description": "Correct your library's tags with MusicBrainz"
+						"title": "Integrationen",
+						"description": "Korrigieren Sie die Tags Ihrer Musikbibliothek mit MusicBrainz"
 					},
 					"appearance": {
 						"title": "Aussehen",
@@ -613,39 +613,39 @@
 					}
 				},
 				"integrations": {
-					"description": "Connect external music databases to enrich and correct your library.",
+					"description": "Verbinden Sie externe Musikdatenbanken, um Ihre Bibliothek zu ergänzen und zu korrigieren.",
 					"statuses": {
 						"configured": "Aktiv",
-						"notConfigured": "Not set up"
+						"notConfigured": "Nicht eingerichtet"
 					},
 					"musicbrainz": {
 						"title": "MusicBrainz",
-						"description": "Match your albums and correct their tags",
-						"intro": "Matches each album in your local library against MusicBrainz and corrects its tags. MusicBrainz allows one request per second, so a large library takes a few minutes.",
+						"description": "Ordne deine Alben zu und korrigiere ihre Tags",
+						"intro": "Gleicht jedes Album in Ihrer lokalen Bibliothek mit MusicBrainz ab und korrigiert dessen Tags. MusicBrainz erlaubt eine Anfrage pro Sekunde, daher dauert die Bearbeitung einer großen Bibliothek einige Minuten.",
 						"tabs": {
-							"setup": "Setup"
+							"setup": "Einrichtung"
 						},
 						"writeMode": {
-							"title": "Where corrections go",
-							"label": "Write tags into files",
-							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too. Because writes are permanent, auto-approval is turned off in this mode: every match waits in the review queue and nothing is written to a file until you approve it.",
-							"unavailable": "Not available on this device. Corrections are stored in Wavio only, and can be undone at any time."
+							"title": "Wohin Korrekturen gehen",
+							"label": "Tags in Dateien schreiben",
+							"description": "Korrekturen werden direkt in die Audiodateien geschrieben, sind somit dauerhaft und für andere Apps sichtbar. Dieser Vorgang kann nicht rückgängig gemacht werden. Auch das Cover-Bild wird in die Datei eingebettet. Da die Änderungen dauerhaft sind, ist die automatische Freigabe in diesem Modus deaktiviert: Jede Übereinstimmung wird in die Überprüfungswarteschlange gestellt, und es wird nichts in eine Datei geschrieben, bis Sie dies genehmigen.",
+							"unavailable": "Auf diesem Gerät nicht verfügbar. Korrekturen werden ausschließlich in Wavio gespeichert und können jederzeit rückgängig gemacht werden."
 						},
 						"automation": {
-							"title": "Automation"
+							"title": "Automatisierung"
 						},
 						"autoApply": {
-							"label": "Apply confident matches automatically",
-							"description": "Matches above the confidence threshold are applied without asking. Everything else waits for your review.",
-							"filesDescription": "Unavailable while writing to files, since a wrong match cannot be undone. Every match is reviewed first."
+							"label": "Zuverlässige Übereinstimmungen automatisch anwenden",
+							"description": "Treffer, die über dem Konfidenzschwellenwert liegen, werden automatisch angewendet. Alle anderen warten auf Ihre Überprüfung.",
+							"filesDescription": "Während des Schreibvorgangs in Dateien nicht verfügbar, da eine falsche Zuordnung nicht rückgängig gemacht werden kann. Jede Zuordnung wird zunächst überprüft."
 						},
 						"threshold": {
-							"label": "Confidence threshold",
-							"description": "How certain a match must be before it is applied automatically. Only used when the setting above is on."
+							"label": "Konfidenzschwelle",
+							"description": "Wie sicher muss eine Übereinstimmung sein, bevor sie automatisch angewendet wird? Wird nur verwendet, wenn die obige Einstellung aktiviert ist."
 						},
 						"fields": {
-							"title": "Fields to correct",
-							"description": "Only the selected fields are changed. Everything else keeps the value read from your files. Cover art is only added to tracks that have none — artwork already in your files is left alone.",
+							"title": "Zu korrigierende Felder",
+							"description": "Es werden nur die ausgewählten Felder geändert. Alle anderen Felder behalten den aus Ihren Dateien gelesenen Wert bei. Cover werden nur zu Titeln hinzugefügt, die noch keine haben – bereits in Ihren Dateien vorhandene Cover bleiben unverändert.",
 							"labels": {
 								"title": "Titel",
 								"artist": "Künstler",
@@ -658,44 +658,44 @@
 							}
 						},
 						"scan": {
-							"title": "Match library",
-							"label": "Scan for matches",
-							"description": "Looks up every album in your library on MusicBrainz.",
+							"title": "Bibliothek abgleichen",
+							"label": "Nach Übereinstimmungen suchen",
+							"description": "Sucht jedes Album in deiner Bibliothek auf MusicBrainz.",
 							"start": "Scannen",
 							"cancel": "Abbrechen",
-							"progress": "{{processed}} of {{total}} — {{album}}",
-							"summary": "{{applied}} applied, {{pending}} awaiting review, {{unmatched}} without a match.",
-							"cancelledSummary": "Cancelled after {{processed}} of {{total}} albums. {{applied}} applied, {{pending}} awaiting review.",
-							"failedSummary": "The scan stopped after {{processed}} of {{total}} albums. Matches found before it stopped were kept, run it again to carry on."
+							"progress": "{{processed}} von {{total}} — {{album}}",
+							"summary": "{{applied}} angewendet, {{pending}} wird derzeit geprüft, {{unmatched}} keine Übereinstimmung gefunden.",
+							"cancelledSummary": "Nach {{processed}} Alben von {{total}} storniert. {{applied}} beantragt, {{pending}} wartet auf Prüfung.",
+							"failedSummary": "Der Scan wurde nach {{processed}} von {{total}} Alben abgebrochen. Die vor dem Abbruch gefundenen Übereinstimmungen wurden beibehalten. Führen Sie den Scan erneut aus, um fortzufahren."
 						},
 						"reset": {
-							"label": "Reset corrections",
-							"description": "Discards every correction stored in Wavio and empties the review queue. Tags already written into files are not affected.",
+							"label": "Korrekturen zurücksetzen",
+							"description": "Löscht alle in Wavio gespeicherten Korrekturen und leert die Überprüfungswarteschlange. Bereits in Dateien geschriebene Tags sind davon nicht betroffen.",
 							"action": "Zurücksetzen"
 						},
 						"review": {
-							"title": "Awaiting review ({{count}})",
-							"confidence": "{{confidence}}% match"
+							"title": "Wartet auf Überprüfung ({{count}})",
+							"confidence": "{{confidence}}% Übereinstimmung"
 						},
 						"unmatched": {
-							"title": "No match found ({{count}})",
-							"description": "These could not be identified. Tracks without an album tag are matched one by one instead, which needs a recognisable title.",
+							"title": "Es wurde kein Treffer gefunden ({{count}})",
+							"description": "Diese konnten nicht identifiziert werden. Titel ohne Album-Tag werden stattdessen einzeln abgeglichen, wofür ein erkennbarer Titel erforderlich ist.",
 							"reasons": {
-								"no-album-tag": "No album tag, and no track could be identified on its own",
-								"no-results": "Nothing found on MusicBrainz",
-								"low-confidence": "Results found, but none close enough to trust"
+								"no-album-tag": "Es gab kein Album-Tag, und kein Titel konnte für sich allein identifiziert werden",
+								"no-results": "Auf MusicBrainz wurde nichts gefunden",
+								"low-confidence": "Es wurden Ergebnisse gefunden, aber keines davon ist zuverlässig genug."
 							}
 						},
 						"album": {
-							"noMatch": "No MusicBrainz release matched this album.",
-							"summary": "{{confidence}}% match across {{tracks}} tracks",
-							"summaryTracks": "{{tracks}} tracks matched individually, {{confidence}}% average",
-							"changes": "Proposed changes",
-							"noChanges": "This album already matches MusicBrainz.",
-							"dismiss": "Dismiss",
+							"noMatch": "Es wurde keine Übereinstimmung mit einem MusicBrainz-Eintrag für dieses Album gefunden.",
+							"summary": "{{confidence}}% Übereinstimmung in den Titeln von „ {{tracks}}“",
+							"summaryTracks": "{{tracks}} Titel wurden einzeln abgeglichen, {{confidence}}% im Durchschnitt",
+							"changes": "Vorgeschlagene Änderungen",
+							"noChanges": "Dieses Album ist bereits bei MusicBrainz erfasst.",
+							"dismiss": "Schließen",
 							"apply": "Bewerben",
-							"applyToFiles": "Write to files",
-							"applying": "Writing"
+							"applyToFiles": "In Dateien schreiben",
+							"applying": "Schreiben"
 						}
 					}
 				},
@@ -1537,7 +1537,7 @@
 				"localInfoMetadataTitle": "Wie Metadaten gelesen werden",
 				"localInfoMetadata": "Titel, Interpret, Album, Titelnummer, Coverbild und weitere Informationen werden aus den in jeder Datei eingebetteten Tags ausgelesen. Bei Dateien ohne Tags wird der Dateiname verwendet; daher liefern gut getaggte Dateien die besten Ergebnisse.",
 				"localInfoTaggingTitle": "Deine Bibliothek mit Tags versehen",
-				"localInfoTagging": "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them. Wavio also has a built-in MusicBrainz integration that can match your albums and tag the files directly on your device.",
+				"localInfoTagging": "Um eine übersichtliche und einheitliche Mediathek zu gewährleisten, empfehlen wir Ihnen, Ihre Dateien vor dem Hinzufügen mit MusicBrainz Picard zu taggen. Wavio verfügt außerdem über eine integrierte MusicBrainz-Anbindung, mit der Sie Ihre Alben abgleichen und die Dateien direkt auf Ihrem Gerät taggen können.",
 				"localInfoTaggingLink": "MusicBrainz Picard herunterladen",
 				"localInfoClose": "Verstanden"
 			},
