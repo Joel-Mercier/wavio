@@ -63,6 +63,7 @@
 				"alphabeticalSort": "按字母排序",
 				"artistSort": "艺人",
 				"albumSort": "专辑",
+				"sizeSort": "File size",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
 				"search": {
@@ -700,6 +701,24 @@
 					"autoSignOutDescription": "当网络正常但无法访问服务器时自动退出登录。关闭后可保持登录状态并继续浏览已下载的曲目。",
 					"pendingChangesLabel": "待同步的更改",
 					"pendingChangesAction": "查看",
+					"extendedOfflineLabel": "Cache entire library",
+					"extendedOfflineDescription": "Progressively download everything on this server so the whole library stays browsable and playable offline",
+					"extendedOfflineSyncing": "Syncing library — {{count}}/{{total}} tracks ({{size}})",
+					"extendedOfflineCachingArtwork": "Caching artwork — {{count}}/{{total}} covers",
+					"extendedOfflineComplete": "Library up to date — {{count}} tracks ({{size}})",
+					"extendedOfflinePausedOffline": "Paused — server unreachable",
+					"extendedOfflinePausedWifi": "Paused — waiting for Wi-Fi",
+					"extendedOfflinePausedDisk": "Paused — device storage is almost full",
+					"extendedOfflineSyncError": "Sync error — retrying automatically",
+					"extendedOfflineCompletedToast": "Your library is fully cached — {{count}} tracks available offline",
+					"extendedOfflineUnsupported": "This server doesn't support full library sync",
+					"extendedOfflineDisableConfirmTitle": "Remove cached library?",
+					"extendedOfflineDisableConfirmDescription": "Tracks and covers cached by the library sync will be deleted from this device. Albums, playlists and tracks you saved for offline individually are kept.",
+					"extendedOfflineDeleting": "Deleting {{done}} / {{total}}",
+					"downloadFormatLabel": "Download format",
+					"downloadFormatDescription": "Format offline downloads are stored in. Original keeps the exact file from the server; other formats are transcoded to save space.",
+					"downloadBitRateLabel": "Download quality",
+					"downloadBitRateDescription": "Maximum bitrate for transcoded downloads",
 					"pendingChangesDescription_other": "{{count}} 项离线更改等待同步"
 				},
 				"updatesSettings": {
@@ -1003,6 +1022,8 @@
 				"empty": "暂无已下载的曲目",
 				"totalSize": "总大小：{{size}}",
 				"clearAll": "清除全部",
+				"searchPlaceholder": "Search downloads",
+				"deleting": "Deleting {{done}} / {{total}}",
 				"totalTracks_other": "{{count}} 首"
 			},
 			"pendingChanges": {
