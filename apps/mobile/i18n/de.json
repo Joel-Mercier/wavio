@@ -26,7 +26,7 @@
 				"moreFrom": "Mehr von",
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internetradiosender",
-				"playErrorMessage": "An error occurred while starting playback",
+				"playErrorMessage": "Beim Starten der Wiedergabe ist ein Fehler aufgetreten.",
 				"tabs": {
 					"music": "Musik",
 					"podcasts": "Podcasts",
@@ -52,7 +52,7 @@
 				"clearRecentSearches": "Alle löschen",
 				"sort": {
 					"alphabetical": "Alphabetisch",
-					"trackCount": "Tracks",
+					"trackCount": "Titel",
 					"albumCount": "Alben"
 				}
 			},
@@ -63,6 +63,7 @@
 				"alphabeticalSort": "Alphabetisch",
 				"artistSort": "Künstler",
 				"albumSort": "Album",
+				"sizeSort": "Dateigröße",
 				"allAlbums": "Alle Alben",
 				"allArtists": "Alle Künstler",
 				"search": {
@@ -79,8 +80,8 @@
 				"internetRadioStationDescription": "Erstelle einen Internetradiosender, den Du über die App streamen kannst",
 				"podcastChannelTitle": "Podcast-Kanal",
 				"podcastChannelDescription": "Abonniere den Server über seinen RSS-Feed für einen Podcast",
-				"downloaderTitle": "Add music",
-				"downloaderDescription": "Search and download music to your server"
+				"downloaderTitle": "Musik hinzufügen",
+				"downloaderDescription": "Musik suchen und auf Ihren Server herunterladen"
 			},
 			"carAuto": {
 				"home": "Start",
@@ -563,124 +564,219 @@
 				"title": "Einstellungen",
 				"menu": {
 					"playback": {
-						"title": "Playback & audio",
-						"description": "Audio quality, replay gain, equalizer"
+						"title": "Wiedergabe & Audio",
+						"description": "Audioqualität, Replay Gain, Equalizer"
 					},
 					"library": {
-						"title": "Music library",
-						"description": "Scan your library and view its status"
+						"title": "Musikbibliothek",
+						"description": "Durchsuchen Sie Ihre Bibliothek und zeigen Sie deren Status an"
 					},
 					"downloads": {
-						"title": "Downloads & offline",
-						"description": "Offline mode, downloads over Wi-Fi, downloads management"
+						"title": "Downloads & Offline",
+						"description": "Offline-Modus, Downloads über WLAN, Download-Verwaltung"
 					},
 					"downloaders": {
-						"title": "Downloaders",
-						"description": "Add music to your server via Lidarr"
+						"title": "Downloader",
+						"description": "Fügen Sie Ihrem Server über Lidarr Musik hinzu"
+					},
+					"integrations": {
+						"title": "Integrationen",
+						"description": "Korrigieren Sie die Tags Ihrer Musikbibliothek mit MusicBrainz"
 					},
 					"appearance": {
-						"title": "Appearance",
-						"description": "Language, home sections, haptics"
+						"title": "Aussehen",
+						"description": "Sprache, Startseiten, Haptik"
 					},
 					"podcasts": {
 						"title": "Podcasts",
-						"description": "Configure the Taddy podcast API"
+						"description": "Die Taddy-Podcast-API konfigurieren"
 					},
 					"radio": {
 						"title": "Internetradio",
-						"description": "Enable stations, country, tags"
+						"description": "Sender, Land, Tags aktivieren"
 					},
 					"storage": {
-						"title": "Storage & data",
-						"description": "Storage usage, cache, recent activity"
+						"title": "Speicher & Daten",
+						"description": "Speicherauslastung, Cache, letzte Aktivitäten"
 					},
 					"backup": {
 						"title": "Sicherung und Wiederherstellung",
-						"description": "Export and restore your data"
+						"description": "Daten exportieren und wiederherstellen"
 					},
 					"security": {
 						"title": "Sicherheit",
 						"description": "Vertrauenswürdige Zertifikate"
+					},
+					"updates": {
+						"title": "Aktualisierungen",
+						"description": "Nach App-Updates suchen und diese installieren"
+					}
+				},
+				"integrations": {
+					"description": "Verbinden Sie externe Musikdatenbanken, um Ihre Bibliothek zu ergänzen und zu korrigieren.",
+					"statuses": {
+						"configured": "Aktiv",
+						"notConfigured": "Nicht eingerichtet"
+					},
+					"musicbrainz": {
+						"title": "MusicBrainz",
+						"description": "Ordne deine Alben zu und korrigiere ihre Tags",
+						"intro": "Gleicht jedes Album in Ihrer lokalen Bibliothek mit MusicBrainz ab und korrigiert dessen Tags. MusicBrainz erlaubt eine Anfrage pro Sekunde, daher dauert die Bearbeitung einer großen Bibliothek einige Minuten.",
+						"tabs": {
+							"setup": "Einrichtung"
+						},
+						"writeMode": {
+							"title": "Wohin Korrekturen gehen",
+							"label": "Tags in Dateien schreiben",
+							"description": "Korrekturen werden direkt in die Audiodateien geschrieben, sind somit dauerhaft und für andere Apps sichtbar. Dieser Vorgang kann nicht rückgängig gemacht werden. Auch das Cover-Bild wird in die Datei eingebettet. Da die Änderungen dauerhaft sind, ist die automatische Freigabe in diesem Modus deaktiviert: Jede Übereinstimmung wird in die Überprüfungswarteschlange gestellt, und es wird nichts in eine Datei geschrieben, bis Sie dies genehmigen.",
+							"unavailable": "Auf diesem Gerät nicht verfügbar. Korrekturen werden ausschließlich in Wavio gespeichert und können jederzeit rückgängig gemacht werden."
+						},
+						"automation": {
+							"title": "Automatisierung"
+						},
+						"autoApply": {
+							"label": "Zuverlässige Übereinstimmungen automatisch anwenden",
+							"description": "Treffer, die über dem Konfidenzschwellenwert liegen, werden automatisch angewendet. Alle anderen warten auf Ihre Überprüfung.",
+							"filesDescription": "Während des Schreibvorgangs in Dateien nicht verfügbar, da eine falsche Zuordnung nicht rückgängig gemacht werden kann. Jede Zuordnung wird zunächst überprüft."
+						},
+						"threshold": {
+							"label": "Konfidenzschwelle",
+							"description": "Wie sicher muss eine Übereinstimmung sein, bevor sie automatisch angewendet wird? Wird nur verwendet, wenn die obige Einstellung aktiviert ist."
+						},
+						"fields": {
+							"title": "Zu korrigierende Felder",
+							"description": "Es werden nur die ausgewählten Felder geändert. Alle anderen Felder behalten den aus Ihren Dateien gelesenen Wert bei. Cover werden nur zu Titeln hinzugefügt, die noch keine haben – bereits in Ihren Dateien vorhandene Cover bleiben unverändert.",
+							"labels": {
+								"title": "Titel",
+								"artist": "Künstler",
+								"album": "Album",
+								"albumArtist": "Albuminterpret",
+								"year": "Jahr",
+								"trackNumber": "Titelnummer",
+								"discNumber": "CD Nummer",
+								"coverArt": "Artwork"
+							}
+						},
+						"scan": {
+							"title": "Bibliothek abgleichen",
+							"label": "Nach Übereinstimmungen suchen",
+							"description": "Sucht jedes Album in deiner Bibliothek auf MusicBrainz.",
+							"start": "Scannen",
+							"cancel": "Abbrechen",
+							"progress": "{{processed}} von {{total}} — {{album}}",
+							"summary": "{{applied}} angewendet, {{pending}} wird derzeit geprüft, {{unmatched}} keine Übereinstimmung gefunden.",
+							"cancelledSummary": "Nach {{processed}} Alben von {{total}} storniert. {{applied}} beantragt, {{pending}} wartet auf Prüfung.",
+							"failedSummary": "Der Scan wurde nach {{processed}} von {{total}} Alben abgebrochen. Die vor dem Abbruch gefundenen Übereinstimmungen wurden beibehalten. Führen Sie den Scan erneut aus, um fortzufahren."
+						},
+						"reset": {
+							"label": "Korrekturen zurücksetzen",
+							"description": "Löscht alle in Wavio gespeicherten Korrekturen und leert die Überprüfungswarteschlange. Bereits in Dateien geschriebene Tags sind davon nicht betroffen.",
+							"action": "Zurücksetzen"
+						},
+						"review": {
+							"title": "Wartet auf Überprüfung ({{count}})",
+							"confidence": "{{confidence}}% Übereinstimmung"
+						},
+						"unmatched": {
+							"title": "Es wurde kein Treffer gefunden ({{count}})",
+							"description": "Diese konnten nicht identifiziert werden. Titel ohne Album-Tag werden stattdessen einzeln abgeglichen, wofür ein erkennbarer Titel erforderlich ist.",
+							"reasons": {
+								"no-album-tag": "Es gab kein Album-Tag, und kein Titel konnte für sich allein identifiziert werden",
+								"no-results": "Auf MusicBrainz wurde nichts gefunden",
+								"low-confidence": "Es wurden Ergebnisse gefunden, aber keines davon ist zuverlässig genug."
+							}
+						},
+						"album": {
+							"noMatch": "Es wurde keine Übereinstimmung mit einem MusicBrainz-Eintrag für dieses Album gefunden.",
+							"summary": "{{confidence}}% Übereinstimmung in den Titeln von „ {{tracks}}“",
+							"summaryTracks": "{{tracks}} Titel wurden einzeln abgeglichen, {{confidence}}% im Durchschnitt",
+							"changes": "Vorgeschlagene Änderungen",
+							"noChanges": "Dieses Album ist bereits bei MusicBrainz erfasst.",
+							"dismiss": "Schließen",
+							"apply": "Bewerben",
+							"applyToFiles": "In Dateien schreiben",
+							"applying": "Schreiben"
+						}
 					}
 				},
 				"downloaders": {
-					"description": "Connect a downloader to add music that isn't on your server yet. It's fetched into your library and appears after the next scan.",
-					"comingSoon": "Coming soon.",
+					"description": "Verbinden Sie einen Downloader, um Musik hinzuzufügen, die noch nicht auf Ihrem Server vorhanden ist. Sie wird in Ihre Bibliothek übernommen und erscheint nach dem nächsten Scan.",
+					"comingSoon": "Demnächst verfügbar.",
 					"statuses": {
 						"active": "Aktiv",
 						"inactive": "Inaktiv"
 					},
 					"lidarr": {
 						"title": "Lidarr",
-						"description": "Search and download albums through your Lidarr instance",
-						"getApiKeyAction": "Where do I find my API key?",
-						"apiKeyHelpTitle": "Finding your API key",
-						"apiKeyHelpStep1": "Open Lidarr in a web browser. It usually runs at http://<ip-address>:8686.",
-						"apiKeyHelpStep2": "Go to Settings > General.",
-						"apiKeyHelpStep3": "Scroll to the Security section and copy the API Key value.",
+						"description": "Alben über Ihre Lidarr-Instanz suchen und herunterladen",
+						"getApiKeyAction": "Wo finde ich meinen API-Schlüssel?",
+						"apiKeyHelpTitle": "So finden Sie Ihren API-Schlüssel",
+						"apiKeyHelpStep1": "Öffnen Sie Lidarr in einem Webbrowser. Es ist in der Regel unter http://<ip-address>:8686 erreichbar.",
+						"apiKeyHelpStep2": "Gehen Sie zu „Einstellungen“ > „Allgemein“.",
+						"apiKeyHelpStep3": "Scrollen Sie zum Abschnitt „Sicherheit“ und kopieren Sie den Wert des API-Schlüssels.",
 						"apiKeyHelpClose": "Verstanden",
-						"serverUrlLabel": "Server URL",
+						"serverUrlLabel": "Server-URL",
 						"apiKeyLabel": "API-Schlüssel",
-						"apiKeyPlaceholder": "Your Lidarr API key",
-						"testAndSaveAction": "Test & save",
-						"connectionSuccess": "Connected to Lidarr",
-						"connectionFailed": "Couldn't connect. Check the URL and API key.",
-						"removedMessage": "Lidarr configuration removed",
-						"autoScanLabel": "Scan library after download",
-						"autoScanDescription": "Rescan your server when a download finishes so new albums show up automatically"
+						"apiKeyPlaceholder": "Ihr Lidarr-API-Schlüssel",
+						"testAndSaveAction": "Testen & sparen",
+						"connectionSuccess": "Mit Lidarr verbunden",
+						"connectionFailed": "Verbindung konnte nicht hergestellt werden. Überprüfen Sie die URL und den API-Schlüssel.",
+						"removedMessage": "Lidarr-Konfiguration entfernt",
+						"autoScanLabel": "Bibliothek nach dem Herunterladen scannen",
+						"autoScanDescription": "Lassen Sie Ihren Server nach Abschluss eines Downloads erneut scannen, damit neue Alben automatisch angezeigt werden"
 					},
 					"discovery": {
-						"title": "Discovery",
-						"description": "Search for artists and albums to add",
-						"inputPlaceholder": "Search artists and albums",
-						"emptyPrompt": "Search for an artist or album to add to your library.",
+						"title": "Entdeckung",
+						"description": "Nach Interpreten und Alben suchen, die hinzugefügt werden sollen",
+						"inputPlaceholder": "Künstler und Alben suchen",
+						"emptyPrompt": "Suchen Sie nach einem Interpreten oder einem Album, das Sie Ihrer Mediathek hinzufügen möchten.",
 						"album": "Album",
 						"artist": "Künstler",
-						"filtersTitle": "Add options",
-						"filtersDescription": "These apply when you add an album to Lidarr.",
-						"qualityProfile": "Quality profile",
-						"metadataProfile": "Metadata profile",
-						"rootFolder": "Root folder",
-						"monitor": "Monitor added albums",
-						"selectPlaceholder": "Select"
+						"filtersTitle": "Optionen hinzufügen",
+						"filtersDescription": "Diese gelten, wenn Sie ein Album zu Lidarr hinzufügen.",
+						"qualityProfile": "Qualitätsprofil",
+						"metadataProfile": "Metadatenprofil",
+						"rootFolder": "Stammordner",
+						"monitor": "Hinzugefügte Alben überwachen",
+						"selectPlaceholder": "Auswählen"
 					},
 					"album": {
-						"addAction": "Add to library",
+						"addAction": "Zur Bibliothek hinzufügen",
 						"downloadAction": "Herunterladen",
-						"downloading": "Downloading… {{percent}}%",
-						"addedMessage": "Added to Lidarr. Searching for a release…",
-						"searchStartedMessage": "Searching for a release…",
-						"addFailed": "Couldn't add this album.",
-						"inLibrary": "In your library",
-						"noRootFolder": "No Lidarr root folder is configured.",
-						"chooseReleaseAction": "Choose release",
+						"downloading": "… {{percent}} % wird heruntergeladen %",
+						"addedMessage": "Zu Lidarr hinzugefügt. Suche nach einem Release-…",
+						"searchStartedMessage": "Auf der Suche nach einem Release-…",
+						"addFailed": "Dieses Album konnte nicht hinzugefügt werden.",
+						"inLibrary": "In Ihrer Bibliothek",
+						"noRootFolder": "Es ist kein Lidarr-Stammordner konfiguriert.",
+						"chooseReleaseAction": "Version auswählen",
 						"trackCount_one": "{{count}} Titel",
 						"trackCount_other": "{{count}} Titel"
 					},
 					"release": {
-						"title": "Choose a release",
-						"description": "Pick a specific release to download.",
-						"searching": "Searching indexers…",
-						"grabbedMessage": "Release sent to your download client.",
-						"grabFailed": "Couldn't grab this release.",
-						"seeders_one": "{{count}} seeder",
-						"seeders_other": "{{count}} seeders"
+						"title": "Wählen Sie eine Version aus",
+						"description": "Wählen Sie eine bestimmte Version zum Herunterladen aus.",
+						"searching": "Indexer suchen…",
+						"grabbedMessage": "Die Veröffentlichung wurde an Ihren Download-Client gesendet.",
+						"grabFailed": "Ich konnte diese Veröffentlichung nicht herunterladen.",
+						"seeders_one": "{{count}} Sämaschine",
+						"seeders_other": "{{count}} Sämaschinen"
 					},
 					"downloads": {
-						"title": "Download progress",
-						"description": "Track in-progress downloads and history",
-						"inProgressTitle": "In progress",
+						"title": "Download-Fortschritt",
+						"description": "Laufende Downloads und Download-Verlauf nachverfolgen",
+						"inProgressTitle": "In Bearbeitung",
 						"historyTitle": "Geschichte",
-						"emptyQueue": "Nothing downloading right now.",
-						"emptyHistory": "No download history yet.",
-						"cancelFailed": "Couldn't cancel this download.",
+						"emptyQueue": "Derzeit wird nichts heruntergeladen.",
+						"emptyHistory": "Es gibt noch keinen Download-Verlauf.",
+						"cancelFailed": "Ich konnte diesen Download nicht abbrechen.",
 						"events": {
-							"grabbed": "Grabbed",
-							"downloadImported": "Imported",
-							"trackFileImported": "Imported",
-							"albumImportIncomplete": "Incomplete",
-							"downloadFailed": "Failed",
-							"downloadIgnored": "Ignored"
+							"grabbed": "Geraubt",
+							"downloadImported": "Importiert",
+							"trackFileImported": "Importiert",
+							"albumImportIncomplete": "Unvollständig",
+							"downloadFailed": "Fehlgeschlagen",
+							"downloadIgnored": "Ignoriert"
 						}
 					}
 				},
@@ -704,8 +800,38 @@
 					"autoSignOutDescription": "Automatisch abmelden, wenn Dein Server nicht erreichbar ist, das Internet jedoch funktioniert. Deaktiviere diese Option, um angemeldet zu bleiben und weiterhin Deine heruntergeladenen Titel anzusehen.",
 					"pendingChangesLabel": "Ausstehende Änderungen",
 					"pendingChangesAction": "Anzeigen",
+					"extendedOfflineLabel": "Gesamte Bibliothek zwischenspeichern",
+					"extendedOfflineDescription": "Lade nach und nach alle Inhalte dieses Servers herunter, damit die gesamte Bibliothek auch offline durchsuchbar und abspielbar bleibt",
+					"extendedOfflineSyncing": "Bibliothek synchronisieren — {{count}}/{{total}} Titel ({{size}})",
+					"extendedOfflineCachingArtwork": "Caching artwork — {{count}}/{{total}} behandelt",
+					"extendedOfflineComplete": "Bibliothek auf dem neuesten Stand — {{count}} Tracks ({{size}})",
+					"extendedOfflinePausedOffline": "Angehalten – Server nicht erreichbar",
+					"extendedOfflinePausedWifi": "Angehalten – Warten auf WLAN",
+					"extendedOfflinePausedDisk": "Angehalten – Der Speicher des Geräts ist fast voll",
+					"extendedOfflineSyncError": "Synchronisierungsfehler – automatischer Wiederholungsversuch",
+					"extendedOfflineCompletedToast": "Ihre Bibliothek ist vollständig zwischengespeichert – {{count}} zeigt die offline verfügbaren Titel an",
+					"extendedOfflineUnsupported": "Dieser Server unterstützt keine vollständige Bibliothekssynchronisierung.",
+					"extendedOfflineDisableConfirmTitle": "Zwischengespeicherte Bibliothek entfernen?",
+					"extendedOfflineDisableConfirmDescription": "Titel und Cover, die durch die Bibliothekssynchronisierung zwischengespeichert wurden, werden von diesem Gerät gelöscht. Alben, Wiedergabelisten und Titel, die Sie einzeln für die Offline-Nutzung gespeichert haben, bleiben erhalten.",
+					"extendedOfflineDeleting": "{{done}} löschen / {{total}}",
+					"downloadFormatLabel": "Download-Format",
+					"downloadFormatDescription": "Format, in dem Offline-Downloads gespeichert werden. Bei „Original“ wird die Datei genau so vom Server beibehalten; andere Formate werden aus Platzgründen transkodiert.",
+					"downloadBitRateLabel": "Download-Qualität",
+					"downloadBitRateDescription": "Maximale Bitrate für transkodierte Downloads",
 					"pendingChangesDescription_one": "{{count}} offline vorgenommene Änderung wartet auf Synchronisierung",
 					"pendingChangesDescription_other": "{{count}} offline vorgenommene Änderungen warten auf Synchronisierung"
+				},
+				"updatesSettings": {
+					"title": "Aktualisierungen",
+					"autoCheckLabel": "Automatisch nach Updates suchen",
+					"autoCheckDescription": "Beim Start wird nach einer neuen Version gesucht und Sie werden benachrichtigt, sobald eine verfügbar ist",
+					"checkNowLabel": "Nach Updates suchen",
+					"checkNowDescription": "Suchen Sie jetzt nach einer neueren Version",
+					"checkNowAction": "Überprüfen",
+					"checking": "… überprüfen",
+					"upToDate": "Sie nutzen die aktuellste Version.",
+					"checkFailed": "Es konnten keine Updates gefunden werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+					"currentVersionLabel": "Aktuelle Version"
 				},
 				"storageSettings": {
 					"title": "Speicher",
@@ -766,10 +892,10 @@
 						"server": "Nur Server",
 						"all": "Server + lrclib.net"
 					},
-					"lyricsKeepScreenOnLabel": "Keep screen on for lyrics",
-					"lyricsKeepScreenOnDescription": "Stop the screen from dimming while the lyrics screen is open and a track is playing. Uses more battery.",
-					"swipeActionLabel": "Swipe action",
-					"swipeActionDescription": "Action triggered when swiping a track to the right in a list",
+					"lyricsKeepScreenOnLabel": "Bildschirm für Liedtexte eingeschaltet lassen",
+					"lyricsKeepScreenOnDescription": "Verhindert, dass sich der Bildschirm abdunkelt, während der Liedtext-Bildschirm geöffnet ist und ein Titel abgespielt wird. Dies führt zu einem höheren Akkuverbrauch.",
+					"swipeActionLabel": "Wischgeste",
+					"swipeActionDescription": "Aktion, die ausgelöst wird, wenn ein Titel in einer Liste nach rechts gewischt wird",
 					"swipeActionOptions": {
 						"off": "Aus",
 						"addToQueue": "Zur Warteschlange hinzufügen",
@@ -989,14 +1115,16 @@
 					"artist": "Interpret",
 					"playlist": "Wiedergabeliste"
 				},
-				"plays_one": "{{count}} track played",
-				"plays_other": "{{count}} tracks played"
+				"plays_one": "{{count}} Titel abgespielt",
+				"plays_other": "{{count}} abgespielte Titel"
 			},
 			"offlineDownloads": {
 				"title": "Offline-Downloads",
 				"empty": "Es wurden noch keine Titel heruntergeladen.",
 				"totalSize": "Gesamtgröße: {{size}}",
 				"clearAll": "Alle löschen",
+				"searchPlaceholder": "Downloads suchen",
+				"deleting": "{{done}} löschen / {{total}}",
 				"totalTracks_one": "{{count}} Titel",
 				"totalTracks_other": "{{count}} Titel"
 			},
@@ -1029,7 +1157,7 @@
 				"empty": "Die Warteschlange ist leer.",
 				"tabQueue": "Warteschlange",
 				"tabRecentlyPlayed": "Zuletzt gespielt",
-				"recentlyPlayedEmpty": "No tracks played yet.",
+				"recentlyPlayedEmpty": "Es wurden noch keine Titel abgespielt.",
 				"edit": "Bearbeiten",
 				"done": "Fertig",
 				"order": "Reihenfolge",
@@ -1039,10 +1167,10 @@
 				"clearConfirmTitle": "Warteschlange löschen?",
 				"clearConfirmMessage": "Alle Titel werden aus der Warteschlange entfernt und die Wiedergabe wird angehalten.",
 				"clearedMessage": "Warteschlange geleert",
-				"clearHistory": "Clear history",
-				"clearHistoryConfirmTitle": "Clear history?",
-				"clearHistoryConfirmMessage": "All recently played tracks will be removed from this list. Your queue and playback are unaffected.",
-				"clearedHistoryMessage": "History cleared",
+				"clearHistory": "Verlauf löschen",
+				"clearHistoryConfirmTitle": "Verlauf löschen?",
+				"clearHistoryConfirmMessage": "Alle kürzlich abgespielten Titel werden aus dieser Liste entfernt. Ihre Wiedergabeliste und die Wiedergabe bleiben davon unberührt.",
+				"clearedHistoryMessage": "Verlauf gelöscht",
 				"nowPlaying": "Aktuell läuft",
 				"nextInQueue": "Als Nächstes in der Warteschlange",
 				"removeFromQueue": "Aus der Warteschlange entfernen",
@@ -1139,8 +1267,8 @@
 					"likedSongs": "Wiedergabe von gemochten Titeln",
 					"folder": "Wiedergabe aus einem Ordner",
 					"similar": "Ähnliche Songs abspielen",
-					"albumList": "Playing from albums",
-					"playlistList": "Playing from playlists"
+					"albumList": "Wiedergabe von Alben",
+					"playlistList": "Wiedergabe aus Wiedergabelisten"
 				},
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
 				"playNext": "Nächsten Titel abspielen",
@@ -1160,7 +1288,7 @@
 				"translationOff": "Aus",
 				"pronunciation": "Aussprache",
 				"showPronunciation": "Aussprache anzeigen",
-				"lyricsUnavailable": "No lyrics available for this track.",
+				"lyricsUnavailable": "Für diesen Titel sind keine Liedtexte verfügbar.",
 				"sleepTimer": "Sleep-Timer",
 				"sleepTimerOff": "Aus",
 				"sleepTimerEndOfTrack": "Ende des Titels",
@@ -1214,7 +1342,7 @@
 				"addServer": "Server hinzufügen",
 				"namePlaceholder": "Servernamen eingeben",
 				"urlPlaceholder": "Server-URL eingeben",
-				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
+				"fallbackUrlPlaceholder": "URL des Ausweichservers (optional)",
 				"usernamePlaceholder": "Benutzernamen für den Server eingeben",
 				"passwordPlaceholder": "Passwort für den Server eingeben",
 				"editServer": "Server bearbeiten",
@@ -1233,9 +1361,21 @@
 				"switchServerConfirmDescription": "Du wirst abgemeldet und zur Anmeldeseite weitergeleitet.",
 				"switchConfirm": "Wechseln"
 			},
+			"update": {
+				"title": "Update verfügbar (Version{{version}})",
+				"description": "Eine neue Version von Wavio ist verfügbar. Führen Sie jetzt ein Update durch, um die neuesten Funktionen und Fehlerbehebungen zu erhalten.",
+				"viewFullRelease": "Vollständige Versionshinweise anzeigen",
+				"later": "Später",
+				"update": "Aktualisierung",
+				"downloading": "… {{percent}} % wird heruntergeladen %",
+				"installing": "Das Installationsprogramm „… “ öffnen",
+				"errorDescription": "Das Update konnte nicht heruntergeladen werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut, oder laden Sie es von der Release-Seite herunter.",
+				"retry": "Erneut versuchen",
+				"openBrowser": "Im Browser öffnen"
+			},
 			"shared": {
 				"advancedSettings": "Erweiterte Einstellungen",
-				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
+				"fallbackUrlHelp": "Wird verwendet, wenn die Haupt-URL nicht erreichbar ist. Muss auf denselben Server verweisen.",
 				"cancel": "Abbrechen",
 				"close": "Schließen",
 				"create": "Erstellen",
@@ -1370,7 +1510,7 @@
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Lokale Bibliothek",
 				"urlPlaceholder": "Server-URL eingeben",
-				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
+				"fallbackUrlPlaceholder": "URL des Ausweichservers (optional)",
 				"usernamePlaceholder": "Benutzernamen eingeben",
 				"passwordPlaceholder": "Passwort eingeben",
 				"choice": "Oder geben Sie Ihre Serverdaten ein",
@@ -1397,7 +1537,7 @@
 				"localInfoMetadataTitle": "Wie Metadaten gelesen werden",
 				"localInfoMetadata": "Titel, Interpret, Album, Titelnummer, Coverbild und weitere Informationen werden aus den in jeder Datei eingebetteten Tags ausgelesen. Bei Dateien ohne Tags wird der Dateiname verwendet; daher liefern gut getaggte Dateien die besten Ergebnisse.",
 				"localInfoTaggingTitle": "Deine Bibliothek mit Tags versehen",
-				"localInfoTagging": "Um eine übersichtliche und einheitliche Bibliothek zu erhalten, empfehlen wir, Deine Dateien vor dem Hinzufügen mit MusicBrainz Picard zu taggen.",
+				"localInfoTagging": "Um eine übersichtliche und einheitliche Mediathek zu gewährleisten, empfehlen wir Ihnen, Ihre Dateien vor dem Hinzufügen mit MusicBrainz Picard zu taggen. Wavio verfügt außerdem über eine integrierte MusicBrainz-Anbindung, mit der Sie Ihre Alben abgleichen und die Dateien direkt auf Ihrem Gerät taggen können.",
 				"localInfoTaggingLink": "MusicBrainz Picard herunterladen",
 				"localInfoClose": "Verstanden"
 			},

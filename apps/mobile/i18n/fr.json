@@ -63,6 +63,7 @@
 				"alphabeticalSort": "Alphabétique",
 				"artistSort": "Artiste",
 				"albumSort": "Album",
+				"sizeSort": "Taille du fichier",
 				"allAlbums": "Tous les albums",
 				"allArtists": "Tous les artistes",
 				"search": {
@@ -578,6 +579,10 @@
 						"title": "Outils de téléchargement",
 						"description": "Ajoutez de la musique à votre serveur via Lidarr"
 					},
+					"integrations": {
+						"title": "Intégrations",
+						"description": "Corriger les tags de votre bibliothèque avec MusicBrainz"
+					},
 					"appearance": {
 						"title": "Apparence",
 						"description": "Langue, rubriques d'accueil, retour haptique"
@@ -601,6 +606,97 @@
 					"security": {
 						"title": "Sécurité",
 						"description": "Certificats approuvés"
+					},
+					"updates": {
+						"title": "Mises à jour",
+						"description": "Vérifier et installer les mises à jour de l'application"
+					}
+				},
+				"integrations": {
+					"description": "Connectez des bases de données musicales externes pour enrichir et corriger votre bibliothèque.",
+					"statuses": {
+						"configured": "Actif",
+						"notConfigured": "Non configuré"
+					},
+					"musicbrainz": {
+						"title": "MusicBrainz",
+						"description": "Faites correspondre vos albums et corrigez leurs tags",
+						"intro": "Fait correspondre chaque album de votre bibliothèque locale à MusicBrainz et corrige ses tags. MusicBrainz permet une demande par seconde, donc une grande bibliothèque prend quelques minutes.",
+						"tabs": {
+							"setup": "Configuration"
+						},
+						"writeMode": {
+							"title": "Où vont les corrections",
+							"label": "Écrire les tags dans les fichiers",
+							"description": "Les corrections sont enregistrées directement dans les fichiers audio ; elles sont donc définitives et visibles par les autres applications. Cette opération ne peut pas être annulée. La pochette est également intégrée au fichier. Les modifications étant définitives, la validation automatique est désactivée dans ce mode : chaque correspondance est placée dans la file d’attente de validation et aucune modification n’est enregistrée dans le fichier tant que vous ne l’avez pas validée.",
+							"unavailable": "Non disponible sur cet appareil. Les corrections sont enregistrées uniquement dans Wavio et peuvent être annulées à tout moment."
+						},
+						"automation": {
+							"title": "Automatisation"
+						},
+						"autoApply": {
+							"label": "Appliquer automatiquement les correspondances fiables",
+							"description": "Les correspondances dépassant le seuil de confiance sont appliquées automatiquement. Toutes les autres attendent votre validation.",
+							"filesDescription": "Indisponible pendant l'écriture dans les fichiers, car une correspondance erronée ne peut pas être annulée. Chaque correspondance est d'abord vérifiée."
+						},
+						"threshold": {
+							"label": "Seuil de confiance",
+							"description": "Seuil de confiance requis pour que l'application soit automatique. Ce paramètre n'est utilisé que lorsque l'option ci-dessus est activée."
+						},
+						"fields": {
+							"title": "Tags à corriger",
+							"description": "Seuls les tags sélectionnés sont modifiés. Tout le reste conserve la valeur lue à partir de vos fichiers. Les pochettes ne sont ajoutées qu'aux morceaux qui n'en ont pas ; celles qui figurent déjà dans vos fichiers ne sont pas modifiées.",
+							"labels": {
+								"title": "Titre",
+								"artist": "Artiste",
+								"album": "Album",
+								"albumArtist": "Artiste de l'album",
+								"year": "Année",
+								"trackNumber": "Numéro de piste",
+								"discNumber": "Numéro de disque",
+								"coverArt": "Pochette"
+							}
+						},
+						"scan": {
+							"title": "Bibliothèque de correspondances",
+							"label": "Rechercher les correspondances",
+							"description": "Recherche chaque album de votre bibliothèque sur MusicBrainz.",
+							"start": "Scanner",
+							"cancel": "Annuler",
+							"progress": "{{processed}} sur {{total}} pistes",
+							"summary": "{{applied}} appliqué, {{pending}} en attente d'examen, {{unmatched}} sans correspondance.",
+							"cancelledSummary": "Annulé après traitement de {{processed}} des {{total}} albums. {{applied}} soumis, {{pending}} en attente de validation.",
+							"failedSummary": "L'analyse s'est arrêtée après avoir analysé {{processed}} albums sur {{total}}. Les correspondances trouvées avant l'arrêt ont été conservées ; relancez l'analyse pour continuer."
+						},
+						"reset": {
+							"label": "Réinitialiser les corrections",
+							"description": "Supprime toutes les corrections enregistrées dans Wavio et vide la file d'attente de révision. Les tags déjà insérés dans les fichiers ne sont pas affectés.",
+							"action": "Réinitialiser"
+						},
+						"review": {
+							"title": "En attente de vérification ({{count}})",
+							"confidence": "{{confidence}}% de correspondance"
+						},
+						"unmatched": {
+							"title": "Aucune correspondance trouvée ({{count}})",
+							"description": "Ces pistes n'ont pas pu être identifiés. Les pistes sans tag d'album sont assorties une par une à la place, ce qui nécessite un titre reconnaissable.",
+							"reasons": {
+								"no-album-tag": "Aucun tag d'album n'était présent, et aucun morceau n'a pu être identifié individuellement",
+								"no-results": "Aucun résultat trouvé sur MusicBrainz",
+								"low-confidence": "Des résultats ont été trouvés, mais aucun n'est suffisamment proche pour être fiable"
+							}
+						},
+						"album": {
+							"noMatch": "Aucune sortie répertoriée sur MusicBrainz ne correspond à cet album.",
+							"summary": "{{confidence}}% de correspondance sur {{tracks}} pistes",
+							"summaryTracks": "{{tracks}} titres appariés individuellement, {{confidence}}% en moyenne",
+							"changes": "Modifications proposées",
+							"noChanges": "Cet album correspond déjà à MusicBrainz.",
+							"dismiss": "Rejeter",
+							"apply": "Appliquer",
+							"applyToFiles": "Écrire dans les fichiers",
+							"applying": "Écriture"
+						}
 					}
 				},
 				"downloaders": {
@@ -704,8 +800,38 @@
 					"autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés.",
 					"pendingChangesLabel": "Modifications en attente",
 					"pendingChangesAction": "Voir",
+					"extendedOfflineLabel": "Mettre toute la bibliothèque en cache",
+					"extendedOfflineDescription": "Téléchargez progressivement l'intégralité du contenu de ce serveur afin que l'ensemble de la bibliothèque reste consultable et accessible hors ligne.",
+					"extendedOfflineSyncing": "Synchronisation de la bibliothèque — {{count}}/{{total}} titres ({{size}})",
+					"extendedOfflineCachingArtwork": "Mise en cache - couvertures {{count}}/{{total}}",
+					"extendedOfflineComplete": "Bibliothèque à jour — {{count}} pistes ({{size}})",
+					"extendedOfflinePausedOffline": "Mis en pause — serveur injoignable",
+					"extendedOfflinePausedWifi": "Mis en pause — en attente de Wi-Fi",
+					"extendedOfflinePausedDisk": "Mis en pause — le stockage de l'appareil est presque plein",
+					"extendedOfflineSyncError": "Erreur de synchronisation — nouvelle tentative automatique",
+					"extendedOfflineCompletedToast": "Votre bibliothèque est entièrement mise en cache — {{count}} pistes disponibles hors ligne",
+					"extendedOfflineUnsupported": "Ce serveur ne prend pas en charge la synchronisation complète de la bibliothèque",
+					"extendedOfflineDisableConfirmTitle": "Supprimer la bibliothèque mise en cache ?",
+					"extendedOfflineDisableConfirmDescription": "Les titres et les pochettes mis en cache par la synchronisation de la bibliothèque seront supprimés de cet appareil. Les albums, listes de lecture et titres que vous avez enregistrés individuellement pour une écoute hors ligne seront conservés.",
+					"extendedOfflineDeleting": "Suppression {{done}} / {{total}}",
+					"downloadFormatLabel": "Format du téléchargement",
+					"downloadFormatDescription": "Format dans lequel les téléchargements hors ligne sont enregistrés. L'option « Original » conserve le fichier tel qu'il est sur le serveur ; les autres formats sont transcodés pour économiser de l'espace.",
+					"downloadBitRateLabel": "Qualité de téléchargement",
+					"downloadBitRateDescription": "Débit maximal pour les téléchargements transcodés",
 					"pendingChangesDescription_one": "{{count}} modification effectuée hors ligne en attente de synchronisation",
 					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation"
+				},
+				"updatesSettings": {
+					"title": "Mises à jour",
+					"autoCheckLabel": "Vérifier les mises à jour automatiquement",
+					"autoCheckDescription": "Vérifier la disponibilité d'une nouvelle version au démarrage et vous prévenir lorsqu'une nouvelle version est disponible",
+					"checkNowLabel": "Vérifier les mises à jour",
+					"checkNowDescription": "Recherchez une version plus récente",
+					"checkNowAction": "Vérifier",
+					"checking": "Vérification en cours…",
+					"upToDate": "Vous avez la dernière version",
+					"checkFailed": "Impossible de vérifier la présence de mises à jour. Vérifiez votre connexion et réessayez.",
+					"currentVersionLabel": "Version actuelle"
 				},
 				"storageSettings": {
 					"title": "Stockage",
@@ -997,6 +1123,8 @@
 				"empty": "Aucun titre téléchargé pour le moment.",
 				"totalSize": "Taille totale : {{size}}",
 				"clearAll": "Tout effacer",
+				"searchPlaceholder": "Rechercher dans les téléchargements",
+				"deleting": "Suppression {{done}} / {{total}}",
 				"totalTracks_one": "{{count}} titre",
 				"totalTracks_other": "{{count}} titres"
 			},
@@ -1233,6 +1361,18 @@
 				"switchServerConfirmDescription": "Vous serez déconnecté et redirigé vers l'écran de connexion",
 				"switchConfirm": "Changer"
 			},
+			"update": {
+				"title": "Mise à jour disponible ({{version}})",
+				"description": "Une nouvelle version de Wavio est disponible. Mettez-la à jour dès maintenant pour bénéficier des dernières fonctionnalités et corrections.",
+				"viewFullRelease": "Consulter les notes de mise à jour complètes",
+				"later": "Plus tard",
+				"update": "Mettre à jour",
+				"downloading": "{{percent}}% téléchargé",
+				"installing": "Lancement du programme d'installation…",
+				"errorDescription": "La mise à jour n'a pas pu être téléchargée. Vérifiez votre connexion et réessayez, ou téléchargez-la à partir de la page des publications.",
+				"retry": "Réessayer",
+				"openBrowser": "Ouvrir dans un navigateur"
+			},
 			"shared": {
 				"advancedSettings": "Paramètres avancés",
 				"fallbackUrlHelp": "À utiliser lorsque l'URL principale est inaccessible. Doit pointer vers le même serveur.",
@@ -1397,7 +1537,7 @@
 				"localInfoMetadataTitle": "Lecture des métadonnées",
 				"localInfoMetadata": "Le titre, l'artiste, l'album, le numéro de piste, la pochette et bien plus sont lus dans les tags intégrés à chaque fichier. Les fichiers sans tags utilisent leur nom de fichier ; des fichiers bien taggés donnent donc les meilleurs résultats.",
 				"localInfoTaggingTitle": "Taguer votre bibliothèque",
-				"localInfoTagging": "Pour une bibliothèque propre et cohérente, nous vous recommandons de taguer vos fichiers avec MusicBrainz Picard avant de les ajouter.",
+				"localInfoTagging": "Pour disposer d'une bibliothèque claire et cohérente, nous vous recommandons d'ajouter des tags à vos fichiers à l'aide de MusicBrainz Picard avant de les importer. Wavio dispose également d'une intégration MusicBrainz qui permet de faire correspondre vos albums et d'ajouter des tags aux fichiers directement sur votre appareil.",
 				"localInfoTaggingLink": "Obtenir MusicBrainz Picard",
 				"localInfoClose": "J'ai compris"
 			},
