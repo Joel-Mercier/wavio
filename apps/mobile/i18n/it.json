@@ -579,6 +579,10 @@
 						"title": "Downloaders",
 						"description": "Aggiungi musica al tuo server tramite Lidarr"
 					},
+					"integrations": {
+						"title": "Integrations",
+						"description": "Correct your library's tags with MusicBrainz"
+					},
 					"appearance": {
 						"title": "Aspetto",
 						"description": "Lingua, selezione home, feedback aptico"
@@ -606,6 +610,93 @@
 					"updates": {
 						"title": "Updates",
 						"description": "Check for and install app updates"
+					}
+				},
+				"integrations": {
+					"description": "Connect external music databases to enrich and correct your library.",
+					"statuses": {
+						"configured": "Attivo",
+						"notConfigured": "Not set up"
+					},
+					"musicbrainz": {
+						"title": "MusicBrainz",
+						"description": "Match your albums and correct their tags",
+						"intro": "Matches each album in your local library against MusicBrainz and corrects its tags. MusicBrainz allows one request per second, so a large library takes a few minutes.",
+						"tabs": {
+							"setup": "Setup"
+						},
+						"writeMode": {
+							"title": "Where corrections go",
+							"label": "Write tags into files",
+							"description": "Corrections are written into the audio files themselves, so they are permanent and visible to other apps. This cannot be undone. Cover art is embedded in the file too. Because writes are permanent, auto-approval is turned off in this mode: every match waits in the review queue and nothing is written to a file until you approve it.",
+							"unavailable": "Not available on this device. Corrections are stored in Wavio only, and can be undone at any time."
+						},
+						"automation": {
+							"title": "Automation"
+						},
+						"autoApply": {
+							"label": "Apply confident matches automatically",
+							"description": "Matches above the confidence threshold are applied without asking. Everything else waits for your review.",
+							"filesDescription": "Unavailable while writing to files, since a wrong match cannot be undone. Every match is reviewed first."
+						},
+						"threshold": {
+							"label": "Confidence threshold",
+							"description": "How certain a match must be before it is applied automatically. Only used when the setting above is on."
+						},
+						"fields": {
+							"title": "Fields to correct",
+							"description": "Only the selected fields are changed. Everything else keeps the value read from your files. Cover art is only added to tracks that have none — artwork already in your files is left alone.",
+							"labels": {
+								"title": "Titolo",
+								"artist": "Artista",
+								"album": "Album",
+								"albumArtist": "Artista dell'album",
+								"year": "Anno",
+								"trackNumber": "Numero della traccia",
+								"discNumber": "Numero del disco",
+								"coverArt": "Copertina"
+							}
+						},
+						"scan": {
+							"title": "Match library",
+							"label": "Scan for matches",
+							"description": "Looks up every album in your library on MusicBrainz.",
+							"start": "Scansione",
+							"cancel": "Annulla",
+							"progress": "{{processed}} of {{total}} — {{album}}",
+							"summary": "{{applied}} applied, {{pending}} awaiting review, {{unmatched}} without a match.",
+							"cancelledSummary": "Cancelled after {{processed}} of {{total}} albums. {{applied}} applied, {{pending}} awaiting review.",
+							"failedSummary": "The scan stopped after {{processed}} of {{total}} albums. Matches found before it stopped were kept, run it again to carry on."
+						},
+						"reset": {
+							"label": "Reset corrections",
+							"description": "Discards every correction stored in Wavio and empties the review queue. Tags already written into files are not affected.",
+							"action": "Reimposta"
+						},
+						"review": {
+							"title": "Awaiting review ({{count}})",
+							"confidence": "{{confidence}}% match"
+						},
+						"unmatched": {
+							"title": "No match found ({{count}})",
+							"description": "These could not be identified. Tracks without an album tag are matched one by one instead, which needs a recognisable title.",
+							"reasons": {
+								"no-album-tag": "No album tag, and no track could be identified on its own",
+								"no-results": "Nothing found on MusicBrainz",
+								"low-confidence": "Results found, but none close enough to trust"
+							}
+						},
+						"album": {
+							"noMatch": "No MusicBrainz release matched this album.",
+							"summary": "{{confidence}}% match across {{tracks}} tracks",
+							"summaryTracks": "{{tracks}} tracks matched individually, {{confidence}}% average",
+							"changes": "Proposed changes",
+							"noChanges": "This album already matches MusicBrainz.",
+							"dismiss": "Dismiss",
+							"apply": "Candidati",
+							"applyToFiles": "Write to files",
+							"applying": "Writing"
+						}
 					}
 				},
 				"downloaders": {
@@ -1446,7 +1537,7 @@
 				"localInfoMetadataTitle": "Come vengono letti i metadati",
 				"localInfoMetadata": "Titolo, artista, album, numero della traccia, copertina e altre informazioni vengono ricavate dai tag incorporati in ciascun file. I file privi di tag utilizzano il nome del file come alternativa, pertanto i file correttamente taggati garantiscono i risultati migliori.",
 				"localInfoTaggingTitle": "Aggiungere tag alla tua libreria",
-				"localInfoTagging": "Per garantire una libreria ordinata e coerente, ti consigliamo di taggare i tuoi file con MusicBrainz Picard prima di aggiungerli.",
+				"localInfoTagging": "For a clean, consistent library we recommend tagging your files with MusicBrainz Picard before adding them. Wavio also has a built-in MusicBrainz integration that can match your albums and tag the files directly on your device.",
 				"localInfoTaggingLink": "Scarica MusicBrainz Picard",
 				"localInfoClose": "Capito"
 			},
