@@ -1,5 +1,5 @@
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import Fuse from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -21,6 +21,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useArtists } from "@/hooks/backend/useBrowsing";
+import { useOfflineArtists } from "@/hooks/offline";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
@@ -49,7 +50,7 @@ export default function AllArtistsScreen() {
   const screenBottomPadding = useScreenBottomPadding();
   const musicFolderId = useCurrentMusicFolderId();
   const form = useForm({ defaultValues: { query: "" } });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const listRef = useRef<FlashListRef<ArtistRow>>(null);
@@ -66,7 +67,19 @@ export default function AllArtistsScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedQuery]);
 
-  const { data, isLoading, error } = useArtists({ musicFolderId });
+  const {
+    data: serverData,
+    isLoading: isLoadingServer,
+    error,
+  } = useArtists({ musicFolderId });
+  // Offline fall back to artists derived from downloaded album collections so
+  // an extended-offline library keeps its artist browse without a cached
+  // server response; only derived while server data is absent. The fallback
+  // also overrides the loading state — offline the paused server query stays
+  // "pending" and would show skeletons over renderable data forever.
+  const offlineArtistsData = useOfflineArtists(serverData == null);
+  const data = serverData ?? offlineArtistsData;
+  const isLoading = isLoadingServer && offlineArtistsData == null;
 
   const allArtists = useMemo<ArtistID3[]>(
     () => data?.artists?.index?.flatMap((i) => i.artist ?? []) ?? [],

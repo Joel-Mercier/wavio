@@ -61,7 +61,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Add your own favorite podcasts through RSS feeds
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
-- Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs, downloads management screen, queued changes screen
+- Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs or full library caching, downloads management screen, queued changes screen
 - Music folders (libraries) discovery and filtering across home, search, and library
 - Activity screen, recently played tracks grouped by source
 - Share screen with shareable links (Navidrome only)
@@ -72,6 +72,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net. Navidrome word-by-word karoake style lyrics support with multiple voices, pronunciation and translation support.
 - Downloaders section with [Lidarr](https://lidarr.audio/) integration. Search and add content to your music library directly from the app. See downloads progress and history.
+- [MusicBrainz](https://musicbrainz.org/) integration for local libraries, tag directly from the app using the MusicBrainz api, write to file or write to app data only option, review workflow, tags to replace selection, auto apply toggle, customizable confidence threshold for auto apply
 - Bookmarks support. Easy access to a song or podcast favorite parts
 - Customizable swipe gestures for tracks
 - Landscape mode support

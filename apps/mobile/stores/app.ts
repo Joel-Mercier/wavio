@@ -37,6 +37,16 @@ export type GenresSort =
   | "albumCountAsc"
   | "albumCountDesc";
 
+export type DownloadsSort =
+  | "alphabeticalAsc"
+  | "alphabeticalDesc"
+  | "artistAsc"
+  | "artistDesc"
+  | "albumAsc"
+  | "albumDesc"
+  | "sizeAsc"
+  | "sizeDesc";
+
 export type LibraryFilter =
   | "artists"
   | "albums"
@@ -127,6 +137,8 @@ interface AppStore {
       | "albumAsc"
       | "albumDesc",
   ) => void;
+  downloadsSort: DownloadsSort;
+  setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
   setMaxBitRate: (maxBitRate: number | null) => void;
   cellularMaxBitRate: number | null;
@@ -135,6 +147,13 @@ interface AppStore {
   setStreamingFormat: (streamingFormat: StreamFormat) => void;
   downloadsWifiOnly: boolean;
   setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
+  // Format offline downloads are stored in, independent of the streaming
+  // settings. "raw" downloads the original file; any other value asks the
+  // server to transcode, with downloadMaxBitRate as the encode target.
+  downloadFormat: StreamFormat;
+  setDownloadFormat: (downloadFormat: StreamFormat) => void;
+  downloadMaxBitRate: number | null;
+  setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
   replayGainMode: "off" | "track" | "album";
@@ -265,6 +284,10 @@ export const useAppBase = create<AppStore>()(
       ) => {
         set({ favoritesSort });
       },
+      downloadsSort: "alphabeticalAsc",
+      setDownloadsSort: (downloadsSort: DownloadsSort) => {
+        set({ downloadsSort });
+      },
       maxBitRate: null,
       setMaxBitRate: (maxBitRate: number | null) => {
         set({ maxBitRate });
@@ -280,6 +303,14 @@ export const useAppBase = create<AppStore>()(
       downloadsWifiOnly: false,
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {
         set({ downloadsWifiOnly });
+      },
+      downloadFormat: "raw",
+      setDownloadFormat: (downloadFormat: StreamFormat) => {
+        set({ downloadFormat });
+      },
+      downloadMaxBitRate: null,
+      setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => {
+        set({ downloadMaxBitRate });
       },
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {

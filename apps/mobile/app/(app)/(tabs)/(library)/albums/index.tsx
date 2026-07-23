@@ -1,5 +1,5 @@
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -21,8 +21,10 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useSearch3 } from "@/hooks/backend/useSearching";
+import { useOfflineAlbums } from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import useDebounce from "@/hooks/useDebounce";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -52,7 +54,7 @@ export default function AllAlbumsScreen() {
         })
       : 1;
   const form = useForm({ defaultValues: { query: "" } });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const listRef = useRef<FlashListRef<AlbumID3>>(null);
@@ -97,11 +99,42 @@ export default function AllAlbumsScreen() {
       browseData?.pages.flatMap((page) => page.albumList2?.album ?? []) ?? [],
     [browseData],
   );
-  const albums = isSearching
-    ? (searchData?.searchResult3?.album ?? [])
-    : browseAlbums;
-  const isLoading = isSearching ? isLoadingSearch : isLoadingBrowse;
-  const error = isSearching ? searchError : browseError;
+  // Offline the paginated browse has no data (infinite queries aren't
+  // persisted) and search3 is paused — fall back to the album collections the
+  // extended-offline library sync registered, filtered client-side while
+  // searching.
+  const isOnline = useIsOnline();
+  const offlineAlbums = useOfflineAlbums(!isOnline);
+  const albums = useMemo(() => {
+    if (isSearching) {
+      if (isOnline) return searchData?.searchResult3?.album ?? [];
+      const query = debouncedQuery.toLowerCase();
+      return (offlineAlbums ?? []).filter(
+        (album) =>
+          album.name.toLowerCase().includes(query) ||
+          (album.artist ?? "").toLowerCase().includes(query),
+      );
+    }
+    if (browseAlbums.length > 0 || isOnline) return browseAlbums;
+    return offlineAlbums ?? [];
+  }, [
+    isSearching,
+    isOnline,
+    searchData,
+    debouncedQuery,
+    offlineAlbums,
+    browseAlbums,
+  ]);
+  const offlineFallbackActive = !isOnline && (offlineAlbums?.length ?? 0) > 0;
+  const isLoading =
+    (isSearching ? isLoadingSearch : isLoadingBrowse) && !offlineFallbackActive;
+  // A stale error from a previous online attempt must not block the offline
+  // fallback list.
+  const error = offlineFallbackActive
+    ? null
+    : isSearching
+      ? searchError
+      : browseError;
 
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");

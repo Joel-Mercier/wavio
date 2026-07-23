@@ -23,10 +23,13 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useHasOfflineAlbumCollections,
+  useIsArtistAvailableOffline,
   useIsCollectionAvailableOffline,
   useIsDetailCached,
   useOfflineModeEnabled,
 } from "@/hooks/offline";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
@@ -125,6 +128,7 @@ export default function LibraryListItem({
     "--color-emerald-500",
   ]) as string[];
   const { t, i18n } = useTranslation();
+  const isOnline = useIsOnline();
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderId = useCurrentMusicFolderId();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -327,10 +331,26 @@ export default function LibraryListItem({
     isCollectionAvailableOffline ||
     (type.id === "favorites" && offlineModeEnabled);
 
+  // The "All albums"/"All artists" browse screens and ArtistDetail fall back
+  // to downloaded album collections (extended offline mode caches the whole
+  // library), so those rows stay tappable offline without a cached list query.
+  const hasOfflineAlbumCollections = useHasOfflineAlbumCollections();
+  const isArtistAvailableOffline = useIsArtistAvailableOffline(
+    type.id === "artist" ? item.id : undefined,
+  );
+  const offlineBrowseAvailable =
+    ((type.id === "allAlbums" || type.id === "allArtists") &&
+      hasOfflineAlbumCollections) ||
+    isArtistAvailableOffline;
+
   return (
     <FadeOutScaleDown
       href={href}
-      disabled={!isDetailCached && !isCollectionAvailableOffline}
+      disabled={
+        !isDetailCached &&
+        !isCollectionAvailableOffline &&
+        !offlineBrowseAvailable
+      }
       // Grid cells use symmetric horizontal padding so every column has the
       // same content width; the parent list offsets its own paddingHorizontal
       // by that amount to keep the outer edge aligned.
@@ -348,8 +368,13 @@ export default function LibraryListItem({
                   uri:
                     radioImage ||
                     item.imageUrl ||
-                    item.artistImageUrl ||
-                    artworkUrl(item.coverArt),
+                    // artistImageUrl points at a third-party image host
+                    // (last.fm and friends), which is unreachable offline —
+                    // only the server's own cover goes through the offline
+                    // artwork cache, so it wins while offline.
+                    (isOnline
+                      ? item.artistImageUrl || artworkUrl(item.coverArt)
+                      : artworkUrl(item.coverArt) || item.artistImageUrl),
                 }
               : undefined
           }

@@ -62,6 +62,7 @@ const bareRow: TrackRow = {
   replay_gain_json: null,
   album_key: null,
   artist_key: null,
+  source_folder: null,
   indexed_at: 0,
   play_count: 0,
   last_played_at: null,

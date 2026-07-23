@@ -55,15 +55,18 @@ describe("buildOfflineSearchCorpus", () => {
     expect(corpus.songs[0]).toMatchObject({ id: "t1", albumId: "al1" });
   });
 
-  it("surfaces a downloaded album but not its artist (no offline artist detail)", () => {
+  it("surfaces a downloaded album and its collection-derived artist", () => {
     const collections = {
       al1: makeAlbumCollection("al1", { artist: "M83", artistId: "ar1" }),
     };
     const corpus = buildOfflineSearchCorpus(new QueryClient(), {}, collections);
     expect(corpus.albums.map((a) => a.id)).toEqual(["al1"]);
-    // The artist has no `["artist", id]` cache, so tapping it would land on an
-    // empty ArtistDetail — it must not be surfaced.
-    expect(corpus.artists).toEqual([]);
+    // ArtistDetail falls back to the artist derived from downloaded album
+    // collections (useOfflineArtist), so the artist row is openable offline
+    // even without a `["artist", id]` cache entry.
+    expect(corpus.artists).toEqual([
+      { id: "ar1", name: "M83", albumCount: 1, coverArt: undefined },
+    ]);
   });
 
   it("lets server-shaped cache entries overwrite store-reconstructed ones", () => {

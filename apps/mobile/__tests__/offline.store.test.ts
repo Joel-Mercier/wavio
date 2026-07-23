@@ -77,6 +77,7 @@ beforeEach(() => {
       downloadedCollections: {},
       downloadProgress: {},
       downloadQueue: [],
+      artworkCache: {},
     },
     false,
   );
@@ -289,5 +290,119 @@ describe("offline store - persistence", () => {
     expect(state.downloadedCollections.p1?.name).toBe("Collection p1");
     expect(state.downloadQueue).toEqual([child]);
     expect(state.downloadProgress.a?.status).toBe("failed");
+  });
+});
+
+describe("offline store - library sync bulk actions", () => {
+  it("addManyToDownloadQueue appends and dedupes in one write", () => {
+    get().addToDownloadQueue(makeChild("a"));
+    get().addManyToDownloadQueue([
+      { ...makeChild("a"), offlineSource: "auto" },
+      { ...makeChild("b"), offlineSource: "auto" },
+      { ...makeChild("c"), offlineSource: "auto" },
+    ]);
+    expect(get().downloadQueue.map((t) => t.id)).toEqual(["a", "b", "c"]);
+    // the pre-existing entry is not overwritten
+    expect(get().downloadQueue[0].offlineSource).toBeUndefined();
+  });
+
+  it("setQueuedTrackSource promotes a queued entry in place", () => {
+    get().addManyToDownloadQueue([
+      { ...makeChild("a"), offlineSource: "auto" },
+      { ...makeChild("b"), offlineSource: "auto" },
+    ]);
+    get().setQueuedTrackSource("a", "user");
+    expect(get().downloadQueue.map((t) => [t.id, t.offlineSource])).toEqual([
+      ["a", "user"],
+      ["b", "auto"],
+    ]);
+  });
+
+  it("removeManyFromDownloadQueue drops queue entries and their progress", () => {
+    get().addManyToDownloadQueue([
+      { ...makeChild("a"), offlineSource: "auto" },
+      { ...makeChild("b"), offlineSource: "auto" },
+      makeChild("c"),
+    ]);
+    get().setManyDownloadProgress([
+      { trackId: "a", status: "pending", progress: 0 },
+      { trackId: "b", status: "pending", progress: 0 },
+      { trackId: "c", status: "pending", progress: 0 },
+    ]);
+    get().removeManyFromDownloadQueue(["a", "b"]);
+    expect(get().downloadQueue.map((t) => t.id)).toEqual(["c"]);
+    expect(get().downloadProgress.a).toBeUndefined();
+    expect(get().downloadProgress.b).toBeUndefined();
+    expect(get().downloadProgress.c?.status).toBe("pending");
+  });
+
+  it("addDownloadedCollections registers a page of collections in one write", () => {
+    get().addDownloadedCollections([
+      makeCollection("a1", { kind: "album", source: "auto", trackIds: [] }),
+      makeCollection("a2", { kind: "album", source: "auto", trackIds: [] }),
+    ]);
+    expect(Object.keys(get().downloadedCollections).sort()).toEqual([
+      "a1",
+      "a2",
+    ]);
+    expect(get().downloadedCollections.a1?.source).toBe("auto");
+  });
+
+  it("appendCollectionTrackIds dedupe-appends per collection and skips unknown ids", () => {
+    get().addDownloadedCollections([
+      makeCollection("a1", { kind: "album", source: "auto", trackIds: ["s1"] }),
+    ]);
+    get().appendCollectionTrackIds({
+      a1: ["s1", "s2", "s3"],
+      missing: ["sX"],
+    });
+    expect(get().downloadedCollections.a1?.trackIds).toEqual([
+      "s1",
+      "s2",
+      "s3",
+    ]);
+    expect(get().downloadedCollections.missing).toBeUndefined();
+  });
+
+  it("replaceCollectionTrackIds overwrites trackIds and skips unknown ids", () => {
+    get().addDownloadedCollections([
+      makeCollection("a1", {
+        kind: "album",
+        source: "auto",
+        trackIds: ["s1", "s2"],
+      }),
+    ]);
+    get().replaceCollectionTrackIds({ a1: ["s1"], missing: ["sX"] });
+    expect(get().downloadedCollections.a1?.trackIds).toEqual(["s1"]);
+    expect(get().downloadedCollections.missing).toBeUndefined();
+  });
+
+  it("removeDownloadedCollections drops several collections in one write", () => {
+    get().addDownloadedCollections([
+      makeCollection("a1", { kind: "album", source: "auto" }),
+      makeCollection("a2", { kind: "album", source: "auto" }),
+      makeCollection("p1"),
+    ]);
+    get().removeDownloadedCollections(["a1", "a2"]);
+    expect(Object.keys(get().downloadedCollections)).toEqual(["p1"]);
+  });
+
+  it("removeCachedArtwork drops only the given cover ids", () => {
+    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
+    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().removeCachedArtwork(["al-1"]);
+    expect(get().artworkCache).toEqual({
+      "al-2": "file:///artwork/al-2.jpg",
+    });
+  });
+
+  it("caches artwork and clears it with clearAllDownloads", () => {
+    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
+    expect(get().artworkCache["al-1"]).toBe("file:///artwork/al-1.jpg");
+    get().clearAllDownloads();
+    expect(get().artworkCache).toEqual({});
+    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().clearArtworkCache();
+    expect(get().artworkCache).toEqual({});
   });
 });

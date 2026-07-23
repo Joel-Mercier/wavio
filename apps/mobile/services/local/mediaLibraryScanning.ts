@@ -1,5 +1,7 @@
+import { getLocalLibraryDb } from "@/services/local/db";
 import {
   createScanController,
+  deleteTracksByFolders,
   type ScanController,
   scanLibrary,
 } from "@/services/local/indexer";
@@ -70,6 +72,48 @@ export const startScan = async (force = false) => {
   }
   const scanStatus: ScanStatus = { scanning: true };
   return localEnvelope({ scanStatus });
+};
+
+/**
+ * Reconcile the index with the configured source folders, then scan. Folders no
+ * longer configured have their tracks deleted directly (by `source_folder`);
+ * `startScan` then indexes added/changed files under the remaining folders. This
+ * is the gate's entry point so both a folder change and a first login funnel
+ * through the same path. `force` re-extracts every file (settings "rescan").
+ */
+let reconcileInFlight: Promise<Awaited<ReturnType<typeof startScan>>> | null =
+  null;
+
+export const runLibraryReconcileScan = (
+  force = false,
+): Promise<Awaited<ReturnType<typeof startScan>>> => {
+  // The first-login gate can mount twice (see LocalLibraryIndexing), firing two
+  // concurrent reconciles that each open a `deleteTracksByFolders` transaction
+  // on the same shared SQLite handle — a second BEGIN throws "cannot start a
+  // transaction within a transaction". Coalesce overlapping calls onto one run,
+  // the same way `startScan` self-guards its scan.
+  if (reconcileInFlight) return reconcileInFlight;
+  const run = (async () => {
+    try {
+      const configured = new Set(localFolders());
+      const db = await getLocalLibraryDb();
+      const rows = await db.getAllAsync<{ source_folder: string | null }>(
+        "SELECT DISTINCT source_folder FROM tracks WHERE source_folder IS NOT NULL",
+      );
+      const removed = rows
+        .map((r) => r.source_folder as string)
+        .filter((folder) => !configured.has(folder));
+      await deleteTracksByFolders(db, removed);
+    } catch (error) {
+      logError("[local] Failed to reconcile removed folders", error);
+    }
+    return startScan(force);
+  })();
+  reconcileInFlight = run;
+  void run.finally(() => {
+    if (reconcileInFlight === run) reconcileInFlight = null;
+  });
+  return run;
 };
 
 export const getScanStatus = async () => {

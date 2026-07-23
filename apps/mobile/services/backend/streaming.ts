@@ -1,8 +1,11 @@
+import { Platform } from "react-native";
 import { resolveServerBase } from "@/modules/ssl-trust";
 import {
   JELLYFIN_DEFAULT_TRANSCODE_CODEC,
   downloadUrl as jellyfinDownloadUrl,
   hlsStreamUrl as jellyfinHlsStreamUrl,
+  offlineStreamUrl as jellyfinOfflineStreamUrl,
+  offlineTranscodeSuffix as jellyfinOfflineTranscodeSuffix,
   streamUrl as jellyfinStreamUrl,
   willDirectPlay as jellyfinWillDirectPlay,
 } from "@/services/jellyfin/streaming";
@@ -12,7 +15,8 @@ import {
 } from "@/services/local/keys";
 import { getEffectiveMaxBitRate } from "@/services/network";
 import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
-import { useAppBase } from "@/stores/app";
+import type { Child } from "@/services/openSubsonic/types";
+import { type StreamFormat, useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
 import { getTranscodeInfo, type TranscodeInfo } from "@/utils/audioQuality";
@@ -134,5 +138,92 @@ export const downloadUrl = (id: string) => {
   if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
   const { url } = useAuthBase.getState();
-  return `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`;
+  return resolveServerBase(
+    `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`,
+  );
+};
+
+// Codec (ALAC) that Android's MediaCodec advertises as supported but then fails
+// to decode. A *streamed* ALAC source recovers via the player's decode-error
+// transcode fallback, but a *downloaded* file has no such retry offline — so it
+// must not be saved raw. Transcode it to opus at download time even in "raw"
+// mode: universally decodable on Android, and — unlike a piped FLAC transcode,
+// whose STREAMINFO carries no total-sample count or seek table so it plays off
+// disk but can't be seeked — the Ogg container's per-page granule positions keep
+// the saved file seekable. Also matches the streaming path's opus fallback
+// (FALLBACK_TRANSCODE_FORMAT) so online and offline land on the same codec.
+const OFFLINE_UNDECODABLE_FALLBACK_FORMAT: StreamFormat = "opus";
+
+// Bitrate above which an MP4-container track is treated as lossless ALAC rather
+// than lossy AAC (which tops out well below this). Only used on Subsonic/
+// Navidrome, whose metadata reports the container mime (audio/mp4) but not the
+// codec; Jellyfin names the codec directly in contentType.
+const LOSSLESS_MP4_MIN_BITRATE = 500;
+
+// Containers that can carry ALAC. `.alac` is the on-disk local-library case.
+const MP4_CONTAINERS = new Set(["m4a", "mp4", "m4b", "alac"]);
+
+// Whether the source codec is one this device can't reliably decode off disk, so
+// an offline download must be transcoded even when the download format is "raw".
+// Android-only: iOS/AVPlayer decodes ALAC natively, so a raw download plays
+// (lossless, seekable) there — only Android's MediaCodec lacks a reliable ALAC
+// decoder.
+function isOfflineUndecodable(track: Child): boolean {
+  if (Platform.OS !== "android") return false;
+  const codec =
+    typeof track.contentType === "string"
+      ? track.contentType.split("/").pop()?.toLowerCase()
+      : undefined;
+  // Jellyfin encodes the real codec as `audio/<codec>` (e.g. audio/alac).
+  if (codec === "alac") return true;
+  const container = track.suffix?.toLowerCase();
+  if (container && MP4_CONTAINERS.has(container)) {
+    // Subsonic/Navidrome only expose the container, so a lossless-range bitrate
+    // is what distinguishes ALAC from playable AAC in the same m4a container.
+    if (
+      typeof track.bitRate === "number" &&
+      track.bitRate >= LOSSLESS_MP4_MIN_BITRATE
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Where an offline download gets its bytes, and the extension the saved file
+// gets. "raw" (the default) downloads the original file; any other
+// downloadFormat asks the server to transcode, driven by the dedicated
+// download settings (stores/app.ts) rather than the streaming ones. A raw
+// download of an ALAC source is forced to a FLAC transcode so the offline file
+// is decodable on Android (see OFFLINE_UNDECODABLE_FALLBACK_FORMAT).
+export const offlineFileInfo = (
+  track: Child,
+): { url: string; suffix: string } => {
+  const original = {
+    url: downloadUrl(track.id),
+    suffix: track.suffix || "mp3",
+  };
+  const { downloadFormat, downloadMaxBitRate } = useAppBase.getState();
+  const format =
+    downloadFormat === "raw" && isOfflineUndecodable(track)
+      ? OFFLINE_UNDECODABLE_FALLBACK_FORMAT
+      : downloadFormat;
+  if (format === "raw") return original;
+  if (localFileUrl(track.id) != null) return original;
+  if (isJellyfin()) {
+    return {
+      url: jellyfinOfflineStreamUrl(track.id, format, downloadMaxBitRate),
+      suffix: jellyfinOfflineTranscodeSuffix(format),
+    };
+  }
+  const { url } = useAuthBase.getState();
+  const bitRateParam = downloadMaxBitRate
+    ? `&maxBitRate=${downloadMaxBitRate}`
+    : "";
+  return {
+    url: resolveServerBase(
+      `${url}/rest/stream?id=${encodeURIComponent(track.id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json&format=${format}${bitRateParam}`,
+    ),
+    suffix: format,
+  };
 };

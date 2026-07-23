@@ -107,6 +107,14 @@ describe("buildBackup", () => {
     expect(entry?.values.bookmarks).toBe("b");
   });
 
+  it("excludes the library-sync store from the file", () => {
+    mockMem.set(`${NEW}:librarySyncStore`, "synced");
+    mockMem.set(`${NEW}:bookmarks`, "b");
+    const entry = buildBackup().scoped.find((s) => s.scope === NEW);
+    expect(entry?.values.librarySyncStore).toBeUndefined();
+    expect(entry?.values.bookmarks).toBe("b");
+  });
+
   it("strips the active session's secrets but keeps the re-login identity", () => {
     mockMem.set(
       "auth",

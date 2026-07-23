@@ -3,11 +3,18 @@
 // Connectivity/reachability is a separate concern — see services/network.ts.
 
 export {
+  collectionArtistCredits,
+  collectionCreditsArtist,
   offlineCollectionToAlbum,
   offlineCollectionToPlaylist,
   offlineTrackToChild,
 } from "./collections";
 export {
+  type DeleteProgress,
   OfflineDownloadService,
   offlineDownloadService,
 } from "./downloadService";
+export {
+  LibrarySyncService,
+  librarySyncService,
+} from "./librarySyncService";

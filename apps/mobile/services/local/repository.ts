@@ -28,7 +28,13 @@ const TRACK_PROJECTION = `${TRACK_COLUMNS.split(", ")
   .join(
     ", ",
   )}, COALESCE(s.play_count, 0) AS play_count, s.last_played_at AS last_played_at`;
-const TRACK_SELECT = `SELECT ${TRACK_PROJECTION} FROM tracks t ${STATS_JOIN}`;
+
+// Reads target the `tracks_resolved` view, not the `tracks` table: the view
+// layers MusicBrainz tag corrections over the scanned tags (see db.ts), so every
+// read path picks them up without knowing they exist. Queries that only touch
+// file identity — id existence, total bytes — stay on the base table, where the
+// join would buy nothing.
+const TRACK_SELECT = `SELECT ${TRACK_PROJECTION} FROM tracks_resolved t ${STATS_JOIN}`;
 
 // One row per album, aggregated across its tracks.
 export type AlbumAggRow = {
@@ -83,7 +89,7 @@ const ALBUM_SELECT = `
     MAX(t.indexed_at) AS indexed_at,
     SUM(COALESCE(s.play_count, 0)) AS play_count,
     MAX(s.last_played_at) AS last_played_at
-  FROM tracks t ${STATS_JOIN}`;
+  FROM tracks_resolved t ${STATS_JOIN}`;
 
 export type LibraryStats = {
   trackCount: number;
@@ -98,7 +104,7 @@ export async function queryStats(): Promise<LibraryStats> {
        COUNT(*) AS trackCount,
        COUNT(DISTINCT album_key) AS albumCount,
        COUNT(DISTINCT artist_key) AS artistCount
-     FROM tracks`,
+     FROM tracks_resolved`,
   );
   return row ?? { trackCount: 0, albumCount: 0, artistCount: 0 };
 }
@@ -349,7 +355,7 @@ export async function queryArtists(): Promise<ArtistAggRow[]> {
        COALESCE(MAX(album_artist), MAX(artist)) AS name,
        COUNT(DISTINCT album_key) AS album_count,
        MAX(artwork_path) AS cover
-     FROM tracks
+     FROM tracks_resolved
      WHERE artist_key != ''
      GROUP BY artist_key
      ORDER BY name COLLATE NOCASE ASC`,
@@ -366,7 +372,7 @@ export async function queryArtistByKey(
        COALESCE(MAX(album_artist), MAX(artist)) AS name,
        COUNT(DISTINCT album_key) AS album_count,
        MAX(artwork_path) AS cover
-     FROM tracks
+     FROM tracks_resolved
      WHERE artist_key = ?
      GROUP BY artist_key`,
     key,
@@ -380,7 +386,7 @@ export async function queryGenres(): Promise<GenreRow[]> {
        genre AS value,
        COUNT(DISTINCT album_key) AS album_count,
        COUNT(*) AS song_count
-     FROM tracks
+     FROM tracks_resolved
      WHERE genre IS NOT NULL AND genre != ''
      GROUP BY genre COLLATE NOCASE
      ORDER BY value COLLATE NOCASE ASC`,
@@ -398,7 +404,7 @@ export async function searchTracks(
   return db.getAllAsync<TrackRow>(
     `SELECT ${TRACK_PROJECTION}
      FROM tracks_fts f
-     JOIN tracks t ON t.id = f.id
+     JOIN tracks_resolved t ON t.id = f.id
      ${STATS_JOIN}
      WHERE tracks_fts MATCH ?
      ORDER BY rank
@@ -435,6 +441,14 @@ export type PlaylistAggRow = PlaylistRow & {
   cover: string | null;
 };
 
+// The cover subquery reads the view: artwork is override-able, so a track whose
+// cover came from the Cover Art Archive has it on the correction rather than on
+// the scanned row, and reading the base table here would show a playlist the old
+// artwork (or none) while every other screen shows the new one.
+//
+// The outer join stays on the base table on purpose — it only counts rows and
+// sums durations, neither of which a correction can touch, so resolving
+// overrides across every track of every playlist would be pure cost.
 const PLAYLIST_AGG_SELECT = `
   SELECT
     p.id, p.name, p.comment, p.created_at, p.changed_at,
@@ -442,7 +456,7 @@ const PLAYLIST_AGG_SELECT = `
     COALESCE(SUM(t.duration_ms), 0) AS duration_ms,
     (SELECT t2.artwork_path
        FROM playlist_tracks pt2
-       JOIN tracks t2 ON t2.id = pt2.track_id
+       JOIN tracks_resolved t2 ON t2.id = pt2.track_id
       WHERE pt2.playlist_id = p.id
       ORDER BY pt2.position ASC
       LIMIT 1) AS cover
@@ -475,7 +489,7 @@ export async function queryPlaylistEntries(id: string): Promise<TrackRow[]> {
   return db.getAllAsync<TrackRow>(
     `SELECT ${TRACK_PROJECTION}
      FROM playlist_tracks pt
-     JOIN tracks t ON t.id = pt.track_id
+     JOIN tracks_resolved t ON t.id = pt.track_id
      ${STATS_JOIN}
      WHERE pt.playlist_id = ?
      ORDER BY pt.position ASC`,

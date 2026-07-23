@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
@@ -51,9 +51,15 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { LOCAL_AUTH_SCOPE } from "@/config/authScope";
+import { createScopedStorage } from "@/config/storage";
+import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import { foldersRemoved } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import { useAuthBase } from "@/stores/auth";
+import useLocalLibrary from "@/stores/localLibrary";
+import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   editServerFormSchema,
   type Server,
@@ -106,7 +112,14 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     },
     onSubmit: async ({ value }) => {
       if (value.type === "local") {
+        const removed = foldersRemoved(server.paths ?? [], value.paths ?? []);
         editServer(server.id, { paths: value.paths });
+        // Folders changed: re-open the indexing gate (incremental) so added
+        // folders get indexed and removed ones pruned without a manual rescan.
+        useLocalLibrary.getState().requestRescan(false);
+        // A dropped folder prunes its albums, so home shortcuts pointing at them
+        // would go stale — clear them (favourites shortcut is kept).
+        if (removed) useRecentPlays.getState().clearRecentPlays();
       } else {
         editServer(server.id, {
           name: value.name,
@@ -138,7 +151,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -148,6 +161,24 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const handleCloseManageUsersDialog = () => setShowManageUsersDialog(false);
   const handleDeletePress = () => {
     const wasCurrent = server.current;
+    // The local library's on-device data is keyed on a fixed sentinel scope, so
+    // a re-added local server would otherwise inherit the deleted one's scan
+    // stamp, favourites and home shortcuts. Clear the scoped stores so a re-add
+    // re-runs the indexing gate; the stale SQLite rows are pruned by that scan
+    // (deleting the DB file here would close its connection mid-query — the
+    // native close race — and crash the app).
+    if (server.type === "local") {
+      if (server.current) {
+        // Active scope: reset in-memory (keeping `ready`) so a same-scope
+        // re-login still fires the indexing gate; persist flushes the clear.
+        useLocalLibrary.getState().clearLocalLibraryData();
+        useRecentPlays.getState().clearRecentPlays();
+      } else {
+        const scoped = createScopedStorage(LOCAL_AUTH_SCOPE);
+        scoped.removeItem("localLibraryStore");
+        scoped.removeItem("recentPlays");
+      }
+    }
     removeServer(server.id);
     if (wasCurrent && useAuthBase.getState().isAuthenticated) {
       useAuthBase.getState().logout();
@@ -176,12 +207,19 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   const visibleUsers = users.slice(0, MAX_VISIBLE_AVATARS);
   const overflowCount = users.length - visibleUsers.length;
 
+  // Switching to a remote server re-authenticates against it, which needs
+  // connectivity; the local library works without any network. Device-online
+  // (not current-server reachability) so an unreachable current server doesn't
+  // block switching to a reachable one on the same LAN.
+  const isDeviceOnline = useIsDeviceOnline();
+  const switchDisabled = !isDeviceOnline && server.type !== "local";
+
   return (
     <FadeOutScaleDown
       className="mb-4"
       onPress={handleCardPress}
-      disabled={server.current}
-      disabledOpacity={1}
+      disabled={server.current || switchDisabled}
+      disabledOpacity={server.current ? 1 : undefined}
     >
       <VStack
         className={cn(
@@ -213,6 +251,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   <FadeOutScaleDown
                     key={`${u.serverId}:${u.username}`}
                     onPress={() => handleAvatarPress(u.username)}
+                    disabled={switchDisabled}
                   >
                     <Avatar size="sm" className="bg-primary-400 w-8 h-8">
                       <AvatarFallbackText>{u.username}</AvatarFallbackText>

@@ -307,6 +307,12 @@ export async function probeServer({
       // recovery poll). The recovery poll now owns re-probing.
       cancelQuickReprobe();
       setServerReachable(false);
+      // setServerReachable no-ops when already unreachable (a reconnect no
+      // longer resets it optimistically), but its timers were stopped while
+      // the device was offline — make sure the recovery poll owns re-probing
+      // again either way.
+      stopHeartbeat();
+      startRecoveryPoll();
     } else {
       // First failed round — likely the network isn't routable yet right after a
       // reconnect. Stay optimistically reachable and re-probe quickly to confirm
@@ -470,15 +476,14 @@ function applyState(state: NetInfoState) {
     if (!isOnline) {
       isOnline = true;
       for (const cb of onlineListeners) cb();
-      // Regained device connectivity. Optimistically clear any stale unreachable
-      // state carried over from before we dropped offline so the banner doesn't
-      // flash "server unreachable" on reconnect, then re-probe to confirm — the
-      // probe flips it back to false only if the server genuinely doesn't answer.
+      // Regained device connectivity: fresh failure budget for the new network,
+      // but reachability keeps its last known value. A server that was
+      // unreachable before the drop stays "unreachable" (banner steady) until a
+      // probe actually succeeds — optimistically flipping it here made the
+      // offline banner blink away and back on every connectivity blip while the
+      // server was down. A server that was reachable before the drop (the
+      // common airplane-mode round trip) was never flipped, so nothing flashes.
       consecutiveProbeFailures = 0;
-      if (!serverReachable) {
-        serverReachable = true;
-        for (const cb of reachableListeners) cb();
-      }
       // Connectivity is back, possibly on a different network — the primary may
       // be reachable again.
       probeServerPreferringPrimary();

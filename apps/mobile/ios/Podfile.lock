@@ -1,6 +1,8 @@
 PODS:
   - AudioMetadata (0.0.1):
     - ExpoModulesCore
+  - AudioTagger (0.0.1):
+    - ExpoModulesCore
   - EXApplication (57.0.0):
     - ExpoModulesCore
   - EXConstants (57.0.3):
@@ -2724,6 +2726,7 @@ PODS:
 
 DEPENDENCIES:
   - AudioMetadata (from `../modules/audio-metadata/ios`)
+  - AudioTagger (from `../modules/audio-tagger/ios`)
   - EXApplication (from `../../../node_modules/expo-application/ios`)
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../../../node_modules/expo-json-utils/ios`)
@@ -2873,6 +2876,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   AudioMetadata:
     :path: "../modules/audio-metadata/ios"
+  AudioTagger:
+    :path: "../modules/audio-tagger/ios"
   EXApplication:
     :path: "../../../node_modules/expo-application/ios"
   EXConstants:
@@ -3147,6 +3152,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AudioMetadata: b0b7c1379036a163b1da3615c6259f96f7d3631f
+  AudioTagger: c30e2e5c55a0da9755c7b63ce1020c1f2ef54191
   EXApplication: 7283a281903a90230466ab545ab87a8c48cf4e12
   EXConstants: d069b4a2dd469d5a3a4d3d7b09757e708fda8f64
   EXJSONUtils: 55eca2b6f8fc320cb36933cf45c4f2200a441589

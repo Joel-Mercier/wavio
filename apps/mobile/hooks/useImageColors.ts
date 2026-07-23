@@ -18,7 +18,13 @@ const useImageColors = (url?: string) => {
       .then((result) => {
         if (!cancelled) setColors(result);
       })
-      .catch(() => {
+      .catch((error) => {
+        // A failure here is non-fatal — callers fall back to a default tint —
+        // but silently discarding it leaves no way to tell an unsupported image
+        // from a missing file or an unreadable path, so surface it in dev.
+        if (__DEV__) {
+          console.log(`[imageColors] failed for ${url}: ${String(error)}`);
+        }
         if (!cancelled) setColors(null);
       });
     return () => {

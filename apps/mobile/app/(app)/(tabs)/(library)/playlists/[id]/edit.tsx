@@ -1,4 +1,4 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -113,7 +113,7 @@ export default function EditPlaylistScreen() {
     },
   });
 
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useSelector(form.store, (state) => state.isDirty);
   return (
     <Box className="h-full flex-1">
       <Box className="px-6 pb-6 bg-black">

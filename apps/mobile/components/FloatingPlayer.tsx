@@ -43,6 +43,7 @@ import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
@@ -75,7 +76,8 @@ export default function FloatingPlayer() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const router = useRouter();
   const pathname = usePathname();
-  const colors = useImageColors(playingTrack?.artwork);
+  const artwork = useTrackArtwork(playingTrack);
+  const colors = useImageColors(artwork);
   const toast = useToast();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
@@ -399,9 +401,7 @@ export default function FloatingPlayer() {
           <PlaybackProgressBar position="top" />
           <HStack className="items-center gap-x-2">
             <ImageWithFallback
-              source={
-                playingTrack.artwork ? { uri: playingTrack.artwork } : undefined
-              }
+              source={artwork ? { uri: artwork } : undefined}
               className="w-10 h-10 rounded aspect-square"
               alt="Track cover"
               contentFit={playingTrack.isRadio ? "contain" : "cover"}
@@ -523,11 +523,7 @@ export default function FloatingPlayer() {
             <HStack className="items-center flex-1">
               <Box style={{ zIndex: 2 }} className="rounded-md">
                 <ImageWithFallback
-                  source={
-                    playingTrack.artwork
-                      ? { uri: playingTrack.artwork }
-                      : undefined
-                  }
+                  source={artwork ? { uri: artwork } : undefined}
                   className="w-12 h-12 rounded-md aspect-square"
                   alt="Track cover"
                   contentFit={playingTrack.isRadio ? "contain" : "cover"}

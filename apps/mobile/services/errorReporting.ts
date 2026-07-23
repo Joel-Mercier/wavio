@@ -46,6 +46,7 @@ export type ReportApi =
   | "radio-browser"
   | "lrclib"
   | "lidarr"
+  | "musicbrainz"
   | "github";
 
 export type ReportContext = {
@@ -176,6 +177,9 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
 // - DownloadCancelledError: an offline download aborted because the user logged
 //   out / switched servers mid-flight (services/offline/downloadService.ts). A
 //   self-inflicted cancellation the queue resumes on next login, not a bug.
+// - AutoDownloadDiscardedError: an in-flight library-sync download whose result
+//   was discarded because extended offline mode was disabled before it finished
+//   (services/offline/downloadService.ts). A deliberate cancellation, not a bug.
 export function isExpectedNoise(error: unknown): boolean {
   if (isNetworkNoise(error)) return true;
   if (isPluginTimeout(error)) return true;
@@ -186,6 +190,7 @@ export function isExpectedNoise(error: unknown): boolean {
       error.name === "JellyfinUnsupportedError" ||
       error.name === "InvalidFeedError" ||
       error.name === "DownloadCancelledError" ||
+      error.name === "AutoDownloadDiscardedError" ||
       error.message.startsWith("Missing queryFn"))
   );
 }

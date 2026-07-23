@@ -1,4 +1,6 @@
 import {
+  collectionArtistCredits,
+  collectionCreditsArtist,
   offlineCollectionToAlbum,
   offlineCollectionToPlaylist,
   offlineTrackToChild,
@@ -95,5 +97,52 @@ describe("offlineCollectionToAlbum", () => {
       year: 2020,
     });
     expect(album.song?.map((t) => t.id)).toEqual(["a"]);
+  });
+});
+
+describe("artist credits", () => {
+  const multiArtistAlbum: OfflineCollection = {
+    id: "al1",
+    kind: "album",
+    name: "Split Album",
+    songCount: 2,
+    trackIds: ["a", "b"],
+    artist: "Primary",
+    artistId: "ar1",
+    artists: [
+      { id: "ar1", name: "Primary" },
+      { id: "ar2", name: "Featured" },
+    ],
+    savedAt: new Date().toISOString(),
+  };
+
+  it("collectionCreditsArtist matches primary and credited artists", () => {
+    expect(collectionCreditsArtist(multiArtistAlbum, "ar1")).toBe(true);
+    expect(collectionCreditsArtist(multiArtistAlbum, "ar2")).toBe(true);
+    expect(collectionCreditsArtist(multiArtistAlbum, "ar3")).toBe(false);
+  });
+
+  it("collectionCreditsArtist falls back to artistId when credits are absent", () => {
+    const legacy: OfflineCollection = {
+      ...multiArtistAlbum,
+      artists: undefined,
+    };
+    expect(collectionCreditsArtist(legacy, "ar1")).toBe(true);
+    expect(collectionCreditsArtist(legacy, "ar2")).toBe(false);
+  });
+
+  it("collectionCreditsArtist never matches playlists", () => {
+    const playlist: OfflineCollection = {
+      ...multiArtistAlbum,
+      kind: "playlist",
+    };
+    expect(collectionCreditsArtist(playlist, "ar1")).toBe(false);
+  });
+
+  it("collectionArtistCredits lists primary first and dedupes", () => {
+    expect(collectionArtistCredits(multiArtistAlbum)).toEqual([
+      { id: "ar1", name: "Primary" },
+      { id: "ar2", name: "Featured" },
+    ]);
   });
 });

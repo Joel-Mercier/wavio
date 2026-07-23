@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
@@ -59,7 +59,7 @@ export default function LibrarySearchScreen() {
       query: "",
     },
   });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
   const musicFolderId = useCurrentMusicFolderId();

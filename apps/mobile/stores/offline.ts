@@ -5,6 +5,13 @@ import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
+// Who caused a track/collection to be downloaded. "user" = an explicit save
+// (single-track download, "Save for offline" on a collection, starred
+// auto-sync); "auto" = the extended-offline library sync. Absent means "user"
+// so data persisted before the flag existed keeps its explicit-save semantics.
+// Disabling extended offline mode removes only "auto" content.
+export type OfflineSource = "user" | "auto";
+
 export type OfflineTrack = {
   id: string;
   title: string;
@@ -15,6 +22,9 @@ export type OfflineTrack = {
   path: string;
   size: number;
   downloadedAt: string;
+  source?: OfflineSource;
+  track?: number;
+  discNumber?: number;
   metadata?: Record<string, unknown>;
 };
 
@@ -28,9 +38,18 @@ export type OfflineCollection = {
   owner?: string;
   artist?: string;
   artistId?: string;
+  // Every credited artist (AlbumID3.artists) — a multi-artist album belongs to
+  // all of them, not just the primary artistId, so each stays browsable
+  // offline.
+  artists?: { id: string; name: string }[];
   year?: number;
   savedAt: string;
+  source?: OfflineSource;
 };
+
+// Queue entries carry the source through app restarts (the queue is persisted),
+// so a resumed auto download is still removable by disabling extended offline.
+export type QueuedTrack = Child & { offlineSource?: OfflineSource };
 
 export type DownloadStatus =
   | "pending"
@@ -52,23 +71,51 @@ interface OfflineStore {
 
   downloadedTracks: Record<string, OfflineTrack>;
   addDownloadedTrack: (track: OfflineTrack) => void;
+  addDownloadedTracks: (tracks: OfflineTrack[]) => void;
   removeDownloadedTrack: (trackId: string) => void;
   clearAllDownloads: () => void;
 
   downloadedCollections: Record<string, OfflineCollection>;
   addDownloadedCollection: (collection: OfflineCollection) => void;
+  addDownloadedCollections: (collections: OfflineCollection[]) => void;
+  appendCollectionTrackIds: (updates: Record<string, string[]>) => void;
+  replaceCollectionTrackIds: (updates: Record<string, string[]>) => void;
   removeDownloadedCollection: (collectionId: string) => void;
+  removeDownloadedCollections: (collectionIds: string[]) => void;
   getDownloadedCollections: () => OfflineCollection[];
 
   downloadProgress: Record<string, DownloadProgress>;
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
+  setManyDownloadProgress: (entries: DownloadProgress[]) => void;
   removeDownloadProgress: (trackId: string) => void;
   clearFailedDownloads: () => void;
 
-  downloadQueue: Child[];
-  addToDownloadQueue: (track: Child) => void;
+  downloadQueue: QueuedTrack[];
+  addToDownloadQueue: (track: QueuedTrack) => void;
+  addManyToDownloadQueue: (tracks: QueuedTrack[]) => void;
+  setQueuedTrackSource: (trackId: string, source: OfflineSource) => void;
   removeFromDownloadQueue: (trackId: string) => void;
+  removeManyFromDownloadQueue: (trackIds: string[]) => void;
   clearDownloadQueue: () => void;
+
+  // Offline album/playlist/artist covers downloaded by the extended-offline
+  // sync, keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
+  // artworkCachedAt records when each cover was fetched so stale covers get
+  // re-fetched (Jellyfin coverArt ids are stable across image changes).
+  artworkCache: Record<string, string>;
+  artworkCachedAt: Record<string, string>;
+  // Cover ids that have no file of their own but resolve to one that does: a
+  // track's per-file cover id → its album's, an artist id → the artist's cover
+  // id. Covers are cached once per album/playlist/artist (a library's worth of
+  // per-track covers would be thousands of downloads of the same images), so
+  // without this every track row and artist avatar dead-ends on the server
+  // while offline.
+  artworkAliases: Record<string, string>;
+  addCachedArtwork: (coverArtId: string, path: string) => void;
+  removeCachedArtwork: (coverArtIds: string[]) => void;
+  addArtworkAliases: (aliases: Record<string, string>) => void;
+  pruneArtworkAliases: () => void;
+  clearArtworkCache: () => void;
 
   isTrackDownloaded: (trackId: string) => boolean;
   getDownloadedTrack: (trackId: string) => OfflineTrack | null;
@@ -83,7 +130,10 @@ const initialOfflineState = {
   downloadedTracks: {} as Record<string, OfflineTrack>,
   downloadedCollections: {} as Record<string, OfflineCollection>,
   downloadProgress: {} as Record<string, DownloadProgress>,
-  downloadQueue: [] as Child[],
+  downloadQueue: [] as QueuedTrack[],
+  artworkCache: {} as Record<string, string>,
+  artworkCachedAt: {} as Record<string, string>,
+  artworkAliases: {} as Record<string, string>,
 };
 
 const useOfflineBase = create<OfflineStore>()(
@@ -108,6 +158,17 @@ const useOfflineBase = create<OfflineStore>()(
         }));
       },
 
+      addDownloadedTracks: (tracks) => {
+        if (tracks.length === 0) return;
+        set((state) => {
+          const downloadedTracks = { ...state.downloadedTracks };
+          for (const track of tracks) {
+            downloadedTracks[track.id] = track;
+          }
+          return { downloadedTracks };
+        });
+      },
+
       removeDownloadedTrack: (trackId) => {
         set((state) => {
           const { [trackId]: _removed, ...remainingTracks } =
@@ -124,7 +185,69 @@ const useOfflineBase = create<OfflineStore>()(
           downloadedCollections: {},
           downloadProgress: {},
           downloadQueue: [],
+          artworkCache: {},
+          artworkCachedAt: {},
+          artworkAliases: {},
         });
+      },
+
+      addCachedArtwork: (coverArtId, path) => {
+        set((state) => ({
+          artworkCache: {
+            ...state.artworkCache,
+            [coverArtId]: path,
+          },
+          artworkCachedAt: {
+            ...state.artworkCachedAt,
+            [coverArtId]: new Date().toISOString(),
+          },
+        }));
+      },
+
+      removeCachedArtwork: (coverArtIds) => {
+        if (coverArtIds.length === 0) return;
+        set((state) => {
+          const artworkCache = { ...state.artworkCache };
+          const artworkCachedAt = { ...state.artworkCachedAt };
+          for (const coverArtId of coverArtIds) {
+            delete artworkCache[coverArtId];
+            delete artworkCachedAt[coverArtId];
+          }
+          return { artworkCache, artworkCachedAt };
+        });
+      },
+
+      addArtworkAliases: (aliases) => {
+        set((state) => {
+          const artworkAliases = { ...state.artworkAliases };
+          let changed = false;
+          for (const [coverArtId, target] of Object.entries(aliases)) {
+            if (artworkAliases[coverArtId] === target) continue;
+            artworkAliases[coverArtId] = target;
+            changed = true;
+          }
+          return changed ? { artworkAliases } : state;
+        });
+      },
+
+      // An alias is only ever a pointer at a cached cover, so one whose target
+      // is gone (its album was deleted server-side) goes with it.
+      pruneArtworkAliases: () => {
+        set((state) => {
+          const artworkAliases: Record<string, string> = {};
+          let removed = 0;
+          for (const [coverArtId, target] of Object.entries(
+            state.artworkAliases,
+          )) {
+            if (state.artworkCache[target]) artworkAliases[coverArtId] = target;
+            else removed++;
+          }
+          return removed > 0 ? { artworkAliases } : state;
+        });
+      },
+
+      clearArtworkCache: () => {
+        set({ artworkCache: {}, artworkCachedAt: {}, artworkAliases: {} });
       },
 
       addDownloadedCollection: (collection) => {
@@ -136,11 +259,72 @@ const useOfflineBase = create<OfflineStore>()(
         }));
       },
 
+      // Bulk writes for the library sync: one store write (and one persist
+      // serialization) per page instead of one per collection/track.
+      addDownloadedCollections: (collections) => {
+        if (collections.length === 0) return;
+        set((state) => {
+          const downloadedCollections = { ...state.downloadedCollections };
+          for (const collection of collections) {
+            downloadedCollections[collection.id] = collection;
+          }
+          return { downloadedCollections };
+        });
+      },
+
+      appendCollectionTrackIds: (updates) => {
+        set((state) => {
+          const downloadedCollections = { ...state.downloadedCollections };
+          let changed = false;
+          for (const [collectionId, trackIds] of Object.entries(updates)) {
+            const collection = downloadedCollections[collectionId];
+            if (!collection) continue;
+            const seen = new Set(collection.trackIds);
+            const additions = trackIds.filter((id) => !seen.has(id));
+            if (additions.length === 0) continue;
+            downloadedCollections[collectionId] = {
+              ...collection,
+              trackIds: [...collection.trackIds, ...additions],
+            };
+            changed = true;
+          }
+          return changed ? { downloadedCollections } : state;
+        });
+      },
+
+      replaceCollectionTrackIds: (updates) => {
+        set((state) => {
+          const downloadedCollections = { ...state.downloadedCollections };
+          let changed = false;
+          for (const [collectionId, trackIds] of Object.entries(updates)) {
+            const collection = downloadedCollections[collectionId];
+            if (!collection) continue;
+            downloadedCollections[collectionId] = { ...collection, trackIds };
+            changed = true;
+          }
+          return changed ? { downloadedCollections } : state;
+        });
+      },
+
       removeDownloadedCollection: (collectionId) => {
         set((state) => {
           const { [collectionId]: _removed, ...remaining } =
             state.downloadedCollections;
           return { downloadedCollections: remaining };
+        });
+      },
+
+      removeDownloadedCollections: (collectionIds) => {
+        if (collectionIds.length === 0) return;
+        set((state) => {
+          const removed = new Set(collectionIds);
+          const downloadedCollections: Record<string, OfflineCollection> = {};
+          for (const [id, collection] of Object.entries(
+            state.downloadedCollections,
+          )) {
+            if (!removed.has(id)) downloadedCollections[id] = collection;
+          }
+          return { downloadedCollections };
         });
       },
 
@@ -156,6 +340,17 @@ const useOfflineBase = create<OfflineStore>()(
             [trackId]: progress,
           },
         }));
+      },
+
+      setManyDownloadProgress: (entries) => {
+        if (entries.length === 0) return;
+        set((state) => {
+          const downloadProgress = { ...state.downloadProgress };
+          for (const entry of entries) {
+            downloadProgress[entry.trackId] = entry;
+          }
+          return { downloadProgress };
+        });
       },
 
       removeDownloadProgress: (trackId) => {
@@ -191,10 +386,47 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
+      addManyToDownloadQueue: (tracks) => {
+        if (tracks.length === 0) return;
+        set((state) => {
+          const seen = new Set(state.downloadQueue.map((t) => t.id));
+          const additions = tracks.filter((t) => !seen.has(t.id));
+          if (additions.length === 0) return state;
+          return {
+            downloadQueue: [...state.downloadQueue, ...additions],
+          };
+        });
+      },
+
+      setQueuedTrackSource: (trackId, source) => {
+        set((state) => ({
+          downloadQueue: state.downloadQueue.map((t) =>
+            t.id === trackId ? { ...t, offlineSource: source } : t,
+          ),
+        }));
+      },
+
       removeFromDownloadQueue: (trackId) => {
         set((state) => ({
           downloadQueue: state.downloadQueue.filter((t) => t.id !== trackId),
         }));
+      },
+
+      removeManyFromDownloadQueue: (trackIds) => {
+        if (trackIds.length === 0) return;
+        set((state) => {
+          const removed = new Set(trackIds);
+          const downloadProgress = { ...state.downloadProgress };
+          for (const trackId of trackIds) {
+            delete downloadProgress[trackId];
+          }
+          return {
+            downloadQueue: state.downloadQueue.filter(
+              (t) => !removed.has(t.id),
+            ),
+            downloadProgress,
+          };
+        });
       },
 
       clearDownloadQueue: () => {
@@ -241,6 +473,9 @@ const useOfflineBase = create<OfflineStore>()(
         downloadedCollections: state.downloadedCollections,
         downloadQueue: state.downloadQueue,
         downloadProgress: state.downloadProgress,
+        artworkCache: state.artworkCache,
+        artworkCachedAt: state.artworkCachedAt,
+        artworkAliases: state.artworkAliases,
       }),
     },
   ),

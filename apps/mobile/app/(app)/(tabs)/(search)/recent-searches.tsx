@@ -1,5 +1,5 @@
 import { FlashList } from "@shopify/flash-list";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
@@ -46,7 +46,7 @@ export default function RecentSearchesScreen() {
       query: "",
     },
   });
-  const query = useStore(form.store, (state) => state.values.query);
+  const query = useSelector(form.store, (state) => state.values.query);
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSearch3(query, {
     albumCount: 12,
