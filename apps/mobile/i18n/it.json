@@ -1416,6 +1416,7 @@
 				"seeLess": "Nascondi",
 				"seeAll": "Vedi tutto",
 				"noData": "Vuoto",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "Successo",
 				"toastErrorTitle": "Errore",
 				"rateSuccessMessage": "Valutazione impostata con successo",
