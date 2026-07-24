@@ -28,6 +28,14 @@ let lastKnownQueueIds: string[] | null = null;
 let queueUnsub: (() => void) | null = null;
 let pollHandle: ReturnType<typeof setInterval> | null = null;
 
+const SEEK_SETTLE_ATTEMPTS = 20;
+const SEEK_SETTLE_DELAY_MS = 200;
+const SEEK_LANDED_TOLERANCE_S = 1;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function readQueueIds(): string[] {
   return useQueue.getState().queue.map((t) => t.id);
 }
@@ -49,12 +57,17 @@ async function refreshStatus() {
       useJukebox.getState().setStatus(status);
       // The server auto-advances through the playlist on its own; reconcile the
       // local queue index to the server's so the UI doesn't show a stale track.
-      const local = useQueue.getState().currentIndex ?? 0;
-      if (
-        typeof status.currentIndex === "number" &&
-        status.currentIndex !== local
-      ) {
-        useQueue.getState().setCurrentIndex(status.currentIndex);
+      // Only when jukebox is the active device — otherwise a stale server-side
+      // playlist (e.g. a prior session sitting at index 0) would yank the local
+      // queue back to its first track just from opening the device sheet.
+      if (useJukebox.getState().active) {
+        const local = useQueue.getState().currentIndex ?? 0;
+        if (
+          typeof status.currentIndex === "number" &&
+          status.currentIndex !== local
+        ) {
+          useQueue.getState().setCurrentIndex(status.currentIndex);
+        }
       }
     }
   } catch {
@@ -159,17 +172,68 @@ function unsubscribeQueue() {
   lastKnownQueueIds = null;
 }
 
+async function readJukeboxStatus(): Promise<JukeboxStatus | undefined> {
+  try {
+    const rsp = await statusJukebox();
+    return (rsp as { jukeboxStatus?: JukeboxStatus }).jukeboxStatus;
+  } catch {
+    return undefined;
+  }
+}
+
+// The server (Navidrome) spawns a fresh mpv process on `skip` that starts playing
+// from 0:00, and a seek/stop issued before the file has loaded is silently
+// dropped. Poll until the server reports the track playing — hence loaded and
+// seekable — before re-issuing the seek or the pause.
+async function waitForPlaying(): Promise<void> {
+  for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
+    await delay(SEEK_SETTLE_DELAY_MS);
+    if ((await readJukeboxStatus())?.playing) return;
+  }
+}
+
+// Same load race, but for the offset seek: re-issue it once the track is playing
+// and confirm the reported position actually moved, retrying across the whole
+// budget so a slow-loading track still lands on the saved position instead of
+// playing on from 0:00 (a single blind reseek would be dropped mid-load).
+async function settleSeek(idx: number, offset: number): Promise<void> {
+  for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
+    await delay(SEEK_SETTLE_DELAY_MS);
+    const status = await readJukeboxStatus();
+    if (!status?.playing) continue;
+    if ((status.position ?? 0) >= offset - SEEK_LANDED_TOLERANCE_S) return;
+    await skipJukebox(idx, offset);
+  }
+}
+
 export async function activate(opts: ActivateOptions): Promise<void> {
   const ids = readQueueIds();
   const idx = currentIndex();
   const gain = useJukebox.getState().gain;
+  const offset = Math.max(0, Math.floor(opts.position));
   await clearJukebox();
-  if (ids.length > 0) await setJukebox(ids);
-  await setGainJukebox(gain);
-  if (ids.length > 0) {
-    await skipJukebox(idx, Math.max(0, Math.floor(opts.position)));
+  if (ids.length === 0) {
+    await setGainJukebox(gain);
+  } else {
+    await setJukebox(ids);
+    // mpv starts playing from 0:00 the moment it spawns, so seeking to the saved
+    // position or pausing both entail an audible pre-roll from the top. Spawn the
+    // track muted (SetVolume happens on track creation) and restore the gain once
+    // it has settled, so the listener never hears the 0:00 intro.
+    const hidePreroll = offset > 0 || !opts.autoplay;
+    await setGainJukebox(hidePreroll ? 0 : gain);
+    try {
+      // Selects the current track and begins playback (mpv auto-plays from 0:00).
+      await skipJukebox(idx, 0);
+      if (offset > 0) await settleSeek(idx, offset);
+      else if (!opts.autoplay) await waitForPlaying();
+      // mpv auto-started on skip; pause so activating from a paused player lands
+      // at the same spot without starting playback on the server.
+      if (!opts.autoplay) await stopJukebox();
+    } finally {
+      if (hidePreroll) await setGainJukebox(gain);
+    }
   }
-  if (opts.autoplay && ids.length > 0) await startJukebox();
   useJukebox.getState().setActive(true);
   await refreshStatus();
   subscribeQueue();
@@ -245,6 +309,7 @@ export async function deactivate(): Promise<{ position: number }> {
   useJukebox.getState().setStatus(null);
   unsubscribeQueue();
   stopPolling();
+  clearGainThrottle();
   return { position: lastPosition };
 }
 
@@ -296,11 +361,63 @@ export function jukeboxIsPlaying(): boolean {
   return useJukebox.getState().status?.playing ?? false;
 }
 
-export async function jukeboxSetGain(gain: number) {
+// The volume slider emits a scrub event every frame while dragging. Firing a
+// setGain request (let alone a status refresh) on each floods the server: the
+// requests queue up, the jukebox volume trails the finger by many seconds, and
+// the UI locks up. Optimistically update the local gain on every call so the
+// thumb stays smooth, but rate-limit the actual network write, always sending
+// the latest value on the trailing edge so the released position still lands.
+const GAIN_SEND_INTERVAL_MS = 300;
+let gainSendTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingGain: number | null = null;
+let lastGainSentAt = 0;
+
+function flushGain() {
+  if (pendingGain === null) return;
+  const gain = pendingGain;
+  pendingGain = null;
+  lastGainSentAt = Date.now();
+  setGainJukebox(gain).catch(() => {});
+}
+
+function clearGainThrottle() {
+  if (gainSendTimer) {
+    clearTimeout(gainSendTimer);
+    gainSendTimer = null;
+  }
+  pendingGain = null;
+}
+
+export function jukeboxSetGain(gain: number) {
   const clamped = Math.max(0, Math.min(1, gain));
   useJukebox.getState().setGain(clamped);
-  await setGainJukebox(clamped);
-  await refreshStatus();
+  pendingGain = clamped;
+  const elapsed = Date.now() - lastGainSentAt;
+  if (elapsed >= GAIN_SEND_INTERVAL_MS) {
+    if (gainSendTimer) {
+      clearTimeout(gainSendTimer);
+      gainSendTimer = null;
+    }
+    flushGain();
+  } else if (!gainSendTimer) {
+    gainSendTimer = setTimeout(() => {
+      gainSendTimer = null;
+      flushGain();
+    }, GAIN_SEND_INTERVAL_MS - elapsed);
+  }
+}
+
+// Push the final gain to the server immediately on drag release, bypassing the
+// throttle so the last value isn't left waiting on the trailing timer.
+export function jukeboxCommitGain(gain: number) {
+  const clamped = Math.max(0, Math.min(1, gain));
+  useJukebox.getState().setGain(clamped);
+  pendingGain = clamped;
+  if (gainSendTimer) {
+    clearTimeout(gainSendTimer);
+    gainSendTimer = null;
+  }
+  flushGain();
 }
 
 export async function jukeboxAdd(ids: string[]) {
