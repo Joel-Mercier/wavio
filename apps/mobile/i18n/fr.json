@@ -1416,6 +1416,7 @@
 				"seeLess": "Voir moins",
 				"seeAll": "Voir tout",
 				"noData": "Vide",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "Succès",
 				"toastErrorTitle": "Erreur",
 				"rateSuccessMessage": "Notation réussie",
