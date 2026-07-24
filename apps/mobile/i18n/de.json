@@ -1416,6 +1416,7 @@
 				"seeLess": "Weniger anzeigen",
 				"seeAll": "Alle anzeigen",
 				"noData": "Leer",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "Erfolg",
 				"toastErrorTitle": "Fehler",
 				"rateSuccessMessage": "Bewertung erfolgreich festgelegt",
