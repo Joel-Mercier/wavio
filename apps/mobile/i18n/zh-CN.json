@@ -1396,6 +1396,7 @@
 				"seeLess": "收起",
 				"seeAll": "查看全部",
 				"noData": "空",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "成功",
 				"toastErrorTitle": "错误",
 				"rateSuccessMessage": "已评分",
