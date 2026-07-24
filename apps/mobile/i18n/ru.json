@@ -1456,6 +1456,7 @@
 				"seeLess": "Показать меньше",
 				"seeAll": "Показать все",
 				"noData": "Пусто",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "Успешно",
 				"toastErrorTitle": "Ошибка",
 				"rateSuccessMessage": "Оценка сохранена",
