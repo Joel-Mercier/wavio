@@ -37,6 +37,7 @@ export const useAlbum = (id: string) => {
     queryFn: () => {
       return getAlbum(id);
     },
+    refetchOnMount: "always",
   });
 
   return query;
@@ -75,6 +76,7 @@ export const useArtist = (id: string, options?: { enabled?: boolean }) => {
       return getArtist(id);
     },
     enabled: !!id && options?.enabled !== false,
+    refetchOnMount: "always",
   });
 
   return query;
