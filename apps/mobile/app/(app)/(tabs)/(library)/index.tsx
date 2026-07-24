@@ -55,6 +55,7 @@ import {
   useSyncServerRadioFavorites,
 } from "@/hooks/useRadioFavorites";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { isNetworkNoise } from "@/services/errorReporting";
 import type {
   AlbumID3,
   ArtistID3,
@@ -345,7 +346,16 @@ export default function LibraryScreen() {
   ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
-  const error = playlistsError || starredError;
+  // A connectivity-class failure (server unreachable / gateway 5xx) is not a
+  // fatal error here: fall through to the list so the offline-merged content
+  // (downloaded collections, local favorites) — or the empty state — shows
+  // instead of a raw error screen. Genuine errors still surface ErrorDisplay.
+  // Classify each query's error independently: a network-noise failure on one
+  // query must not mask a genuine error on the other (which `a || b` would, by
+  // collapsing both into a single value before classification).
+  const error = [playlistsError, starredError].find(
+    (e) => e && !isNetworkNoise(e),
+  );
 
   // Changing the sort or filter swaps the list contents; without this the
   // FlashList keeps its old offset and can land mid-list or at the bottom. Reset
@@ -567,7 +577,9 @@ export default function LibraryScreen() {
             );
           }}
           extraData={{ layout, gridColumns }}
-          ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
+          ListEmptyComponent={() =>
+            isLoading ? null : <EmptyDisplay offline={!isOnline} />
+          }
           contentContainerStyle={{
             // Grid cells add their own 8px (px-2) each side; drop the container
             // padding to 16 so the outer edge stays at 24 and every column has

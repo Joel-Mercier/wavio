@@ -1431,6 +1431,7 @@
 				"seeLess": "See less",
 				"seeAll": "See all",
 				"noData": "Empty",
+				"noDataOffline": "Nothing available offline",
 				"albumCount_one": "{{count}} album",
 				"albumCount_other": "{{count}} albums",
 				"songCount_one": "{{count}} song",
