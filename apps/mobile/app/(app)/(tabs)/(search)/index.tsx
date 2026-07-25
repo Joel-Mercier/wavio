@@ -1,7 +1,4 @@
-import {
-  type BottomSheetModal,
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -19,10 +16,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
-import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import GenreListItem from "@/components/search/GenreListItem";
 import GenreListItemSkeleton from "@/components/search/GenreListItemSkeleton";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
@@ -30,15 +29,26 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
 import { useGenres } from "@/hooks/backend/useBrowsing";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/openSubsonic/types";
-import useApp, { type GenresSort } from "@/stores/app";
+import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import {
+  GENRE_SORT_FIELDS,
+  GENRE_SORT_SPECS,
+  genreSortEnabled,
+} from "@/utils/genreSort";
 import { gridCellMarginClass, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
+import {
+  availableSortFields,
+  effectiveSort,
+  parseSortType,
+  sortItems,
+} from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -46,27 +56,24 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
-const isAlphabeticalSort = (sort: GenresSort) =>
-  sort === "alphabeticalAsc" || sort === "alphabeticalDesc";
-
 // Space left above the search bar once it's pinned at the top. The header stops
 // collapsing this many px short of the title's full height (the title has faded
 // out by then, so it reads as plain padding above the pinned search bar).
 const PINNED_TOP_GAP = 16;
 
 export default function SearchScreen() {
-  const [gray500, white, emerald500] = Uniwind.getCSSVariable([
+  const [gray500, white] = Uniwind.getCSSVariable([
     "--color-gray-500",
     "--color-white",
-    "--color-emerald-500",
   ]) as string[];
   const { t } = useTranslation();
   const username = useAuth((store) => store.username);
-  const serverType = useAuth((store) => store.serverType);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const isWideLayout = useApp((store) => store.isWideLayout);
   const sort = useApp((store) => store.genresSort);
   const setSort = useApp((store) => store.setGenresSort);
+  const capabilities = useCapabilities();
+  const sortFieldLabel = useSortFieldLabel();
   const router = useRouter();
   const screenBottomPadding = useScreenBottomPadding();
   const musicFolderId = useCurrentMusicFolderId();
@@ -117,35 +124,24 @@ export default function SearchScreen() {
   };
 
   const genres = useMemo(() => data?.genres.genre ?? [], [data]);
-  const countsAvailable =
-    serverType !== "jellyfin" && genres.some((g) => g.songCount != null);
-  // Fall back to alphabetical when a persisted count sort can't apply on the
-  // active backend (Jellyfin / library-scoped Navidrome expose no counts).
-  const activeSort: GenresSort =
-    !countsAvailable && !isAlphabeticalSort(sort) ? "alphabeticalAsc" : sort;
+  const sortFields = useMemo(
+    () =>
+      availableSortFields(
+        genres,
+        GENRE_SORT_SPECS,
+        GENRE_SORT_FIELDS,
+        genreSortEnabled(capabilities),
+      ),
+    [genres, capabilities],
+  );
+  // Falls back to alphabetical when a persisted count sort can't apply (Jellyfin
+  // and library-scoped Navidrome expose no counts) without dropping the choice.
+  const activeSort = effectiveSort(sort, sortFields, "alphabeticalAsc");
 
-  const sortedGenres = useMemo(() => {
-    const sorted = [...genres];
-    sorted.sort((a, b) => {
-      switch (activeSort) {
-        case "alphabeticalAsc":
-          return a.value.localeCompare(b.value);
-        case "alphabeticalDesc":
-          return b.value.localeCompare(a.value);
-        case "songCountAsc":
-          return (a.songCount ?? 0) - (b.songCount ?? 0);
-        case "songCountDesc":
-          return (b.songCount ?? 0) - (a.songCount ?? 0);
-        case "albumCountAsc":
-          return (a.albumCount ?? 0) - (b.albumCount ?? 0);
-        case "albumCountDesc":
-          return (b.albumCount ?? 0) - (a.albumCount ?? 0);
-        default:
-          return 0;
-      }
-    });
-    return sorted;
-  }, [genres, activeSort]);
+  const sortedGenres = useMemo(
+    () => sortItems(genres, activeSort, GENRE_SORT_SPECS),
+    [genres, activeSort],
+  );
 
   const handleSearchPress = () => {
     router.navigate("/(app)/(tabs)/(search)/recent-searches");
@@ -155,22 +151,11 @@ export default function SearchScreen() {
     bottomSheetModalSortRef.current?.present();
   }, []);
 
-  const handleSortPress = (type: GenresSort) => {
-    bottomSheetModalSortRef.current?.dismiss();
-    setSort(type);
-  };
-
   // Swapping the sort reorders the list; reset to the top so the new ordering
   // starts in view instead of keeping the previous offset.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [activeSort]);
-
-  const sortLabel = isAlphabeticalSort(activeSort)
-    ? t("app.search.sort.alphabetical")
-    : activeSort.startsWith("songCount")
-      ? t("app.search.sort.trackCount")
-      : t("app.search.sort.albumCount");
 
   return (
     <Box className="h-full">
@@ -222,7 +207,9 @@ export default function SearchScreen() {
               ) : (
                 <ArrowDown size={16} color={white} />
               )}
-              <Text className="text-white font-bold">{sortLabel}</Text>
+              <Text className="text-white font-bold">
+                {sortFieldLabel(parseSortType(activeSort).field)}
+              </Text>
             </HStack>
           </FadeOutScaleDown>
         </HStack>
@@ -256,95 +243,12 @@ export default function SearchScreen() {
         }}
         showsVerticalScrollIndicator={false}
       />
-      <CenteredBottomSheetModal
+      <SortOptionsSheet
         ref={bottomSheetModalSortRef}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    activeSort === "alphabeticalAsc"
-                      ? "alphabeticalDesc"
-                      : "alphabeticalAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.search.sort.alphabetical")}
-                    </Text>
-                  </VStack>
-                  {activeSort === "alphabeticalAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {activeSort === "alphabeticalDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              {countsAvailable && (
-                <FadeOutScaleDown
-                  onPress={() =>
-                    handleSortPress(
-                      activeSort === "songCountAsc"
-                        ? "songCountDesc"
-                        : "songCountAsc",
-                    )
-                  }
-                >
-                  <HStack className="items-center justify-between">
-                    <VStack className="ml-4">
-                      <Text className="text-lg text-gray-200">
-                        {t("app.search.sort.trackCount")}
-                      </Text>
-                    </VStack>
-                    {activeSort === "songCountAsc" && (
-                      <ArrowUp size={24} color={emerald500} />
-                    )}
-                    {activeSort === "songCountDesc" && (
-                      <ArrowDown size={24} color={emerald500} />
-                    )}
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
-              {countsAvailable && (
-                <FadeOutScaleDown
-                  onPress={() =>
-                    handleSortPress(
-                      activeSort === "albumCountAsc"
-                        ? "albumCountDesc"
-                        : "albumCountAsc",
-                    )
-                  }
-                >
-                  <HStack className="items-center justify-between">
-                    <VStack className="ml-4">
-                      <Text className="text-lg text-gray-200">
-                        {t("app.search.sort.albumCount")}
-                      </Text>
-                    </VStack>
-                    {activeSort === "albumCountAsc" && (
-                      <ArrowUp size={24} color={emerald500} />
-                    )}
-                    {activeSort === "albumCountDesc" && (
-                      <ArrowDown size={24} color={emerald500} />
-                    )}
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={setSort}
+      />
     </Box>
   );
 }

@@ -25,17 +25,22 @@ jest.mock("@/stores/auth", () => ({
 const mockStatusJukebox = jest.fn();
 const mockGetJukebox = jest.fn();
 const mockSkipJukebox = jest.fn();
+const mockClearJukebox = jest.fn();
+const mockSetJukebox = jest.fn();
+const mockSetGainJukebox = jest.fn();
+const mockStartJukebox = jest.fn();
+const mockStopJukebox = jest.fn();
 jest.mock("@/services/backend/jukebox", () => ({
   addJukebox: jest.fn(),
-  clearJukebox: jest.fn(),
+  clearJukebox: () => mockClearJukebox(),
   getJukebox: () => mockGetJukebox(),
-  setGainJukebox: jest.fn(),
-  setJukebox: jest.fn(),
+  setGainJukebox: (gain: number) => mockSetGainJukebox(gain),
+  setJukebox: (ids: string[]) => mockSetJukebox(ids),
   skipJukebox: (index: number, offset?: number) =>
     mockSkipJukebox(index, offset),
-  startJukebox: jest.fn(),
+  startJukebox: () => mockStartJukebox(),
   statusJukebox: () => mockStatusJukebox(),
-  stopJukebox: jest.fn(),
+  stopJukebox: () => mockStopJukebox(),
 }));
 
 const mockRestoreServerQueue = jest.fn();
@@ -63,14 +68,22 @@ const mockQueueState: MockQueue = {
   previous: jest.fn(),
   clearQueue: jest.fn(),
 };
+const mockQueueUnsub = jest.fn();
 jest.mock("@/stores/queue", () => ({
   __esModule: true,
-  default: { getState: () => mockQueueState },
+  default: {
+    getState: () => mockQueueState,
+    subscribe: jest.fn(() => mockQueueUnsub),
+  },
 }));
 
 import {
+  activate,
+  deactivate,
+  jukeboxCommitGain,
   jukeboxReconcileFromServer,
   jukeboxRefreshStatus,
+  jukeboxSetGain,
   jukeboxSkipNext,
   jukeboxSkipPrevious,
 } from "@/services/jukebox";
@@ -81,10 +94,31 @@ const status = (currentIndex: number): { jukeboxStatus: JukeboxStatus } => ({
   jukeboxStatus: { currentIndex, gain: 0.5, playing: true, position: 0 },
 });
 
+// Mirror the server: mpv reports the position it was last seeked to, so status
+// reflects the offset of the most recent skip. Lets settleSeek observe the seek
+// actually landing.
+const trackSeekedPosition = (currentIndex: number) => {
+  let position = 0;
+  mockSkipJukebox.mockImplementation((_index: number, offset?: number) => {
+    position = offset ?? 0;
+    return Promise.resolve(undefined);
+  });
+  mockStatusJukebox.mockImplementation(() =>
+    Promise.resolve({
+      jukeboxStatus: { currentIndex, gain: 0.5, playing: true, position },
+    }),
+  );
+};
+
 beforeEach(() => {
   mockStatusJukebox.mockReset();
   mockGetJukebox.mockReset();
   mockSkipJukebox.mockReset().mockResolvedValue(undefined);
+  mockClearJukebox.mockReset().mockResolvedValue(undefined);
+  mockSetJukebox.mockReset().mockResolvedValue(undefined);
+  mockSetGainJukebox.mockReset().mockResolvedValue(undefined);
+  mockStartJukebox.mockReset().mockResolvedValue(undefined);
+  mockStopJukebox.mockReset().mockResolvedValue(undefined);
   mockRestoreServerQueue.mockReset();
   mockQueueState.queue = [];
   mockQueueState.currentIndex = 0;
@@ -107,6 +141,7 @@ describe("jukebox service - refreshStatus reconciliation", () => {
   });
 
   test("reconciles the local queue index when the server advanced", async () => {
+    useJukebox.setState({ active: true }, false);
     mockQueueState.currentIndex = 0;
     mockStatusJukebox.mockResolvedValue(status(2));
     await jukeboxRefreshStatus();
@@ -114,10 +149,22 @@ describe("jukebox service - refreshStatus reconciliation", () => {
   });
 
   test("does not touch the queue when indexes already match", async () => {
+    useJukebox.setState({ active: true }, false);
     mockQueueState.currentIndex = 2;
     mockStatusJukebox.mockResolvedValue(status(2));
     await jukeboxRefreshStatus();
     expect(mockQueueState.setCurrentIndex).not.toHaveBeenCalled();
+  });
+
+  test("does not reconcile the queue index when jukebox is inactive", async () => {
+    // Opening the device sheet refreshes status while still on the local device;
+    // a stale server-side playlist must never yank the local queue's position.
+    useJukebox.setState({ active: false }, false);
+    mockQueueState.currentIndex = 1;
+    mockStatusJukebox.mockResolvedValue(status(0));
+    await jukeboxRefreshStatus();
+    expect(mockQueueState.setCurrentIndex).not.toHaveBeenCalled();
+    expect(useJukebox.getState().status?.currentIndex).toBe(0);
   });
 
   test("swallows transient status errors without throwing", async () => {
@@ -198,5 +245,123 @@ describe("jukebox service - reconcileFromServer", () => {
   test("swallows transient errors without throwing", async () => {
     mockGetJukebox.mockRejectedValue(new Error("network"));
     await expect(jukeboxReconcileFromServer()).resolves.toBeUndefined();
+  });
+});
+
+describe("jukebox service - activate", () => {
+  test("selects the current track then reseeks to the saved position once playing", async () => {
+    jest.useFakeTimers();
+    mockQueueState.queue = [{ id: "a" }, { id: "b" }];
+    mockQueueState.currentIndex = 1;
+    trackSeekedPosition(1);
+    const p = activate({ position: 42.9, autoplay: true });
+    await jest.advanceTimersByTimeAsync(2000);
+    await p;
+    expect(mockSkipJukebox).toHaveBeenNthCalledWith(1, 1, 0);
+    expect(mockSkipJukebox).toHaveBeenNthCalledWith(2, 1, 42);
+    expect(mockStopJukebox).not.toHaveBeenCalled();
+    await deactivate();
+    jest.useRealTimers();
+  });
+
+  test("starts the track without a reseek when there is no saved position", async () => {
+    mockQueueState.queue = [{ id: "a" }];
+    mockQueueState.currentIndex = 0;
+    await activate({ position: 0, autoplay: true });
+    expect(mockSkipJukebox).toHaveBeenCalledTimes(1);
+    expect(mockSkipJukebox).toHaveBeenCalledWith(0, 0);
+    expect(mockStopJukebox).not.toHaveBeenCalled();
+    await deactivate();
+  });
+
+  test("restores the saved position then pauses when the local player was paused", async () => {
+    jest.useFakeTimers();
+    mockQueueState.queue = [{ id: "a" }];
+    mockQueueState.currentIndex = 0;
+    trackSeekedPosition(0);
+    const p = activate({ position: 30, autoplay: false });
+    await jest.advanceTimersByTimeAsync(2000);
+    await p;
+    expect(mockSkipJukebox).toHaveBeenNthCalledWith(1, 0, 0);
+    expect(mockSkipJukebox).toHaveBeenNthCalledWith(2, 0, 30);
+    expect(mockStopJukebox).toHaveBeenCalled();
+    await deactivate();
+    jest.useRealTimers();
+  });
+
+  test("mutes the 0:00 pre-roll then restores the gain when seeking", async () => {
+    jest.useFakeTimers();
+    mockQueueState.queue = [{ id: "a" }];
+    mockQueueState.currentIndex = 0;
+    trackSeekedPosition(0);
+    const p = activate({ position: 30, autoplay: true });
+    await jest.advanceTimersByTimeAsync(2000);
+    await p;
+    expect(mockSetGainJukebox).toHaveBeenNthCalledWith(1, 0);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.5);
+    await deactivate();
+    jest.useRealTimers();
+  });
+
+  test("plays from 0:00 at full gain without muting when there is no saved position", async () => {
+    mockQueueState.queue = [{ id: "a" }];
+    mockQueueState.currentIndex = 0;
+    await activate({ position: 0, autoplay: true });
+    expect(mockSetGainJukebox).toHaveBeenCalledTimes(1);
+    expect(mockSetGainJukebox).toHaveBeenCalledWith(0.5);
+    await deactivate();
+  });
+
+  test("does not push tracks to the server when the queue is empty", async () => {
+    mockQueueState.queue = [];
+    await activate({ position: 0, autoplay: true });
+    expect(mockSetJukebox).not.toHaveBeenCalled();
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+    expect(useJukebox.getState().active).toBe(true);
+    await deactivate();
+  });
+});
+
+describe("jukebox service - gain throttling", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    useJukebox.setState({ active: true }, false);
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  test("sends the leading scrub immediately then rate-limits the rest", () => {
+    jukeboxSetGain(0.1);
+    jukeboxSetGain(0.2);
+    jukeboxSetGain(0.3);
+    // Only the leading value hits the network synchronously — the flood of
+    // intermediate scrubs is coalesced.
+    expect(mockSetGainJukebox).toHaveBeenCalledTimes(1);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.1);
+    // The trailing timer then flushes the latest value once the window elapses.
+    jest.advanceTimersByTime(300);
+    expect(mockSetGainJukebox).toHaveBeenCalledTimes(2);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.3);
+  });
+
+  test("applies the gain locally on every scrub for a smooth thumb", () => {
+    jukeboxSetGain(0.42);
+    expect(useJukebox.getState().gain).toBe(0.42);
+  });
+
+  test("commit flushes the final gain immediately and cancels the trailing send", () => {
+    jukeboxSetGain(0.5);
+    mockSetGainJukebox.mockClear();
+    jukeboxSetGain(0.6);
+    jukeboxCommitGain(0.7);
+    expect(mockSetGainJukebox).toHaveBeenCalledTimes(1);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.7);
+    expect(useJukebox.getState().gain).toBe(0.7);
+    // No stale trailing flush afterwards.
+    jest.advanceTimersByTime(300);
+    expect(mockSetGainJukebox).toHaveBeenCalledTimes(1);
   });
 });

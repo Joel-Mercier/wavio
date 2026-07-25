@@ -148,6 +148,7 @@ export const usePlaylist = (id: string) => {
     queryFn: () => {
       return getPlaylist(id);
     },
+    refetchOnMount: "always",
   });
 
   return query;

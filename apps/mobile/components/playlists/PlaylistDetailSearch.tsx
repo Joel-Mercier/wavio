@@ -19,11 +19,12 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { usePlaylist } from "@/hooks/backend/usePlaylists";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
-import { orderPlaylistEntries } from "@/utils/playlistOrder";
+import { playlistTracks } from "@/utils/playlistOrder";
 
 export default function PlaylistDetailSearch() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -42,6 +43,7 @@ export default function PlaylistDetailSearch() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const { data: playlistData, isLoading, error } = usePlaylist(id);
+  const { activeSort } = useTrackSort(playlistData?.playlist?.entry, sort);
   const form = useForm({
     defaultValues: {
       query: "",
@@ -60,23 +62,13 @@ export default function PlaylistDetailSearch() {
     ) {
       return null;
     }
-    let newData = [...playlistData.playlist.entry];
-    const storedOrder = getPlaylistTrackOrder(id);
-
-    // If we have a stored custom order and sort is "addedAtAsc", use it
-    if (storedOrder && sort === "addedAtAsc") {
-      newData = orderPlaylistEntries(newData, storedOrder);
-    } else if (sort === "addedAtDesc") {
-      newData = newData.reverse();
-    } else if (sort === "alphabeticalAsc") {
-      newData = newData.sort((a, b) => {
-        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-      });
-    } else if (sort === "alphabeticalDesc") {
-      newData = newData.sort((a, b) => {
-        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
-      });
-    }
+    // Same ordering as the detail screen, so the search results keep the sort
+    // the user picked there.
+    const newData = playlistTracks(
+      playlistData.playlist.entry,
+      getPlaylistTrackOrder(id),
+      activeSort,
+    );
 
     if (query.length === 0) {
       const result = newData.map((item, refIndex) => ({
@@ -96,7 +88,7 @@ export default function PlaylistDetailSearch() {
     const fuse = new Fuse<Child>(newData, options);
     const result = fuse.search(query);
     return result;
-  }, [playlistData, sort, query, id, getPlaylistTrackOrder]);
+  }, [playlistData, activeSort, query, id, getPlaylistTrackOrder]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);
   const handleTrackPress = useTrackListPress(trackList);

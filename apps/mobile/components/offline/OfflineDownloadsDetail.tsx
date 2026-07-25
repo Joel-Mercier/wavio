@@ -1,13 +1,9 @@
-import {
-  type BottomSheetModal,
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import Fuse from "fuse.js";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -17,10 +13,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
-import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import OfflineDownloadItem from "@/components/offline/OfflineDownloadItem";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -48,70 +46,32 @@ import {
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import useApp, { type DownloadsSort } from "@/stores/app";
+import useApp from "@/stores/app";
 import type { OfflineTrack } from "@/stores/offline";
 import { niceBytes } from "@/utils/fileSize";
 import { goBackOrHome } from "@/utils/navigation";
+import {
+  availableSortFields,
+  effectiveSort,
+  parseSortType,
+  sortItems,
+} from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
-
-const byTitle = (a: OfflineTrack, b: OfflineTrack) =>
-  a.title.localeCompare(b.title);
-
-const sortTracks = (tracks: OfflineTrack[], sort: DownloadsSort) => {
-  switch (sort) {
-    case "alphabeticalAsc":
-      return tracks.sort(byTitle);
-    case "alphabeticalDesc":
-      return tracks.sort((a, b) => byTitle(b, a));
-    case "artistAsc":
-      return tracks.sort(
-        (a, b) =>
-          (a.artist || "").localeCompare(b.artist || "") ||
-          (a.album || "").localeCompare(b.album || "") ||
-          (a.track ?? 0) - (b.track ?? 0) ||
-          byTitle(a, b),
-      );
-    case "artistDesc":
-      return tracks.sort(
-        (a, b) =>
-          (b.artist || "").localeCompare(a.artist || "") ||
-          (a.album || "").localeCompare(b.album || "") ||
-          (a.track ?? 0) - (b.track ?? 0) ||
-          byTitle(a, b),
-      );
-    case "albumAsc":
-      return tracks.sort(
-        (a, b) =>
-          (a.album || "").localeCompare(b.album || "") ||
-          (a.track ?? 0) - (b.track ?? 0) ||
-          byTitle(a, b),
-      );
-    case "albumDesc":
-      return tracks.sort(
-        (a, b) =>
-          (b.album || "").localeCompare(a.album || "") ||
-          (a.track ?? 0) - (b.track ?? 0) ||
-          byTitle(a, b),
-      );
-    case "sizeAsc":
-      return tracks.sort((a, b) => a.size - b.size);
-    case "sizeDesc":
-      return tracks.sort((a, b) => b.size - a.size);
-    default:
-      return tracks;
-  }
-};
+import {
+  OFFLINE_TRACK_SORT_FIELDS,
+  OFFLINE_TRACK_SORT_SPECS,
+  trackSortEnabled,
+} from "@/utils/trackSort";
 
 export default function OfflineDownloadsDetail() {
-  const [gray500, white, primary50, emerald500, primary800] =
-    Uniwind.getCSSVariable([
-      "--color-gray-500",
-      "--color-white",
-      "--color-primary-50",
-      "--color-emerald-500",
-      "--color-primary-800",
-    ]) as string[];
+  const [gray500, white, primary50, primary800] = Uniwind.getCSSVariable([
+    "--color-gray-500",
+    "--color-white",
+    "--color-primary-50",
+    "--color-primary-800",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const toast = useToast();
@@ -143,8 +103,29 @@ export default function OfflineDownloadsDetail() {
     form.setFieldValue("query", "");
   };
 
+  const capabilities = useCapabilities();
+  const sortFields = useMemo(
+    () =>
+      availableSortFields(
+        downloadedTracksList,
+        OFFLINE_TRACK_SORT_SPECS,
+        OFFLINE_TRACK_SORT_FIELDS,
+        trackSortEnabled(capabilities),
+      ),
+    [downloadedTracksList, capabilities],
+  );
+  // Downloads saved before the store kept year/genre/album artist can't offer
+  // those sorts; fall back to alphabetical without dropping the preference.
+  const activeSort = effectiveSort(sort, sortFields, "alphabeticalAsc");
+  const activeSortField = parseSortType(activeSort).field;
+  const sortFieldLabel = useSortFieldLabel();
+
   const data = useMemo(() => {
-    const sorted = sortTracks([...downloadedTracksList], sort);
+    const sorted = sortItems(
+      downloadedTracksList,
+      activeSort,
+      OFFLINE_TRACK_SORT_SPECS,
+    );
     if (query.length === 0) {
       return sorted;
     }
@@ -154,32 +135,19 @@ export default function OfflineDownloadsDetail() {
       keys: ["title", "artist", "album"],
     });
     return fuse.search(query).map((result) => result.item);
-  }, [downloadedTracksList, sort, query]);
+  }, [downloadedTracksList, activeSort, query]);
 
   // A changed sort/query reorders the list; snap back to the top so the new
   // ordering starts in view instead of leaving the user mid-scroll.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [sort, query]);
+  }, [activeSort, query]);
 
   const isEmpty = downloadedTracksList.length === 0;
 
   const handlePresentSortModalPress = () => {
     bottomSheetSortModalRef.current?.present();
   };
-
-  const handleSortPress = (type: DownloadsSort) => {
-    bottomSheetSortModalRef.current?.dismiss();
-    setDownloadsSort(type);
-  };
-
-  const sortLabel = sort.startsWith("artist")
-    ? t("app.library.artistSort")
-    : sort.startsWith("album")
-      ? t("app.library.albumSort")
-      : sort.startsWith("size")
-        ? t("app.library.sizeSort")
-        : t("app.library.alphabeticalSort");
 
   const handleClearAllPress = async () => {
     setIsClearing(true);
@@ -332,12 +300,14 @@ export default function OfflineDownloadsDetail() {
             </form.Field>
             <FadeOutScaleDown onPress={handlePresentSortModalPress}>
               <HStack className="items-center gap-x-2">
-                {sort.endsWith("Asc") && <ArrowUp size={16} color={white} />}
-                {sort.endsWith("Desc") && <ArrowDown size={16} color={white} />}
-                {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                  <ArrowDownUp size={16} color={white} />
+                {activeSort.endsWith("Desc") ? (
+                  <ArrowDown size={16} color={white} />
+                ) : (
+                  <ArrowUp size={16} color={white} />
                 )}
-                <Text className="text-white font-bold">{sortLabel}</Text>
+                <Text className="text-white font-bold">
+                  {sortFieldLabel(activeSortField)}
+                </Text>
               </HStack>
             </FadeOutScaleDown>
           </VStack>
@@ -369,98 +339,12 @@ export default function OfflineDownloadsDetail() {
           )}
         </Box>
       </Box>
-      <CenteredBottomSheetModal
+      <SortOptionsSheet
         ref={bottomSheetSortModalRef}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "alphabeticalAsc"
-                      ? "alphabeticalDesc"
-                      : "alphabeticalAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <Text className="text-lg text-gray-200 ml-4">
-                    {t("app.library.alphabeticalSort")}
-                  </Text>
-                  {sort === "alphabeticalAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "alphabeticalDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "artistAsc" ? "artistDesc" : "artistAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <Text className="text-lg text-gray-200 ml-4">
-                    {t("app.library.artistSort")}
-                  </Text>
-                  {sort === "artistAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "artistDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "albumAsc" ? "albumDesc" : "albumAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <Text className="text-lg text-gray-200 ml-4">
-                    {t("app.library.albumSort")}
-                  </Text>
-                  {sort === "albumAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "albumDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(sort === "sizeAsc" ? "sizeDesc" : "sizeAsc")
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <Text className="text-lg text-gray-200 ml-4">
-                    {t("app.library.sizeSort")}
-                  </Text>
-                  {sort === "sizeAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "sizeDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={setDownloadsSort}
+      />
       <AlertDialog
         isOpen={showClearConfirm}
         onClose={() => {

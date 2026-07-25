@@ -24,7 +24,12 @@ set(WITH_ZLIB OFF CACHE BOOL "" FORCE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -fvisibility=hidden -ffunction-sections -fdata-sections")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL -s")
+# max-page-size=16384 is required by Play: Android 15 devices can use 16 KB
+# memory pages, and a .so whose LOAD segments are only 4 KB aligned can't be
+# mapped there. NDK r27 gates this behind ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES
+# (off by default) and r28+ makes it the default; setting the flag here keeps
+# the output correct on every NDK rather than depending on which one is picked.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL -Wl,-z,max-page-size=16384 -s")
 
 add_subdirectory(${TAGLIB_DIR} taglib-build EXCLUDE_FROM_ALL)
 

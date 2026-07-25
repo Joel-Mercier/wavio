@@ -11,7 +11,11 @@ import {
   scopedQueryCacheKey,
   storage,
 } from "@/config/storage";
-import { type ReportBackend, reportError } from "@/services/errorReporting";
+import {
+  isNetworkNoise,
+  type ReportBackend,
+  reportError,
+} from "@/services/errorReporting";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 
 // Map the active server type to the reporting backend tag. Navidrome and
@@ -23,6 +27,22 @@ function activeBackend(): ReportBackend {
   return "subsonic";
 }
 
+// A connectivity-class query failure (a gateway 502/503/504, an origin-error
+// 5xx, or a socket-level error with no response) means the server is
+// unreachable, not that the app hit a bug — but the reachability probe runs on
+// its own cadence and may not have noticed yet. Kick a probe so serverReachable
+// flips within a couple of seconds (offline banner + paused queries + cache)
+// instead of waiting for the next heartbeat. Lazy require mirrors
+// errorReporting.ts: keep the network / backend-dispatch module graph out of
+// queryClient's eval path.
+function kickReachabilityProbeIfUnreachable(networkNoise: boolean): void {
+  if (!networkNoise) return;
+  if (activeBackend() === "local") return;
+  void (
+    require("@/services/network") as typeof import("@/services/network")
+  ).probeServer();
+}
+
 export const queryClient = new QueryClient({
   // Safety net: any query/mutation failure not already reported at its service
   // chokepoint is reported here, tagged by the active backend. The classifier
@@ -30,11 +50,17 @@ export const queryClient = new QueryClient({
   // so this only fires for genuinely-unreported failures.
   queryCache: new QueryCache({
     onError: (error, query) => {
-      reportError(error, {
-        area: "api",
-        backend: activeBackend(),
-        endpoint: String(query.queryKey[0] ?? "query"),
-      });
+      const networkNoise = isNetworkNoise(error);
+      kickReachabilityProbeIfUnreachable(networkNoise);
+      reportError(
+        error,
+        {
+          area: "api",
+          backend: activeBackend(),
+          endpoint: String(query.queryKey[0] ?? "query"),
+        },
+        networkNoise,
+      );
     },
   }),
   mutationCache: new MutationCache({

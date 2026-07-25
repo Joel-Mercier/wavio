@@ -25,6 +25,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import {
   activate as activateJukebox,
+  jukeboxCommitGain,
   jukeboxReconcileFromServer,
   jukeboxRefreshStatus,
   jukeboxSetGain,
@@ -94,7 +95,11 @@ export default function JukeboxSheet() {
   };
 
   const handleJukeboxGainChange = (value: number) => {
-    jukeboxSetGain(value).catch(() => {});
+    jukeboxSetGain(value);
+  };
+
+  const handleJukeboxGainComplete = (value: number) => {
+    jukeboxCommitGain(value);
   };
 
   // Ping the server for live jukebox state whenever the sheet opens, rather than
@@ -176,6 +181,7 @@ export default function JukeboxSheet() {
                 <GestureSlider
                   value={jukeboxGain}
                   onScrub={handleJukeboxGainChange}
+                  onComplete={handleJukeboxGainComplete}
                 />
                 {jukeboxStatus && (
                   <Text className="text-sm text-primary-100 mt-2">

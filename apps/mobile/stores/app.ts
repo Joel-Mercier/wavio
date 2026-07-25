@@ -5,6 +5,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
+import type { SortType } from "@/utils/sort";
+import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 
 const isLandscapeOrientation = (orientation: Orientation) =>
   orientation === Orientation.LANDSCAPE_LEFT ||
@@ -29,23 +31,18 @@ export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
 
-export type GenresSort =
-  | "alphabeticalAsc"
-  | "alphabeticalDesc"
-  | "songCountAsc"
-  | "songCountDesc"
-  | "albumCountAsc"
-  | "albumCountDesc";
+// Sort values are `<field>Asc` / `<field>Desc` everywhere; the field specs that
+// give them meaning live next to the list they sort (utils/trackSort.ts for
+// tracks, the screen itself for genres and the library index). See utils/sort.ts.
+export type GenreSortField = "alphabetical" | "songCount" | "albumCount";
+export type GenresSort = SortType<GenreSortField>;
 
-export type DownloadsSort =
-  | "alphabeticalAsc"
-  | "alphabeticalDesc"
-  | "artistAsc"
-  | "artistDesc"
-  | "albumAsc"
-  | "albumDesc"
-  | "sizeAsc"
-  | "sizeDesc";
+export type DownloadsSort = OfflineTrackSortType;
+
+// The library index mixes artists, albums, playlists, podcasts, radio stations
+// and folders, so only order-independent fields apply.
+export type LibrarySortField = "addedAt" | "alphabetical";
+export type LibrarySort = SortType<LibrarySortField>;
 
 export type LibraryFilter =
   | "artists"
@@ -97,18 +94,8 @@ interface AppStore {
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
   lyricsKeepScreenOn: boolean;
   setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
-  librarySort:
-    | "addedAtAsc"
-    | "addedAtDesc"
-    | "alphabeticalAsc"
-    | "alphabeticalDesc";
-  setLibrarySort: (
-    librarySort:
-      | "addedAtAsc"
-      | "addedAtDesc"
-      | "alphabeticalAsc"
-      | "alphabeticalDesc",
-  ) => void;
+  librarySort: LibrarySort;
+  setLibrarySort: (librarySort: LibrarySort) => void;
   libraryFilter: LibraryFilter[];
   setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
   genresSort: GenresSort;
@@ -117,26 +104,8 @@ interface AppStore {
   // screen id. One value per screen so choices don't bleed across screens.
   albumScreenLayouts: Record<string, AlbumScreenLayout>;
   setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => void;
-  favoritesSort:
-    | "addedAtAsc"
-    | "addedAtDesc"
-    | "alphabeticalAsc"
-    | "alphabeticalDesc"
-    | "artistAsc"
-    | "artistDesc"
-    | "albumAsc"
-    | "albumDesc";
-  setFavoritesSort: (
-    favoritesSort:
-      | "addedAtAsc"
-      | "addedAtDesc"
-      | "alphabeticalAsc"
-      | "alphabeticalDesc"
-      | "artistAsc"
-      | "artistDesc"
-      | "albumAsc"
-      | "albumDesc",
-  ) => void;
+  favoritesSort: TrackSortType;
+  setFavoritesSort: (favoritesSort: TrackSortType) => void;
   downloadsSort: DownloadsSort;
   setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
@@ -244,13 +213,7 @@ export const useAppBase = create<AppStore>()(
         set({ lyricsKeepScreenOn });
       },
       librarySort: "addedAtAsc",
-      setLibrarySort: (
-        librarySort:
-          | "addedAtAsc"
-          | "addedAtDesc"
-          | "alphabeticalAsc"
-          | "alphabeticalDesc",
-      ) => {
+      setLibrarySort: (librarySort: LibrarySort) => {
         set({ librarySort });
       },
       libraryFilter: [],
@@ -271,17 +234,7 @@ export const useAppBase = create<AppStore>()(
         }));
       },
       favoritesSort: "addedAtAsc",
-      setFavoritesSort: (
-        favoritesSort:
-          | "addedAtAsc"
-          | "addedAtDesc"
-          | "alphabeticalAsc"
-          | "alphabeticalDesc"
-          | "artistAsc"
-          | "artistDesc"
-          | "albumAsc"
-          | "albumDesc",
-      ) => {
+      setFavoritesSort: (favoritesSort: TrackSortType) => {
         set({ favoritesSort });
       },
       downloadsSort: "alphabeticalAsc",

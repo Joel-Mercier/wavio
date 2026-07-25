@@ -37,7 +37,7 @@ export function logError(...args: unknown[]): void {
 
   // Suppress an expected non-Error arg (e.g. a Subsonic {code} object) that
   // wouldn't be the one `reportError` classifies below.
-  if (args.some(isExpectedNoise)) return;
+  if (args.some((arg) => isExpectedNoise(arg))) return;
 
   const error = args.find((arg) => arg instanceof Error);
   const context = args.filter((arg) => arg !== error);

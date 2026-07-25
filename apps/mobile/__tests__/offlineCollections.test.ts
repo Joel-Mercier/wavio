@@ -38,6 +38,23 @@ describe("offlineTrackToChild", () => {
       suffix: "mp3",
     });
   });
+
+  it("carries the tag fields the sort options need", () => {
+    const child = offlineTrackToChild(
+      makeTrack("a", {
+        albumArtist: "Album Artist",
+        year: 1994,
+        genre: "Jazz",
+        sortName: "Track a, The",
+      }),
+    );
+    expect(child).toMatchObject({
+      displayAlbumArtist: "Album Artist",
+      year: 1994,
+      genre: "Jazz",
+      sortName: "Track a, The",
+    });
+  });
 });
 
 describe("offlineCollectionToPlaylist", () => {

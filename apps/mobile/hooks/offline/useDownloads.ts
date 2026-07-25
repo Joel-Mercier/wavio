@@ -111,10 +111,11 @@ export const useOfflineModeEnabled = () =>
   useOffline((s) => s.offlineModeEnabled);
 
 // Reactive view of the downloaded-tracks list (changes on add/remove/clear —
-// not progress ticks).
+// not progress ticks). Derived in a useMemo so the array keeps its identity
+// between renders and the consumers' sort/search memos actually hold.
 export const useDownloadedTracksList = () => {
   const downloadedTracks = useOffline((s) => s.downloadedTracks);
-  return Object.values(downloadedTracks);
+  return useMemo(() => Object.values(downloadedTracks), [downloadedTracks]);
 };
 
 // Selects the (referentially stable) map and derives in useMemo so the O(n)

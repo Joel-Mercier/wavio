@@ -180,8 +180,14 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
 // - AutoDownloadDiscardedError: an in-flight library-sync download whose result
 //   was discarded because extended offline mode was disabled before it finished
 //   (services/offline/downloadService.ts). A deliberate cancellation, not a bug.
-export function isExpectedNoise(error: unknown): boolean {
-  if (isNetworkNoise(error)) return true;
+export function isExpectedNoise(
+  error: unknown,
+  // Callers that already classified `error` (e.g. the query cache, which needs
+  // the same verdict to decide whether to kick a reachability probe) pass it in
+  // so `isNetworkNoise` runs once per error instead of once per consumer.
+  networkNoise: boolean = isNetworkNoise(error),
+): boolean {
+  if (networkNoise) return true;
   if (isPluginTimeout(error)) return true;
   if (isUnsupportedOrEmptySubsonic(error)) return true;
   return (
@@ -195,8 +201,12 @@ export function isExpectedNoise(error: unknown): boolean {
   );
 }
 
-function isExpectedFailure(error: unknown, ctx: ReportContext): boolean {
-  if (isExpectedNoise(error)) return true;
+function isExpectedFailure(
+  error: unknown,
+  ctx: ReportContext,
+  networkNoise?: boolean,
+): boolean {
+  if (isExpectedNoise(error, networkNoise)) return true;
   // Device has no connectivity at all — a network/API failure is expected. Only
   // applies to `api`; the local library, player engine and metadata extraction
   // work offline, so a failure there is a real bug even with no connectivity.
@@ -267,7 +277,13 @@ function toError(error: unknown, ctx: ReportContext): Error {
  */
 const REPORTED = "__wavioReported";
 
-export function reportError(error: unknown, ctx: ReportContext): void {
+export function reportError(
+  error: unknown,
+  ctx: ReportContext,
+  // Optional: a precomputed `isNetworkNoise(error)` verdict from a caller that
+  // already needed it, so the classifier doesn't recompute it.
+  networkNoise?: boolean,
+): void {
   // Dedupe across chokepoints, BEFORE classifying. The same error object often
   // passes through more than one reporter (e.g. a service interceptor with full
   // context, then the React Query cache safety net with only a query key). Mark
@@ -288,7 +304,7 @@ export function reportError(error: unknown, ctx: ReportContext): void {
       // Frozen/sealed error object — fall through and report (worst case a dup).
     }
   }
-  if (isExpectedFailure(error, ctx)) return;
+  if (isExpectedFailure(error, ctx, networkNoise)) return;
   if (__DEV__) {
     console.error(`[${ctx.area}]`, ctx.endpoint ?? "", error);
     return;

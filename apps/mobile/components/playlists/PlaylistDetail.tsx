@@ -8,7 +8,6 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
@@ -44,6 +43,9 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import {
   AlertDialog,
@@ -83,11 +85,12 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
-import usePlaylists from "@/stores/playlists";
+import usePlaylists, { type PlaylistSortType } from "@/stores/playlists";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -96,7 +99,8 @@ import { formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
-import { orderPlaylistEntries } from "@/utils/playlistOrder";
+import { playlistTracks } from "@/utils/playlistOrder";
+import type { TrackSortField } from "@/utils/trackSort";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -155,6 +159,18 @@ export default function PlaylistDetail() {
   const doShare = useCreateShare();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  // A saved sort whose field isn't offerable right now (e.g. genre, on a
+  // playlist rebuilt from downloads) renders as the playlist's own order without
+  // overwriting the preference, so it comes back with the data.
+  const { sortFields, activeSort, activeSortField } = useTrackSort(
+    playlistData?.playlist?.entry,
+    sort,
+  );
+  const sortLabels = useMemo(
+    () => ({ addedAt: t("app.shared.sort.playlistOrder") }),
+    [t],
+  );
+  const sortFieldLabel = useSortFieldLabel<TrackSortField>(sortLabels);
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const topColor =
@@ -396,10 +412,7 @@ export default function PlaylistDetail() {
     bottomSheetSortModalRef.current?.present();
   }, []);
 
-  const handleSortPress = (
-    type: "addedAtAsc" | "addedAtDesc" | "alphabeticalAsc" | "alphabeticalDesc",
-  ) => {
-    bottomSheetSortModalRef.current?.dismiss();
+  const handleSortSelect = (type: PlaylistSortType) => {
     setPlaylistSort(id, type);
   };
 
@@ -411,30 +424,12 @@ export default function PlaylistDetail() {
     ) {
       return null;
     }
-    const newData = [...playlistData.playlist.entry];
-    const storedOrder = getPlaylistTrackOrder(id);
-
-    if (storedOrder && sort === "addedAtAsc") {
-      return orderPlaylistEntries(newData, storedOrder);
-    }
-
-    if (sort === "addedAtAsc") {
-      return newData;
-    }
-    if (sort === "addedAtDesc") {
-      return newData.reverse();
-    }
-    if (sort === "alphabeticalAsc") {
-      return newData.sort((a, b) => {
-        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-      });
-    }
-    if (sort === "alphabeticalDesc") {
-      return newData.sort((a, b) => {
-        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
-      });
-    }
-  }, [playlistData, sort, id, getPlaylistTrackOrder]);
+    return playlistTracks(
+      playlistData.playlist.entry,
+      getPlaylistTrackOrder(id),
+      activeSort,
+    );
+  }, [playlistData, activeSort, id, getPlaylistTrackOrder]);
 
   const handleDeleteFromPlaylistPress = useCallback(
     (displayIndex: string) => {
@@ -754,19 +749,13 @@ export default function PlaylistDetail() {
                 <HStack className="items-center gap-x-4">
                   <FadeOutScaleDown onPress={handlePresentSortModalPress}>
                     <HStack className="items-center gap-x-2">
-                      {sort.endsWith("Asc") && (
+                      {activeSort.endsWith("Desc") ? (
+                        <ArrowDown size={16} color={white} />
+                      ) : (
                         <ArrowUp size={16} color={white} />
                       )}
-                      {sort.endsWith("Desc") && (
-                        <ArrowDown size={16} color={white} />
-                      )}
-                      {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                        <ArrowDownUp size={16} color={white} />
-                      )}
                       <Text className="text-white font-bold">
-                        {sort.startsWith("addedAt")
-                          ? t("app.library.recentSort")
-                          : t("app.library.alphabeticalSort")}
+                        {sortFieldLabel(activeSortField)}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
@@ -1023,67 +1012,13 @@ export default function PlaylistDetail() {
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
-      <CenteredBottomSheetModal
+      <SortOptionsSheet
         ref={bottomSheetSortModalRef}
-        enableHalfExpand={false}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "addedAtAsc" ? "addedAtDesc" : "addedAtAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.recentSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "addedAtAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "addedAtDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "alphabeticalAsc"
-                      ? "alphabeticalDesc"
-                      : "alphabeticalAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.alphabeticalSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "alphabeticalAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "alphabeticalDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={handleSortSelect}
+        labels={sortLabels}
+      />
       <AlertDialog
         isOpen={showAlertDialog}
         onClose={handleCloseAlertDialog}
