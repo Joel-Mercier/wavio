@@ -50,6 +50,19 @@ for ABI in "${ABIS[@]}"; do
   mkdir -p "$OUT_DIR/$ABI"
   cp "$BUILD_ROOT/$ABI/libaudiotagger.so" "$OUT_DIR/$ABI/libaudiotagger.so"
   "$NDK/toolchains/llvm/prebuilt/"*/bin/llvm-strip --strip-unneeded "$OUT_DIR/$ABI/libaudiotagger.so"
+
+  # Play rejects 64-bit libs whose LOAD segments aren't 16 KB aligned. Checked
+  # here rather than at upload time, where it surfaces as an opaque console
+  # warning long after the .so was committed.
+  if [[ "$ABI" == "arm64-v8a" || "$ABI" == "x86_64" ]]; then
+    ALIGN="$("$NDK/toolchains/llvm/prebuilt/"*/bin/llvm-readelf -l "$OUT_DIR/$ABI/libaudiotagger.so" \
+      | awk '/LOAD/ {print $NF}' | sort -u | tail -1)"
+    if [[ "$ALIGN" != "0x4000" && "$ALIGN" != "0x10000" ]]; then
+      echo "   $ABI LOAD alignment is $ALIGN, expected >= 0x4000 (16 KB)" >&2
+      exit 1
+    fi
+  fi
+
   echo "   $(du -h "$OUT_DIR/$ABI/libaudiotagger.so" | cut -f1)  $ABI"
 done
 

@@ -1,1 +1,0 @@
-Music player for Navidrome, Jellyfin, OpenSubsonic or a local library
