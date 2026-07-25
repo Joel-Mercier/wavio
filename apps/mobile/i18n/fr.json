@@ -1365,11 +1365,11 @@
 			},
 			"shared": {
 				"sort": {
-					"playlistOrder": "Playlist order",
-					"addedAt": "Recent",
-					"downloadedAt": "Recently downloaded",
-					"alphabetical": "Alphabetical",
-					"artist": "Artist",
+					"playlistOrder": "Ordre de la playlist",
+					"addedAt": "Récent",
+					"downloadedAt": "Récemment téléchargé",
+					"alphabetical": "Alphabétique",
+					"artist": "Artiste",
 					"albumArtist": "Artiste de l'album",
 					"album": "Album",
 					"year": "Année de sortie",
@@ -1377,8 +1377,8 @@
 					"duration": "Durée",
 					"playCount": "Nombre d'écoutes",
 					"rating": "Note",
-					"size": "File size",
-					"songCount": "Tracks",
+					"size": "Taille du fichier",
+					"songCount": "Titres",
 					"albumCount": "Albums"
 				},
 				"advancedSettings": "Paramètres avancés",
