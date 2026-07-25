@@ -49,21 +49,11 @@
 				"inputPlaceholder": "想听什么？",
 				"exploreGenres": "按风格浏览",
 				"recentSearches": "搜索历史",
-				"clearRecentSearches": "清除",
-				"sort": {
-					"alphabetical": "按字母排序",
-					"trackCount": "曲目",
-					"albumCount": "专辑"
-				}
+				"clearRecentSearches": "清除"
 			},
 			"library": {
 				"title": "音乐库",
 				"searchPlaceholder": "在音乐库中搜索",
-				"recentSort": "最近",
-				"alphabeticalSort": "按字母排序",
-				"artistSort": "艺人",
-				"albumSort": "专辑",
-				"sizeSort": "文件大小",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
 				"search": {
@@ -1357,6 +1347,23 @@
 				"openBrowser": "在浏览器中打开"
 			},
 			"shared": {
+				"sort": {
+					"playlistOrder": "Playlist order",
+					"addedAt": "Recent",
+					"downloadedAt": "Recently downloaded",
+					"alphabetical": "Alphabetical",
+					"artist": "Artist",
+					"albumArtist": "专辑艺人",
+					"album": "Album",
+					"year": "发行年份",
+					"genre": "流派",
+					"duration": "时长",
+					"playCount": "播放次数",
+					"rating": "评分",
+					"size": "File size",
+					"songCount": "Tracks",
+					"albumCount": "专辑"
+				},
 				"advancedSettings": "高级设置",
 				"fallbackUrlHelp": "当无法访问主URL时使用。必须指向同一台服务器。",
 				"cancel": "取消",
