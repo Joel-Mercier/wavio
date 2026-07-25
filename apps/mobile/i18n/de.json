@@ -49,21 +49,11 @@
 				"inputPlaceholder": "Was möchtest du hören?",
 				"exploreGenres": "Genres entdecken",
 				"recentSearches": "Letzte Suchen",
-				"clearRecentSearches": "Alle löschen",
-				"sort": {
-					"alphabetical": "Alphabetisch",
-					"trackCount": "Titel",
-					"albumCount": "Alben"
-				}
+				"clearRecentSearches": "Alle löschen"
 			},
 			"library": {
 				"title": "Bibliothek",
 				"searchPlaceholder": "Durchsuchen Sie Ihre Bibliothek",
-				"recentSort": "Aktuell",
-				"alphabeticalSort": "Alphabetisch",
-				"artistSort": "Künstler",
-				"albumSort": "Album",
-				"sizeSort": "Dateigröße",
 				"allAlbums": "Alle Alben",
 				"allArtists": "Alle Künstler",
 				"search": {
@@ -1374,6 +1364,23 @@
 				"openBrowser": "Im Browser öffnen"
 			},
 			"shared": {
+				"sort": {
+					"playlistOrder": "Playlist order",
+					"addedAt": "Recent",
+					"downloadedAt": "Recently downloaded",
+					"alphabetical": "Alphabetical",
+					"artist": "Artist",
+					"albumArtist": "Albuminterpret",
+					"album": "Album",
+					"year": "Erscheinungsjahr",
+					"genre": "Genre",
+					"duration": "Dauer",
+					"playCount": "Anzahl der Aufrufe",
+					"rating": "Bewertung",
+					"size": "File size",
+					"songCount": "Tracks",
+					"albumCount": "Alben"
+				},
 				"advancedSettings": "Erweiterte Einstellungen",
 				"fallbackUrlHelp": "Wird verwendet, wenn die Haupt-URL nicht erreichbar ist. Muss auf denselben Server verweisen.",
 				"cancel": "Abbrechen",
