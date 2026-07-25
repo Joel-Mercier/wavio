@@ -49,21 +49,11 @@
 				"inputPlaceholder": "Cosa vuoi ascoltare?",
 				"exploreGenres": "Esplora i generi",
 				"recentSearches": "Ricerche recenti",
-				"clearRecentSearches": "Cancella tutto",
-				"sort": {
-					"alphabetical": "Ordine alfabetico",
-					"trackCount": "Tracce",
-					"albumCount": "Album"
-				}
+				"clearRecentSearches": "Cancella tutto"
 			},
 			"library": {
 				"title": "Libreria",
 				"searchPlaceholder": "Cerca nella tua libreria",
-				"recentSort": "Recenti",
-				"alphabeticalSort": "Ordine alfabetico",
-				"artistSort": "Artista",
-				"albumSort": "Album",
-				"sizeSort": "Dimensione del file",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
 				"search": {
@@ -1374,6 +1364,23 @@
 				"openBrowser": "Apri nel browser"
 			},
 			"shared": {
+				"sort": {
+					"playlistOrder": "Playlist order",
+					"addedAt": "Recent",
+					"downloadedAt": "Recently downloaded",
+					"alphabetical": "Alphabetical",
+					"artist": "Artist",
+					"albumArtist": "Artista dell'album",
+					"album": "Album",
+					"year": "Anno di uscita",
+					"genre": "Genere",
+					"duration": "Durata",
+					"playCount": "Numero di riproduzioni",
+					"rating": "Valutazione",
+					"size": "File size",
+					"songCount": "Tracks",
+					"albumCount": "Album"
+				},
 				"advancedSettings": "Impostazioni avanzate",
 				"fallbackUrlHelp": "Viene utilizzato quando l'URL principale non è raggiungibile. Deve puntare allo stesso server.",
 				"cancel": "Annulla",
@@ -1416,6 +1423,7 @@
 				"seeLess": "Nascondi",
 				"seeAll": "Vedi tutto",
 				"noData": "Vuoto",
+				"noDataOffline": "Nothing available offline",
 				"toastSuccessTitle": "Successo",
 				"toastErrorTitle": "Errore",
 				"rateSuccessMessage": "Valutazione impostata con successo",
