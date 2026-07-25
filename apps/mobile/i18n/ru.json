@@ -49,21 +49,11 @@
 				"inputPlaceholder": "Что хочешь послушать?",
 				"exploreGenres": "Обзор жанров",
 				"recentSearches": "Недавние",
-				"clearRecentSearches": "Очистить всё",
-				"sort": {
-					"alphabetical": "По алфавиту",
-					"trackCount": "Треки",
-					"albumCount": "Альбомы"
-				}
+				"clearRecentSearches": "Очистить всё"
 			},
 			"library": {
 				"title": "Моя медиатека",
 				"searchPlaceholder": "Поиск в медиатеке",
-				"recentSort": "Недавние",
-				"alphabeticalSort": "По алфавиту",
-				"artistSort": "По автору",
-				"albumSort": "По альбому",
-				"sizeSort": "Размер",
 				"allAlbums": "Все альбомы",
 				"allArtists": "Все исполнители",
 				"search": {
@@ -1408,6 +1398,23 @@
 				"openBrowser": "Открыть в браузере"
 			},
 			"shared": {
+				"sort": {
+					"playlistOrder": "Playlist order",
+					"addedAt": "Recent",
+					"downloadedAt": "Recently downloaded",
+					"alphabetical": "Alphabetical",
+					"artist": "Artist",
+					"albumArtist": "Исполнитель альбома",
+					"album": "Album",
+					"year": "Год релиза",
+					"genre": "Жанр",
+					"duration": "Длительность",
+					"playCount": "Количество прослушиваний",
+					"rating": "Рейтинг",
+					"size": "File size",
+					"songCount": "Tracks",
+					"albumCount": "Альбомы"
+				},
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
 				"cancel": "Отмена",
