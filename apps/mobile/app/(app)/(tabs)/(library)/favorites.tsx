@@ -1,12 +1,8 @@
-import {
-  type BottomSheetModal,
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -21,12 +17,14 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
-import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -40,6 +38,7 @@ import { useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
@@ -49,6 +48,8 @@ import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { sortItems } from "@/utils/sort";
+import { TRACK_SORT_SPECS } from "@/utils/trackSort";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -59,11 +60,10 @@ const SKELETON_DATA = loadingData(16);
 const EMPTY_DATA: Child[] = [];
 
 export default function FavoritesScreen() {
-  const [blue500, white, black, emerald500] = Uniwind.getCSSVariable([
+  const [blue500, white, black] = Uniwind.getCSSVariable([
     "--color-blue-500",
     "--color-white",
     "--color-black",
-    "--color-emerald-500",
   ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
@@ -105,78 +105,16 @@ export default function FavoritesScreen() {
     bottomSheetSortModalRef.current?.present();
   }, []);
 
-  const handleSortPress = (
-    type:
-      | "addedAtAsc"
-      | "addedAtDesc"
-      | "alphabeticalAsc"
-      | "alphabeticalDesc"
-      | "artistAsc"
-      | "artistDesc"
-      | "albumAsc"
-      | "albumDesc",
-  ) => {
-    bottomSheetSortModalRef.current?.dismiss();
-    setFavoritesSort(type);
-  };
+  const songs = starredData?.starred2?.song;
+  // Renders as the starred order when the saved field has no data on this
+  // backend, without overwriting the preference.
+  const { sortFields, activeSort, activeSortField } = useTrackSort(songs, sort);
+  const sortFieldLabel = useSortFieldLabel();
 
-  const data = useMemo(() => {
-    if (!starredData?.starred2?.song) {
-      return null;
-    }
-    const newData = [...starredData.starred2.song];
-
-    if (sort === "addedAtAsc") {
-      return newData;
-    }
-    if (sort === "addedAtDesc") {
-      return newData.reverse();
-    }
-    if (sort === "alphabeticalAsc") {
-      return newData.sort((a, b) => {
-        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-      });
-    }
-    if (sort === "alphabeticalDesc") {
-      return newData.sort((a, b) => {
-        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
-      });
-    }
-    const byTitle = (a: Child, b: Child) =>
-      (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-    if (sort === "artistAsc") {
-      return newData.sort((a, b) => {
-        const artistCmp = (a.artist || "").localeCompare(b.artist || "");
-        if (artistCmp !== 0) return artistCmp;
-        const albumCmp = (a.album || "").localeCompare(b.album || "");
-        if (albumCmp !== 0) return albumCmp;
-        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
-      });
-    }
-    if (sort === "artistDesc") {
-      return newData.sort((a, b) => {
-        const artistCmp = (b.artist || "").localeCompare(a.artist || "");
-        if (artistCmp !== 0) return artistCmp;
-        const albumCmp = (a.album || "").localeCompare(b.album || "");
-        if (albumCmp !== 0) return albumCmp;
-        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
-      });
-    }
-    if (sort === "albumAsc") {
-      return newData.sort((a, b) => {
-        const albumCmp = (a.album || "").localeCompare(b.album || "");
-        if (albumCmp !== 0) return albumCmp;
-        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
-      });
-    }
-    if (sort === "albumDesc") {
-      return newData.sort((a, b) => {
-        const albumCmp = (b.album || "").localeCompare(a.album || "");
-        if (albumCmp !== 0) return albumCmp;
-        return (a.track ?? 0) - (b.track ?? 0) || byTitle(a, b);
-      });
-    }
-  }, [starredData, sort]);
+  const data = useMemo(
+    () => (songs ? sortItems(songs, activeSort, TRACK_SORT_SPECS) : null),
+    [songs, activeSort],
+  );
 
   const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
@@ -300,23 +238,13 @@ export default function FavoritesScreen() {
               <HStack className="items-center justify-between">
                 <FadeOutScaleDown onPress={handlePresentSortModalPress}>
                   <HStack className="items-center gap-x-2">
-                    {sort.endsWith("Asc") && (
+                    {activeSort.endsWith("Desc") ? (
+                      <ArrowDown size={16} color={white} />
+                    ) : (
                       <ArrowUp size={16} color={white} />
                     )}
-                    {sort.endsWith("Desc") && (
-                      <ArrowDown size={16} color={white} />
-                    )}
-                    {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                      <ArrowDownUp size={16} color={white} />
-                    )}
                     <Text className="text-white font-bold">
-                      {sort.startsWith("addedAt")
-                        ? t("app.library.recentSort")
-                        : sort.startsWith("artist")
-                          ? t("app.library.artistSort")
-                          : sort.startsWith("album")
-                            ? t("app.library.albumSort")
-                            : t("app.library.alphabeticalSort")}
+                      {sortFieldLabel(activeSortField)}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -357,108 +285,12 @@ export default function FavoritesScreen() {
         }}
         showsVerticalScrollIndicator={false}
       />
-      <CenteredBottomSheetModal
+      <SortOptionsSheet
         ref={bottomSheetSortModalRef}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "addedAtAsc" ? "addedAtDesc" : "addedAtAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.recentSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "addedAtAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "addedAtDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "alphabeticalAsc"
-                      ? "alphabeticalDesc"
-                      : "alphabeticalAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.alphabeticalSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "alphabeticalAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "alphabeticalDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "artistAsc" ? "artistDesc" : "artistAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.artistSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "artistAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "artistDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "albumAsc" ? "albumDesc" : "albumAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.albumSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "albumAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "albumDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={setFavoritesSort}
+      />
     </Box>
   );
 }

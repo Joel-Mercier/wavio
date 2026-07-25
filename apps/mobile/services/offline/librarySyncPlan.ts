@@ -237,6 +237,10 @@ export function refreshedOfflineTrack(
     coverArt: song.coverArt ?? existing.coverArt,
     track: song.track ?? existing.track,
     discNumber: song.discNumber ?? existing.discNumber,
+    albumArtist: song.displayAlbumArtist ?? existing.albumArtist,
+    year: song.year ?? existing.year,
+    genre: song.genre?.trim() || song.genres?.[0]?.name || existing.genre,
+    sortName: song.sortName ?? existing.sortName,
   };
   const unchanged =
     updated.title === existing.title &&
@@ -245,7 +249,11 @@ export function refreshedOfflineTrack(
     updated.duration === existing.duration &&
     updated.coverArt === existing.coverArt &&
     updated.track === existing.track &&
-    updated.discNumber === existing.discNumber;
+    updated.discNumber === existing.discNumber &&
+    updated.albumArtist === existing.albumArtist &&
+    updated.year === existing.year &&
+    updated.genre === existing.genre &&
+    updated.sortName === existing.sortName;
   return unchanged ? null : updated;
 }
 

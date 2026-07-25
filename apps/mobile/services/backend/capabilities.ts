@@ -50,6 +50,14 @@ export type BackendCapabilities = {
   // and Jellyfin's item-update API edits its own database rather than the files,
   // so neither can be tagged from here. See services/musicbrainz/.
   tagWriting: boolean;
+  // A song carries an album artist distinct from its track artist, so sorting a
+  // track list by album artist says something the artist sort doesn't. Jellyfin's
+  // mapper fills `Child.artist` from AlbumArtist (services/jellyfin/mappers.ts),
+  // so there the two sorts would be identical.
+  songAlbumArtist: boolean;
+  // getGenres returns per-genre song/album counts, so genre lists can be sorted
+  // by them. Jellyfin's genre items carry no counts.
+  genreCounts: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -74,6 +82,8 @@ const SUBSONIC: BackendCapabilities = {
   extendedMetadata: true,
   streamFormatSelection: true,
   tagWriting: false,
+  songAlbumArtist: true,
+  genreCounts: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -121,6 +131,10 @@ const JELLYFIN: BackendCapabilities = {
   // Subsonic's `format=` param (see services/jellyfin/streaming.ts).
   streamFormatSelection: true,
   tagWriting: false,
+  // Jellyfin maps a song's `artist` from AlbumArtist, so the two are the same
+  // value and an album-artist sort would duplicate the artist one.
+  songAlbumArtist: false,
+  genreCounts: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -157,6 +171,8 @@ const LOCAL: BackendCapabilities = {
   streamFormatSelection: false,
   // The only backend that owns its files, so the only one that can be tagged.
   tagWriting: true,
+  songAlbumArtist: true,
+  genreCounts: true,
 };
 
 // A few capabilities depend on per-server *config*, not just the server type:

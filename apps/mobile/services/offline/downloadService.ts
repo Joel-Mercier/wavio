@@ -493,6 +493,10 @@ export class OfflineDownloadService {
       source,
       track: track.track,
       discNumber: track.discNumber,
+      albumArtist: track.displayAlbumArtist,
+      year: track.year,
+      genre: track.genre?.trim() || track.genres?.[0]?.name,
+      sortName: track.sortName,
     };
 
     offlineStore.addDownloadedTrack(offlineTrack);

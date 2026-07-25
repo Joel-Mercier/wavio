@@ -3,12 +3,11 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
+import type { TrackSortType } from "@/utils/trackSort";
 
-export type PlaylistSortType =
-  | "addedAtAsc"
-  | "addedAtDesc"
-  | "alphabeticalAsc"
-  | "alphabeticalDesc";
+// Every field in utils/trackSort, per playlist. `addedAt` is the playlist's own
+// order (server order with the manual reorder overlay applied).
+export type PlaylistSortType = TrackSortType;
 
 interface PlaylistsStore {
   playlistSorts: Record<string, PlaylistSortType>;

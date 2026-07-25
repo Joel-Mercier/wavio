@@ -20,11 +20,14 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { sortItems } from "@/utils/sort";
+import { TRACK_SORT_SPECS } from "@/utils/trackSort";
 
 export default function FavoritesSearch() {
   const [primary50] = Uniwind.getCSSVariable([
@@ -41,6 +44,7 @@ export default function FavoritesSearch() {
     isLoading,
     error,
   } = useStarred2({ musicFolderId });
+  const { activeSort } = useTrackSort(starredData?.starred2?.song, sort);
   const form = useForm({
     defaultValues: {
       query: "",
@@ -56,21 +60,12 @@ export default function FavoritesSearch() {
       return null;
     }
 
-    let newData = [...starredData.starred2.song];
-
-    if (sort === "addedAtDesc") {
-      newData = newData.reverse();
-    }
-    if (sort === "alphabeticalAsc") {
-      newData = newData.sort((a, b) => {
-        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-      });
-    }
-    if (sort === "alphabeticalDesc") {
-      newData = newData.sort((a, b) => {
-        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
-      });
-    }
+    // Same ordering as the favorites screen, so results keep the sort picked there.
+    const newData = sortItems(
+      starredData.starred2.song,
+      activeSort,
+      TRACK_SORT_SPECS,
+    );
 
     if (query.length === 0) {
       const result = newData.map((item, refIndex) => ({
@@ -87,10 +82,10 @@ export default function FavoritesSearch() {
       ignoreDiacritics: true,
       keys: ["title"],
     };
-    const fuse = new Fuse<Child>(starredData.starred2.song, options);
+    const fuse = new Fuse<Child>(newData, options);
     const result = fuse.search(query);
     return result;
-  }, [starredData, query, sort]);
+  }, [starredData, query, activeSort]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);
   const handleTrackPress = useTrackListPress(trackList);

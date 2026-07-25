@@ -27,8 +27,8 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import {
+  useDownloadedCollections,
   useDownloadedTracksCount,
-  useDownloadedTracksList,
   useLibrarySyncStatus,
   useOfflineDownloads,
   useTotalDownloadSize,
@@ -177,7 +177,7 @@ export default function DownloadsOfflineSection() {
   );
   const downloadedTracksCount = useDownloadedTracksCount();
   const totalDownloadSize = useTotalDownloadSize();
-  const downloadedTracksList = useDownloadedTracksList();
+  const downloadedCollections = useDownloadedCollections();
   const { data: starredTracksData } = useStarred2({});
   const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
 
@@ -269,10 +269,7 @@ export default function DownloadsOfflineSection() {
             <Text className="text-emerald-400 text-sm">
               {t("app.settings.offlineSettings.downloadedTracksCount", {
                 count: downloadedTracksCount,
-                total: Math.max(
-                  totalTracksToDownload,
-                  downloadedTracksList.length,
-                ),
+                total: Math.max(totalTracksToDownload, downloadedTracksCount),
                 size: niceBytes(totalDownloadSize),
               })}
             </Text>
@@ -335,9 +332,11 @@ export default function DownloadsOfflineSection() {
           )}
           actionLabel={t("app.settings.offlineSettings.manageDownloadsAction")}
           onPress={() => router.navigate("/offline-downloads")}
+          // Downloads exist independently of both offline toggles (a saved
+          // playlist/album/track downloads with them off), so only an empty
+          // store closes the screen.
           disabled={
-            (!offlineModeEnabled && !extendedOfflineModeEnabled) ||
-            downloadedTracksList.length === 0
+            downloadedTracksCount === 0 && downloadedCollections.length === 0
           }
         />
         {pendingChangesCount > 0 && (

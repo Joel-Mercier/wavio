@@ -1,4 +1,7 @@
 import type { Child } from "@/services/openSubsonic/types";
+import type { PlaylistSortType } from "@/stores/playlists";
+import { sortItems } from "@/utils/sort";
+import { TRACK_SORT_SPECS } from "@/utils/trackSort";
 
 // Applies a locally-saved custom order (an ordered list of track ids) to the
 // server's playlist entries. Matching is done by consuming entries id-by-id, so
@@ -35,4 +38,20 @@ export function orderPlaylistEntries(
     }
   }
   return ordered;
+}
+
+// The rows a playlist screen renders: the playlist's own order (server order +
+// the manual reorder overlay) is the base, and the active field sort is applied
+// on top of it. Shared by the detail, in-playlist search and reorder screens so
+// they can't disagree about what a sort means.
+export function playlistTracks(
+  entries: Child[] | undefined,
+  order: string[] | undefined,
+  sort: PlaylistSortType,
+): Child[] {
+  return sortItems(
+    orderPlaylistEntries(entries ?? [], order),
+    sort,
+    TRACK_SORT_SPECS,
+  );
 }

@@ -49,8 +49,6 @@ export default function ReorderPlaylistScreen() {
   const router = useRouter();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const playlistSorts = usePlaylists((store) => store.playlistSorts);
-  const sort = playlistSorts[id] ?? "addedAtAsc";
   const getPlaylistTrackOrder = usePlaylists(
     (store) => store.getPlaylistTrackOrder,
   );
@@ -149,54 +147,20 @@ export default function ReorderPlaylistScreen() {
     setOrder((prev) => prev.filter((item) => item !== track));
   };
 
+  // Always the playlist's own order (server order + the saved manual overlay),
+  // whatever field sort the detail screen is currently displaying — this screen
+  // *is* how that order gets edited, so seeding it from a field sort would
+  // overwrite the manual order on save.
   useEffect(() => {
     if (playlistData?.playlist) {
-      const entries = playlistData.playlist.entry || [];
-      const storedOrder = getPlaylistTrackOrder(id);
-
-      if (storedOrder && sort === "addedAtAsc") {
-        const sorted = orderPlaylistEntries(entries, storedOrder);
-        setOrder(sorted);
-        setInitialOrder(sorted);
-      } else {
-        setOrder(entries);
-        setInitialOrder(entries);
-      }
+      const sorted = orderPlaylistEntries(
+        playlistData.playlist.entry || [],
+        getPlaylistTrackOrder(id),
+      );
+      setOrder(sorted);
+      setInitialOrder(sorted);
     }
-  }, [playlistData, id, sort, getPlaylistTrackOrder]);
-
-  const data = useMemo(() => {
-    if (
-      !playlistData ||
-      !playlistData?.playlist ||
-      !playlistData?.playlist.entry
-    ) {
-      return null;
-    }
-    const newData = [...playlistData.playlist.entry];
-    const storedOrder = getPlaylistTrackOrder(id);
-
-    if (storedOrder && sort === "addedAtAsc") {
-      return orderPlaylistEntries(newData, storedOrder);
-    }
-
-    if (sort === "addedAtAsc") {
-      return newData;
-    }
-    if (sort === "addedAtDesc") {
-      return newData.reverse();
-    }
-    if (sort === "alphabeticalAsc") {
-      return newData.sort((a, b) => {
-        return (a?.sortName || a.title).localeCompare(b?.sortName || b.title);
-      });
-    }
-    if (sort === "alphabeticalDesc") {
-      return newData.sort((a, b) => {
-        return (b?.sortName || b.title).localeCompare(a?.sortName || a.title);
-      });
-    }
-  }, [playlistData, sort, id, getPlaylistTrackOrder]);
+  }, [playlistData, id, getPlaylistTrackOrder]);
 
   const hasOrderChanged = useMemo(() => {
     if (order.length !== initialOrder.length) return true;
@@ -256,7 +220,7 @@ export default function ReorderPlaylistScreen() {
       )}
       {!error && (!isLoading || playlistData) && (
         <DraggableFlashList
-          data={order.length > 0 ? order : data || []}
+          data={order}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={renderItem}
           itemHeight={70}

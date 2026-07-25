@@ -25,6 +25,13 @@ export type OfflineTrack = {
   source?: OfflineSource;
   track?: number;
   discNumber?: number;
+  // Kept so a downloaded list stays sortable by these fields with no server and
+  // no React Query cache (see utils/trackSort). Tracks downloaded before this
+  // existed simply have none, and the sort sheet hides the options they'd need.
+  albumArtist?: string;
+  year?: number;
+  genre?: string;
+  sortName?: string;
   metadata?: Record<string, unknown>;
 };
 

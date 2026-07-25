@@ -74,6 +74,10 @@ export function offlineTrackToChild(track: OfflineTrack): Child {
     suffix: track.path.split(".").pop(),
     track: track.track,
     discNumber: track.discNumber,
+    displayAlbumArtist: track.albumArtist,
+    year: track.year,
+    genre: track.genre,
+    sortName: track.sortName,
   };
 }
 

@@ -1,12 +1,8 @@
-import {
-  type BottomSheetModal,
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowDownUp from "lucide-react-native/dist/esm/icons/arrow-down-up.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
 import List from "lucide-react-native/dist/esm/icons/list.mjs";
@@ -18,7 +14,6 @@ import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
-import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -31,6 +26,9 @@ import LibraryListItem, {
   type LibraryRadioStation,
 } from "@/components/library/LibraryListItem";
 import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleton";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -38,7 +36,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
-import { VStack } from "@/components/ui/vstack";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
@@ -61,21 +58,26 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
-import useApp, { type LibraryFilter } from "@/stores/app";
+import useApp, {
+  type LibraryFilter,
+  type LibrarySortField,
+} from "@/stores/app";
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
+import { parseSortType, sortItems } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
 
+// The list mixes artists, albums, playlists, podcasts, radio stations and
+// folders, so only these two fields mean anything across every row.
+const LIBRARY_SORT_FIELDS: LibrarySortField[] = ["addedAt", "alphabetical"];
+
 export default function LibraryScreen() {
-  const [white, emerald500] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-emerald-500",
-  ]) as string[];
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
@@ -84,6 +86,7 @@ export default function LibraryScreen() {
   const router = useRouter();
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
+  const sortFieldLabel = useSortFieldLabel();
   const { layout, toggle: handleLayoutPress } =
     useAlbumScreenLayout("library-index");
   const filter = useApp((store) => store.libraryFilter);
@@ -163,11 +166,6 @@ export default function LibraryScreen() {
   const handlePresentSortModalPress = useCallback(() => {
     bottomSheetModalSortRef.current?.present();
   }, []);
-
-  const handleSortPress = (type: typeof sort) => {
-    bottomSheetModalSortRef.current?.dismiss();
-    setSort(type);
-  };
 
   const handleSearchPress = () => {
     router.navigate("/(app)/(tabs)/(library)/search");
@@ -298,6 +296,9 @@ export default function LibraryScreen() {
       );
     }
     data = data.flat();
+    // Each row shape carries at most one of these dates; 0 (rather than
+    // undefined) keeps undated rows sorting as "oldest" instead of being pinned
+    // last, which is how this list has always behaved.
     const sortTime = (item: (typeof data)[number]) => {
       const value =
         ("starred" in item ? item.starred : undefined) ??
@@ -308,20 +309,9 @@ export default function LibraryScreen() {
       }
       return 0;
     };
-    const sorted = data.sort((a, b) => {
-      if (sort === "addedAtAsc") {
-        return sortTime(a) - sortTime(b);
-      }
-      if (sort === "addedAtDesc") {
-        return sortTime(b) - sortTime(a);
-      }
-      if (sort === "alphabeticalAsc") {
-        return a.name.localeCompare(b.name);
-      }
-      if (sort === "alphabeticalDesc") {
-        return b.name.localeCompare(a.name);
-      }
-      return 0;
+    const sorted = sortItems(data, sort, {
+      addedAt: { value: sortTime, always: true },
+      alphabetical: { value: (item) => item.name, always: true },
     });
     // Pin Favorites + the "all albums/artists" browse entries at the top of the
     // unfiltered library so the sort never scatters them into the list. Offline
@@ -519,15 +509,13 @@ export default function LibraryScreen() {
         <HStack className="px-6 pb-4 items-center justify-between">
           <FadeOutScaleDown onPress={handlePresentSortModalPress}>
             <HStack className="items-center gap-x-2">
-              {sort.endsWith("Asc") && <ArrowUp size={16} color={white} />}
-              {sort.endsWith("Desc") && <ArrowDown size={16} color={white} />}
-              {!sort.endsWith("Asc") && !sort.endsWith("Desc") && (
-                <ArrowDownUp size={16} color={white} />
+              {sort.endsWith("Desc") ? (
+                <ArrowDown size={16} color={white} />
+              ) : (
+                <ArrowUp size={16} color={white} />
               )}
               <Text className="text-white font-bold">
-                {sort.startsWith("addedAt")
-                  ? t("app.library.recentSort")
-                  : t("app.library.alphabeticalSort")}
+                {sortFieldLabel(parseSortType(sort).field)}
               </Text>
             </HStack>
           </FadeOutScaleDown>
@@ -591,66 +579,12 @@ export default function LibraryScreen() {
         />
       )}
       <AddBottomSheet ref={bottomSheetModalRef} />
-      <CenteredBottomSheetModal
+      <SortOptionsSheet
         ref={bottomSheetModalSortRef}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
-          <Box className="p-6 w-full mb-12">
-            <VStack className="mt-6 gap-y-8">
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "addedAtAsc" ? "addedAtDesc" : "addedAtAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.recentSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "addedAtAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "addedAtDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() =>
-                  handleSortPress(
-                    sort === "alphabeticalAsc"
-                      ? "alphabeticalDesc"
-                      : "alphabeticalAsc",
-                  )
-                }
-              >
-                <HStack className="items-center justify-between">
-                  <VStack className="ml-4">
-                    <Text className="text-lg text-gray-200">
-                      {t("app.library.alphabeticalSort")}
-                    </Text>
-                  </VStack>
-                  {sort === "alphabeticalAsc" && (
-                    <ArrowUp size={24} color={emerald500} />
-                  )}
-                  {sort === "alphabeticalDesc" && (
-                    <ArrowDown size={24} color={emerald500} />
-                  )}
-                </HStack>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
+        fields={LIBRARY_SORT_FIELDS}
+        sort={sort}
+        onSelect={setSort}
+      />
     </Box>
   );
 }

@@ -49,21 +49,11 @@
 				"inputPlaceholder": "What do you want to listen to ?",
 				"exploreGenres": "Explore genres",
 				"recentSearches": "Recent searches",
-				"clearRecentSearches": "Clear all",
-				"sort": {
-					"alphabetical": "Alphabetical",
-					"trackCount": "Tracks",
-					"albumCount": "Albums"
-				}
+				"clearRecentSearches": "Clear all"
 			},
 			"library": {
 				"title": "Library",
 				"searchPlaceholder": "Search your library",
-				"recentSort": "Recent",
-				"alphabeticalSort": "Alphabetical",
-				"artistSort": "Artist",
-				"albumSort": "Album",
-				"sizeSort": "File size",
 				"allAlbums": "All albums",
 				"allArtists": "All artists",
 				"search": {
@@ -1375,6 +1365,23 @@
 				"openBrowser": "Open in browser"
 			},
 			"shared": {
+				"sort": {
+					"playlistOrder": "Playlist order",
+					"addedAt": "Recent",
+					"downloadedAt": "Recently downloaded",
+					"alphabetical": "Alphabetical",
+					"artist": "Artist",
+					"albumArtist": "Album artist",
+					"album": "Album",
+					"year": "Release year",
+					"genre": "Genre",
+					"duration": "Duration",
+					"playCount": "Play count",
+					"rating": "Rating",
+					"size": "File size",
+					"songCount": "Tracks",
+					"albumCount": "Albums"
+				},
 				"advancedSettings": "Advanced settings",
 				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
 				"cancel": "Cancel",
