@@ -1322,7 +1322,7 @@
 				"visitCount_other": "{{count}} visite"
 			},
 			"libraries": {
-				"title": "Biblioteche",
+				"title": "Librerie",
 				"allLibraries": "Tutte le librerie",
 				"default": "Libreria predefinita",
 				"empty": "Non ci sono biblioteche disponibili"
@@ -1365,11 +1365,11 @@
 			},
 			"shared": {
 				"sort": {
-					"playlistOrder": "Playlist order",
-					"addedAt": "Recent",
-					"downloadedAt": "Recently downloaded",
-					"alphabetical": "Alphabetical",
-					"artist": "Artist",
+					"playlistOrder": "Ordine playlist",
+					"addedAt": "Recenti",
+					"downloadedAt": "Scaricati di recente",
+					"alphabetical": "Ordine alfabetico",
+					"artist": "Artista",
 					"albumArtist": "Artista dell'album",
 					"album": "Album",
 					"year": "Anno di uscita",
@@ -1377,8 +1377,8 @@
 					"duration": "Durata",
 					"playCount": "Numero di riproduzioni",
 					"rating": "Valutazione",
-					"size": "File size",
-					"songCount": "Tracks",
+					"size": "Dimensione file",
+					"songCount": "Tracce",
 					"albumCount": "Album"
 				},
 				"advancedSettings": "Impostazioni avanzate",
@@ -1423,7 +1423,7 @@
 				"seeLess": "Nascondi",
 				"seeAll": "Vedi tutto",
 				"noData": "Vuoto",
-				"noDataOffline": "Nothing available offline",
+				"noDataOffline": "Niente disponibile offline",
 				"toastSuccessTitle": "Successo",
 				"toastErrorTitle": "Errore",
 				"rateSuccessMessage": "Valutazione impostata con successo",
@@ -1442,7 +1442,7 @@
 					"settings": "Impostazioni",
 					"shares": "Condivisioni",
 					"servers": "Server",
-					"libraries": "Biblioteche",
+					"libraries": "Librerie",
 					"logout": "Esci",
 					"switchUser": "Cambia utente",
 					"currentServer": "Server attuale",
