@@ -1457,6 +1457,15 @@
 					"removeErrorMessage": "Произошла ошибка при удалении загрузок"
 				},
 				"favorites": "Любимые треки",
+				"filters": {
+					"albums": "Альбомы",
+					"artists": "Исполнители",
+					"playlists": "Плейлисты",
+					"podcasts": "Подкасты",
+					"radioStations": "Radio stations",
+					"folders": "Folders",
+					"songs": "Songs"
+				},
 				"save": "Сохранить",
 				"done": "Готово",
 				"seeMore": "Показать еще",
