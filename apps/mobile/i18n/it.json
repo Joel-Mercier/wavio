@@ -1417,6 +1417,15 @@
 					"removeErrorMessage": "Si è verificato un errore durante la rimozione dei download offline"
 				},
 				"favorites": "Preferiti",
+				"filters": {
+					"albums": "Album",
+					"artists": "Artisti",
+					"playlists": "Playlist",
+					"podcasts": "Podcast",
+					"radioStations": "Radio stations",
+					"folders": "Folders",
+					"songs": "Songs"
+				},
 				"save": "Salva",
 				"done": "Fatto",
 				"seeMore": "Scopri di più",
