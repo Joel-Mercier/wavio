@@ -1417,6 +1417,15 @@
 					"removeErrorMessage": "Beim Löschen der Offline-Downloads ist ein Fehler aufgetreten"
 				},
 				"favorites": "Favoriten",
+				"filters": {
+					"albums": "Alben",
+					"artists": "Interpreten",
+					"playlists": "Wiedergabelisten",
+					"podcasts": "Podcasts",
+					"radioStations": "Radio stations",
+					"folders": "Folders",
+					"songs": "Songs"
+				},
 				"save": "Speichern",
 				"done": "Fertig",
 				"seeMore": "Mehr anzeigen",

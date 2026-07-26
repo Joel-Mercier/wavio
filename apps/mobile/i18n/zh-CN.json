@@ -1397,6 +1397,15 @@
 					"removeErrorMessage": "移除离线下载时发生错误"
 				},
 				"favorites": "收藏",
+				"filters": {
+					"albums": "专辑",
+					"artists": "艺人",
+					"playlists": "歌单",
+					"podcasts": "播客",
+					"radioStations": "Radio stations",
+					"folders": "Folders",
+					"songs": "Songs"
+				},
 				"save": "保存",
 				"done": "完成",
 				"seeMore": "查看更多",

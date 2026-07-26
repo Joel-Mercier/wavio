@@ -1417,6 +1417,15 @@
 					"removeErrorMessage": "Une erreur s'est produite lors de la suppression des téléchargements hors ligne"
 				},
 				"favorites": "Favoris",
+				"filters": {
+					"albums": "Albums",
+					"artists": "Artistes",
+					"playlists": "Playlists",
+					"podcasts": "Podcasts",
+					"radioStations": "Stations de radio",
+					"folders": "Dossiers",
+					"songs": "Titres"
+				},
 				"save": "Enregistrer",
 				"done": "Appliquer",
 				"seeMore": "Voir plus",

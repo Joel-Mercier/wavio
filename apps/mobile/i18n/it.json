@@ -208,7 +208,7 @@
 				"popularInLanguage": "Popolare in {{language, titlecase}}",
 				"seeAllEpisodes": "Guarda tutti gli episodi",
 				"publishedAt": "{{distance}} fa",
-				"configureTaddyPodcasts": "Configurare nelle impostazioni",
+				"configureTaddyPodcasts": "Configura nelle impostazioni",
 				"taddyPodcastsNotConfigured": "L'accesso al podcast non è configurato",
 				"yourPodcasts": "I tuoi podcast",
 				"noServerPodcasts": "Non hai ancora aggiunto nessun podcast. Tocca il segno \"+\" per aggiungerne uno tramite il suo feed RSS.",
@@ -1322,7 +1322,7 @@
 				"visitCount_other": "{{count}} visite"
 			},
 			"libraries": {
-				"title": "Biblioteche",
+				"title": "Librerie",
 				"allLibraries": "Tutte le librerie",
 				"default": "Libreria predefinita",
 				"empty": "Non ci sono biblioteche disponibili"
@@ -1365,11 +1365,11 @@
 			},
 			"shared": {
 				"sort": {
-					"playlistOrder": "Playlist order",
-					"addedAt": "Recent",
-					"downloadedAt": "Recently downloaded",
-					"alphabetical": "Alphabetical",
-					"artist": "Artist",
+					"playlistOrder": "Ordine playlist",
+					"addedAt": "Recenti",
+					"downloadedAt": "Scaricati di recente",
+					"alphabetical": "Ordine alfabetico",
+					"artist": "Artista",
 					"albumArtist": "Artista dell'album",
 					"album": "Album",
 					"year": "Anno di uscita",
@@ -1377,8 +1377,8 @@
 					"duration": "Durata",
 					"playCount": "Numero di riproduzioni",
 					"rating": "Valutazione",
-					"size": "File size",
-					"songCount": "Tracks",
+					"size": "Dimensione file",
+					"songCount": "Tracce",
 					"albumCount": "Album"
 				},
 				"advancedSettings": "Impostazioni avanzate",
@@ -1417,13 +1417,22 @@
 					"removeErrorMessage": "Si è verificato un errore durante la rimozione dei download offline"
 				},
 				"favorites": "Preferiti",
+				"filters": {
+					"albums": "Album",
+					"artists": "Artisti",
+					"playlists": "Playlist",
+					"podcasts": "Podcast",
+					"radioStations": "Radio stations",
+					"folders": "Folders",
+					"songs": "Songs"
+				},
 				"save": "Salva",
 				"done": "Fatto",
 				"seeMore": "Scopri di più",
 				"seeLess": "Nascondi",
 				"seeAll": "Vedi tutto",
 				"noData": "Vuoto",
-				"noDataOffline": "Nothing available offline",
+				"noDataOffline": "Niente disponibile offline",
 				"toastSuccessTitle": "Successo",
 				"toastErrorTitle": "Errore",
 				"rateSuccessMessage": "Valutazione impostata con successo",
@@ -1442,7 +1451,7 @@
 					"settings": "Impostazioni",
 					"shares": "Condivisioni",
 					"servers": "Server",
-					"libraries": "Biblioteche",
+					"libraries": "Librerie",
 					"logout": "Esci",
 					"switchUser": "Cambia utente",
 					"currentServer": "Server attuale",
