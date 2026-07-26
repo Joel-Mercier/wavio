@@ -1422,9 +1422,9 @@
 					"artists": "Artistes",
 					"playlists": "Playlists",
 					"podcasts": "Podcasts",
-					"radioStations": "Radio stations",
-					"folders": "Folders",
-					"songs": "Songs"
+					"radioStations": "Stations de radio",
+					"folders": "Dossiers",
+					"songs": "Titres"
 				},
 				"save": "Enregistrer",
 				"done": "Appliquer",
