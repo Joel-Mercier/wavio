@@ -119,6 +119,45 @@ function LibraryListItemIcon({ type }: { type: string }) {
   return <ListMusic size={32} color={white} />;
 }
 
+function LibraryListItemSubtitle({
+  type,
+  item,
+}: {
+  type: { id: string; label: string };
+  item: LibraryListItemProps["item"];
+}) {
+  const { t } = useTranslation();
+  // The "All albums" / "All artists" rows already say what they are in their
+  // title, so they get no subtitle.
+  if (type.id === "allAlbums" || type.id === "allArtists") {
+    return null;
+  }
+  const songCount = t("app.shared.songCount", { count: item.songCount ?? 0 });
+  const label = (() => {
+    switch (type.id) {
+      case "podcast":
+        return item.authorName
+          ? `${type.label} ⦁ ${item.authorName}`
+          : type.label;
+      case "radioStation":
+        return item.tags ? `${type.label} ⦁ ${item.tags}` : type.label;
+      case "artist":
+        return `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`;
+      case "folder":
+        return type.label;
+      case "playlist":
+        return `${type.label} ⦁ ${songCount}${item.owner ? ` ⦁ ${item.owner}` : ""}`;
+      default:
+        return `${type.label} ⦁ ${songCount}`;
+    }
+  })();
+  return (
+    <Text numberOfLines={1} className="text-md text-primary-100 flex-1">
+      {label}
+    </Text>
+  );
+}
+
 export default function LibraryListItem({
   item,
   layout,
@@ -437,27 +476,7 @@ export default function LibraryListItem({
           </Heading>
           <HStack className="items-center w-full">
             {showDownloadedBadge && <DownloadedBadge className="mr-2" />}
-            <Text numberOfLines={1} className="text-md text-primary-100 flex-1">
-              {type.id === "podcast"
-                ? item.authorName
-                  ? `${type.label} ⦁ ${item.authorName}`
-                  : type.label
-                : type.id === "radioStation"
-                  ? item.tags
-                    ? `${type.label} ⦁ ${item.tags}`
-                    : type.label
-                  : type.id === "allAlbums"
-                    ? t("app.shared.album_other")
-                    : type.id === "allArtists"
-                      ? t("app.shared.artist_other")
-                      : type.id === "artist"
-                        ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`
-                        : type.id === "folder"
-                          ? type.label
-                          : type.id === "playlist"
-                            ? `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}${item.owner ? ` ⦁ ${item.owner}` : ""}`
-                            : `${type.label} ⦁ ${t("app.shared.songCount", { count: item.songCount ?? 0 })}`}
-            </Text>
+            <LibraryListItemSubtitle type={type} item={item} />
           </HStack>
         </VStack>
       </HStack>

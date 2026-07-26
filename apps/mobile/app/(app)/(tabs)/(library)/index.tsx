@@ -408,7 +408,7 @@ export default function LibraryScreen() {
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.playlist_other")}
+                    {t("app.shared.filters.playlists")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
@@ -420,7 +420,7 @@ export default function LibraryScreen() {
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.album_other")}
+                    {t("app.shared.filters.albums")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
@@ -433,7 +433,7 @@ export default function LibraryScreen() {
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.artist_other")}
+                    {t("app.shared.filters.artists")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
@@ -446,7 +446,7 @@ export default function LibraryScreen() {
                     })}
                   >
                     <BadgeText className="normal-case text-md text-white">
-                      {t("app.shared.podcast_other")}
+                      {t("app.shared.filters.podcasts")}
                     </BadgeText>
                   </Badge>
                 </FadeOutScaleDown>
@@ -461,7 +461,7 @@ export default function LibraryScreen() {
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.radioStation_other")}
+                    {t("app.shared.filters.radioStations")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
@@ -473,7 +473,7 @@ export default function LibraryScreen() {
                   })}
                 >
                   <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.folder_other")}
+                    {t("app.shared.filters.folders")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
