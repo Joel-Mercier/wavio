@@ -136,7 +136,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.album_other")}
+              {t("app.shared.filters.albums")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>
@@ -147,7 +147,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.artist_other")}
+              {t("app.shared.filters.artists")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>
@@ -158,7 +158,7 @@ export default function SearchResultsScreen() {
             })}
           >
             <BadgeText className="normal-case text-md text-white">
-              {t("app.shared.song_other")}
+              {t("app.shared.filters.songs")}
             </BadgeText>
           </Badge>
         </FadeOutScaleDown>
