@@ -13,6 +13,8 @@
     "mobile:web": "bun run --cwd apps/mobile web",
     "mobile:test": "bun run --cwd apps/mobile test",
     "mobile:doctor": "bun run --cwd apps/mobile doctor",
+    "mobile:analyze:export": "bun run --cwd apps/mobile analyze:export",
+    "mobile:analyze": "bun run --cwd apps/mobile analyze",
     "mobile:lint": "bun run --cwd apps/mobile lint",
     "mobile:lint:fix": "bun run --cwd apps/mobile lint:fix",
     "mobile:typecheck": "bun run --cwd apps/mobile typecheck",

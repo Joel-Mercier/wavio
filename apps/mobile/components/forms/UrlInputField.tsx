@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react-native";
+import ChevronsUpDown from "lucide-react-native/dist/esm/icons/chevrons-up-down.mjs";
 import { InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";

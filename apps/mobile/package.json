@@ -7,6 +7,8 @@
     "start": "eas env:exec --non-interactive development \"expo start\"",
     "prebuild": "bunx expo prebuild",
     "doctor": "bunx expo-doctor",
+    "analyze:export": "EXPO_ATLAS=1 bunx expo export --platform android",
+    "analyze": "bunx expo-atlas .expo/atlas.jsonl",
     "reset-project": "bun ./scripts/reset-project.js",
     "android": "eas env:exec --non-interactive development \"DARK_MODE=media expo run:android\"",
     "ios": "eas env:exec --non-interactive development \"DARK_MODE=media expo run:ios\"",

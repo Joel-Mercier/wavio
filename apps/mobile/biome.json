@@ -12,5 +12,19 @@
       "!**/global.css",
       "!**/uniwind-types.d.ts"
     ]
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "lucide-react-native": "Import icons from \"lucide-react-native/dist/esm/icons/<kebab-name>.mjs\" instead. Metro can't tree-shake the barrel, so a single root import pulls all ~1750 icons (~3MB) into the bundle."
+            }
+          }
+        }
+      }
+    }
   }
 }

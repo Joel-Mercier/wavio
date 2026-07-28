@@ -1,9 +1,9 @@
 import { SelectPortalContext } from "@gluestack-ui/core/lib/esm/select/creator/SelectContext";
 import * as Application from "expo-application";
 import { useRouter } from "expo-router";
-import { ClipboardClock } from "lucide-react-native";
 import ArrowLeftRight from "lucide-react-native/dist/esm/icons/arrow-left-right.mjs";
 import Bug from "lucide-react-native/dist/esm/icons/bug.mjs";
+import ClipboardClock from "lucide-react-native/dist/esm/icons/clipboard-clock.mjs";
 import History from "lucide-react-native/dist/esm/icons/history.mjs";
 import Library from "lucide-react-native/dist/esm/icons/library.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
