@@ -39,7 +39,10 @@ const MENU_ENTRIES: {
   { key: "radio", icon: Radio },
   { key: "storage", icon: HardDrive },
   { key: "downloaders", icon: CloudDownload, hideForLocal: true },
-  { key: "integrations", icon: Workflow, requiresCapability: "tagWriting" },
+  // Not capability-gated: the section itself decides which integrations apply
+  // to the active backend (MusicBrainz tagging is local-only, AudioMuse-AI is
+  // remote-only), and there is always at least one of the two.
+  { key: "integrations", icon: Workflow },
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
   { key: "updates", icon: RefreshCw },

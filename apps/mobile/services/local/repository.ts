@@ -139,6 +139,20 @@ export async function queryExistingTrackIds(ids: string[]): Promise<string[]> {
 }
 
 /**
+ * Full rows for `ids`, in whatever order sqlite returns them — callers that
+ * care about ordering re-key the result themselves.
+ */
+export async function queryTracksByIds(ids: string[]): Promise<TrackRow[]> {
+  if (ids.length === 0) return [];
+  const db = await getLocalLibraryDb();
+  const placeholders = ids.map(() => "?").join(",");
+  return db.getAllAsync<TrackRow>(
+    `${TRACK_SELECT} WHERE t.id IN (${placeholders})`,
+    ...ids,
+  );
+}
+
+/**
  * An artist's tracks ordered by play count (most-played first), used for the
  * "Top songs" surface. Mirrors Subsonic's getTopSongs; ties break on title.
  */

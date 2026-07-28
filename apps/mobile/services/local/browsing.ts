@@ -22,6 +22,7 @@ import {
   queryGenres,
   queryTopSongsByArtist,
   queryTrackById,
+  queryTracksByIds,
 } from "@/services/local/repository";
 import {
   LocalUnsupportedError,
@@ -30,6 +31,7 @@ import {
 import type {
   AlbumID3,
   AlbumWithSongsID3,
+  ArtistID3,
   ArtistWithAlbumsID3,
   Child,
   Directory,
@@ -146,6 +148,21 @@ export const getArtist = async (id: string) => {
   return localEnvelope({ artist });
 };
 
+// One aggregate row per artist against the on-device db — cheap enough that
+// resolving ids in turn beats a batch query, and it skips the album fetch
+// getArtist would do for data a carousel never shows. Ids the scanner has since
+// pruned drop out rather than failing the set.
+export const getArtistsByIds = async (ids: string[]): Promise<ArtistID3[]> => {
+  const artists: ArtistID3[] = [];
+  for (const id of ids) {
+    const key = parseLocalArtistId(id);
+    if (key == null) continue;
+    const row = await queryArtistByKey(key);
+    if (row) artists.push(mapAggToArtist(row));
+  }
+  return artists;
+};
+
 export const getAlbum = async (id: string) => {
   const key = parseLocalAlbumId(id);
   if (key == null) throw new LocalUnsupportedError(`album id "${id}"`);
@@ -166,6 +183,16 @@ export const getSong = async (id: string) => {
   const row = await queryTrackById(id);
   if (!row) throw new LocalUnsupportedError(`song "${id}" (not indexed)`);
   return localEnvelope({ song: mapRowToChild(row) });
+};
+
+export const getSongsByIds = async (ids: string[]): Promise<Child[]> => {
+  if (ids.length === 0) return [];
+  const rows = await queryTracksByIds(ids);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((row) => !!row)
+    .map(mapRowToChild);
 };
 
 // One indexed query settles the set; a row the scanner pruned is definitively

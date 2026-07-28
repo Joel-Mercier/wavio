@@ -56,7 +56,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
-- [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity. (Navidrome and Jellyfin only)
+- [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity : prompt to playlist, sonic fingerprint playlist, playlist from similar songs, search sounds and lyrics and artist similarity. (Navidrome and Jellyfin only)
 - [Octo-Fiesta](https://github.com/V1ck3s/octo-fiesta) proxy server support. Automatically fetch songs not in your library. (Navidrome and OpenSubsonic only)
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Add your own favorite podcasts through RSS feeds
