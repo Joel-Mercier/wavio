@@ -49,13 +49,20 @@
 				"inputPlaceholder": "想听什么？",
 				"exploreGenres": "按风格浏览",
 				"recentSearches": "搜索历史",
-				"clearRecentSearches": "清除"
+				"clearRecentSearches": "清除",
+				"tabs": {
+					"library": "音乐库",
+					"sound": "Sound",
+					"lyrics": "歌词"
+				}
 			},
 			"library": {
 				"title": "音乐库",
 				"searchPlaceholder": "在音乐库中搜索",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
+				"allAlbumsSubtitle": "专辑",
+				"allArtistsSubtitle": "艺人",
 				"search": {
 					"inputPlaceholder": "在音乐库中搜索"
 				}
@@ -64,6 +71,14 @@
 				"title": "创建",
 				"playlistTitle": "歌单",
 				"playlistDescription": "创建歌单",
+				"aiPlaylistTitle": "Playlist from a prompt",
+				"aiPlaylistDescription": "Describe what you want to hear and let AudioMuse-AI build it",
+				"fingerprintTitle": "Sonic fingerprint",
+				"fingerprintDescription": "Generate a playlist based on your unique listening habits",
+				"moodPlaylistTitle": "Playlist from a mood",
+				"moodPlaylistDescription": "Pick a mood and fill a playlist with the tracks that sound like it",
+				"songPathTitle": "Song path",
+				"songPathDescription": "Travel gradually from one song to another, one small step at a time",
 				"smartPlaylistTitle": "智能歌单",
 				"smartPlaylistDescription": "创建按规则自动更新的歌单",
 				"internetRadioStationTitle": "网络电台",
@@ -72,6 +87,140 @@
 				"podcastChannelDescription": "通过RSS订阅播客",
 				"downloaderTitle": "添加音乐",
 				"downloaderDescription": "搜索并下载音乐到您的服务器"
+			},
+			"audiomuse": {
+				"prompt": {
+					"title": "Playlist from a prompt",
+					"description": "Describe what you want to hear. AudioMuse-AI searches your library by sound, mood and lyrics to build the playlist.",
+					"placeholder": "Songs for a rainy afternoon",
+					"action": "Generate",
+					"newPrompt": "New prompt",
+					"failed": "AudioMuse-AI could not build a playlist. Try again or rephrase your prompt.",
+					"noResults": "Nothing in your library matched that prompt."
+				},
+				"fingerprint": {
+					"title": "Sonic fingerprint",
+					"description": "AudioMuse-AI builds a profile from the songs you play most, then finds the tracks in your library that sound closest to it.",
+					"countLabel": "Number of results",
+					"countHint": "Between {{min}} and {{max}}. The first 20 are the songs your fingerprint was built from, so a higher number means more discoveries.",
+					"action": "Generate",
+					"newFingerprint": "New fingerprint",
+					"failed": "AudioMuse-AI could not build your fingerprint. Check your media server credentials in settings.",
+					"noResults": "AudioMuse-AI couldn't find enough listening history to build your fingerprint."
+				},
+				"similar": {
+					"heading": "Similar to {{title}}",
+					"description": "AudioMuse-AI compares how this track actually sounds against the rest of your library and returns the closest matches.",
+					"countLabel": "Number of results",
+					"countHint": "Between {{min}} and {{max}}.",
+					"limitPerArtistLabel": "Limit songs per artist",
+					"limitPerArtistDescription": "Keeps one artist from taking over the results.",
+					"radiusLabel": "Radius similarity",
+					"radiusDescription": "Groups matches by how close they are and orders them for smoother transitions.",
+					"action": "Find similar tracks",
+					"newSearch": "New search",
+					"failed": "AudioMuse-AI could not find similar tracks. Try again in a moment.",
+					"noResults": "AudioMuse-AI hasn't analyzed this track, so it has nothing to compare it against."
+				},
+				"mood": {
+					"title": "Playlist from a mood",
+					"heading": "{{mood}} · {{style}}",
+					"description": "AudioMuse-AI holds a map of how music sounds. Pick a spot on it and this fills a playlist with the tracks nearest to it.",
+					"modes": {
+						"mood": "Mood",
+						"anchor": "Anchor"
+					},
+					"moods": {
+						"happy": "Happy",
+						"sad": "Sad",
+						"aggressive": "Aggressive",
+						"party": "Party",
+						"relaxed": "Relaxed",
+						"danceable": "Danceable"
+					},
+					"choosePlaceholder": "Choose",
+					"loading": "Loading…",
+					"moodLabel": "Mood",
+					"moodDescription": "The broad feel to build the playlist around.",
+					"styleLabel": "Style",
+					"styleDescription": "Every mood covers several kinds of music. This picks which one.",
+					"anchorLabel": "Anchor",
+					"anchorDescription": "One of the anchors you saved from AudioMuse-AI's Alchemy page.",
+					"countLabel": "Number of results",
+					"countHint": "Between {{min}} and {{max}}.",
+					"limitPerArtistLabel": "Limit songs per artist",
+					"limitPerArtistDescription": "Keeps one artist from taking over the playlist.",
+					"action": "Generate",
+					"newSearch": "New search",
+					"unavailable": "This AudioMuse-AI deployment didn't report any moods.",
+					"loadFailed": "The moods couldn't be loaded from AudioMuse-AI.",
+					"retry": "重试",
+					"failed": "AudioMuse-AI could not build the playlist. Try again in a moment.",
+					"noResults": "Nothing in your library sounds close enough to that.",
+					"styleCount_other": "{{count}} styles",
+					"styleSongs_other": "{{count}} songs in this style"
+				},
+				"path": {
+					"title": "Song path",
+					"heading": "{{start}} → {{end}}",
+					"description": "AudioMuse-AI walks its way from one end to the other, each song a small step from the last, so the playlist drifts instead of jumping.",
+					"startLabel": "Start",
+					"endLabel": "End",
+					"choosePlaceholder": "Choose a song, mood or anchor",
+					"searchPlaceholder": "Search by song, artist or album",
+					"searchHint": "Type at least 3 characters.",
+					"searchEmpty": "AudioMuse-AI has nothing analyzed matching that.",
+					"modes": {
+						"song": "歌曲",
+						"mood": "Mood",
+						"anchor": "Anchor"
+					},
+					"moods": {
+						"happy": "Happy",
+						"sad": "Sad",
+						"aggressive": "Aggressive",
+						"relaxed": "Relaxed",
+						"danceable": "Danceable"
+					},
+					"oneResolvedEndpoint": "The other end is already a mood or anchor, and a path can only have one. Pick a song here.",
+					"lyricsSongsOnly": "A path that follows the lyrics runs between two songs.",
+					"lyricsLabel": "Follow the lyrics",
+					"lyricsDescription": "Steps through what the songs are about rather than how they sound.",
+					"blendLabel": "Blend",
+					"blendDescription": "How far the mood or anchor end travels from the other one.",
+					"lengthLabel": "Songs in path",
+					"lengthHint": "Between {{min}} and {{max}}, counting both ends. More songs mean smaller, smoother steps.",
+					"fixSizeLabel": "Keep path size exact",
+					"fixSizeDescription": "Fills the path to the exact length, even where a less similar step is needed. Off, it stops early rather than reaching.",
+					"action": "Find path",
+					"newPath": "New path",
+					"failed": "AudioMuse-AI could not build a path. Try a longer path or different ends.",
+					"noResults": "AudioMuse-AI found no route between those two."
+				},
+				"results": {
+					"saveAction": "Save as playlist",
+					"queueAction": "加入播放队列",
+					"queued_other": "{{count}} songs added to the queue",
+					"missing_other": "{{count}} songs are no longer in your library"
+				},
+				"notScanned": {
+					"library": "AudioMuse-AI hasn't analyzed your library yet, so it has nothing to search. Start an analysis from its dashboard, then refresh the features in settings.",
+					"clap": "AudioMuse-AI hasn't built its sound index yet. Run the CLAP analysis from its dashboard, then refresh the features in settings."
+				},
+				"search": {
+					"soundEmpty": "No track in your library sounds like that.",
+					"lyricsEmpty": "No lyrics in your library match that."
+				},
+				"save": {
+					"title": "Save as playlist",
+					"namePlaceholder": "Playlist name",
+					"targetLabel": "Created by",
+					"targetHint": "Change this in Settings > Integrations > AudioMuse-AI.",
+					"instantSuffixNote": "AudioMuse-AI will name it \"{{name}}\".",
+					"action": "保存",
+					"success": "Playlist saved",
+					"failed": "Could not save the playlist"
+				}
 			},
 			"carAuto": {
 				"home": "首页",
@@ -133,10 +282,16 @@
 			},
 			"artists": {
 				"label": "艺人",
+				"notInLibrary": "Not in your library",
+				"notInLibraryAddWithLidarr": "Not in your library • Find in Lidarr",
 				"coverAlt": "艺人封面",
 				"topSongs": "热门歌曲",
 				"discography": "作品集",
 				"appearsOn": "参与作品",
+				"soundsLike": "Sounds like",
+				"poweredByAudioMuse": "Powered by AudioMuse-AI",
+				"similarArtists": "Similar artists",
+				"similarArtistsSource": "From your music server",
 				"about": "关于",
 				"rate": "评分",
 				"musicBrainz": "在 MusicBrainz 中打开",
@@ -565,7 +720,7 @@
 					},
 					"integrations": {
 						"title": "集成",
-						"description": "使用 MusicBrainz 修正您的音乐库中的标签"
+						"description": "Connect external services to your library"
 					},
 					"appearance": {
 						"title": "外观",
@@ -597,7 +752,7 @@
 					}
 				},
 				"integrations": {
-					"description": "连接外部音乐数据库，以丰富和修正您的音乐库。",
+					"description": "Connect external services to enrich your library and discover music in it.",
 					"statuses": {
 						"configured": "已连接",
 						"notConfigured": "未设置"
@@ -680,6 +835,95 @@
 							"apply": "应用",
 							"applyToFiles": "向文件写入数据",
 							"applying": "写作"
+						}
+					},
+					"audiomuse": {
+						"title": "AudioMuse-AI",
+						"description": "Generate playlists from your library's sound",
+						"serverUrlLabel": "服务器网址",
+						"apiTokenLabel": "API token",
+						"apiTokenPlaceholder": "Leave empty if authentication is off",
+						"getTokenAction": "Where do I find the API token?",
+						"tokenHelpTitle": "Finding your API token",
+						"tokenHelpStep1": "Open AudioMuse-AI in a browser and sign in as an admin.",
+						"tokenHelpStep2": "Go to Administration > Setup Wizard and look for the API token setting.",
+						"tokenHelpStep3": "Copy the token here. If your deployment runs with authentication turned off, leave this field empty.",
+						"tokenHelpClose": "我知道了",
+						"testAndSaveAction": "Test and save",
+						"connectionSuccess": "Connected to AudioMuse-AI",
+						"connectionFailed": "Could not reach AudioMuse-AI. Check the server URL.",
+						"tokenRejected": "AudioMuse-AI rejected the API token.",
+						"removedMessage": "AudioMuse-AI connection removed",
+						"features": {
+							"title": "Available features",
+							"description": "AudioMuse-AI deployments are configurable, so the app only offers what your server answers to.",
+							"available": "可用空间",
+							"unavailable": "Unavailable",
+							"aiPlaylists": "Playlists from a prompt",
+							"aiPlaylistsHint": "Create one from the + button in your library, or from the Create tab.",
+							"noAiProvider": "Pick an AI provider below to turn this on",
+							"soundSearch": "Search by sound",
+							"soundSearchDetail": "Describe how a track sounds and find the ones that match, even when you don't know its name.",
+							"soundSearchHint": "Use the Sound tab in search.",
+							"lyricsSearch": "Search by lyrics",
+							"lyricsSearchDetail": "Find songs by what their lyrics are about, rather than by their exact wording.",
+							"lyricsSearchHint": "Use the Lyrics tab in search.",
+							"fingerprint": "Sonic fingerprint",
+							"fingerprintDetail": "Generate a playlist based on your unique listening habits",
+							"fingerprintHint": "Create one from the + button in your library, or from the Create tab.",
+							"similarTracks": "Similar-sounding tracks",
+							"similarTracksDetail": "Build a playlist from the tracks that sound closest to any song in your library.",
+							"similarTracksHint": "Open any track's menu, in a list or in the player.",
+							"similarArtists": "Similar-sounding artists",
+							"similarArtistsDetail": "Discover artists whose music sounds like the one you're listening to.",
+							"similarArtistsHint": "Open any artist's page and scroll to \"Sounds like\".",
+							"moodPlaylists": "Playlists from a mood",
+							"moodPlaylistsDetail": "Build a playlist around a mood, or around an anchor you saved on the Alchemy page.",
+							"moodPlaylistsHint": "Create one from the + button in your library, or from the Create tab.",
+							"songPath": "Song path",
+							"songPathDetail": "Build a playlist that travels gradually from one song to another, one small step at a time.",
+							"songPathDetailLyrics": "Build a playlist that travels gradually from one song to another. This deployment can follow the lyrics as well as the sound.",
+							"songPathHint": "Create one from the + button in your library, from the Create tab, or from any track's menu.",
+							"library": "Library analysis",
+							"libraryNotAnalyzed": "Nothing analyzed yet — searches and prompts will come back empty",
+							"libraryUnknown": "This deployment didn't report its analysis progress",
+							"refreshLabel": "Refresh features",
+							"refreshDescription": "Ask the server again what it supports.",
+							"refreshAction": "Refresh",
+							"refreshed": "Features refreshed",
+							"libraryAnalyzed_other": "{{count}} tracks analyzed"
+						},
+						"fingerprint": {
+							"title": "Sonic fingerprint",
+							"description": "The fingerprint is built from your own play history, which AudioMuse-AI reads from your media server. It needs an account there — its API token is not enough.",
+							"jellyfinUserLabel": "Jellyfin username or user ID",
+							"jellyfinUserPlaceholder": "Your username on the media server",
+							"jellyfinSecretLabel": "Jellyfin API token",
+							"navidromeUserLabel": "Navidrome username",
+							"navidromeUserPlaceholder": "Your username on the media server",
+							"navidromeSecretLabel": "Navidrome password or API token",
+							"secretPlaceholder": "Optional — AudioMuse-AI falls back to its own",
+							"noCredentialsNote": "This deployment profiles the account AudioMuse-AI was set up with, so there is nothing to enter here.",
+							"saved": "Media server credentials saved"
+						},
+						"server": {
+							"label": "Media server",
+							"description": "Which of the deployment's media servers to use. Results come back with that server's track ids.",
+							"defaultOption": "Server default"
+						},
+						"aiProvider": {
+							"label": "AI provider",
+							"description": "Which model builds playlists from your prompts. Pick the one your AudioMuse-AI holds credentials for.",
+							"autoOption": "Server default",
+							"autoDetail": "Currently {{provider}}"
+						},
+						"saveTarget": {
+							"label": "Save playlists with",
+							"description": "Who creates the playlist when you save a generated track list.",
+							"wavio": "Wavio",
+							"wavioDescription": "Wavio creates the playlist on your server, using your own account.",
+							"audiomuse": "AudioMuse-AI",
+							"audiomuseDescription": "AudioMuse-AI creates the playlist on your server, using the credentials it was set up with. It always adds \"_instant\" to the end of the name you choose."
 						}
 					}
 				},
@@ -1172,6 +1416,8 @@
 				"showCredits": "查看制作信息",
 				"similarSongs": "相似歌曲",
 				"similarSongsTitle": "与 {{title}} 相似的歌曲",
+				"audioMuseSimilarTracks": "Find similar-sounding tracks (AudioMuse-AI)",
+				"audioMuseSongPath": "Start a path from this song (AudioMuse-AI)",
 				"trackInfoModalTitle": "歌曲信息",
 				"rateModalTitle": "给歌曲评分",
 				"creditsModalTitle": "制作信息",
@@ -1241,6 +1487,7 @@
 					"likedSongs": "播放自喜欢的歌曲",
 					"folder": "播放自文件夹",
 					"similar": "播放自相似歌曲",
+					"audiomuse": "Playing from AudioMuse-AI",
 					"albumList": "从专辑中播放",
 					"playlistList": "从播放列表中播放"
 				},
