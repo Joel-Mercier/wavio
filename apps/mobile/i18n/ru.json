@@ -1462,9 +1462,9 @@
 					"artists": "Исполнители",
 					"playlists": "Плейлисты",
 					"podcasts": "Подкасты",
-					"radioStations": "Radio stations",
-					"folders": "Folders",
-					"songs": "Songs"
+					"radioStations": "Радиостанции",
+					"folders": "Папки",
+					"songs": "Треки"
 				},
 				"save": "Сохранить",
 				"done": "Готово",
