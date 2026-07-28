@@ -158,6 +158,26 @@ export async function queryTopSongsByArtist(
 }
 
 /**
+ * Every track of an artist ordered by album chronology then disc/track number.
+ * Used for the "All songs" surface — distinct from queryTopSongsByArtist, which
+ * is a play-count-ranked subset. Mirrors the Subsonic search3-based "all songs
+ * by artist" path; ties break on title.
+ */
+export async function queryAllSongsByArtist(
+  artistKey: string,
+): Promise<TrackRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<TrackRow>(
+    `${TRACK_SELECT}
+     WHERE t.artist_key = ?
+     ORDER BY t.year ASC, t.album COLLATE NOCASE ASC,
+              t.disc_number ASC, t.track_number ASC,
+              t.title COLLATE NOCASE ASC`,
+    artistKey,
+  );
+}
+
+/**
  * The globally most-played tracks (most-played first), for the "Most played
  * tracks" home surface. Unplayed tracks are excluded (play_count > 0); ties
  * break on title. Paginated via limit/offset.

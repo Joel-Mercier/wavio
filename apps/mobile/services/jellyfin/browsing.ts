@@ -160,6 +160,27 @@ export const getArtistAppearances = async (
   return fakeEnvelope({ artistAppearances: { album } });
 };
 
+// Every audio track of the artist (album artist or track artist), ordered by
+// album chronology then disc/track number. The ArtistIds filter keeps the
+// result scoped to the artist's own catalog even when an artist id collides
+// with a featured-artist role. `name` is unused — Jellyfin routes lookups by id.
+export const getArtistSongs = async (
+  id: string,
+  _opts: { name?: string; musicFolderId?: string } = {},
+) => {
+  const rsp = await fetchItems(
+    {
+      IncludeItemTypes: "Audio",
+      ArtistIds: id,
+      SortBy: "Album,ParentIndexNumber,IndexNumber,SortName",
+      SortOrder: "Ascending",
+    },
+    { notFoundIsExpected: true },
+  );
+  const song: Child[] = (rsp.Items ?? []).map(mapBaseItemToChild);
+  return fakeEnvelope({ artistSongs: { song } });
+};
+
 export const getArtistInfo = async (id: string) => {
   const item = await jellyfinApiInstance.get<BaseItemDto>(
     `/Users/${userId()}/Items/${id}`,

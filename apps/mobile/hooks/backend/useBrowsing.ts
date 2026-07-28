@@ -8,6 +8,7 @@ import {
   getArtistAppearances,
   getArtistInfo,
   getArtistInfo2,
+  getArtistSongs,
   getArtists,
   getGenres,
   getIndexes,
@@ -90,6 +91,19 @@ export const useArtistAppearances = (
     queryKey: ["artistAppearances", id, params],
     queryFn: () => {
       return getArtistAppearances(id, params);
+    },
+    enabled: !!id && !!params.name,
+  });
+};
+
+export const useAllArtistSongs = (
+  id: string,
+  params: { name?: string; musicFolderId?: string },
+) => {
+  return useQuery({
+    queryKey: ["artistSongs", id, params],
+    queryFn: () => {
+      return getArtistSongs(id, params);
     },
     enabled: !!id && !!params.name,
   });

@@ -15,6 +15,7 @@ import { folderLabel, localFolders } from "@/services/local/paths";
 import {
   queryAlbumByKey,
   queryAlbumTracksByKey,
+  queryAllSongsByArtist,
   queryArtistAlbumsByKey,
   queryArtistByKey,
   queryArtists,
@@ -228,4 +229,20 @@ export const getArtistAppearances = async (
 ) => {
   const album: AlbumID3[] = [];
   return localEnvelope({ artistAppearances: { album } });
+};
+
+// Every indexed track of the artist, ordered by album chronology then
+// disc/track number. Falls back to localUnsupported() for non-artist ids so the
+// call site can distinguish "no songs" from "wrong shape". `name` and
+// `musicFolderId` are part of the signature to mirror the rest of the browsing
+// surface; the on-device index is library-wide, so neither is consulted.
+export const getArtistSongs = async (
+  id: string,
+  _opts: { name?: string; musicFolderId?: string } = {},
+) => {
+  const key = parseLocalArtistId(id);
+  if (key == null) throw new LocalUnsupportedError(`artist id "${id}"`);
+  const rows = await queryAllSongsByArtist(key);
+  const song: Child[] = rows.map(mapRowToChild);
+  return localEnvelope({ artistSongs: { song } });
 };

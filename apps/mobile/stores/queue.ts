@@ -8,6 +8,7 @@ export type QueueSource = {
     | "album"
     | "playlist"
     | "artist"
+    | "allSongs"
     | "likedSongs"
     | "folder"
     | "similar"

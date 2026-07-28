@@ -10,6 +10,7 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -56,6 +57,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useAllArtistSongs,
   useArtist,
   useArtistAppearances,
   useArtistInfo2,
@@ -129,6 +131,11 @@ export default function ArtistDetail() {
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const musicFolderId = useCurrentMusicFolderId();
+  const { data: allSongsData } = useAllArtistSongs(id, {
+    name: data?.artist?.name,
+    musicFolderId,
+  });
+  const allSongsCount = allSongsData?.artistSongs?.song?.length ?? 0;
   const { data: appearancesData } = useArtistAppearances(id, {
     name: data?.artist?.name,
     musicFolderId,
@@ -601,6 +608,42 @@ export default function ArtistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              {allSongsCount > 0 && (
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/artists/[id]/all-songs",
+                    params: { id },
+                  }}
+                >
+                  <HStack className="items-center mb-6">
+                    <Box className="relative">
+                      <Image
+                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        alt="All songs cover"
+                        className="w-16 h-16 rounded-full aspect-square"
+                      />
+                      <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
+                        <ListMusic size={14} color={emerald500} />
+                      </Box>
+                    </Box>
+                    <VStack className="ml-4 flex-1">
+                      <Heading
+                        className="text-white"
+                        size="md"
+                        numberOfLines={1}
+                      >
+                        {t("app.artists.allSongs")}
+                      </Heading>
+                      <Text className="text-primary-100" numberOfLines={1}>
+                        {t("app.shared.songCount", { count: allSongsCount })}
+                        {" • "}
+                        {data?.artist?.name}
+                      </Text>
+                    </VStack>
+                    <ChevronRight color={white} />
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               <Heading className="text-white">
                 {t("app.artists.topSongs")}
               </Heading>
@@ -657,7 +700,23 @@ export default function ArtistDetail() {
 
                   {!isLoadingTopSongs &&
                     !topSongsError &&
-                    !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
+                    !topSongsData?.topSongs.song?.length && (
+                      <VStack className="items-center pb-2">
+                        <EmptyDisplay />
+                        {allSongsCount > 0 && (
+                          <FadeOutScaleDown
+                            href={{
+                              pathname: "/artists/[id]/all-songs",
+                              params: { id },
+                            }}
+                          >
+                            <Text className="text-emerald-500">
+                              {t("app.artists.viewAllSongs")}
+                            </Text>
+                          </FadeOutScaleDown>
+                        )}
+                      </VStack>
+                    )}
 
                   {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
                     <Animated.View

@@ -231,3 +231,26 @@ export const getArtistAppearances = async (
   }
   return { artistAppearances: { album }, status: "ok" as const };
 };
+
+// Every song where the artist is the primary artist (artistId === id), across
+// all of their albums. Mirrors the search3 call useArtistAppearances already
+// makes, but filters down to the artist's own tracks instead of outside
+// collaborations. musicFolderId is forwarded so libraries stay scoped.
+export const getArtistSongs = async (
+  id: string,
+  { name, musicFolderId }: { name?: string; musicFolderId?: string } = {},
+) => {
+  if (!name) {
+    return { artistSongs: { song: [] as Child[] }, status: "ok" as const };
+  }
+  const searchRsp = await search3(name, {
+    artistCount: 0,
+    albumCount: 0,
+    songCount: 500,
+    musicFolderId,
+  });
+  const song: Child[] = (searchRsp.searchResult3?.song ?? []).filter(
+    (s) => s.artistId === id,
+  );
+  return { artistSongs: { song }, status: "ok" as const };
+};
