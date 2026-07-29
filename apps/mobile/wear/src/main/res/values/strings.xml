@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  English only. crowdin.yml tracks apps/mobile/i18n/en.json and the landing
+  site's strings, not Android XML resources, so these are not translated yet.
+-->
+<resources>
+  <string name="app_name">Wavio</string>
+  <string name="nothing_playing">Nothing playing</string>
+  <string name="open_on_phone">Open Wavio on your phone</string>
+  <string name="phone_unreachable">Can\'t reach your phone</string>
+  <string name="unknown_track">Unknown track</string>
+  <string name="queue">Queue</string>
+  <string name="queue_empty">The queue is empty</string>
+  <string name="cd_play">Play</string>
+  <string name="cd_pause">Pause</string>
+  <string name="cd_next">Next track</string>
+  <string name="cd_previous">Previous track</string>
+  <string name="cd_shuffle">Shuffle</string>
+  <string name="cd_repeat">Repeat</string>
+  <string name="cd_queue">Open queue</string>
+  <string name="cd_artwork">Album artwork</string>
+</resources>

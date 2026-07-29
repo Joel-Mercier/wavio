@@ -1,0 +1,107 @@
+// The Kotlin plugin is applied project-wide by expo-root-project, but the
+// Compose compiler plugin (a separate artifact since Kotlin 2.0) is not. It is
+// resolved here rather than from the root build.gradle so it picks up the same
+// `kotlinVersion` expo-root-project derived from the version catalog — the two
+// must match, and a hard-coded number would silently drift on the next RN bump.
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:${kotlinVersion}")
+  }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+// :app must be configured before we can borrow its version and signing config.
+evaluationDependsOn(':app')
+
+// Play requires every artifact in a multi-APK release to carry a distinct
+// version code, and every code to be unused by any previous upload of the same
+// application id. The watch therefore sits on its own band a million above the
+// phone rather than at phone + 1: the phone's codes come from EAS's remote
+// counter, which steps by one, so +1 would be handed to the phone itself a
+// release later and rejected as already used.
+//
+// The phone's code is read from :app at configuration time because that is
+// where the resolved version actually lands — with `appVersionSource: "remote"`
+// EAS writes the auto-incremented code into android/app/build.gradle at build
+// time, which a value stamped during prebuild (this project commits android/,
+// so EAS never prebuilds) would never see.
+def phoneVersion = project(':app').android.defaultConfig
+def wearVersionCodeOffset = 1_000_000
+
+android {
+  namespace 'com.jmercier.wavio.wear'
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+
+  defaultConfig {
+    // Must match the phone app: Play multi-APK delivery keys off the
+    // application id, and the Data Layer only bridges same-id peers.
+    applicationId 'com.jmercier.wavio'
+    // Wear OS 3.0 and up. The phone app's minSdk (26) is irrelevant here.
+    minSdkVersion 30
+    targetSdkVersion 34
+    versionCode phoneVersion.versionCode + wearVersionCodeOffset
+    versionName phoneVersion.versionName
+  }
+
+  buildFeatures {
+    compose true
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = '17'
+  }
+
+  buildTypes {
+    // Both build types borrow :app's signing config, and this is not cosmetic:
+    // Play Services only bridges the Data Layer between apps that share a
+    // package name *and* a signing certificate. Signed with the default
+    // ~/.android/debug.keystore instead of the repo's committed one, a debug
+    // watch build installs and runs fine but never receives a single item.
+    // For release it is also what Play multi-APK delivery requires, and :app is
+    // where EAS injects the real upload keystore.
+    debug {
+      signingConfig project(':app').android.buildTypes.debug.signingConfig
+    }
+    release {
+      minifyEnabled false
+      signingConfig project(':app').android.buildTypes.release.signingConfig
+    }
+  }
+
+  packaging {
+    resources {
+      excludes += ['/META-INF/{AL2.0,LGPL2.1}']
+    }
+  }
+}
+
+dependencies {
+  implementation platform("androidx.compose:compose-bom:2025.02.00")
+  implementation "androidx.compose.ui:ui"
+  implementation "androidx.compose.ui:ui-tooling-preview"
+  debugImplementation "androidx.compose.ui:ui-tooling"
+
+  implementation "androidx.wear.compose:compose-material:1.4.1"
+  implementation "androidx.wear.compose:compose-foundation:1.4.1"
+  implementation "androidx.wear.compose:compose-navigation:1.4.1"
+
+  implementation "androidx.activity:activity-compose:1.9.3"
+  implementation "androidx.core:core-ktx:1.13.1"
+  implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
+  implementation "androidx.lifecycle:lifecycle-runtime-compose:2.8.7"
+
+  implementation "com.google.android.gms:play-services-wearable:18.2.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1"
+}

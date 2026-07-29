@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    Advertised to the Data Layer so the watch app can discover that Wavio is
+    installed on this phone. The watch declares the matching `wavio_watch`
+    capability in apps/mobile/wear.
+  -->
+  <string-array name="android_wear_capabilities">
+    <item>wavio_phone</item>
+  </string-array>
+</resources>

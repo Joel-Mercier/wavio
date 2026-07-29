@@ -1,0 +1,31 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.wearbridge'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.wearbridge"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // Data Layer only (DataClient / MessageClient / CapabilityClient). This must
+  // stay the phone side's *only* Wear dependency — the watch app in
+  // apps/mobile/wear is a separate APK and shares no code with this module.
+  implementation "com.google.android.gms:play-services-wearable:18.2.0"
+}

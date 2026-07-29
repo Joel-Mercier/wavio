@@ -57,6 +57,14 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=armeabi-v7a"
       }
+    },
+    "production-wear": {
+      "extends": "production",
+      "autoIncrement": false,
+      "android": {
+        "gradleCommand": ":wear:bundleRelease",
+        "applicationArchivePath": "wear/build/outputs/bundle/release/*.aab"
+      }
     }
   },
   "submit": {

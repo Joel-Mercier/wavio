@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    Lets the phone discover that a watch running Wavio is reachable. The phone
+    gates every Data Layer push on this capability, so users without a watch
+    pay nothing. Its counterpart is `wavio_phone`, declared in
+    modules/wear-bridge.
+  -->
+  <string-array name="android_wear_capabilities">
+    <item>wavio_watch</item>
+  </string-array>
+</resources>

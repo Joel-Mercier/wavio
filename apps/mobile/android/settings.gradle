@@ -37,3 +37,7 @@ expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
+
+// wavio: wear os companion
+include ':wear'
+project(':wear').projectDir = new File(rootDir, '../wear')

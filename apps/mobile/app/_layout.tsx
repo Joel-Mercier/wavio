@@ -18,6 +18,7 @@ import CarAutoSync from "@/components/CarAutoSync";
 import { PodcastEpisodeActionsProvider } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import WearSync from "@/components/WearSync";
 import "react-native-reanimated";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { init as sentryInit, wrap as sentryWrap } from "@sentry/react-native";
@@ -268,6 +269,7 @@ export default sentryWrap(function RootLayout() {
                       </Stack>
                     </AppErrorBoundary>
                     <CarAutoSync />
+                    <WearSync />
                   </PodcastEpisodeActionsProvider>
                 </TrackActionsProvider>
               </BottomSheetModalProvider>

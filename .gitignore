@@ -15,6 +15,10 @@ android/app/build/
 android/.gradle/
 **/android/build/
 **/modules/car-auto/android/build/
+**/modules/wear-bridge/android/build/
+# The Wear OS companion lives outside android/, so it needs its own entries.
+apps/mobile/wear/build/
+apps/mobile/wear/.gradle/
 **/modules/audio-tagger/native/.build/
 **/modules/audio-tagger/native/.taglib/
 *.iml
