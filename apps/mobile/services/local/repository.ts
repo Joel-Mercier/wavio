@@ -172,10 +172,10 @@ export async function queryTopSongsByArtist(
 }
 
 /**
- * Every track of an artist ordered by album chronology then disc/track number.
- * Used for the "All songs" surface — distinct from queryTopSongsByArtist, which
- * is a play-count-ranked subset. Mirrors the Subsonic search3-based "all songs
- * by artist" path; ties break on title.
+ * Every track of an artist ordered by album chronology then disc/track number,
+ * for the "All songs" surface — distinct from queryTopSongsByArtist, which is a
+ * play-count-ranked subset. Album order matches queryArtistAlbumsByKey so the
+ * tracklist reads like the discography; ties break on title.
  */
 export async function queryAllSongsByArtist(
   artistKey: string,

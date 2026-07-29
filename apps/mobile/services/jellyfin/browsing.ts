@@ -161,14 +161,10 @@ export const getArtistAppearances = async (
   return fakeEnvelope({ artistAppearances: { album } });
 };
 
-// Every audio track of the artist (album artist or track artist), ordered by
-// album chronology then disc/track number. The ArtistIds filter keeps the
-// result scoped to the artist's own catalog even when an artist id collides
-// with a featured-artist role. `name` is unused — Jellyfin routes lookups by id.
-export const getArtistSongs = async (
-  id: string,
-  _opts: { name?: string; musicFolderId?: string } = {},
-) => {
+// Every audio track of the artist, ordered by album then disc/track number.
+// `ArtistIds` is the same filter getArtist uses for the albums, so this stays
+// the tracklist of the discography the artist screen shows.
+export const getArtistSongs = async (id: string) => {
   const rsp = await fetchItems(
     {
       IncludeItemTypes: "Audio",

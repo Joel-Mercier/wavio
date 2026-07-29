@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -25,14 +25,13 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useAllArtistSongs, useArtist } from "@/hooks/backend/useBrowsing";
+import { useArtist, useArtistSongs } from "@/hooks/backend/useBrowsing";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -45,6 +44,9 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
 
+const SKELETON_DATA = loadingData(16);
+const EMPTY_DATA: Child[] = [];
+
 export default function AllSongs() {
   const [white, black] = Uniwind.getCSSVariable([
     "--color-white",
@@ -56,16 +58,9 @@ export default function AllSongs() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const { data } = useArtist(id);
-  const musicFolderId = useCurrentMusicFolderId();
-  const {
-    data: songsData,
-    isLoading,
-    error,
-  } = useAllArtistSongs(id, {
-    name: data?.artist?.name,
-    musicFolderId,
-  });
-  const songs: Child[] = songsData?.artistSongs?.song ?? [];
+  const { data: songsData, isLoading, error } = useArtistSongs(id);
+  const songs = songsData?.artistSongs?.song ?? EMPTY_DATA;
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
     (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
@@ -89,23 +84,18 @@ export default function AllSongs() {
   const trackIdSet = useMemo(() => new Set(songs.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
 
-  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const handleTrackPressCallback = () => {
-    if (data?.artist) {
-      addRecentPlay({
-        id,
-        title: data.artist.name,
-        type: "artist",
-        coverArt: data.artist.coverArt,
-      });
-    }
-  };
+  const handleTrackPressCallback = useCallback(() => {
+    if (!data?.artist) return;
+    addRecentPlay({
+      id,
+      title: data.artist.name,
+      type: "artist",
+      coverArt: data.artist.coverArt,
+    });
+  }, [addRecentPlay, data?.artist, id]);
 
   const songsSource = useMemo<QueueSource>(
-    () =>
-      data?.artist
-        ? { type: "allSongs", name: data.artist.name }
-        : { type: "allSongs", name: "" },
+    () => ({ type: "allSongs", name: data?.artist?.name ?? "" }),
     [data?.artist],
   );
   const handlePlayPress = () => {
@@ -129,26 +119,25 @@ export default function AllSongs() {
 
   const handleTrackPress = useTrackListPress(songs, songsSource);
 
-  // Mirror LikedSongs: a single FlashList with one row shape, so the list never
-  // nests another virtualized list. Errors render in-place; the empty state
-  // falls back to EmptyDisplay without an extra section.
-  type Row =
-    | { type: "song"; song: Child; index: number }
-    | { type: "skeleton"; index: number }
-    | { type: "songsEmpty" };
-
-  const rows = useMemo<Row[]>(() => {
-    if (isLoading) {
-      return loadingData(8).map((_, index) => ({
-        type: "skeleton" as const,
-        index,
-      }));
-    }
-    if (songs.length === 0) {
-      return [{ type: "songsEmpty" }];
-    }
-    return songs.map((song, index) => ({ type: "song" as const, song, index }));
-  }, [isLoading, songs]);
+  const keyExtractor = useCallback(
+    (item: Child, index: number) => item.id ?? String(index),
+    [],
+  );
+  const renderRow = useCallback(
+    ({ item, index }: { item: Child; index: number }) =>
+      isLoading ? (
+        <TrackListItemSkeleton index={index} className="px-6" />
+      ) : (
+        <TrackListItem
+          track={item}
+          index={index}
+          className="px-6"
+          onPress={handleTrackPress}
+          onPlayCallback={handleTrackPressCallback}
+        />
+      ),
+    [isLoading, handleTrackPress, handleTrackPressCallback],
+  );
 
   return (
     <Box className="h-full bg-black">
@@ -184,35 +173,9 @@ export default function AllSongs() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
-        data={rows}
-        keyExtractor={(item: Row) =>
-          item.type === "song"
-            ? item.song.id
-            : item.type === "skeleton"
-              ? `skeleton-${item.index}`
-              : item.type
-        }
-        getItemType={(item: Row) => item.type}
-        renderItem={({ item }: { item: Row }) => {
-          switch (item.type) {
-            case "song":
-              return (
-                <TrackListItem
-                  track={item.song}
-                  index={item.index}
-                  className="px-6"
-                  onPress={handleTrackPress}
-                  onPlayCallback={handleTrackPressCallback}
-                />
-              );
-            case "skeleton":
-              return (
-                <TrackListItemSkeleton index={item.index} className="px-6" />
-              );
-            case "songsEmpty":
-              return error ? <ErrorDisplay error={error} /> : <EmptyDisplay />;
-          }
-        }}
+        data={isLoading ? SKELETON_DATA : songs}
+        keyExtractor={keyExtractor}
+        renderItem={renderRow}
         ListHeaderComponent={
           <>
             <LinearGradient
@@ -263,9 +226,11 @@ export default function AllSongs() {
               <Heading className="text-white mb-4" size="lg">
                 {t("app.artists.allSongs")}
               </Heading>
+              {error && <ErrorDisplay error={error} />}
             </VStack>
           </>
         }
+        ListEmptyComponent={<EmptyDisplay />}
       />
     </Box>
   );

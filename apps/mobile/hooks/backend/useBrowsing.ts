@@ -96,16 +96,13 @@ export const useArtistAppearances = (
   });
 };
 
-export const useAllArtistSongs = (
-  id: string,
-  params: { name?: string; musicFolderId?: string },
-) => {
+export const useArtistSongs = (id: string) => {
   return useQuery({
-    queryKey: ["artistSongs", id, params],
+    queryKey: ["artistSongs", id],
     queryFn: () => {
-      return getArtistSongs(id, params);
+      return getArtistSongs(id);
     },
-    enabled: !!id && !!params.name,
+    enabled: !!id,
   });
 };
 

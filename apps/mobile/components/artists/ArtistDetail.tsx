@@ -59,7 +59,6 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
-  useAllArtistSongs,
   useArtist,
   useArtistAppearances,
   useArtistInfo2,
@@ -145,11 +144,14 @@ export default function ArtistDetail() {
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const musicFolderId = useCurrentMusicFolderId();
-  const { data: allSongsData } = useAllArtistSongs(id, {
-    name: data?.artist?.name,
-    musicFolderId,
-  });
-  const allSongsCount = allSongsData?.artistSongs?.song?.length ?? 0;
+  // Summed from the discography rather than fetched: the all-songs list itself
+  // costs one request per album, which the artist screen shouldn't pay just to
+  // label a link.
+  const albums = useMemo(() => data?.artist?.album ?? [], [data?.artist]);
+  const allSongsCount = useMemo(
+    () => albums.reduce((total, album) => total + (album.songCount ?? 0), 0),
+    [albums],
+  );
   const { data: appearancesData } = useArtistAppearances(id, {
     name: data?.artist?.name,
     musicFolderId,
@@ -507,9 +509,7 @@ export default function ArtistDetail() {
 
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={
-          isLoading ? loadingData(3) : (data?.artist?.album?.slice(0, 3) ?? [])
-        }
+        data={isLoading ? loadingData(3) : albums.slice(0, 3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <Box className="bg-black">
@@ -622,42 +622,6 @@ export default function ArtistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
-              {allSongsCount > 0 && (
-                <FadeOutScaleDown
-                  href={{
-                    pathname: "/artists/[id]/all-songs",
-                    params: { id },
-                  }}
-                >
-                  <HStack className="items-center mb-6">
-                    <Box className="relative">
-                      <Image
-                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
-                        alt="All songs cover"
-                        className="w-16 h-16 rounded-full aspect-square"
-                      />
-                      <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
-                        <ListMusic size={14} color={emerald500} />
-                      </Box>
-                    </Box>
-                    <VStack className="ml-4 flex-1">
-                      <Heading
-                        className="text-white"
-                        size="md"
-                        numberOfLines={1}
-                      >
-                        {t("app.artists.allSongs")}
-                      </Heading>
-                      <Text className="text-primary-100" numberOfLines={1}>
-                        {t("app.shared.songCount", { count: allSongsCount })}
-                        {" • "}
-                        {data?.artist?.name}
-                      </Text>
-                    </VStack>
-                    <ChevronRight color={white} />
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
               <Heading className="text-white">
                 {t("app.artists.topSongs")}
               </Heading>
@@ -714,23 +678,7 @@ export default function ArtistDetail() {
 
                   {!isLoadingTopSongs &&
                     !topSongsError &&
-                    !topSongsData?.topSongs.song?.length && (
-                      <VStack className="items-center pb-2">
-                        <EmptyDisplay />
-                        {allSongsCount > 0 && (
-                          <FadeOutScaleDown
-                            href={{
-                              pathname: "/artists/[id]/all-songs",
-                              params: { id },
-                            }}
-                          >
-                            <Text className="text-emerald-500">
-                              {t("app.artists.viewAllSongs")}
-                            </Text>
-                          </FadeOutScaleDown>
-                        )}
-                      </VStack>
-                    )}
+                    !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
 
                   {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
                     <Animated.View
@@ -798,11 +746,9 @@ export default function ArtistDetail() {
           <Box className="bg-black">
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
-                {t("app.artists.albumCount", {
-                  count: data?.artist?.album?.length || 0,
-                })}
+                {t("app.artists.albumCount", { count: albums.length })}
               </Text>
-              {(data?.artist?.album?.length || 0) > 3 && (
+              {albums.length > 3 && (
                 <Center>
                   <FadeOutScaleDown
                     href={{
@@ -818,6 +764,50 @@ export default function ArtistDetail() {
                 </Center>
               )}
             </VStack>
+            {albums.length > 0 && (
+              <VStack className="px-6 pb-6 bg-black">
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/artists/[id]/all-songs",
+                    params: { id },
+                  }}
+                >
+                  <HStack className="items-center">
+                    <Box className="relative">
+                      <Image
+                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        alt="All songs cover"
+                        className="w-16 h-16 rounded-full aspect-square"
+                      />
+                      <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
+                        <ListMusic size={14} color={emerald500} />
+                      </Box>
+                    </Box>
+                    <VStack className="ml-4 flex-1">
+                      <Heading
+                        className="text-white"
+                        size="md"
+                        numberOfLines={1}
+                      >
+                        {t("app.artists.allSongs")}
+                      </Heading>
+                      <Text className="text-primary-100" numberOfLines={1}>
+                        {allSongsCount > 0 && (
+                          <>
+                            {t("app.shared.songCount", {
+                              count: allSongsCount,
+                            })}
+                            {" • "}
+                          </>
+                        )}
+                        {data?.artist?.name}
+                      </Text>
+                    </VStack>
+                    <ChevronRight color={white} />
+                  </HStack>
+                </FadeOutScaleDown>
+              </VStack>
+            )}
             {appearsOnAlbums.length > 0 && (
               <VStack className="bg-black pb-6">
                 <Heading className="text-white mb-4 px-6">
