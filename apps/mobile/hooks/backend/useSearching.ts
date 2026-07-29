@@ -51,6 +51,9 @@ export const useSearch3 = (
     songOffset?: number;
     musicFolderId?: string;
   },
+  // Lets a caller that renders the results behind a tab hold the search back
+  // until that tab is actually shown.
+  { enabled = true }: { enabled?: boolean } = {},
 ) => {
   // Offline (server unreachable), the server query is paused by onlineManager and
   // returns nothing; branch to a synchronous search over downloads + persisted
@@ -64,8 +67,10 @@ export const useSearch3 = (
     queryFn: () => {
       return search3(query, params);
     },
-    enabled: query.length > 0 && isOnline,
+    enabled: enabled && query.length > 0 && isOnline,
   });
-  const offline = useOfflineSearch3(query, params, { enabled: !isOnline });
+  const offline = useOfflineSearch3(query, params, {
+    enabled: enabled && !isOnline,
+  });
   return isOnline ? serverQuery : offline;
 };

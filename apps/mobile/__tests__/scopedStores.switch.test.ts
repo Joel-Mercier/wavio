@@ -41,6 +41,7 @@ jest.mock("@/stores/auth", () => ({
 }));
 
 import { withScopedWritesSuspended } from "@/config/storage";
+import { useAudioMuseBase } from "@/stores/audioMuse";
 import useBookmarksBase from "@/stores/bookmarks";
 import { useLidarrBase } from "@/stores/lidarr";
 
@@ -50,9 +51,11 @@ const switchScope = (to: string) => {
   withScopedWritesSuspended(() => {
     useLidarrBase.getState().__reset();
     useBookmarksBase.getState().__reset();
+    useAudioMuseBase.getState().__reset();
   });
   useLidarrBase.persist.rehydrate();
   useBookmarksBase.persist.rehydrate();
+  useAudioMuseBase.persist.rehydrate();
 };
 
 describe("scoped stores across a server switch", () => {
@@ -62,11 +65,17 @@ describe("scoped stores across a server switch", () => {
       .setConfig({ serverUrl: "http://lidarr.a", apiKey: "KEY_A" });
     useLidarrBase.getState().setConnected(true);
     useBookmarksBase.getState().addBookmark("track-a", 42);
+    useAudioMuseBase
+      .getState()
+      .setConfig({ serverUrl: "http://audiomuse.a", apiToken: "TOKEN_A" });
+    useAudioMuseBase.getState().setConnected(true);
 
     switchScope("serverB_bob");
     expect(useLidarrBase.getState().serverUrl).toBe("");
     expect(useLidarrBase.getState().isConnected).toBe(false);
     expect(useBookmarksBase.getState().bookmarks).toEqual({});
+    expect(useAudioMuseBase.getState().serverUrl).toBe("");
+    expect(useAudioMuseBase.getState().isConnected).toBe(false);
 
     useBookmarksBase.getState().addBookmark("track-b", 7);
 
@@ -74,6 +83,8 @@ describe("scoped stores across a server switch", () => {
     expect(useLidarrBase.getState().serverUrl).toBe("http://lidarr.a");
     expect(useLidarrBase.getState().apiKey).toBe("KEY_A");
     expect(useLidarrBase.getState().isConnected).toBe(true);
+    expect(useAudioMuseBase.getState().serverUrl).toBe("http://audiomuse.a");
+    expect(useAudioMuseBase.getState().apiToken).toBe("TOKEN_A");
     expect(useBookmarksBase.getState().bookmarks["track-a"]).toEqual([42]);
     expect(useBookmarksBase.getState().bookmarks["track-b"]).toBeUndefined();
 

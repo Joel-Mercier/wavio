@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
@@ -42,8 +42,11 @@ export default function DiscoveryScreen() {
   const isConnected = useLidarr((store) => store.isConnected);
 
   const filtersSheetRef = useRef<BottomSheetModal>(null);
-  const [term, setTerm] = useState("");
-  const [debouncedTerm, setDebouncedTerm] = useState("");
+  // Seeded when another screen sends a name here to look up (e.g. a similar
+  // artist the library doesn't hold), so the results are already on screen.
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [term, setTerm] = useState(q ?? "");
+  const [debouncedTerm, setDebouncedTerm] = useState(q ?? "");
   const debounce = useDebounce(400);
 
   const { data, isLoading, error } = useLidarrSearch(debouncedTerm);

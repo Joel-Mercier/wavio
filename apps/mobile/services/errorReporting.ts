@@ -47,6 +47,7 @@ export type ReportApi =
   | "lrclib"
   | "lidarr"
   | "musicbrainz"
+  | "audiomuse"
   | "github";
 
 export type ReportContext = {
@@ -65,6 +66,18 @@ export type ReportContext = {
    * an empty/stale music folder browse) and not a reportable bug.
    */
   notFoundIsExpected?: boolean;
+  /**
+   * When true, a 401/403 is expected — the call is validating user-entered
+   * credentials (e.g. an integration's API token), so a rejection is input to
+   * correct, not a bug.
+   */
+  unauthorizedIsExpected?: boolean;
+  /**
+   * When true, a 503 is expected — the endpoint exists but the deployment can't
+   * answer it yet (e.g. AudioMuse's artist index was never built). A deployment
+   * state the UI degrades around, not a bug.
+   */
+  serviceUnavailableIsExpected?: boolean;
   /** Extra structured context attached to the Sentry event. */
   extra?: Record<string, unknown>;
 };
@@ -227,6 +240,26 @@ function isExpectedFailure(
     ctx.notFoundIsExpected &&
     ((axios.isAxiosError(error) && error.response?.status === 404) ||
       ctx.status === 70)
+  ) {
+    return true;
+  }
+  // A rejected credential the caller anticipates: the token the user just typed
+  // into an integration's setup form is wrong. Surfaced via an error toast, not
+  // a bug.
+  if (
+    ctx.unauthorizedIsExpected &&
+    axios.isAxiosError(error) &&
+    (error.response?.status === 401 || error.response?.status === 403)
+  ) {
+    return true;
+  }
+  // The endpoint is there but the deployment can't serve it yet — an index the
+  // operator hasn't built, a dependency still warming up. The caller degrades to
+  // an empty state, so it is a deployment state rather than an app bug.
+  if (
+    ctx.serviceUnavailableIsExpected &&
+    axios.isAxiosError(error) &&
+    error.response?.status === 503
   ) {
     return true;
   }

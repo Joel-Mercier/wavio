@@ -19,10 +19,12 @@ import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
+import Radar from "lucide-react-native/dist/esm/icons/radar.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import Waypoints from "lucide-react-native/dist/esm/icons/waypoints.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import {
   createContext,
@@ -75,6 +77,10 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
+import useAudioMuse, {
+  selectSimilarTracksAvailable,
+  selectSongPathAvailable,
+} from "@/stores/audioMuse";
 import useQueue from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -126,6 +132,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
+  const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const {
     isTrackDownloaded,
@@ -402,6 +410,30 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     router.navigate({
       pathname: "/tracks/[id]/similar",
       params: { id: track.id, title: track.title },
+    });
+  };
+
+  const handleAudioMuseSimilarPress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/tracks/[id]/audiomuse-similar",
+      params: { id: track.id, title: track.title },
+    });
+  };
+
+  // Seeds only the start: the path needs somewhere to go, which is picked in the
+  // screen.
+  const handleAudioMuseSongPathPress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    router.navigate({
+      pathname: "/playlists/new-path",
+      params: {
+        startId: track.id,
+        startTitle: track.title ?? "",
+        startAuthor: track.artist ?? "",
+      },
     });
   };
 
@@ -874,6 +906,32 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                       <Sparkles size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.tracks.similarSongs")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {audioMuseSimilarAvailable && (
+                  <FadeOutScaleDown
+                    onPress={handleAudioMuseSimilarPress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <Radar size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.audioMuseSimilarTracks")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {audioMuseSongPathAvailable && (
+                  <FadeOutScaleDown
+                    onPress={handleAudioMuseSongPathPress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <Waypoints size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.audioMuseSongPath")}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>

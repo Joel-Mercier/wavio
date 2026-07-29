@@ -35,6 +35,7 @@ export const SCOPED_STORE_NAMES = [
   "librarySyncStore",
   "lidarrStore",
   "musicBrainzStore",
+  "audioMuseStore",
 ] as const;
 
 // Scoped stores that must NOT travel in a backup file — both hold state that is
