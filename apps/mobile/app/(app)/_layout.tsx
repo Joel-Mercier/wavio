@@ -45,6 +45,7 @@ import { loadResumePositions } from "@/services/resumePositions";
 import { rewriteQueueRoutes } from "@/services/routeSwap";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
+import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
@@ -159,6 +160,7 @@ export default function AppLayout() {
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
         useMusicBrainz.getState().__reset();
+        useAudioMuse.getState().__reset();
         useServerExtensionsBase.getState().reset();
       });
       // Clear the previous server's reachability state so the new server starts
@@ -205,6 +207,7 @@ export default function AppLayout() {
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
+    useAudioMuse.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });
@@ -280,6 +283,10 @@ export default function AppLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="playlists/new" />
             <Stack.Screen name="playlists/new-smart" />
+            <Stack.Screen name="playlists/new-ai" />
+            <Stack.Screen name="playlists/new-fingerprint" />
+            <Stack.Screen name="playlists/new-path" />
+            <Stack.Screen name="playlists/new-mood" />
             <Stack.Screen name="playlists/[id]/edit-rules" />
             <Stack.Screen name="internet-radio-stations/new" />
             <Stack.Screen name="podcast-channels/new" />

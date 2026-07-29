@@ -50,6 +50,7 @@ import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
+import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
@@ -369,14 +370,7 @@ export default function FloatingPlayer() {
     ),
   }));
 
-  if (
-    !playingTrack ||
-    pathname.startsWith("/player") ||
-    pathname.startsWith("/lyrics") ||
-    pathname.startsWith("/playlists/new") ||
-    pathname.includes("/edit-rules") ||
-    pathname.startsWith("/internet-radio-stations/new")
-  ) {
+  if (!playingTrack || hidesFloatingPlayer(pathname)) {
     return null;
   }
 

@@ -9,6 +9,7 @@ import type {
   AlbumID3,
   AlbumInfo,
   AlbumWithSongsID3,
+  ArtistID3,
   ArtistInfo,
   ArtistInfo2,
   ArtistsID3,
@@ -140,6 +141,62 @@ export const getSong = async (id: string) =>
 // `notFoundIsExpected` keeps a deleted track — the whole point of the probe —
 // out of Sentry.
 const SONGS_EXIST_CONCURRENCY = 4;
+
+// Neither is there a batch fetch, so hydrating a list of ids costs one request
+// each. Ids the server no longer knows are dropped rather than failing the whole
+// set: the caller's id list comes from an external index (AudioMuse-AI) that can
+// lag a library change.
+export const getSongsByIds = async (ids: string[]): Promise<Child[]> => {
+  if (ids.length === 0) return [];
+  const songs = await mapWithConcurrency(
+    ids,
+    SONGS_EXIST_CONCURRENCY,
+    async (id) => {
+      try {
+        const rsp = await subsonicRequest<{ song: Child }>(
+          "/rest/getSong",
+          { id },
+          {},
+          { notFoundIsExpected: true },
+        );
+        return rsp.song;
+      } catch {
+        return null;
+      }
+    },
+  );
+  return songs.filter((song) => !!song);
+};
+
+// Same story for artists, minus even the option of a batch: /rest/getArtist is
+// the only lookup, and it answers with the artist's whole discography when all
+// the caller wants is the name and cover. Callers that already hold the artist
+// index should match against that instead of paying this.
+export const getArtistsByIds = async (ids: string[]): Promise<ArtistID3[]> => {
+  if (ids.length === 0) return [];
+  const artists = await mapWithConcurrency(
+    ids,
+    SONGS_EXIST_CONCURRENCY,
+    async (id) => {
+      try {
+        const rsp = await getArtist(id);
+        return rsp.artist ?? null;
+      } catch {
+        return null;
+      }
+    },
+  );
+  return artists.filter((artist) => !!artist).map(stripArtistAlbums);
+};
+
+// getArtist answers ArtistWithAlbumsID3; the album list is dead weight in a
+// carousel and would bloat the persisted query cache, so drop it.
+function stripArtistAlbums({
+  album: _album,
+  ...artist
+}: ArtistWithAlbumsID3): ArtistID3 {
+  return artist;
+}
 
 export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
   const verdicts = await mapWithConcurrency(

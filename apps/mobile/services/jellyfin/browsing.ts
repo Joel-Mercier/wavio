@@ -18,6 +18,7 @@ import type {
   AlbumID3,
   AlbumInfo,
   AlbumWithSongsID3,
+  ArtistID3,
   ArtistInfo,
   ArtistInfo2,
   ArtistsID3,
@@ -190,15 +191,36 @@ export const getArtistInfo = async (id: string) => {
   return fakeEnvelope({ artistInfo: info });
 };
 
+// `includeNotPresent` has no Jellyfin equivalent and is ignored: /Artists/{id}/
+// Similar resolves every candidate — including those a remote provider plugin
+// suggests — against the local library and drops what it can't find, so an
+// artist absent from the library can never come back.
 export const getArtistInfo2 = async (
   id: string,
-  _opts: { count?: number; includeNotPresent?: boolean },
+  { count }: { count?: number; includeNotPresent?: boolean },
 ) => {
-  const item = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
-  const info: ArtistInfo2 = { biography: item.data?.Overview };
+  const [item, similar] = await Promise.all([
+    jellyfinApiInstance.get<BaseItemDto>(`/Users/${userId()}/Items/${id}`, {
+      params: { Fields: COMMON_FIELDS },
+    }),
+    // Best-effort: the biography is the part callers always expect, so a server
+    // that can't answer the similarity query costs the row, not the whole
+    // screen.
+    jellyfinApiInstance
+      .get<JellyfinItemsResult>(`/Artists/${id}/Similar`, {
+        params: {
+          UserId: userId(),
+          Fields: COMMON_FIELDS,
+          Limit: count ?? 20,
+        },
+      })
+      .catch(() => null),
+  ]);
+  const info: ArtistInfo2 = {
+    biography: item.data?.Overview,
+    musicBrainzId: item.data?.ProviderIds?.MusicBrainzArtist,
+    similarArtist: (similar?.data?.Items ?? []).map(mapBaseItemToArtist),
+  };
   return fakeEnvelope({ artistInfo2: info });
 };
 
@@ -380,6 +402,35 @@ export const getSong = async (id: string) => {
   );
   const song: Child = mapBaseItemToChild(rsp.data);
   return fakeEnvelope({ song });
+};
+
+// One call hydrates the whole set. /Items?Ids= answers in its own order, so
+// re-key by id to give the caller its ranking back; ids Jellyfin no longer knows
+// simply drop out.
+export const getSongsByIds = async (ids: string[]): Promise<Child[]> => {
+  if (ids.length === 0) return [];
+  const items = await fetchItems({ Ids: ids.join(",") });
+  const byId = new Map((items.Items ?? []).map((item) => [item.Id, item]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((item): item is BaseItemDto => !!item)
+    .map(mapBaseItemToChild);
+};
+
+// Same one-call hydration for artists — worth having as its own path because
+// getArtist costs *two* requests per artist here (the albums browse plus the
+// item itself), which a 12-artist row would turn into 24.
+export const getArtistsByIds = async (ids: string[]): Promise<ArtistID3[]> => {
+  if (ids.length === 0) return [];
+  const items = await fetchItems({
+    Ids: ids.join(","),
+    IncludeItemTypes: "MusicArtist",
+  });
+  const byId = new Map((items.Items ?? []).map((item) => [item.Id, item]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((item): item is BaseItemDto => !!item)
+    .map(mapBaseItemToArtist);
 };
 
 // Jellyfin filters /Items?Ids= down to what exists, so one call settles the

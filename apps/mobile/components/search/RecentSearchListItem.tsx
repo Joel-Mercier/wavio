@@ -45,7 +45,7 @@ export default function RecentSearchListItem({
   const [gray400] = Uniwind.getCSSVariable(["--color-gray-400"]) as string[];
   const url = useMemo<Href>(() => {
     if (recentSearch.type === "query") {
-      return `/search-results?query=${recentSearch.title}`;
+      return `/search-results?query=${encodeURIComponent(recentSearch.title)}`;
     }
     if (recentSearch.type === "artist") {
       return `/artists/${recentSearch.id}`;

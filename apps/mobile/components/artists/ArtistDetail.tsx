@@ -32,6 +32,8 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import AnimatedHeart from "@/components/AnimatedHeart";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import ArtistCarouselRow from "@/components/artists/ArtistCarouselRow";
+import AudioMuseSimilarArtists from "@/components/artists/AudioMuseSimilarArtists";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -76,6 +78,7 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -93,6 +96,11 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
+
+// Both similar-artist rows cap alike, so the backend one borrows AudioMuse's
+// count rather than keeping a second number in sync by hand. It doubles as the
+// getArtistInfo2 `count` param, which is what decides how many the server sends.
+const SIMILAR_ARTISTS_LIMIT = SIMILAR_ARTISTS_DEFAULT_RESULTS;
 
 export default function ArtistDetail() {
   const [black, white, emerald500, gray200] = Uniwind.getCSSVariable([
@@ -123,8 +131,14 @@ export default function ArtistDetail() {
   // while server data is absent.
   const offlineArtistData = useOfflineArtist(id, serverData == null);
   const data = serverData ?? offlineArtistData;
+  // `includeNotPresent` keeps the recommendations the library doesn't hold:
+  // they're the discovery half of the row, and ArtistCarouselRow renders them
+  // as their own kind of tile rather than a link to a detail screen.
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
-    useArtistInfo2(id, { count: 10 });
+    useArtistInfo2(id, {
+      count: SIMILAR_ARTISTS_LIMIT,
+      includeNotPresent: true,
+    });
   const {
     data: topSongsData,
     isLoading: isLoadingTopSongs,
@@ -805,11 +819,18 @@ export default function ArtistDetail() {
               )}
             </VStack>
             {appearsOnAlbums.length > 0 && (
-              <VStack className="px-6 bg-black pb-6">
-                <Heading className="text-white mb-4">
+              <VStack className="bg-black pb-6">
+                <Heading className="text-white mb-4 px-6">
                   {t("app.artists.appearsOn")}
                 </Heading>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {/* Padding on the scroll content, not the wrapper: an inset
+                    ScrollView clips its items at both edges mid-scroll. The
+                    trailing gap comes from the last item's own mr-6. */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="pl-6"
+                >
                   {appearsOnAlbums.map((album, index) => (
                     <AlbumListItem
                       key={album.id}
@@ -821,6 +842,23 @@ export default function ArtistDetail() {
                 </ScrollView>
               </VStack>
             )}
+            {/* Two kinds of "similar", so two rows rather than one blended
+                list: AudioMuse compares how the artists actually sound, while
+                the backend's own list reflects what listeners play together.
+                Each says where it came from, and they are deliberately not
+                de-duplicated — an artist both agree on is signal. */}
+            <ArtistCarouselRow
+              title={t("app.artists.similarArtists")}
+              subtitle={t("app.artists.similarArtistsSource")}
+              artists={(artistInfoData?.artistInfo2?.similarArtist ?? []).slice(
+                0,
+                SIMILAR_ARTISTS_LIMIT,
+              )}
+            />
+            <AudioMuseSimilarArtists
+              artistId={id}
+              artistName={data?.artist?.name}
+            />
             {artistInfoData?.artistInfo2?.biography && (
               <VStack className="px-6 bg-black">
                 <Heading className="text-white mb-6">

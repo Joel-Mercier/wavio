@@ -97,7 +97,11 @@ export default function RecentSearchesScreen() {
         type: "query",
       });
     }
-    router.navigate(`/(app)/(tabs)/(search)/search-results?query=${query}`);
+    // Encoded, or the value is cut at the first `&` or `#` — searching "R&B"
+    // would arrive at the results screen as "R".
+    router.navigate(
+      `/(app)/(tabs)/(search)/search-results?query=${encodeURIComponent(query)}`,
+    );
   };
 
   return (

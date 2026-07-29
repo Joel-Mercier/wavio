@@ -1240,6 +1240,19 @@ export function restoreServerQueue(
   }
 }
 
+// Append to the queue without ever starting playback. Appending is silent while
+// something is already queued, but on an empty queue enqueueEnd has to set
+// currentIndex, and the queue subscription reads that new current track as a
+// cue to play — so "Add to queue" would start playing, which is the Play
+// button's job and not what the label promises.
+export function enqueueWithoutAutoplay(tracks: QueueTrack[]) {
+  if (tracks.length === 0) return;
+  if (useQueue.getState().getCurrent() == null) {
+    suppressAutoplayOnce = true;
+  }
+  useQueue.getState().enqueueEnd(tracks);
+}
+
 // Take over playback locally from a (now stopped) jukebox session: load the
 // current queue track and resume it at the position the server reached. Arms the
 // pending-resume seek so it re-applies once the media is ready.

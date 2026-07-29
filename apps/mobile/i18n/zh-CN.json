@@ -49,13 +49,20 @@
 				"inputPlaceholder": "想听什么？",
 				"exploreGenres": "按风格浏览",
 				"recentSearches": "搜索历史",
-				"clearRecentSearches": "清除"
+				"clearRecentSearches": "清除",
+				"tabs": {
+					"library": "音乐库",
+					"sound": "声音",
+					"lyrics": "歌词"
+				}
 			},
 			"library": {
 				"title": "音乐库",
 				"searchPlaceholder": "在音乐库中搜索",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
+				"allAlbumsSubtitle": "专辑",
+				"allArtistsSubtitle": "艺人",
 				"search": {
 					"inputPlaceholder": "在音乐库中搜索"
 				}
@@ -64,6 +71,14 @@
 				"title": "创建",
 				"playlistTitle": "歌单",
 				"playlistDescription": "创建歌单",
+				"aiPlaylistTitle": "根据提示生成的播放列表",
+				"aiPlaylistDescription": "描述你想听的内容，让AudioMuse-AI为你生成",
+				"fingerprintTitle": "声波指纹",
+				"fingerprintDescription": "根据您的独特收听习惯生成播放列表",
+				"moodPlaylistTitle": "根据心情创建的播放列表",
+				"moodPlaylistDescription": "选择一种心情，然后用符合这种心情的歌曲来填满播放列表",
+				"songPathTitle": "歌曲路径",
+				"songPathDescription": "从一首歌到另一首歌，一步一个脚印，缓缓前行",
 				"smartPlaylistTitle": "智能歌单",
 				"smartPlaylistDescription": "创建按规则自动更新的歌单",
 				"internetRadioStationTitle": "网络电台",
@@ -72,6 +87,140 @@
 				"podcastChannelDescription": "通过RSS订阅播客",
 				"downloaderTitle": "添加音乐",
 				"downloaderDescription": "搜索并下载音乐到您的服务器"
+			},
+			"audiomuse": {
+				"prompt": {
+					"title": "根据提示生成的播放列表",
+					"description": "描述你想听的内容。AudioMuse-AI 会根据声音、情绪和歌词搜索你的音乐库，从而生成播放列表。",
+					"placeholder": "雨后午后的歌曲",
+					"action": "生成",
+					"newPrompt": "新提示",
+					"failed": "AudioMuse-AI 无法生成播放列表。请重试或重新表述您的提示。",
+					"noResults": "您的书库中没有与该提示词匹配的内容。"
+				},
+				"fingerprint": {
+					"title": "声波指纹",
+					"description": "AudioMuse-AI 会根据你最常播放的歌曲建立一个个人偏好档案，然后在你的音乐库中找出风格最接近的曲目。",
+					"countLabel": "结果数量",
+					"countHint": "介于 {{min}} 和 {{max}}之间。前20首是构建您音乐指纹所依据的歌曲，因此数字越大，意味着发现的歌曲越多。",
+					"action": "生成",
+					"newFingerprint": "新指纹",
+					"failed": "AudioMuse-AI 无法生成您的指纹。请在设置中检查您的媒体服务器凭据。",
+					"noResults": "AudioMuse-AI 无法找到足够的收听记录来构建您的指纹。"
+				},
+				"similar": {
+					"heading": "类似于 {{title}}",
+					"description": "AudioMuse-AI 会将这首曲目的实际音效与您音乐库中的其他曲目进行对比，并返回最接近的匹配结果。",
+					"countLabel": "结果数量",
+					"countHint": "介于 {{min}} 和 {{max}} 之间。",
+					"limitPerArtistLabel": "限制每位艺人的歌曲数量",
+					"limitPerArtistDescription": "防止某位艺术家垄断结果。",
+					"radiusLabel": "半径相似度",
+					"radiusDescription": "根据比赛之间的接近程度对比赛进行分组，并按此顺序排列，以实现更流畅的过渡。",
+					"action": "查找类似曲目",
+					"newSearch": "新搜索",
+					"failed": "AudioMuse-AI 未能找到类似的曲目。请稍后再试。",
+					"noResults": "AudioMuse-AI 尚未分析这首曲目，因此没有可供比较的对象。"
+				},
+				"mood": {
+					"title": "根据心情创建的播放列表",
+					"heading": "{{mood}} · {{style}}",
+					"description": "AudioMuse-AI 拥有一张音乐声音的地图。在地图上选定一个位置，它就会生成一份包含该位置附近曲目的播放列表。",
+					"modes": {
+						"mood": "心情",
+						"anchor": "锚"
+					},
+					"moods": {
+						"happy": "开心",
+						"sad": "伤心",
+						"aggressive": "咄咄逼人",
+						"party": "聚会",
+						"relaxed": "轻松自在",
+						"danceable": "适合跳舞的"
+					},
+					"choosePlaceholder": "选择",
+					"loading": "正在加载…",
+					"moodLabel": "心情",
+					"moodDescription": "构建播放列表时应围绕的整体风格。",
+					"styleLabel": "风格",
+					"styleDescription": "每种心情都包含几种音乐类型。这个功能会帮你挑选其中的一种。",
+					"anchorLabel": "锚",
+					"anchorDescription": "这是您从 AudioMuse-AI 的“Alchemy”页面保存下来的其中一个锚点。",
+					"countLabel": "结果数量",
+					"countHint": "介于 {{min}} 和 {{max}} 之间。",
+					"limitPerArtistLabel": "限制每位艺人的歌曲数量",
+					"limitPerArtistDescription": "防止某位艺人的歌曲占据整个播放列表。",
+					"action": "生成",
+					"newSearch": "新搜索",
+					"unavailable": "此次 AudioMuse-AI 的部署未报告任何情绪。",
+					"loadFailed": "无法从 AudioMuse-AI 加载情绪。",
+					"retry": "重试",
+					"failed": "AudioMuse-AI 无法生成播放列表。请稍后再试。",
+					"noResults": "你音乐库里的曲子没有哪一首听起来像那首。",
+					"styleCount_other": "{{count}} 样式",
+					"styleSongs_other": "{{count}} 这种风格的歌曲"
+				},
+				"path": {
+					"title": "歌曲路径",
+					"heading": "{{start}} → {{end}}",
+					"description": "AudioMuse-AI 循序渐进地从头到尾播放，每首歌曲都像是在前一首的基础上迈出小小的一步，因此播放列表的过渡是自然流畅的，而非突兀跳跃。",
+					"startLabel": "开始",
+					"endLabel": "结束",
+					"choosePlaceholder": "选择一首歌曲、一种心情或一个锚点",
+					"searchPlaceholder": "按歌曲、艺人或专辑搜索",
+					"searchHint": "请输入至少3个字符。",
+					"searchEmpty": "AudioMuse-AI 分析的结果中没有与之匹配的条目。",
+					"modes": {
+						"song": "歌曲",
+						"mood": "心情",
+						"anchor": "锚"
+					},
+					"moods": {
+						"happy": "开心",
+						"sad": "伤心",
+						"aggressive": "咄咄逼人",
+						"relaxed": "轻松自在",
+						"danceable": "适合跳舞的"
+					},
+					"oneResolvedEndpoint": "另一端已经是一种氛围或锚点，而一条路径只能有一个。请在此选择一首歌。",
+					"lyricsSongsOnly": "两首歌曲之间，有一条与歌词相呼应的线索贯穿其中。",
+					"lyricsLabel": "跟着歌词唱",
+					"lyricsDescription": "重点阐述了歌曲的主题，而非其音乐风格。",
+					"blendLabel": "混合",
+					"blendDescription": "锚端与另一端之间的距离有多远。",
+					"lengthLabel": "路上的歌",
+					"lengthHint": "从 {{min}} 到 {{max}}，两端都算在内。歌曲越多，步长就越小，过渡也越平滑。",
+					"fixSizeLabel": "保持路径大小完全一致",
+					"fixSizeDescription": "将路径填充至确切长度，即使需要采取相似度较低的步骤也是如此。若关闭此选项，则会提前停止，而非填满至目标长度。",
+					"action": "查找路径",
+					"newPath": "新路径",
+					"failed": "AudioMuse-AI 无法构建路径。请尝试更长的路径或不同的起点和终点。",
+					"noResults": "AudioMuse-AI 未在两者之间找到路径。"
+				},
+				"results": {
+					"saveAction": "保存为播放列表",
+					"queueAction": "加入播放队列",
+					"queued_other": "{{count}} 已添加到播放列表中的歌曲",
+					"missing_other": "{{count}} 这些歌曲已不在您的资料库中"
+				},
+				"notScanned": {
+					"library": "AudioMuse-AI 尚未分析您的音乐库，因此无法进行搜索。请从其仪表盘开始分析，然后在设置中刷新功能。",
+					"clap": "AudioMuse-AI 尚未建立其声音索引。请在其仪表盘中运行 CLAP 分析，然后在设置中刷新特征。"
+				},
+				"search": {
+					"soundEmpty": "你的音乐库里没有哪首歌是那种风格的。",
+					"lyricsEmpty": "您的歌词库中没有与之匹配的歌词。"
+				},
+				"save": {
+					"title": "保存为播放列表",
+					"namePlaceholder": "播放列表名称",
+					"targetLabel": "创建者：",
+					"targetHint": "请在“设置” > “集成” > “AudioMuse-AI”中进行更改。",
+					"instantSuffixNote": "AudioMuse-AI 会将其命名为“{{name}}”。",
+					"action": "保存",
+					"success": "播放列表已保存",
+					"failed": "无法保存播放列表"
+				}
 			},
 			"carAuto": {
 				"home": "首页",
@@ -133,10 +282,16 @@
 			},
 			"artists": {
 				"label": "艺人",
+				"notInLibrary": "不在您的书库中",
+				"notInLibraryAddWithLidarr": "您的图书馆中没有此资源 • 在Lidarr中查找",
 				"coverAlt": "艺人封面",
 				"topSongs": "热门歌曲",
 				"discography": "作品集",
 				"appearsOn": "参与作品",
+				"soundsLike": "听起来像是",
+				"poweredByAudioMuse": "由 AudioMuse-AI 提供支持",
+				"similarArtists": "类似的艺术家",
+				"similarArtistsSource": "来自您的音乐服务器",
 				"about": "关于",
 				"rate": "评分",
 				"musicBrainz": "在 MusicBrainz 中打开",
@@ -565,7 +720,7 @@
 					},
 					"integrations": {
 						"title": "集成",
-						"description": "使用 MusicBrainz 修正您的音乐库中的标签"
+						"description": "将外部服务连接到您的库"
 					},
 					"appearance": {
 						"title": "外观",
@@ -597,7 +752,7 @@
 					}
 				},
 				"integrations": {
-					"description": "连接外部音乐数据库，以丰富和修正您的音乐库。",
+					"description": "连接外部服务，丰富您的音乐库，并在其中发现音乐。",
 					"statuses": {
 						"configured": "已连接",
 						"notConfigured": "未设置"
@@ -680,6 +835,95 @@
 							"apply": "应用",
 							"applyToFiles": "向文件写入数据",
 							"applying": "写作"
+						}
+					},
+					"audiomuse": {
+						"title": "AudioMuse-AI",
+						"description": "根据您的音频库生成播放列表",
+						"serverUrlLabel": "服务器网址",
+						"apiTokenLabel": "API 令牌",
+						"apiTokenPlaceholder": "如果未启用身份验证，请留空简体中文（大陆）",
+						"getTokenAction": "在哪里可以找到 API 令牌？",
+						"tokenHelpTitle": "查找您的 API 令牌",
+						"tokenHelpStep1": "在浏览器中打开 AudioMuse-AI，并以管理员身份登录。",
+						"tokenHelpStep2": "转到“管理”>“设置向导”，查找 API 令牌设置。",
+						"tokenHelpStep3": "请将令牌复制到此处。如果您的部署是在关闭身份验证的情况下运行的，请将此字段留空。",
+						"tokenHelpClose": "我知道了",
+						"testAndSaveAction": "测试并保存",
+						"connectionSuccess": "已连接至 AudioMuse-AI",
+						"connectionFailed": "无法连接到 AudioMuse-AI。请检查服务器 URL。",
+						"tokenRejected": "AudioMuse-AI 拒绝了该 API 令牌。",
+						"removedMessage": "已断开 AudioMuse 与 AI 的连接",
+						"features": {
+							"title": "可用功能",
+							"description": "AudioMuse-AI 的部署支持自定义配置，因此该应用仅提供服务器响应的内容。",
+							"available": "可用空间",
+							"unavailable": "不可用",
+							"aiPlaylists": "根据提示生成的播放列表",
+							"aiPlaylistsHint": "您可以通过图库中的“+”按钮，或通过“创建”选项卡来创建一个。",
+							"noAiProvider": "请从下方选择一家 AI 服务提供商以启用此功能",
+							"soundSearch": "按发音搜索",
+							"soundSearchDetail": "描述一首歌曲的音色，并找到与之相符的歌曲，即使你不知道它的名字。",
+							"soundSearchHint": "在搜索中使用“声音”选项卡。",
+							"lyricsSearch": "按歌词搜索",
+							"lyricsSearchDetail": "根据歌词所表达的主题来查找歌曲，而不是根据歌词的具体措辞。",
+							"lyricsSearchHint": "在搜索时使用“歌词”选项卡。",
+							"fingerprint": "声波指纹",
+							"fingerprintDetail": "根据您的独特收听习惯生成播放列表",
+							"fingerprintHint": "您可以通过图库中的“+”按钮，或通过“创建”选项卡来创建一个。",
+							"similarTracks": "听起来相似的曲目",
+							"similarTracksDetail": "根据您音乐库中任意一首歌曲，从听起来最接近的曲目中创建一个播放列表。",
+							"similarTracksHint": "在列表或播放器中，打开任意曲目的菜单。",
+							"similarArtists": "风格相似的歌手",
+							"similarArtistsDetail": "发现那些音乐风格与你正在收听的歌曲相似的艺术家。",
+							"similarArtistsHint": "打开任意一位艺术家的页面，向下滚动至“类似风格”部分。",
+							"moodPlaylists": "按心情分类的播放列表",
+							"moodPlaylistsDetail": "围绕一种心情，或者围绕你在“Alchemy”页面上保存的锚点，创建一个播放列表。",
+							"moodPlaylistsHint": "您可以通过图库中的“+”按钮，或通过“创建”选项卡来创建一个。",
+							"songPath": "歌曲路径",
+							"songPathDetail": "制作一份播放列表，让歌曲之间自然过渡，一步一个脚印地衔接。",
+							"songPathDetailLyrics": "制作一份歌曲之间能自然过渡的播放列表。这种编排既可以遵循歌词，也可以遵循旋律。",
+							"songPathHint": "您可以通过库中的“+”按钮、在“创建”选项卡中，或通过任何音轨的菜单来创建一个。",
+							"library": "库分析",
+							"libraryNotAnalyzed": "尚未进行任何分析——搜索和提示将返回空结果",
+							"libraryUnknown": "此次部署未报告其分析进度",
+							"refreshLabel": "刷新功能",
+							"refreshDescription": "再次询问服务器支持哪些功能。",
+							"refreshAction": "刷新",
+							"refreshed": "功能已更新",
+							"libraryAnalyzed_other": "{{count}} 已分析的曲目"
+						},
+						"fingerprint": {
+							"title": "声波指纹",
+							"description": "该指纹是根据您自己的播放历史生成的，AudioMuse-AI 会从您的媒体服务器中读取这些数据。它需要您在该媒体服务器上拥有一个账户——仅凭其 API 令牌是不够的。",
+							"jellyfinUserLabel": "Jellyfin 用户名或用户 ID",
+							"jellyfinUserPlaceholder": "您在媒体服务器上的用户名",
+							"jellyfinSecretLabel": "Jellyfin API 令牌",
+							"navidromeUserLabel": "Navidrome 用户名",
+							"navidromeUserPlaceholder": "您在媒体服务器上的用户名",
+							"navidromeSecretLabel": "Navidrome 密码或 API 令牌",
+							"secretPlaceholder": "可选 — AudioMuse-AI 将回退到其自身的",
+							"noCredentialsNote": "此部署配置了创建 AudioMuse-AI 账户时使用的配置文件，因此此处无需输入任何内容。",
+							"saved": "已保存媒体服务器的登录凭据"
+						},
+						"server": {
+							"label": "媒体服务器",
+							"description": "应使用该部署中的哪台媒体服务器。查询结果将包含该服务器的曲目 ID。",
+							"defaultOption": "服务器默认设置"
+						},
+						"aiProvider": {
+							"label": "人工智能服务提供商",
+							"description": "哪个模型能根据您的提示生成播放列表。请选择您的 AudioMuse-AI 持有相应凭据的那个模型。",
+							"autoOption": "服务器默认设置",
+							"autoDetail": "目前 {{provider}}"
+						},
+						"saveTarget": {
+							"label": "使用以下方式保存播放列表：",
+							"description": "当您保存生成的曲目列表时，由谁来创建播放列表？",
+							"wavio": "Wavio",
+							"wavioDescription": "Wavio 会使用您的账户，在您的服务器上创建播放列表。",
+							"audiomuse": "AudioMuse-AI",
+							"audiomuseDescription": "AudioMuse-AI 会使用其设置时的凭据，在您的服务器上创建播放列表。它总会将“_instant”添加到您所选名称的末尾。"
 						}
 					}
 				},
@@ -1172,6 +1416,8 @@
 				"showCredits": "查看制作信息",
 				"similarSongs": "相似歌曲",
 				"similarSongsTitle": "与 {{title}} 相似的歌曲",
+				"audioMuseSimilarTracks": "查找发音相似的曲目（AudioMuse-AI）",
+				"audioMuseSongPath": "从这首歌开始创作（AudioMuse-AI）",
 				"trackInfoModalTitle": "歌曲信息",
 				"rateModalTitle": "给歌曲评分",
 				"creditsModalTitle": "制作信息",
@@ -1241,6 +1487,7 @@
 					"likedSongs": "播放自喜欢的歌曲",
 					"folder": "播放自文件夹",
 					"similar": "播放自相似歌曲",
+					"audiomuse": "正在播放来自 AudioMuse-AI 的内容",
 					"albumList": "从专辑中播放",
 					"playlistList": "从播放列表中播放"
 				},
@@ -1348,20 +1595,20 @@
 			},
 			"shared": {
 				"sort": {
-					"playlistOrder": "Playlist order",
-					"addedAt": "Recent",
-					"downloadedAt": "Recently downloaded",
-					"alphabetical": "Alphabetical",
-					"artist": "Artist",
+					"playlistOrder": "播放列表顺序",
+					"addedAt": "最近",
+					"downloadedAt": "最近下载的",
+					"alphabetical": "按字母顺序排列",
+					"artist": "艺术家",
 					"albumArtist": "专辑艺人",
-					"album": "Album",
+					"album": "专辑",
 					"year": "发行年份",
 					"genre": "流派",
 					"duration": "时长",
 					"playCount": "播放次数",
 					"rating": "评分",
-					"size": "File size",
-					"songCount": "Tracks",
+					"size": "文件大小",
+					"songCount": "曲目",
 					"albumCount": "专辑"
 				},
 				"advancedSettings": "高级设置",
@@ -1402,9 +1649,9 @@
 					"artists": "艺人",
 					"playlists": "歌单",
 					"podcasts": "播客",
-					"radioStations": "Radio stations",
-					"folders": "Folders",
-					"songs": "Songs"
+					"radioStations": "广播电台",
+					"folders": "文件夹",
+					"songs": "歌曲"
 				},
 				"save": "保存",
 				"done": "完成",
@@ -1412,7 +1659,7 @@
 				"seeLess": "收起",
 				"seeAll": "查看全部",
 				"noData": "空",
-				"noDataOffline": "Nothing available offline",
+				"noDataOffline": "离线时无可用内容",
 				"toastSuccessTitle": "成功",
 				"toastErrorTitle": "错误",
 				"rateSuccessMessage": "已评分",
