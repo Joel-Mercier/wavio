@@ -288,3 +288,29 @@ export const getArtistAppearances = async (
   }
   return { artistAppearances: { album }, status: "ok" as const };
 };
+
+const ARTIST_SONGS_CONCURRENCY = 4;
+
+// Subsonic has no "songs by artist" endpoint — search3 on the artist name would
+// both miss tracks and cap out — so the discography is the index: getArtist
+// lists the albums and each getAlbum answers with its tracklist. Songs come back
+// in album order, then disc/track within an album. An album that fails to load
+// is skipped rather than sinking the whole list.
+export const getArtistSongs = async (id: string) => {
+  const artistRsp = await getArtist(id);
+  const albums = artistRsp.artist?.album ?? [];
+  const albumSongs = await mapWithConcurrency(
+    albums,
+    ARTIST_SONGS_CONCURRENCY,
+    async (album) => {
+      try {
+        const rsp = await getAlbum(album.id);
+        return rsp.album?.song ?? [];
+      } catch {
+        return [];
+      }
+    },
+  );
+  const song: Child[] = albumSongs.flat();
+  return { artistSongs: { song }, status: "ok" as const };
+};

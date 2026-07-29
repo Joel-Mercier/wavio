@@ -161,6 +161,23 @@ export const getArtistAppearances = async (
   return fakeEnvelope({ artistAppearances: { album } });
 };
 
+// Every audio track of the artist, ordered by album then disc/track number.
+// `ArtistIds` is the same filter getArtist uses for the albums, so this stays
+// the tracklist of the discography the artist screen shows.
+export const getArtistSongs = async (id: string) => {
+  const rsp = await fetchItems(
+    {
+      IncludeItemTypes: "Audio",
+      ArtistIds: id,
+      SortBy: "Album,ParentIndexNumber,IndexNumber,SortName",
+      SortOrder: "Ascending",
+    },
+    { notFoundIsExpected: true },
+  );
+  const song: Child[] = (rsp.Items ?? []).map(mapBaseItemToChild);
+  return fakeEnvelope({ artistSongs: { song } });
+};
+
 export const getArtistInfo = async (id: string) => {
   const item = await jellyfinApiInstance.get<BaseItemDto>(
     `/Users/${userId()}/Items/${id}`,
