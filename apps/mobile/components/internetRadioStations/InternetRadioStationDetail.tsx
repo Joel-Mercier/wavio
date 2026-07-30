@@ -131,7 +131,11 @@ export default function InternetRadioStationDetail() {
   const image = imageUrl || meta.image || meta["twitter:image"];
   const colors = useImageColors(image);
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
 
   const isRadioBrowser = source === "radioBrowser";
 

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createDynamicScopedStorage } from "@/config/storage";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
+import { dispersedShuffle } from "@/utils/shuffle";
 
 export type QueueSource = {
   type:
@@ -39,20 +40,22 @@ export type QueueTrack = {
   [key: string]: any;
 };
 
+// `queue` is always the real playback order: shuffling permutes the array
+// itself rather than maintaining a parallel traversal order beside it. That is
+// what every consumer renders or exports (the Queue screen, the player's
+// prev/next preview, Android Auto, the server play-queue sync), so keeping a
+// second order would — and did, see #137 — show tracks that never play.
 interface QueueStore {
   queue: QueueTrack[];
   currentIndex: number | null;
   removePlayed: boolean;
   repeatMode: "off" | "all" | "one";
-  // Optional context subset that defines the loop scope for repeatMode "all"
-  // Represented by track ids to remain stable across reorders
-  contextIds: string[] | null;
   // Shuffle mode state
   shuffle: boolean;
-  // Ordered list of ids representing the traversal order when shuffle is enabled
-  shuffleOrderIds: string[] | null;
-  // Cursor within shuffleOrderIds that points to the current track id
-  shuffleCursor: number | null;
+  // The queue's ids in their pre-shuffle order, snapshotted when shuffle is
+  // turned on so turning it off can restore the source order. Null while
+  // shuffle is off, where `queue` is already that order.
+  originalOrderIds: string[] | null;
   // Where the current queue was played from (Spotify-style "Playing from …")
   source: QueueSource;
   setQueue: (
@@ -64,7 +67,6 @@ interface QueueStore {
   setCurrentIndex: (index: number | null) => void;
   setRemovePlayed: (remove: boolean) => void;
   setRepeatMode: (mode: "off" | "all" | "one") => void;
-  setContext: (trackIds: string[] | null) => void;
   setShuffle: (enabled: boolean) => void;
 
   enqueueNext: (track: QueueTrack | QueueTrack[]) => void;
@@ -112,15 +114,56 @@ function capQueueWindow(
   };
 }
 
+// Group same-artist tracks apart rather than drawing positions independently —
+// a uniform shuffle regularly stacks three tracks by one artist in a row, which
+// reads as broken. Falls back to the artist name, then to nothing (each such
+// track becomes its own group) when the backend gave us no artist id.
+function shuffleTracks(tracks: QueueTrack[]): QueueTrack[] {
+  return dispersedShuffle(tracks, (track) => {
+    const id = typeof track.artistId === "string" ? track.artistId : undefined;
+    if (id) return id;
+    return typeof track.artist === "string" && track.artist
+      ? `name:${track.artist}`
+      : undefined;
+  });
+}
+
+// A repeat-all wrap under shuffle starts a fresh random pass, so the loop isn't
+// the same order forever. Never lead with the track that just finished.
+function reshuffleForNewPass(queue: QueueTrack[]): QueueTrack[] {
+  if (queue.length < 2) return queue;
+  const lastId = queue[queue.length - 1].id;
+  const next = shuffleTracks(queue);
+  if (next[0].id === lastId) {
+    const swapAt = 1 + Math.floor(Math.random() * (next.length - 1));
+    [next[0], next[swapAt]] = [next[swapAt], next[0]];
+  }
+  return next;
+}
+
+// Keep the pre-shuffle order in step with a queue whose contents changed:
+// dropped ids fall out, ids added while shuffled (enqueues) land at the end so
+// turning shuffle off doesn't lose them. Only meaningful while shuffle is on.
+function reconcileOriginalOrder(
+  previous: string[] | null,
+  queue: QueueTrack[],
+): string[] {
+  const present = new Set(queue.map((t) => t.id));
+  const order = previous ? previous.filter((id) => present.has(id)) : [];
+  const known = new Set(order);
+  for (const track of queue) {
+    if (!known.has(track.id)) order.push(track.id);
+  }
+  return order;
+}
+
 const initialQueueState = {
   queue: [] as QueueTrack[],
   currentIndex: null as number | null,
   removePlayed: false,
   repeatMode: "off" as "off" | "all" | "one",
-  contextIds: null as string[] | null,
   shuffle: false,
-  shuffleOrderIds: null as string[] | null,
-  shuffleCursor: null as number | null,
+  originalOrderIds: null as string[] | null,
   source: null as QueueSource,
 };
 
@@ -134,85 +177,28 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
     set(() => ({ ...initialQueueState }));
   },
 
-  // Build a new shuffle order constrained by current context (if any)
-  // and ensure the current track id is placed at the cursor position.
-  // This helper never escapes the store and does not mutate state directly.
-  // It returns { orderIds, cursor }.
-  _buildShuffleOrder: (
-    state: Pick<QueueStore, "queue" | "currentIndex" | "contextIds">,
-  ) => {
-    const hasContext = !!(state.contextIds && state.contextIds.length > 0);
-    const idsInQueue = state.queue.map((t) => t.id);
-    const queueIdSet = hasContext ? new Set(idsInQueue) : null;
-    const sourceIds =
-      hasContext && queueIdSet
-        ? (state.contextIds as string[]).filter((id) => queueIdSet.has(id))
-        : idsInQueue;
-    const currentId =
-      state.currentIndex != null
-        ? state.queue[state.currentIndex]?.id
-        : undefined;
-    // Shuffle everything except the current id, then pin current at index 0
-    // so the full remaining order sits ahead of the cursor.
-    const rest = currentId
-      ? sourceIds.filter((id) => id !== currentId)
-      : sourceIds.slice();
-    for (let i = rest.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rest[i], rest[j]] = [rest[j], rest[i]];
-    }
-    const order = currentId ? [currentId, ...rest] : rest;
-    let cursor: number | null = null;
-    if (currentId) {
-      cursor = order.indexOf(currentId);
-      if (cursor === -1) cursor = null;
-    }
-    return { orderIds: order, cursor };
-  },
-
-  setQueue: (tracks, startIndex = 0, source = null) => {
+  // Replaces the queue *without* reshuffling — its callers are the Queue
+  // screen's manual reorder and the server play-queue restore, both of which
+  // hand over an order that must survive verbatim. Starting playback with
+  // shuffle applied is playNow's job. Omitting `source` keeps the current one,
+  // so reordering the queue doesn't wipe the "Playing from …" label.
+  setQueue: (tracks, startIndex = 0, source) => {
     set((state) => {
       const capped = capQueueWindow(tracks, startIndex);
-      const nextTracks = capped.tracks;
+      const nextTracks = [...capped.tracks];
       const nextStart = capped.startIndex;
-      // When replacing the queue, drop context if it no longer applies
-      const newIds = new Set(nextTracks.map((t) => t.id));
-      const nextContext = state.contextIds
-        ? state.contextIds.filter((id) => newIds.has(id))
-        : null;
-      const base: Partial<QueueStore> = {
-        queue: [...nextTracks],
+      return {
+        queue: nextTracks,
         currentIndex:
           nextTracks.length === 0
             ? null
             : nextStart != null
               ? Math.max(0, Math.min(nextStart, nextTracks.length - 1))
               : 0,
-        contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
-        source,
-      };
-      if (state.shuffle) {
-        const built = (
-          get() as unknown as {
-            _buildShuffleOrder: (s: unknown) => {
-              orderIds: string[];
-              cursor: number | null;
-            };
-          }
-        )._buildShuffleOrder({
-          ...state,
-          ...base,
-        });
-        return {
-          ...base,
-          shuffleOrderIds: built.orderIds,
-          shuffleCursor: built.cursor,
-        } as Partial<QueueStore>;
-      }
-      return {
-        ...base,
-        shuffleOrderIds: null,
-        shuffleCursor: null,
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(state.originalOrderIds, nextTracks)
+          : null,
+        ...(source !== undefined ? { source } : {}),
       } as Partial<QueueStore>;
     });
   },
@@ -222,49 +208,19 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       return {
         queue: [],
         currentIndex: null,
-        contextIds: null,
-        shuffleOrderIds: null,
-        shuffleCursor: null,
+        originalOrderIds: null,
         source: null,
       };
     });
   },
 
   setCurrentIndex: (index) => {
-    set((state) => {
-      const nextIndex =
+    set((state) => ({
+      currentIndex:
         index == null
           ? null
-          : Math.max(0, Math.min(index, state.queue.length - 1));
-      // Update shuffle cursor to align with the selected id
-      if (!state.shuffle || nextIndex == null)
-        return { currentIndex: nextIndex };
-      const targetId = state.queue[nextIndex]?.id;
-      if (!targetId) return { currentIndex: nextIndex };
-      let order = state.shuffleOrderIds ?? [];
-      let cursor: number | null = order.indexOf(targetId);
-      if (cursor === -1) {
-        // Rebuild to include the target and align cursor
-        const built = (
-          get() as unknown as {
-            _buildShuffleOrder: (s: unknown) => {
-              orderIds: string[];
-              cursor: number | null;
-            };
-          }
-        )._buildShuffleOrder({
-          ...state,
-          currentIndex: nextIndex,
-        });
-        order = built.orderIds;
-        cursor = built.cursor;
-      }
-      return {
-        currentIndex: nextIndex,
-        shuffleOrderIds: order,
-        shuffleCursor: cursor,
-      } as Partial<QueueStore>;
-    });
+          : Math.max(0, Math.min(index, state.queue.length - 1)),
+    }));
   },
 
   setRemovePlayed: (remove) => {
@@ -272,73 +228,60 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   },
 
   setRepeatMode: (mode) => {
-    set((state) => {
-      // Changing repeat mode can alter context application; rebuild shuffle if active
-      if (!state.shuffle) return { repeatMode: mode };
-      const built = (
-        get() as unknown as {
-          _buildShuffleOrder: (s: unknown) => {
-            orderIds: string[];
-            cursor: number | null;
-          };
-        }
-      )._buildShuffleOrder(state);
-      return {
-        repeatMode: mode,
-        shuffleOrderIds: built.orderIds,
-        shuffleCursor: built.cursor,
-      } as Partial<QueueStore>;
-    });
+    set(() => ({ repeatMode: mode }));
   },
 
-  setContext: (trackIds) => {
-    set((state) => {
-      if (!trackIds || trackIds.length === 0) return { contextIds: null };
-      const availableIds = new Set(state.queue.map((t) => t.id));
-      const filtered = trackIds.filter((id) => availableIds.has(id));
-      const nextContext = filtered.length > 0 ? filtered : null;
-      if (!state.shuffle) return { contextIds: nextContext };
-      const built = (
-        get() as unknown as {
-          _buildShuffleOrder: (s: unknown) => {
-            orderIds: string[];
-            cursor: number | null;
-          };
-        }
-      )._buildShuffleOrder({
-        ...state,
-        contextIds: nextContext,
-      });
-      return {
-        contextIds: nextContext,
-        shuffleOrderIds: built.orderIds,
-        shuffleCursor: built.cursor,
-      } as Partial<QueueStore>;
-    });
-  },
-
+  // Turning shuffle on randomises only what hasn't played yet: the head up to
+  // and including the current track keeps its positions, so "previous" still
+  // walks back through what was actually heard. Turning it off restores the
+  // snapshotted source order and repoints at the same track.
   setShuffle: (enabled) => {
     set((state) => {
       if (enabled === state.shuffle) return state;
-      if (!enabled) {
+
+      if (enabled) {
+        const tailStart =
+          state.currentIndex != null ? state.currentIndex + 1 : 0;
+        const tail = state.queue.slice(tailStart);
         return {
-          shuffle: false,
-          shuffleOrderIds: null,
-          shuffleCursor: null,
-        };
+          shuffle: true,
+          originalOrderIds: state.queue.map((t) => t.id),
+          queue:
+            tail.length > 1
+              ? [...state.queue.slice(0, tailStart), ...shuffleTracks(tail)]
+              : state.queue,
+        } as Partial<QueueStore>;
       }
-      const built = (
-        get() as unknown as {
-          _buildShuffleOrder: (s: unknown) => {
-            orderIds: string[];
-            cursor: number | null;
-          };
+
+      const order = state.originalOrderIds;
+      if (!order || state.queue.length === 0) {
+        return { shuffle: false, originalOrderIds: null };
+      }
+      const byId = new Map(state.queue.map((t) => [t.id, t]));
+      const restored: QueueTrack[] = [];
+      for (const id of order) {
+        const track = byId.get(id);
+        if (track) {
+          restored.push(track);
+          byId.delete(id);
         }
-      )._buildShuffleOrder(state);
+      }
+      // Anything the snapshot never learned about keeps its relative position.
+      for (const track of state.queue) {
+        if (byId.has(track.id)) restored.push(track);
+      }
+      const currentId =
+        state.currentIndex != null
+          ? state.queue[state.currentIndex]?.id
+          : undefined;
+      const nextIndex = currentId
+        ? restored.findIndex((t) => t.id === currentId)
+        : -1;
       return {
-        shuffle: true,
-        shuffleOrderIds: built.orderIds,
-        shuffleCursor: built.cursor,
+        shuffle: false,
+        originalOrderIds: null,
+        queue: restored,
+        currentIndex: nextIndex >= 0 ? nextIndex : state.currentIndex,
       } as Partial<QueueStore>;
     });
   },
@@ -356,27 +299,15 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
           : state.queue.length;
       const nextQueue = state.queue.slice();
       nextQueue.splice(insertAt, 0, ...items);
-      // Keep contextIds as-is; they are based on ids and remain valid
-      const base: Partial<QueueStore> = {
+      // "Play next" means next, shuffle or not — the inserted tracks are never
+      // randomised into the rest of the queue.
+      return {
         queue: nextQueue,
         currentIndex: state.currentIndex ?? (nextQueue.length > 0 ? 0 : null),
-      };
-      if (state.shuffle) {
-        // Append new ids randomly to the remaining order after the cursor
-        const newIds = items.map((t) => t.id);
-        const order = (state.shuffleOrderIds ?? []).slice();
-        // Insert new ids at random positions after current cursor if exists; else at end
-        const startPos =
-          state.shuffleCursor != null ? state.shuffleCursor + 1 : order.length;
-        for (const id of newIds) {
-          const pos =
-            startPos +
-            Math.floor(Math.random() * (order.length - startPos + 1));
-          order.splice(pos, 0, id);
-        }
-        return { ...base, shuffleOrderIds: order } as Partial<QueueStore>;
-      }
-      return base;
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(state.originalOrderIds, nextQueue)
+          : null,
+      } as Partial<QueueStore>;
     });
   },
 
@@ -386,29 +317,19 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       const items = (Array.isArray(track) ? track : [track]).slice(0, capacity);
       if (items.length === 0) return state;
       const nextQueue = state.queue.concat(items);
-      // Keep contextIds as-is; they are based on ids and remain valid
-      const base: Partial<QueueStore> = {
+      return {
         queue: nextQueue,
         currentIndex: state.currentIndex ?? (nextQueue.length > 0 ? 0 : null),
-      };
-      if (state.shuffle) {
-        const newIds = items.map((t) => t.id);
-        const order = (state.shuffleOrderIds ?? []).slice();
-        // Place all new ids at the end in random order
-        const shuffled = newIds.slice();
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return {
-          ...base,
-          shuffleOrderIds: order.concat(shuffled),
-        } as Partial<QueueStore>;
-      }
-      return base;
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(state.originalOrderIds, nextQueue)
+          : null,
+      } as Partial<QueueStore>;
     });
   },
 
+  // The entry point for "start playing this list". With shuffle on, the track
+  // the user actually picked leads and the rest of the list follows in random
+  // order — so the whole context sits ahead of them, as on Spotify.
   playNow: (tracks, startIndex = 0, source = null) => {
     const capped = capQueueWindow(
       Array.isArray(tracks) ? tracks : [tracks],
@@ -417,41 +338,30 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
     const items = capped.tracks;
     const cappedStart = capped.startIndex ?? 0;
     set((state) => {
-      const newIds = new Set(items.map((t) => t.id));
-      const nextContext = state.contextIds
-        ? state.contextIds.filter((id) => newIds.has(id))
-        : null;
-      const base: Partial<QueueStore> = {
-        queue: [...items],
-        currentIndex:
-          items.length === 0
-            ? null
-            : Math.max(0, Math.min(cappedStart, items.length - 1)),
-        contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
-        source,
-      };
-      if (state.shuffle) {
-        const built = (
-          get() as unknown as {
-            _buildShuffleOrder: (s: unknown) => {
-              orderIds: string[];
-              cursor: number | null;
-            };
-          }
-        )._buildShuffleOrder({
-          ...state,
-          ...base,
-        });
+      if (items.length === 0) {
         return {
-          ...base,
-          shuffleOrderIds: built.orderIds,
-          shuffleCursor: built.cursor,
+          queue: [],
+          currentIndex: null,
+          originalOrderIds: null,
+          source,
         } as Partial<QueueStore>;
       }
+      const start = Math.max(0, Math.min(cappedStart, items.length - 1));
+      if (!state.shuffle) {
+        return {
+          queue: [...items],
+          currentIndex: start,
+          originalOrderIds: null,
+          source,
+        } as Partial<QueueStore>;
+      }
+      const lead = items[start];
+      const rest = items.filter((_, i) => i !== start);
       return {
-        ...base,
-        shuffleOrderIds: null,
-        shuffleCursor: null,
+        queue: [lead, ...shuffleTracks(rest)],
+        currentIndex: 0,
+        originalOrderIds: items.map((t) => t.id),
+        source,
       } as Partial<QueueStore>;
     });
   },
@@ -475,13 +385,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       if (ids.length === 0) return state;
       const idSet = new Set(ids);
       const originalIndex = state.currentIndex;
-      const filtered = state.queue.filter((t) => {
-        const remove = idSet.has(t.id);
-        return !remove;
-      });
-      const nextContext = state.contextIds
-        ? state.contextIds.filter((id) => !idSet.has(id))
-        : null;
+      const filtered = state.queue.filter((t) => !idSet.has(t.id));
       let nextIndex: number | null = originalIndex;
       if (originalIndex != null) {
         const removedBefore = state.queue
@@ -491,29 +395,13 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         if (nextIndex >= filtered.length) nextIndex = filtered.length - 1;
         if (filtered.length === 0) nextIndex = null;
       }
-      const base: Partial<QueueStore> = {
+      return {
         queue: filtered,
         currentIndex: nextIndex,
-        contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
-      };
-      if (state.shuffle) {
-        const order = (state.shuffleOrderIds ?? []).filter(
-          (id) => !idSet.has(id),
-        );
-        let cursor = state.shuffleCursor;
-        if (cursor != null) {
-          // Repoint cursor to current id
-          const currentId =
-            nextIndex != null ? filtered[nextIndex]?.id : undefined;
-          cursor = currentId ? order.indexOf(currentId) : null;
-        }
-        return {
-          ...base,
-          shuffleOrderIds: order,
-          shuffleCursor: cursor,
-        } as Partial<QueueStore>;
-      }
-      return base;
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(state.originalOrderIds, filtered)
+          : null,
+      } as Partial<QueueStore>;
     });
   },
 
@@ -525,12 +413,6 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       );
       if (removeSet.size === 0) return state;
       const filtered = state.queue.filter((_, idx) => !removeSet.has(idx));
-      const removedIds = new Set(
-        state.queue.filter((_, idx) => removeSet.has(idx)).map((t) => t.id),
-      );
-      const nextContext = state.contextIds
-        ? state.contextIds.filter((id) => !removedIds.has(id))
-        : null;
       let nextIndex: number | null = state.currentIndex;
       if (state.currentIndex != null) {
         const currentIndex = state.currentIndex ?? 0;
@@ -541,28 +423,13 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         if (nextIndex >= filtered.length) nextIndex = filtered.length - 1;
         if (filtered.length === 0) nextIndex = null;
       }
-      const base: Partial<QueueStore> = {
+      return {
         queue: filtered,
         currentIndex: nextIndex,
-        contextIds: nextContext && nextContext.length > 0 ? nextContext : null,
-      };
-      if (state.shuffle) {
-        const order = (state.shuffleOrderIds ?? []).filter(
-          (id) => !removedIds.has(id),
-        );
-        let cursor = state.shuffleCursor;
-        if (cursor != null) {
-          const currentId =
-            nextIndex != null ? filtered[nextIndex]?.id : undefined;
-          cursor = currentId ? order.indexOf(currentId) : null;
-        }
-        return {
-          ...base,
-          shuffleOrderIds: order,
-          shuffleCursor: cursor,
-        } as Partial<QueueStore>;
-      }
-      return base;
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(state.originalOrderIds, filtered)
+          : null,
+      } as Partial<QueueStore>;
     });
   },
 
@@ -595,225 +462,63 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   next: () => {
     set((state) => {
       if (state.queue.length === 0) return state;
-      if (state.currentIndex == null) {
-        return {
-          currentIndex: state.queue.length > 0 ? 0 : null,
-        };
-      }
-
-      const isRepeatOne = state.repeatMode === "one";
-      const isRepeatAll = state.repeatMode === "all";
+      if (state.currentIndex == null) return { currentIndex: 0 };
 
       // Repeat one: stay on the same track, never remove current
-      if (isRepeatOne) {
+      if (state.repeatMode === "one") {
         return { currentIndex: state.currentIndex };
       }
 
-      // Shuffle path: drive by shuffle order ids
-      if (
-        state.shuffle &&
-        state.shuffleOrderIds &&
-        state.shuffleOrderIds.length > 0
-      ) {
-        const currentIdAtIdx = state.queue[state.currentIndex]?.id;
-        let order = state.shuffleOrderIds;
-        const cursor =
-          state.shuffleCursor ??
-          (currentIdAtIdx != null ? order.indexOf(currentIdAtIdx) : -1);
-        // If removing played, drop current from order and queue before advancing
-        if (state.removePlayed && currentIdAtIdx) {
-          order = order.filter((id) => id !== currentIdAtIdx);
-        }
-        if (order.length === 0) {
-          return {
-            queue: state.removePlayed ? [] : state.queue,
-            currentIndex: null,
-            shuffleOrderIds: [],
-            shuffleCursor: null,
-          } as Partial<QueueStore>;
-        }
-        // Advance cursor
-        if (!state.removePlayed) {
-          const safeCursor = cursor == null ? -1 : cursor;
-          const nextCursor = safeCursor + 1;
-          if (nextCursor < order.length) {
-            const targetId = order[nextCursor];
-            const targetIndex = getQueueIndexById(targetId);
-            return {
-              currentIndex: targetIndex >= 0 ? targetIndex : state.currentIndex,
-              shuffleOrderIds: order,
-              shuffleCursor: nextCursor,
-            } as Partial<QueueStore>;
-          }
-          // End of shuffle order reached: regenerate a fresh random
-          // order so shuffle loops indefinitely. Avoid immediately
-          // replaying the current track when alternatives exist.
-          const hasContext = !!(
-            state.contextIds && state.contextIds.length > 0
-          );
-          const sourceIds = hasContext
-            ? (state.contextIds as string[]).filter(
-                (id) => getQueueIndexById(id) >= 0,
-              )
-            : state.queue.map((t) => t.id);
-          const currentId = currentIdAtIdx;
-          const pool =
-            sourceIds.length > 1 && currentId
-              ? sourceIds.filter((id) => id !== currentId)
-              : sourceIds.slice();
-          for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-          }
-          if (pool.length === 0) {
-            return { currentIndex: null } as Partial<QueueStore>;
-          }
-          const targetId = pool[0];
-          const targetIndex = getQueueIndexById(targetId);
-          return {
-            currentIndex: targetIndex >= 0 ? targetIndex : state.currentIndex,
-            shuffleOrderIds: pool,
-            shuffleCursor: 0,
-          } as Partial<QueueStore>;
-        }
-        {
-          // removePlayed path: remove current from queue and move to next id in order (at same position)
-          const nextQueue = state.queue.slice();
-          nextQueue.splice(state.currentIndex, 1);
-          const nextId = order[0];
-          // Look up against the pre-mutation queue, then adjust for the splice.
-          let nextIndex = getQueueIndexById(nextId);
-          if (nextIndex > state.currentIndex) nextIndex -= 1;
-          return {
-            queue: nextQueue,
-            currentIndex:
-              nextQueue.length === 0 ? null : nextIndex >= 0 ? nextIndex : 0,
-            shuffleOrderIds: order,
-            shuffleCursor: 0,
-          } as Partial<QueueStore>;
-        }
-      }
-
-      // If a context subset is defined and repeat-all is active, wrap within the subset
-      if (isRepeatAll && state.contextIds && state.contextIds.length > 0) {
-        const currentId = state.queue[state.currentIndex]?.id;
-        const ids = state.contextIds;
-        const count = ids.length;
-        const pos = currentId ? ids.indexOf(currentId) : -1;
-        // If current is not in context, snap to first valid id in context
-        const startPos = pos >= 0 ? pos : 0;
-        for (let offset = 1; offset <= count; offset++) {
-          const nextPos = (startPos + offset) % count;
-          const targetIndex = getQueueIndexById(ids[nextPos]);
-          if (targetIndex >= 0) {
-            return { currentIndex: targetIndex };
-          }
-        }
-        // No valid target (context references removed tracks)
-        return state;
-      }
-
-      // When removing played tracks, we pop current and advance to the next item at the same index
+      // Pop the played track and let the one behind it slide into its index.
       if (state.removePlayed) {
         const nextQueue = state.queue.slice();
         nextQueue.splice(state.currentIndex, 1);
         if (nextQueue.length === 0) {
-          return { queue: nextQueue, currentIndex: null };
+          return {
+            queue: nextQueue,
+            currentIndex: null,
+            originalOrderIds: null,
+          };
         }
-        const nextIndex = Math.min(state.currentIndex, nextQueue.length - 1);
-        return { queue: nextQueue, currentIndex: nextIndex };
+        return {
+          queue: nextQueue,
+          currentIndex: Math.min(state.currentIndex, nextQueue.length - 1),
+          originalOrderIds: state.shuffle
+            ? reconcileOriginalOrder(state.originalOrderIds, nextQueue)
+            : null,
+        } as Partial<QueueStore>;
       }
 
-      // Not removing played tracks
-      const length = state.queue.length;
       const candidate = state.currentIndex + 1;
-      let nextIndex: number | null;
-      if (candidate < length) {
-        nextIndex = candidate;
-      } else {
-        nextIndex = isRepeatAll ? 0 : null;
-      }
-
-      return { currentIndex: nextIndex } as Partial<QueueStore>;
+      if (candidate < state.queue.length) return { currentIndex: candidate };
+      if (state.repeatMode !== "all") return { currentIndex: null };
+      // Repeat-all wrap. Shuffled, the next pass gets a fresh random order.
+      return state.shuffle
+        ? ({
+            queue: reshuffleForNewPass(state.queue),
+            currentIndex: 0,
+          } as Partial<QueueStore>)
+        : { currentIndex: 0 };
     });
   },
 
   previous: () => {
     set((state) => {
       if (state.queue.length === 0) return state;
-      if (state.currentIndex == null) {
-        return {
-          currentIndex: state.queue.length > 0 ? 0 : null,
-        };
-      }
-
-      const isRepeatOne = state.repeatMode === "one";
-      const isRepeatAll = state.repeatMode === "all";
-
-      if (isRepeatOne) {
+      if (state.currentIndex == null) return { currentIndex: 0 };
+      if (state.repeatMode === "one") {
         return { currentIndex: state.currentIndex };
-      }
-
-      if (
-        state.shuffle &&
-        state.shuffleOrderIds &&
-        state.shuffleOrderIds.length > 0
-      ) {
-        const order = state.shuffleOrderIds;
-        const cursor =
-          state.shuffleCursor ??
-          (state.currentIndex != null
-            ? order.indexOf(state.queue[state.currentIndex].id)
-            : -1);
-        const prevCursor = cursor == null ? -1 : cursor - 1;
-        if (prevCursor >= 0) {
-          const targetId = order[prevCursor];
-          const targetIndex = getQueueIndexById(targetId);
-          return {
-            currentIndex: targetIndex >= 0 ? targetIndex : state.currentIndex,
-            shuffleCursor: prevCursor,
-          } as Partial<QueueStore>;
-        }
-        if (isRepeatAll) {
-          const lastId = order[order.length - 1];
-          const targetIndex = getQueueIndexById(lastId);
-          return {
-            currentIndex: targetIndex >= 0 ? targetIndex : state.currentIndex,
-            shuffleCursor: order.length - 1,
-          } as Partial<QueueStore>;
-        }
-        return { currentIndex: null } as Partial<QueueStore>;
-      }
-
-      // If a context subset is defined and repeat-all is active, wrap within the subset backwards
-      if (isRepeatAll && state.contextIds && state.contextIds.length > 0) {
-        const currentId = state.queue[state.currentIndex]?.id;
-        const ids = state.contextIds;
-        const count = ids.length;
-        const pos = currentId ? ids.indexOf(currentId) : -1;
-        const startPos = pos >= 0 ? pos : 0;
-        for (let offset = 1; offset <= count; offset++) {
-          const prevPos = (startPos - offset + count) % count;
-          const targetIndex = getQueueIndexById(ids[prevPos]);
-          if (targetIndex >= 0) {
-            return { currentIndex: targetIndex };
-          }
-        }
-        return state;
       }
 
       const prevIndex = state.currentIndex - 1;
       if (prevIndex >= 0) return { currentIndex: prevIndex };
-
       // Wrap to end only when repeating all
-      if (isRepeatAll && state.queue.length > 0) {
+      if (state.repeatMode === "all") {
         return { currentIndex: state.queue.length - 1 };
       }
-
       return { currentIndex: null };
     });
   },
-
   getCurrent: () => {
     const { queue, currentIndex } = get();
     if (
@@ -845,44 +550,15 @@ useQueueBase.subscribe((next, prev) => {
 });
 
 // Pure view of the track `next()` would advance to, without mutating state.
-// Mirrors next()'s decision order exactly (repeat-one, shuffle, context wrap,
-// removePlayed) so gapless/crossfade preloads always target the track the
-// queue will actually land on. Returns null when next() would regenerate the
-// shuffle order (callers must not preload across a regeneration) or when
-// playback would stop.
+// Mirrors next()'s decision order exactly (repeat-one, removePlayed, repeat-all
+// wrap) so gapless/crossfade preloads always target the track the queue will
+// actually land on. Returns null when playback would stop, or across a shuffled
+// repeat-all wrap — that re-randomises the queue, so there is nothing stable to
+// preload.
 export function peekNextTrack(): QueueTrack | null {
   const s = useQueueBase.getState();
   if (s.queue.length === 0 || s.currentIndex == null) return null;
   if (s.repeatMode === "one") return s.queue[s.currentIndex] ?? null;
-
-  if (s.shuffle && s.shuffleOrderIds && s.shuffleOrderIds.length > 0) {
-    const currentId = s.queue[s.currentIndex]?.id;
-    const order = s.shuffleOrderIds;
-    if (s.removePlayed) {
-      const nextId = order.find((id) => id !== currentId);
-      if (nextId == null) return null;
-      const idx = getQueueIndexById(nextId);
-      return idx >= 0 ? (s.queue[idx] ?? null) : null;
-    }
-    const cursor =
-      s.shuffleCursor ?? (currentId != null ? order.indexOf(currentId) : -1);
-    const nextCursor = cursor + 1;
-    if (nextCursor >= order.length) return null;
-    const idx = getQueueIndexById(order[nextCursor]);
-    return idx >= 0 ? (s.queue[idx] ?? null) : null;
-  }
-
-  if (s.repeatMode === "all" && s.contextIds && s.contextIds.length > 0) {
-    const currentId = s.queue[s.currentIndex]?.id;
-    const ids = s.contextIds;
-    const pos = currentId ? ids.indexOf(currentId) : -1;
-    const startPos = pos >= 0 ? pos : 0;
-    for (let offset = 1; offset <= ids.length; offset++) {
-      const idx = getQueueIndexById(ids[(startPos + offset) % ids.length]);
-      if (idx >= 0) return s.queue[idx] ?? null;
-    }
-    return null;
-  }
 
   if (s.removePlayed) {
     if (s.queue.length === 1) return null;
@@ -893,29 +569,32 @@ export function peekNextTrack(): QueueTrack | null {
 
   if (s.currentIndex + 1 < s.queue.length)
     return s.queue[s.currentIndex + 1] ?? null;
-  return s.repeatMode === "all" ? (s.queue[0] ?? null) : null;
+  if (s.repeatMode !== "all") return null;
+  return s.shuffle ? null : (s.queue[0] ?? null);
 }
 
 // Persistence is hand-rolled (instead of zustand's `persist` middleware) so
-// the hot path — a track skip that only changes `currentIndex` / `shuffleCursor`
-// — doesn't re-stringify the entire queue array on every set(). The queue and
-// shuffle order are heavy fields that only re-serialize when their reference
-// actually changes; cursor fields are tiny and rewritten on any change.
+// the hot path — a track skip that only changes `currentIndex` — doesn't
+// re-stringify the entire queue array on every set(). The queue and the
+// pre-shuffle order are heavy fields that only re-serialize when their
+// reference actually changes; the cursor blob is tiny and rewritten on any
+// change.
 const QUEUE_STORAGE_NAME = "queueStore";
 const persistedStorage = createDynamicScopedStorage(currentAuthScope);
 
 type CursorBlob = {
   currentIndex: number | null;
   repeatMode: "off" | "all" | "one";
-  contextIds: string[] | null;
   shuffle: boolean;
-  shuffleCursor: number | null;
   source: QueueSource;
 };
 
 const keyQueue = `${QUEUE_STORAGE_NAME}:queue`;
-const keyShuffleOrder = `${QUEUE_STORAGE_NAME}:shuffleOrder`;
+const keyOriginalOrder = `${QUEUE_STORAGE_NAME}:originalOrder`;
 const keyCursor = `${QUEUE_STORAGE_NAME}:cursor`;
+// Written by versions that kept a parallel shuffle traversal beside the queue;
+// dropped on the first rehydrate so it doesn't linger in MMKV forever.
+const keyLegacyShuffleOrder = `${QUEUE_STORAGE_NAME}:shuffleOrder`;
 
 const writeQueue = (queue: QueueTrack[]) => {
   try {
@@ -924,11 +603,11 @@ const writeQueue = (queue: QueueTrack[]) => {
     console.warn("[queue] persist queue failed", e);
   }
 };
-const writeShuffleOrder = (ids: string[] | null) => {
+const writeOriginalOrder = (ids: string[] | null) => {
   try {
-    persistedStorage.setItem(keyShuffleOrder, JSON.stringify(ids));
+    persistedStorage.setItem(keyOriginalOrder, JSON.stringify(ids));
   } catch (e) {
-    console.warn("[queue] persist shuffleOrder failed", e);
+    console.warn("[queue] persist originalOrder failed", e);
   }
 };
 const writeCursor = (s: CursorBlob) => {
@@ -947,22 +626,18 @@ useQueueBase.subscribe((next, prev) => {
   // default state would clobber whatever is on disk.
   if (!hydrated) return;
   if (next.queue !== prev.queue) writeQueue(next.queue);
-  if (next.shuffleOrderIds !== prev.shuffleOrderIds)
-    writeShuffleOrder(next.shuffleOrderIds);
+  if (next.originalOrderIds !== prev.originalOrderIds)
+    writeOriginalOrder(next.originalOrderIds);
   if (
     next.currentIndex !== prev.currentIndex ||
     next.repeatMode !== prev.repeatMode ||
-    next.contextIds !== prev.contextIds ||
     next.shuffle !== prev.shuffle ||
-    next.shuffleCursor !== prev.shuffleCursor ||
     next.source !== prev.source
   ) {
     writeCursor({
       currentIndex: next.currentIndex,
       repeatMode: next.repeatMode,
-      contextIds: next.contextIds,
       shuffle: next.shuffle,
-      shuffleCursor: next.shuffleCursor,
       source: next.source,
     });
   }
@@ -975,20 +650,26 @@ const readSync = (key: string): string | null =>
 const rehydrate = (): Promise<void> => {
   try {
     const queueRaw = readSync(keyQueue);
-    const orderRaw = readSync(keyShuffleOrder);
+    const orderRaw = readSync(keyOriginalOrder);
     const cursorRaw = readSync(keyCursor);
+    persistedStorage.removeItem(keyLegacyShuffleOrder);
     const patch: Partial<QueueStore> = {};
     if (queueRaw) patch.queue = JSON.parse(queueRaw) as QueueTrack[];
     if (orderRaw)
-      patch.shuffleOrderIds = JSON.parse(orderRaw) as string[] | null;
+      patch.originalOrderIds = JSON.parse(orderRaw) as string[] | null;
     if (cursorRaw) {
       const cursor = JSON.parse(cursorRaw) as CursorBlob;
       patch.currentIndex = cursor.currentIndex;
       patch.repeatMode = cursor.repeatMode;
-      patch.contextIds = cursor.contextIds;
       patch.shuffle = cursor.shuffle;
-      patch.shuffleCursor = cursor.shuffleCursor;
       patch.source = cursor.source ?? null;
+    }
+    // Upgrading from a build that stored the queue in source order beside a
+    // separate shuffle traversal: that queue *is* the pre-shuffle order, so
+    // adopt it. The shuffled traversal is lost — the queue view is truthful
+    // again from here, which is the point.
+    if (patch.shuffle && patch.originalOrderIds == null) {
+      patch.originalOrderIds = (patch.queue ?? []).map((t) => t.id);
     }
     if (Object.keys(patch).length > 0) {
       useQueueBase.setState(patch);

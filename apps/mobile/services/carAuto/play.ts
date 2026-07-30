@@ -36,8 +36,7 @@ export async function handleBrowsePlay(
     }
     const tracks = await resolveTracksForMediaId(mediaId);
     if (!tracks || tracks.length === 0) return false;
-    playTracks(tracks, 0);
-    return true;
+    return playTracks(tracks, 0);
   } catch {
     return false;
   }
@@ -45,7 +44,8 @@ export async function handleBrowsePlay(
 
 // Enqueue the parent's playable children, start at the tapped one. Returns
 // false if the parent isn't a tracklist we can resolve (e.g. user tapped a
-// track inside a non-track grouping).
+// track inside a non-track grouping), or if nothing in it can play right now —
+// the head unit must not be told playback started when the queue was left as-is.
 async function playFromParent(
   trackMediaId: string,
   parentId: string,
@@ -63,8 +63,7 @@ async function playFromParent(
   // ids may include non-track entries (e.g. artist children mix songs +
   // albums). The startIndex from the id list still points at the right entry
   // because non-playables are filtered at recordParentTracks.
-  playTracks(tracks, Math.min(startIndex, tracks.length - 1));
-  return true;
+  return playTracks(tracks, Math.min(startIndex, tracks.length - 1));
 }
 
 // Resolve a leaf (or "play whole thing") mediaId to a QueueTrack[].

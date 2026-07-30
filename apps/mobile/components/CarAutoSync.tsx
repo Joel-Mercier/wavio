@@ -15,7 +15,6 @@ import { buildBrowseTree } from "@/services/carAuto/tree";
 import {
   pause,
   play,
-  playTracks,
   seekTo,
   skipNext,
   skipPrevious,
@@ -184,8 +183,12 @@ export default function CarAutoSync() {
         case "seekToIndex": {
           const idx = Math.round(event.value ?? 0);
           const q = useQueue.getState();
-          const target = q.queue[idx];
-          if (target) playTracks(q.queue, idx);
+          // Jump within the existing queue — replaying it would rebuild the
+          // order the car is displaying (and re-randomise it under shuffle).
+          if (q.queue[idx]) {
+            q.setCurrentIndex(idx);
+            play();
+          }
           break;
         }
         case "shuffle":

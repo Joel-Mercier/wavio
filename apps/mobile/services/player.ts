@@ -46,7 +46,7 @@ import {
   notePlaybackTrack,
   recordResumePosition,
 } from "@/services/resumePositions";
-import { rewriteQueueRoutes } from "@/services/routeSwap";
+import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
 import {
   checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
@@ -473,8 +473,37 @@ function resolveTrackUrl(
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
-  if (onlineManager.isOnline()) return true;
-  return useOffline.getState().isTrackDownloaded(track.id);
+  if (useOffline.getState().isTrackDownloaded(track.id)) return true;
+  // Radio streams and third-party podcast enclosures play from an absolute URL
+  // on another host (see resolveTrackUrl), so they only need the *device* online
+  // — an unreachable server, which is the other half of what makes onlineManager
+  // report offline, doesn't stop them. Server-hosted podcast episodes bake the
+  // server's own stream URL, so they stay on the server-reachability check.
+  const playsOffServer =
+    (track.isRadio || track.source === "podcast") &&
+    !!track.url &&
+    !isActiveServerUrl(track.url);
+  if (playsOffServer) return getIsOnline();
+  return onlineManager.isOnline();
+}
+
+// Resolve a requested start index onto a track that can actually play right
+// now. loadAndPlay only ever walks *forward* (wrapping only under repeat-all),
+// so starting on an unplayable track whose only playable siblings sit behind it
+// would strand the player — scan forward first, then fall back to the earlier
+// ones. Returns null when nothing in the list can play.
+function resolvePlayableStartIndex(
+  tracks: QueueTrack[],
+  startIndex: number,
+): number | null {
+  const from = Math.min(Math.max(startIndex, 0), tracks.length);
+  for (let i = from; i < tracks.length; i += 1) {
+    if (isPlayableNow(tracks[i])) return i;
+  }
+  for (let i = 0; i < from; i += 1) {
+    if (isPlayableNow(tracks[i])) return i;
+  }
+  return null;
 }
 
 // Walk forward from a starting queue index to find the next track that is
@@ -639,13 +668,13 @@ function loadAndPlay(track: QueueTrack | null) {
 // end-of-track advance stays seamless instead of stalling on a network call.
 const ENDLESS_PREFETCH_LEAD_SECONDS = 20;
 
-// True when the queue is parked on its final track with no repeat/shuffle — the
-// point at which endless playback must extend it to keep going.
+// True when the queue is parked on its final track with no repeat — the point
+// at which endless playback must extend it to keep going. Shuffle permutes the
+// queue in place rather than traversing it endlessly, so it ends here too.
 function atEndlessQueueTail(): boolean {
   const q = useQueue.getState();
   return (
     q.repeatMode === "off" &&
-    !q.shuffle &&
     q.currentIndex != null &&
     q.currentIndex >= q.queue.length - 1
   );
@@ -899,7 +928,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       player.pause();
       return;
     }
-    // End of queue with no repeat/shuffle: keep the current track loaded so the
+    // End of queue with no repeat: keep the current track loaded so the
     // player UI keeps its title/artist/cover, just stop playback. If endless
     // playback is enabled and the near-end prefetch hasn't already extended the
     // queue, fall back to fetching now (arming resume so playback restarts once
@@ -1164,20 +1193,29 @@ export async function configurePlayback() {
   });
 }
 
+// Returns whether the queue was actually replaced, so callers can tell the user
+// when nothing happened.
 export function playTracks(
   tracks: QueueTrack[],
   startIndex = 0,
   options?: { shuffleFromRandom?: boolean; source?: QueueSource },
-) {
-  if (tracks.length === 0) return;
-  const index =
+): boolean {
+  if (tracks.length === 0) return false;
+  const requestedIndex =
     options?.shuffleFromRandom && useQueue.getState().shuffle
       ? Math.floor(Math.random() * tracks.length)
       : startIndex;
+  // Offline with nothing playable at or after the requested index, replacing the
+  // queue would strand the player: loadAndPlay finds no playable index, pauses
+  // and clears the lock screen — silently killing whatever was playing. Land on
+  // a playable track instead, or leave the existing queue alone when the list
+  // has none at all.
+  const index = resolvePlayableStartIndex(tracks, requestedIndex);
+  if (index == null) return false;
   const previousId = lastTrackId;
   useQueue.getState().playNow(tracks, index, options?.source ?? null);
   const current = useQueue.getState().getCurrent();
-  if (!current) return;
+  if (!current) return false;
   // Starting a new track normally auto-plays via the queue subscription, which
   // fires on the id change. Two cases need an explicit push instead: the id
   // didn't change (subscription never fired), or the subscription took a silent
@@ -1191,16 +1229,23 @@ export function playTracks(
   ) {
     loadAndPlay(current);
   }
+  return true;
 }
 
 // Play `seed` alone, then fill the queue behind it with similar tracks. The
 // seed plays immediately rather than after the fetch, so the tap is never
 // blocked on a round-trip; offline (or on a backend without similarity) the
 // fetch yields nothing and the seed simply plays on its own.
-export async function startTrackRadio(seed: QueueTrack) {
-  playTracks([seed], 0, {
-    source: { type: "similar", name: seed.title ?? "" },
-  });
+export async function startTrackRadio(seed: QueueTrack): Promise<boolean> {
+  // The seed can't play (offline and not downloaded) — nothing to build a radio
+  // around, and playTracks left the queue as it was.
+  if (
+    !playTracks([seed], 0, {
+      source: { type: "similar", name: seed.title ?? "" },
+    })
+  ) {
+    return false;
+  }
   let extras: QueueTrack[] = [];
   try {
     extras = await fetchEndlessExtension(seed);
@@ -1210,13 +1255,15 @@ export async function startTrackRadio(seed: QueueTrack) {
       endpoint: "startTrackRadio",
       extra: { seedId: seed.id },
     });
-    return;
+    // The seed is playing either way — only the extension failed.
+    return true;
   }
-  if (extras.length === 0) return;
+  if (extras.length === 0) return true;
   // The user may have started another radio while this was in flight; those
   // tracks belong to a queue that no longer exists.
-  if (useQueue.getState().getCurrent()?.id !== seed.id) return;
+  if (useQueue.getState().getCurrent()?.id !== seed.id) return true;
   useQueue.getState().enqueueEnd(extras);
+  return true;
 }
 
 // Replace the queue with one restored from the server, positioned at `index`
@@ -1230,7 +1277,8 @@ export function restoreServerQueue(
   if (tracks.length === 0) return;
   suppressAutoplayOnce = true;
   playbackInitialized = false;
-  useQueue.getState().setQueue(tracks, index);
+  // Explicit null: the server queue carries no "Playing from …" context.
+  useQueue.getState().setQueue(tracks, index, null);
   if (positionSeconds > 0) {
     try {
       player.seekTo(positionSeconds);
@@ -1361,7 +1409,7 @@ export function isPlaying() {
 export function skipNext() {
   const state = useQueue.getState();
   if (state.queue.length === 0 || state.currentIndex == null) return;
-  if (state.repeatMode === "off" && !state.shuffle) {
+  if (state.repeatMode === "off") {
     if (state.currentIndex >= state.queue.length - 1) return;
   }
   if (useJukebox.getState().active) {
@@ -1384,11 +1432,7 @@ export function skipPrevious(options?: { force?: boolean }) {
   // At the start of the playback order with no repeat there is no previous
   // target — restart the current track instead of letting previous() clear the
   // queue position (which would unload it).
-  const atStart =
-    queue.repeatMode !== "all" &&
-    (queue.shuffle && queue.shuffleOrderIds?.length
-      ? (queue.shuffleCursor ?? 0) <= 0
-      : (queue.currentIndex ?? 0) <= 0);
+  const atStart = queue.repeatMode !== "all" && (queue.currentIndex ?? 0) <= 0;
   if (atStart) {
     seekTo(0);
     return;

@@ -26,6 +26,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useArtist, useArtistSongs } from "@/hooks/backend/useBrowsing";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
@@ -63,7 +64,11 @@ export default function AllSongs() {
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
@@ -83,6 +88,7 @@ export default function AllSongs() {
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const hasPlayableTracks = useHasPlayableTracks(songs);
 
   const handleTrackPressCallback = useCallback(() => {
     if (!data?.artist) return;
@@ -220,6 +226,7 @@ export default function AllSongs() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isPlayingFromList && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

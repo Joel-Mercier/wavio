@@ -286,7 +286,11 @@ export default function LyricsScreen() {
     textShadowRadius: 2,
   } as const;
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
 
   const handleClosePress = () => {
     if (router.canGoBack()) router.back();

@@ -15,6 +15,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useHydratedTracks } from "@/hooks/audioMuse/useHydratedTracks";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
@@ -73,6 +74,7 @@ export default function AudioMuseResults({
     [tracks],
   );
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const hasPlayableTracks = useHasPlayableTracks(tracks);
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -175,6 +177,7 @@ export default function AudioMuseResults({
                 iconSize={24}
                 color={white}
                 className="bg-emerald-500"
+                disabled={!isPlayingFromList && !hasPlayableTracks}
               />
             </HStack>
             {error && <ErrorDisplay error={error} />}

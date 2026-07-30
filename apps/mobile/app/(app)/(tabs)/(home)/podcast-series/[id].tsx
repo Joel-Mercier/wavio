@@ -94,7 +94,11 @@ export default function PodcastSeriesScreen() {
   }, [similarData, podcastSeries.id]);
   const colors = useImageColors(podcastSeries.imageUrl);
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const toast = useToast();

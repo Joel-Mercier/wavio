@@ -147,6 +147,26 @@ function stopPolling() {
   }
 }
 
+function isReorderOf(ids: string[], prev: string[]): boolean {
+  if (ids.length !== prev.length) return false;
+  const a = ids.slice().sort();
+  const b = prev.slice().sort();
+  return a.every((id, i) => id === b[i]);
+}
+
+// Re-upload a reordered queue and point the server back at the track that is
+// actually playing. `set` leaves the server on its old index, so without the
+// skip it would carry on with whatever track happens to land there — and the
+// status poll would then drag the local queue onto it.
+async function pushReorder(ids: string[], index: number) {
+  const wasPlaying = useJukebox.getState().status?.playing ?? false;
+  const position = Math.max(0, Math.floor(jukeboxGetCurrentTime()));
+  await setJukebox(ids);
+  await skipJukebox(index, position);
+  if (!wasPlaying) await stopJukebox();
+  await refreshStatus();
+}
+
 function subscribeQueue() {
   if (queueUnsub) return;
   lastKnownQueueIds = readQueueIds();
@@ -157,9 +177,16 @@ function subscribeQueue() {
     const changed =
       ids.length !== prev.length || ids.some((id, i) => id !== prev[i]);
     if (!changed) return;
+    const reordered = isReorderOf(ids, prev);
     lastKnownQueueIds = ids;
     if (ids.length === 0) {
       clearJukebox().catch(() => {});
+      return;
+    }
+    if (reordered) {
+      pushReorder(ids, clampIndex(state.currentIndex ?? 0, ids.length)).catch(
+        () => {},
+      );
       return;
     }
     setJukebox(ids).catch(() => {});

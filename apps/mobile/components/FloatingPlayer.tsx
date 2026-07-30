@@ -82,9 +82,9 @@ export default function FloatingPlayer() {
   const toast = useToast();
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
-  const [white, primary, emerald500] = Uniwind.getCSSVariable([
+  const [black, white, emerald500] = Uniwind.getCSSVariable([
+    "--color-black",
     "--color-white",
-    "--color-primary-500",
     "--color-emerald-500",
   ]) as string[];
   const capabilities = useCapabilities();
@@ -92,7 +92,6 @@ export default function FloatingPlayer() {
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
-  const shuffle = useQueue((s) => s.shuffle);
   const queryClient = useQueryClient();
 
   const isRadio = !!playingTrack?.isRadio;
@@ -111,14 +110,11 @@ export default function FloatingPlayer() {
   );
   const canSkipNext =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
+    (repeatMode !== "off" ||
       (currentIndex != null && currentIndex < queueLength - 1));
   const canSkipPrevious =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
-      (currentIndex != null && currentIndex > 0));
+    (repeatMode !== "off" || (currentIndex != null && currentIndex > 0));
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -375,7 +371,11 @@ export default function FloatingPlayer() {
   }
 
   const backgroundColor =
-    (colors?.platform === "ios" ? colors.background : colors?.muted) || primary;
+    (colors?.platform === "ios"
+      ? colors.background
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
 
   if (isWideLayout) {
     return (
