@@ -7,12 +7,14 @@ import { initReactI18next } from "react-i18next";
 import * as z from "zod";
 import zodDe from "zod/v4/locales/de.js";
 import zodEn from "zod/v4/locales/en.js";
+import zodEs from "zod/v4/locales/es.js";
 import zodFr from "zod/v4/locales/fr.js";
 import zodIt from "zod/v4/locales/it.js";
 import zodRu from "zod/v4/locales/ru.js";
 import zodCn from "zod/v4/locales/zh-CN.js";
 import de from "@/i18n/de.json";
 import en from "@/i18n/en.json";
+import es from "@/i18n/es.json";
 import fr from "@/i18n/fr.json";
 import it from "@/i18n/it.json";
 import ru from "@/i18n/ru.json";
@@ -23,6 +25,7 @@ const resources = {
   fr,
   de,
   it,
+  es,
   "zh-CN": zhCn,
   ru,
 };
@@ -37,6 +40,7 @@ export const LanguageNames: Record<TSupportedLanguages, string> = {
   fr: "Français",
   de: "Deutsch",
   it: "Italiano",
+  es: "Español",
   "zh-CN": "简体中文",
   ru: "Русский",
 };
@@ -48,6 +52,7 @@ const zodLocales = {
   "zh-CN": zodCn,
   ru: zodRu,
   it: zodIt,
+  es: zodEs,
 } satisfies Record<TSupportedLanguages, () => { localeError: unknown }>;
 
 export function applyZodLocale(locale: TSupportedLanguages) {
