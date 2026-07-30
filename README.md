@@ -105,25 +105,77 @@ This repository is a [Bun workspace](https://bun.sh/docs/pm/workspaces) monorepo
 
 A single `bun install` at the repo root installs both. Most scripts are exposed at the root as `mobile:*` / `landing:*` (which delegate to the relevant workspace), or you can run a workspace's own scripts with `bun run --cwd apps/<workspace> <script>`.
 
+### Prerequisites
+
+- **Node v22+** and **[bun](https://bun.sh/)** (the repo pins a version in `.bun-version`)
+- **JDK 17** (17 is what React Native 0.86 pins source/target compatibility to; a newer JDK generally works too, JDK 11 or older does not)
+- **Android SDK** with platform 36 and the build tools, usually via Android Studio, with `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) exported and `platform-tools` on your `PATH`
+- An Android device with USB debugging on, or an emulator
+
+You do **not** need an NDK or CMake: the only C++ in the repo (TagLib, in `apps/mobile/modules/audio-tagger`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
+
+You also do **not** need a Sentry account to develop the app — Sentry is disabled in `__DEV__` and only matters for release builds. An Expo account is optional too: it's needed for EAS builds and for the `bun run mobile:start`/`android`/`ios`/`web` scripts, but not for the `bunx expo …` workflow below. See [Using your own Expo account](#using-your-own-expo-account).
+
 ### Getting started
 
 1. Clone the repository
-2. Make sure you have Node v22+ installed
-3. Make sure you have bun installed
-4. Install dependencies with `bun install` (from the repo root)
-5. Set environment variables in EAS secrets (see `.env.example`)
-6. Prebuild the native development app with `bun run mobile:prebuild`
-7. Run the app with `bun run mobile:start` and make sure you have a development build for the targetted platform (`bun run mobile:android` or `bun run mobile:ios`)
+2. Install dependencies with `bun install` — **from the repo root**, not from `apps/mobile`. The root `package.json` owns `patchedDependencies` (patches for `expo-audio`, `expo-font`, `expo-navigation-bar`, `lucide-react-native` and `zod`) and `bunfig.toml` pins `linker = "hoisted"`, both of which Metro and `jest-expo` depend on. Installing inside the workspace skips the patches and produces a layout Metro can't resolve.
+3. Create your env file: `cp apps/mobile/.env.example apps/mobile/.env`. This step is **required for everyone, maintainers included** — it is how the app gets its Subsonic API version and client name during local development (see [Environment variables](#environment-variables)). `.env` is gitignored.
+4. Build and install the development client on a connected device or emulator:
+   ```sh
+   cd apps/mobile && DARK_MODE=media bunx expo run:android
+   ```
+   The first Gradle build takes a while. This produces a **debug dev-client APK** — the app talks to the Metro bundler on your machine, so JS changes reload instantly and you never need to rebuild for a JS-only change.
+5. On later sessions, just start the bundler: `cd apps/mobile && DARK_MODE=media bunx expo start`, then open Wavio on the device.
 
-### Android
+`DARK_MODE=media` is read by the Gluestack/Tailwind setup at bundle time — keep it set or the theme resolves incorrectly.
 
-1. Make sure you have the correct environnement for building on Android (Android Studio, SDK, Java, etc.)
-2. Make sure you are have the SENTRY_AUTH_TOKEN and are logged in to the sentry-cli with `sentry-cli login`
-3. Make sure you are logged in to Expo with `eas login` (check with `eas whoami`)
-4. Build the app with the desired profile `bun run mobile:build:android:<profile>`
-5. Install the app on your device with the generated APK file
+You normally don't need `bun run mobile:prebuild`: `apps/mobile/android/` and `apps/mobile/ios/` are committed, so `expo run:android` builds them as-is. Re-run prebuild only after changing `app.json` or a config plugin in `apps/mobile/plugins/` — and note it **regenerates** those directories, so review the diff before committing.
 
-#### Android Auto
+> **Why `bunx expo` instead of `bun run mobile:android`?**
+> The `mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` scripts wrap the Expo CLI in `eas env:exec --non-interactive development "…"`. That wrapper pulls the **Taddy podcast credentials** out of the EAS `development` environment, and it resolves against the Expo account and project declared in `apps/mobile/app.json` (`owner: "jmercier"` and `extra.eas.projectId`) — so it fails for anyone who isn't a member of that account, before Metro or Gradle ever start.
+>
+> That wrapper is a convenience, not a requirement: the Subsonic API version and client name come from your local `.env` either way, and podcasts can be configured by hand in Settings. Running `bunx expo …` directly gives you a fully working app. If you'd rather have the `mobile:*` scripts work too, see [Using your own Expo account](#using-your-own-expo-account).
+>
+> Everything else (`mobile:lint`, `mobile:test`, `mobile:typecheck`, `mobile:prebuild`) needs no Expo account.
+
+#### Using your own Expo account
+
+Optional. Do this if you want the `mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` scripts to run, or if you plan to make EAS builds from your fork.
+
+1. Create a free [Expo account](https://expo.dev/signup) and log in with `eas login` (check with `eas whoami`)
+2. In `apps/mobile/app.json`, change `"owner"` to your Expo username (or remove the field)
+3. From `apps/mobile`, run `eas init` to create a project under your account — it rewrites `extra.eas.projectId`
+4. Create the `development` environment variables the wrapper expects, if you want podcasts seeded automatically:
+   ```sh
+   eas env:create --environment development --name EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID --value <your-id>
+   eas env:create --environment development --name EXPO_PUBLIC_TADDY_PODCASTS_API_KEY --value <your-key>
+   ```
+   Skip this and the scripts still work — they just inject nothing extra.
+
+⚠️ Steps 2 and 3 modify `apps/mobile/app.json`, which is tracked. **Don't commit those changes** — revert with `git checkout apps/mobile/app.json` before opening a PR, or keep them out of your commits with `git update-index --skip-worktree apps/mobile/app.json`.
+
+### Environment variables
+
+`apps/mobile/.env.example` lists every variable the app reads. For local development only the first two matter:
+
+| Variable | Needed for | If missing |
+| --- | --- | --- |
+| `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION` | Sent as `v=` on **every** Subsonic/Navidrome request | Requests go out with `v=`, and servers reject them with error 10 *"Required parameter is missing"* — login fails against any OpenSubsonic server |
+| `EXPO_PUBLIC_CLIENT_NAME` | Sent as `c=` on **every** Subsonic/Navidrome request | Same as above |
+| `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID` / `_KEY` / `_LANGUAGE` / `_COUNTRY` | Seeds the Taddy podcast config | Podcasts simply need to be configured by hand in Settings; nothing else breaks |
+| `SENTRY_AUTH_TOKEN` | Sourcemap upload during **release** builds only | Nothing — Sentry is disabled in `__DEV__` |
+
+The values in `.env.example` are the correct defaults for the first two, so copying the file verbatim is enough to get a working app. Every `EXPO_PUBLIC_*` value is inlined into the JS bundle at build time, so none of them are secret in a shipped build.
+
+How the same variables reach a **release** build is different, and worth knowing if you touch `eas.json`:
+
+- The two Subsonic vars are declared inline in every profile's `env` block in `apps/mobile/eas.json`, so `eas build` supplies them. `eas env:exec` does **not** read those blocks — which is why a local `.env` is needed for development regardless of your EAS setup.
+- The Taddy credentials and `SENTRY_AUTH_TOKEN` live in EAS server-side environment variables (`eas env:create`, scoped per `development` / `preview` / `production`), and each `eas.json` profile names the `environment` it pulls from.
+
+**Keep secrets out of `.env`** — a local `eas build --local` reads both `.env` and EAS, so anything stray in `.env` ends up in a release bundle.
+
+### Android Auto
 
 In order to test Android Auto, you need to :
 1. Install the Android Auto Desktop Head Unit Emulator via Android Studio in SDK Manager > SDK Tools > Android Auto Desktop Head Unit Emulator.
@@ -136,6 +188,15 @@ In order to test Android Auto, you need to :
 ### iOS
 
 Mostly functional, no carplay or widgets support yet. No plan yet to publish to the App Store.
+
+### Troubleshooting
+
+- **Black screen after the bundle loads (dev menu bubble visible)** — the JS bundle reached the device but the root layout rendered nothing. Check `adb logcat -c && adb logcat ReactNativeJS:V "*:S"` for the real error, and watch the Metro terminal. A stale Metro cache is a common cause: restart with `bunx expo start --clear`. Shaking the device opens the dev menu, from which you can reload.
+- **Login always fails / the server rejects every request** — you're missing `apps/mobile/.env`, so `v=` and `c=` go out empty on every Subsonic request (see [Environment variables](#environment-variables)).
+- **`eas env:exec` errors, or "entity not authorized"** — a `mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` script is resolving against an Expo project you're not a member of. Either use the `bunx expo …` commands from [Getting started](#getting-started), or follow [Using your own Expo account](#using-your-own-expo-account).
+- **Odd Metro resolution errors, or patched packages misbehaving** — you probably ran `bun install` inside `apps/mobile`. Delete `apps/mobile/node_modules` and run `bun install` at the repo root.
+- **Gradle fails on an unsupported Java version** — check `java -version` resolves to JDK 17+ and that `JAVA_HOME` points at it.
+- **Anything else** — `bun run mobile:doctor` checks the project for common Expo issues.
 
 ### Marketing website (`apps/landing`)
 
@@ -160,10 +221,10 @@ You can find more information about the test scenarios in the [E2E tests README]
 
 Run from the repo root:
 
-- `bun run mobile:start`: Start the app in development mode
-- `bun run mobile:android`: Start the app in development mode on Android
-- `bun run mobile:ios`: Start the app in development mode on iOS
-- `bun run mobile:web`: Start the app in development mode with web support
+- `bun run mobile:start`: Start the app in development mode (⚠️ needs an Expo account)
+- `bun run mobile:android`: Start the app in development mode on Android (⚠️ needs an Expo account)
+- `bun run mobile:ios`: Start the app in development mode on iOS (⚠️ needs an Expo account)
+- `bun run mobile:web`: Start the app in development mode with web support (⚠️ needs an Expo account)
 - `bun run mobile:prebuild`: Prebuild the native development app
 - `bun run mobile:typecheck`: Type-check the app
 - `bun run mobile:lint`: Lint the codebase
@@ -176,6 +237,8 @@ Run from the repo root:
 - `eas build --profile preview --platform android` (inside `apps/mobile`): Build the app for Android with the desired profile and platform (add `--local` to build locally)
 - `eas whoami`: Check the current user
 - `eas login`: Login to Expo
+
+⚠️ The four marked scripts are wrapped in `eas env:exec` against the Expo project declared in `apps/mobile/app.json`. Either point that project at your own account ([Using your own Expo account](#using-your-own-expo-account)), or skip them entirely and run `cd apps/mobile && DARK_MODE=media bunx expo run:android` / `bunx expo start`. See [Getting started](#getting-started).
 
 ## Useful links
 
