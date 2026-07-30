@@ -1635,6 +1635,7 @@
 					"songCount": "Tracce",
 					"albumCount": "Album"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Impostazioni avanzate",
 				"fallbackUrlHelp": "Viene utilizzato quando l'URL principale non è raggiungibile. Deve puntare allo stesso server.",
 				"cancel": "Annulla",
