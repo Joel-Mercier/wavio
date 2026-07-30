@@ -64,7 +64,7 @@
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
 				"search": {
-					"inputPlaceholder": "Cerca nella tua biblioteca"
+					"inputPlaceholder": "Cerca nella tua libreria"
 				}
 			},
 			"create": {
@@ -233,7 +233,7 @@
 				"mostPlayed": "I più ascoltati",
 				"topRated": "I più apprezzati",
 				"random": "Casuale",
-				"library": "Biblioteca",
+				"library": "Libreria",
 				"playlists": "Playlist",
 				"albums": "Album",
 				"podcasts": "Podcast",
@@ -288,7 +288,7 @@
 			"artists": {
 				"label": "Artista",
 				"notInLibrary": "Non presente nella tua libreria",
-				"notInLibraryAddWithLidarr": "Non presente nella tua biblioteca • Cerca in Lidarr",
+				"notInLibraryAddWithLidarr": "Non presente nella tua libreria • Cerca in Lidarr",
 				"coverAlt": "Copertina dell'artista",
 				"topSongs": "Brani più ascoltati",
 				"discography": "Discografia",
@@ -304,6 +304,7 @@
 				"rateModalTitle": "Vota l'artista",
 				"likedSongs": "Brani che mi sono piaciuti",
 				"likedAlbums": "Album preferiti",
+				"allSongs": "Tutti i brani",
 				"favoriteSuccessMessage": "L'artista è stato aggiunto con successo ai preferiti",
 				"favoriteErrorMessage": "Si è verificato un errore durante l'aggiunta dell'artista ai preferiti",
 				"unfavoriteSuccessMessage": "L'artista è stato rimosso con successo dai preferiti",
@@ -894,7 +895,7 @@
 							"songPathDetail": "Crea una playlist che passi gradualmente da un brano all’altro, un piccolo passo alla volta.",
 							"songPathDetailLyrics": "Crea una playlist che passi gradualmente da un brano all’altro. Questa struttura può seguire sia il testo che la musica.",
 							"songPathHint": "Creane uno tramite il pulsante + nella tua libreria, dalla scheda \"Crea\" o dal menu di qualsiasi traccia.",
-							"library": "Analisi della biblioteca",
+							"library": "Analisi della libreria",
 							"libraryNotAnalyzed": "Non è stato ancora analizzato nulla: le ricerche e i suggerimenti non daranno alcun risultato",
 							"libraryUnknown": "Questa distribuzione non ha segnalato lo stato di avanzamento dell'analisi",
 							"refreshLabel": "Funzionalità di aggiornamento",
@@ -1506,6 +1507,7 @@
 					"playlist": "Riproduzione dalla playlist",
 					"artist": "Riproduzione dall'artista",
 					"likedSongs": "Riproduzione dei brani preferiti",
+					"allSongs": "Riproduzione da tutti i brani",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
 					"audiomuse": "Riproduzione da AudioMuse-AI",
@@ -1577,7 +1579,7 @@
 				"title": "Librerie",
 				"allLibraries": "Tutte le librerie",
 				"default": "Libreria predefinita",
-				"empty": "Non ci sono biblioteche disponibili"
+				"empty": "Non ci sono librerie disponibili"
 			},
 			"servers": {
 				"title": "Server",
@@ -1633,6 +1635,7 @@
 					"songCount": "Tracce",
 					"albumCount": "Album"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Impostazioni avanzate",
 				"fallbackUrlHelp": "Viene utilizzato quando l'URL principale non è raggiungibile. Deve puntare allo stesso server.",
 				"cancel": "Annulla",
@@ -1694,7 +1697,7 @@
 				"tabs": {
 					"home": "Home",
 					"search": "Cerca",
-					"library": "Biblioteca",
+					"library": "Libreria",
 					"create": "Crea"
 				},
 				"sidebar": {
@@ -1748,7 +1751,7 @@
 				"addedToPlayNextMessage_other": "Aggiunti i brani di {{count}} alla lista di riproduzione successiva"
 			},
 			"localLibrary": {
-				"unsupported": "La biblioteca locale non supporta questa operazione"
+				"unsupported": "La libreria locale non supporta questa operazione"
 			},
 			"localIndexing": {
 				"title": "Creare la propria libreria",
@@ -1777,7 +1780,7 @@
 				"serverTypeNavidrome": "Navidrome",
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
-				"serverTypeLocal": "Biblioteca comunale",
+				"serverTypeLocal": "Libreria Locale",
 				"urlPlaceholder": "Inserisci l'URL del server",
 				"fallbackUrlPlaceholder": "URL del server di riserva (facoltativo)",
 				"usernamePlaceholder": "Inserisci il nome utente",
@@ -1793,14 +1796,14 @@
 				"demo": "Modalità demo",
 				"navidromeSetupHelp": "Configura il tuo server Navidrome",
 				"jellyfinSetupHelp": "Configura il tuo server Jellyfin",
-				"localLibraryName": "Biblioteca comunale",
+				"localLibraryName": "Libreria Locale",
 				"localFoldersLabel": "Cartelle di origine",
 				"localFoldersHelp": "Aggiungi una o più cartelle presenti su questo dispositivo per cercare i brani musicali.",
 				"localPickFolder": "Scegli una cartella",
 				"localNoPaths": "Aggiungi almeno una cartella per continuare",
 				"localRemovePath": "Elimina cartella",
-				"localSetupHelp": "Come funziona la biblioteca locale?",
-				"localInfoTitle": "Biblioteca comunale",
+				"localSetupHelp": "Come funziona la libreria locale?",
+				"localInfoTitle": "Libreria Locale",
 				"localInfoFormatsTitle": "Formati supportati",
 				"localInfoFormats": "Wavio esegue la scansione delle cartelle selezionate alla ricerca di file MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA e AIFF.",
 				"localInfoMetadataTitle": "Come vengono letti i metadati",

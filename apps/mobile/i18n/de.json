@@ -304,6 +304,7 @@
 				"rateModalTitle": "Künstler bewerten",
 				"likedSongs": "Gefallene Titel",
 				"likedAlbums": "Gefallene Alben",
+				"allSongs": "All songs",
 				"favoriteSuccessMessage": "Der Interpret wurde erfolgreich zu den Favoriten hinzugefügt",
 				"favoriteErrorMessage": "Beim Hinzufügen des Interpreten zu den Favoriten ist ein Fehler aufgetreten",
 				"unfavoriteSuccessMessage": "Der Interpret wurde erfolgreich aus den Favoriten entfernt",
@@ -1506,6 +1507,7 @@
 					"playlist": "Wiedergabe aus der Wiedergabeliste",
 					"artist": "Wiedergabe vom Interpreten",
 					"likedSongs": "Wiedergabe von gemochten Titeln",
+					"allSongs": "Playing from all songs",
 					"folder": "Wiedergabe aus einem Ordner",
 					"similar": "Ähnliche Songs abspielen",
 					"audiomuse": "Wiedergabe über AudioMuse-AI",
@@ -1633,6 +1635,7 @@
 					"songCount": "Titel",
 					"albumCount": "Alben"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Erweiterte Einstellungen",
 				"fallbackUrlHelp": "Wird verwendet, wenn die Haupt-URL nicht erreichbar ist. Muss auf denselben Server verweisen.",
 				"cancel": "Abbrechen",
