@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import { formatDistanceToNow } from "@/utils/date";
@@ -66,6 +67,9 @@ export default function PodcastListItem({
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isCurrent = playingTrack?.id === podcast.uuid;
+  // Taddy episodes stream a third-party enclosure URL, so only the device being
+  // offline stops them — an unreachable music server is irrelevant here.
+  const isDeviceOnline = useIsDeviceOnline();
   const [white, black] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-black",
@@ -240,6 +244,7 @@ export default function PodcastListItem({
           <PlayPauseButton
             isPlaying={isCurrent && isPlaying}
             onPress={handlePlayPress}
+            disabled={!isCurrent && !isDeviceOnline}
             size={40}
             iconSize={20}
             color={black}

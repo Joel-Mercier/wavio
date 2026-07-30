@@ -170,9 +170,27 @@ export default function QueueDetail() {
     () => history.map(historyEntryToChild),
     [history],
   );
-  const handleHistoryPress = useCallback((_index: number, track: Child) => {
-    void startTrackRadio(childToTrack(track));
-  }, []);
+  const handleHistoryPress = useCallback(
+    async (_index: number, track: Child) => {
+      // TrackListItem already disables rows that are unavailable offline, but
+      // connectivity can flip between render and tap — startTrackRadio then
+      // leaves the queue alone, so surface that instead of doing nothing.
+      if (await startTrackRadio(childToTrack(track))) return;
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.notAvailableOfflineMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    },
+    [t, toast],
+  );
 
   // Prune entries the server has since deleted. Best-effort and self-throttled,
   // so firing it on every tab switch is fine.

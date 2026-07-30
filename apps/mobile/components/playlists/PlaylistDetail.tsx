@@ -77,6 +77,7 @@ import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import {
   type DownloadCollectionMeta,
   useCollectionDownload,
+  useHasPlayableTracks,
   useOfflinePlaylist,
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
@@ -434,6 +435,7 @@ export default function PlaylistDetail() {
       activeSort,
     );
   }, [playlistData, activeSort, id, getPlaylistTrackOrder]);
+  const hasPlayableTracks = useHasPlayableTracks(data);
 
   const handleDeleteFromPlaylistPress = useCallback(
     (displayIndex: string) => {
@@ -798,6 +800,10 @@ export default function PlaylistDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    // Offline, a playlist whose detail is only cached has
+                    // nothing to play — pressing would leave the queue
+                    // untouched.
+                    disabled={!isActiveSource && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

@@ -18,6 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIndexes, useMusicDirectory } from "@/hooks/backend/useBrowsing";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
@@ -96,6 +97,7 @@ export default function FolderDetail() {
     () => ({ type: "folder", name: headerName, id }),
     [headerName, id],
   );
+  const hasPlayableTracks = useHasPlayableTracks(tracks);
   const handlePlayAllPress = () => {
     if (tracks.length === 0) return;
     playTracks(tracks.map(childToTrack), 0, {
@@ -121,7 +123,10 @@ export default function FolderDetail() {
             {headerName}
           </Heading>
           {tracks.length > 0 ? (
-            <FadeOutScaleDown onPress={handlePlayAllPress}>
+            <FadeOutScaleDown
+              onPress={handlePlayAllPress}
+              disabled={!hasPlayableTracks}
+            >
               <Box className="w-10 h-10 rounded-full bg-emerald-500 items-center justify-center">
                 <Play size={18} color={white} fill={white} />
               </Box>

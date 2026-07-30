@@ -14,6 +14,8 @@ android/build/
 android/app/build/
 android/.gradle/
 **/android/build/
+**/wear/build/
+**/wear/.gradle/
 **/modules/car-auto/android/build/
 **/modules/audio-tagger/native/.build/
 **/modules/audio-tagger/native/.taglib/

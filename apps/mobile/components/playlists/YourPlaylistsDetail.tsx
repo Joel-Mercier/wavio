@@ -123,7 +123,11 @@ export default function YourPlaylistsDetail() {
     try {
       const tracks = await buildTracks();
       if (tracks.length === 0) return;
-      playTracks(tracks, 0, { shuffleFromRandom: true, source });
+      // Offline none of these may be downloaded, in which case playTracks
+      // leaves the queue alone rather than stranding the player.
+      if (!playTracks(tracks, 0, { shuffleFromRandom: true, source })) {
+        showErrorToast(t("app.home.playErrorMessage"));
+      }
     } catch {
       showErrorToast(t("app.home.playErrorMessage"));
     } finally {

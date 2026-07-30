@@ -34,7 +34,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
-import { useOfflineModeEnabled } from "@/hooks/offline";
+import { useHasPlayableTracks, useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
@@ -122,6 +122,7 @@ export default function FavoritesScreen() {
     () => ({ type: "likedSongs", name: t("app.favorites.title") }),
     [t],
   );
+  const hasPlayableTracks = useHasPlayableTracks(data);
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
@@ -260,6 +261,7 @@ export default function FavoritesScreen() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isPlayingFromList && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

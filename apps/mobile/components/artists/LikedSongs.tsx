@@ -52,6 +52,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
@@ -134,6 +135,7 @@ export default function LikedSongs() {
     [likedSongs],
   );
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const hasPlayableTracks = useHasPlayableTracks(likedSongs);
 
   const handleTrackPressCallback = () => {
     if (data?.artist) {
@@ -507,6 +509,7 @@ export default function LikedSongs() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isPlayingFromList && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

@@ -11,6 +11,8 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useNowPlaying } from "@/hooks/backend/useLists";
+import { useIsTrackAvailableOffline } from "@/hooks/offline";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import type { NowPlayingEntry } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { useAuthBase } from "@/stores/auth";
@@ -23,9 +25,12 @@ function NowPlayingCard({ entry }: { entry: NowPlayingEntry }) {
     "--color-white",
     "--color-emerald-500",
   ]) as string[];
+  const isTrackDownloaded = useIsTrackAvailableOffline(entry.id);
+  const isOnline = useIsOnline();
   return (
     <FadeOutScaleDown
       onPress={() => playTracks([childToTrack(entry)], 0)}
+      disabled={!isOnline && !isTrackDownloaded}
       className="mr-6"
     >
       <VStack className="w-32 gap-y-2">

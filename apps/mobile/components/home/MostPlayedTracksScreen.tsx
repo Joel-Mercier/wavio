@@ -26,6 +26,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteMostPlayedSongs } from "@/hooks/backend/useLists";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
@@ -81,6 +82,7 @@ export default function MostPlayedTracksScreen() {
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs.map((s) => s.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const hasPlayableTracks = useHasPlayableTracks(songs);
   const shuffle = useQueue((store) => store.shuffle);
   const setShuffle = useQueue((store) => store.setShuffle);
 
@@ -189,6 +191,7 @@ export default function MostPlayedTracksScreen() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isPlayingFromList && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

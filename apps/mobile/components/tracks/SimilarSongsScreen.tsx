@@ -27,6 +27,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSimilarTracks } from "@/hooks/backend/useBrowsing";
+import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
@@ -72,6 +73,7 @@ export default function SimilarSongsScreen() {
   const playingTrack = usePlayingTrack();
   const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
+  const hasPlayableTracks = useHasPlayableTracks(songs);
   const shuffle = useQueue((store) => store.shuffle);
   const setShuffle = useQueue((store) => store.setShuffle);
 
@@ -188,6 +190,7 @@ export default function SimilarSongsScreen() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isPlayingFromList && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>

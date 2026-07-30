@@ -47,6 +47,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useInfinitePodcastSeries } from "@/hooks/taddyPodcasts/usePodcasts";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { playTracks, togglePlayPause } from "@/services/player";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
@@ -89,6 +90,9 @@ export default function PodcastScreen() {
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const isCurrent = !!podcast.uuid && playingTrack?.id === podcast.uuid;
+  // Taddy episodes stream a third-party enclosure URL, so only the device being
+  // offline stops them — an unreachable music server is irrelevant here.
+  const isDeviceOnline = useIsDeviceOnline();
   const { data: seriesData } = useInfinitePodcastSeries({
     uuid: podcast.podcastSeries?.uuid,
   });
@@ -412,6 +416,7 @@ export default function PodcastScreen() {
                 <PlayPauseButton
                   isPlaying={isCurrent && isPlaying}
                   onPress={handlePlayPress}
+                  disabled={!isCurrent && !isDeviceOnline}
                   size={48}
                   iconSize={24}
                   color={white}

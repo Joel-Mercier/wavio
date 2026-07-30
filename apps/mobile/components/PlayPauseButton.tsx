@@ -23,6 +23,8 @@ type PlayPauseButtonProps = {
   color?: string;
   className?: string;
   hitSlop?: ComponentProps<typeof Pressable>["hitSlop"];
+  disabled?: boolean;
+  disabledOpacity?: number;
   testID?: string;
 };
 
@@ -36,6 +38,10 @@ export default function PlayPauseButton({
   color: colorProp,
   className,
   hitSlop,
+  disabled = false,
+  // Matches FadeOutScaleDown so a disabled play button reads the same as the
+  // disabled rows around it.
+  disabledOpacity = 0.6,
   testID,
 }: PlayPauseButtonProps) {
   const [gray800] = Uniwind.getCSSVariable(["--color-gray-800"]) as string[];
@@ -92,7 +98,8 @@ export default function PlayPauseButton({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={containerStyle}
+      disabled={disabled}
+      style={[containerStyle, { opacity: disabled ? disabledOpacity : 1 }]}
     >
       <Box
         className={cn("rounded-full items-center justify-center", className)}

@@ -79,6 +79,7 @@ import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
   type DownloadCollectionMeta,
   useCollectionDownload,
+  useHasPlayableTracks,
   useIsDetailCached,
   useOfflineAlbum,
 } from "@/hooks/offline";
@@ -434,6 +435,7 @@ export default function AlbumDetail() {
 
   const isPlaying = useIsPlaying();
   const albumTracks = data?.album?.song;
+  const hasPlayableTracks = useHasPlayableTracks(albumTracks);
   const albumSource = useMemo<QueueSource>(
     () =>
       data?.album
@@ -936,6 +938,9 @@ export default function AlbumDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    // Offline, an album whose detail is only cached has nothing
+                    // to play — pressing would leave the queue untouched.
+                    disabled={!isActiveSource && !hasPlayableTracks}
                     testID="album-play-button"
                   />
                 </HStack>
