@@ -136,7 +136,7 @@ export function buildScopeRemap(
 //
 // Prefix-based rather than a loop over SCOPED_STORE_NAMES on purpose: it also
 // carries the queue's three hand-rolled keys (`<scope>:queueStore:queue`, and
-// the shuffleOrder/cursor siblings) and the React Query cache
+// the originalOrder/cursor siblings) and the React Query cache
 // (`<scope>:wavio-rq-cache`) without either having to be enumerated here.
 function renameScopedKeys(remap: ScopeRemap): void {
   for (const key of storage.getAllKeys()) {

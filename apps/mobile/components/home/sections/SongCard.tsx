@@ -6,6 +6,8 @@ import { Heading } from "@/components/ui/heading";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsTrackAvailableOffline } from "@/hooks/offline";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { artworkUrl } from "@/utils/artwork";
@@ -19,11 +21,18 @@ interface SongCardProps {
 
 export default function SongCard({ track, trackList, index }: SongCardProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
+  const isOnline = useIsOnline();
+  const isUnavailableOffline = !isOnline && !isTrackDownloaded;
   const handlePress = () => {
     playTracks(trackList.map(childToTrack), index);
   };
   return (
-    <FadeOutScaleDown onPress={handlePress} className="mr-6">
+    <FadeOutScaleDown
+      onPress={handlePress}
+      disabled={isUnavailableOffline}
+      className="mr-6"
+    >
       <VStack className="w-32 gap-y-2">
         {track.coverArt ? (
           <Image

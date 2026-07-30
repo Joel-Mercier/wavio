@@ -18,6 +18,11 @@ export const getArtistAppearances = dispatch(
   J.getArtistAppearances,
   L.getArtistAppearances,
 );
+export const getArtistSongs = dispatch(
+  S.getArtistSongs,
+  J.getArtistSongs,
+  L.getArtistSongs,
+);
 export const getArtistInfo = dispatch(S.getArtistInfo, J.getArtistInfo);
 export const getArtistInfo2 = dispatch(S.getArtistInfo2, J.getArtistInfo2);
 export const getArtists = dispatch(S.getArtists, J.getArtists, L.getArtists);

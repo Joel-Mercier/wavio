@@ -15,6 +15,7 @@ import { folderLabel, localFolders } from "@/services/local/paths";
 import {
   queryAlbumByKey,
   queryAlbumTracksByKey,
+  queryAllSongsByArtist,
   queryArtistAlbumsByKey,
   queryArtistByKey,
   queryArtists,
@@ -255,4 +256,14 @@ export const getArtistAppearances = async (
 ) => {
   const album: AlbumID3[] = [];
   return localEnvelope({ artistAppearances: { album } });
+};
+
+// Every indexed track of the artist, ordered like getArtist orders the albums
+// (year, then album name) and by disc/track number within an album.
+export const getArtistSongs = async (id: string) => {
+  const key = parseLocalArtistId(id);
+  if (key == null) throw new LocalUnsupportedError(`artist id "${id}"`);
+  const rows = await queryAllSongsByArtist(key);
+  const song: Child[] = rows.map(mapRowToChild);
+  return localEnvelope({ artistSongs: { song } });
 };

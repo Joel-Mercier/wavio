@@ -61,6 +61,7 @@ import {
 } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
 import { offlineDownloadService } from "@/services/offline";
@@ -123,7 +124,11 @@ export default function ServerPodcastChannelScreen() {
   const episodes = useMemo(() => channel?.episode ?? [], [channel]);
   const colors = useImageColors(image);
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const scope = useCurrentAuthScope();
   // Server-assigned channel ids can collide across servers — only a favorite
   // from the active scope counts.
@@ -206,8 +211,22 @@ export default function ServerPodcastChannelScreen() {
       0,
       tracks.findIndex((track) => track.id === episode.id),
     );
-    if (tracks.length > 0) {
-      playTracks(tracks, start);
+    if (tracks.length === 0) return;
+    // Offline with nothing downloaded from here, playTracks leaves the queue
+    // alone rather than stranding the player — say so instead of doing nothing.
+    if (!playTracks(tracks, start)) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.notAvailableOfflineMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
     }
   };
 
@@ -359,6 +378,7 @@ export default function ServerPodcastChannelScreen() {
         <PodcastEpisodeRow
           episode={item}
           seriesName={title}
+          isCurrent={playingTrack?.id === item.id}
           isPlaying={playingTrack?.id === item.id && isPlaying}
           onPlayPress={() => handlePlayEpisode(item)}
           onDeletePress={() => setEpisodePendingDelete(item)}
@@ -600,12 +620,14 @@ export default function ServerPodcastChannelScreen() {
 function PodcastEpisodeRow({
   episode,
   seriesName,
+  isCurrent,
   isPlaying,
   onPlayPress,
   onDeletePress,
 }: {
   episode: PodcastEpisode;
   seriesName: string;
+  isCurrent: boolean;
   isPlaying: boolean;
   onPlayPress: () => void;
   onDeletePress: () => void;
@@ -627,6 +649,7 @@ function PodcastEpisodeRow({
     episode.streamId != null &&
     parseLocalPodcastEpisodeId(episode.streamId) != null;
   const isDownloaded = useIsTrackAvailableOffline(episode.id);
+  const isOnline = useIsOnline();
   const progress = useDownloadProgress(episode.id);
   const isDownloading =
     progress?.status === "downloading" || progress?.status === "pending";
@@ -714,6 +737,7 @@ function PodcastEpisodeRow({
             <PlayPauseButton
               isPlaying={isPlaying}
               onPress={onPlayPress}
+              disabled={!isCurrent && !isOnline && !isDownloaded}
               size={40}
               iconSize={20}
               color={black}

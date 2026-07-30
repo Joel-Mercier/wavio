@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal, startTrackRadio } from "@/services/player";
 import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
@@ -127,11 +126,13 @@ export default function QueueDetail() {
   const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
 
   const tracks = useMemo(() => queue.map(queueTrackToChild), [queue]);
-  const handleTrackPress = useTrackListPress(tracks);
-  const handlePodcastPress = (index: number) => {
+  // The rows already *are* the queue: jump to the tapped index rather than
+  // replaying the list, which would rebuild (and under shuffle re-randomise)
+  // the very order the user is looking at, and drop the "Playing from" source.
+  const handleQueueItemPress = useCallback((index: number) => {
     useQueue.getState().setCurrentIndex(index);
     playLocal();
-  };
+  }, []);
   const hasCurrent =
     currentIndex != null && currentIndex >= 0 && currentIndex < queue.length;
   const playingTrackId = hasCurrent ? queue[currentIndex]?.id : undefined;
@@ -169,9 +170,27 @@ export default function QueueDetail() {
     () => history.map(historyEntryToChild),
     [history],
   );
-  const handleHistoryPress = useCallback((_index: number, track: Child) => {
-    void startTrackRadio(childToTrack(track));
-  }, []);
+  const handleHistoryPress = useCallback(
+    async (_index: number, track: Child) => {
+      // TrackListItem already disables rows that are unavailable offline, but
+      // connectivity can flip between render and tap — startTrackRadio then
+      // leaves the queue alone, so surface that instead of doing nothing.
+      if (await startTrackRadio(childToTrack(track))) return;
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.notAvailableOfflineMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    },
+    [t, toast],
+  );
 
   // Prune entries the server has since deleted. Best-effort and self-throttled,
   // so firing it on every tab switch is fine.
@@ -510,13 +529,13 @@ export default function QueueDetail() {
                   <QueuePodcastListItem
                     track={item.track}
                     index={item.index}
-                    onPress={handlePodcastPress}
+                    onPress={handleQueueItemPress}
                   />
                 ) : (
                   <TrackListItem
                     track={tracks[item.index]}
                     index={item.index}
-                    onPress={handleTrackPress}
+                    onPress={handleQueueItemPress}
                     disableFirstItemMargin={item.index === currentIndex}
                   />
                 );

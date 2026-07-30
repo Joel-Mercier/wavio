@@ -4,6 +4,7 @@ import {
   getIsCacheRestoring,
   subscribeCacheRestoring,
 } from "@/config/queryClient";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
@@ -27,6 +28,22 @@ type CollectionKind = "album" | "playlist";
 // other track is added/removed.
 export const useIsTrackAvailableOffline = (trackId: string) =>
   useOffline((s) => trackId in s.downloadedTracks);
+
+// Whether a collection's play affordance can do anything right now: online
+// always (the stream is one fetch away), offline only if at least one of its
+// tracks is downloaded. Mirrors the guard `playTracks` applies before it
+// replaces the queue, so the button reflects what pressing it would do — an
+// album whose detail is merely cached stays browsable but can't be played.
+export function useHasPlayableTracks(
+  songs: Child[] | null | undefined,
+): boolean {
+  const isOnline = useIsOnline();
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(() => {
+    if (isOnline) return true;
+    return !!songs?.some((song) => song.id in downloadedTracks);
+  }, [isOnline, songs, downloadedTracks]);
+}
 
 // Whether a collection/detail row should be ENABLED (tappable). Online — or
 // while the persisted cache is still restoring — always enabled (tapping fetches

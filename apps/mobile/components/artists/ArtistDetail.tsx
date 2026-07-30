@@ -10,6 +10,7 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -69,7 +70,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
-import { useOfflineArtist } from "@/hooks/offline";
+import { useHasPlayableTracks, useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
@@ -143,6 +144,14 @@ export default function ArtistDetail() {
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
   const musicFolderId = useCurrentMusicFolderId();
+  // Summed from the discography rather than fetched: the all-songs list itself
+  // costs one request per album, which the artist screen shouldn't pay just to
+  // label a link.
+  const albums = useMemo(() => data?.artist?.album ?? [], [data?.artist]);
+  const allSongsCount = useMemo(
+    () => albums.reduce((total, album) => total + (album.songCount ?? 0), 0),
+    [albums],
+  );
   const { data: appearancesData } = useArtistAppearances(id, {
     name: data?.artist?.name,
     musicFolderId,
@@ -163,7 +172,11 @@ export default function ArtistDetail() {
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -333,35 +346,56 @@ export default function ArtistDetail() {
     topSongsData?.topSongs.song,
     artistSource,
   );
+  const firstAlbumId = data?.artist?.album?.[0]?.id;
+  // The play button falls back to the artist's first album when there are no top
+  // songs. Offline that album's detail can only come from the persisted cache —
+  // fetchQuery would hang on a paused fetch once the entry is stale — so read it
+  // synchronously here, both to gate the button and to play from.
+  const cachedFirstAlbumSongs = useMemo(
+    () =>
+      firstAlbumId
+        ? queryClient.getQueryData<Awaited<ReturnType<typeof getAlbum>>>([
+            "album",
+            firstAlbumId,
+          ])?.album?.song
+        : undefined,
+    [queryClient, firstAlbumId],
+  );
+  const topSongs = topSongsData?.topSongs?.song;
+  const hasPlayableTracks = useHasPlayableTracks(
+    topSongs && topSongs.length > 0 ? topSongs : cachedFirstAlbumSongs,
+  );
   const handlePlayPress = async () => {
     if (isActiveSource) {
       togglePlayPause();
       return;
     }
-    const topSongs = topSongsData?.topSongs?.song;
     if (topSongs && topSongs.length > 0) {
       playTracks(topSongs.map(childToTrack), 0, {
         shuffleFromRandom: true,
         source: artistSource,
       });
     } else {
-      const firstAlbumId = data?.artist?.album?.[0]?.id;
       if (!firstAlbumId) return;
-      try {
-        const albumData = await queryClient.fetchQuery({
-          queryKey: ["album", firstAlbumId],
-          queryFn: () => getAlbum(firstAlbumId),
-        });
-        const songs = albumData?.album?.song;
-        if (!songs || songs.length === 0) return;
-        playTracks(songs.map(childToTrack), 0, {
-          shuffleFromRandom: true,
-          source: artistSource,
-        });
-      } catch (e) {
-        logError(e);
-        return;
+      let songs = cachedFirstAlbumSongs;
+      if (!songs || songs.length === 0) {
+        if (!isOnline) return;
+        try {
+          const albumData = await queryClient.fetchQuery({
+            queryKey: ["album", firstAlbumId],
+            queryFn: () => getAlbum(firstAlbumId),
+          });
+          songs = albumData?.album?.song;
+        } catch (e) {
+          logError(e);
+          return;
+        }
       }
+      if (!songs || songs.length === 0) return;
+      playTracks(songs.map(childToTrack), 0, {
+        shuffleFromRandom: true,
+        source: artistSource,
+      });
     }
     if (data?.artist) {
       addRecentPlay({
@@ -500,9 +534,7 @@ export default function ArtistDetail() {
 
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={
-          isLoading ? loadingData(3) : (data?.artist?.album?.slice(0, 3) ?? [])
-        }
+        data={isLoading ? loadingData(3) : albums.slice(0, 3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
           isLoading ? (
             <Box className="bg-black">
@@ -566,6 +598,7 @@ export default function ArtistDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
+                    disabled={!isActiveSource && !hasPlayableTracks}
                   />
                 </HStack>
               </HStack>
@@ -739,11 +772,9 @@ export default function ArtistDetail() {
           <Box className="bg-black">
             <VStack className="px-6 py-6 bg-black">
               <Text className="text-white font-bold">
-                {t("app.artists.albumCount", {
-                  count: data?.artist?.album?.length || 0,
-                })}
+                {t("app.artists.albumCount", { count: albums.length })}
               </Text>
-              {(data?.artist?.album?.length || 0) > 3 && (
+              {albums.length > 3 && (
                 <Center>
                   <FadeOutScaleDown
                     href={{
@@ -759,6 +790,50 @@ export default function ArtistDetail() {
                 </Center>
               )}
             </VStack>
+            {albums.length > 0 && (
+              <VStack className="px-6 pb-6 bg-black">
+                <FadeOutScaleDown
+                  href={{
+                    pathname: "/artists/[id]/all-songs",
+                    params: { id },
+                  }}
+                >
+                  <HStack className="items-center">
+                    <Box className="relative">
+                      <Image
+                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        alt="All songs cover"
+                        className="w-16 h-16 rounded-full aspect-square"
+                      />
+                      <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
+                        <ListMusic size={14} color={emerald500} />
+                      </Box>
+                    </Box>
+                    <VStack className="ml-4 flex-1">
+                      <Heading
+                        className="text-white"
+                        size="md"
+                        numberOfLines={1}
+                      >
+                        {t("app.artists.allSongs")}
+                      </Heading>
+                      <Text className="text-primary-100" numberOfLines={1}>
+                        {allSongsCount > 0 && (
+                          <>
+                            {t("app.shared.songCount", {
+                              count: allSongsCount,
+                            })}
+                            {" • "}
+                          </>
+                        )}
+                        {data?.artist?.name}
+                      </Text>
+                    </VStack>
+                    <ChevronRight color={white} />
+                  </HStack>
+                </FadeOutScaleDown>
+              </VStack>
+            )}
             {appearsOnAlbums.length > 0 && (
               <VStack className="bg-black pb-6">
                 <Heading className="text-white mb-4 px-6">

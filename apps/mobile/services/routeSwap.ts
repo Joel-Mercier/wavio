@@ -36,6 +36,23 @@ function routeRewrites(): { active: string; known: string[] } | null {
   return known.length ? { active, known } : null;
 }
 
+/**
+ * Whether a baked absolute URL points at the active server, on any of its known
+ * routes — i.e. whether reaching it depends on the server being up, as opposed
+ * to an offline `file://` path, an internet-radio stream or a third-party
+ * podcast enclosure, which are all hosted elsewhere.
+ */
+export function isActiveServerUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  const { serverId, url: activeUrl } = useAuthBase.getState();
+  if (!activeUrl) return false;
+  const server = useServersBase.getState().getServerById(serverId);
+  return [activeUrl, server?.url, server?.fallbackUrl]
+    .filter((u): u is string => !!u)
+    .map(stripSlash)
+    .some((prefix) => url.startsWith(prefix));
+}
+
 function repoint(value: string, active: string, known: string[]): string {
   for (const prefix of known) {
     if (value.startsWith(prefix)) return active + value.slice(prefix.length);

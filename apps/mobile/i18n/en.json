@@ -304,6 +304,7 @@
 				"rateModalTitle": "Rate artist",
 				"likedSongs": "Liked songs",
 				"likedAlbums": "Liked albums",
+				"allSongs": "All songs",
 				"albumCount_one": "{{count}} album",
 				"albumCount_other": "{{count}} albums",
 				"favoriteSuccessMessage": "Artist successfully added to favorites",
@@ -1507,6 +1508,7 @@
 					"playlist": "Playing from playlist",
 					"artist": "Playing from artist",
 					"likedSongs": "Playing from liked songs",
+					"allSongs": "Playing from all songs",
 					"folder": "Playing from folder",
 					"similar": "Playing from similar songs",
 					"audiomuse": "Playing from AudioMuse-AI",
@@ -1634,6 +1636,7 @@
 					"songCount": "Tracks",
 					"albumCount": "Albums"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Advanced settings",
 				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
 				"cancel": "Cancel",

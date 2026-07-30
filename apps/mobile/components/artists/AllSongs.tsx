@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -23,83 +23,135 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useSimilarTracks } from "@/hooks/backend/useBrowsing";
+import { useArtist, useArtistSongs } from "@/hooks/backend/useBrowsing";
 import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import useImageColors from "@/hooks/useImageColors";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useQueue, { type QueueSource } from "@/stores/queue";
+import useRecentPlays from "@/stores/recentPlays";
+import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 
+const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
 ) as unknown as typeof FlashList;
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
-export default function SimilarSongsScreen() {
-  const [emerald500, white] = Uniwind.getCSSVariable([
-    "--color-emerald-500",
+const SKELETON_DATA = loadingData(16);
+const EMPTY_DATA: Child[] = [];
+
+export default function AllSongs() {
+  const [white, black] = Uniwind.getCSSVariable([
     "--color-white",
+    "--color-black",
   ]) as string[];
   const { t } = useTranslation();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
+  const { data } = useArtist(id);
+  const { data: songsData, isLoading, error } = useArtistSongs(id);
+  const songs = songsData?.artistSongs?.song ?? EMPTY_DATA;
+  const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
+  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const topColor =
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     return {
-      opacity: interpolate(offsetY.value, [0, 50], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(
+        offsetY.value,
+        [0, 100],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
     };
   });
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
-  const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
-  const { data: songs, isLoading, error } = useSimilarTracks(id, { count: 50 });
-  const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
-  const similarSource = useMemo<QueueSource>(
-    () => ({ type: "similar", name: title ?? "" }),
-    [title],
-  );
-  const handleTrackPress = useTrackListPress(songs, similarSource);
+
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
-  const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
+  const trackIdSet = useMemo(() => new Set(songs.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const hasPlayableTracks = useHasPlayableTracks(songs);
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
 
+  const handleTrackPressCallback = useCallback(() => {
+    if (!data?.artist) return;
+    addRecentPlay({
+      id,
+      title: data.artist.name,
+      type: "artist",
+      coverArt: data.artist.coverArt,
+    });
+  }, [addRecentPlay, data?.artist, id]);
+
+  const songsSource = useMemo<QueueSource>(
+    () => ({ type: "allSongs", name: data?.artist?.name ?? "" }),
+    [data?.artist],
+  );
   const handlePlayPress = () => {
     if (isPlayingFromList) {
       togglePlayPause();
       return;
     }
-    if (!songs || songs.length === 0) return;
+    if (songs.length === 0) return;
     playTracks(songs.map(childToTrack), 0, {
       shuffleFromRandom: true,
-      source: similarSource,
+      source: songsSource,
     });
+    handleTrackPressCallback();
   };
 
+  const shuffle = useQueue((store) => store.shuffle);
+  const setShuffle = useQueue((store) => store.setShuffle);
   const handleShufflePress = () => {
     setShuffle(!shuffle);
   };
 
+  const handleTrackPress = useTrackListPress(songs, songsSource);
+
+  const keyExtractor = useCallback(
+    (item: Child, index: number) => item.id ?? String(index),
+    [],
+  );
+  const renderRow = useCallback(
+    ({ item, index }: { item: Child; index: number }) =>
+      isLoading ? (
+        <TrackListItemSkeleton index={index} className="px-6" />
+      ) : (
+        <TrackListItem
+          track={item}
+          index={index}
+          className="px-6"
+          onPress={handleTrackPress}
+          onPlayCallback={handleTrackPressCallback}
+        />
+      ),
+    [isLoading, handleTrackPress, handleTrackPressCallback],
+  );
+
   return (
-    <Box className="h-full">
+    <Box className="h-full bg-black">
       <AnimatedBox
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient colors={["#000", emerald500]} locations={[0, 0.7]}>
+        <LinearGradient colors={[topColor, black]} locations={[0, 0.7]}>
           <HStack
             className="items-center justify-between pb-4 px-6 bg-black/25"
             style={{ paddingTop: insets.top + 16 }}
@@ -111,10 +163,10 @@ export default function SimilarSongsScreen() {
             </FadeOutScaleDown>
             <Heading
               numberOfLines={1}
-              className="text-white font-bold flex-1 mx-4 text-center"
+              className="text-white font-bold text-center truncate flex-1"
               size="lg"
             >
-              {heading}
+              {data?.artist?.name}
             </Heading>
             <Box className="w-10" />
           </HStack>
@@ -122,24 +174,18 @@ export default function SimilarSongsScreen() {
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
-        data={isLoading ? loadingData(6) : songs || []}
-        renderItem={({ item, index }: { item: Child; index: number }) =>
-          isLoading ? (
-            <TrackListItemSkeleton index={index} className="px-6" />
-          ) : (
-            <TrackListItem
-              track={item}
-              index={index}
-              onPress={handleTrackPress}
-              showCoverArt
-              className="px-6"
-            />
-          )
-        }
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingBottom: screenBottomPadding,
+        }}
+        showsVerticalScrollIndicator={false}
+        data={isLoading ? SKELETON_DATA : songs}
+        keyExtractor={keyExtractor}
+        renderItem={renderRow}
         ListHeaderComponent={
           <>
             <LinearGradient
-              colors={[emerald500, "#000000"]}
+              colors={[topColor, black]}
               className="h-48"
               style={{ height: 192 }}
             >
@@ -148,36 +194,26 @@ export default function SimilarSongsScreen() {
                 style={{ paddingTop: insets.top }}
               >
                 <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <Pressable onPress={() => goBackOrHome(router)}>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <ArrowLeft size={24} color={white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
+                  <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
+                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                      <ArrowLeft size={24} color={white} />
+                    </Box>
+                  </FadeOutScaleDown>
                   <Heading
                     numberOfLines={2}
-                    className="text-white mb-12"
+                    className="text-white mb-12 font-bold"
                     size="xl"
                   >
-                    {heading}
+                    {data?.artist?.name}
                   </Heading>
                 </VStack>
               </Box>
             </LinearGradient>
-            <VStack className="px-6">
-              <HStack className="items-center gap-x-4 mb-4">
-                <Text className="text-primary-100" numberOfLines={1}>
-                  {t("app.shared.songCount", { count: songs?.length || 0 })}
-                </Text>
-              </HStack>
-              <HStack className="items-center justify-end">
+            <VStack className="px-6 bg-black">
+              <Text className="text-primary-100 mt-4" numberOfLines={1}>
+                {t("app.shared.songCount", { count: songs.length })}
+              </Text>
+              <HStack className="items-center justify-end my-4">
                 <HStack className="items-center gap-x-4">
                   <ShuffleToggle
                     active={shuffle}
@@ -194,15 +230,14 @@ export default function SimilarSongsScreen() {
                   />
                 </HStack>
               </HStack>
+              <Heading className="text-white mb-4" size="lg">
+                {t("app.artists.allSongs")}
+              </Heading>
               {error && <ErrorDisplay error={error} />}
             </VStack>
           </>
         }
-        ListEmptyComponent={isLoading ? null : <EmptyDisplay />}
-        contentContainerStyle={{
-          paddingBottom: screenBottomPadding,
-        }}
-        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<EmptyDisplay />}
       />
     </Box>
   );

@@ -49,13 +49,20 @@
 				"inputPlaceholder": "Cosa vuoi ascoltare?",
 				"exploreGenres": "Esplora i generi",
 				"recentSearches": "Ricerche recenti",
-				"clearRecentSearches": "Cancella tutto"
+				"clearRecentSearches": "Cancella tutto",
+				"tabs": {
+					"library": "Libreria",
+					"sound": "Audio",
+					"lyrics": "Testi delle canzoni"
+				}
 			},
 			"library": {
 				"title": "Libreria",
 				"searchPlaceholder": "Cerca nella tua libreria",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
+				"allAlbumsSubtitle": "Album",
+				"allArtistsSubtitle": "Artisti",
 				"search": {
 					"inputPlaceholder": "Cerca nella tua biblioteca"
 				}
@@ -64,6 +71,14 @@
 				"title": "Crea",
 				"playlistTitle": "Playlist",
 				"playlistDescription": "Crea una playlist con delle canzoni",
+				"aiPlaylistTitle": "Playlist creata a partire da un suggerimento",
+				"aiPlaylistDescription": "Descrivi ciò che desideri ascoltare e lascia che AudioMuse-AI lo realizzi",
+				"fingerprintTitle": "Impronta sonora",
+				"fingerprintDescription": "Crea una playlist basata sulle tue abitudini di ascolto personali",
+				"moodPlaylistTitle": "Playlist ispirata a uno stato d'animo",
+				"moodPlaylistDescription": "Scegli uno stato d'animo e crea una playlist con i brani che meglio lo rispecchiano",
+				"songPathTitle": "Percorso del brano",
+				"songPathDescription": "Passa gradualmente da una canzone all’altra, un piccolo passo alla volta",
 				"smartPlaylistTitle": "Playlist intelligente",
 				"smartPlaylistDescription": "Crea una playlist che si aggiorni automaticamente in base a determinate regole",
 				"internetRadioStationTitle": "Stazione radio su Internet",
@@ -72,6 +87,144 @@
 				"podcastChannelDescription": "Iscrivi il server a un podcast tramite il relativo feed RSS",
 				"downloaderTitle": "Aggiungi Musica",
 				"downloaderDescription": "Cerca e scarica musica dal tuo server"
+			},
+			"audiomuse": {
+				"prompt": {
+					"title": "Playlist creata a partire da un suggerimento",
+					"description": "Descrivi ciò che desideri ascoltare. AudioMuse-AI effettua una ricerca nella tua libreria in base al suono, all’atmosfera e ai testi per creare la playlist.",
+					"placeholder": "Canzoni per un pomeriggio piovoso",
+					"action": "Genera",
+					"newPrompt": "Nuovo prompt",
+					"failed": "AudioMuse-AI non è riuscito a creare una playlist. Riprova o riformula la tua richiesta.",
+					"noResults": "Nella tua libreria non è stato trovato nulla che corrispondesse a quella richiesta."
+				},
+				"fingerprint": {
+					"title": "Impronta sonora",
+					"description": "AudioMuse-AI crea un profilo basato sui brani che ascolti più spesso, quindi individua nella tua libreria i brani che più si avvicinano a quel profilo.",
+					"countLabel": "Numero di risultati",
+					"countHint": "Tra {{min}} e {{max}}. Le prime 20 sono le canzoni con cui è stata creata la tua impronta musicale, quindi un numero più alto indica un maggior numero di scoperte.",
+					"action": "Genera",
+					"newFingerprint": "Nuova impronta digitale",
+					"failed": "AudioMuse-AI non è riuscito a generare la tua impronta digitale. Controlla le credenziali del tuo server multimediale nelle impostazioni.",
+					"noResults": "AudioMuse-AI non è riuscito a trovare una cronologia di ascolti sufficiente per creare la tua impronta digitale."
+				},
+				"similar": {
+					"heading": "Simile a {{title}}",
+					"description": "AudioMuse-AI confronta il suono effettivo di questo brano con quello del resto della tua libreria e ti propone i risultati più simili.",
+					"countLabel": "Numero di risultati",
+					"countHint": "Tra {{min}} e {{max}}.",
+					"limitPerArtistLabel": "Limita il numero di brani per artista",
+					"limitPerArtistDescription": "Impedisce che un singolo artista domini i risultati.",
+					"radiusLabel": "Somiglianza dei raggi",
+					"radiusDescription": "Raggruppa le partite in base alla loro vicinanza e le ordina per garantire transizioni più fluide.",
+					"action": "Trova brani simili",
+					"newSearch": "Nuova ricerca",
+					"failed": "AudioMuse-AI non è riuscito a trovare brani simili. Riprova tra qualche istante.",
+					"noResults": "AudioMuse-AI non ha analizzato questo brano, quindi non ha alcun termine di paragone."
+				},
+				"mood": {
+					"title": "Playlist ispirata a uno stato d'animo",
+					"heading": "{{mood}} · {{style}}",
+					"description": "AudioMuse-AI dispone di una mappa che rappresenta i suoni della musica. Basta scegliere un punto su questa mappa e il sistema creerà una playlist con i brani più vicini a quel punto.",
+					"modes": {
+						"mood": "Stato d'animo",
+						"anchor": "Ancoraggio"
+					},
+					"moods": {
+						"happy": "Felice",
+						"sad": "Triste",
+						"aggressive": "Aggressivo",
+						"party": "Festa",
+						"relaxed": "Rilassato",
+						"danceable": "Adatto al ballo"
+					},
+					"choosePlaceholder": "Scegli",
+					"loading": "Caricamento in corso…",
+					"moodLabel": "Stato d'animo",
+					"moodDescription": "L'idea generale su cui basare la playlist.",
+					"styleLabel": "Stile",
+					"styleDescription": "Ogni stato d'animo comprende diversi generi musicali. Questo strumento ti aiuta a scegliere quello giusto.",
+					"anchorLabel": "Ancoraggio",
+					"anchorDescription": "Uno dei presentatori che hai salvato dalla pagina \"Alchemy\" di AudioMuse-AI.",
+					"countLabel": "Numero di risultati",
+					"countHint": "Tra {{min}} e {{max}}.",
+					"limitPerArtistLabel": "Limita il numero di brani per artista",
+					"limitPerArtistDescription": "Impedisce che un singolo artista domini la playlist.",
+					"action": "Genera",
+					"newSearch": "Nuova ricerca",
+					"unavailable": "Questa implementazione di AudioMuse-AI non ha segnalato alcuno stato d'animo.",
+					"loadFailed": "Non è stato possibile caricare gli stati d'animo da AudioMuse-AI.",
+					"retry": "Riprova",
+					"failed": "AudioMuse-AI non è riuscito a creare la playlist. Riprova tra qualche istante.",
+					"noResults": "Nella tua libreria non c'è nulla che gli assomigli abbastanza.",
+					"styleCount_one": "{{count}} stile",
+					"styleCount_other": "{{count}} stili",
+					"styleSongs_one": "{{count}} canzone in questo stile",
+					"styleSongs_other": "{{count}} canzoni di questo genere"
+				},
+				"path": {
+					"title": "Percorso del brano",
+					"heading": "{{start}} → {{end}}",
+					"description": "AudioMuse-AI procede gradualmente da un capo all’altro, con ogni brano che rappresenta un piccolo passo rispetto al precedente, così che la playlist scorra fluidamente anziché passare da un brano all’altro a scatti.",
+					"startLabel": "Inizio",
+					"endLabel": "Fine",
+					"choosePlaceholder": "Scegli una canzone, uno stato d'animo o un punto di riferimento",
+					"searchPlaceholder": "Cerca per brano, artista o album",
+					"searchHint": "Digita almeno 3 caratteri.",
+					"searchEmpty": "AudioMuse-AI non ha trovato alcun risultato corrispondente a quello analizzato.",
+					"modes": {
+						"song": "Canzone",
+						"mood": "Stato d'animo",
+						"anchor": "Ancoraggio"
+					},
+					"moods": {
+						"happy": "Felice",
+						"sad": "Triste",
+						"aggressive": "Aggressivo",
+						"relaxed": "Rilassato",
+						"danceable": "Adatto al ballo"
+					},
+					"oneResolvedEndpoint": "L'altra estremità è già uno stato d'animo o un punto di riferimento, e un percorso può averne solo uno. Scegli una canzone qui.",
+					"lyricsSongsOnly": "Tra due canzoni si snoda un percorso che segue il testo delle canzoni.",
+					"lyricsLabel": "Segui il testo della canzone",
+					"lyricsDescription": "Si sofferma sul significato delle canzoni piuttosto che sul loro sound.",
+					"blendLabel": "Miscela",
+					"blendDescription": "La distanza che separa l'estremità mobile o l'ancora dall'altra.",
+					"lengthLabel": "Brani nel percorso",
+					"lengthHint": "Tra {{min}} e {{max}}, contando entrambe le estremità. Più canzoni ci sono, più i passi sono piccoli e fluidi.",
+					"fixSizeLabel": "Mantenere la dimensione del percorso esatta",
+					"fixSizeDescription": "Completa il percorso fino alla lunghezza esatta, anche quando è necessario un passo meno simile. Se disattivato, si ferma prima di raggiungere la lunghezza desiderata.",
+					"action": "Trova percorso",
+					"newPath": "Nuovo percorso",
+					"failed": "AudioMuse-AI non è riuscito a creare un percorso. Prova con un percorso più lungo o con punti di partenza e di arrivo diversi.",
+					"noResults": "AudioMuse-AI non ha trovato alcun percorso tra i due."
+				},
+				"results": {
+					"saveAction": "Salva come playlist",
+					"queueAction": "Aggiungi alla coda",
+					"queued_one": "{{count}} brano aggiunto alla coda",
+					"queued_other": "{{count}} brani aggiunti alla coda",
+					"missing_one": "{{count}} Il brano non è più presente nella tua libreria",
+					"missing_other": "{{count}} i brani non sono più presenti nella tua libreria"
+				},
+				"notScanned": {
+					"library": "AudioMuse-AI non ha ancora analizzato la tua libreria, quindi non ha nulla da cercare. Avvia un'analisi dalla dashboard, quindi aggiorna le funzionalità nelle impostazioni.",
+					"clap": "AudioMuse-AI non ha ancora creato il proprio indice sonoro. Esegui l'analisi CLAP dalla dashboard, quindi aggiorna le caratteristiche nelle impostazioni."
+				},
+				"search": {
+					"soundEmpty": "Nessun brano della tua libreria suona così.",
+					"lyricsEmpty": "Nella tua libreria non ci sono testi che corrispondano a quello."
+				},
+				"save": {
+					"title": "Salva come playlist",
+					"namePlaceholder": "Nome della playlist",
+					"targetLabel": "Creato da",
+					"targetHint": "Modifica questa impostazione in Impostazioni > Integrazioni > AudioMuse-AI.",
+					"instantSuffixNote": "AudioMuse-AI lo chiamerà \"{{name}}\".",
+					"action": "Salva",
+					"success": "Playlist salvata",
+					"failed": "Impossibile salvare la playlist"
+				}
 			},
 			"carAuto": {
 				"home": "Home",
@@ -134,10 +287,16 @@
 			},
 			"artists": {
 				"label": "Artista",
+				"notInLibrary": "Non presente nella tua libreria",
+				"notInLibraryAddWithLidarr": "Non presente nella tua biblioteca • Cerca in Lidarr",
 				"coverAlt": "Copertina dell'artista",
 				"topSongs": "Brani più ascoltati",
 				"discography": "Discografia",
 				"appearsOn": "Pubblicato su",
+				"soundsLike": "Sembra che",
+				"poweredByAudioMuse": "Realizzato con AudioMuse-AI",
+				"similarArtists": "Artisti simili",
+				"similarArtistsSource": "Dal tuo server musicale",
 				"about": "Informazioni su",
 				"rate": "Valutazione",
 				"musicBrainz": "Apri in MusicBrainz",
@@ -571,7 +730,7 @@
 					},
 					"integrations": {
 						"title": "Integrazioni",
-						"description": "Correggi i tag della tua libreria con MusicBrainz"
+						"description": "Collega servizi esterni alla tua libreria"
 					},
 					"appearance": {
 						"title": "Aspetto",
@@ -603,7 +762,7 @@
 					}
 				},
 				"integrations": {
-					"description": "Collega database musicali esterni per arricchire e correggere la tua libreria.",
+					"description": "Collega servizi esterni per arricchire la tua libreria e scoprire nuova musica al suo interno.",
 					"statuses": {
 						"configured": "Attivo",
 						"notConfigured": "Non configurato"
@@ -686,6 +845,96 @@
 							"apply": "Candidati",
 							"applyToFiles": "Scrivere su file",
 							"applying": "Scrittura"
+						}
+					},
+					"audiomuse": {
+						"title": "AudioMuse-AI",
+						"description": "Crea playlist a partire dai brani della tua libreria",
+						"serverUrlLabel": "Server URL",
+						"apiTokenLabel": "Token API",
+						"apiTokenPlaceholder": "Lasciare vuoto se l'autenticazione è disattivata",
+						"getTokenAction": "Dove posso trovare il token API?",
+						"tokenHelpTitle": "Come trovare il proprio token API",
+						"tokenHelpStep1": "Apri AudioMuse-AI in un browser ed effettua l'accesso come amministratore.",
+						"tokenHelpStep2": "Vai su Amministrazione > Procedura guidata di configurazione e cerca l'impostazione relativa al token API.",
+						"tokenHelpStep3": "Copia qui il token. Se la tua distribuzione viene eseguita con l'autenticazione disattivata, lascia questo campo vuoto.",
+						"tokenHelpClose": "Capito",
+						"testAndSaveAction": "Prova e salva",
+						"connectionSuccess": "Collegato ad AudioMuse-AI",
+						"connectionFailed": "Impossibile connettersi ad AudioMuse-AI. Verificare l'URL del server.",
+						"tokenRejected": "AudioMuse-AI ha rifiutato il token API.",
+						"removedMessage": "Connessione AudioMuse-AI interrotta",
+						"features": {
+							"title": "Funzionalità disponibili",
+							"description": "Le implementazioni di AudioMuse-AI sono configurabili, quindi l'app offre solo ciò a cui risponde il tuo server.",
+							"available": "Disponibile",
+							"unavailable": "Non disponibile",
+							"aiPlaylists": "Playlist generate da un prompt",
+							"aiPlaylistsHint": "Creane uno dal pulsante + nella tua libreria oppure dalla scheda Crea.",
+							"noAiProvider": "Scegli uno dei fornitori di IA riportati di seguito per attivare questa funzione",
+							"soundSearch": "Ricerca per suono",
+							"soundSearchDetail": "Descrivi il suono di un brano e trova quelli simili, anche se non ne conosci il titolo.",
+							"soundSearchHint": "Utilizza la scheda \"Audio\" nella ricerca.",
+							"lyricsSearch": "Cerca per testo della canzone",
+							"lyricsSearchDetail": "Cerca le canzoni in base al significato dei testi, piuttosto che alle parole esatte.",
+							"lyricsSearchHint": "Utilizza la scheda \"Testi\" nella ricerca.",
+							"fingerprint": "Impronta sonora",
+							"fingerprintDetail": "Crea una playlist basata sulle tue abitudini di ascolto personali",
+							"fingerprintHint": "Creane uno dal pulsante + nella tua libreria oppure dalla scheda Crea.",
+							"similarTracks": "Brani dal suono simile",
+							"similarTracksDetail": "Crea una playlist con i brani che più si avvicinano a qualsiasi brano presente nella tua libreria.",
+							"similarTracksHint": "Apri il menu di qualsiasi brano, sia dall'elenco che dal lettore.",
+							"similarArtists": "Artisti dal nome simile",
+							"similarArtistsDetail": "Scopri gli artisti la cui musica è simile a quella che stai ascoltando.",
+							"similarArtistsHint": "Apri la pagina di un artista qualsiasi e scorri fino alla sezione \"Suona come\".",
+							"moodPlaylists": "Playlist in base allo stato d'animo",
+							"moodPlaylistsDetail": "Crea una playlist ispirata a uno stato d'animo o a un punto di riferimento che hai salvato nella pagina Alchemy.",
+							"moodPlaylistsHint": "Creane uno dal pulsante + nella tua libreria oppure dalla scheda Crea.",
+							"songPath": "Percorso del brano",
+							"songPathDetail": "Crea una playlist che passi gradualmente da un brano all’altro, un piccolo passo alla volta.",
+							"songPathDetailLyrics": "Crea una playlist che passi gradualmente da un brano all’altro. Questa struttura può seguire sia il testo che la musica.",
+							"songPathHint": "Creane uno tramite il pulsante + nella tua libreria, dalla scheda \"Crea\" o dal menu di qualsiasi traccia.",
+							"library": "Analisi della biblioteca",
+							"libraryNotAnalyzed": "Non è stato ancora analizzato nulla: le ricerche e i suggerimenti non daranno alcun risultato",
+							"libraryUnknown": "Questa distribuzione non ha segnalato lo stato di avanzamento dell'analisi",
+							"refreshLabel": "Funzionalità di aggiornamento",
+							"refreshDescription": "Chiedi di nuovo al server quali funzionalità supporta.",
+							"refreshAction": "Aggiorna",
+							"refreshed": "Funzionalità aggiornate",
+							"libraryAnalyzed_one": "{{count}} traccia analizzata",
+							"libraryAnalyzed_other": "{{count}} tracce analizzate"
+						},
+						"fingerprint": {
+							"title": "Impronta sonora",
+							"description": "L'impronta digitale viene generata sulla base della tua cronologia di riproduzione, che AudioMuse-AI legge dal tuo server multimediale. È necessario disporre di un account su tale server: il token API non è sufficiente.",
+							"jellyfinUserLabel": "Nome utente o ID utente Jellyfin",
+							"jellyfinUserPlaceholder": "Il tuo nome utente sul server multimediale",
+							"jellyfinSecretLabel": "Token API di Jellyfin",
+							"navidromeUserLabel": "Nome utente Navidrome",
+							"navidromeUserPlaceholder": "Il tuo nome utente sul server multimediale",
+							"navidromeSecretLabel": "Password o token API di Navidrome",
+							"secretPlaceholder": "Opzionale — AudioMuse-AI ricorre al proprio",
+							"noCredentialsNote": "Questa configurazione utilizza le credenziali dell'account con cui è stato configurato AudioMuse-AI, quindi non è necessario inserire nulla in questo campo.",
+							"saved": "Credenziali del media server salvate"
+						},
+						"server": {
+							"label": "Server multimediale",
+							"description": "Quale dei server multimediali dell'implementazione utilizzare. I risultati vengono restituiti con gli ID delle tracce di quel server.",
+							"defaultOption": "Impostazioni predefinite del server"
+						},
+						"aiProvider": {
+							"label": "Fornitore di soluzioni di intelligenza artificiale",
+							"description": "Il modello che crea playlist in base alle tue indicazioni. Scegli quello per cui il tuo AudioMuse-AI dispone delle credenziali.",
+							"autoOption": "Impostazioni predefinite del server",
+							"autoDetail": "Attualmente {{provider}}"
+						},
+						"saveTarget": {
+							"label": "Salva le playlist con",
+							"description": "Chi crea la playlist quando si salva un elenco di brani generato?",
+							"wavio": "Wavio",
+							"wavioDescription": "Wavio crea la playlist sul tuo server, utilizzando il tuo account.",
+							"audiomuse": "AudioMuse-AI",
+							"audiomuseDescription": "AudioMuse-AI crea la playlist sul tuo server, utilizzando le credenziali con cui è stato configurato. Aggiunge sempre \"_instant\" alla fine del nome che scegli."
 						}
 					}
 				},
@@ -1187,6 +1436,8 @@
 				"showCredits": "Mostra i crediti del brano",
 				"similarSongs": "Canzoni simili",
 				"similarSongsTitle": "Brani simili a: {{title}}",
+				"audioMuseSimilarTracks": "Trova brani dal suono simile (AudioMuse-AI)",
+				"audioMuseSongPath": "Inizia un percorso partendo da questa canzone (AudioMuse-AI)",
 				"trackInfoModalTitle": "Informazioni sul brano",
 				"rateModalTitle": "Valutazione della traccia",
 				"creditsModalTitle": "Crediti del brano",
@@ -1257,6 +1508,7 @@
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
+					"audiomuse": "Riproduzione da AudioMuse-AI",
 					"albumList": "Riproduzione dagli album",
 					"playlistList": "Riproduzione dalla playlist"
 				},
@@ -1422,9 +1674,9 @@
 					"artists": "Artisti",
 					"playlists": "Playlist",
 					"podcasts": "Podcast",
-					"radioStations": "Radio stations",
-					"folders": "Folders",
-					"songs": "Songs"
+					"radioStations": "Stazioni radio",
+					"folders": "Cartelle",
+					"songs": "Canzoni"
 				},
 				"save": "Salva",
 				"done": "Fatto",
