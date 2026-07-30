@@ -45,7 +45,10 @@ android {
     applicationId 'com.jmercier.wavio'
     // Wear OS 3.0 and up. The phone app's minSdk (26) is irrelevant here.
     minSdkVersion 30
-    targetSdkVersion 34
+    // Play requires Wear submissions to target API 35 from 2026-08-31, on its
+    // own schedule rather than the phone's — hence a literal here instead of
+    // following :app's targetSdk.
+    targetSdkVersion 35
     versionCode phoneVersion.versionCode + wearVersionCodeOffset
     versionName phoneVersion.versionName
   }

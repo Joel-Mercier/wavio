@@ -98,15 +98,16 @@ class WearBridgeModule : Module() {
     }
 
     Function("clearState") {
-      val context = appContext.reactContext ?: return@Function
-      publishedArtworkKey = null
-      io.execute {
-        val client = Wearable.getDataClient(context)
-        for (path in listOf(WearPaths.STATE, WearPaths.QUEUE, WearPaths.ARTWORK)) {
-          // Awaited, on the same thread the puts use: a delete still in flight
-          // when the next server publishes would wipe its state instead.
-          runCatching { awaitDataOp(client.deleteDataItems(Uri.parse("wear://*$path"))) }
-            .onFailure { WearLog.w("deleteDataItems($path) failed", it) }
+      appContext.reactContext?.let { context ->
+        publishedArtworkKey = null
+        io.execute {
+          val client = Wearable.getDataClient(context)
+          for (path in listOf(WearPaths.STATE, WearPaths.QUEUE, WearPaths.ARTWORK)) {
+            // Awaited, on the same thread the puts use: a delete still in flight
+            // when the next server publishes would wipe its state instead.
+            runCatching { awaitDataOp(client.deleteDataItems(Uri.parse("wear://*$path"))) }
+              .onFailure { WearLog.w("deleteDataItems($path) failed", it) }
+          }
         }
       }
     }

@@ -68,22 +68,49 @@ adb devices -l
 
 ### Pairing
 
-**Recommended — pair with a phone *emulator*.** Android Studio → Device Manager →
-⋮ on the Wear AVD → **Pair Devices for Wear OS** → pick a phone AVD (create a
-Pixel API 34/35 **Google Play** image if you don't have one). The assistant does
-the whole handshake. This is by far the most reliable path and needs no
-companion app.
+**Pair with a phone *emulator*.** Android Studio → Device Manager → ⋮ on the Wear
+AVD → **Pair Devices for Wear OS** → pick a phone AVD (create a Pixel API 34+
+**Google Play** image if you don't have one). The assistant does the whole
+handshake, including the companion app. Nothing to install by hand.
 
-**Alternative — pair with your physical Redmi.** Install *Wear OS by Google* from
-Play on the phone, then:
+Note both identifiers once they're up — from here on every command targets one
+explicitly. Which emulator grabs `5554` depends only on boot order, so identify
+them rather than assuming; the watch is the one whose `ro.build.characteristics`
+contains `watch`:
 
 ```sh
-adb -s 7822d0f4 forward tcp:5601 tcp:5601
+for s in $(adb devices | awk 'NR>1 && $2=="device"{print $1}'); do
+  echo "$s  $(adb -s $s emu avd name 2>/dev/null | head -1)  $(adb -s $s shell getprop ro.build.characteristics)"
+done
 ```
 
-and in the Wear OS app choose *Pair with emulator*. More realistic (real
-Bluetooth, real doze behaviour) but flakier on Wear OS 3+; use it for the final
-pass, not the edit-run loop.
+Each emulator has **two** identifiers and they are not interchangeable:
+
+| Identifier | Example | Used by |
+|---|---|---|
+| adb serial | `emulator-5554` | every `adb -s …` command below |
+| AVD name | `Pixel_9_API_36` | `expo run:android --device` **only** |
+
+Passing a serial to `expo run:android` fails with `Could not find device with
+name:` — it matches on the AVD name.
+
+#### Why not a physical phone?
+
+Pairing an emulated watch to a real phone needed *Wear OS by Google*
+(`com.google.android.wearable.app`) and its **Pair with emulator** menu item.
+Google delisted that app for Android 14+, and neither successor replaces it:
+**Galaxy Wearable** pairs only Samsung watches, **Pixel Watch** pairs only real
+Pixel Watches over BLE. Neither can target an emulator, so the old
+`adb forward tcp:5601 tcp:5601` route is unreachable.
+
+Sideloading an old 2.x companion APK is the only remaining option and is not
+recommended: newer builds dropped the emulator-pairing entry point, older ones
+tend to fail the Play Services version check on Android 15.
+
+Little is actually lost. The cases below that look like they want real hardware —
+B2, B5, C1–C3 — all measure *watch-side* behaviour, and the watch is emulated
+either way. A real phone would not have bought real doze fidelity. The parts of
+this feature that genuinely need hardware need a real **watch**, not a real phone.
 
 Confirm the two are actually bridged before going further:
 
@@ -109,22 +136,25 @@ grep -c "include ':wear'"                    android/settings.gradle    # 1
 grep    "org.gradle.jvmargs"                 android/gradle.properties  # -Xmx4096m
 ```
 
-The watch's version code is derived from `:app` at configuration time rather
-than stamped during prebuild, so it is only observable once built. Both apps
-share an application id, so ask each device what it installed — the watch must
-report the phone's code plus 1000000:
+Then install to the phone you paired (Metro must stay running). With a watch AVD
+attached — and possibly a physical phone too — `expo run:android` must be told
+which one, and `bun run mobile:android` can't forward the flag through
+`eas env:exec`'s quoted command. Run it directly:
 
 ```sh
-adb -s <phone-serial> shell dumpsys package com.jmercier.wavio | grep versionCode
-adb -s <watch-serial> shell dumpsys package com.jmercier.wavio | grep versionCode
+cd /Users/joel/www/wavio/apps/mobile
+eas env:exec --non-interactive development \
+  "DARK_MODE=media bunx expo run:android --device <phone-avd-name>"
 ```
 
-Then install to whichever device you paired (Metro must stay running):
+Two gotchas in that one line:
 
-```sh
-cd /Users/joel/www/wavio
-bun run mobile:android
-```
+- `--device` wants the **AVD name** (`Pixel_9_API_36`), not the adb serial —
+  see the table in §1.
+- `bunx` is not optional: `eas env:exec` runs the command through `/bin/sh`
+  without `node_modules/.bin` on `PATH`, so a bare `expo` fails with
+  `expo: command not found`. The `package.json` scripts get away with it
+  because Bun adds that directory when running a script.
 
 Sanity check that the native module loaded, before touching the watch:
 
@@ -153,6 +183,22 @@ First build downloads the Compose and Play Services artifacts; expect a few
 minutes. Subsequent watch-only rebuilds are the two commands above and take
 seconds — you do **not** need to re-run prebuild or rebuild the phone app to
 iterate on watch UI.
+
+### Check the two version codes
+
+Only now — with both apps installed — can this be verified. The watch's version
+code is derived from `:app` at configuration time rather than stamped during
+prebuild, so it isn't observable until each APK is built and on a device. Both
+apps share an application id, so ask each device what *it* installed; the watch
+must report the phone's code plus 1000000:
+
+```sh
+adb -s <phone-serial> shell dumpsys package com.jmercier.wavio | grep versionCode
+adb -s <watch-serial> shell dumpsys package com.jmercier.wavio | grep versionCode
+```
+
+If the watch reports the *same* code as the phone, `:wear` didn't pick up the
+offset and Play will later reject the pair.
 
 ---
 
@@ -260,13 +306,34 @@ draft release in the Play Console before rolling out.
 
 ## 7. Known-unverified
 
-None of the Kotlin in `modules/wear-bridge` or `apps/mobile/wear` has been
-compiled yet. The two things most likely to need adjusting on the first build:
+Both `modules/wear-bridge` and `apps/mobile/wear` now compile in **debug**
+(`:app:assembleDebug` and `:wear:assembleDebug` both succeed). The pinned
+dependency versions in `wear/build.gradle` — Compose BOM `2025.02.00`, Wear
+Compose `1.4.1`, `play-services-wearable:18.2.0` — resolved without adjustment.
 
-- The pinned dependency versions in `wear/build.gradle` (Compose BOM
-  `2025.02.00`, Wear Compose `1.4.1`, `play-services-wearable:18.2.0`).
+Compiling is not running: none of the runtime behaviour in §5 has been exercised
+yet.
+
+Still unverified:
+
 - `signingConfig project(':app').android.buildTypes.release.signingConfig`,
   which assumes EAS injects its keystore into `:app`'s `release` build type.
+  Only debug has been built, and debug borrows the debug keystore, so this says
+  nothing about whether the release path works.
+- Everything in §5.
+- **The watch's `targetSdkVersion 35` on an API 35+ device.** Play requires Wear
+  submissions to target 35 from **2026-08-31**, so `wear/build.gradle` sets it,
+  but the Android 15 behaviour changes that opts into only apply when the app is
+  *running* on API 35+. The API 34 AVD in §1 therefore never exercises them.
+  Before submitting `production-wear`, do one pass on a newer image:
+
+  ```sh
+  SDK=$HOME/Library/Android/sdk
+  $SDK/cmdline-tools/latest/bin/sdkmanager "system-images;android-35-ext15;android-wear;arm64-v8a"
+  ```
+
+  Keep the API 34 AVD for day-to-day work — a new AVD has to be re-paired.
+  Images at 36+ use the different `android-wear-signed` tag.
 
 Rotary scroll on the queue list is not wired (touch scrolling works); rotary is
 only used for seeking on the player screen.
