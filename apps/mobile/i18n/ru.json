@@ -1679,6 +1679,7 @@
 					"songCount": "По количеству треков",
 					"albumCount": "Альбомы"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
 				"cancel": "Отмена",
