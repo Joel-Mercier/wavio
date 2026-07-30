@@ -9,7 +9,7 @@
 			"home": {
 				"tabTitle": "Inicio",
 				"title": "Hola {{username}}",
-				"recentlyPlayed": "Últimos juegos jugados",
+				"recentlyPlayed": "Reproducido recientemente",
 				"recentlyAdded": "Añadidos recientemente",
 				"mostPlayed": "Los más reproducidos",
 				"mostPlayedTracks": "Canciones más escuchadas",
@@ -36,12 +36,12 @@
 					"radioFavorites": "Favoritos"
 				},
 				"sections": {
-					"recent": "Últimos juegos jugados",
+					"recent": "Reproducido recientemente",
 					"newest": "Añadidos recientemente",
 					"highest": "Los mejor valorados",
 					"frequent": "Los más reproducidos",
 					"random": "Aleatorio",
-					"nowPlaying": "Ahora estoy escuchando"
+					"nowPlaying": "Escuchando ahora"
 				}
 			},
 			"search": {
@@ -78,7 +78,7 @@
 				"moodPlaylistTitle": "Lista de reproducción según el estado de ánimo",
 				"moodPlaylistDescription": "Elige un estado de ánimo y crea una lista de reproducción con las canciones que mejor lo reflejen",
 				"songPathTitle": "Ruta de la canción",
-				"songPathDescription": "Pasa poco a poco de una canción a otra, paso a paso",
+				"songPathDescription": "Pasa gradualmente de una canción a otra",
 				"smartPlaylistTitle": "Lista de reproducción inteligente",
 				"smartPlaylistDescription": "Crea una lista de reproducción que se actualice automáticamente según unas reglas",
 				"internetRadioStationTitle": "Emisora de radio por Internet",
@@ -143,7 +143,7 @@
 					"moodLabel": "Estado de ánimo",
 					"moodDescription": "La idea general en torno a la cual organizar la lista de reproducción.",
 					"styleLabel": "Estilo",
-					"styleDescription": "Cada estado de ánimo abarca varios tipos de música. Esto elige cuál de ellos.",
+					"styleDescription": "Cada estado de ánimo abarca varios tipos de música. Esto elige cual escoger.",
 					"anchorLabel": "Ancla",
 					"anchorDescription": "Uno de los «anchors» que has guardado de la página «Alchemy» de AudioMuse-AI.",
 					"countLabel": "Número de resultados",
@@ -154,7 +154,7 @@
 					"newSearch": "Nueva búsqueda",
 					"unavailable": "Esta implementación de AudioMuse-AI no ha registrado ningún estado de ánimo.",
 					"loadFailed": "No se han podido cargar los estados de ánimo desde AudioMuse-AI.",
-					"retry": "Volver a intentarlo",
+					"retry": "Reintentar",
 					"failed": "AudioMuse-AI no ha podido crear la lista de reproducción. Inténtalo de nuevo dentro de un momento.",
 					"noResults": "No hay nada en tu biblioteca que se parezca lo suficiente a eso.",
 					"styleCount_one": "{{count}} estilo",
@@ -184,18 +184,18 @@
 						"relaxed": "Tranquilo",
 						"danceable": "Para bailar"
 					},
-					"oneResolvedEndpoint": "El otro extremo ya es un estado de ánimo o un punto de referencia, y un camino solo puede tener uno. Elige una canción aquí.",
+					"oneResolvedEndpoint": "El otro extremo ya es un estado de ánimo o referencia, y la ruta solo puede tener uno. Elige una canción aquí.",
 					"lyricsSongsOnly": "Entre dos canciones discurre un hilo conductor que sigue la letra.",
 					"lyricsLabel": "Sigue la letra de la canción",
 					"lyricsDescription": "Analiza el significado de las canciones, más que su sonido.",
-					"blendLabel": "Mezcla",
+					"blendLabel": "Mezclar",
 					"blendDescription": "La distancia a la que se desplaza el extremo de la línea de fondeo o el ancla respecto al otro.",
-					"lengthLabel": "Canciones en el camino",
+					"lengthLabel": "Canciones en la ruta",
 					"lengthHint": "Entre {{min}} y {{max}}, contando ambos extremos. Cuantas más canciones haya, más pequeños y suaves serán los pasos.",
 					"fixSizeLabel": "Mantén el tamaño de la ruta exacto",
 					"fixSizeDescription": "Rellena la ruta hasta la longitud exacta, incluso cuando se necesita un paso menos similar. Si está desactivado, se detiene antes de alcanzar la longitud deseada.",
 					"action": "Buscar ruta",
-					"newPath": "Nuevo camino",
+					"newPath": "Nueva ruta",
 					"failed": "AudioMuse-AI no ha podido crear una ruta. Prueba con una ruta más larga o con puntos de partida y llegada diferentes.",
 					"noResults": "AudioMuse-AI no ha encontrado ninguna ruta entre esos dos puntos."
 				},
@@ -228,7 +228,7 @@
 			},
 			"carAuto": {
 				"home": "Inicio",
-				"recentlyPlayed": "Últimos juegos jugados",
+				"recentlyPlayed": "Reproducido recientemente",
 				"recentlyAdded": "Añadidos recientemente",
 				"mostPlayed": "Los más reproducidos",
 				"topRated": "Los mejor valorados",
@@ -246,7 +246,7 @@
 				"playNext": "Reproducir la siguiente",
 				"addToQueue": "Añadir a la cola",
 				"goToArtist": "Ir al artista",
-				"rate": "Tasa",
+				"rate": "Valoración",
 				"share": "Compartir",
 				"musicBrainz": "Abrir en MusicBrainz",
 				"lastFM": "Abrir en Last.fm",
@@ -267,7 +267,7 @@
 				"typeCompilation": "Recopilación",
 				"releaseTypes": {
 					"album": "Álbum",
-					"single": "Sólito",
+					"single": "Single",
 					"ep": "EP",
 					"broadcast": "Emisión",
 					"other": "Otros",
@@ -1146,7 +1146,7 @@
 					}
 				},
 				"hapticsSettings": {
-					"title": "Haptics",
+					"title": "Háptica",
 					"enabledLabel": "Retroalimentación háptica",
 					"enabledDescription": "Vibrar al realizar acciones como desplazarse por el índice alfabético"
 				},
@@ -1635,7 +1635,7 @@
 					"songCount": "Pistas",
 					"albumCount": "Álbumes"
 				},
-				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
+				"notAvailableOfflineMessage": "No disponible sin conexión. Descárgalo para poderlo escuchar sin conexión.",
 				"advancedSettings": "Configuración avanzada",
 				"fallbackUrlHelp": "Se utiliza cuando no se puede acceder a la URL principal. Debe apuntar al mismo servidor.",
 				"cancel": "Cancelar",
