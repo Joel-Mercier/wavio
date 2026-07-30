@@ -3,6 +3,7 @@ import { formatDistanceToNow as _formatDistanceToNow } from "date-fns/formatDist
 import type { Locale } from "date-fns/locale";
 import { de } from "date-fns/locale/de";
 import { enUS as en } from "date-fns/locale/en-US";
+import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
 import { it } from "date-fns/locale/it";
 import { ru } from "date-fns/locale/ru";
@@ -16,6 +17,7 @@ const locales: Record<string, Locale> = {
   ru,
   de,
   it,
+  es,
 };
 
 export const formatDistanceToNow = (date: Date) => {
