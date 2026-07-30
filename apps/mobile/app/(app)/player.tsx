@@ -175,14 +175,11 @@ export default function PlayerScreen() {
   );
   const canSkipNext =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
+    (repeatMode !== "off" ||
       (currentIndex != null && currentIndex < queueLength - 1));
   const canSkipPrevious =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
-      (currentIndex != null && currentIndex > 0));
+    (repeatMode !== "off" || (currentIndex != null && currentIndex > 0));
   const [coverArea, setCoverArea] = useState({ width: 0, height: 0 });
   const coverSize = Math.max(
     0,

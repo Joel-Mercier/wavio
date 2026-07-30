@@ -639,13 +639,13 @@ function loadAndPlay(track: QueueTrack | null) {
 // end-of-track advance stays seamless instead of stalling on a network call.
 const ENDLESS_PREFETCH_LEAD_SECONDS = 20;
 
-// True when the queue is parked on its final track with no repeat/shuffle — the
-// point at which endless playback must extend it to keep going.
+// True when the queue is parked on its final track with no repeat — the point
+// at which endless playback must extend it to keep going. Shuffle permutes the
+// queue in place rather than traversing it endlessly, so it ends here too.
 function atEndlessQueueTail(): boolean {
   const q = useQueue.getState();
   return (
     q.repeatMode === "off" &&
-    !q.shuffle &&
     q.currentIndex != null &&
     q.currentIndex >= q.queue.length - 1
   );
@@ -899,7 +899,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       player.pause();
       return;
     }
-    // End of queue with no repeat/shuffle: keep the current track loaded so the
+    // End of queue with no repeat: keep the current track loaded so the
     // player UI keeps its title/artist/cover, just stop playback. If endless
     // playback is enabled and the near-end prefetch hasn't already extended the
     // queue, fall back to fetching now (arming resume so playback restarts once
@@ -1230,7 +1230,8 @@ export function restoreServerQueue(
   if (tracks.length === 0) return;
   suppressAutoplayOnce = true;
   playbackInitialized = false;
-  useQueue.getState().setQueue(tracks, index);
+  // Explicit null: the server queue carries no "Playing from …" context.
+  useQueue.getState().setQueue(tracks, index, null);
   if (positionSeconds > 0) {
     try {
       player.seekTo(positionSeconds);
@@ -1361,7 +1362,7 @@ export function isPlaying() {
 export function skipNext() {
   const state = useQueue.getState();
   if (state.queue.length === 0 || state.currentIndex == null) return;
-  if (state.repeatMode === "off" && !state.shuffle) {
+  if (state.repeatMode === "off") {
     if (state.currentIndex >= state.queue.length - 1) return;
   }
   if (useJukebox.getState().active) {
@@ -1384,11 +1385,7 @@ export function skipPrevious(options?: { force?: boolean }) {
   // At the start of the playback order with no repeat there is no previous
   // target — restart the current track instead of letting previous() clear the
   // queue position (which would unload it).
-  const atStart =
-    queue.repeatMode !== "all" &&
-    (queue.shuffle && queue.shuffleOrderIds?.length
-      ? (queue.shuffleCursor ?? 0) <= 0
-      : (queue.currentIndex ?? 0) <= 0);
+  const atStart = queue.repeatMode !== "all" && (queue.currentIndex ?? 0) <= 0;
   if (atStart) {
     seekTo(0);
     return;

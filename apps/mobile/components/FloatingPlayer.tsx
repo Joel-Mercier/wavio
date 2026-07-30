@@ -92,7 +92,6 @@ export default function FloatingPlayer() {
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
-  const shuffle = useQueue((s) => s.shuffle);
   const queryClient = useQueryClient();
 
   const isRadio = !!playingTrack?.isRadio;
@@ -111,14 +110,11 @@ export default function FloatingPlayer() {
   );
   const canSkipNext =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
+    (repeatMode !== "off" ||
       (currentIndex != null && currentIndex < queueLength - 1));
   const canSkipPrevious =
     !isRadio &&
-    (shuffle ||
-      repeatMode !== "off" ||
-      (currentIndex != null && currentIndex > 0));
+    (repeatMode !== "off" || (currentIndex != null && currentIndex > 0));
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);

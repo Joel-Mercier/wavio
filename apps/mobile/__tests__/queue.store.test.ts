@@ -42,13 +42,15 @@ beforeEach(() => {
     currentIndex: null,
     removePlayed: true,
     repeatMode: "off",
-    contextIds: null,
     shuffle: false,
-    shuffleOrderIds: null,
-    shuffleCursor: null,
+    originalOrderIds: null,
     source: null,
   });
 });
+
+// The queue is the playback order, so the ids it holds after any operation are
+// what will actually play — asserting on them is asserting on playback.
+const ids = () => get().queue.map((t) => t.id);
 
 describe("queue store - basic state setters", () => {
   test("setQueue initializes queue and currentIndex", () => {
@@ -58,14 +60,14 @@ describe("queue store - basic state setters", () => {
     expect(get().currentIndex).toBe(1);
   });
 
-  test("clearQueue empties queue and resets index and context", () => {
+  test("clearQueue empties queue and resets index and order", () => {
     const tracks = makeTracks(2);
     get().setQueue(tracks, 0);
-    get().setContext(["t1"]);
+    get().setShuffle(true);
     get().clearQueue();
     expect(get().queue).toHaveLength(0);
     expect(get().currentIndex).toBeNull();
-    expect(get().contextIds).toBeNull();
+    expect(get().originalOrderIds).toBeNull();
   });
 
   test("setCurrentIndex clamps within range", () => {
@@ -84,15 +86,6 @@ describe("queue store - basic state setters", () => {
     expect(get().removePlayed).toBe(false);
     get().setRepeatMode("all");
     expect(get().repeatMode).toBe("all");
-  });
-
-  test("setContext filters to existing ids, clears when none valid", () => {
-    const tracks = makeTracks(3);
-    get().setQueue(tracks, 0);
-    get().setContext(["t2", "x"]); // x not present
-    expect(get().contextIds).toEqual(["t2"]);
-    get().removeByIds(["t2"]);
-    expect(get().contextIds).toBeNull();
   });
 });
 
@@ -119,6 +112,14 @@ describe("queue store - playback source", () => {
     expect(get().source).toBeNull();
   });
 
+  test("setQueue without a source argument keeps the current one", () => {
+    // The Queue screen's reorder replaces the queue in place; that must not
+    // drop the "Playing from …" label.
+    get().setQueue(makeTracks(3), 0, albumSource);
+    get().setQueue([...makeTracks(3)].reverse(), 0);
+    expect(get().source).toEqual(albumSource);
+  });
+
   test("clearQueue clears the source", () => {
     get().setQueue(makeTracks(2), 0, albumSource);
     get().clearQueue();
@@ -136,76 +137,85 @@ describe("queue store - playback source", () => {
 });
 
 describe("queue store - shuffle mode", () => {
-  test("enabling shuffle creates an order and cursor on current", () => {
-    const base = makeTracks(5);
-    get().setQueue(base, 2); // current t3
+  // Regression for #137: the Queue screen renders `queue` forward from
+  // `currentIndex`, so whatever sits there must be exactly what plays next.
+  test("what the queue shows below the current track is what next() plays", () => {
+    get().setQueue(makeTracks(20), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    const upcoming = get()
+      .queue.slice(1)
+      .map((t) => t.id);
+    const played: string[] = [];
+    for (let i = 0; i < upcoming.length; i++) {
+      get().next();
+      played.push(get().getCurrent()?.id as string);
+    }
+    expect(played).toEqual(upcoming);
+  });
+
+  test("enabling shuffle permutes the queue and keeps the current track put", () => {
+    get().setQueue(makeTracks(20), 4); // current t5
     expect(get().shuffle).toBeFalsy();
     get().setShuffle(true);
     expect(get().shuffle).toBeTruthy();
-    expect(get().shuffleOrderIds).not.toBeNull();
-    expect(get().shuffleOrderIds?.length).toBeGreaterThan(0);
-    const currentId = get().getCurrent()?.id;
-    expect(currentId).toBe("t3");
-    const cursor = get().shuffleCursor;
-    expect(cursor).not.toBeNull();
-    expect(get().shuffleOrderIds?.[cursor as number]).toBe(currentId);
+    expect(get().getCurrent()?.id).toBe("t5");
+    expect(get().currentIndex).toBe(4);
+    // The played head is untouched, the tail is randomised, nothing is lost.
+    expect(ids().slice(0, 5)).toEqual(["t1", "t2", "t3", "t4", "t5"]);
+    expect(ids().slice(5)).not.toEqual(get().originalOrderIds?.slice(5));
+    expect([...ids()].sort()).toEqual(
+      [...(get().originalOrderIds as string[])].sort(),
+    );
   });
 
-  test("next respects shuffle order without removePlayed and wraps when repeat all", () => {
-    const base = makeTracks(3);
+  test("disabling shuffle restores the source order at the same track", () => {
+    const base = makeTracks(20);
     get().setQueue(base, 0);
     get().setRemovePlayed(false);
-    get().setRepeatMode("all");
     get().setShuffle(true);
-    const initialCursor = get().shuffleCursor as number;
-    const initialOrder = get().shuffleOrderIds as string[];
-    // Step through 4 times, expecting wrap on 3rd -> 0
     get().next();
-    expect(get().shuffleCursor).toBe((initialCursor + 1) % initialOrder.length);
-    get().next();
-    expect(get().shuffleCursor).toBe((initialCursor + 2) % initialOrder.length);
-    get().next();
-    expect(get().shuffleCursor).toBe((initialCursor + 3) % initialOrder.length);
+    const currentId = get().getCurrent()?.id;
+    get().setShuffle(false);
+    expect(ids()).toEqual(base.map((t) => t.id));
+    expect(get().getCurrent()?.id).toBe(currentId);
+    expect(get().originalOrderIds).toBeNull();
   });
 
-  test("next in shuffle with removePlayed removes current and advances to next id", () => {
-    const base = makeTracks(4);
-    get().setQueue(base, 1); // t2 current
+  test("playNow with shuffle on leads with the tapped track", () => {
+    get().setShuffle(true);
+    const base = makeTracks(20);
+    get().playNow(base, 7);
+    expect(get().currentIndex).toBe(0);
+    expect(get().getCurrent()?.id).toBe("t8");
+    expect([...ids()].sort()).toEqual([...base.map((t) => t.id)].sort());
+    expect(get().originalOrderIds).toEqual(base.map((t) => t.id));
+  });
+
+  test("next in shuffle with removePlayed drops the played track", () => {
+    get().setQueue(makeTracks(4), 1); // t2 current
     get().setRemovePlayed(true);
     get().setShuffle(true);
-    const orderBefore = get().shuffleOrderIds as string[];
-    const expectedNextId = orderBefore.filter((id) => id !== "t2")[0];
+    const expectedNextId = get().queue[2].id;
     get().next();
-    expect(get().queue.map((t) => t.id)).toHaveLength(3);
+    expect(get().queue).toHaveLength(3);
     expect(get().getCurrent()?.id).toBe(expectedNextId);
-    // cursor should be at 0 after removal path
-    expect(get().shuffleCursor).toBe(0);
   });
 
-  test("previous in shuffle steps back by order and wraps with repeat all", () => {
-    const base = makeTracks(3);
-    get().setQueue(base, 0);
-    get().setRemovePlayed(false);
-    get().setRepeatMode("all");
+  test("setQueue while shuffle on keeps the given order verbatim", () => {
+    get().setQueue(makeTracks(3), 1);
     get().setShuffle(true);
-    // Move forward once to avoid prev at start
-    get().next();
-    const curCursor = get().shuffleCursor as number;
-    get().previous();
-    const order = get().shuffleOrderIds as string[];
-    const expectedCursor = (curCursor - 1 + order.length) % order.length;
-    expect(get().shuffleCursor).toBe(expectedCursor);
-  });
-
-  test("setQueue while shuffle on rebuilds order and aligns cursor", () => {
-    const base = makeTracks(3);
-    get().setQueue(base, 1); // t2 current
-    get().setShuffle(true);
-    get().setQueue(makeTracks(2), 0); // now t1 current
-    const currentId = get().getCurrent()?.id;
-    expect(currentId).toBe("t1");
-    const cursor = get().shuffleCursor as number;
-    expect(get().shuffleOrderIds?.[cursor]).toBe(currentId);
+    // Standing in for the Queue screen's manual reorder.
+    get().setQueue(
+      [
+        { id: "t3", url: "url://t3" },
+        { id: "t1", url: "url://t1" },
+        { id: "t2", url: "url://t2" },
+      ],
+      0,
+    );
+    expect(ids()).toEqual(["t3", "t1", "t2"]);
+    expect(get().getCurrent()?.id).toBe("t3");
   });
 });
 
@@ -228,10 +238,9 @@ describe("queue store - enqueue and play", () => {
     expect(get().queue.map((t) => t.id)).toEqual(["t1", "t2", "x", "y"]);
   });
 
-  test("playNow replaces queue and index, prunes context", () => {
+  test("playNow replaces queue and index", () => {
     const base = makeTracks(3);
     get().setQueue(base, 0);
-    get().setContext(["t2", "t3"]);
     get().playNow(
       [
         { id: "t3", url: "url://t3" },
@@ -239,36 +248,46 @@ describe("queue store - enqueue and play", () => {
       ],
       1,
     );
-    expect(get().queue.map((t) => t.id)).toEqual(["t3", "a"]);
+    expect(ids()).toEqual(["t3", "a"]);
     expect(get().currentIndex).toBe(1);
-    // Only t3 remains from old context, but it exists → kept
-    expect(get().contextIds).toEqual(["t3"]);
+  });
+
+  test("enqueueNext plays next even while shuffled", () => {
+    get().setQueue(makeTracks(10), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    get().enqueueNext({ id: "x", url: "url://x" });
+    expect(get().queue[1].id).toBe("x");
+    get().next();
+    expect(get().getCurrent()?.id).toBe("x");
   });
 });
 
 describe("queue store - removals and move", () => {
-  test("removeByIds updates queue, index and context", () => {
+  test("removeByIds updates queue and index", () => {
     const base = makeTracks(4);
     get().setQueue(base, 2); // current t3
-    get().setContext(["t2", "t4"]);
     get().removeByIds(["t1", "t2"]);
-    expect(get().queue.map((t) => t.id)).toEqual(["t3", "t4"]);
+    expect(ids()).toEqual(["t3", "t4"]);
     // Two removed before index 2 → index becomes 0 (t3)
     expect(get().currentIndex).toBe(0);
-    // Context pruned (t2 removed)
-    expect(get().contextIds).toEqual(["t4"]);
   });
 
-  test("removeAtIndices updates queue, index and context", () => {
+  test("removeAtIndices updates queue and index", () => {
     const base = makeTracks(5);
     get().setQueue(base, 3); // current t4
-    get().setContext(["t1", "t3", "t5"]);
     get().removeAtIndices([0, 2, 4]); // remove t1, t3, t5
-    expect(get().queue.map((t) => t.id)).toEqual(["t2", "t4"]);
+    expect(ids()).toEqual(["t2", "t4"]);
     // Removed one before current (t1, t3 are before t4) → index adjusts from 3 to 1
     expect(get().currentIndex).toBe(1);
-    // Context pruned to none
-    expect(get().contextIds).toBeNull();
+  });
+
+  test("removals stay out of the restored order when shuffle is turned off", () => {
+    get().setQueue(makeTracks(5), 0);
+    get().setShuffle(true);
+    get().removeByIds(["t2", "t4"]);
+    get().setShuffle(false);
+    expect(ids()).toEqual(["t1", "t3", "t5"]);
   });
 
   test("move reorders queue and adjusts index", () => {
@@ -361,55 +380,8 @@ describe("queue store - navigation without context", () => {
   });
 });
 
-describe("queue store - navigation with context (repeat all)", () => {
-  test("next wraps within context ids only", () => {
-    const base = makeTracks(5);
-    get().setQueue(base, 1); // t2 current
-    get().setRemovePlayed(false);
-    get().setRepeatMode("all");
-    get().setContext(["t2", "t4"]);
-    // From t2 → next context member is t4
-    get().next();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t4");
-    // Next after t4 wraps to t2
-    get().next();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t2");
-  });
-
-  test("previous wraps within context ids only (backwards)", () => {
-    const base = makeTracks(5);
-    get().setQueue(base, 3); // t4 current
-    get().setRemovePlayed(false);
-    get().setRepeatMode("all");
-    get().setContext(["t1", "t3", "t4"]);
-    // previous from t4 → t3
-    get().previous();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t3");
-    // previous from t3 → t1
-    get().previous();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t1");
-    // previous from t1 wraps to t4
-    get().previous();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t4");
-  });
-
-  test("context skips ids not present in queue", () => {
-    const base = makeTracks(3);
-    get().setQueue(base, 0); // t1 current
-    get().setRemovePlayed(false);
-    get().setRepeatMode("all");
-    get().setContext(["x", "t2"]);
-    get().next();
-    expect(get().getCurrent()).not.toBeNull();
-    expect(get().getCurrent()?.id).toBe("t2");
-  });
-
-  test("removePlayed still removes track when repeat all but no context", () => {
+describe("queue store - navigation with repeat all", () => {
+  test("removePlayed still removes track when repeat all", () => {
     const base = makeTracks(2);
     get().setQueue(base, 0);
     get().setRemovePlayed(true);
@@ -489,24 +461,13 @@ describe("queue store - enqueue with null currentIndex", () => {
     expect(get().currentIndex).toBe(0);
   });
 
-  test("enqueueNext while shuffle on extends order with new ids", () => {
+  test("tracks enqueued while shuffled survive turning shuffle off", () => {
     get().setQueue(makeTracks(3), 0);
     get().setShuffle(true);
-    const orderBefore = get().shuffleOrderIds as string[];
     get().enqueueNext([{ id: "x", url: "url://x" }]);
-    const orderAfter = get().shuffleOrderIds as string[];
-    expect(orderAfter).toContain("x");
-    expect(orderAfter.length).toBe(orderBefore.length + 1);
-  });
-
-  test("enqueueEnd while shuffle on appends new ids to order", () => {
-    get().setQueue(makeTracks(2), 0);
-    get().setShuffle(true);
-    const orderBefore = get().shuffleOrderIds as string[];
-    get().enqueueEnd([{ id: "x", url: "url://x" }]);
-    const orderAfter = get().shuffleOrderIds as string[];
-    expect(orderAfter[orderAfter.length - 1]).toBe("x");
-    expect(orderAfter.length).toBe(orderBefore.length + 1);
+    get().enqueueEnd([{ id: "y", url: "url://y" }]);
+    get().setShuffle(false);
+    expect(ids()).toEqual(["t1", "t2", "t3", "x", "y"]);
   });
 });
 
@@ -541,50 +502,47 @@ describe("queue store - removal edge cases", () => {
 });
 
 describe("queue store - shuffle / repeat interactions", () => {
-  test("setRepeatMode rebuilds shuffle order when shuffle is on", () => {
+  test("setRepeatMode leaves the playback order alone", () => {
     get().setQueue(makeTracks(4), 1);
     get().setShuffle(true);
-    const before = get().shuffleOrderIds;
+    const before = get().queue;
     get().setRepeatMode("all");
     expect(get().repeatMode).toBe("all");
-    expect(get().shuffleOrderIds).not.toBeNull();
-    // order may be regenerated; only require it's a fresh array (not the same ref)
-    expect(get().shuffleOrderIds).not.toBe(before);
+    expect(get().queue).toBe(before);
   });
 
   test("previous in shuffle wraps to last with repeat all when at start", () => {
-    const base = makeTracks(3);
-    get().setQueue(base, 0);
+    get().setQueue(makeTracks(3), 0);
     get().setRemovePlayed(false);
     get().setRepeatMode("all");
     get().setShuffle(true);
-    const order = get().shuffleOrderIds as string[];
-    // ensure cursor is at 0
-    expect(get().shuffleCursor).toBe(0);
     get().previous();
-    expect(get().shuffleCursor).toBe(order.length - 1);
+    expect(get().currentIndex).toBe(2);
   });
 
-  test("next at end of shuffle order regenerates a fresh pool", () => {
-    const base = makeTracks(3);
-    get().setQueue(base, 0);
+  test("a shuffled repeat-all wrap starts a fresh pass on a new order", () => {
+    get().setQueue(makeTracks(20), 0);
     get().setRemovePlayed(false);
+    get().setRepeatMode("all");
     get().setShuffle(true);
-    // Drive cursor to last position
-    const order = get().shuffleOrderIds as string[];
-    while ((get().shuffleCursor as number) < order.length - 1) {
+    const firstPass = ids();
+    const lastId = firstPass[firstPass.length - 1];
+    while ((get().currentIndex as number) < get().queue.length - 1) {
       get().next();
     }
-    get().next(); // hits end-of-order regen branch
-    expect(get().shuffleCursor).toBe(0);
-    expect(get().shuffleOrderIds?.length ?? 0).toBeGreaterThan(0);
+    get().next(); // wraps
+    expect(get().currentIndex).toBe(0);
+    expect(ids()).not.toEqual(firstPass);
+    expect([...ids()].sort()).toEqual([...firstPass].sort());
+    // The track that just finished never leads the new pass.
+    expect(get().getCurrent()?.id).not.toBe(lastId);
   });
 });
 
 describe("queue store - peekNextTrack mirrors next()", () => {
   // peekNextTrack must predict exactly where next() lands (it drives
   // gapless/crossfade preloads), except when it returns null on purpose
-  // (shuffle-order regeneration / playback stop).
+  // (shuffled repeat-all reshuffle / playback stop).
   const expectPeekMatchesNext = () => {
     const peeked = peekNextTrack();
     get().next();
@@ -623,34 +581,20 @@ describe("queue store - peekNextTrack mirrors next()", () => {
     expectPeekMatchesNext();
   });
 
-  test("repeat all with a context subset wraps within the context", () => {
-    get().setQueue(makeTracks(5), 3); // current t4
-    get().setRemovePlayed(false);
-    get().setRepeatMode("all");
-    get().setContext(["t2", "t4"]);
-    // t4 is the last context entry: next() wraps to t2, not to queue[0].
-    expect(peekNextTrack()?.id).toBe("t2");
-    expectPeekMatchesNext();
-  });
-
-  test("shuffle follows the shuffle order", () => {
+  test("shuffle follows the materialized queue order", () => {
     get().setQueue(makeTracks(5), 0);
     get().setRemovePlayed(false);
     get().setShuffle(true);
-    const order = get().shuffleOrderIds as string[];
-    const cursor = get().shuffleCursor as number;
-    if (cursor + 1 < order.length) {
-      expect(peekNextTrack()?.id).toBe(order[cursor + 1]);
-      expectPeekMatchesNext();
-    }
+    expect(peekNextTrack()?.id).toBe(get().queue[1].id);
+    expectPeekMatchesNext();
   });
 
-  test("shuffle at end of order returns null (regeneration boundary)", () => {
+  test("shuffled repeat-all wrap returns null (reshuffle boundary)", () => {
     get().setQueue(makeTracks(3), 0);
     get().setRemovePlayed(false);
+    get().setRepeatMode("all");
     get().setShuffle(true);
-    const order = get().shuffleOrderIds as string[];
-    while ((get().shuffleCursor as number) < order.length - 1) {
+    while ((get().currentIndex as number) < get().queue.length - 1) {
       expectPeekMatchesNext();
     }
     expect(peekNextTrack()).toBeNull();
