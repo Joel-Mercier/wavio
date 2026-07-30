@@ -74,7 +74,11 @@ export default function PodcastScreen() {
   podcast.podcastSeries = JSON.parse(podcast.podcastSeries as never as string);
   const colors = useImageColors(podcast.imageUrl);
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const insets = useSafeAreaInsets();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const toast = useToast();

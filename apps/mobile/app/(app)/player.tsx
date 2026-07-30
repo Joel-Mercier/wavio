@@ -98,7 +98,8 @@ function CoverSlot({
 }
 
 export default function PlayerScreen() {
-  const [blue500, emerald500, gray800] = Uniwind.getCSSVariable([
+  const [black, blue500, emerald500, gray800] = Uniwind.getCSSVariable([
+    "--color-black",
     "--color-blue-500",
     "--color-emerald-500",
     "--color-gray-800",
@@ -163,7 +164,11 @@ export default function PlayerScreen() {
     textShadowRadius: 2,
   } as const;
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || blue500;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || blue500;
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,

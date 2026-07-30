@@ -150,7 +150,11 @@ export default function AlbumDetail() {
   } = useArtist(data?.album?.artistId ?? "");
   const colors = useImageColors(artworkUrl(data?.album?.coverArt));
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();

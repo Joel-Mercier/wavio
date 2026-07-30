@@ -174,7 +174,11 @@ export default function PlaylistDetail() {
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
   const topColor =
-    (colors?.platform === "ios" ? colors.primary : colors?.muted) || black;
+    (colors?.platform === "ios"
+      ? colors.primary
+      : colors?.muted === black
+        ? colors?.darkVibrant
+        : colors?.muted) || black;
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
