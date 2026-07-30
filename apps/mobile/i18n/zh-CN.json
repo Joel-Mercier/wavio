@@ -1613,6 +1613,7 @@
 					"songCount": "曲目",
 					"albumCount": "专辑"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "高级设置",
 				"fallbackUrlHelp": "当无法访问主URL时使用。必须指向同一台服务器。",
 				"cancel": "取消",
