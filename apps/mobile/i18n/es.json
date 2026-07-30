@@ -293,7 +293,7 @@
 				"topSongs": "Canciones más populares",
 				"discography": "Discografía",
 				"appearsOn": "Aparece en",
-				"soundsLike": "Parece que",
+				"soundsLike": "Suena como",
 				"poweredByAudioMuse": "Con tecnología de AudioMuse-AI",
 				"similarArtists": "Artistas similares",
 				"similarArtistsSource": "Desde tu servidor de música",
@@ -308,7 +308,7 @@
 				"favoriteSuccessMessage": "El artista se ha añadido correctamente a los favoritos",
 				"favoriteErrorMessage": "Se ha producido un error al añadir al artista a los favoritos",
 				"unfavoriteSuccessMessage": "El artista se ha eliminado correctamente de los favoritos",
-				"unfavoriteErrorMessage": "Se ha producido un error al eliminar al artista de los favoritos",
+				"unfavoriteErrorMessage": "Error al eliminar al artista de los favoritos",
 				"albumCount_one": "{{count}} álbum",
 				"albumCount_other": "{{count}} álbumes"
 			},
@@ -323,10 +323,10 @@
 				"editRules": "Editar reglas de listas de reproducción inteligentes",
 				"delete": "Eliminar esta lista de reproducción",
 				"share": "Compartir",
-				"playNext": "Reproducir la siguiente",
+				"playNext": "Reproducir siguiente",
 				"addToQueue": "Añadir a la cola",
 				"deletePlaylistConfirmTitle": "¿Estás seguro de que quieres eliminar esta lista de reproducción?",
-				"deletePlaylistConfirmDescription": "Si eliminas esta lista de reproducción, se borrará de forma definitiva y no podrás deshacer la acción. Confirma si deseas continuar.",
+				"deletePlaylistConfirmDescription": "Si eliminas esta lista de reproducción, se borrará de forma definitiva. Confirma si deseas continuar.",
 				"deletePlaylistSuccessMessage": "La lista de reproducción se ha eliminado correctamente",
 				"deletePlaylistErrorMessage": "Se ha producido un error al eliminar la lista de reproducción",
 				"sharePlaylistSuccessMessage": "La lista de reproducción se ha compartido correctamente",
@@ -342,9 +342,9 @@
 				"emptyAction": "Busca canciones para añadir a esta lista de reproducción",
 				"searchPlaceholder": "Buscar lista de reproducción",
 				"addTrackSuccessMessage_one": "La canción se ha añadido correctamente a la lista de reproducción",
-				"addTrackSuccessMessage_other": "Las canciones se han añadido correctamente a la lista de reproducción",
+				"addTrackSuccessMessage_other": "Canciones añadidas a la lista de reproducción",
 				"addTrackErrorMessage_one": "Se ha producido un error al añadir la canción a la lista de reproducción",
-				"addTrackErrorMessage_other": "Se ha producido un error al añadir las canciones a la lista de reproducción",
+				"addTrackErrorMessage_other": "Error al añadir las canciones a la lista de reproducción",
 				"duplicateDescription_one": "Esta canción ya está en {{playlists}}. ¿La añades de todos modos?",
 				"duplicateDescription_other": "Algunas de estas canciones ya están en {{playlists}}. ¿Las añado de todos modos?"
 			},
@@ -352,8 +352,8 @@
 				"goToPodcastSeries": "Ir al podcast",
 				"addToFavorites": "Suscríbete",
 				"removeFromFavorites": "Darse de baja",
-				"addToFavoritesSuccessMessage": "Me he suscrito al podcast",
-				"removeFromFavoritesSuccessMessage": "Me he dado de baja del podcast",
+				"addToFavoritesSuccessMessage": "Suscrito al podcast",
+				"removeFromFavoritesSuccessMessage": "Dado de baja del podcast",
 				"shareErrorMessage": "Se ha producido un error al compartir el podcast",
 				"subscribe": "Suscríbete",
 				"unsubscribe": "Darse de baja",
@@ -367,7 +367,7 @@
 				"dailyTopChartsByGenre": "Los podcasts más populares de hoy en « $t(app.podcasts.genres.{{genre}})»",
 				"popularInLanguage": "Popular en {{language, titlecase}}",
 				"seeAllEpisodes": "Ver todos los episodios",
-				"publishedAt": "{{distance}} hace",
+				"publishedAt": "Hace {{distance}}",
 				"configureTaddyPodcasts": "Configurar en «Ajustes»",
 				"taddyPodcastsNotConfigured": "El acceso al podcast no está configurado",
 				"yourPodcasts": "Tus podcasts",
@@ -403,11 +403,11 @@
 				"search": {
 					"inputPlaceholder": "Buscar",
 					"filters": "Filtros",
-					"apply": "Solicitar",
+					"apply": "Aplicar",
 					"reset": "Restablecer",
 					"sortByLabel": "Ordenar por",
 					"sortByPlaceholder": "Por defecto",
-					"matchByLabel": "Partido",
+					"matchByLabel": "Encontrado",
 					"matchByPlaceholder": "Por defecto",
 					"contentTypeLabel": "Tipo de contenido",
 					"contentTypePlaceholder": "Cualquiera",
@@ -779,7 +779,7 @@
 							"title": "A dónde van las correcciones",
 							"label": "Escribir etiquetas en archivos",
 							"description": "Las correcciones se escriben directamente en los propios archivos de audio, por lo que son permanentes y visibles para otras aplicaciones. Esto no se puede deshacer. La carátula también se incrusta en el archivo. Dado que las modificaciones son permanentes, la aprobación automática está desactivada en este modo: cada coincidencia queda en la cola de revisión y no se escribe nada en el archivo hasta que tú lo apruebes.",
-							"unavailable": "No está disponible en este dispositivo. Las correcciones se guardan únicamente en Wavio y se pueden deshacer en cualquier momento."
+							"unavailable": "No disponible en este dispositivo. Las correcciones se guardan únicamente en Wavio y se pueden deshacer en cualquier momento."
 						},
 						"automation": {
 							"title": "Automatización"
@@ -860,7 +860,7 @@
 						"tokenHelpStep2": "Ve a «Administración» > «Asistente de configuración» y busca la opción del token de API.",
 						"tokenHelpStep3": "Copia aquí el token. Si tu implementación se ejecuta con la autenticación desactivada, deja este campo en blanco.",
 						"tokenHelpClose": "Entendido",
-						"testAndSaveAction": "Prueba y guarda",
+						"testAndSaveAction": "Comprobar y guardar",
 						"connectionSuccess": "Conectado a AudioMuse-AI",
 						"connectionFailed": "No se ha podido conectar con AudioMuse-AI. Comprueba la URL del servidor.",
 						"tokenRejected": "AudioMuse-AI ha rechazado el token de la API.",
@@ -914,7 +914,7 @@
 							"navidromeUserLabel": "Nombre de usuario de Navidrome",
 							"navidromeUserPlaceholder": "Tu nombre de usuario en el servidor multimedia",
 							"navidromeSecretLabel": "Contraseña o token de API de Navidrome",
-							"secretPlaceholder": "Opcional: AudioMuse-AI recurre a su propio",
+							"secretPlaceholder": "Opcional: AudioMuse-AI fallback a si mismo",
 							"noCredentialsNote": "Esta implementación utiliza el perfil de la cuenta con la que se configuró AudioMuse-AI, por lo que no es necesario introducir nada aquí.",
 							"saved": "Credenciales del servidor multimedia guardadas"
 						},
@@ -990,7 +990,7 @@
 						"inLibrary": "En tu biblioteca",
 						"noRootFolder": "No hay ninguna carpeta raíz de Lidarr configurada.",
 						"chooseReleaseAction": "Elige la versión",
-						"trackCount_one": "{{count}} pista",
+						"trackCount_one": "{{count}} canción",
 						"trackCount_other": "{{count}} canciones"
 					},
 					"release": {
@@ -1068,7 +1068,7 @@
 					"checkNowLabel": "Comprueba si hay actualizaciones",
 					"checkNowDescription": "Busca ahora una versión más reciente",
 					"checkNowAction": "Comprobar",
-					"checking": "Visita…",
+					"checking": "Comprobando…",
 					"upToDate": "Ya tienes la última versión",
 					"checkFailed": "No se han podido buscar actualizaciones. Comprueba tu conexión e inténtalo de nuevo.",
 					"currentVersionLabel": "Versión actual"
@@ -1365,7 +1365,7 @@
 				"clearAll": "Borrar todo",
 				"searchPlaceholder": "Buscar descargas",
 				"deleting": "Eliminar {{done}} / {{total}}",
-				"totalTracks_one": "{{count}} pista",
+				"totalTracks_one": "{{count}} canción",
 				"totalTracks_other": "{{count}} canciones"
 			},
 			"pendingChanges": {
@@ -1470,7 +1470,7 @@
 					"artists": "Artistas",
 					"album": "Álbum",
 					"discNumber": "Número de disco",
-					"track": "Número de pista",
+					"track": "Número de canción",
 					"year": "Año de estreno",
 					"genres": "Géneros",
 					"grouping": "Agrupación",
@@ -1488,16 +1488,16 @@
 					"size": "Tamaño",
 					"favorite": "Favoritos",
 					"playCount": "Número de reproducciones",
-					"lastPlayed": "Último partido disputado",
+					"lastPlayed": "Última vez reproducida",
 					"modified": "Modificado",
 					"albumPeak": "Posición máxima del álbum",
-					"trackPeak": "Pico de pista",
+					"trackPeak": "Pico de la canción",
 					"unknownDuration": "Desconocido",
 					"neverPlayed": "Nunca",
 					"lastPlayedDistance": "{{distance}} hace"
 				},
 				"goToArtist_one": "Ir al artista",
-				"goToArtist_other": "Ir a «Artistas»"
+				"goToArtist_other": "Ir a artistas"
 			},
 			"player": {
 				"title": "Reproduciéndose ahora",
@@ -1522,7 +1522,7 @@
 				"bookmarkRemoved": "Se ha eliminado el marcador",
 				"goToArtist": "Ir al artista",
 				"goToAlbum": "Ir al álbum",
-				"rate": "Tasa",
+				"rate": "Valoración",
 				"share": "Compartir",
 				"download": "Descargar",
 				"lyrics": "Letra de la canción",
@@ -1539,7 +1539,7 @@
 				"sleepTimerMinutes": "{{count}} minutos",
 				"sleepTimerActive": "Temporizador de apagado · {{label}}",
 				"jukebox": "Máquina de discos",
-				"jukeboxOn": "El",
+				"jukeboxOn": "Encendido",
 				"jukeboxOff": "Apagado",
 				"jukeboxDeviceThis": "Este dispositivo",
 				"jukeboxGain": "Volumen",
@@ -1550,7 +1550,7 @@
 				"jukeboxResumeTitle": "¿Reanudar el «jukebox»?",
 				"jukeboxResumeMessage": "Todavía hay una sesión de jukebox en curso en el servidor. ¿Quieres retomar el control o reproducirla en este dispositivo?",
 				"jukeboxResumeResume": "Retomar el control",
-				"jukeboxResumePlayHere": "Juega aquí"
+				"jukeboxResumePlayHere": "Reproducir aquí"
 			},
 			"shares": {
 				"title": "Acciones",
@@ -1754,18 +1754,18 @@
 				"unsupported": "La biblioteca local no admite esta operación"
 			},
 			"localIndexing": {
-				"title": "Cómo crear tu biblioteca",
+				"title": "Creando tu biblioteca",
 				"listing": "Cómo leer archivos de tus carpetas…",
-				"indexing": "Extracción de metadatos…",
-				"pruning": "Limpieza de…",
+				"indexing": "Extrayendo metadatos…",
+				"pruning": "Limpiando…",
 				"finishing": "Ya casi está listo…",
-				"countLabel": "{{processed}} de las canciones de « {{total}}»",
+				"countLabel": "{{processed}} de {{total}} canciones",
 				"errorTitle": "No se ha podido compilar tu biblioteca",
 				"retry": "Volver a intentarlo",
 				"continue": "Continuar de todos modos"
 			},
 			"serverSwitch": {
-				"title": "Cambio de servidor",
+				"title": "Cambiando de servidor",
 				"subtitle": "Iniciando sesión en…",
 				"errorTitle": "No se ha podido cambiar de servidor",
 				"errorDescription": "No hemos podido iniciar sesión con tus datos de acceso guardados. Es posible que hayan cambiado en el servidor.",
@@ -1780,7 +1780,7 @@
 				"serverTypeNavidrome": "Navidrome",
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
-				"serverTypeLocal": "Biblioteca municipal",
+				"serverTypeLocal": "Biblioteca local",
 				"urlPlaceholder": "Introduce la URL del servidor",
 				"fallbackUrlPlaceholder": "URL del servidor de reserva (opcional)",
 				"usernamePlaceholder": "Introduce tu nombre de usuario",
@@ -1803,7 +1803,7 @@
 				"localNoPaths": "Añade al menos una carpeta para continuar",
 				"localRemovePath": "Eliminar carpeta",
 				"localSetupHelp": "¿Cómo funciona la biblioteca local?",
-				"localInfoTitle": "Biblioteca municipal",
+				"localInfoTitle": "Biblioteca local",
 				"localInfoFormatsTitle": "Formatos compatibles",
 				"localInfoFormats": "Wavio busca en las carpetas que selecciones archivos en formato MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA y AIFF.",
 				"localInfoMetadataTitle": "Cómo se leen los metadatos",
@@ -1846,7 +1846,7 @@
 		"openSubsonic": {
 			"errorCodes": {
 				"10": "Falta un parámetro obligatorio.",
-				"20": "Versión del protocolo REST de Subsonic incompatible. El cliente debe actualizarla.",
+				"20": "Versión del protocolo REST de Subsonic incompatible. El cliente debe actualizarse.",
 				"30": "Versión del protocolo REST de Subsonic incompatible. El servidor debe actualizarse.",
 				"40": "El nombre de usuario o la contraseña son incorrectos.",
 				"41": "La autenticación mediante token no es compatible con los usuarios LDAP.",
