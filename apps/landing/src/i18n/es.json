@@ -52,12 +52,12 @@
 		},
 		"audiophile": {
 			"label": "Audiófilo",
-			"title": "Bien afinado, no a todo volumen.",
+			"title": "Afinado, no a todo volumen.",
 			"desc": "Ajustes de calidad de audio, reproducción sin interrupciones, Replay Gain, ecualizador del sistema."
 		},
 		"offline": {
 			"label": "Sin conexión",
-			"title": "Desconéctalo de la red eléctrica."
+			"title": "Desconéctalo de la red."
 		},
 		"quote": {
 			"label": "Sin condiciones",
@@ -65,7 +65,7 @@
 		},
 		"playlists": {
 			"label": "Listas de reproducción",
-			"title": "Reglas inteligentes, control total."
+			"title": "Reglas inteligentes, todo el control."
 		},
 		"auto": {
 			"label": "En el coche",
@@ -82,14 +82,14 @@
 			"desc": "Ejecuta Navidrome en casa, Jellyfin en casa de un amigo, OpenSubsonic en otro sitio e incluso en una biblioteca local como copia de seguridad. Una sola aplicación para todas ellas."
 		},
 		"sleep": {
-			"label": "Temporizador de apagado automático",
+			"label": "Temporizador de apagado",
 			"title": "Desaparece con elegancia.",
-			"desc": "Programa un fundido de salida suave para que tu álbum favorito te lleve a dormir."
+			"desc": "Programa un apagado suave para que tu álbum favorito te lleve a dormir."
 		},
 		"podcasts": {
 			"label": "Podcasts",
 			"title": "Aprende algo allá donde vayas.",
-			"desc": "Busca, sigue y escucha podcasts con la tecnología de Taddy. Tus canciones y tus programas, todo en un mismo sitio."
+			"desc": "Busca, sigue y escucha podcasts con la tecnología de Taddy. Tus canciones y shows, todo en un mismo sitio."
 		},
 		"radio": {
 			"label": "Radio por Internet",
@@ -97,19 +97,19 @@
 			"desc": "Escucha emisoras de radio por Internet desde tu servidor con solo un toque. Explora, guarda y escucha en directo."
 		},
 		"lyrics": {
-			"label": "Letra de la canción",
+			"label": "Letras",
 			"title": "Canta con nosotros, al unísono.",
-			"desc": "Letra sincronizada de LRCLib, que se desplaza línea a línea al ritmo de la canción."
+			"desc": "Letras sincronizada de LRCLib, moviéndose línea a línea al ritmo de la canción."
 		},
 		"widgets": {
 			"label": "Widgets de la pantalla de inicio",
-			"title": "Una mirada al lado.",
-			"desc": "Lo que estás reproduciendo ahora y lo que has reproducido recientemente, directamente en la pantalla de inicio de tu Android. No hace falta abrir la aplicación."
+			"title": "Con un vistazo.",
+			"desc": "Lo que estás reproduciendo y lo que reprodujiste, directamente en la pantalla de inicio de Android. Sin abrir la aplicación."
 		}
 	},
 	"showcase": {
 		"headingPre": "Cada pantalla,",
-		"headingEm": "justo lo que hace falta.",
+		"headingEm": "justo donde hace falta.",
 		"sub": "Pantallas diseñadas en función de lo que más haces. Navega, reproduce, añade a la cola, ajusta la configuración, descarga y ni siquiera te darás cuenta de que la aplicación está ahí."
 	},
 	"final": {
@@ -137,7 +137,7 @@
 		"updated": "Última actualización: 27 de mayo de 2026",
 		"readTime": "5 minutos de lectura",
 		"summaryLabel": "En una frase",
-		"summary": "Wavio se ejecuta íntegramente en tu dispositivo y solo se comunica con el servidor de música que configures. No recopilamos, vendemos ni compartimos tus datos, porque no disponemos de ellos.",
+		"summary": "Wavio se ejecuta entero en tu dispositivo y solo se comunica con el servidor de música que configures. No recopilamos, vendemos ni compartimos tus datos, porque no los tenemos.",
 		"sections": [
 			{
 				"num": "01",

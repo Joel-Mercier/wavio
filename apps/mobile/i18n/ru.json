@@ -314,6 +314,7 @@
 				"rateModalTitle": "Оценить исполнителя",
 				"likedSongs": "Любимые треки",
 				"likedAlbums": "Любимые альбомы",
+				"allSongs": "Все треки",
 				"favoriteSuccessMessage": "Исполнитель добавлен в медиатеку",
 				"favoriteErrorMessage": "Не удалось добавить исполнителя в медиатеку",
 				"unfavoriteSuccessMessage": "Исполнитель удален из медиатеки",
@@ -1548,6 +1549,7 @@
 					"playlist": "Из плейлиста",
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
+					"allSongs": "Из медиатеки",
 					"folder": "Из папки",
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
@@ -1677,6 +1679,7 @@
 					"songCount": "По количеству треков",
 					"albumCount": "Альбомы"
 				},
+				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
 				"cancel": "Отмена",
