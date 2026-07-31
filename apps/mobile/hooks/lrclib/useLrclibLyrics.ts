@@ -56,5 +56,6 @@ export function useLrclibLyrics({
     staleTime: (query) =>
       query.state.data ? Number.POSITIVE_INFINITY : LYRICS_MISS_STALE_MS,
   });
+  console.log("useLrclibLyrics", query);
   return { lyrics: query.data ?? null, isLoading: query.isLoading };
 }

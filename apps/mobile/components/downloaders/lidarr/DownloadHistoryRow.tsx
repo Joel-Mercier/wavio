@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import LidarrCover from "@/components/downloaders/lidarr/LidarrCover";
+import DownloaderCover from "@/components/downloaders/DownloaderCover";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
@@ -27,7 +27,7 @@ export default function DownloadHistoryRow({
 
   return (
     <HStack className="items-center gap-x-3 py-3">
-      <LidarrCover url={item.coverUrl} size={44} variant="album" />
+      <DownloaderCover url={item.coverUrl} size={44} variant="album" />
       <VStack className="flex-1">
         <Heading className="text-white font-normal" size="sm" numberOfLines={1}>
           {primary}

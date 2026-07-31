@@ -34,6 +34,7 @@ export const SCOPED_STORE_NAMES = [
   "offlineMutations",
   "librarySyncStore",
   "lidarrStore",
+  "soulsyncStore",
   "musicBrainzStore",
   "audioMuseStore",
 ] as const;

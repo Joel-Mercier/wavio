@@ -2,8 +2,10 @@ import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
-import Compass from "lucide-react-native/dist/esm/icons/compass.mjs";
+import Eye from "lucide-react-native/dist/esm/icons/eye.mjs";
 import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import TriangleAlert from "lucide-react-native/dist/esm/icons/triangle-alert.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -15,7 +17,6 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import UrlInputField from "@/components/forms/UrlInputField";
-import { SettingsToggleRow } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -26,18 +27,18 @@ import { Input, InputField } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useCanStartScan } from "@/hooks/useCanStartScan";
+import { useSoulSyncStatus } from "@/hooks/soulsync/useSoulSyncStatus";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
-import { testConnection } from "@/services/lidarr/auth";
-import useLidarr from "@/stores/lidarr";
+import { testConnection } from "@/services/soulsync/auth";
+import useSoulSync from "@/stores/soulsync";
 import { cn } from "@/utils/tailwind";
 
-const lidarrConfigSchema = z.object({
+const soulSyncConfigSchema = z.object({
   serverUrl: z.string().trim().min(1),
   apiKey: z.string().trim().min(1),
 });
 
-function LidarrLinkRow({
+function SoulSyncLinkRow({
   icon,
   title,
   description,
@@ -72,32 +73,29 @@ function LidarrLinkRow({
   );
 }
 
-export default function LidarrConfigScreen() {
+export default function SoulSyncConfigScreen() {
   const { t } = useTranslation();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
-  const [white, primary50] = Uniwind.getCSSVariable([
+  const [white, primary50, amber400] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-primary-50",
+    "--color-amber-400",
   ]) as string[];
 
-  const storedServerUrl = useLidarr((store) => store.serverUrl);
-  const storedApiKey = useLidarr((store) => store.apiKey);
-  const isConnected = useLidarr((store) => store.isConnected);
-  const autoScanOnComplete = useLidarr((store) => store.autoScanOnComplete);
-  const canStartScan = useCanStartScan();
-  const setConfig = useLidarr((store) => store.setConfig);
-  const setConnected = useLidarr((store) => store.setConnected);
-  const setAutoScanOnComplete = useLidarr(
-    (store) => store.setAutoScanOnComplete,
-  );
-  const clearConfig = useLidarr((store) => store.clearConfig);
+  const storedServerUrl = useSoulSync((store) => store.serverUrl);
+  const storedApiKey = useSoulSync((store) => store.apiKey);
+  const isConnected = useSoulSync((store) => store.isConnected);
+  const setConfig = useSoulSync((store) => store.setConfig);
+  const setConnected = useSoulSync((store) => store.setConnected);
+  const clearConfig = useSoulSync((store) => store.clearConfig);
+  const { data: status } = useSoulSyncStatus();
   const queryClient = useQueryClient();
 
   // Everything cached under this key belongs to the instance that was
   // configured a moment ago — keeping it would show another instance's queue,
-  // profiles and library until it goes stale.
+  // watchlist and status until it goes stale.
   const dropCachedData = () => {
-    queryClient.removeQueries({ queryKey: ["lidarr"] });
+    queryClient.removeQueries({ queryKey: ["soulsync"] });
   };
 
   const [isTesting, setIsTesting] = useState(false);
@@ -108,7 +106,7 @@ export default function LidarrConfigScreen() {
       serverUrl: storedServerUrl,
       apiKey: storedApiKey,
     },
-    validators: { onChange: lidarrConfigSchema },
+    validators: { onChange: soulSyncConfigSchema },
     onSubmit: async ({ value }) => {
       const serverUrl = value.serverUrl.trim();
       const apiKey = value.apiKey.trim();
@@ -117,7 +115,7 @@ export default function LidarrConfigScreen() {
         await testConnection({ serverUrl, apiKey });
       } catch {
         setConnected(false);
-        showErrorToast(t("app.settings.downloaders.lidarr.connectionFailed"));
+        showErrorToast(t("app.settings.downloaders.soulsync.connectionFailed"));
         return;
       } finally {
         setIsTesting(false);
@@ -128,7 +126,9 @@ export default function LidarrConfigScreen() {
       // Mark the form pristine so the Remove button (gated on !isDirty) shows
       // immediately after a successful save.
       form.reset({ serverUrl, apiKey });
-      showSuccessToast(t("app.settings.downloaders.lidarr.connectionSuccess"));
+      showSuccessToast(
+        t("app.settings.downloaders.soulsync.connectionSuccess"),
+      );
     },
   });
 
@@ -138,15 +138,17 @@ export default function LidarrConfigScreen() {
     clearConfig();
     dropCachedData();
     form.reset({ serverUrl: "", apiKey: "" });
-    showSuccessToast(t("app.settings.downloaders.lidarr.removedMessage"));
+    showSuccessToast(t("app.settings.downloaders.soulsync.removedMessage"));
   };
 
   return (
-    <SettingsScreenScaffold title={t("app.settings.downloaders.lidarr.title")}>
+    <SettingsScreenScaffold
+      title={t("app.settings.downloaders.soulsync.title")}
+    >
       <VStack className="gap-y-4">
         <HStack className="items-center justify-between py-2">
           <Text className="text-primary-100 text-sm w-3/5">
-            {t("app.settings.downloaders.lidarr.description")}
+            {t("app.settings.downloaders.soulsync.description")}
           </Text>
           <Badge
             className={cn(
@@ -175,7 +177,7 @@ export default function LidarrConfigScreen() {
           className="self-start"
         >
           <Text className="text-emerald-400 text-sm underline">
-            {t("app.settings.downloaders.lidarr.getApiKeyAction")}
+            {t("app.settings.downloaders.soulsync.getApiKeyAction")}
           </Text>
         </FadeOutScaleDown>
 
@@ -183,14 +185,14 @@ export default function LidarrConfigScreen() {
           {(field) => (
             <FormControl isInvalid={showFieldError(field)} className="mt-2">
               <Heading className="text-white font-normal mb-2" size="sm">
-                {t("app.settings.downloaders.lidarr.serverUrlLabel")}
+                {t("app.settings.downloaders.soulsync.serverUrlLabel")}
               </Heading>
               <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-4 py-2">
                 <UrlInputField
                   value={field.state.value}
                   onChangeText={field.handleChange}
                   onBlur={() => handleFieldBlur(field)}
-                  placeholder="192.168.1.10:8686"
+                  placeholder="192.168.1.10:8008"
                   placeholderTextColor={primary50}
                 />
               </Input>
@@ -203,7 +205,7 @@ export default function LidarrConfigScreen() {
           {(field) => (
             <FormControl isInvalid={showFieldError(field)} className="mt-2">
               <Heading className="text-white font-normal mb-2" size="sm">
-                {t("app.settings.downloaders.lidarr.apiKeyLabel")}
+                {t("app.settings.downloaders.soulsync.apiKeyLabel")}
               </Heading>
               <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-4 py-2">
                 <InputField
@@ -212,7 +214,7 @@ export default function LidarrConfigScreen() {
                   onBlur={() => handleFieldBlur(field)}
                   className="text-md text-white"
                   placeholder={t(
-                    "app.settings.downloaders.lidarr.apiKeyPlaceholder",
+                    "app.settings.downloaders.soulsync.apiKeyPlaceholder",
                   )}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -236,7 +238,7 @@ export default function LidarrConfigScreen() {
               <Spinner color="rgb(41, 41, 41)" />
             ) : (
               <Text className="text-primary-800 font-bold text-lg">
-                {t("app.settings.downloaders.lidarr.testAndSaveAction")}
+                {t("app.settings.downloaders.soulsync.testAndSaveAction")}
               </Text>
             )}
           </FadeOutScaleDown>
@@ -252,36 +254,47 @@ export default function LidarrConfigScreen() {
           )}
         </HStack>
 
+        {isConnected && status && !status.services?.soulseek && (
+          <HStack className="items-start gap-x-3 rounded-md bg-primary-600 p-4">
+            <TriangleAlert size={20} color={amber400} />
+            <Text className="text-primary-50 text-sm flex-1">
+              {t("app.settings.downloaders.soulsync.soulseekOffline")}
+            </Text>
+          </HStack>
+        )}
+
         <Box className="h-px bg-primary-500 my-2" />
 
-        <LidarrLinkRow
-          icon={<Compass size={24} color={white} />}
-          title={t("app.settings.downloaders.discovery.title")}
-          description={t("app.settings.downloaders.discovery.description")}
-          href="/downloaders/discovery"
+        <SoulSyncLinkRow
+          icon={<Search size={24} color={white} />}
+          title={t("app.settings.downloaders.soulsync.searchTitle")}
+          description={t("app.settings.downloaders.soulsync.searchDescription")}
+          href="/downloaders/soulsync/search"
           disabled={!isConnected}
         />
-        <LidarrLinkRow
+        <SoulSyncLinkRow
           icon={<ListChecks size={24} color={white} />}
-          title={t("app.settings.downloaders.downloads.title")}
-          description={t("app.settings.downloaders.downloads.description")}
-          href="/downloaders/downloads"
+          title={t("app.settings.downloaders.soulsync.downloadsTitle")}
+          description={t(
+            "app.settings.downloaders.soulsync.downloadsDescription",
+          )}
+          href="/downloaders/soulsync/downloads"
           disabled={!isConnected}
         />
-
-        <Box className="h-px bg-primary-500 my-2" />
-        <SettingsToggleRow
-          label={t("app.settings.downloaders.lidarr.autoScanLabel")}
-          description={t("app.settings.downloaders.lidarr.autoScanDescription")}
-          value={autoScanOnComplete}
-          onToggle={setAutoScanOnComplete}
-          disabled={!canStartScan}
+        <SoulSyncLinkRow
+          icon={<Eye size={24} color={white} />}
+          title={t("app.settings.downloaders.soulsync.watchlistTitle")}
+          description={t(
+            "app.settings.downloaders.soulsync.watchlistDescription",
+          )}
+          href="/downloaders/soulsync/watchlist"
+          disabled={!isConnected}
         />
       </VStack>
       <ApiKeyHelpDialog
         isOpen={isApiKeyHelpOpen}
         onClose={() => setIsApiKeyHelpOpen(false)}
-        i18nPrefix="app.settings.downloaders.lidarr"
+        i18nPrefix="app.settings.downloaders.soulsync"
         stepCount={3}
       />
     </SettingsScreenScaffold>

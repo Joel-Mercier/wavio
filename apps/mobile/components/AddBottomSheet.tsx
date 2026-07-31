@@ -32,6 +32,7 @@ import useAudioMuse, {
 } from "@/stores/audioMuse";
 import useAuth from "@/stores/auth";
 import useLidarr from "@/stores/lidarr";
+import useSoulSync from "@/stores/soulsync";
 import { supportsSmartPlaylists } from "@/utils/navidromeVersion";
 
 const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
@@ -42,9 +43,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const serverVersion = useAuth((s) => s.serverVersion);
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
-  // Any configured downloader (only Lidarr today) surfaces the entry; it leads
-  // to the downloaders list so the user picks which one to add from.
-  const hasDownloader = useLidarr((s) => s.isConnected);
+  // Any configured downloader surfaces the entry; it leads to the downloaders
+  // list so the user picks which one to add from.
+  const isLidarrConnected = useLidarr((s) => s.isConnected);
+  const isSoulSyncConnected = useSoulSync((s) => s.isConnected);
+  const hasDownloader = isLidarrConnected || isSoulSyncConnected;
   // Prompt playlists need both a configured AudioMuse-AI and an LLM to run the
   // prompt through — either one the user picked or the deployment's default.
   const audioMuseAiProvider = useAudioMuse(selectAiProvider);

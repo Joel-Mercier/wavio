@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import LidarrCover from "@/components/downloaders/lidarr/LidarrCover";
+import DownloaderCover from "@/components/downloaders/DownloaderCover";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -26,7 +26,11 @@ export default function LidarrArtistRow({ artist }: { artist: LidarrArtist }) {
   return (
     <FadeOutScaleDown onPress={handlePress}>
       <HStack className="items-center gap-x-3 px-6 py-2">
-        <LidarrCover url={artistImageUrl(artist)} size={56} variant="artist" />
+        <DownloaderCover
+          url={artistImageUrl(artist)}
+          size={56}
+          variant="artist"
+        />
         <VStack className="flex-1">
           <Heading
             className="text-white font-normal"

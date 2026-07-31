@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import LidarrCover from "@/components/downloaders/lidarr/LidarrCover";
+import DownloaderCover from "@/components/downloaders/DownloaderCover";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -31,7 +31,7 @@ export default function LidarrAlbumRow({ album }: { album: LidarrAlbum }) {
   return (
     <FadeOutScaleDown onPress={handlePress}>
       <HStack className="items-center gap-x-3 px-6 py-2">
-        <LidarrCover url={albumCoverUrl(album)} size={56} variant="album" />
+        <DownloaderCover url={albumCoverUrl(album)} size={56} variant="album" />
         <VStack className="flex-1">
           <Heading
             className="text-white font-normal"
