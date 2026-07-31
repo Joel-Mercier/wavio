@@ -146,7 +146,7 @@ index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381
  
  enum class InterruptionMode(val value: String) : Enumerable {
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f226c93d4 100644
+index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1af3918e92 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -90,6 +90,8 @@ class AudioControlsService : MediaSessionService() {
@@ -269,7 +269,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f
            .build()
        )
      }
-@@ -322,15 +388,51 @@ class AudioControlsService : MediaSessionService() {
+@@ -322,15 +388,59 @@ class AudioControlsService : MediaSessionService() {
  
    private fun resolveSessionPlayer(player: AudioPlayer, options: AudioLockScreenOptions?): Player {
      val isLive = options?.isLiveStream ?: player.isLive
@@ -294,6 +294,14 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f
 +        if (isLive) {
 +          builder.remove(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
 +        }
++        // Android's AVRCP bridge (MediaPlayerWrapper.isMetadataSynced) compares the
++        // legacy queue's active item against the session metadata and defers every
++        // update to the Bluetooth device by 2s while the two disagree. The single
++        // MediaItem loaded here is a bare stream URI with no title/artist, while the
++        // metadata is injected separately, so they can never match. Hiding the
++        // timeline makes Media3 publish an empty legacy queue and an UNKNOWN active
++        // queue id — the case AVRCP treats as synced — so updates go out at once.
++        builder.remove(Player.COMMAND_GET_TIMELINE)
 +        if (showSkipPrevious) {
 +          builder.add(Player.COMMAND_SEEK_TO_PREVIOUS)
 +          builder.add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
@@ -328,7 +336,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f
        }
      }
    }
-@@ -371,7 +473,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -371,7 +481,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -342,7 +350,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f
            .build()
  
          // Replace the basic media session with a session connected to our playback service.
-@@ -452,7 +559,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -452,7 +567,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -356,7 +364,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..e86eb0c16f14322e5a07143d98e2344f
            .build()
  
          player.mediaSession.release()
-@@ -558,6 +670,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -558,6 +678,8 @@ class AudioControlsService : MediaSessionService() {
  
      const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
      const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
