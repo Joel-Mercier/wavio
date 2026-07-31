@@ -50,6 +50,23 @@ export class SslUntrustedError extends Error {
   }
 }
 
+// Thrown when the server rejected the credentials themselves: a mistyped
+// password, a username that doesn't exist, an unsupported auth mechanism. The
+// user has something to correct, so the login screen shows `message` (already
+// localized) and errorReporting.isExpectedNoise drops it by name — otherwise
+// every wrong password on every device raises an Issue, one per language.
+export class InvalidCredentialsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidCredentialsError";
+  }
+}
+
+// Subsonic codes that mean "these credentials won't do": 40 wrong username or
+// password, 41 token auth not supported, 42 mechanism not supported, 43 multiple
+// conflicting auth mechanisms, 44 invalid API key.
+const CREDENTIAL_ERROR_CODES = new Set([40, 41, 42, 43, 44]);
+
 // A thrown network failure (not a Subsonic credential error) whose message
 // looks like a TLS/certificate problem. Walks `message` / `code` / `cause`
 // since axios on RN often nests the real reason under a generic wrapper.
@@ -124,9 +141,23 @@ export async function authenticateRemote(
   const trimmedPassword = password.trim();
 
   if (type === "jellyfin") {
+    // Jellyfin answers a bad username/password with a plain 401 — the same
+    // correctable input mistake as Subsonic code 40, so give it the same typed
+    // error instead of letting a raw AxiosError reach Sentry. The conversion has
+    // to happen *outside* withSslDetection: its certificate probe is gated on
+    // "no HTTP response came back", which a 401 fails but an InvalidCredentials-
+    // Error would pass — turning every mistyped password into a TLS round trip
+    // and, on a self-signed host, into a bogus "certificate not trusted".
     const payload = await withSslDetection(trimmedUrl, () =>
       jellyfinAuthenticate(trimmedUrl, trimmedUsername, trimmedPassword),
-    );
+    ).catch((error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        throw new InvalidCredentialsError(
+          openSubsonicErrorCodes[40] ?? i18n.t("auth.login.loginErrorMessage"),
+        );
+      }
+      throw error;
+    });
     return {
       serverType: "jellyfin",
       jellyfin: {
@@ -187,7 +218,9 @@ export async function authenticateRemote(
     const message =
       (typeof code === "number" ? openSubsonicErrorCodes[code] : undefined) ??
       i18n.t("auth.login.loginErrorMessage");
-    throw new Error(message);
+    throw typeof code === "number" && CREDENTIAL_ERROR_CODES.has(code)
+      ? new InvalidCredentialsError(message)
+      : new Error(message);
   }
 
   let navidrome: RemoteLoginOptions["navidrome"] = null;

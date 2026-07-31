@@ -1,6 +1,7 @@
 import type { Line, StructuredLyrics } from "@/services/openSubsonic/types";
 import {
   findCurrentLineIndex,
+  hasLyricContent,
   isSyncedLyrics,
   parseLrcToStructuredLyrics,
   stripLyricTimeTokens,
@@ -111,6 +112,39 @@ describe("stripLyricTimeTokens", () => {
     expect(stripLyricTimeTokens("meet me at 3:30 tonight")).toBe(
       "meet me at 3:30 tonight",
     );
+  });
+});
+
+// A server that answers getLyricsBySongId with an entry holding no text (an
+// empty LYRICS tag, an empty .lrc sidecar) used to win useSyncedLyrics'
+// `list[0]` fallback and read as "the server has lyrics" — blanking the view and
+// skipping the LRCLIB fallback for a track LRCLIB actually has.
+describe("hasLyricContent", () => {
+  const entry = (line: Line[]): StructuredLyrics => ({
+    lang: "xxx",
+    synced: false,
+    line,
+  });
+
+  it("rejects an entry with no lines", () => {
+    expect(hasLyricContent(entry([]))).toBe(false);
+  });
+
+  it("rejects an entry whose lines are all blank", () => {
+    expect(hasLyricContent(entry([{ value: "" }, { value: "   " }]))).toBe(
+      false,
+    );
+  });
+
+  it("accepts an entry with any real text", () => {
+    expect(hasLyricContent(entry([{ value: "" }, { value: "words" }]))).toBe(
+      true,
+    );
+  });
+
+  it("rejects null / undefined", () => {
+    expect(hasLyricContent(null)).toBe(false);
+    expect(hasLyricContent(undefined)).toBe(false);
   });
 });
 

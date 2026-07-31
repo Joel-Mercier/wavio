@@ -71,8 +71,15 @@ export const getAlbumList2 = async (
     { albumList2: {} },
   );
 
+// Code 70 here is "nobody is playing anything" on servers that answer an empty
+// now-playing list that way — an empty state the UI already renders.
 export const getNowPlaying = async () =>
-  subsonicRequest<{ nowPlaying: NowPlaying }>("/rest/getNowPlaying");
+  subsonicRequest<{ nowPlaying: NowPlaying }>(
+    "/rest/getNowPlaying",
+    {},
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getRandomSongs = async ({
   size,

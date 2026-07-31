@@ -5,6 +5,7 @@ import {
   createAudioPlayer,
   setAudioModeAsync,
 } from "expo-audio";
+import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
@@ -742,6 +743,54 @@ async function confirmServerReachable(): Promise<boolean> {
   return getServerReachable();
 }
 
+// How long the post-mortem probe below may take. It runs after playback already
+// failed, so it must not linger — a missing answer is itself a data point.
+const SOURCE_PROBE_TIMEOUT_MS = 5000;
+
+// Post-mortem on a source expo-audio refused to play. The engine only ever says
+// "Source error", which collapses several unrelated causes into one Issue; these
+// fields separate them:
+// - a stream: the HTTP status and content type the URL actually serves. A 4xx,
+//   or a 200 that isn't audio (an error page, or the cover art some servers hand
+//   back), is a very different bug from audio the device can't decode.
+// - a downloaded file: whether it still exists and how big it is, which tells a
+//   pruned/truncated download from a decode failure.
+// Never throws: whatever it can't determine is simply absent from the event.
+async function describeFailedSource(resolved: {
+  url: string;
+  isOffline: boolean;
+}): Promise<Record<string, unknown>> {
+  if (resolved.isOffline) {
+    try {
+      const file = new File(resolved.url);
+      return { fileExists: file.exists, fileSize: file.exists ? file.size : 0 };
+    } catch (error) {
+      return { fileProbeError: String(error) };
+    }
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SOURCE_PROBE_TIMEOUT_MS);
+  try {
+    // Ranged so a server that honours it sends two bytes rather than a track;
+    // the body is never read and the request is aborted as soon as the headers
+    // land, so a server that ignores Range doesn't stream a whole file either.
+    const response = await fetch(resolved.url, {
+      headers: { Range: "bytes=0-1" },
+      signal: controller.signal,
+    });
+    return {
+      probeStatus: response.status,
+      probeContentType: response.headers.get("content-type"),
+      probeContentLength: response.headers.get("content-length"),
+    };
+  } catch (error) {
+    return { probeError: error instanceof Error ? error.message : "unknown" };
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
+
 function handlePlaybackStatus(status: AudioStatus) {
   // A genuine engine-level playback failure (decode error, dead stream URL,
   // unreadable offline file). expo-audio clears `error` on a fresh load /
@@ -791,7 +840,13 @@ function handlePlaybackStatus(status: AudioStatus) {
       : "unknown";
     const errorMessage = status.error;
     const playbackState = status.playbackState;
-    const report = () =>
+    const report = async () => {
+      // The engine says "Source error" and nothing else — it can't say whether
+      // the bytes never arrived, arrived as an error page, or arrived as audio
+      // it couldn't decode. Ask the source itself what it is before reporting.
+      const diagnostics = resolved
+        ? await describeFailedSource(resolved)
+        : undefined;
       reportError(new Error(errorMessage), {
         area: "player",
         endpoint: kind,
@@ -812,19 +867,30 @@ function handlePlaybackStatus(status: AudioStatus) {
           transcodeRetried: current
             ? transcodeRetriedIds.has(current.id)
             : false,
+          ...diagnostics,
         },
       });
-    // Offline-file failures (corrupt/missing download) need no network and are
-    // always real. A streamed/radio source, though, throws the same engine
-    // "Source error" when the server merely blips mid-track as when the stream
-    // is genuinely bad — and effective-online lags a real drop by ~24s, so
-    // trusting it here over-reports transient losses the offline UI already
-    // covers. Confirm the server actually answers before blaming the engine.
-    if (!needsNetwork) {
-      report();
+    };
+    // Three sources, three verdicts. An internet radio station that stopped
+    // serving its stream is a property of the Radio Browser directory (which is
+    // full of dead entries), not of this app — every user of that station sees
+    // it and no client change fixes it, so it stays a breadcrumb. Offline-file
+    // failures (corrupt/missing download) need no network and are always real.
+    // A streamed source throws the same engine "Source error" when the server
+    // merely blips mid-track as when the stream is genuinely bad — and
+    // effective-online lags a real drop by ~24s, so trusting it here
+    // over-reports transient losses the offline UI already covers. Confirm the
+    // server actually answers before blaming the engine.
+    if (kind === "radio") {
+      reportBreadcrumb("player", "radio-source-error", {
+        trackId: current?.id,
+        error: errorMessage,
+      });
+    } else if (!needsNetwork) {
+      void report();
     } else {
       void confirmServerReachable().then((reachable) => {
-        if (reachable) report();
+        if (reachable) void report();
       });
     }
   } else if (!status.error) {

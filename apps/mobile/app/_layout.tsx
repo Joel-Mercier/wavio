@@ -87,12 +87,15 @@ sentryInit({
   beforeSend: (event) => scrubEvent(event),
 
   // Backstop to the reportError classifier: never raise an Issue for transient
-  // connectivity failures.
+  // connectivity failures, nor for a dev bundle served by Metro (a development
+  // build whose EXPO_PUBLIC_ENV said otherwise — the dev server's 404 says
+  // nothing about the shipped app).
   ignoreErrors: [
     "Network Error",
     "timeout exceeded",
     "Request aborted",
     "AbortError",
+    "DebugServerException",
     /ECONNABORTED/,
     /ERR_NETWORK/,
   ],

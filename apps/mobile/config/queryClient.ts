@@ -121,6 +121,17 @@ export const queryPersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
+// A lyrics lookup that found nothing. Worth keeping for the session (the fan-out
+// is up to seven requests), but never worth persisting: a miss is only ever a
+// snapshot of one moment — LRCLIB's edge rejecting the request, a block, tags
+// that didn't match yet, a track it hadn't indexed — and restoring it would pin
+// "no lyrics" on that track for the full 7-day maxAge with nothing able to
+// dislodge it. A *found* sheet persists as normal: lyrics don't change, and
+// keeping them is what makes them available offline.
+function isEmptyLyricsLookup(query: Query): boolean {
+  return query.queryKey[0] === "lrclib" && query.state.data == null;
+}
+
 export const persistOptions = {
   persister: queryPersister,
   // Discard persisted cache older than 7 days.
@@ -129,7 +140,8 @@ export const persistOptions = {
     shouldDehydrateQuery: (query: Query) =>
       defaultShouldDehydrateQuery(query) &&
       // Infinite-list pages don't restore cleanly; skip them.
-      !String(query.queryKey[0]).includes(":infinite"),
+      !String(query.queryKey[0]).includes(":infinite") &&
+      !isEmptyLyricsLookup(query),
   },
 } as const;
 

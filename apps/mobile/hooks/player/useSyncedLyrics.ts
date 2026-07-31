@@ -4,16 +4,25 @@ import { useLrclibLyrics } from "@/hooks/lrclib/useLrclibLyrics";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
-import { hasKaraoke, sanitizeStructuredLyrics } from "@/utils/lyrics";
+import {
+  hasKaraoke,
+  hasLyricContent,
+  sanitizeStructuredLyrics,
+} from "@/utils/lyrics";
 
 function pickSyncedLyrics(
   list: StructuredLyrics[] | undefined,
 ): StructuredLyrics | null {
   if (!Array.isArray(list) || list.length === 0) return null;
+  // Entries carrying no text are dropped before picking: an empty one would win
+  // the `list[0]` fallback below and then read as "the server has lyrics",
+  // blanking the view and skipping LRCLIB for a track it could resolve.
+  const withContent = list.filter(hasLyricContent);
+  if (withContent.length === 0) return null;
   return (
-    list.find((l) => l.synced && hasKaraoke(l)) ??
-    list.find((l) => l.synced) ??
-    list[0] ??
+    withContent.find((l) => l.synced && hasKaraoke(l)) ??
+    withContent.find((l) => l.synced) ??
+    withContent[0] ??
     null
   );
 }
@@ -56,9 +65,9 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     enabled: backendSettled && !backendLyrics && lyricsSource === "all",
   });
 
-  // lrclib's query keeps its cached result after being disabled (staleTime is
-  // Infinity), so switching away from "all" must also stop surfacing it here —
-  // otherwise the last-played track keeps showing its lrclib lyrics.
+  // lrclib's query keeps its cached result after being disabled, so switching
+  // away from "all" must also stop surfacing it here — otherwise the
+  // last-played track keeps showing its lrclib lyrics.
   const lyrics =
     backendLyrics ?? (lyricsSource === "all" ? lrclib.lyrics : null);
   const isLoading = backend.isLoading || lrclib.isLoading;

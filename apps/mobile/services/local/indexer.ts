@@ -39,6 +39,11 @@ const EXTRACT_CONCURRENCY = 4;
 // `dir.list()` is synchronous; yield to the event loop every N directories so
 // a large walk doesn't starve the UI thread.
 const LIST_YIELD_EVERY = 25;
+// A scan raises an Issue only when it fails on both enough files and a large
+// enough share of them: individual unreadable files are a fact of any real
+// library, a systematic reader failure is not.
+const MIN_SCAN_FAILURES_TO_REPORT = 5;
+const MIN_SCAN_FAILURE_RATE_TO_REPORT = 0.05;
 
 const isAudioFile = (name: string): boolean =>
   AUDIO_EXTENSIONS.has(name.split(".").pop()?.toLowerCase() ?? "");
@@ -247,9 +252,16 @@ export async function scanLibrary(
   );
   await flush();
 
-  // One aggregated Issue per scan when files failed to index — captures the
-  // metadata-extraction failure rate without spamming an event per file.
-  if (result.failed > 0) {
+  // One aggregated Issue per scan when the extraction failure *rate* is
+  // material. A handful of unreadable files in a large library is normal — a
+  // DRM'd track, a truncated download, a container the native reader doesn't
+  // know — and the per-file breadcrumbs above already record those. What is
+  // worth an Issue is a systematic failure (a whole folder, a codec the reader
+  // regressed on), which shows up as a share of the scan rather than a count.
+  if (
+    result.failed >= MIN_SCAN_FAILURES_TO_REPORT &&
+    result.failed / work.length >= MIN_SCAN_FAILURE_RATE_TO_REPORT
+  ) {
     reportError(
       new Error(
         `Local library scan: ${result.failed}/${work.length} files failed to index`,

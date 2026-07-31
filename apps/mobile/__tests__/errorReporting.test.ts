@@ -198,6 +198,96 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'Internal Server Error: plugin call failed: AudioMuse-AI HTTP request failed: Get "http://127.0.0.1:8129/api/similar_tracks": connection refused',
+    "Internal Server Error: mpv error: property unavailable",
+  ])("suppresses a server-side subsystem failure (%s)", (message) => {
+    reportError(
+      { code: 0, message },
+      { area: "api", backend: "subsonic", endpoint: "/rest/x", status: 0 },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a full device (ENOSPC) reported from the native downloader", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.io.IOException: write failed: ENOSPC (No space left on device)",
+      ),
+      { area: "storage", endpoint: "download:disk-full" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a full device reported from sqlite", () => {
+    reportError(
+      new Error(
+        "Call to function 'NativeDatabase.execAsync' has been rejected.\n→ Caused by: database or disk is full",
+      ),
+      { area: "api", backend: "subsonic", endpoint: "podcasts" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a native socket failure (the non-axios half of network noise)", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.net.SocketTimeoutException: timeout",
+      ),
+      { area: "storage", endpoint: "download:network" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports a download failure the app itself caused", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.lang.IllegalArgumentException: URI is not absolute",
+      ),
+      { area: "storage", endpoint: "download:bad-url" },
+    );
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("suppresses a rejected credential typed into the login form", () => {
+    const error = new Error("Wrong username or password.");
+    error.name = "InvalidCredentialsError";
+    reportError(error, { area: "auth", endpoint: "navidrome login" });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a backend 401 (an expired session, not a bug)", () => {
+    const error = new axios.AxiosError("Request failed");
+    error.response = { status: 401 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "mostPlayedSongs",
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  // Subsonic signals permission denial as code 50 and Jellyfin doesn't 403 a
+  // normal browse, so a 403 means something (a proxy, a WAF) sits in front of
+  // the server and the whole app renders empty — worth surfacing.
+  it("still reports a backend 403", () => {
+    const error = new axios.AxiosError("Forbidden");
+    error.response = { status: 403 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "subsonic",
+      endpoint: "mostPlayedSongs",
+    });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("still reports a 403 from an external API", () => {
+    const error = new axios.AxiosError("Forbidden");
+    error.response = { status: 403 } as never;
+    reportError(error, { area: "api", api: "lidarr", endpoint: "/album" });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
   it("still reports a non-timeout Subsonic code-0 internal error", () => {
     reportError(
       { code: 0, message: "Internal Server Error" },

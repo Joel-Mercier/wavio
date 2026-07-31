@@ -132,10 +132,13 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     // under the binder transaction limit for very large local queues.
     val builder = ImmutableList.builder<MediaItemData>()
     var artBudget = ART_BUDGET_BYTES
+    val occurrences = mutableMapOf<String, Int>()
     for ((i, item) in source.withIndex()) {
       val isCurrent = i == activeIndex
       val embed = isCurrent || artBudget > 0
-      val used = item.toMediaItemDataInto(builder, embed)
+      val occurrence = occurrences[item.id] ?: 0
+      occurrences[item.id] = occurrence + 1
+      val used = item.toMediaItemDataInto(builder, occurrence, embed)
       if (!isCurrent) artBudget -= used
     }
     val items = builder.build()
@@ -179,8 +182,19 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
   // Builds the timeline item and appends it to [out]. Returns the number of
   // embedded artwork bytes so the caller can budget the player-state binder
   // transaction; when [embed] is false the art falls back to its uri.
+  //
+  // [occurrence] is how many times this track id already appeared earlier in the
+  // queue, and only exists to make the MediaItemData UID unique: SimpleBasePlayer
+  // rejects a playlist with a duplicate UID, and a queue legitimately holds the
+  // same track twice (a playlist with a repeated song, a track queued again).
+  // Counting occurrences rather than using the plain index keeps the UID stable
+  // across queue edits — media3 diffs states by UID, so a positional one would
+  // report a media-item transition (resetting the head unit's Now Playing) every
+  // time an *earlier* entry was removed or reordered mid-track. The media id
+  // stays the plain track id, which is what play intents resolve against.
   private fun NowPlaying.toMediaItemDataInto(
     out: ImmutableList.Builder<MediaItemData>,
+    occurrence: Int,
     embed: Boolean,
   ): Int {
     val metadata = MediaMetadata.Builder()
@@ -196,7 +210,7 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
       .setMediaMetadata(metadata.build())
       .build()
     out.add(
-      MediaItemData.Builder(id)
+      MediaItemData.Builder(if (occurrence == 0) id else "$id#$occurrence")
         .setMediaItem(mi)
         .setDurationUs(if (durationMs > 0) durationMs * 1000 else C.TIME_UNSET)
         .build()
