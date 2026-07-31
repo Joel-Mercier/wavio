@@ -76,9 +76,13 @@ describe("authenticateWithFallback", () => {
 
   it("does not fall back when the primary rejects the credentials", async () => {
     // The primary answered; the same credentials would be rejected by the
-    // fallback too, and falling back would mask the real message.
+    // fallback too, and falling back would mask the real message. The 401 is
+    // re-thrown as InvalidCredentialsError so the login screen shows a
+    // correctable message and Sentry never sees a wrong password.
     mockJellyfinAuth.mockRejectedValue(rejected(401));
-    await expect(run()).rejects.toMatchObject({ response: { status: 401 } });
+    await expect(run()).rejects.toMatchObject({
+      name: "InvalidCredentialsError",
+    });
     expect(mockJellyfinAuth).toHaveBeenCalledTimes(1);
   });
 

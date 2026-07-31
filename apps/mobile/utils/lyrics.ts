@@ -79,6 +79,17 @@ export function hasKaraoke(
   return !!lyrics?.cueLine?.some((c) => !!c.cue?.length);
 }
 
+// A server can answer getLyricsBySongId with a structured entry that holds no
+// actual text — a file tagged with an empty LYRICS frame, an empty .lrc
+// sidecar, or lines that were nothing but time tokens before sanitizing. Such an
+// entry must not count as lyrics: it renders as a blank view *and* (in
+// useSyncedLyrics) suppresses the LRCLIB fallback for a track LRCLIB has.
+export function hasLyricContent(
+  lyrics: StructuredLyrics | null | undefined,
+): boolean {
+  return !!lyrics?.line?.some((l) => l.value.trim().length > 0);
+}
+
 // Agents (multi-voice) live at the word level: each cueLine carries an agentId
 // that resolves to an entry in the layer's `agents` list. Lines without a
 // cueLine (or in single-voice tracks) resolve to no agent.

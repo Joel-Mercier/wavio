@@ -36,13 +36,26 @@ export type LidarrRequestOptions = Omit<
   config?: LidarrConfig;
   /** Extra headers merged onto the API-key header. */
   headers?: Record<string, string>;
+  /** A 404 is a data state for this call (e.g. the record is already gone). */
+  notFoundIsExpected?: boolean;
 };
+
+// Ids in the path would otherwise fingerprint one Issue per record — group
+// `/artist/93` and `/artist/94` as `/artist/:id`.
+function endpointFor(path: string): string {
+  return path.replace(/\/\d+(?=\/|$)/g, "/:id");
+}
 
 // Shared request wrapper for the section files: resolves the connection config,
 // scopes the call to the /api/v1 root and unwraps the response body.
 export async function lidarrRequest<T>(
   path: string,
-  { config, headers, ...axiosConfig }: LidarrRequestOptions = {},
+  {
+    config,
+    headers,
+    notFoundIsExpected,
+    ...axiosConfig
+  }: LidarrRequestOptions = {},
 ): Promise<T> {
   const { serverUrl, apiKey } = resolveConfig(config);
   if (!serverUrl || !apiKey) {
@@ -61,7 +74,12 @@ export async function lidarrRequest<T>(
   } catch (error) {
     // The classifier drops offline / unreachable / cancelled noise and reports
     // only genuine HTTP failures.
-    reportError(error, { area: "api", api: "lidarr", endpoint: path });
+    reportError(error, {
+      area: "api",
+      api: "lidarr",
+      endpoint: endpointFor(path),
+      notFoundIsExpected,
+    });
     throw error;
   }
 }

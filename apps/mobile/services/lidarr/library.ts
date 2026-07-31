@@ -127,9 +127,12 @@ export async function getArtistAlbums(
   });
 }
 
+// A 404 means the artist was already removed (from Lidarr's own UI, or by a
+// previous run of this cleanup) — the intended end state, not a failure.
 export async function deleteArtist(artistId: number): Promise<void> {
   await lidarrRequest<void>(`/artist/${artistId}`, {
     method: "DELETE",
     params: { deleteFiles: false, addImportListExclusion: false },
+    notFoundIsExpected: true,
   });
 }

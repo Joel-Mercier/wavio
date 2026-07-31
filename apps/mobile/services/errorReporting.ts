@@ -124,22 +124,28 @@ export function isNetworkNoise(error: unknown): boolean {
   return false;
 }
 
-// A Navidrome plugin (e.g. AudioMuse-AI, which takes over getSimilarSongs2 /
-// getSonicSimilarTracks to compute audio similarity on demand) whose own upstream
-// call timed out: the server returns a generic Subsonic code-0 "Internal Server
-// Error" carrying Go's "context deadline exceeded". That's a transient
-// server-side timeout — the same environmental class as a socket timeout
-// (isNetworkNoise), one layer up inside the server — not an app bug, so don't
-// report it. Matched narrowly on the timeout idiom so other code-0 internal
-// errors (and non-timeout plugin failures) still surface.
-function isPluginTimeout(error: unknown): boolean {
+// A server-side subsystem the request was handed off to failed, and the server
+// wrapped that in a generic Subsonic code-0 "Internal Server Error":
+// - "context deadline exceeded": a Navidrome plugin (e.g. AudioMuse-AI, which
+//   takes over getSimilarSongs2 / getSonicSimilarTracks) whose own upstream call
+//   timed out — the environmental class of a socket timeout, one layer up.
+// - "plugin call failed": the same plugin bridge failing to reach its backend at
+//   all (connection refused because the operator's AudioMuse container is down).
+// - "mpv error": the jukebox's player process rejected the command.
+// All three are the operator's deployment, not the app: nothing in the client
+// changes the outcome. Matched narrowly on those idioms so other code-0 internal
+// errors still surface.
+const SERVER_SUBSYSTEM_FAILURES = [
+  "context deadline exceeded",
+  "plugin call failed",
+  "mpv error",
+];
+
+function isServerSubsystemFailure(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const { code, message } = error as { code?: number; message?: string };
-  return (
-    code === 0 &&
-    typeof message === "string" &&
-    message.includes("context deadline exceeded")
-  );
+  if (code !== 0 || typeof message !== "string") return false;
+  return SERVER_SUBSYSTEM_FAILURES.some((idiom) => message.includes(idiom));
 }
 
 // A Subsonic envelope error that says nothing about an app bug:
@@ -170,6 +176,22 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
   return false;
 }
 
+// The native layers (expo-file-system's downloader, expo-sqlite) reject with a
+// CodedError whose message carries the underlying Java exception rather than a
+// status or a typed error, so the only thing left to match on is the text.
+// Two classes of those are the environment, not a bug:
+// - the device is out of storage (a download's ENOSPC, sqlite's "disk is full").
+//   Nothing the app can fix — the user has to free space.
+// - a socket failure: the same connectivity class `isNetworkNoise` already drops
+//   for axios, arriving through the native downloader instead.
+const NATIVE_ENVIRONMENT_RE =
+  /ENOSPC|No space left on device|disk is full|SocketTimeoutException|SocketException|UnknownHostException|ConnectException|Connection reset|connection abort/i;
+
+function isNativeEnvironmentFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : "";
+  return message.length > 0 && NATIVE_ENVIRONMENT_RE.test(message);
+}
+
 // Failures that are expected from the error itself, independent of any request
 // context: network noise plus typed control-flow / user-input errors. Shared by
 // `reportError`'s classifier and `logError` so neither path reports them —
@@ -183,6 +205,13 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
 // - InvalidFeedError: a user-entered feed URL that doesn't resolve to a
 //   parseable RSS feed (e.g. an HTML page pasted into "add podcast"). Surfaced to
 //   the user via an error toast — a correctable input mistake, not a bug.
+// - InvalidCredentialsError: the server rejected the username/password typed
+//   into the login form (services/auth/authenticate.ts). The same class of
+//   correctable input, and the message is localized — so reporting it would
+//   raise one Issue per language for what is never a bug.
+// - LrclibThrottledError: LRCLIB's Cloudflare limiter is blocking this device,
+//   raised by hooks/lrclib/useLrclibLyrics purely so the "no lyrics" result
+//   isn't cached forever. A remote rate limit on optional decoration, not a bug.
 // - "Missing queryFn": a React Query lifecycle artifact, not a call site bug — a
 //   query that was paused while offline gets resumed after its only observer
 //   unmounted (e.g. the user left the screen), so React Query has no queryFn to
@@ -201,13 +230,16 @@ export function isExpectedNoise(
   networkNoise: boolean = isNetworkNoise(error),
 ): boolean {
   if (networkNoise) return true;
-  if (isPluginTimeout(error)) return true;
+  if (isServerSubsystemFailure(error)) return true;
   if (isUnsupportedOrEmptySubsonic(error)) return true;
+  if (isNativeEnvironmentFailure(error)) return true;
   return (
     error instanceof Error &&
     (error.name === "LocalUnsupportedError" ||
       error.name === "JellyfinUnsupportedError" ||
       error.name === "InvalidFeedError" ||
+      error.name === "InvalidCredentialsError" ||
+      error.name === "LrclibThrottledError" ||
       error.name === "DownloadCancelledError" ||
       error.name === "AutoDownloadDiscardedError" ||
       error.message.startsWith("Missing queryFn"))
@@ -230,6 +262,22 @@ function isExpectedFailure(
     ctx.backend !== "local" &&
     !getServerReachable() &&
     axios.isAxiosError(error)
+  ) {
+    return true;
+  }
+  // A backend call the server refused for lack of a valid session: an expired
+  // native token (Navidrome's JWT, which services/navidrome/index.ts already
+  // re-auths once before giving up), credentials revoked server-side. The auth
+  // layer already degrades around it and no client change alters the outcome.
+  // 403 is deliberately NOT included: neither Subsonic (which signals permission
+  // denial as code 50, handled below) nor a healthy Jellyfin answers a normal
+  // browse with one, so a 403 means something sits in front of the server —
+  // exactly the misconfiguration worth one Issue.
+  if (
+    ctx.backend &&
+    ctx.backend !== "local" &&
+    axios.isAxiosError(error) &&
+    error.response?.status === 401
   ) {
     return true;
   }

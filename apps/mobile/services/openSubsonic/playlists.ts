@@ -12,8 +12,16 @@ export const createPlaylist = async (name: string, songId?: string[]) =>
     { paramsSerializer: { indexes: null } },
   );
 
+// Code 70 means the playlist is already gone — a stale list the user tapped
+// delete on twice, or one removed from another client. The end state is the one
+// asked for, so it isn't a failure worth reporting.
 export const deletePlaylist = async (id: string) =>
-  subsonicRequest<Record<string, never>>("/rest/deletePlaylist", { id });
+  subsonicRequest<Record<string, never>>(
+    "/rest/deletePlaylist",
+    { id },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getPlaylist = async (id: string) =>
   subsonicRequest<{ playlist: PlaylistWithSongs }>(

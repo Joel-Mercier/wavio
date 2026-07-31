@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { offlineFileInfo } from "@/services/backend/streaming";
+import { reportError } from "@/services/errorReporting";
 import {
   getConnectionType,
   getIsEffectivelyOnline,
@@ -46,6 +47,13 @@ const FAILURE_CIRCUIT_BREAK = 3;
 
 const QUEUE_RETRY_BACKOFF_STEPS_MS = [5_000, 15_000, 60_000, 300_000];
 
+// How long the queue stays parked after the device reports no free space.
+// Without it, a full disk fails every remaining track in seconds and the whole
+// queue lands in "failed" — a state the user can only recover by re-queuing
+// everything. Parking instead keeps the queue intact so it drains on its own
+// once space is freed.
+const STORAGE_FULL_PAUSE_MS = 30 * 60 * 1000;
+
 // Subsonic reports API errors as HTTP 200 with a JSON/XML envelope (and a
 // misconfigured reverse proxy can 200 an HTML page), so a "successful" download
 // can be an error body saved under the track's name — downloadFileAsync only
@@ -79,6 +87,48 @@ class AutoDownloadDiscardedError extends Error {
   }
 }
 
+// A download can fail for a dozen unrelated reasons, and the native downloader
+// folds them all into one "downloadFileAsync has been rejected" message — which
+// used to land in Sentry as a single bucket where a bad URL was indistinguishable
+// from a full disk. Name the cause so each real one gets its own Issue (and so
+// the environmental ones can be told apart without parsing the message twice).
+type DownloadFailureKind =
+  | "disk-full"
+  | "network"
+  | "not-found"
+  | "permission"
+  | "bad-url"
+  | "missing-file"
+  | "server-error"
+  | "unknown";
+
+function downloadFailureKind(error: unknown): DownloadFailureKind {
+  if (error && typeof error === "object" && !(error instanceof Error)) {
+    const code = (error as { code?: number }).code;
+    if (code === 70) return "not-found";
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  if (/ENOSPC|No space left on device|disk is full/i.test(message)) {
+    return "disk-full";
+  }
+  if (
+    /SocketTimeoutException|SocketException|UnknownHostException|ConnectException|Connection reset|connection abort/i.test(
+      message,
+    )
+  ) {
+    return "network";
+  }
+  if (/permission/i.test(message)) return "permission";
+  if (/URI is not absolute|Unsupported URI|Invalid URL/i.test(message)) {
+    return "bad-url";
+  }
+  if (/FileNotFoundException|file does not exist/i.test(message)) {
+    return "missing-file";
+  }
+  if (/server returned an error response/i.test(message)) return "server-error";
+  return "unknown";
+}
+
 export class OfflineDownloadService {
   private static instance: OfflineDownloadService;
   private activeIds: Set<string> = new Set();
@@ -91,6 +141,9 @@ export class OfflineDownloadService {
   private attempts: Map<string, number> = new Map();
   private consecutiveFailures = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  // Set when a download failed for lack of storage; the queue stays parked
+  // until then instead of failing every remaining track against a full disk.
+  private storageFullUntil = 0;
 
   private constructor() {
     subscribeConnectionType((type) => {
@@ -115,6 +168,23 @@ export class OfflineDownloadService {
     }
     this.consecutiveFailures = 0;
     this.processQueue();
+  }
+
+  // The storage park has no other wake-up: freeing space changes no signal the
+  // service listens to, and every drain kicked from executeDownload's finally
+  // just re-parks. Without this timer the queue stays paused until the app
+  // restarts (or the user happens to switch networks).
+  private scheduleStorageRetry(): void {
+    if (this.retryTimer) return;
+    const delay = Math.max(0, this.storageFullUntil - Date.now());
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.storageFullUntil = 0;
+      // The park *was* the backoff, so a disk-full cascade shouldn't also
+      // escalate the circuit breaker's next delay.
+      this.consecutiveFailures = 0;
+      this.processQueue();
+    }, delay);
   }
 
   private scheduleQueueRetry(): void {
@@ -264,6 +334,7 @@ export class OfflineDownloadService {
     // failure history, and never start out tripped.
     this.attempts.clear();
     this.consecutiveFailures = 0;
+    this.storageFullUntil = 0;
     if (this.retryTimer) {
       clearTimeout(this.retryTimer);
       this.retryTimer = null;
@@ -328,17 +399,16 @@ export class OfflineDownloadService {
     if (this.retryTimer) return;
 
     if (downloadsWifiOnly && getConnectionType() !== "wifi") {
-      for (const track of offlineStore.downloadQueue) {
-        if (this.activeIds.has(track.id)) continue;
-        const progress = offlineStore.downloadProgress[track.id];
-        if (progress?.status !== "paused") {
-          offlineStore.setDownloadProgress(track.id, {
-            trackId: track.id,
-            status: "paused",
-            progress: progress?.progress ?? 0,
-          });
-        }
-      }
+      this.pauseQueued();
+      return;
+    }
+
+    // The device had no space left on the last attempt. Nothing will change by
+    // trying again right away, so hold the queue (paused, not failed) until the
+    // window elapses.
+    if (Date.now() < this.storageFullUntil) {
+      this.pauseQueued();
+      this.scheduleStorageRetry();
       return;
     }
 
@@ -352,28 +422,66 @@ export class OfflineDownloadService {
     }
   }
 
+  // Marks every queued item the drain isn't currently working on as paused, so
+  // the UI reflects "waiting on something" rather than a stalled download.
+  private pauseQueued(): void {
+    const offlineStore = useOffline.getState();
+    for (const track of offlineStore.downloadQueue) {
+      if (this.activeIds.has(track.id)) continue;
+      const progress = offlineStore.downloadProgress[track.id];
+      if (progress?.status !== "paused") {
+        offlineStore.setDownloadProgress(track.id, {
+          trackId: track.id,
+          status: "paused",
+          progress: progress?.progress ?? 0,
+        });
+      }
+    }
+  }
+
   private async executeDownload(track: Child): Promise<void> {
     const offlineStore = useOffline.getState();
     const resolvers = this.resolvers.get(track.id);
     const generation = this.generation;
+    const storageParkAtStart = this.storageFullUntil;
 
     try {
       await this.writeTrackToDisk(track, generation);
       offlineStore.removeFromDownloadQueue(track.id);
       this.attempts.delete(track.id);
       this.consecutiveFailures = 0;
+      // A file landed, so there is space again — unless one of the downloads
+      // running alongside this one hit ENOSPC while it wrote. This one started
+      // before that park, so a small file squeezing onto an almost-full disk
+      // says nothing about the disk *now*: leave the park standing rather than
+      // draining the rest of the queue into it.
+      if (this.storageFullUntil === storageParkAtStart) {
+        this.storageFullUntil = 0;
+      }
       resolvers?.resolve();
     } catch (error) {
       const attempts = (this.attempts.get(track.id) ?? 0) + 1;
       this.attempts.set(track.id, attempts);
       this.consecutiveFailures++;
+      const kind = downloadFailureKind(error);
+      // A full device says nothing about *this* track and won't empty itself
+      // between attempts — retrying would burn the track's attempts and then
+      // every other queued track's, turning the whole queue into failures the
+      // user has to re-queue by hand. Refund the attempt and park the queue
+      // (processQueue) so it resumes on its own once there's space.
+      if (kind === "disk-full") {
+        this.attempts.set(track.id, attempts - 1);
+        this.storageFullUntil = Date.now() + STORAGE_FULL_PAUSE_MS;
+      }
       const retryable =
+        kind === "disk-full" ||
         error instanceof DownloadCancelledError ||
         !getIsEffectivelyOnline() ||
         attempts < MAX_TRACK_ATTEMPTS;
       if (retryable) {
-        // Logged out / switched servers, connectivity dropped under it, or a
-        // failure we haven't yet seen enough of to call permanent. Keep the item
+        // Logged out / switched servers, connectivity dropped under it, the
+        // device ran out of space, or a failure we haven't yet seen enough of to
+        // call permanent. Keep the item
         // queued so it resumes (next login, connectivity recovery, or backoff),
         // reflect that it's waiting, and don't report it. Dequeuing here is what
         // let a 2.5s connectivity blip burn down the whole queue: every failure
@@ -392,10 +500,22 @@ export class OfflineDownloadService {
           progress: 0,
           error: error instanceof Error ? error.message : "Unknown error",
         });
-        logError(
-          `Download Manager: Error downloading track ${track.id} after ${attempts} attempts:`,
-          error,
-        );
+        // `endpoint` is the failure cause, not a URL: it's what reportError
+        // fingerprints on, so a bad stream URL, a missing offline directory and
+        // a denied permission each get their own Issue instead of sharing one
+        // opaque "downloadFileAsync rejected" bucket. Environmental causes
+        // (disk-full, sockets, a track the server no longer has) are dropped by
+        // the classifier — isNativeEnvironmentFailure / notFoundIsExpected.
+        reportError(error, {
+          area: "storage",
+          endpoint: `download:${kind}`,
+          status:
+            kind === "not-found"
+              ? ((error as { code?: number })?.code ?? undefined)
+              : undefined,
+          notFoundIsExpected: true,
+          extra: { trackId: track.id, attempts, kind },
+        });
       }
       resolvers?.reject(error);
     } finally {

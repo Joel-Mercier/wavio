@@ -46,13 +46,21 @@ export const getCoverArt = async (id: string, { size }: { size?: number }) => {
   return arrayBufferToBase64(rsp.data);
 };
 
+// Most tracks have no lyrics, and servers report that as code 70 rather than an
+// empty list — the caller falls back to LRCLIB, so it's a miss, not a failure.
 export const getLyrics = async ({
   artist,
   title,
 }: {
   artist?: string;
   title?: string;
-}) => subsonicRequest<{ lyrics: Lyrics }>("/rest/getLyrics", { artist, title });
+}) =>
+  subsonicRequest<{ lyrics: Lyrics }>(
+    "/rest/getLyrics",
+    { artist, title },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getLyricsBySongId = async (
   id: string,
@@ -60,7 +68,12 @@ export const getLyricsBySongId = async (
 ) =>
   subsonicRequest<{
     lyricsList: { structuredLyrics?: StructuredLyrics[] };
-  }>("/rest/getLyricsBySongId", { id, enhanced });
+  }>(
+    "/rest/getLyricsBySongId",
+    { id, enhanced },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const hls = async (id: string, bitRate: number, audioTrack: string) => {
   const rsp = await openSubsonicApiInstance.get<string>("/rest/hls", {
