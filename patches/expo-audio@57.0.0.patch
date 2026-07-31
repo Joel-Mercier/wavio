@@ -63,7 +63,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..b7f72781612d263468f185cce3f9174c
          if (!audioEnabled) {
            Log.e(TAG, "Audio has been disabled. Re-enable to start playing")
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..a6e3e004abe1db6321506db60fec8d0a69ac2a96 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..df1e9d9da871ce97f5c2aaba9ede2de37b7defce 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -24,6 +24,8 @@ import java.lang.ref.WeakReference
@@ -75,15 +75,16 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..a6e3e004abe1db6321506db60fec8d0a
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +39,7 @@ class AudioPlayer(
+@@ -37,6 +39,8 @@ class AudioPlayer(
    player = ExoPlayer.Builder(context)
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
++    .setHandleAudioBecomingNoisy(true)
 +    .setWakeMode(C.WAKE_MODE_NETWORK)
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -97,6 +100,14 @@ class AudioPlayer(
+@@ -97,6 +101,14 @@ class AudioPlayer(
      startUpdating()
    }
  
@@ -99,7 +100,7 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..a6e3e004abe1db6321506db60fec8d0a
      if (active) {
        this.metadata = metadata
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index f3536d571535db7d6af57f568fce0d7c0b3fb674..8bd08ad7817d79da89bb7e09556d56bed0005ceb 100644
+index f3536d571535db7d6af57f568fce0d7c0b3fb674..b62725b5f2a09b0c1c7ac7b1de0517dd36a35969 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -2,6 +2,7 @@ package expo.modules.audio
@@ -110,10 +111,11 @@ index f3536d571535db7d6af57f568fce0d7c0b3fb674..8bd08ad7817d79da89bb7e09556d56be
  import androidx.media3.common.MediaItem
  import androidx.media3.common.PlaybackException
  import androidx.media3.common.Player
-@@ -25,6 +26,7 @@ class AudioPlaylist(
+@@ -25,6 +26,8 @@ class AudioPlaylist(
    player = ExoPlayer.Builder(context)
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
++    .setHandleAudioBecomingNoisy(true)
 +    .setWakeMode(C.WAKE_MODE_NETWORK)
      .setMediaSourceFactory(DefaultMediaSourceFactory(context).setDataSourceFactory(dataSourceFactory))
      .build(),
