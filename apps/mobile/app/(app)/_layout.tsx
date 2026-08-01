@@ -10,6 +10,7 @@ import { Drawer } from "react-native-drawer-layout";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
+import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerSheet";
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
@@ -61,6 +62,7 @@ import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
+import useSoulSync from "@/stores/soulsync";
 import { logError } from "@/utils/log";
 
 // Module-level so it survives AppLayout unmount/remount during the
@@ -159,6 +161,7 @@ export default function AppLayout() {
         useBookmarks.getState().__reset();
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
+        useSoulSync.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
         useServerExtensionsBase.getState().reset();
@@ -206,6 +209,7 @@ export default function AppLayout() {
     useBookmarks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
+    useSoulSync.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
     useAudioMuse.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
@@ -326,6 +330,7 @@ export default function AppLayout() {
       </AppDrawer>
       <OfflineMutationsSync />
       <LidarrDownloadsWatcher />
+      <DownloaderPickerSheet />
       <OfflineStarredAutoSync />
       <LibrarySyncController />
       <ServerExtensionsSync />

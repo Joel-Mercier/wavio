@@ -5,7 +5,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { cn } from "@/utils/tailwind";
 
-export default function LidarrCover({
+export default function DownloaderCover({
   url,
   size = 56,
   variant = "album",

@@ -27,6 +27,10 @@ export default function HomeLayout() {
       <Stack.Screen name="downloaders/downloads" />
       <Stack.Screen name="downloaders/artist/[id]" />
       <Stack.Screen name="downloaders/album/[id]" />
+      <Stack.Screen name="downloaders/soulsync/index" />
+      <Stack.Screen name="downloaders/soulsync/search" />
+      <Stack.Screen name="downloaders/soulsync/downloads" />
+      <Stack.Screen name="downloaders/soulsync/watchlist" />
       <Stack.Screen name="trusted-certificates" />
       <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="pending-changes" />

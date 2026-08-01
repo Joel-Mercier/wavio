@@ -288,7 +288,8 @@
 			"artists": {
 				"label": "Artist",
 				"notInLibrary": "Not in your library",
-				"notInLibraryAddWithLidarr": "Not in your library • Find in Lidarr",
+				"notInLibraryFindIn": "Not in your library • Find in {{name}}",
+				"notInLibraryFindInDownloader": "Not in your library • Find in a downloader",
 				"coverAlt": "Artist cover",
 				"topSongs": "Top songs",
 				"discography": "Discography",
@@ -727,7 +728,7 @@
 					},
 					"downloaders": {
 						"title": "Downloaders",
-						"description": "Add music to your server via Lidarr"
+						"description": "Add music to your server via Lidarr or SoulSync"
 					},
 					"integrations": {
 						"title": "Integrations",
@@ -942,6 +943,7 @@
 				"downloaders": {
 					"description": "Connect a downloader to add music that isn't on your server yet. It's fetched into your library and appears after the next scan.",
 					"comingSoon": "Coming soon.",
+					"pickerTitle": "Look for it in",
 					"statuses": {
 						"active": "Active",
 						"inactive": "Inactive"
@@ -964,6 +966,57 @@
 						"removedMessage": "Lidarr configuration removed",
 						"autoScanLabel": "Scan library after download",
 						"autoScanDescription": "Rescan your server when a download finishes so new albums show up automatically"
+					},
+					"soulsync": {
+						"title": "SoulSync",
+						"description": "Search and download tracks through your SoulSync instance",
+						"getApiKeyAction": "Where do I find my API key?",
+						"apiKeyHelpTitle": "Finding your API key",
+						"apiKeyHelpStep1": "Open SoulSync in a web browser. It usually runs at http://<ip-address>:8008.",
+						"apiKeyHelpStep2": "Go to Settings > Advanced > SoulSync API > REST API Keys.",
+						"apiKeyHelpStep3": "Generate a key and copy it. It's shown only once.",
+						"apiKeyHelpClose": "Got it",
+						"serverUrlLabel": "Server URL",
+						"apiKeyLabel": "API key",
+						"apiKeyPlaceholder": "Your SoulSync API key",
+						"testAndSaveAction": "Test & save",
+						"connectionSuccess": "Connected to SoulSync",
+						"connectionFailed": "Couldn't connect. Check the URL and API key.",
+						"removedMessage": "SoulSync configuration removed",
+						"soulseekOffline": "SoulSync is connected, but its Soulseek (slskd) backend isn't running. Searches will work, but nothing can be downloaded until it's back.",
+						"searchTitle": "Search",
+						"searchDescription": "Find tracks and artists to download",
+						"downloadsTitle": "Download progress",
+						"downloadsDescription": "Track in-progress downloads",
+						"watchlistTitle": "Watched artists",
+						"watchlistDescription": "SoulSync downloads new releases from these artists automatically",
+						"inputPlaceholder": "Search tracks and artists",
+						"emptyPrompt": "Search for a track or an artist to add to your library.",
+						"tracksSection": "Tracks",
+						"artistsSection": "Artists",
+						"artist": "Artist",
+						"watching": "Watching",
+						"requestFailed": "Couldn't send this request.",
+						"statusQueued": "Queued…",
+						"statusDownloading": "Downloading — see Download progress",
+						"statusDownloadingPercent": "Downloading {{percent}}% — see Download progress",
+						"statusImporting": "Adding to your library…",
+						"statusCompleted": "Added to your library.",
+						"statusFailed": "Couldn't find this track on Soulseek. SoulSync will try again.",
+						"statusUnavailable": "Couldn't check this download. See Download progress, or try again.",
+						"watchedMessage": "Now watching {{name}}",
+						"unwatchedMessage": "Stopped watching {{name}}",
+						"watchFailed": "Couldn't update the watchlist.",
+						"inProgressTitle": "In progress",
+						"emptyQueue": "Nothing downloading right now.",
+						"recentTitle": "Recently added",
+						"recentDescription": "The newest albums in SoulSync's library. Finished downloads show up here once SoulSync has imported them.",
+						"emptyRecent": "Nothing has been added yet.",
+						"loadFailed": "Couldn't reach SoulSync. Check that it's running and that the URL is still right.",
+						"scanAction": "Scan for new releases",
+						"scanStartedMessage": "Scanning watched artists…",
+						"scanFailed": "Couldn't start the scan.",
+						"emptyWatchlist": "No watched artists yet. Search for an artist to start watching them."
 					},
 					"discovery": {
 						"title": "Discovery",
@@ -1847,6 +1900,18 @@
 				"50": "User is not authorized for the given operation.",
 				"60": "The trial period for the Subsonic server is over. Please upgrade to Subsonic Premium. Visit subsonic.org for details.",
 				"70": "The requested data was not found."
+			}
+		},
+		"soulSync": {
+			"errorCodes": {
+				"AUTH_REQUIRED": "An API key is required.",
+				"INVALID_KEY": "Invalid API key.",
+				"RATE_LIMITED": "Too many requests. Please slow down.",
+				"NOT_AVAILABLE": "SoulSync can't do this right now. Check that its download backend is running.",
+				"NOT_FOUND": "Not found.",
+				"CONFLICT": "That's already in progress.",
+				"BAD_REQUEST": "SoulSync rejected the request.",
+				"INTERNAL_ERROR": "SoulSync ran into an error."
 			}
 		},
 		"taddyPodcasts": {

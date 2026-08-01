@@ -7,8 +7,8 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";
-import DownloadProgressBar from "@/components/downloaders/lidarr/DownloadProgressBar";
-import LidarrCover from "@/components/downloaders/lidarr/LidarrCover";
+import DownloaderCover from "@/components/downloaders/DownloaderCover";
+import DownloadProgressBar from "@/components/downloaders/DownloadProgressBar";
 import ReleasePickerSheet from "@/components/downloaders/lidarr/ReleasePickerSheet";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -185,7 +185,11 @@ export default function AlbumDetailScreen() {
       }
     >
       <VStack className="items-center gap-y-4 py-2">
-        <LidarrCover url={albumCoverUrl(album)} size={220} variant="album" />
+        <DownloaderCover
+          url={albumCoverUrl(album)}
+          size={220}
+          variant="album"
+        />
         <VStack className="items-center gap-y-1">
           <Heading className="text-white text-center" size="xl">
             {album.title}

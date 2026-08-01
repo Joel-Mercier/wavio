@@ -46,6 +46,7 @@ export type ReportApi =
   | "radio-browser"
   | "lrclib"
   | "lidarr"
+  | "soulsync"
   | "musicbrainz"
   | "audiomuse"
   | "github";

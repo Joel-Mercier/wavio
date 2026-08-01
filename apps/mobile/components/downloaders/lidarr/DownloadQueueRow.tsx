@@ -1,8 +1,8 @@
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
-import DownloadProgressBar from "@/components/downloaders/lidarr/DownloadProgressBar";
-import LidarrCover from "@/components/downloaders/lidarr/LidarrCover";
+import DownloaderCover from "@/components/downloaders/DownloaderCover";
+import DownloadProgressBar from "@/components/downloaders/DownloadProgressBar";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -30,7 +30,7 @@ export default function DownloadQueueRow({ item }: { item: LidarrQueueItem }) {
   return (
     <VStack className="gap-y-2 py-3">
       <HStack className="items-center gap-x-3">
-        <LidarrCover url={item.coverUrl} size={48} variant="album" />
+        <DownloaderCover url={item.coverUrl} size={48} variant="album" />
         <VStack className="flex-1">
           <Heading
             className="text-white font-normal"
