@@ -65,6 +65,18 @@
         "gradleCommand": ":wear:bundleRelease",
         "applicationArchivePath": "wear/build/outputs/bundle/release/*.aab"
       }
+    },
+    "production-wear-apk": {
+      "extends": "production-wear",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":wear:assembleRelease",
+        "applicationArchivePath": "wear/build/outputs/apk/release/*.apk"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_DISTRIBUTION": "github"
+      }
     }
   },
   "submit": {

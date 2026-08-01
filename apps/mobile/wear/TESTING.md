@@ -1,81 +1,44 @@
 # Testing the Wear OS companion
 
-No physical watch required. Everything below runs against a Wear OS emulator.
+No physical watch required — everything below runs against a Wear OS emulator.
 
 ---
 
-## Three things that will silently break the Data Layer
+## Three things that silently break the Data Layer
 
-Read these before anything else — each one produces a watch app that installs,
-launches, and looks fine while receiving nothing at all.
+Each one produces a watch app that installs, launches and looks fine while
+receiving nothing at all.
 
 1. **Same package name *and* same signing certificate.** Play Services only
-   bridges the Data Layer between apps that match on both. `wear/build.gradle`
-   borrows `:app`'s signing config for *both* build types to guarantee this. If
-   you ever see the watch stuck on "Open Wavio on your phone" while the phone
-   logs successful puts, check this first:
+   bridges the Data Layer between apps matching on both, which is why
+   `wear/build.gradle` borrows `:app`'s signing config for both build types. If
+   the watch is stuck on "Open Wavio on your phone" while the phone logs
+   successful puts, check this first — the two SHA-256 fingerprints must match:
    ```sh
-   # The two SHA-256 fingerprints must be identical.
    keytool -list -v -keystore apps/mobile/android/app/debug.keystore \
      -storepass android -alias androiddebugkey | grep SHA256
    ```
-
-2. **The emulator image must include Google Play Services.** Pick an
-   `android-wear` image, *not* `android-wear-cn` (the China variant ships
-   without Play Services, so the Data Layer never starts).
-
-3. **The watch APK shares `applicationId` with the phone app.** Installing it
+2. **The emulator image must include Play Services** — an `android-wear` image,
+   *not* `android-wear-cn`.
+3. **The watch APK shares `applicationId` with the phone app**, so installing it
    on the phone *replaces Wavio*. Never run a bare `./gradlew :wear:installDebug`
-   with both devices attached — always target a serial explicitly (see step 3).
+   with both devices attached; always target a serial (see §3).
 
 ---
 
-## 0. Prerequisites
+## 1. Create and pair the emulators
 
-```sh
-bun install
-bun run mobile:typecheck && bun run mobile:lint && bun run mobile:test
-```
+Android Studio → Device Manager → **+** → **Wear OS** → *Wear OS Large Round* →
+download the **API 34 (Wear OS 5), arm64, Google APIs** image → Finish.
 
-Your legacy `~/Library/Android/sdk/tools/bin/sdkmanager` is broken under Java 17.
-To get a working CLI: Android Studio → Settings → Languages & Frameworks →
-Android SDK → **SDK Tools** tab → check **Android SDK Command-line Tools
-(latest)**. Everything below also has a UI equivalent if you'd rather skip that.
+Then pair it with a **phone emulator**: Device Manager → ⋮ on the Wear AVD →
+**Pair Devices for Wear OS** → pick a phone AVD (create a Pixel API 34+ **Google
+Play** image if you don't have one). The assistant does the whole handshake,
+companion app included.
 
----
-
-## 1. Create the Wear OS emulator
-
-**UI route (no cmdline-tools needed):** Android Studio → Device Manager → **+** →
-**Wear OS** → *Wear OS Large Round* → download the **API 34 (Wear OS 5), arm64,
-Google APIs** image → Finish.
-
-**CLI route** (arm64 host):
-
-```sh
-SDK=$HOME/Library/Android/sdk
-$SDK/cmdline-tools/latest/bin/sdkmanager "system-images;android-34;android-wear;arm64-v8a"
-$SDK/cmdline-tools/latest/bin/avdmanager create avd \
-  -n WearOS_API34 -k "system-images;android-34;android-wear;arm64-v8a" -d wearos_large_round
-```
-
-Boot it and note its serial (usually `emulator-5554`):
-
-```sh
-emulator -avd WearOS_API34 &
-adb devices -l
-```
-
-### Pairing
-
-**Pair with a phone *emulator*.** Android Studio → Device Manager → ⋮ on the Wear
-AVD → **Pair Devices for Wear OS** → pick a phone AVD (create a Pixel API 34+
-**Google Play** image if you don't have one). The assistant does the whole
-handshake, including the companion app. Nothing to install by hand.
-
-Note both identifiers once they're up — from here on every command targets one
-explicitly. Which emulator grabs `5554` depends only on boot order, so identify
-them rather than assuming; the watch is the one whose `ro.build.characteristics`
+Note both identifiers once they're up — every command below targets one
+explicitly. Which emulator grabs `5554` depends on boot order, so identify them
+rather than assuming; the watch is the one whose `ro.build.characteristics`
 contains `watch`:
 
 ```sh
@@ -84,33 +47,12 @@ for s in $(adb devices | awk 'NR>1 && $2=="device"{print $1}'); do
 done
 ```
 
-Each emulator has **two** identifiers and they are not interchangeable:
+Each emulator has **two** identifiers, and they are not interchangeable:
 
 | Identifier | Example | Used by |
 |---|---|---|
 | adb serial | `emulator-5554` | every `adb -s …` command below |
 | AVD name | `Pixel_9_API_36` | `expo run:android --device` **only** |
-
-Passing a serial to `expo run:android` fails with `Could not find device with
-name:` — it matches on the AVD name.
-
-#### Why not a physical phone?
-
-Pairing an emulated watch to a real phone needed *Wear OS by Google*
-(`com.google.android.wearable.app`) and its **Pair with emulator** menu item.
-Google delisted that app for Android 14+, and neither successor replaces it:
-**Galaxy Wearable** pairs only Samsung watches, **Pixel Watch** pairs only real
-Pixel Watches over BLE. Neither can target an emulator, so the old
-`adb forward tcp:5601 tcp:5601` route is unreachable.
-
-Sideloading an old 2.x companion APK is the only remaining option and is not
-recommended: newer builds dropped the emulator-pairing entry point, older ones
-tend to fail the Play Services version check on Android 15.
-
-Little is actually lost. The cases below that look like they want real hardware —
-B2, B5, C1–C3 — all measure *watch-side* behaviour, and the watch is emulated
-either way. A real phone would not have bought real doze fidelity. The parts of
-this feature that genuinely need hardware need a real **watch**, not a real phone.
 
 Confirm the two are actually bridged before going further:
 
@@ -136,25 +78,19 @@ grep -c "include ':wear'"                    android/settings.gradle    # 1
 grep    "org.gradle.jvmargs"                 android/gradle.properties  # -Xmx4096m
 ```
 
-Then install to the phone you paired (Metro must stay running). With a watch AVD
-attached — and possibly a physical phone too — `expo run:android` must be told
-which one, and `bun run mobile:android` can't forward the flag through
-`eas env:exec`'s quoted command. Run it directly:
+Then install to the paired phone (Metro must stay running). `bun run
+mobile:android` can't forward `--device` through `eas env:exec`'s quoted
+command, so run it directly:
 
 ```sh
-cd /Users/joel/www/wavio/apps/mobile
+cd apps/mobile
 eas env:exec --non-interactive development \
   "DARK_MODE=media bunx expo run:android --device <phone-avd-name>"
 ```
 
-Two gotchas in that one line:
-
-- `--device` wants the **AVD name** (`Pixel_9_API_36`), not the adb serial —
-  see the table in §1.
-- `bunx` is not optional: `eas env:exec` runs the command through `/bin/sh`
-  without `node_modules/.bin` on `PATH`, so a bare `expo` fails with
-  `expo: command not found`. The `package.json` scripts get away with it
-  because Bun adds that directory when running a script.
+- `--device` wants the **AVD name**, not the adb serial (see §1).
+- `bunx` is not optional: `eas env:exec` runs through `/bin/sh` without
+  `node_modules/.bin` on `PATH`, so a bare `expo` fails.
 
 Sanity check that the native module loaded, before touching the watch:
 
@@ -169,28 +105,25 @@ adb -s <phone-serial> logcat -s ReactNativeJS | grep -i wear
 
 ## 3. Build and install the watch app
 
-Build the APK, then install it **to an explicit serial**. Do not use
-`installDebug`; see hazard 3 above.
+Build the APK, then install it **to an explicit serial** (see hazard 3):
 
 ```sh
-cd /Users/joel/www/wavio/apps/mobile/android
+cd apps/mobile/android
 ./gradlew :wear:assembleDebug
 adb -s <wear-serial> install -r ../wear/build/outputs/apk/debug/wear-debug.apk
 adb -s <wear-serial> shell am start -n com.jmercier.wavio/com.jmercier.wavio.wear.MainActivity
 ```
 
-First build downloads the Compose and Play Services artifacts; expect a few
-minutes. Subsequent watch-only rebuilds are the two commands above and take
-seconds — you do **not** need to re-run prebuild or rebuild the phone app to
-iterate on watch UI.
+The first build downloads the Compose and Play Services artifacts; expect a few
+minutes. Watch-only rebuilds are just the commands above and take seconds — no
+prebuild, no phone rebuild.
 
 ### Check the two version codes
 
-Only now — with both apps installed — can this be verified. The watch's version
-code is derived from `:app` at configuration time rather than stamped during
-prebuild, so it isn't observable until each APK is built and on a device. Both
-apps share an application id, so ask each device what *it* installed; the watch
-must report the phone's code plus 1000000:
+The watch's version code is derived from `:app` at configuration time rather
+than stamped during prebuild, so it's only observable once both APKs are built
+and installed. Both apps share an application id, so ask each device what *it*
+installed; the watch must report the phone's code plus 1000000:
 
 ```sh
 adb -s <phone-serial> shell dumpsys package com.jmercier.wavio | grep versionCode
@@ -288,52 +221,19 @@ ignores what it doesn't understand instead of crashing.
 
 ---
 
-## 6. Release builds
+## 6. Known-unverified
 
-The `:app:`-scoped gradle commands in `eas.json` mean `preview` and
-`production-apk*` never build `:wear`. The watch artifact has its own profile:
+Both `modules/wear-bridge` and `apps/mobile/wear` compile in **debug** and
+**release** — `:wear:assembleDebug`, plus the `production-wear` (AAB) and
+`production-wear-apk` (sideloadable APK) profiles — with the pinned versions in
+`wear/build.gradle`: Compose BOM `2025.02.00`, Wear Compose `1.4.1`,
+`play-services-wearable:18.2.0`. Release signing and the version-code offset
+are confirmed on both artifacts: each is signed with the EAS upload keystore
+rather than the debug one, and carries the phone's remote version code plus
+1000000.
 
-```sh
-eas build -p android --profile production-wear
-```
-
-Combining the phone AAB and the watch AAB into a **single** Play release is
-manual — `eas submit` uploads one artifact per invocation and creates its own
-release. Submit the phone build as usual, then attach the watch AAB to the same
-draft release in the Play Console before rolling out.
-
----
-
-## 7. Known-unverified
-
-Both `modules/wear-bridge` and `apps/mobile/wear` now compile in **debug**
-(`:app:assembleDebug` and `:wear:assembleDebug` both succeed). The pinned
-dependency versions in `wear/build.gradle` — Compose BOM `2025.02.00`, Wear
-Compose `1.4.1`, `play-services-wearable:18.2.0` — resolved without adjustment.
-
-Compiling is not running: none of the runtime behaviour in §5 has been exercised
-yet.
-
-Still unverified:
-
-- `signingConfig project(':app').android.buildTypes.release.signingConfig`,
-  which assumes EAS injects its keystore into `:app`'s `release` build type.
-  Only debug has been built, and debug borrows the debug keystore, so this says
-  nothing about whether the release path works.
-- Everything in §5.
-- **The watch's `targetSdkVersion 35` on an API 35+ device.** Play requires Wear
-  submissions to target 35 from **2026-08-31**, so `wear/build.gradle` sets it,
-  but the Android 15 behaviour changes that opts into only apply when the app is
-  *running* on API 35+. The API 34 AVD in §1 therefore never exercises them.
-  Before submitting `production-wear`, do one pass on a newer image:
-
-  ```sh
-  SDK=$HOME/Library/Android/sdk
-  $SDK/cmdline-tools/latest/bin/sdkmanager "system-images;android-35-ext15;android-wear;arm64-v8a"
-  ```
-
-  Keep the API 34 AVD for day-to-day work — a new AVD has to be re-paired.
-  Images at 36+ use the different `android-wear-signed` tag.
+Compiling is not running, though — **none of the runtime behaviour in §5 has
+been exercised yet**.
 
 Rotary scroll on the queue list is not wired (touch scrolling works); rotary is
 only used for seeking on the player screen.

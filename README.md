@@ -29,6 +29,12 @@ Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) archite
 
 We are nearing a official release on the Google Play Store ! Production access request has been submitted. 
 
+### Wear OS companion
+
+The watch app is published as its own APK on the same releases page and is sideloaded onto the watch with `adb install -r wavio-wear.apk` (over Wi-Fi debugging, or with the watch's ADB debugging enabled).
+
+It must be paired with the **APK** build of the phone app, not the Play Store one: the two apps talk over the Play Services Data Layer, which only bridges apps sharing a package name *and* a signing certificate, and Play App Signing re-signs the Play build with a different key. Mixing the two gives a watch app that installs and launches but never receives anything.
+
 ### Use Android Auto with a APK install
 
 Android Auto doesn't detect Wavio automatically if you installed the app via APK on Github, Android Auto detects only Play Store apps automatically. To see Wavio with a APK install on Android Auto : 
@@ -190,17 +196,17 @@ In order to test Android Auto, you need to :
 
 Wavio ships a Wear OS companion (`apps/mobile/wear`, a native Kotlin/Compose module) that acts as a **remote control** for the phone: it plays no audio itself and never talks to your server. The two communicate over the Play Services Data Layer, which only bridges apps sharing both an `applicationId` and a signing certificate — hence the watch module reuses `:app`'s signing config, and the two apps share `com.jmercier.wavio`.
 
-In order to test Wear OS, you need to :
+To run it locally:
 
-1. Create a Wear OS AVD in Android Studio → Device Manager → **+** → **Wear OS**. Pick an `android-wear` system image, **not** `android-wear-cn` — the China variant ships without Play Services, so the Data Layer never starts and the watch silently receives nothing.
-2. Pair it with a **phone emulator**: Device Manager → ⋮ on the Wear AVD → **Pair Devices for Wear OS** → pick a Google Play phone AVD. Pairing an emulated watch with a physical phone is no longer possible — it needed the *Wear OS by Google* app, which Google delisted for Android 14+, and neither Galaxy Wearable nor the Pixel Watch app can target an emulator.
-3. Run `bun run mobile:prebuild`. This is what runs `plugins/withWearOS.js`, which adds `:wear` to `android/settings.gradle` and raises the Gradle heap; without it Gradle doesn't know the watch module exists.
+1. Android Studio → Device Manager → **+** → **Wear OS**, and pick an `android-wear` system image — **not** `android-wear-cn`, which ships without Play Services, so the Data Layer never starts and the watch silently receives nothing.
+2. Pair it with a **phone emulator**: Device Manager → ⋮ on the Wear AVD → **Pair Devices for Wear OS** → pick a Google Play phone AVD. An emulated watch can't be paired with a physical phone.
+3. Run `bun run mobile:prebuild` — `plugins/withWearOS.js` adds `:wear` to `android/settings.gradle` and raises the Gradle heap; without it Gradle doesn't know the watch module exists.
 4. Install the phone app to the phone AVD, from `apps/mobile`:
    ```sh
    eas env:exec --non-interactive development \
      "DARK_MODE=media bunx expo run:android --device <phone-avd-name>"
    ```
-   `--device` takes the **AVD name** (`Pixel_9_API_36`), not the adb serial. `bunx` is required because `eas env:exec` runs the command through `/bin/sh`, which has no `node_modules/.bin` on `PATH`.
+   `--device` takes the **AVD name** (`Pixel_9_API_36`), not the adb serial.
 5. Build and install the watch app **to an explicit serial**. It shares the phone's `applicationId`, so a bare `./gradlew :wear:installDebug` with both devices attached will replace Wavio on the phone:
    ```sh
    cd apps/mobile/android
@@ -212,15 +218,7 @@ In order to test Wear OS, you need to :
 
 Iterating on watch UI only needs step 5 — no prebuild, no phone rebuild.
 
-Release builds have their own EAS profile, because the `:app`-scoped Gradle commands in `eas.json` never build `:wear`:
-
-```sh
-eas build -p android --profile production-wear
-```
-
-Combining the phone and watch artifacts into one Play release is manual: `eas submit` uploads a single artifact per invocation and creates its own release, so attach the watch AAB to the phone's draft release in the Play Console before rolling out.
-
-The full test protocol — reconnect and recovery, battery and traffic discipline, degradation — is in [`apps/mobile/wear/TESTING.md`](apps/mobile/wear/TESTING.md).
+The test protocol — reconnect and recovery, battery and traffic discipline, degradation — is in [`apps/mobile/wear/TESTING.md`](apps/mobile/wear/TESTING.md).
 
 ### iOS
 
