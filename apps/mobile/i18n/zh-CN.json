@@ -283,7 +283,8 @@
 			"artists": {
 				"label": "艺人",
 				"notInLibrary": "不在您的书库中",
-				"notInLibraryAddWithLidarr": "您的图书馆中没有此资源 • 在Lidarr中查找",
+				"notInLibraryFindIn": "Not in your library • Find in {{name}}",
+				"notInLibraryFindInDownloader": "Not in your library • Find in a downloader",
 				"coverAlt": "艺人封面",
 				"topSongs": "热门歌曲",
 				"discography": "作品集",
@@ -717,7 +718,7 @@
 					},
 					"downloaders": {
 						"title": "下载者",
-						"description": "通过 Lidarr 为您的服务器添加音乐"
+						"description": "Add music to your server via Lidarr or SoulSync"
 					},
 					"integrations": {
 						"title": "集成",
@@ -931,6 +932,7 @@
 				"downloaders": {
 					"description": "连接一个下载工具，即可添加服务器上尚未有的音乐。这些音乐会被导入到您的音乐库中，并在下次扫描后显示出来。",
 					"comingSoon": "即将推出。",
+					"pickerTitle": "Look for it in",
 					"statuses": {
 						"active": "已连接",
 						"inactive": "未连接"
@@ -953,6 +955,57 @@
 						"removedMessage": "已移除激光雷达配置",
 						"autoScanLabel": "下载后扫描书库",
 						"autoScanDescription": "下载完成后请重新扫描服务器，以便新专辑自动显示"
+					},
+					"soulsync": {
+						"title": "SoulSync",
+						"description": "Search and download tracks through your SoulSync instance",
+						"getApiKeyAction": "在哪里可以找到我的 API 密钥？",
+						"apiKeyHelpTitle": "查找您的 API 密钥",
+						"apiKeyHelpStep1": "Open SoulSync in a web browser. It usually runs at http://<ip-address>:8008.",
+						"apiKeyHelpStep2": "Go to Settings > Advanced > SoulSync API > REST API Keys.",
+						"apiKeyHelpStep3": "Generate a key and copy it. It's shown only once.",
+						"apiKeyHelpClose": "我知道了",
+						"serverUrlLabel": "服务器网址",
+						"apiKeyLabel": "API密钥",
+						"apiKeyPlaceholder": "Your SoulSync API key",
+						"testAndSaveAction": "测试并保存",
+						"connectionSuccess": "Connected to SoulSync",
+						"connectionFailed": "无法连接。请检查 URL 和 API 密钥。",
+						"removedMessage": "SoulSync configuration removed",
+						"soulseekOffline": "SoulSync is connected, but its Soulseek (slskd) backend isn't running. Searches will work, but nothing can be downloaded until it's back.",
+						"searchTitle": "搜索",
+						"searchDescription": "Find tracks and artists to download",
+						"downloadsTitle": "下载进度",
+						"downloadsDescription": "Track in-progress downloads",
+						"watchlistTitle": "Watched artists",
+						"watchlistDescription": "SoulSync downloads new releases from these artists automatically",
+						"inputPlaceholder": "Search tracks and artists",
+						"emptyPrompt": "Search for a track or an artist to add to your library.",
+						"tracksSection": "曲目",
+						"artistsSection": "艺人",
+						"artist": "艺术家",
+						"watching": "Watching",
+						"requestFailed": "Couldn't send this request.",
+						"statusQueued": "Queued…",
+						"statusDownloading": "Downloading — see Download progress",
+						"statusDownloadingPercent": "Downloading {{percent}}% — see Download progress",
+						"statusImporting": "Adding to your library…",
+						"statusCompleted": "Added to your library.",
+						"statusFailed": "Couldn't find this track on Soulseek. SoulSync will try again.",
+						"statusUnavailable": "Couldn't check this download. See Download progress, or try again.",
+						"watchedMessage": "Now watching {{name}}",
+						"unwatchedMessage": "Stopped watching {{name}}",
+						"watchFailed": "Couldn't update the watchlist.",
+						"inProgressTitle": "进行中",
+						"emptyQueue": "目前没有正在下载的文件。",
+						"recentTitle": "最近添加",
+						"recentDescription": "The newest albums in SoulSync's library. Finished downloads show up here once SoulSync has imported them.",
+						"emptyRecent": "Nothing has been added yet.",
+						"loadFailed": "Couldn't reach SoulSync. Check that it's running and that the URL is still right.",
+						"scanAction": "Scan for new releases",
+						"scanStartedMessage": "Scanning watched artists…",
+						"scanFailed": "Couldn't start the scan.",
+						"emptyWatchlist": "No watched artists yet. Search for an artist to start watching them."
 					},
 					"discovery": {
 						"title": "发现",
@@ -1820,6 +1873,18 @@
 				"50": "用户没有执行该操作的权限。",
 				"60": "Subsonic 服务器试用期已结束，请升级至 Subsonic Premium。详情请访问 subsonic.org",
 				"70": "请求的数据未找到。"
+			}
+		},
+		"soulSync": {
+			"errorCodes": {
+				"AUTH_REQUIRED": "An API key is required.",
+				"INVALID_KEY": "无效的 API 密钥。",
+				"RATE_LIMITED": "Too many requests. Please slow down.",
+				"NOT_AVAILABLE": "SoulSync can't do this right now. Check that its download backend is running.",
+				"NOT_FOUND": "Not found.",
+				"CONFLICT": "That's already in progress.",
+				"BAD_REQUEST": "SoulSync rejected the request.",
+				"INTERNAL_ERROR": "SoulSync ran into an error."
 			}
 		},
 		"taddyPodcasts": {
