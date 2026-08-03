@@ -5,22 +5,26 @@ import {
   buildArtistArtworkAliases,
   buildTrackArtworkAliases,
   groupSongIdsByAlbum,
+  hasUnseenAutoTracks,
   isArtworkStale,
   isSongEnumerationComplete,
   isSyncStale,
+  nextSongCalibration,
   planServerDeletions,
   playlistToAutoCollection,
   RESYNC_INTERVAL_MS,
   referencedArtworkIds,
   refreshedOfflineTrack,
+  type SongEnumerationCalibration,
   shouldWriteAutoCollection,
+  songEnumerationBaseline,
 } from "@/services/offline/librarySyncPlan";
 import type {
   AlbumID3,
   Child,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
-import type { OfflineCollection } from "@/stores/offline";
+import type { OfflineCollection, OfflineTrack } from "@/stores/offline";
 import { artworkCacheKey } from "@/utils/artworkCacheKey";
 
 const makeAlbum = (
@@ -226,6 +230,295 @@ describe("isSongEnumerationComplete", () => {
 
   it("trusts the pass when there is no album estimate to check against", () => {
     expect(isSongEnumerationComplete(0, 0)).toBe(true);
+  });
+});
+
+const calibrated = (
+  enumerableSongCount: number | null,
+  calibratedAlbumSongEstimate: number | null,
+): SongEnumerationCalibration => ({
+  enumerableSongCount,
+  calibratedAlbumSongEstimate,
+});
+
+describe("songEnumerationBaseline", () => {
+  it("bootstraps from the album estimate before any pass has completed", () => {
+    expect(songEnumerationBaseline(75, calibrated(null, null))).toBe(75);
+  });
+
+  it("prefers the measured count once calibrated", () => {
+    // The album estimate counts rows the server never serves; the measurement
+    // is what the server actually hands over.
+    expect(songEnumerationBaseline(75, calibrated(62, 75))).toBe(62);
+  });
+
+  it("scales the measurement by how much the library has grown", () => {
+    // 10x the albums, same 62/75 skew: a pass truncated at 500 must not read as
+    // complete just because the last measurement was taken on a small library.
+    expect(songEnumerationBaseline(750, calibrated(62, 75))).toBe(620);
+  });
+
+  it("never lets a shrinking album estimate lower the baseline", () => {
+    // Shrinkage is a deletion signal, and deletions go through corroboration.
+    expect(songEnumerationBaseline(30, calibrated(62, 75))).toBe(62);
+  });
+
+  it("falls back to the measurement when it has no album estimate paired", () => {
+    expect(songEnumerationBaseline(750, calibrated(62, null))).toBe(62);
+  });
+});
+
+describe("nextSongCalibration", () => {
+  const next = (
+    uniqueSeenSongs: number,
+    passTrusted: boolean,
+    calibration: SongEnumerationCalibration,
+    lastPassSongCount: number | null,
+    unseenAutoTracks = false,
+    albumSongEstimate = 75,
+  ) =>
+    nextSongCalibration({
+      uniqueSeenSongs,
+      albumSongEstimate,
+      passTrusted,
+      calibration,
+      lastPassSongCount,
+      unseenAutoTracks,
+    });
+
+  it("calibrates from the first completed pass, trusted or not", () => {
+    expect(next(62, false, calibrated(null, null), null)).toEqual(
+      calibrated(62, 75),
+    );
+  });
+
+  it("adopts what a trusted pass saw", () => {
+    expect(next(80, true, calibrated(62, 75), 62, false, 90)).toEqual(
+      calibrated(80, 90),
+    );
+  });
+
+  it("ignores a single truncated pass rather than lowering the baseline", () => {
+    // One pass seeing 30 where the library holds 62 is a hiccup. Adopting it
+    // would make the *next* 30-song pass look trusted and delete 32 tracks.
+    expect(next(30, false, calibrated(62, 75), 62)).toEqual(calibrated(62, 75));
+  });
+
+  it("adopts a lower count once a second pass and the albums agree", () => {
+    // The albums phase shrank with it (75 → 36 at the same skew), so the
+    // library really did lose half its songs.
+    expect(next(30, false, calibrated(62, 75), 30, false, 36)).toEqual(
+      calibrated(30, 36),
+    );
+  });
+
+  it("rejects a repeated drop the albums phase does not corroborate", () => {
+    // Same count twice, but Σ songCount says the library is untouched. The
+    // causes of truncation are deterministic, so a second identical pass is no
+    // evidence at all — it is the *second enumeration* that carries the weight.
+    expect(next(30, false, calibrated(62, 75), 30, false, 75)).toEqual(
+      calibrated(62, 75),
+    );
+  });
+
+  it("holds the baseline when there is no previous pass to corroborate", () => {
+    expect(next(30, false, calibrated(62, 75), null)).toEqual(
+      calibrated(62, 75),
+    );
+  });
+
+  it("never lowers the baseline on a trusted pass", () => {
+    // A pass 5% short is still trusted; adopting its count would let the next
+    // 5%-short pass do the same, ratcheting the baseline down indefinitely
+    // while every step looks legitimate. Lowering goes through corroboration.
+    expect(next(59, true, calibrated(62, 75), 62)).toEqual(calibrated(62, 75));
+  });
+
+  it("defers calibration when auto downloads predate the first pass", () => {
+    // An install upgrading into calibration already holds a downloaded library.
+    // A truncated first pass must not write its own truncation in as the
+    // baseline, or the next identically truncated pass reconciles against it.
+    expect(next(30, false, calibrated(null, null), null, true)).toEqual(
+      calibrated(null, null),
+    );
+  });
+
+  it("calibrates a corroborated count once auto downloads exist", () => {
+    expect(next(30, false, calibrated(null, null), 30, true)).toEqual(
+      calibrated(30, 75),
+    );
+  });
+});
+
+// Mirrors the songs-phase completion step in librarySyncService, so the
+// calibration regressions below exercise the sequence the crawl actually runs.
+const calibrationRun = () => {
+  let calibration = calibrated(null, null);
+  let lastPassSongCount: number | null = null;
+  return {
+    get calibration() {
+      return calibration;
+    },
+    runPass(args: {
+      uniqueSeenSongs: number;
+      albumSongEstimate: number;
+      unseenAutoTracks?: boolean;
+    }) {
+      const { uniqueSeenSongs, albumSongEstimate } = args;
+      const baseline = songEnumerationBaseline(albumSongEstimate, calibration);
+      const passTrusted = isSongEnumerationComplete(uniqueSeenSongs, baseline);
+      calibration = nextSongCalibration({
+        uniqueSeenSongs,
+        albumSongEstimate,
+        passTrusted,
+        calibration,
+        lastPassSongCount,
+        unseenAutoTracks: args.unseenAutoTracks ?? false,
+      });
+      lastPassSongCount = uniqueSeenSongs;
+      return passTrusted;
+    },
+  };
+};
+
+// The bug this guards against: Navidrome counts `missing` media_files in
+// album.song_count but never serves them, so Σ songCount permanently overstates
+// what the crawl can enumerate. Under the old album-estimate-only check every
+// pass failed, which silently disabled deletion reconciliation forever.
+describe("song enumeration calibration (regression: stale album songCount)", () => {
+  it("self-heals to the enumerable count and then reconciles again", () => {
+    const albumSongEstimate = 75; // 62 servable + 13 `missing` rows
+    const enumerated = 62;
+    const sync = calibrationRun();
+    // A fresh enable: every auto track was enqueued from the pages the pass
+    // enumerating it just walked, so nothing predates the enumeration.
+    const runPass = (uniqueSeenSongs: number) =>
+      sync.runPass({ uniqueSeenSongs, albumSongEstimate });
+
+    // First pass is judged against the inflated bootstrap and so is distrusted,
+    // which is harmless — it is also the pass that measures the truth.
+    expect(runPass(enumerated)).toBe(false);
+    expect(sync.calibration.enumerableSongCount).toBe(enumerated);
+
+    // From here on the baseline is honest and every full pass is trusted, so
+    // deletions reconcile normally.
+    expect(runPass(enumerated)).toBe(true);
+    expect(runPass(enumerated)).toBe(true);
+
+    // A genuinely truncated pass is still caught, and does not drag the
+    // baseline down with it.
+    expect(runPass(20)).toBe(false);
+    expect(sync.calibration.enumerableSongCount).toBe(enumerated);
+
+    // Recovery needs no intervention.
+    expect(runPass(enumerated)).toBe(true);
+  });
+});
+
+// The bug this guards against: once measured, the baseline was used alone and
+// went stale the moment the library grew — leaving a truncated pass free to
+// clear a baseline several times smaller than the library and reconcile away
+// everything it had failed to enumerate.
+describe("song enumeration calibration (regression: library growth)", () => {
+  it("catches a truncated pass after a bulk import", () => {
+    const sync = calibrationRun();
+
+    // Calibrate on a small library: 62 servable of 75 counted rows.
+    expect(sync.runPass({ uniqueSeenSongs: 62, albumSongEstimate: 75 })).toBe(
+      false,
+    );
+    expect(sync.calibration).toEqual(calibrated(62, 75));
+
+    // 10k tracks are imported server-side, and the very next pass truncates at
+    // 500. The album estimate grew with the library, so the scaled baseline
+    // (~9900) catches it even though 500 clears the measured 62.
+    expect(
+      sync.runPass({ uniqueSeenSongs: 500, albumSongEstimate: 12_000 }),
+    ).toBe(false);
+    expect(sync.calibration).toEqual(calibrated(62, 75));
+
+    // A complete pass over the grown library recalibrates.
+    expect(
+      sync.runPass({ uniqueSeenSongs: 9800, albumSongEstimate: 12_000 }),
+    ).toBe(true);
+    expect(sync.calibration).toEqual(calibrated(9800, 12_000));
+  });
+});
+
+// The bug this guards against: corroboration by repetition assumed truncation
+// was random, but its causes are deterministic — a proxy response-size cap, a
+// server short-paging at a fixed offset, a crawl interrupted at the same point
+// each time. Those repeat *exactly*, so a second identical pass read as
+// confirmation of a shrunken library and the third deleted against it.
+describe("song enumeration calibration (regression: deterministic truncation)", () => {
+  it("never adopts a repeated truncation the albums phase contradicts", () => {
+    const sync = calibrationRun();
+    const capped = { uniqueSeenSongs: 30, albumSongEstimate: 75 };
+
+    expect(sync.runPass({ uniqueSeenSongs: 62, albumSongEstimate: 75 })).toBe(
+      false,
+    );
+    expect(sync.calibration).toEqual(calibrated(62, 75));
+
+    // A cap now truncates every pass at exactly 30 while the album inventory
+    // still reports the whole library. However often that repeats, it is never
+    // trusted and never lowers the baseline.
+    for (let pass = 0; pass < 5; pass++) {
+      expect(sync.runPass(capped)).toBe(false);
+      expect(sync.calibration).toEqual(calibrated(62, 75));
+    }
+
+    // Lift the cap and the very next pass reconciles again.
+    expect(sync.runPass({ uniqueSeenSongs: 62, albumSongEstimate: 75 })).toBe(
+      true,
+    );
+  });
+});
+
+describe("hasUnseenAutoTracks", () => {
+  const track = (id: string, source: "user" | "auto"): OfflineTrack =>
+    ({ id, source }) as OfflineTrack;
+
+  it("is false when every auto track was enumerated by the pass", () => {
+    const tracks = { a: track("a", "auto"), b: track("b", "auto") };
+    expect(hasUnseenAutoTracks(tracks, new Set(["a", "b", "c"]))).toBe(false);
+  });
+
+  it("is true for an auto track the pass never saw", () => {
+    const tracks = { a: track("a", "auto"), b: track("b", "auto") };
+    expect(hasUnseenAutoTracks(tracks, new Set(["a"]))).toBe(true);
+  });
+
+  it("ignores user downloads, which are never reconciled away", () => {
+    const tracks = { a: track("a", "auto"), b: track("b", "user") };
+    expect(hasUnseenAutoTracks(tracks, new Set(["a"]))).toBe(false);
+  });
+});
+
+// The bug this guards against: an install upgrading into calibration starts
+// with enumerableSongCount null while already holding a downloaded library, so
+// the first-pass exemption would let a truncated pass write its own truncation
+// in as the baseline — and the next identically truncated pass would then be
+// "trusted" and delete everything it failed to enumerate.
+describe("song enumeration calibration (regression: upgrade with downloads)", () => {
+  it("refuses to calibrate from an uncorroborated truncated pass", () => {
+    const albumSongEstimate = 10_000;
+    const sync = calibrationRun();
+    const runPass = (uniqueSeenSongs: number, unseenAutoTracks: boolean) =>
+      sync.runPass({ uniqueSeenSongs, albumSongEstimate, unseenAutoTracks });
+
+    // Truncated, and the 10k already-downloaded tracks predate it.
+    expect(runPass(3000, true)).toBe(false);
+    expect(sync.calibration.enumerableSongCount).toBeNull();
+
+    // Truncated again at a different offset: no corroboration, so still no
+    // baseline and still no deletions.
+    expect(runPass(4000, true)).toBe(false);
+    expect(sync.calibration.enumerableSongCount).toBeNull();
+
+    // A complete pass calibrates honestly and restores reconciliation.
+    expect(runPass(10_000, false)).toBe(true);
+    expect(sync.calibration.enumerableSongCount).toBe(10_000);
   });
 });
 

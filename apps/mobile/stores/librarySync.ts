@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
+import type { SongEnumerationCalibration } from "@/services/offline/librarySyncPlan";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
@@ -83,12 +84,28 @@ export type LibrarySyncCrawlState = {
   lastError: LibrarySyncErrorCode | null;
 };
 
-interface LibrarySyncStore extends LibrarySyncCrawlState, IdMigrationState {
+// How many songs this server actually enumerates, measured rather than assumed.
+// The albums phase's Σ songCount is only a bootstrap for it: that figure counts
+// rows the server will never serve (Navidrome keeps `missing` media_files in
+// album.songCount long after the files are gone), and the resulting skew is
+// permanent — a library that has ever been reorganised would fail the songs
+// completeness check on every pass and never reconcile deletions again.
+export type LibrarySyncCalibrationState = SongEnumerationCalibration & {
+  // The previous completed pass's raw count, used to corroborate a *lower*
+  // baseline before adopting it. See nextSongCalibration.
+  lastPassSongCount: number | null;
+};
+
+interface LibrarySyncStore
+  extends LibrarySyncCrawlState,
+    IdMigrationState,
+    LibrarySyncCalibrationState {
   extendedOfflineModeEnabled: boolean;
   setExtendedOfflineModeEnabled: (enabled: boolean) => void;
   setCrawl: (partial: Partial<LibrarySyncCrawlState>) => void;
   appendSeenIds: (kind: SeenIdKind, ids: string[]) => void;
   setIdMigration: (partial: Partial<IdMigrationState>) => void;
+  setCalibration: (partial: Partial<LibrarySyncCalibrationState>) => void;
   resetCursor: () => void;
   __reset: () => void;
 }
@@ -99,6 +116,16 @@ const initialIdMigrationState: IdMigrationState = {
   lastSeenServerVersion: null,
   lastProbedAt: null,
   idMigration: "idle",
+};
+
+// Deliberately not part of initialCrawlState, for the same reason as the id
+// migration slice: resetCursor() rewinds the crawl between passes, and the
+// calibration describes the *server*, not the pass — re-measuring it from
+// scratch every pass would defeat it entirely.
+const initialCalibrationState: LibrarySyncCalibrationState = {
+  enumerableSongCount: null,
+  calibratedAlbumSongEstimate: null,
+  lastPassSongCount: null,
 };
 
 const initialCrawlState: LibrarySyncCrawlState = {
@@ -121,6 +148,7 @@ const initialLibrarySyncState = {
   extendedOfflineModeEnabled: false,
   ...initialCrawlState,
   ...initialIdMigrationState,
+  ...initialCalibrationState,
 };
 
 export const useLibrarySyncBase = create<LibrarySyncStore>()(
@@ -155,6 +183,10 @@ export const useLibrarySyncBase = create<LibrarySyncStore>()(
       },
 
       setIdMigration: (partial) => {
+        set(partial);
+      },
+
+      setCalibration: (partial) => {
         set(partial);
       },
 

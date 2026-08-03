@@ -94,6 +94,21 @@ describe("librarySync store", () => {
     expect(get().seenPlaylistIds).toEqual([]);
   });
 
+  // The calibration describes the server, not the pass. Rewinding it between
+  // passes would send the completeness check back to the inflated album
+  // bootstrap every time, which is the whole bug it exists to fix.
+  it("resetCursor keeps the song-enumeration calibration", () => {
+    get().setCalibration({
+      enumerableSongCount: 62,
+      calibratedAlbumSongEstimate: 75,
+      lastPassSongCount: 62,
+    });
+    get().resetCursor();
+    expect(get().enumerableSongCount).toBe(62);
+    expect(get().calibratedAlbumSongEstimate).toBe(75);
+    expect(get().lastPassSongCount).toBe(62);
+  });
+
   it("__reset clears everything including the toggle", () => {
     get().setExtendedOfflineModeEnabled(true);
     get().setCrawl({
@@ -101,10 +116,20 @@ describe("librarySync store", () => {
       songOffset: 400,
       lastSyncCompletedAt: "2026-07-16T00:00:00.000Z",
     });
+    // A calibration belongs to one server; a scope switch must not carry it
+    // over to the next.
+    get().setCalibration({
+      enumerableSongCount: 62,
+      calibratedAlbumSongEstimate: 75,
+      lastPassSongCount: 62,
+    });
     get().__reset();
     expect(get().extendedOfflineModeEnabled).toBe(false);
     expect(get().phase).toBe("idle");
     expect(get().songOffset).toBe(0);
     expect(get().lastSyncCompletedAt).toBeNull();
+    expect(get().enumerableSongCount).toBeNull();
+    expect(get().calibratedAlbumSongEstimate).toBeNull();
+    expect(get().lastPassSongCount).toBeNull();
   });
 });
