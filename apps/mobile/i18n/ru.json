@@ -1129,6 +1129,7 @@
 					"extendedOfflinePausedDisk": "Приостановлено — память устройства почти заполнена",
 					"extendedOfflineSyncError": "Ошибка синхронизации — пробуем еще раз",
 					"extendedOfflineCompletedToast": "Твоя медиатека полностью закэширована — {{count}} треков",
+					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
 					"extendedOfflineUnsupported": "Этот сервер не поддерживает полную синхронизацию медиатеки",
 					"extendedOfflineDisableConfirmTitle": "Удалить кэшированную медиатеку?",
 					"extendedOfflineDisableConfirmDescription": "Загруженные при синхронизации медиатеки треки и обложки удалятся с устройства. Альбомы, плейлисты и треки, сохраненные для офлайна вручную, сохранятся.",
