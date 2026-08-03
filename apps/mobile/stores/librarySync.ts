@@ -28,6 +28,24 @@ export type LibrarySyncErrorCode = "diskFull" | "unsupported" | "syncFailed";
 
 export type SeenIdKind = "album" | "song" | "playlist";
 
+// Navidrome's canonical-id migration renumbers most song ids server-side, which
+// would make every persisted id dangle (see services/navidromeIdMigration.ts).
+// "checking" is the frozen state: a probe is scheduled or in flight and nothing
+// may read "id not found" as "content deleted" — most importantly this store's
+// own seenSongIds, which planServerDeletions would otherwise use to delete every
+// auto-downloaded file. "migrated" is informational and behaves like "idle".
+export type IdMigrationStatus = "idle" | "checking" | "migrated";
+
+export type IdMigrationState = {
+  // The raw serverVersion string last observed. Compared by *inequality*, not
+  // by semver ordering: develop builds carry a git sha rather than a sequential
+  // version, so a threshold comparison would skip exactly the users who hit the
+  // migration first.
+  lastSeenServerVersion: string | null;
+  lastProbedAt: number | null;
+  idMigration: IdMigrationStatus;
+};
+
 export type LibrarySyncCrawlState = {
   phase: LibrarySyncPhase;
   albumOffset: number;
@@ -65,14 +83,23 @@ export type LibrarySyncCrawlState = {
   lastError: LibrarySyncErrorCode | null;
 };
 
-interface LibrarySyncStore extends LibrarySyncCrawlState {
+interface LibrarySyncStore extends LibrarySyncCrawlState, IdMigrationState {
   extendedOfflineModeEnabled: boolean;
   setExtendedOfflineModeEnabled: (enabled: boolean) => void;
   setCrawl: (partial: Partial<LibrarySyncCrawlState>) => void;
   appendSeenIds: (kind: SeenIdKind, ids: string[]) => void;
+  setIdMigration: (partial: Partial<IdMigrationState>) => void;
   resetCursor: () => void;
   __reset: () => void;
 }
+
+// Deliberately not part of initialCrawlState: resetCursor() rewinds the crawl
+// between passes and must not forget that this scope was already migrated.
+const initialIdMigrationState: IdMigrationState = {
+  lastSeenServerVersion: null,
+  lastProbedAt: null,
+  idMigration: "idle",
+};
 
 const initialCrawlState: LibrarySyncCrawlState = {
   phase: "idle",
@@ -93,6 +120,7 @@ const initialCrawlState: LibrarySyncCrawlState = {
 const initialLibrarySyncState = {
   extendedOfflineModeEnabled: false,
   ...initialCrawlState,
+  ...initialIdMigrationState,
 };
 
 export const useLibrarySyncBase = create<LibrarySyncStore>()(
@@ -126,6 +154,10 @@ export const useLibrarySyncBase = create<LibrarySyncStore>()(
         });
       },
 
+      setIdMigration: (partial) => {
+        set(partial);
+      },
+
       // Rewind to the start of a fresh pass; keeps lastSyncCompletedAt so a
       // delta resync still knows when the library was last fully synced.
       resetCursor: () => {
@@ -144,6 +176,17 @@ export const useLibrarySyncBase = create<LibrarySyncStore>()(
     },
   ),
 );
+
+/**
+ * True while a canonical-id probe is scheduled or in flight. Every reconciler
+ * that treats "the server doesn't know this id" as "the content was deleted"
+ * must bail out on this, or it will delete content that was merely renumbered.
+ *
+ * Lives here rather than in services/navidromeIdMigration.ts so the reconcilers
+ * can read it without importing the migration (and its store graph).
+ */
+export const isIdMigrationFrozen = (): boolean =>
+  useLibrarySyncBase.getState().idMigration === "checking";
 
 const useLibrarySync = createSelectors(useLibrarySyncBase);
 

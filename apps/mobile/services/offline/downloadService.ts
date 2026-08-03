@@ -731,6 +731,17 @@ export class OfflineDownloadService {
     }
   }
 
+  // Makes every download currently writing to disk throw away its file instead
+  // of registering it. Used by the canonical-id migration, whose in-flight
+  // downloads carry ids the server has renumbered: registering one would leave
+  // an orphan entry under an id no collection references. The queue entries
+  // themselves are left alone, so the drain retries them once remapped.
+  discardInFlightDownloads(): void {
+    if (this.activeIds.size === 0) return;
+    this.generation++;
+    this.attempts.clear();
+  }
+
   getDownloadProgress(trackId: string): DownloadProgress | null {
     const offlineStore = useOffline.getState();
     return offlineStore.downloadProgress[trackId] || null;

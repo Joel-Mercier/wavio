@@ -8,6 +8,10 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import {
+  runIdMigrationCheck,
+  subscribeIdMigrationCompleted,
+} from "@/services/navidromeIdMigration";
 import { librarySyncService } from "@/services/offline";
 import { subscribeLibrarySyncCompleted } from "@/services/offline/librarySyncService";
 import useLibrarySync from "@/stores/librarySync";
@@ -24,20 +28,52 @@ export default function LibrarySyncController() {
   const toast = useToast();
   const isOnline = useIsOnline();
   const enabled = useLibrarySync((s) => s.extendedOfflineModeEnabled);
+  const idMigration = useLibrarySync((s) => s.idMigration);
 
   useEffect(() => {
     if (!enabled || !isOnline) return;
     librarySyncService.startIfNeeded();
   }, [enabled, isOnline]);
 
+  // Not gated on `enabled`: the canonical-id migration has to be resolved for
+  // every Navidrome user, not just those using extended offline mode. The
+  // interceptor only flags that a probe is due — running it here means it
+  // retries on reconnect and on the foreground kick below.
   useEffect(() => {
-    if (!enabled) return;
+    if (idMigration !== "checking" || !isOnline) return;
+    void runIdMigrationCheck();
+  }, [idMigration, isOnline]);
+
+  useEffect(() => {
     const onChange = (status: AppStateStatus) => {
-      if (status === "active") librarySyncService.startIfNeeded();
+      if (status !== "active") return;
+      if (enabled) librarySyncService.startIfNeeded();
+      void runIdMigrationCheck();
     };
     const sub = AppState.addEventListener("change", onChange);
     return () => sub.remove();
   }, [enabled]);
+
+  useEffect(
+    () =>
+      subscribeIdMigrationCompleted(({ remappedCount }) => {
+        toast.show({
+          placement: "top",
+          duration: 6000,
+          render: () => (
+            <Toast action="success">
+              <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+              <ToastDescription>
+                {t("app.settings.offlineSettings.idMigrationCompletedToast", {
+                  count: remappedCount,
+                })}
+              </ToastDescription>
+            </Toast>
+          ),
+        });
+      }),
+    [toast, t],
+  );
 
   useEffect(
     () =>

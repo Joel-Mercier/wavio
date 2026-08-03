@@ -2,6 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
 import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
+import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
@@ -81,6 +82,10 @@ openSubsonicApiInstance.interceptors.response.use(
       if (current !== version) {
         useAuthBase.getState().setServerVersion(version);
       }
+      // Navidrome's canonical-id migration renumbers most song ids server-side.
+      // This records the version and, when it may have happened, freezes the
+      // reconcilers that would read our stored ids as deleted content.
+      noteServerVersion(version, envelope?.type);
     }
     // Only log out on genuine credential failures (Subsonic error code 40 =
     // "Wrong username or password"). Network errors are transient and must not
