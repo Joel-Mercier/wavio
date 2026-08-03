@@ -379,6 +379,35 @@ describe("planServerDeletions", () => {
     });
   });
 
+  // Documents *why* librarySyncService.canProceed() bails out while a
+  // canonical-id migration is pending (see isIdMigrationFrozen). Navidrome's
+  // migration renumbers most song ids, so a pass run before the local remap
+  // enumerates an inventory of entirely new ids while every stored id is the
+  // old one. Nothing here can tell that apart from a mass server-side deletion,
+  // and it shouldn't try to: the anomaly guards don't fire (the pass is
+  // complete and non-empty), so it plans to delete every downloaded file. The
+  // freeze is the only thing standing between an upgrade and data loss.
+  it("would delete every auto download after a server-side id renumbering", () => {
+    const result = plan({
+      collections: {
+        a1: makeCollection({
+          id: "a1",
+          source: "auto",
+          trackIds: ["s1", "s2"],
+        }),
+      },
+      tracks: {
+        s1: makeOfflineTrack("s1", "auto"),
+        s2: makeOfflineTrack("s2", "auto"),
+      },
+      // Album ids are hash-derived and survive; song ids were renumbered.
+      seenAlbums: ["a1"],
+      seenSongs: ["6VHl3uR4kss6sUPKA8Cwnk", "7rke2SAWaicSeSYzkhww6R"],
+    });
+    expect(result.removeTrackIds.sort()).toEqual(["s1", "s2"]);
+    expect(result.replaceAlbumTrackIds).toEqual({ a1: [] });
+  });
+
   it("plans nothing when the pass saw albums but no songs", () => {
     const result = plan({
       collections: {

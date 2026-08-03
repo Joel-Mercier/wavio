@@ -37,7 +37,7 @@ import {
 } from "@/services/offline/librarySyncPlan";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
-import useLibrarySync from "@/stores/librarySync";
+import useLibrarySync, { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOffline, { type OfflineCollection } from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
 import { artworkCacheKey } from "@/utils/artworkCacheKey";
@@ -390,6 +390,10 @@ export class LibrarySyncService {
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return false;
     if (sync.lastError === "unsupported") return false;
+    // A pending canonical-id migration makes seenSongIds meaningless: the crawl
+    // would enumerate renumbered ids, and reconcileServerDeletions would read
+    // every locally-stored id as deleted server-side and wipe the files.
+    if (isIdMigrationFrozen()) return false;
     const { url, username, serverType } = useAuthBase.getState();
     if (!url || !username || serverType === "local") return false;
     return getIsEffectivelyOnline();
@@ -732,6 +736,11 @@ export class LibrarySyncService {
   // touched. Interrupted passes never get here, so a partial inventory can't
   // masquerade as deletions.
   private reconcileServerDeletions(): void {
+    // canProceed() gates the loop, but a step already in flight when the freeze
+    // engages (the interceptor can set it from that very response) still lands
+    // here with an inventory of pre-migration ids — against which every local
+    // id reads as deleted server-side.
+    if (isIdMigrationFrozen()) return;
     const { seenAlbumIds, seenSongIds, seenPlaylistIds, passTrusted } =
       useLibrarySync.getState();
     // A pass with enumeration gaps can't tell "deleted server-side" from

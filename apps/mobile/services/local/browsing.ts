@@ -232,13 +232,21 @@ export const getSimilarSongs2 = async (
   return localEnvelope({ similarSongs2 });
 };
 
-// `artist` is the display name; its artist_key is normalizeKey(albumArtist ||
-// artist) at index time, so normalizing the name recovers the same key.
+// A local artist id already carries the artist_key, so parsing it beats
+// recovering the same key from the display name — normalizeKey(name) only
+// round-trips because artist_key is normalizeKey(albumArtist || artist) at
+// index time, which the name fallback still relies on.
+// An unparseable id rejects rather than falling back: "" is a *legitimate*
+// artist_key (the untagged bucket), so `parseLocalArtistId(id) ?? normalizeKey(name)`
+// would answer a foreign id with the unknown artist's tracks — silently wrong,
+// where getArtist raises. Callers supply the name only when they supply no id.
 export const getTopSongs = async (
   artist: string,
-  { count }: { count?: number } = {},
+  { count, id }: { count?: number; id?: string } = {},
 ) => {
-  const rows = await queryTopSongsByArtist(normalizeKey(artist), count ?? 50);
+  const key = id ? parseLocalArtistId(id) : normalizeKey(artist);
+  if (key == null) throw new LocalUnsupportedError(`artist id "${id}"`);
+  const rows = await queryTopSongsByArtist(key, count ?? 50);
   return localEnvelope({ topSongs: { song: rows.map(mapRowToChild) } });
 };
 
