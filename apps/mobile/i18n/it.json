@@ -1103,6 +1103,7 @@
 					"extendedOfflinePausedDisk": "In pausa — lo spazio di archiviazione del dispositivo è quasi pieno",
 					"extendedOfflineSyncError": "Errore di sincronizzazione — si riprova automaticamente",
 					"extendedOfflineCompletedToast": "La tua libreria è completamente memorizzata nella cache — {{count}} tiene traccia dei contenuti disponibili offline",
+					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
 					"extendedOfflineUnsupported": "Questo server non supporta la sincronizzazione completa della libreria",
 					"extendedOfflineDisableConfirmTitle": "Rimuovere la libreria memorizzata nella cache?",
 					"extendedOfflineDisableConfirmDescription": "I brani e le copertine memorizzati nella cache tramite la sincronizzazione della libreria verranno eliminati da questo dispositivo. Gli album, le playlist e i brani salvati singolarmente per l'ascolto offline verranno conservati.",
