@@ -444,17 +444,24 @@ export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
 
 export const getTopSongs = async (
   artist: string,
-  { count }: { count?: number },
+  { count, id }: { count?: number; id?: string } = {},
 ) => {
-  // Jellyfin doesn't expose top songs per name; fetch by artist match and
-  // sort by PlayCount as a best-effort substitute.
-  const rsp = await fetchItems({
-    IncludeItemTypes: "Audio",
-    SearchTerm: artist,
-    SortBy: "PlayCount,SortName",
-    SortOrder: "Descending",
-    Limit: count ?? 50,
-  });
+  // Jellyfin has no top-songs endpoint; sorting the artist's tracks by
+  // PlayCount is the substitute. `ArtistIds` is the same exact filter getArtist
+  // and getArtistSongs use, so prefer it — the `SearchTerm` fallback is a fuzzy
+  // text match that can pull in other artists' songs.
+  const rsp = await fetchItems(
+    {
+      IncludeItemTypes: "Audio",
+      ...(id ? { ArtistIds: id } : { SearchTerm: artist }),
+      SortBy: "PlayCount,SortName",
+      SortOrder: "Descending",
+      Limit: count ?? 50,
+    },
+    // Only the id form is an id-scoped browse, so only it treats a stale artist
+    // id as an empty result; a 400 on the free-text form is a real request bug.
+    { notFoundIsExpected: !!id },
+  );
   const top: TopSongs = {
     song: (rsp.Items ?? []).map(mapBaseItemToChild),
   };

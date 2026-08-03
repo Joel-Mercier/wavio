@@ -1,5 +1,5 @@
 import i18n from "@/config/i18n";
-import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
+import { getAlbum, getArtist } from "@/services/backend/browsing";
 import { getAlbumList2, getStarred2 } from "@/services/backend/lists";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import type {
@@ -10,6 +10,7 @@ import type {
   Playlist,
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
+import { fetchTopSongs } from "@/services/topSongs";
 import { currentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
@@ -380,13 +381,11 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         const artistRsp = await getArtist(id);
         const artist = artistRsp.artist;
         const albums = artist.album ?? [];
-        let topSongs: Child[] = [];
-        if (artist.name) {
-          const topRsp = await getTopSongs(artist.name, { count: 10 }).catch(
-            () => null,
-          );
-          topSongs = topRsp?.topSongs?.song ?? [];
-        }
+        const topSongs = await fetchTopSongs({
+          id,
+          name: artist.name,
+          count: 10,
+        }).catch(() => [] as Child[]);
         snapshot.artistTopSongs.set(id, topSongs);
         for (const s of topSongs) snapshot.tracks.set(s.id, s);
         // Children: top songs (playable) followed by albums (browsable). Drill

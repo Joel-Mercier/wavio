@@ -138,11 +138,14 @@ export default function ArtistDetail() {
       count: SIMILAR_ARTISTS_LIMIT,
       includeNotPresent: true,
     });
+  // Passing the route id lets servers with the `topSongsByArtistId` extension
+  // (and Jellyfin / the local library) fetch this in parallel with useArtist
+  // instead of waiting on it for a name.
   const {
-    data: topSongsData,
+    data: topSongs,
     isLoading: isLoadingTopSongs,
     error: topSongsError,
-  } = useTopSongs(data?.artist?.name ?? "", { count: 10 });
+  } = useTopSongs(data?.artist?.name ?? "", { count: 10, id });
   const musicFolderId = useCurrentMusicFolderId();
   // Summed from the discography rather than fetched: the all-songs list itself
   // costs one request per album, which the artist screen shouldn't pay just to
@@ -342,10 +345,7 @@ export default function ArtistDetail() {
         : null,
     [data?.artist],
   );
-  const handleTopSongPress = useTrackListPress(
-    topSongsData?.topSongs.song,
-    artistSource,
-  );
+  const handleTopSongPress = useTrackListPress(topSongs, artistSource);
   const firstAlbumId = data?.artist?.album?.[0]?.id;
   // The play button falls back to the artist's first album when there are no top
   // songs. Offline that album's detail can only come from the persisted cache —
@@ -361,7 +361,6 @@ export default function ArtistDetail() {
         : undefined,
     [queryClient, firstAlbumId],
   );
-  const topSongs = topSongsData?.topSongs?.song;
   const hasPlayableTracks = useHasPlayableTracks(
     topSongs && topSongs.length > 0 ? topSongs : cachedFirstAlbumSongs,
   );
@@ -654,8 +653,7 @@ export default function ArtistDetail() {
               <AnimatedBox
                 className="overflow-hidden mb-4"
                 style={
-                  (topSongsData?.topSongs.song?.length || 0) > 5 ||
-                  isLoadingTopSongs
+                  (topSongs?.length || 0) > 5 || isLoadingTopSongs
                     ? topSongsAnimatedStyle
                     : undefined
                 }
@@ -688,7 +686,7 @@ export default function ArtistDetail() {
                     ))
                   ) : (
                     <>
-                      {topSongsData?.topSongs.song?.map((song, index) => (
+                      {topSongs?.map((song, index) => (
                         <TrackListItem
                           key={song.id}
                           showIndex
@@ -704,9 +702,9 @@ export default function ArtistDetail() {
 
                   {!isLoadingTopSongs &&
                     !topSongsError &&
-                    !topSongsData?.topSongs.song?.length && <EmptyDisplay />}
+                    !topSongs?.length && <EmptyDisplay />}
 
-                  {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
+                  {(topSongs?.length || 0) > 5 && (
                     <Animated.View
                       pointerEvents={topSongsExpanded ? "auto" : "none"}
                       style={topSongsSeeLessStyle}
@@ -724,7 +722,7 @@ export default function ArtistDetail() {
                     </Animated.View>
                   )}
                 </Box>
-                {(topSongsData?.topSongs?.song?.length || 0) > 5 && (
+                {(topSongs?.length || 0) > 5 && (
                   <Animated.View
                     pointerEvents={topSongsExpanded ? "none" : "auto"}
                     style={[

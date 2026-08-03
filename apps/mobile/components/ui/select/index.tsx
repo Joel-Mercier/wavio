@@ -30,7 +30,10 @@ const SelectTriggerWrapper = React.forwardRef<
   React.ComponentRef<typeof Pressable>,
   React.ComponentProps<typeof Pressable>
 >(function SelectTriggerWrapper({ ...props }, ref) {
-  return <Pressable {...props} ref={ref} />;
+  // The inner TextInput sets `pointerEvents="none"`, but Android only honours
+  // that on view groups — so it swallowed every tap and only the chevron
+  // opened the sheet. `box-only` makes the trigger itself the touch target.
+  return <Pressable pointerEvents="box-only" {...props} ref={ref} />;
 });
 
 const selectIconStyle = tva({
@@ -52,7 +55,7 @@ const selectStyle = tva({
 });
 
 const selectTriggerStyle = tva({
-  base: "border border-border rounded flex-row items-center overflow-hidden data-[hover=true]:border-primary/80 data-[disabled=true]:opacity-40 data-[disabled=true]:data-[hover=true]:border-border/80",
+  base: "border border-border rounded flex-row items-center overflow-hidden active:opacity-60 data-[hover=true]:border-primary/80 data-[disabled=true]:opacity-40 data-[disabled=true]:data-[hover=true]:border-border/80",
   variants: {
     size: {
       xl: "min-h-12",

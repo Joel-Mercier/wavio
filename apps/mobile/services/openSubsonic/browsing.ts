@@ -226,13 +226,18 @@ export const songsExist = async (ids: string[]): Promise<SongsExistResult> => {
   };
 };
 
+// `id` is the `topSongsByArtistId` extension: servers advertising it resolve the
+// artist from the id and treat `artist` as optional, servers without it ignore
+// `id` and need the name. Sending an empty `artist` would be a valid-but-
+// unmatchable name on the latter, so omit it rather than send a blank.
 export const getTopSongs = async (
   artist: string,
-  { count }: { count?: number },
+  { count, id }: { count?: number; id?: string } = {},
 ) =>
   subsonicRequest<{ topSongs: TopSongs }>("/rest/getTopSongs", {
-    artist,
+    artist: artist || undefined,
     count,
+    id,
   });
 
 export const getVideoInfo = async (id: string) =>

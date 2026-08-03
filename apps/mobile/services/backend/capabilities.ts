@@ -25,6 +25,14 @@ export type BackendCapabilities = {
   // (native /api/song?_sort=playCount) all provide one; plain OpenSubsonic has
   // no such endpoint (getTopSongs is per-artist only), so it stays off there.
   mostPlayedTracks: boolean;
+  // getTopSongs can be resolved from an artist id instead of a display name,
+  // which lets it run without first fetching the artist and can't mis-resolve
+  // two artists sharing a name. Jellyfin (ArtistIds filter) and the local
+  // library (artist_key) always can; on the Subsonic family it is advertised at
+  // runtime as the `topSongsByArtistId` extension (Navidrome 0.64+), so the
+  // static value stays false and stores/serverExtensions upgrades it — see
+  // services/topSongs.ts.
+  topSongsByArtistId: boolean;
   // Server-side play queue persistence (Subsonic getPlayQueue/savePlayQueue)
   // used to resume the same queue + position on another device.
   playQueueSync: boolean;
@@ -75,6 +83,9 @@ const SUBSONIC: BackendCapabilities = {
   jukebox: true,
   songLists: false,
   mostPlayedTracks: false,
+  // Left false for the whole Subsonic family: the `topSongsByArtistId`
+  // extension flips it on per-server at runtime (see services/topSongs.ts).
+  topSongsByArtistId: false,
   playQueueSync: true,
   nowPlaying: true,
   similarSongs: true,
@@ -119,6 +130,7 @@ const JELLYFIN: BackendCapabilities = {
   jukebox: false,
   songLists: true,
   mostPlayedTracks: true,
+  topSongsByArtistId: true,
   // Jellyfin's getPlayQueue/getNowPlaying adapters are inert stubs, so these
   // sync/social surfaces stay hidden until a real adapter exists.
   playQueueSync: false,
@@ -163,6 +175,7 @@ const LOCAL: BackendCapabilities = {
   jukebox: false,
   songLists: true,
   mostPlayedTracks: true,
+  topSongsByArtistId: true,
   playQueueSync: false,
   nowPlaying: false,
   similarSongs: false,

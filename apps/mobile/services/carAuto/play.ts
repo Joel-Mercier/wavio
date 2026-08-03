@@ -1,6 +1,7 @@
-import { getAlbum, getArtist, getTopSongs } from "@/services/backend/browsing";
+import { getAlbum, getArtist } from "@/services/backend/browsing";
 import { getPlaylist } from "@/services/backend/playlists";
 import { playTracks } from "@/services/player";
+import { fetchTopSongs, supportsTopSongsById } from "@/services/topSongs";
 import type { QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { getSnapshot } from "./tree";
@@ -105,11 +106,17 @@ export async function resolveTracksForMediaId(
     case "artist": {
       const cachedTop = snap.artistTopSongs.get(id);
       if (cachedTop && cachedTop.length > 0) return cachedTop.map(childToTrack);
+      // getArtist is only ever fetched here to read a name, so servers that can
+      // resolve top songs from the id skip that round-trip entirely.
+      if (supportsTopSongsById()) {
+        const songs = await fetchTopSongs({ id, count: 10 });
+        return songs.map(childToTrack);
+      }
       const artistRsp = await getArtist(id);
       const name = artistRsp.artist.name;
       if (!name) return null;
-      const topRsp = await getTopSongs(name, { count: 10 });
-      return (topRsp.topSongs.song ?? []).map(childToTrack);
+      const songs = await fetchTopSongs({ name, count: 10 });
+      return songs.map(childToTrack);
     }
     default:
       return null;

@@ -16,11 +16,11 @@ import {
   getMusicFolders,
   getSimilarSongs,
   getSimilarSongs2,
-  getTopSongs,
   getVideoInfo,
   getVideos,
 } from "@/services/backend/browsing";
 import { fetchSimilarSongs } from "@/services/similarSongs";
+import { fetchTopSongs } from "@/services/topSongs";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 
 export const useMusicFolders = () => {
@@ -228,16 +228,36 @@ export const useSimilarTracks = (id: string, params: { count?: number }) => {
   });
 };
 
-export const useTopSongs = (artist: string, params: { count?: number }) => {
-  const query = useQuery({
-    queryKey: ["topSongs", artist, params],
-    queryFn: () => {
-      return getTopSongs(artist, params);
-    },
-    enabled: !!artist,
+// Returns a flat Child[] of an artist's top songs, resolved by artist id where
+// the server supports it and by display name otherwise (see
+// services/topSongs.ts).
+//
+// The key never depends on that support, only on whether the caller holds an
+// id: `hasExtension` reads a non-persisted store that stays empty until an
+// online extensions fetch lands, so a capability-derived key would be written
+// under the id offline and read under the name — an artist screen opened
+// offline would find nothing and render empty for good. Entries are persisted
+// for 7 days (config/queryClient.ts), so id callers orphan their name-keyed
+// entries once on upgrade; that costs at most one offline session per artist.
+// The "topSongs" prefix is what STARRED_AFFECTED_KEYS invalidates, so it stays
+// first on both shapes.
+export const useTopSongs = (
+  artist: string,
+  { count, id }: { count?: number; id?: string },
+) => {
+  const capabilities = useCapabilities();
+  const hasTopSongsByArtistId = useServerExtensionsBase((s) =>
+    s.hasExtension("topSongsByArtistId"),
+  );
+  const byId =
+    !!id && (capabilities.topSongsByArtistId || hasTopSongsByArtistId);
+  return useQuery({
+    queryKey: id
+      ? ["topSongs", { id, count }]
+      : ["topSongs", artist, { count }],
+    queryFn: () => fetchTopSongs({ id, name: artist, count }),
+    enabled: byId || !!artist,
   });
-
-  return query;
 };
 
 export const useVideoInfo = (id: string) => {
