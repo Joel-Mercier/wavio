@@ -1103,7 +1103,7 @@
 					"extendedOfflinePausedDisk": "Mis en pause — le stockage de l'appareil est presque plein",
 					"extendedOfflineSyncError": "Erreur de synchronisation — nouvelle tentative automatique",
 					"extendedOfflineCompletedToast": "Votre bibliothèque est entièrement mise en cache — {{count}} pistes disponibles hors ligne",
-					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
+					"idMigrationCompletedToast": "Votre serveur a modifié la manière dont il identifie les titres — {{count}} liens ont été mis à jour, vos téléchargements sont intacts",
 					"extendedOfflineUnsupported": "Ce serveur ne prend pas en charge la synchronisation complète de la bibliothèque",
 					"extendedOfflineDisableConfirmTitle": "Supprimer la bibliothèque mise en cache ?",
 					"extendedOfflineDisableConfirmDescription": "Les titres et les pochettes mis en cache par la synchronisation de la bibliothèque seront supprimés de cet appareil. Les albums, listes de lecture et titres que vous avez enregistrés individuellement pour une écoute hors ligne seront conservés.",
