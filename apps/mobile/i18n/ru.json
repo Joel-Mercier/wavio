@@ -298,8 +298,8 @@
 			"artists": {
 				"label": "Исполнитель",
 				"notInLibrary": "Нет в вашей библиотеке",
-				"notInLibraryFindIn": "Not in your library • Find in {{name}}",
-				"notInLibraryFindInDownloader": "Not in your library • Find in a downloader",
+				"notInLibraryFindIn": "Нет в твоей медиатеке • Поищи в {{name}}",
+				"notInLibraryFindInDownloader": "Нет в твоей медиатеке • Поищи в загрузчиках",
 				"coverAlt": "Обложка исполнителя",
 				"topSongs": "Популярное",
 				"discography": "Релизы",
@@ -748,7 +748,7 @@
 					},
 					"downloaders": {
 						"title": "Загрузчики",
-						"description": "Add music to your server via Lidarr or SoulSync"
+						"description": "Добавь музыку на свой сервер через Lidarr или SoulSync"
 					},
 					"integrations": {
 						"title": "Интеграции",
@@ -965,7 +965,7 @@
 				"downloaders": {
 					"description": "Подключи загрузчик, чтобы добавить музыку, которой еще нет на сервере. Она будет скачана в твою медиатеку и появится после следующего скана.",
 					"comingSoon": "Скоро.",
-					"pickerTitle": "Look for it in",
+					"pickerTitle": "Поискать в",
 					"statuses": {
 						"active": "Активен",
 						"inactive": "Неактивен"
@@ -991,11 +991,11 @@
 					},
 					"soulsync": {
 						"title": "SoulSync",
-						"description": "Search and download tracks through your SoulSync instance",
+						"description": "Поиск и загрузка альбомов через инстанс SoulSync",
 						"getApiKeyAction": "Где я могу найти свой ключ API?",
 						"apiKeyHelpTitle": "Как найти свой API ключ",
-						"apiKeyHelpStep1": "Open SoulSync in a web browser. It usually runs at http://<ip-address>:8008.",
-						"apiKeyHelpStep2": "Go to Settings > Advanced > SoulSync API > REST API Keys.",
+						"apiKeyHelpStep1": "Открой SoulSync в браузере. Обычно он висит на адресе http://<ip-address>:8008.",
+						"apiKeyHelpStep2": "Перейди в раздел «Настройки» > «Дополнительные» > «SoulSync API » > «Ключи REST API».",
 						"apiKeyHelpStep3": "Generate a key and copy it. It's shown only once.",
 						"apiKeyHelpClose": "Понял",
 						"serverUrlLabel": "URL сервера",
