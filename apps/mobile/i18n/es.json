@@ -1103,6 +1103,7 @@
 					"extendedOfflinePausedDisk": "En pausa: el almacenamiento del dispositivo está casi lleno",
 					"extendedOfflineSyncError": "Error de sincronización: se volverá a intentar automáticamente",
 					"extendedOfflineCompletedToast": "Tu biblioteca está completamente almacenada en caché: {{count}} registra los títulos disponibles sin conexión",
+					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
 					"extendedOfflineUnsupported": "Este servidor no admite la sincronización completa de la biblioteca",
 					"extendedOfflineDisableConfirmTitle": "¿Eliminar la biblioteca almacenada en caché?",
 					"extendedOfflineDisableConfirmDescription": "Las canciones y las carátulas almacenadas en la caché mediante la sincronización de la biblioteca se eliminarán de este dispositivo. Se conservarán los álbumes, las listas de reproducción y las canciones que hayas guardado individualmente para escucharlas sin conexión.",
