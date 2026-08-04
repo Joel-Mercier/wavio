@@ -11,7 +11,7 @@ import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import CircleCheckBig from "lucide-react-native/dist/esm/icons/circle-check-big.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

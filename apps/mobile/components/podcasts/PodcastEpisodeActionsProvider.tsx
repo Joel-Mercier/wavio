@@ -5,7 +5,7 @@ import {
 import { useRouter } from "expo-router";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import {
   createContext,
   type ReactNode,

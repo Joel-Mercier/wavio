@@ -5,8 +5,8 @@ import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import HardDrive from "lucide-react-native/dist/esm/icons/hard-drive.mjs";
 import Library from "lucide-react-native/dist/esm/icons/library.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Palette from "lucide-react-native/dist/esm/icons/palette.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
 import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
