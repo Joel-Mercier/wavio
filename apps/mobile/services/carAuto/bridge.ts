@@ -11,6 +11,7 @@ type CarAutoNative = {
   setQueue: (json: string) => void;
   setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
+  notifyReady: () => void;
   addListener: (
     event: "play" | "transport",
     listener: (e: Record<string, unknown>) => void,
@@ -96,6 +97,18 @@ export const CarAutoBridge = {
       NativeCarAuto.setPlaybackState(JSON.stringify(state));
     } catch (e) {
       if (__DEV__) console.log("[carauto] setPlaybackState threw", e);
+    }
+  },
+
+  // Tell native the car listeners are live. Android Auto can bind the media
+  // service with the app never having been opened, in which case the tap that
+  // started the JS runtime is parked natively and replayed on this call.
+  notifyReady() {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.notifyReady();
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] notifyReady threw", e);
     }
   },
 

@@ -14,7 +14,6 @@ import { StatusBar } from "expo-status-bar";
 
 import { useEffect, useRef } from "react";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
-import CarAutoSync from "@/components/CarAutoSync";
 import { PodcastEpisodeActionsProvider } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import { TrackActionsProvider } from "@/components/tracks/TrackActionsProvider";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
@@ -29,7 +28,6 @@ import {
 } from "@tanstack/react-query";
 import { persistQueryClientSubscribe } from "@tanstack/react-query-persist-client";
 import * as Application from "expo-application";
-import { getLocales } from "expo-localization";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -37,11 +35,6 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import i18n, {
-  applyZodLocale,
-  SupportedLanguages,
-  type TSupportedLanguages,
-} from "@/config/i18n";
 import { persistOptions, queryClient } from "@/config/queryClient";
 import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
 import {
@@ -54,10 +47,12 @@ import { initOrientation } from "@/services/orientation";
 import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
 import { initSslTrust, refreshSslProxyOnForeground } from "@/services/sslTrust";
+import { applyStartupLocale } from "@/services/startupHydration";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import { initWidget } from "@/services/widget";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import { logError } from "@/utils/log";
 
 sentryInit({
   dsn: "https://fdd67c7590ff4b680308d9dae6640460@o4511401546285056.ingest.de.sentry.io/4511401549758544",
@@ -131,7 +126,6 @@ function onAppStateChange(status: AppStateStatus) {
 
 export default sentryWrap(function RootLayout() {
   const locale = useApp((store) => store.locale);
-  const setLocale = useApp((store) => store.setLocale);
   // Inter has no CJK glyphs, so forcing it under zh-CN renders Latin in Inter and
   // Chinese in Android's system Noto CJK — a mismatched, uneven mix. Skip loading
   // Inter for zh-CN so the whole UI falls back to the OS system font (Roboto +
@@ -181,16 +175,16 @@ export default sentryWrap(function RootLayout() {
     const unsubscribeConnectionType = initConnectionType();
     const unsubscribeSentryScope = initSentryScope();
     const unsubscribeOrientation = initOrientation();
+    const onIdle = () => {
+      void configurePlayback().catch((error) => {
+        logError("[app] Failed to configure playback", error);
+      });
+      initWidget();
+    };
     const idle =
       typeof requestIdleCallback === "function"
-        ? requestIdleCallback(() => {
-            configurePlayback();
-            initWidget();
-          })
-        : (setTimeout(() => {
-            configurePlayback();
-            initWidget();
-          }, 0) as unknown as number);
+        ? requestIdleCallback(onIdle)
+        : (setTimeout(onIdle, 0) as unknown as number);
     const subscription = AppState.addEventListener("change", onAppStateChange);
     return () => {
       if (typeof cancelIdleCallback === "function") {
@@ -206,30 +200,11 @@ export default sentryWrap(function RootLayout() {
     };
   }, []);
 
+  // Shared with the headless (Android Auto) boot, which has no React tree to
+  // apply the saved locale from — see services/startupHydration.ts.
   useEffect(() => {
-    if (locale) {
-      i18n.changeLanguage(locale);
-      applyZodLocale(locale);
-      return;
-    }
-    const userLocales = getLocales();
-    const matching = userLocales.find(
-      (userLocale) =>
-        userLocale.languageCode &&
-        (SupportedLanguages as string[]).includes(userLocale.languageCode),
-    );
-    // SupportedLanguages only holds the region-qualified "zh-CN", so a device
-    // reporting a bare "zh" (or "zh-Hans", "zh-TW", …) never matches above and
-    // would wrongly fall back to English. Map any Chinese base code to zh-CN.
-    const zhMatch = userLocales.find((userLocale) =>
-      userLocale.languageCode?.toLowerCase().startsWith("zh"),
-    );
-    const next = (matching?.languageCode ??
-      (zhMatch ? "zh-CN" : "en")) as TSupportedLanguages;
-    setLocale(next);
-    i18n.changeLanguage(next);
-    applyZodLocale(next);
-  }, [locale, setLocale]);
+    applyStartupLocale(locale);
+  }, [locale]);
 
   // Local-library display labels (e.g. "Unknown album") are localized at map
   // time and cached by React Query, so a runtime locale switch wouldn't update
@@ -271,7 +246,6 @@ export default sentryWrap(function RootLayout() {
                         <Stack.Screen name="+not-found" />
                       </Stack>
                     </AppErrorBoundary>
-                    <CarAutoSync />
                     <WearSync />
                   </PodcastEpisodeActionsProvider>
                 </TrackActionsProvider>

@@ -1090,6 +1090,7 @@
 					"extendedOfflinePausedDisk": "已暂停 — 设备存储空间已几乎用尽",
 					"extendedOfflineSyncError": "同步错误——正在自动重试",
 					"extendedOfflineCompletedToast": "您的书库已完全缓存—— {{count}} 记录了可离线阅读的书籍",
+					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
 					"extendedOfflineUnsupported": "该服务器不支持完整库同步",
 					"extendedOfflineDisableConfirmTitle": "清除缓存的库？",
 					"extendedOfflineDisableConfirmDescription": "由“库同步”缓存的歌曲和封面将从本设备中删除。您单独保存用于离线收听的专辑、播放列表和歌曲将予以保留。",

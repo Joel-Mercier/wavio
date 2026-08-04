@@ -24,6 +24,12 @@ android {
 
 dependencies {
   implementation project(':expo-modules-core')
+  // ReactHostBoot starts the JS runtime when Android Auto binds the media
+  // service without an Activity. expo-modules-core depends on React Native with
+  // `implementation`, which keeps it off our compile classpath, so declare it
+  // here. No version pin: the `com.facebook.react.rootproject` plugin applied at
+  // the Android root project resolves it for every subproject.
+  implementation "com.facebook.react:react-android"
   // media3 versions must match what expo-audio pulls in. 1.4.x is the version
   // bundled with expo-audio 55.x.
   implementation "androidx.media3:media3-session:1.4.1"

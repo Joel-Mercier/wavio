@@ -30,7 +30,7 @@ class WavioCarBrowserService : MediaLibraryService() {
   override fun onCreate() {
     super.onCreate()
     BrowseTreeCache.loadFromDiskIfNeeded(applicationContext)
-    val player = JsProxyPlayer().also {
+    val player = JsProxyPlayer(applicationContext).also {
       jsPlayer = it
       activePlayer = it
     }
@@ -55,6 +55,12 @@ class WavioCarBrowserService : MediaLibraryService() {
       browser: MediaSession.ControllerInfo,
       params: LibraryParams?,
     ): ListenableFuture<LibraryResult<MediaItem>> {
+      // A car host opening our browse tree is the earliest reliable signal that
+      // the user is about to play something. Start the JS runtime now so it is
+      // warm by the time they tap, instead of paying the boot on the tap itself.
+      if (browser.packageName in CAR_HOST_PACKAGES) {
+        ReactHostBoot.ensureJsRuntime(applicationContext)
+      }
       val rootExtras = Bundle().apply {
         // Hints to Android Auto: root children should be rendered as tabs
         // (category list items) and any inner browsable defaults to list.
@@ -177,7 +183,12 @@ class WavioCarBrowserService : MediaLibraryService() {
     private fun emitPlay(mediaId: String) {
       val parentId = BrowseTreeCache.findParentOf(mediaId)
       CarAutoLog.d("emitPlay id=$mediaId parent=$parentId")
-      CarAutoModule.instance?.emitPlayEvent(mediaId, parentId)
+      if (CarAutoModule.deliverPlay(mediaId, parentId)) return
+      // Cold process: Android Auto bound this service without ever starting the
+      // app's Activity, so there was no JS to hand the tap to. deliverPlay has
+      // parked it; notifyReady replays it once the listeners are up.
+      CarAutoLog.d("no JS yet, queued play and booting runtime")
+      ReactHostBoot.ensureJsRuntime(applicationContext)
     }
   }
 
@@ -200,6 +211,15 @@ class WavioCarBrowserService : MediaLibraryService() {
   companion object {
     @Volatile var activePlayer: JsProxyPlayer? = null
       private set
+
+    // Controllers we treat as "the user is in the car". Other binders (system
+    // media resumption, assistants) still work — their first play just pays the
+    // runtime boot — but they don't get to spin up JS merely by browsing.
+    private val CAR_HOST_PACKAGES = setOf(
+      "com.google.android.projection.gearhead",
+      "com.google.android.gms.car",
+      "com.google.android.apps.automotive.templates.host",
+    )
   }
 }
 
