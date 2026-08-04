@@ -1748,7 +1748,8 @@
 					"podcasts": "Podcasts",
 					"radioStations": "Radio stations",
 					"folders": "Folders",
-					"songs": "Songs"
+					"songs": "Songs",
+					"downloaded": "Downloaded"
 				},
 				"save": "Save",
 				"done": "Done",

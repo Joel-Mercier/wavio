@@ -50,7 +50,8 @@ export type LibraryFilter =
   | "playlists"
   | "podcasts"
   | "radioStations"
-  | "folders";
+  | "folders"
+  | "downloaded";
 
 // list = single-column rows, grid = responsive multi-column cards. Persisted
 // per album-list screen (keyed in `albumScreenLayouts`) via

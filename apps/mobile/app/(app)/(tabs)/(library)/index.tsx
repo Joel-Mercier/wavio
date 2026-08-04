@@ -107,10 +107,10 @@ export default function LibraryScreen() {
   const gridColumns =
     layout === "grid"
       ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
+        minItemWidth: 160,
+        minColumns: 3,
+        maxColumns: 5,
+      })
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
@@ -118,14 +118,14 @@ export default function LibraryScreen() {
     useRef<
       FlashListRef<
         Playlist &
-          AlbumID3 &
-          ArtistID3 &
-          Favorites &
-          LibraryPodcast &
-          LibraryFolder &
-          LibraryRadioStation &
-          LibraryAllAlbums &
-          LibraryAllArtists
+        AlbumID3 &
+        ArtistID3 &
+        Favorites &
+        LibraryPodcast &
+        LibraryFolder &
+        LibraryRadioStation &
+        LibraryAllAlbums &
+        LibraryAllArtists
       >
     >(null);
   const musicFolderId = useCurrentMusicFolderId();
@@ -182,6 +182,18 @@ export default function LibraryScreen() {
       return null;
     }
 
+    const downloadedAlbumIds = new Set(
+      downloadedCollections
+        .filter((c) => c.kind === "album")
+        .map((c) => c.id),
+    );
+
+    const downloadedPlaylistIds = new Set(
+      downloadedCollections
+        .filter((c) => c.kind === "playlist")
+        .map((c) => c.id),
+    );
+
     const favoritesItem = {
       id: "favorites",
       name: "Favorites",
@@ -206,13 +218,17 @@ export default function LibraryScreen() {
       serverItems: T[],
       kind: "playlist" | "album",
     ): T[] => {
-      if (isOnline) return serverItems;
-      const ids = new Set(serverItems.map((item) => item.id));
-      const offlineItems = downloadedCollections
-        .filter((c) => c.kind === kind && !ids.has(c.id))
-        .map((c) =>
-          kind === "playlist"
-            ? {
+
+      let merged = serverItems;
+
+      if (!isOnline) {
+        const ids = new Set(serverItems.map((item) => item.id));
+
+        const offlineItems = downloadedCollections
+          .filter((c) => c.kind === kind && !ids.has(c.id))
+          .map((c) =>
+            kind === "playlist"
+              ? {
                 id: c.id,
                 name: c.name,
                 songCount: c.songCount,
@@ -220,7 +236,7 @@ export default function LibraryScreen() {
                 owner: c.owner,
                 created: c.savedAt,
               }
-            : {
+              : {
                 id: c.id,
                 name: c.name,
                 songCount: c.songCount,
@@ -230,9 +246,35 @@ export default function LibraryScreen() {
                 year: c.year,
                 created: c.savedAt,
               },
-        ) as unknown as T[];
-      return [...serverItems, ...offlineItems];
+          ) as unknown as T[];
+
+        merged = [...serverItems, ...offlineItems];
+      }
+
+      if (filter.includes("downloaded")) {
+        const downloadedIds =
+          kind === "album"
+            ? downloadedAlbumIds
+            : downloadedPlaylistIds;
+
+        merged = merged.filter((item) => downloadedIds.has(item.id));
+      }
+
+      return merged;
     };
+
+    const downloadedOnly =
+      filter.includes("downloaded") &&
+      !filter.some((f) =>
+        [
+          "albums",
+          "artists",
+          "playlists",
+          "podcasts",
+          "radioStations",
+          "folders",
+        ].includes(f),
+      );
 
     const noFilter = filter.length === 0;
     let data = [];
@@ -242,11 +284,19 @@ export default function LibraryScreen() {
     ) {
       data.push(starredData.starred2.artist);
     }
-    if (noFilter || filter.includes("albums")) {
+    if (
+      noFilter ||
+      filter.includes("albums") ||
+      downloadedOnly
+    ) {
       data.push(mergeOffline(starredData?.starred2?.album ?? [], "album"));
     }
-    if (noFilter || filter.includes("playlists")) {
-      if (filter.includes("playlists") && hasServerData) {
+    if (
+      noFilter ||
+      filter.includes("playlists") ||
+      downloadedOnly
+    ) {
+      if (filter.includes("playlists") && hasServerData && !filter.includes("downloaded")) {
         data.push(favoritesItem);
       }
       data.push(
@@ -400,6 +450,20 @@ export default function LibraryScreen() {
               className="gap-x-4"
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
+              {!isOnline && (
+                <FadeOutScaleDown onPress={() => handleFilterPress("downloaded")}>
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                      "bg-emerald-500 text-primary-800":
+                        filter.includes("downloaded"),
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.shared.filters.downloaded")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+              )}
               <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
                 <Badge
                   className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
@@ -477,6 +541,20 @@ export default function LibraryScreen() {
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>
+              {isOnline && (
+                <FadeOutScaleDown onPress={() => handleFilterPress("downloaded")}>
+                  <Badge
+                    className={cn("rounded-full bg-gray-800 px-4 py-1 ml-2", {
+                      "bg-emerald-500 text-primary-800":
+                        filter.includes("downloaded"),
+                    })}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.shared.filters.downloaded")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+              )}
             </ScrollView>
             <LinearGradient
               colors={["#000000", "transparent"]}
@@ -537,14 +615,14 @@ export default function LibraryScreen() {
           data={
             (isLoading ? loadingData(16) : (data ?? [])) as Array<
               Playlist &
-                AlbumID3 &
-                ArtistID3 &
-                Favorites &
-                LibraryPodcast &
-                LibraryFolder &
-                LibraryRadioStation &
-                LibraryAllAlbums &
-                LibraryAllArtists
+              AlbumID3 &
+              ArtistID3 &
+              Favorites &
+              LibraryPodcast &
+              LibraryFolder &
+              LibraryRadioStation &
+              LibraryAllAlbums &
+              LibraryAllArtists
             >
           }
           keyExtractor={(item) => item.id}
