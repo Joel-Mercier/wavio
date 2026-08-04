@@ -6,7 +6,7 @@ import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import LibraryBig from "lucide-react-native/dist/esm/icons/library-big.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import Users from "lucide-react-native/dist/esm/icons/users.mjs";

@@ -137,7 +137,17 @@ const HOME_SECTIONS: Array<{
 
 const HOME_SECTION_SIZE = 20;
 
-export async function buildBrowseTree(): Promise<BrowseTree> {
+export type BrowseTreeBuild = {
+  tree: BrowseTree;
+  // False when any request below failed. Every section swallows its own error
+  // and falls back to an empty list, so a degraded tree is indistinguishable
+  // from a genuinely empty library by looking at it. Callers that cache the
+  // result need to know the difference — see session.ts, which refuses to let
+  // an incomplete build suppress later rebuilds.
+  complete: boolean;
+};
+
+export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
   // Reset snapshots; everything is repopulated below.
   snapshot.tracks.clear();
   snapshot.playlists.clear();
@@ -146,6 +156,10 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
   snapshot.parentTracks.clear();
 
   const tree: BrowseTree = {};
+  let complete = true;
+  const failed = () => {
+    complete = false;
+  };
 
   // === Root ===
   tree[ROOT_ID] = [
@@ -174,7 +188,10 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
     HOME_SECTIONS.map(async (s) => {
       const rsp = await getAlbumList2(s.type, {
         size: HOME_SECTION_SIZE,
-      }).catch(() => null);
+      }).catch(() => {
+        failed();
+        return null;
+      });
       return { section: s, albums: rsp?.albumList2?.album ?? [] };
     }),
   );
@@ -243,8 +260,14 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
 
   // === Library tab ===
   const [playlistsRsp, starredRsp] = await Promise.all([
-    getPlaylists({}).catch(() => null),
-    getStarred2({}).catch(() => null),
+    getPlaylists({}).catch(() => {
+      failed();
+      return null;
+    }),
+    getStarred2({}).catch(() => {
+      failed();
+      return null;
+    }),
   ]);
 
   const libraryChildren: BrowseNode[] = [
@@ -347,6 +370,7 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         tree[parent] = entries.map((e) => trackNode(e, parent));
         recordParentTracks(parent, tree[parent]);
       } catch {
+        failed();
         tree[`playlist:${id}`] = [];
       }
     },
@@ -367,6 +391,7 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
         tree[parent] = songs.map((s) => trackNode(s, parent));
         recordParentTracks(parent, tree[parent]);
       } catch {
+        failed();
         tree[`album:${id}`] = [];
       }
     },
@@ -385,7 +410,10 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
           id,
           name: artist.name,
           count: 10,
-        }).catch(() => [] as Child[]);
+        }).catch(() => {
+          failed();
+          return [] as Child[];
+        });
         snapshot.artistTopSongs.set(id, topSongs);
         for (const s of topSongs) snapshot.tracks.set(s.id, s);
         // Children: top songs (playable) followed by albums (browsable). Drill
@@ -409,15 +437,17 @@ export async function buildBrowseTree(): Promise<BrowseTree> {
               tree[albumParent] = songs.map((s) => trackNode(s, albumParent));
               recordParentTracks(albumParent, tree[albumParent]);
             } catch {
+              failed();
               tree[albumParent] = [];
             }
           }
         }
       } catch {
+        failed();
         tree[`artist:${id}`] = [];
       }
     },
   );
 
-  return tree;
+  return { tree, complete };
 }

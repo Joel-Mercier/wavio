@@ -1,5 +1,5 @@
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { usePodcastEpisodeActions } from "@/components/podcasts/PodcastEpisodeActionsProvider";

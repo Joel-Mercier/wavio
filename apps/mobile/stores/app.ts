@@ -95,6 +95,8 @@ interface AppStore {
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
   lyricsKeepScreenOn: boolean;
   setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
+  waveformSeekbarEnabled: boolean;
+  setWaveformSeekbarEnabled: (waveformSeekbarEnabled: boolean) => void;
   librarySort: LibrarySort;
   setLibrarySort: (librarySort: LibrarySort) => void;
   libraryFilter: LibraryFilter[];
@@ -212,6 +214,12 @@ export const useAppBase = create<AppStore>()(
       lyricsKeepScreenOn: false,
       setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => {
         set({ lyricsKeepScreenOn });
+      },
+      // Off by default: the first play of each track costs a decode, and for a
+      // streamed track a one-off download too (see services/waveform).
+      waveformSeekbarEnabled: false,
+      setWaveformSeekbarEnabled: (waveformSeekbarEnabled: boolean) => {
+        set({ waveformSeekbarEnabled });
       },
       librarySort: "addedAtAsc",
       setLibrarySort: (librarySort: LibrarySort) => {

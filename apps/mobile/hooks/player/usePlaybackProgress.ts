@@ -3,12 +3,22 @@ import { type SharedValue, useSharedValue } from "react-native-reanimated";
 import {
   getPlaybackSnapshot,
   subscribePlaybackProgress,
+  subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 
 // Numeric snapshot for consumers that need the value in render (time labels, the
 // seek slider). Re-renders on every progress tick.
 export function usePlaybackProgress() {
   return useSyncExternalStore(subscribePlaybackProgress, getPlaybackSnapshot);
+}
+
+const getDuration = () => getPlaybackSnapshot().duration;
+
+// Duration alone, off the state channel, so a component that needs it for
+// geometry (bookmark ticks, a seek epsilon) isn't dragged into a re-render on
+// every ~4 Hz time tick the way usePlaybackProgress would.
+export function usePlaybackDuration(): number {
+  return useSyncExternalStore(subscribePlaybackState, getDuration);
 }
 
 // Drives a Reanimated shared value (0..1 progress fraction) from the snapshot's

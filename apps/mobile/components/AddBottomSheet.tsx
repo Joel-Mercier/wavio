@@ -7,7 +7,7 @@ import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs
 import Drama from "lucide-react-native/dist/esm/icons/drama.mjs";
 import Fingerprint from "lucide-react-native/dist/esm/icons/fingerprint-pattern.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";

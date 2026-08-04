@@ -120,19 +120,20 @@ describe("getLrclibLyrics when /api/get fails for a non-404 reason", () => {
     syncedLyrics: "[00:10.00]You get a shiver in the dark",
   };
 
-  it.each([
-    520, 500, 502,
-  ])("falls through to search on a %s instead of aborting", async (status) => {
-    const { getLrclibLyrics } = importLyrics();
-    mockGet
-      .mockRejectedValueOnce(httpError(status))
-      .mockResolvedValue({ data: [record] });
+  it.each([520, 500, 502])(
+    "falls through to search on a %s instead of aborting",
+    async (status) => {
+      const { getLrclibLyrics } = importLyrics();
+      mockGet
+        .mockRejectedValueOnce(httpError(status))
+        .mockResolvedValue({ data: [record] });
 
-    await expect(getLrclibLyrics(PARAMS)).resolves.toMatchObject({
-      id: record.id,
-    });
-    expect(mockGet.mock.calls.length).toBeGreaterThan(1);
-  });
+      await expect(getLrclibLyrics(PARAMS)).resolves.toMatchObject({
+        id: record.id,
+      });
+      expect(mockGet.mock.calls.length).toBeGreaterThan(1);
+    },
+  );
 
   it("still reports the /api/get failure it recovered from", async () => {
     const { getLrclibLyrics } = importLyrics();
