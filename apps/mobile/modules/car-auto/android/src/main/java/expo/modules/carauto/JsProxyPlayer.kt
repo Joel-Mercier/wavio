@@ -1,5 +1,6 @@
 package expo.modules.carauto
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.OptIn
@@ -21,7 +22,9 @@ import com.google.common.util.concurrent.ListenableFuture
  * playback without a second audio engine.
  */
 @OptIn(UnstableApi::class)
-class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
+class JsProxyPlayer(
+  private val appContext: Context,
+) : SimpleBasePlayer(Looper.getMainLooper()) {
 
   data class NowPlaying(
     val id: String,
@@ -226,10 +229,12 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
   }
 
   override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
-    CarAutoModule.instance?.emitTransport(
-      if (playWhenReady) "play" else "pause",
-      null,
-    )
+    val action = if (playWhenReady) "play" else "pause"
+    // Nothing is loaded in a cold process, so only a play is worth acting on:
+    // booting JS lets it rehydrate the persisted queue and start it (see
+    // services/startupHydration.ts). A pause has nothing to pause and is dropped.
+    val delivered = CarAutoModule.deliverTransport(action, parkWhenCold = playWhenReady)
+    if (!delivered && playWhenReady) ReactHostBoot.ensureJsRuntime(appContext)
     return Futures.immediateVoidFuture()
   }
 
@@ -251,26 +256,35 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     positionMs: Long,
     seekCommand: Int,
   ): ListenableFuture<*> {
-    when (seekCommand) {
+    // Like handleSetPlayWhenReady: `instance != null` is not enough, JS only
+    // listens from notifyReady on. Skips against the restored queue still make
+    // sense cold, so they are parked and boot the runtime; a position seek or a
+    // jump to a queue index targets a timeline the cold process doesn't have.
+    val skip = when (seekCommand) {
       Player.COMMAND_SEEK_TO_NEXT,
-      Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM ->
-        CarAutoModule.instance?.emitTransport("next", null)
+      Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> "next"
       Player.COMMAND_SEEK_TO_PREVIOUS,
-      Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM ->
-        CarAutoModule.instance?.emitTransport("previous", null)
-      Player.COMMAND_SEEK_TO_MEDIA_ITEM ->
-        CarAutoModule.instance?.emitTransport("seekToIndex", mediaItemIndex.toDouble())
-      else ->
-        CarAutoModule.instance?.emitTransport("seek", positionMs.toDouble())
+      Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM -> "previous"
+      else -> null
+    }
+    if (skip != null) {
+      if (!CarAutoModule.deliverTransport(skip, parkWhenCold = true)) {
+        ReactHostBoot.ensureJsRuntime(appContext)
+      }
+      return Futures.immediateVoidFuture()
+    }
+    if (seekCommand == Player.COMMAND_SEEK_TO_MEDIA_ITEM) {
+      CarAutoModule.deliverTransport("seekToIndex", mediaItemIndex.toDouble())
+    } else {
+      CarAutoModule.deliverTransport("seek", positionMs.toDouble())
     }
     return Futures.immediateVoidFuture()
   }
 
   override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
-    CarAutoModule.instance?.emitTransport(
-      "shuffle",
-      if (shuffleModeEnabled) 1.0 else 0.0,
-    )
+    // Dropped when cold: the car is showing the proxy's default (off), so
+    // replaying the toggle after boot could invert the user's persisted setting.
+    CarAutoModule.deliverTransport("shuffle", if (shuffleModeEnabled) 1.0 else 0.0)
     return Futures.immediateVoidFuture()
   }
 
@@ -280,7 +294,7 @@ class JsProxyPlayer : SimpleBasePlayer(Looper.getMainLooper()) {
       Player.REPEAT_MODE_ALL -> "all"
       else -> "off"
     }
-    CarAutoModule.instance?.emitTransportString("repeat", v)
+    CarAutoModule.deliverTransport("repeat", stringValue = v)
     return Futures.immediateVoidFuture()
   }
 }

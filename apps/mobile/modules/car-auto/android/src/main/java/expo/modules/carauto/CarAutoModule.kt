@@ -1,5 +1,6 @@
 package expo.modules.carauto
 
+import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -16,10 +17,21 @@ class CarAutoModule : Module() {
 
     OnCreate {
       instance = this@CarAutoModule
+      jsReady = false
     }
 
     OnDestroy {
       if (instance === this@CarAutoModule) instance = null
+      jsReady = false
+    }
+
+    // Called by services/carAuto/session.ts once its `play` / `transport`
+    // listeners are registered. The module instance exists as soon as the React
+    // context is created — a few hundred ms before the bundle finishes
+    // evaluating — so events emitted in that window would land nowhere. Anything
+    // the car did while JS was booting is replayed here.
+    Function("notifyReady") {
+      markJsReady()
     }
 
     Function("setNodes") { json: String ->
@@ -100,6 +112,115 @@ class CarAutoModule : Module() {
   companion object {
     @Volatile var instance: CarAutoModule? = null
       private set
+
+    // Whether JS has registered its car listeners. `instance != null` is not
+    // enough — see the `notifyReady` comment above.
+    @Volatile var jsReady: Boolean = false
+      private set
+
+    // A tap that arrived while the runtime was still booting is replayed on
+    // notifyReady, but only for as long as it plausibly reflects what the user
+    // still wants to hear.
+    private const val PENDING_TTL_MS = 60_000L
+
+    private data class PendingPlay(
+      val mediaId: String,
+      val parentId: String?,
+      val atMs: Long,
+    )
+
+    private data class PendingTransport(
+      val action: String,
+      val value: Double?,
+      val stringValue: String?,
+      val atMs: Long,
+    )
+
+    private var pendingPlay: PendingPlay? = null
+    private var pendingTransport: PendingTransport? = null
+
+    // Deciding "deliver or park" and flipping jsReady have to be one atomic step.
+    // They run on different threads — car intents arrive on a binder thread,
+    // notifyReady on the JS thread — and interleaved they lose the intent: the
+    // binder side reads jsReady == false, JS then flips it and finds nothing
+    // pending, and the binder side parks a tap that nothing will ever flush.
+    private val gate = Any()
+
+    // Hands the car's tap to JS, or parks it for notifyReady to replay.
+    // Returns false when it was parked, i.e. the caller should boot the runtime.
+    fun deliverPlay(mediaId: String, parentId: String?): Boolean = synchronized(gate) {
+      val module = instance
+      if (module != null && jsReady) {
+        module.emitPlayEvent(mediaId, parentId)
+        return@synchronized true
+      }
+      pendingPlay = PendingPlay(mediaId, parentId, SystemClock.elapsedRealtime())
+      // A newer tap supersedes a bare transport command.
+      pendingTransport = null
+      false
+    }
+
+    // Same for transport commands. `parkWhenCold` is for the ones that still
+    // mean something against the queue JS restores on boot (play, next,
+    // previous); a seek or a shuffle toggle targets state the cold process
+    // doesn't have yet and is dropped instead.
+    fun deliverTransport(
+      action: String,
+      value: Double? = null,
+      stringValue: String? = null,
+      parkWhenCold: Boolean = false,
+    ): Boolean = synchronized(gate) {
+      val module = instance
+      if (module != null && jsReady) {
+        if (stringValue != null) {
+          module.emitTransportString(action, stringValue)
+        } else {
+          module.emitTransport(action, value)
+        }
+        return@synchronized true
+      }
+      // Never let a transport command override a parked tap: the tap carries
+      // what to play, "play" only says to start whatever is loaded.
+      if (parkWhenCold && pendingPlay == null) {
+        pendingTransport =
+          PendingTransport(action, value, stringValue, SystemClock.elapsedRealtime())
+      }
+      false
+    }
+
+    fun markJsReady() {
+      synchronized(gate) {
+        jsReady = true
+        val module = instance ?: return
+        val play = takePendingPlay()
+        if (play != null) {
+          CarAutoLog.d("flushing pending play ${play.mediaId}")
+          module.emitPlayEvent(play.mediaId, play.parentId)
+          return
+        }
+        val transport = takePendingTransport() ?: return
+        CarAutoLog.d("flushing pending transport ${transport.action}")
+        if (transport.stringValue != null) {
+          module.emitTransportString(transport.action, transport.stringValue)
+        } else {
+          module.emitTransport(transport.action, transport.value)
+        }
+      }
+    }
+
+    private fun takePendingPlay(): PendingPlay? {
+      val p = pendingPlay ?: return null
+      pendingPlay = null
+      if (SystemClock.elapsedRealtime() - p.atMs > PENDING_TTL_MS) return null
+      return p
+    }
+
+    private fun takePendingTransport(): PendingTransport? {
+      val t = pendingTransport ?: return null
+      pendingTransport = null
+      if (SystemClock.elapsedRealtime() - t.atMs > PENDING_TTL_MS) return null
+      return t
+    }
   }
 }
 
