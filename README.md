@@ -127,16 +127,23 @@ You also do **not** need a Sentry account to develop the app — Sentry is disab
 1. Clone the repository
 2. Install dependencies with `bun install` — **from the repo root**, not from `apps/mobile`. The root `package.json` owns `patchedDependencies` (patches for `expo-audio`, `expo-font`, `expo-navigation-bar`, `lucide-react-native` and `zod`) and `bunfig.toml` pins `linker = "hoisted"`, both of which Metro and `jest-expo` depend on. Installing inside the workspace skips the patches and produces a layout Metro can't resolve.
 3. Create your env file: `cp apps/mobile/.env.example apps/mobile/.env`. This step is **required for everyone, maintainers included** — it is how the app gets its Subsonic API version and client name during local development (see [Environment variables](#environment-variables)). `.env` is gitignored.
-4. Build and install the development client on a connected device or emulator:
+4. Generate the native projects:
+   ```sh
+   bun run mobile:prebuild
+   ```
+   `apps/mobile/android/` and `apps/mobile/ios/` are **not tracked in git** — they're generated from `app.json` and the config plugins in `apps/mobile/plugins/` ([Continuous Native Generation](https://docs.expo.dev/workflow/continuous-native-generation/)). To generate a single platform, run `cd apps/mobile && bunx expo prebuild -p android`; on macOS, follow an iOS prebuild with `bunx pod-install`.
+5. Build and install the development client on a connected device or emulator:
    ```sh
    cd apps/mobile && DARK_MODE=media bunx expo run:android
    ```
    The first Gradle build takes a while. This produces a **debug dev-client APK** — the app talks to the Metro bundler on your machine, so JS changes reload instantly and you never need to rebuild for a JS-only change.
-5. On later sessions, just start the bundler: `cd apps/mobile && DARK_MODE=media bunx expo start`, then open Wavio on the device.
+6. On later sessions, just start the bundler: `cd apps/mobile && DARK_MODE=media bunx expo start`, then open Wavio on the device.
 
 `DARK_MODE=media` is read by the Gluestack/Tailwind setup at bundle time — keep it set or the theme resolves incorrectly.
 
-You normally don't need `bun run mobile:prebuild`: `apps/mobile/android/` and `apps/mobile/ios/` are committed, so `expo run:android` builds them as-is. Re-run prebuild only after changing `app.json` or a config plugin in `apps/mobile/plugins/` — and note it **regenerates** those directories, so review the diff before committing.
+Re-run prebuild after changing `app.json` or a config plugin — nothing else picks those changes up, and a JS-only change never needs it. It **wipes and regenerates** `android/` and `ios/`, so never hand-edit them: native changes belong in a config plugin (`apps/mobile/plugins/`) or a local Expo module (`apps/mobile/modules/`, whose own `android/` / `ios/` folders *are* tracked source). `eas build` runs prebuild itself, so cloud builds always match the plugins.
+
+> `expo run:android` prebuilds on its own when `android/` is missing, so step 4 is technically optional — running it explicitly keeps config-plugin errors from getting buried in Gradle output. It needs no Expo account.
 
 > **Why `bunx expo` instead of `bun run mobile:android`?**
 > The `mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` scripts wrap the Expo CLI in `eas env:exec --non-interactive development "…"`. That wrapper pulls the **Taddy podcast credentials** out of the EAS `development` environment, and it resolves against the Expo account and project declared in `apps/mobile/app.json` (`owner: "jmercier"` and `extra.eas.projectId`) — so it fails for anyone who isn't a member of that account, before Metro or Gradle ever start.
@@ -229,6 +236,7 @@ Mostly functional, no carplay or widgets support yet. No plan yet to publish to 
 - **Black screen after the bundle loads (dev menu bubble visible)** — the JS bundle reached the device but the root layout rendered nothing. Check `adb logcat -c && adb logcat ReactNativeJS:V "*:S"` for the real error, and watch the Metro terminal. A stale Metro cache is a common cause: restart with `bunx expo start --clear`. Shaking the device opens the dev menu, from which you can reload.
 - **Login always fails / the server rejects every request** — you're missing `apps/mobile/.env`, so `v=` and `c=` go out empty on every Subsonic request (see [Environment variables](#environment-variables)).
 - **`eas env:exec` errors, or "entity not authorized"** — a `mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` script is resolving against an Expo project you're not a member of. Either use the `bunx expo …` commands from [Getting started](#getting-started), or follow [Using your own Expo account](#using-your-own-expo-account).
+- **`gradlew: no such file or directory`, or Gradle can't find the project** — `apps/mobile/android/` hasn't been generated yet, or a previous prebuild failed. Run `bun run mobile:prebuild` (the directory is gitignored, so a fresh clone never has it).
 - **Odd Metro resolution errors, or patched packages misbehaving** — you probably ran `bun install` inside `apps/mobile`. Delete `apps/mobile/node_modules` and run `bun install` at the repo root.
 - **Gradle fails on an unsupported Java version** — check `java -version` resolves to JDK 17+ and that `JAVA_HOME` points at it.
 - **Anything else** — `bun run mobile:doctor` checks the project for common Expo issues.

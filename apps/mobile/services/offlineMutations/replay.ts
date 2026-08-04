@@ -17,6 +17,7 @@ import {
 } from "@/services/network";
 import { isSubsonicDataNotFound } from "@/services/openSubsonic";
 import { useAuthBase } from "@/stores/auth";
+import { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOfflineMutations, {
   playlistIdOf,
   type QueuedMutation,
@@ -183,6 +184,10 @@ export async function drainOfflineMutations(): Promise<void> {
     drainRequested = true;
     return;
   }
+  // Queued actions carry song/playlist ids captured before a canonical-id
+  // migration. Replaying them against a renumbered server would silently target
+  // nothing — or the wrong track. Hold until the ids have been remapped.
+  if (isIdMigrationFrozen()) return;
   draining = true;
   const gen = generation;
   clearBackoffTimer();

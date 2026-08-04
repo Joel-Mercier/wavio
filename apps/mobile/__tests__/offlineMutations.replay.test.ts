@@ -71,6 +71,7 @@ import {
   stopOfflineMutationReplay,
   subscribeDrainResult,
 } from "@/services/offlineMutations/replay";
+import useLibrarySync from "@/stores/librarySync";
 import useOfflineMutations, {
   type OfflineAction,
   type QueuedMutation,
@@ -212,6 +213,33 @@ describe("drainOfflineMutations - execution", () => {
     expect(queue()).toHaveLength(0);
     expect(results).toHaveLength(0);
     expect(reportErrorMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("drainOfflineMutations - canonical-id migration freeze", () => {
+  afterEach(() => {
+    useLibrarySync.getState().setIdMigration({ idMigration: "idle" });
+  });
+
+  test("holds the queue while a canonical-id probe is pending", async () => {
+    // Queued ids were captured before the server renumbered; replaying them
+    // would target nothing, or the wrong track.
+    useLibrarySync.getState().setIdMigration({ idMigration: "checking" });
+    setQueue([
+      seed({ type: "star", target: { kind: "song", id: "s1" }, starred: true }),
+    ]);
+    await drain();
+    expect(starMock).not.toHaveBeenCalled();
+    expect(queue()).toHaveLength(1);
+  });
+
+  test("drains again once the migration settles", async () => {
+    useLibrarySync.getState().setIdMigration({ idMigration: "migrated" });
+    setQueue([
+      seed({ type: "star", target: { kind: "song", id: "s1" }, starred: true }),
+    ]);
+    await drain();
+    expect(starMock).toHaveBeenCalledWith({ id: "s1" });
   });
 });
 

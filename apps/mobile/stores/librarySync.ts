@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
+import type { SongEnumerationCalibration } from "@/services/offline/librarySyncPlan";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
@@ -27,6 +28,24 @@ export type LibrarySyncPhase =
 export type LibrarySyncErrorCode = "diskFull" | "unsupported" | "syncFailed";
 
 export type SeenIdKind = "album" | "song" | "playlist";
+
+// Navidrome's canonical-id migration renumbers most song ids server-side, which
+// would make every persisted id dangle (see services/navidromeIdMigration.ts).
+// "checking" is the frozen state: a probe is scheduled or in flight and nothing
+// may read "id not found" as "content deleted" — most importantly this store's
+// own seenSongIds, which planServerDeletions would otherwise use to delete every
+// auto-downloaded file. "migrated" is informational and behaves like "idle".
+export type IdMigrationStatus = "idle" | "checking" | "migrated";
+
+export type IdMigrationState = {
+  // The raw serverVersion string last observed. Compared by *inequality*, not
+  // by semver ordering: develop builds carry a git sha rather than a sequential
+  // version, so a threshold comparison would skip exactly the users who hit the
+  // migration first.
+  lastSeenServerVersion: string | null;
+  lastProbedAt: number | null;
+  idMigration: IdMigrationStatus;
+};
 
 export type LibrarySyncCrawlState = {
   phase: LibrarySyncPhase;
@@ -65,14 +84,49 @@ export type LibrarySyncCrawlState = {
   lastError: LibrarySyncErrorCode | null;
 };
 
-interface LibrarySyncStore extends LibrarySyncCrawlState {
+// How many songs this server actually enumerates, measured rather than assumed.
+// The albums phase's Σ songCount is only a bootstrap for it: that figure counts
+// rows the server will never serve (Navidrome keeps `missing` media_files in
+// album.songCount long after the files are gone), and the resulting skew is
+// permanent — a library that has ever been reorganised would fail the songs
+// completeness check on every pass and never reconcile deletions again.
+export type LibrarySyncCalibrationState = SongEnumerationCalibration & {
+  // The previous completed pass's raw count, used to corroborate a *lower*
+  // baseline before adopting it. See nextSongCalibration.
+  lastPassSongCount: number | null;
+};
+
+interface LibrarySyncStore
+  extends LibrarySyncCrawlState,
+    IdMigrationState,
+    LibrarySyncCalibrationState {
   extendedOfflineModeEnabled: boolean;
   setExtendedOfflineModeEnabled: (enabled: boolean) => void;
   setCrawl: (partial: Partial<LibrarySyncCrawlState>) => void;
   appendSeenIds: (kind: SeenIdKind, ids: string[]) => void;
+  setIdMigration: (partial: Partial<IdMigrationState>) => void;
+  setCalibration: (partial: Partial<LibrarySyncCalibrationState>) => void;
   resetCursor: () => void;
   __reset: () => void;
 }
+
+// Deliberately not part of initialCrawlState: resetCursor() rewinds the crawl
+// between passes and must not forget that this scope was already migrated.
+const initialIdMigrationState: IdMigrationState = {
+  lastSeenServerVersion: null,
+  lastProbedAt: null,
+  idMigration: "idle",
+};
+
+// Deliberately not part of initialCrawlState, for the same reason as the id
+// migration slice: resetCursor() rewinds the crawl between passes, and the
+// calibration describes the *server*, not the pass — re-measuring it from
+// scratch every pass would defeat it entirely.
+const initialCalibrationState: LibrarySyncCalibrationState = {
+  enumerableSongCount: null,
+  calibratedAlbumSongEstimate: null,
+  lastPassSongCount: null,
+};
 
 const initialCrawlState: LibrarySyncCrawlState = {
   phase: "idle",
@@ -93,6 +147,8 @@ const initialCrawlState: LibrarySyncCrawlState = {
 const initialLibrarySyncState = {
   extendedOfflineModeEnabled: false,
   ...initialCrawlState,
+  ...initialIdMigrationState,
+  ...initialCalibrationState,
 };
 
 export const useLibrarySyncBase = create<LibrarySyncStore>()(
@@ -126,6 +182,14 @@ export const useLibrarySyncBase = create<LibrarySyncStore>()(
         });
       },
 
+      setIdMigration: (partial) => {
+        set(partial);
+      },
+
+      setCalibration: (partial) => {
+        set(partial);
+      },
+
       // Rewind to the start of a fresh pass; keeps lastSyncCompletedAt so a
       // delta resync still knows when the library was last fully synced.
       resetCursor: () => {
@@ -144,6 +208,17 @@ export const useLibrarySyncBase = create<LibrarySyncStore>()(
     },
   ),
 );
+
+/**
+ * True while a canonical-id probe is scheduled or in flight. Every reconciler
+ * that treats "the server doesn't know this id" as "the content was deleted"
+ * must bail out on this, or it will delete content that was merely renumbered.
+ *
+ * Lives here rather than in services/navidromeIdMigration.ts so the reconcilers
+ * can read it without importing the migration (and its store graph).
+ */
+export const isIdMigrationFrozen = (): boolean =>
+  useLibrarySyncBase.getState().idMigration === "checking";
 
 const useLibrarySync = createSelectors(useLibrarySyncBase);
 

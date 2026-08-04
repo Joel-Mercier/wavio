@@ -1,5 +1,6 @@
 import { songsExist } from "@/services/backend/browsing";
 import { getIsEffectivelyOnline } from "@/services/network";
+import { isIdMigrationFrozen } from "@/stores/librarySync";
 import usePlayHistory from "@/stores/playHistory";
 
 // Play history holds client-side snapshots, so a track deleted server-side
@@ -26,6 +27,9 @@ export function __resetPlayHistoryReconcile() {
 export async function reconcilePlayHistory(): Promise<void> {
   if (inFlight) return;
   if (!getIsEffectivelyOnline()) return;
+  // A renumbered server reports every stored id as missing, which would prune
+  // the entire history. Wait for the canonical-id migration to settle.
+  if (isIdMigrationFrozen()) return;
   const now = Date.now();
   if (lastRunAt != null && now - lastRunAt < RUN_INTERVAL_MS) return;
 

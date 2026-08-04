@@ -22,10 +22,12 @@ import {
   buildArtistArtworkAliases,
   buildTrackArtworkAliases,
   groupSongIdsByAlbum,
+  hasUnseenAutoTracks,
   isArtworkStale,
   isSongEnumerationComplete,
   isSyncStale,
   MIN_FREE_DISK_BYTES,
+  nextSongCalibration,
   planServerDeletions,
   playlistToAutoCollection,
   QUEUE_LOW_WATER,
@@ -34,10 +36,11 @@ import {
   refreshedOfflineTrack,
   SONG_PAGE_SIZE,
   shouldWriteAutoCollection,
+  songEnumerationBaseline,
 } from "@/services/offline/librarySyncPlan";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
-import useLibrarySync from "@/stores/librarySync";
+import useLibrarySync, { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOffline, { type OfflineCollection } from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
 import { artworkCacheKey } from "@/utils/artworkCacheKey";
@@ -390,6 +393,10 @@ export class LibrarySyncService {
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return false;
     if (sync.lastError === "unsupported") return false;
+    // A pending canonical-id migration makes seenSongIds meaningless: the crawl
+    // would enumerate renumbered ids, and reconcileServerDeletions would read
+    // every locally-stored id as deleted server-side and wipe the files.
+    if (isIdMigrationFrozen()) return false;
     const { url, username, serverType } = useAuthBase.getState();
     if (!url || !username || serverType === "local") return false;
     return getIsEffectivelyOnline();
@@ -641,20 +648,42 @@ export class LibrarySyncService {
     );
     // The songs enumeration just ended (a page shorter than SONG_PAGE_SIZE is
     // how the protocol signals "last page"). That's also exactly how a
-    // truncated page looks, so cross-check the total against the albums phase's
-    // independent estimate before letting this pass delete anything.
+    // truncated page looks, so cross-check the total against an independent
+    // baseline before letting this pass delete anything.
     let passTrusted = true;
     if (pageDone) {
       const sync = useLibrarySync.getState();
-      const uniqueSeenSongs = new Set(sync.seenSongIds).size;
-      passTrusted = isSongEnumerationComplete(
-        uniqueSeenSongs,
-        sync.albumSongEstimate,
-      );
+      const seenSongIds = new Set(sync.seenSongIds);
+      const uniqueSeenSongs = seenSongIds.size;
+      const baseline = songEnumerationBaseline(sync.albumSongEstimate, sync);
+      passTrusted = isSongEnumerationComplete(uniqueSeenSongs, baseline);
+      useLibrarySync.getState().setCalibration({
+        ...nextSongCalibration({
+          uniqueSeenSongs,
+          albumSongEstimate: sync.albumSongEstimate,
+          passTrusted,
+          calibration: sync,
+          lastPassSongCount: sync.lastPassSongCount,
+          unseenAutoTracks: hasUnseenAutoTracks(
+            useOffline.getState().downloadedTracks,
+            seenSongIds,
+          ),
+        }),
+        lastPassSongCount: uniqueSeenSongs,
+      });
       if (!passTrusted) {
-        logError(
-          `Library sync: song enumeration looks truncated (${uniqueSeenSongs} of ~${sync.albumSongEstimate}); skipping deletion reconciliation for this pass`,
-        );
+        // Falling short while there is no measured baseline yet is expected:
+        // the pass is judged against the album bootstrap, which a server that
+        // keeps rows for absent files can never satisfy. Not worth reporting —
+        // logError ships to Sentry.
+        const message = `Library sync: song enumeration looks truncated (${uniqueSeenSongs} of ~${baseline}); skipping deletion reconciliation for this pass`;
+        if (sync.enumerableSongCount === null) {
+          if (__DEV__) {
+            console.log(`[librarySync] ${message} (no measured baseline yet)`);
+          }
+        } else {
+          logError(message);
+        }
       }
     }
     useLibrarySync.getState().setCrawl({
@@ -732,6 +761,11 @@ export class LibrarySyncService {
   // touched. Interrupted passes never get here, so a partial inventory can't
   // masquerade as deletions.
   private reconcileServerDeletions(): void {
+    // canProceed() gates the loop, but a step already in flight when the freeze
+    // engages (the interceptor can set it from that very response) still lands
+    // here with an inventory of pre-migration ids — against which every local
+    // id reads as deleted server-side.
+    if (isIdMigrationFrozen()) return;
     const { seenAlbumIds, seenSongIds, seenPlaylistIds, passTrusted } =
       useLibrarySync.getState();
     // A pass with enumeration gaps can't tell "deleted server-side" from
