@@ -1,7 +1,12 @@
+const mockWrites: string[] = [];
+
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
   const make = () => ({
-    setItem: (k: string, v: string) => mem.set(k, v),
+    setItem: (k: string, v: string) => {
+      mockWrites.push(k);
+      return mem.set(k, v);
+    },
     getItem: (k: string) => mem.get(k) ?? null,
     removeItem: (k: string) => mem.delete(k),
   });
@@ -64,6 +69,29 @@ describe("recentPlays store - addRecentPlay", () => {
     }
     expect(get().recentPlays).toHaveLength(8);
     expect(get().recentPlays[0].id).toBe("p11");
+  });
+
+  // persist wraps set() so that it writes the whole list back to storage on
+  // every call, even one zustand treats as a no-op — so the early return in
+  // addRecentPlay has to happen before set(), not inside it.
+  it("does not write to storage when re-adding an existing entry", () => {
+    get().addRecentPlay(make("a"));
+    const writes = mockWrites.length;
+    get().addRecentPlay(make("a"));
+    expect(mockWrites).toHaveLength(writes);
+    get().addRecentPlay(make("b"));
+    expect(mockWrites.length).toBeGreaterThan(writes);
+  });
+
+  it("does not notify subscribers when re-adding an existing entry", () => {
+    get().addRecentPlay(make("a"));
+    const listener = jest.fn();
+    const unsubscribe = useRecentPlays.subscribe(listener);
+    get().addRecentPlay(make("a"));
+    expect(listener).not.toHaveBeenCalled();
+    get().addRecentPlay(make("b"));
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
   });
 
   it("pins favorites entry to the top when present", () => {
