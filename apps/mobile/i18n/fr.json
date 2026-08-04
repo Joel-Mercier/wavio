@@ -1240,13 +1240,13 @@
 							"description": "Aucune synchronisation. Votre file reste uniquement sur cet appareil et n'est jamais envoyée au serveur."
 						}
 					},
-					"waveformSeekbarLabel": "Waveform seek bar",
-					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
-					"waveformCacheLabel": "Waveform cache",
-					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
-					"waveformCacheConfirmTitle": "Clear waveform cache?",
-					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
-					"waveformCacheSuccessMessage": "Waveform cache cleared"
+					"waveformSeekbarLabel": "Barre de progression en forme d'onde",
+					"waveformSeekbarDescription": "Affiche la forme d'onde du morceau à la place d'une simple barre de progression. Chaque forme d'onde est analysée une seule fois, quelques secondes après le début du morceau, puis réutilisée. Pour ce faire, les morceaux en streaming téléchargent une copie supplémentaire de faible qualité, ce qui entraîne une consommation de données plus importante — mais jamais via le réseau mobile. Cette fonctionnalité n'est pas disponible pour les podcasts, la radio et les morceaux de plus de 15 minutes.",
+					"waveformCacheLabel": "Cache des formes d'onde",
+					"waveformCacheDescription": "Supprime toutes les formes d'onde enregistrées. Les pistes dont l'analyse a échoué feront l'objet d'une nouvelle tentative lors de leur prochaine lecture.",
+					"waveformCacheConfirmTitle": "Vider le cache des formes d'onde ?",
+					"waveformCacheConfirmDescription": "Toutes les formes d'onde enregistrées seront supprimées, puis générées à nouveau lors de la prochaine lecture de chaque piste.",
+					"waveformCacheSuccessMessage": "Cache des formes d'onde effacé"
 				},
 				"streamingSettings": {
 					"title": "Paramètres de streaming",
