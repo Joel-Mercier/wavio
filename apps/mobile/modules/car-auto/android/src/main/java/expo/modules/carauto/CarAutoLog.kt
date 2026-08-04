@@ -9,7 +9,7 @@ import android.util.Log
  */
 object CarAutoLog {
   private const val TAG = "CarAuto"
-  var verbose: Boolean = true
+  var verbose: Boolean = false
 
   fun d(msg: String) {
     if (verbose) Log.d(TAG, msg)
