@@ -44,24 +44,37 @@ let storeRef: { getState: () => RecentPlaysStore } | null = null;
 
 const useRecentPlaysBase = create<RecentPlaysStore>()(
   persist(
-    (set, _get, store) => {
+    (set, get, store) => {
       storeRef = store as unknown as { getState: () => RecentPlaysStore };
+      // Returns the input array itself when it already satisfies the invariant,
+      // so callers can tell "nothing changed" apart from "rebuilt identically"
+      // and skip the set() entirely.
       const pinFavoritesAndCap = (items: RecentPlay[]): RecentPlay[] => {
-        const capped = items.slice(0, 8);
+        const capped = items.length > 8 ? items.slice(0, 8) : items;
         const favIndex = capped.findIndex((p) => p.id === "favorites");
-        if (favIndex > 0) {
-          const [fav] = capped.splice(favIndex, 1);
-          capped.unshift(fav);
-        }
-        return capped;
+        if (favIndex <= 0) return capped;
+        const pinned = capped.slice();
+        const [fav] = pinned.splice(favIndex, 1);
+        pinned.unshift(fav);
+        return pinned;
       };
       return {
         recentPlays: [],
         addRecentPlay: (recentPlay: RecentPlay) => {
+          const { recentPlays } = get();
+          if (recentPlays.some((play) => play.id === recentPlay.id)) {
+            const normalized = pinFavoritesAndCap(recentPlays);
+            // Re-adding an entry that is already there is a no-op. Return
+            // before set() rather than from inside it: persist wraps set() so
+            // that it always writes the whole list back to MMKV, even when
+            // zustand skips notifying subscribers. Screens call this on every
+            // play, so that write (and waking every listener, including the
+            // Android Auto tree rebuild, which hits the server) is pure waste.
+            if (normalized === recentPlays) return;
+            set({ recentPlays: normalized });
+            return;
+          }
           set((state) => {
-            if (state.recentPlays.some((play) => play.id === recentPlay.id)) {
-              return { recentPlays: pinFavoritesAndCap(state.recentPlays) };
-            }
             const newRecentPlays = [recentPlay, ...state.recentPlays];
             return { recentPlays: pinFavoritesAndCap(newRecentPlays) };
           });

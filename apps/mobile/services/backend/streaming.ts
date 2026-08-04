@@ -100,6 +100,43 @@ export const streamUrl = (
   );
 };
 
+// Bitrate the waveform analysis copy is transcoded at. A waveform only needs the
+// amplitude envelope, which survives heavy lossy compression intact, so this is
+// purely about not pulling a 40 MB FLAC to draw 1024 bars — mp3 at 64 kbps is
+// ~1.4 MB for a 3-minute track and decodes in well under a second.
+const ANALYSIS_FORMAT: StreamFormat = "mp3";
+const ANALYSIS_MAX_BITRATE = 64;
+
+/**
+ * A cheap, deliberately low-quality copy of a track, used only to compute its
+ * waveform envelope (see services/waveform/source.ts). Never played.
+ *
+ * Returns null when the track is already a local file (the caller reads it off
+ * disk instead) — there is nothing to fetch and nothing to transcode.
+ *
+ * The extension matters: iOS's AVURLAsset infers a file's container from its
+ * name, so the analysis temp file has to be saved with this suffix.
+ */
+export const analysisUrl = (
+  id: string,
+): { url: string; suffix: string } | null => {
+  if (localFileUrl(id) != null) return null;
+  if (isJellyfin()) {
+    return {
+      url: jellyfinOfflineStreamUrl(id, ANALYSIS_FORMAT, ANALYSIS_MAX_BITRATE),
+      suffix: jellyfinOfflineTranscodeSuffix(ANALYSIS_FORMAT),
+    };
+  }
+  const { url } = useAuthBase.getState();
+  if (!url) return null;
+  return {
+    url: resolveServerBase(
+      `${url}/rest/stream?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json&format=${ANALYSIS_FORMAT}&maxBitRate=${ANALYSIS_MAX_BITRATE}`,
+    ),
+    suffix: ANALYSIS_FORMAT,
+  };
+};
+
 // Backend-aware transcode prediction for the active streaming settings. The
 // generic getTranscodeInfo comparison (suffix vs streamingFormat) matches
 // Subsonic's `format=` semantics; Jellyfin instead negotiates against the

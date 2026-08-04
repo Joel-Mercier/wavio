@@ -12,6 +12,10 @@ import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
 import { handleBrowsePlay } from "@/services/carAuto/play";
 import { buildBrowseTree, getSnapshot } from "@/services/carAuto/tree";
 import {
+  getIsEffectivelyOnline,
+  subscribeEffectiveOnline,
+} from "@/services/network";
+import {
   configurePlayback,
   pause,
   play,
@@ -24,8 +28,8 @@ import {
   applyStartupLocale,
   hydratePlaybackStores,
 } from "@/services/startupHydration";
-import { useAuthBase } from "@/stores/auth";
-import usePodcasts from "@/stores/podcasts";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 
@@ -40,6 +44,13 @@ import useRecentPlays from "@/stores/recentPlays";
 // from index.js so it covers every JS boot, headless or not.
 
 const REBUILD_DEBOUNCE_MS = 500;
+// How long a pushed tree is trusted before the next trigger is allowed to
+// rebuild it. The fingerprint below can only cover local state, but most of
+// what the tree shows comes from the server (home sections, playlists, starred)
+// and nothing notifies this process when the phone UI — or another client —
+// changes any of it. The TTL bounds how stale the car's view can get while
+// still collapsing the burst of triggers a single play produces.
+const REBUILD_TTL_MS = 5 * 60 * 1000;
 const PLAYBACK_PUSH_INTERVAL_MS = 1000;
 
 // Pairs with CarAutoLog on the native side: a headless session has no UI to
@@ -82,6 +93,60 @@ const builtNothing = () => {
   );
 };
 
+// Fingerprint of everything buildBrowseTree() reads out of local state. The
+// store subscriptions below are unselective — they fire on every set(), and
+// most of those change nothing the tree renders — while a rebuild costs a burst
+// of server requests (album lists, playlists, starred, plus per-album and
+// per-artist prefetches). Cheap to compute, so compare before spending it.
+const rebuildSignature = () => {
+  const {
+    isAuthenticated,
+    serverId,
+    url,
+    username,
+    serverType,
+    subsonicSalt,
+    subsonicToken,
+    useTokenAuth,
+    password,
+    jellyfinAccessToken,
+  } = useAuthBase.getState();
+  const podcasts = usePodcasts.getState();
+  const podcastsEnabled = Boolean(
+    podcasts.taddyPodcastsApiKey && podcasts.taddyPodcastsUserId,
+  );
+  return JSON.stringify([
+    isAuthenticated,
+    serverId,
+    url,
+    username,
+    serverType,
+    // Every cover URL baked into the tree carries the session's credentials
+    // (`t`/`s`, or `p` when token auth is off — see utils/artwork.ts), and the
+    // salt is regenerated on every login while url/username stay identical.
+    // Without these, signing out and back in would keep a tree whose artwork
+    // all 401s.
+    subsonicSalt,
+    subsonicToken,
+    useTokenAuth,
+    password,
+    jellyfinAccessToken,
+    // The tree is built with translated section titles, so a locale change has
+    // to invalidate it.
+    i18n.language,
+    useRecentPlays
+      .getState()
+      .recentPlays.map((p) => [p.id, p.type, p.title, p.coverArt]),
+    podcastsEnabled,
+    podcastsEnabled
+      ? podcastFavoritesForScope(
+          podcasts.favoritePodcasts,
+          currentAuthScope(),
+        ).map((p) => [p.uuid, p.name, p.authorName, p.imageUrl])
+      : null,
+  ]);
+};
+
 let started = false;
 
 export function startCarAutoSession() {
@@ -122,38 +187,90 @@ async function wire() {
   ]);
 
   let timer: ReturnType<typeof setTimeout> | null = null;
+  // Only ever set after a *complete* tree was actually pushed, so a build that
+  // failed, came back empty or came back partial (offline, server unreachable,
+  // a section that timed out) stays retryable.
+  let pushedSignature: string | null = null;
+  let pushedAt = 0;
+  let building = false;
+  let rebuildQueued = false;
 
   const rebuild = () => {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const { isAuthenticated, url, username, serverType } =
-        useAuthBase.getState();
-      // The on-device library has no url/username, so gate on the session
-      // being authenticated and only require credentials for remote servers.
-      if (!isAuthenticated) return log("rebuild skipped: not authenticated");
-      if (serverType !== "local" && (!url || !username)) {
-        return log("rebuild skipped: no credentials");
-      }
+    timer = setTimeout(runRebuild, REBUILD_DEBOUNCE_MS);
+  };
+
+  const runRebuild = async () => {
+    // The debounce only delays the *start* of a build; the build itself is
+    // dozens of sequential requests and routinely outlives the next trigger.
+    // Two of them running at once would interleave their writes to the shared
+    // snapshot play.ts resolves taps against, and could push the older tree
+    // last — so serialize, and re-run once for whatever arrived meanwhile.
+    if (building) {
+      rebuildQueued = true;
+      return;
+    }
+    const { isAuthenticated, url, username, serverType } =
+      useAuthBase.getState();
+    // The on-device library has no url/username, so gate on the session
+    // being authenticated and only require credentials for remote servers.
+    if (!isAuthenticated) return log("rebuild skipped: not authenticated");
+    if (serverType !== "local" && (!url || !username)) {
+      return log("rebuild skipped: no credentials");
+    }
+    const signature = rebuildSignature();
+    if (
+      signature === pushedSignature &&
+      Date.now() - pushedAt < REBUILD_TTL_MS
+    ) {
+      return;
+    }
+    building = true;
+    try {
       log("rebuild: building tree");
-      const tree = await buildBrowseTree().catch((e) => {
+      const build = await buildBrowseTree().catch((e) => {
         log("buildBrowseTree threw", e);
         return null;
       });
-      if (!tree) return;
+      if (!build) return;
       // Silence here would be indistinguishable from a build that never
       // finished — and this guard dropping a good tree is the one way it can be
       // wrong, so it has to say so.
       if (builtNothing()) return log("rebuild skipped: build returned nothing");
       log("rebuild: pushing tree");
-      if (CarAutoBridge.available) CarAutoBridge.setNodes(tree);
-      if (Platform.OS === "ios") updateCarPlayTree(tree);
-    }, REBUILD_DEBOUNCE_MS);
+      // A partial tree is still worth pushing — it beats the stale native disk
+      // cache — but it must not pin its signature, or the sections the server
+      // failed to answer would stay empty for the life of the process.
+      if (build.complete) {
+        pushedSignature = signature;
+        pushedAt = Date.now();
+      } else {
+        pushedSignature = null;
+        log("rebuild: build incomplete, staying retryable");
+      }
+      if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
+      if (Platform.OS === "ios") updateCarPlayTree(build.tree);
+    } finally {
+      building = false;
+      if (rebuildQueued) {
+        rebuildQueued = false;
+        rebuild();
+      }
+    }
   };
 
   useAuthBase.subscribe(rebuild);
   useRecentPlays.subscribe(rebuild);
   usePodcasts.subscribe(rebuild);
   i18n.on("languageChanged", rebuild);
+  subscribeEffectiveOnline(() => {
+    // Connectivity is invisible to the fingerprint, so a tree built while the
+    // server was unreachable would otherwise never be repaired. Drop it on the
+    // way back up and rebuild from a server that can actually answer.
+    if (!getIsEffectivelyOnline()) return;
+    pushedSignature = null;
+    rebuild();
+  });
 
   rebuild();
 

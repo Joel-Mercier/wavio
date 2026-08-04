@@ -310,6 +310,40 @@ CREATE INDEX IF NOT EXISTS idx_album_tag_matches_status
   ON album_tag_matches(status);
 `;
 
+// Cached waveform envelopes for the waveform seekbar (services/waveform).
+// Despite living in this file, these are not local-library rows: the id is
+// whatever track id the *active backend* uses, so a Navidrome or Jellyfin scope
+// fills this table too — which is exactly why it belongs in the per-scope
+// database rather than a global one, since the same id means different audio on
+// two different servers.
+//
+// A row is a derived cache and always safe to lose: dropping the table only
+// costs a re-decode. `peaks` is a BLOB of one byte per bucket (~1 KB), so even
+// a large library stays a few megabytes, and eviction is a single ORDER BY over
+// `last_used_at`.
+//
+// `status` records permanent decode failures (an unsupported codec) so those
+// tracks are never retried; transient failures bump `attempts` and are retried
+// after a back-off instead. `fingerprint` is written only for local-library
+// files — the one case where the bytes behind a stable id can change — and is
+// NULL elsewhere, where `version` alone decides staleness.
+const SCHEMA_WAVEFORMS = `
+CREATE TABLE IF NOT EXISTS waveforms (
+  id           TEXT PRIMARY KEY NOT NULL,
+  peaks        BLOB,
+  bucket_count INTEGER NOT NULL,
+  duration_ms  INTEGER NOT NULL,
+  status       TEXT NOT NULL,
+  fingerprint  TEXT,
+  version      INTEGER NOT NULL,
+  attempts     INTEGER NOT NULL DEFAULT 0,
+  created_at   INTEGER NOT NULL,
+  last_used_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_waveforms_last_used
+  ON waveforms(last_used_at);
+`;
+
 // Indexes over the stored grouping keys the `tracks_resolved` view reads. These
 // are what album and artist lookups actually seek on; the equivalents on
 // `tracks.album_key` / `tracks.artist_key` only serve the raw scanned values,
@@ -428,6 +462,7 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(SCHEMA_STATS);
   await db.execAsync(SCHEMA_V4);
   await db.execAsync(SCHEMA_V5);
+  await db.execAsync(SCHEMA_WAVEFORMS);
 
   // SCHEMA_V1's `CREATE TABLE IF NOT EXISTS` won't add a column to a `tracks`
   // table that already exists from an earlier schema, so add later columns with
