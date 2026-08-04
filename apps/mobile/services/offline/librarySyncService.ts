@@ -22,10 +22,12 @@ import {
   buildArtistArtworkAliases,
   buildTrackArtworkAliases,
   groupSongIdsByAlbum,
+  hasUnseenAutoTracks,
   isArtworkStale,
   isSongEnumerationComplete,
   isSyncStale,
   MIN_FREE_DISK_BYTES,
+  nextSongCalibration,
   planServerDeletions,
   playlistToAutoCollection,
   QUEUE_LOW_WATER,
@@ -34,6 +36,7 @@ import {
   refreshedOfflineTrack,
   SONG_PAGE_SIZE,
   shouldWriteAutoCollection,
+  songEnumerationBaseline,
 } from "@/services/offline/librarySyncPlan";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
@@ -645,20 +648,42 @@ export class LibrarySyncService {
     );
     // The songs enumeration just ended (a page shorter than SONG_PAGE_SIZE is
     // how the protocol signals "last page"). That's also exactly how a
-    // truncated page looks, so cross-check the total against the albums phase's
-    // independent estimate before letting this pass delete anything.
+    // truncated page looks, so cross-check the total against an independent
+    // baseline before letting this pass delete anything.
     let passTrusted = true;
     if (pageDone) {
       const sync = useLibrarySync.getState();
-      const uniqueSeenSongs = new Set(sync.seenSongIds).size;
-      passTrusted = isSongEnumerationComplete(
-        uniqueSeenSongs,
-        sync.albumSongEstimate,
-      );
+      const seenSongIds = new Set(sync.seenSongIds);
+      const uniqueSeenSongs = seenSongIds.size;
+      const baseline = songEnumerationBaseline(sync.albumSongEstimate, sync);
+      passTrusted = isSongEnumerationComplete(uniqueSeenSongs, baseline);
+      useLibrarySync.getState().setCalibration({
+        ...nextSongCalibration({
+          uniqueSeenSongs,
+          albumSongEstimate: sync.albumSongEstimate,
+          passTrusted,
+          calibration: sync,
+          lastPassSongCount: sync.lastPassSongCount,
+          unseenAutoTracks: hasUnseenAutoTracks(
+            useOffline.getState().downloadedTracks,
+            seenSongIds,
+          ),
+        }),
+        lastPassSongCount: uniqueSeenSongs,
+      });
       if (!passTrusted) {
-        logError(
-          `Library sync: song enumeration looks truncated (${uniqueSeenSongs} of ~${sync.albumSongEstimate}); skipping deletion reconciliation for this pass`,
-        );
+        // Falling short while there is no measured baseline yet is expected:
+        // the pass is judged against the album bootstrap, which a server that
+        // keeps rows for absent files can never satisfy. Not worth reporting —
+        // logError ships to Sentry.
+        const message = `Library sync: song enumeration looks truncated (${uniqueSeenSongs} of ~${baseline}); skipping deletion reconciliation for this pass`;
+        if (sync.enumerableSongCount === null) {
+          if (__DEV__) {
+            console.log(`[librarySync] ${message} (no measured baseline yet)`);
+          }
+        } else {
+          logError(message);
+        }
       }
     }
     useLibrarySync.getState().setCrawl({

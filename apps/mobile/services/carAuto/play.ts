@@ -1,8 +1,10 @@
-import { getAlbum, getArtist } from "@/services/backend/browsing";
+import { getAlbum, getArtist, getSong } from "@/services/backend/browsing";
+import { getStarred2 } from "@/services/backend/lists";
 import { getPlaylist } from "@/services/backend/playlists";
 import { playTracks } from "@/services/player";
 import { fetchTopSongs, supportsTopSongsById } from "@/services/topSongs";
 import type { QueueTrack } from "@/stores/queue";
+import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { getSnapshot } from "./tree";
 
@@ -34,13 +36,53 @@ export async function handleBrowsePlay(
     if (parsed && effectiveParent) {
       const enqueued = await playFromParent(mediaId, effectiveParent);
       if (enqueued) return true;
+      // Snapshot miss. Android Auto can browse a tree the native side restored
+      // from disk into a process where JS has only just booted, so the tap
+      // routinely lands before buildBrowseTree() has repopulated anything.
+      // Fetch the collection instead of dropping the tap.
+      const fromServer = await playParentFromServer(
+        parsed.songId,
+        effectiveParent,
+      );
+      if (fromServer) return true;
     }
     const tracks = await resolveTracksForMediaId(mediaId);
-    if (!tracks || tracks.length === 0) return false;
-    return playTracks(tracks, 0);
+    if (tracks && tracks.length > 0) return playTracks(tracks, 0);
+    // Parents that aren't tracklists (home sections, library folders) can't be
+    // enqueued around the tap — play the song on its own rather than nothing.
+    const songId = parsed?.songId ?? legacyTrackId(mediaId);
+    if (songId) return playSongById(songId);
+    return false;
   } catch {
     return false;
   }
+}
+
+// Resolve the tapped track's collection from the backend and start at it.
+// Parents that don't resolve to a tracklist (a grid of albums, a library
+// folder) yield nothing and leave the queue alone.
+async function playParentFromServer(
+  songId: string,
+  parentId: string,
+): Promise<boolean> {
+  const tracks = await resolveTracksForMediaId(parentId).catch(() => null);
+  if (!tracks || tracks.length === 0) return false;
+  const index = tracks.findIndex((t) => t.id === songId);
+  return playTracks(tracks, Math.max(0, index));
+}
+
+// `track:<id>` ids predate the parent-embedding format and can still be sitting
+// in a browse tree the native side restored from disk.
+function legacyTrackId(mediaId: string): string | null {
+  return mediaId.startsWith("track:")
+    ? mediaId.slice("track:".length) || null
+    : null;
+}
+
+async function playSongById(songId: string): Promise<boolean> {
+  const rsp = await getSong(songId).catch(() => null);
+  if (!rsp?.song) return false;
+  return playTracks([childToTrack(rsp.song)], 0);
 }
 
 // Enqueue the parent's playable children, start at the tapped one. Returns
@@ -101,7 +143,35 @@ export async function resolveTracksForMediaId(
     }
     case "favorites": {
       const songs = Array.from(snap.tracks.values()).filter((t) => t.starred);
-      return songs.length > 0 ? songs.map(childToTrack) : null;
+      if (songs.length > 0) return songs.map(childToTrack);
+      const rsp = await getStarred2({});
+      const starred = rsp.starred2?.song ?? [];
+      return starred.length > 0 ? starred.map(childToTrack) : null;
+    }
+    case "radio": {
+      // Radio nodes only ever come from the recent plays store (tree.ts). That
+      // store is `skipHydration`, so a cold start only resolves this because
+      // session.ts rehydrates it before answering the car — see
+      // services/startupHydration.ts.
+      const station = useRecentPlays
+        .getState()
+        .recentPlays.find(
+          (p) => p.type === "internetRadioStation" && p.id === id,
+        );
+      if (!station?.streamUrl) return null;
+      return [
+        {
+          id: station.id,
+          url: station.streamUrl,
+          title: station.title,
+          artwork: station.coverArt,
+          artist: station.homePageUrl,
+          isRadio: true,
+          streamUrl: station.streamUrl,
+          homePageUrl: station.homePageUrl,
+          source: station.source,
+        },
+      ];
     }
     case "artist": {
       const cachedTop = snap.artistTopSongs.get(id);

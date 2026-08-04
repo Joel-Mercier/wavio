@@ -1251,12 +1251,24 @@ useAuthBase.subscribe((state) => {
   reloadAtOffset(current, getCurrentTime());
 });
 
+// Called from both the UI root and the car session (which is the only caller in
+// a headless Android Auto boot, where no screen ever mounts), so it has to be
+// safe to invoke twice in one process.
+// Holds the in-flight/settled call rather than a "done" flag, so concurrent
+// callers share one attempt and a rejected one is retried by the next caller
+// instead of leaving background playback silently unconfigured for the process.
+let playbackConfigured: Promise<void> | null = null;
+
 export async function configurePlayback() {
-  await setAudioModeAsync({
+  playbackConfigured ??= setAudioModeAsync({
     playsInSilentMode: true,
     shouldPlayInBackground: true,
     interruptionMode: "doNotMix",
+  }).catch((e) => {
+    playbackConfigured = null;
+    throw e;
   });
+  await playbackConfigured;
 }
 
 // Returns whether the queue was actually replaced, so callers can tell the user
