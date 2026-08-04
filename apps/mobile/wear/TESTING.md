@@ -209,8 +209,16 @@ C6 is the regression that matters most for everyone who doesn't own a watch.
 | D2 | Turn off Bluetooth, tap a control | "Can't reach your phone" appears |
 | D3 | Sign out / switch servers on the phone | Watch state and artwork clear; nothing from the old server lingers |
 | D4 | Play a local-library track with no cover art | Placeholder icon, no crash, no blank title |
+| D5 | Start playback, then swipe the phone app away (audio keeps playing) | Watch keeps tracking the track and position; its transport controls still work |
+| D6 | Force-stop the phone app, connect Android Auto, start playback **from the car** | Watch shows the car's track and can control it |
 
 D3 is the per-scope isolation rule the rest of the app follows.
+
+D5 and D6 are why the JS half lives in `services/wear/session.ts`, started from
+`index.js`, rather than in a component: in both, the process and the JS runtime
+are alive but no React surface is mounted. Failing them looks worse than D1 —
+the DataItems are retained, so the watch shows a stale track with buttons that
+appear live instead of "Open Wavio on your phone".
 
 ### E. Protocol compatibility
 
