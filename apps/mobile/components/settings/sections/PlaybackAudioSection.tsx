@@ -1,7 +1,8 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import * as Application from "expo-application";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
   SettingsActionRow,
@@ -15,10 +16,13 @@ import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { isAudioWaveformAvailable } from "@/modules/audio-waveform";
 import {
   isEqualizerAvailable,
   openSystemEqualizer,
 } from "@/services/equalizer";
+import { clearWaveformMemory } from "@/services/waveform";
+import { clearWaveforms } from "@/services/waveform/cache";
 import useApp, { type StreamFormat } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
@@ -52,8 +56,10 @@ const queueSyncOptions: ("server" | "local" | "off")[] = [
 
 export default function PlaybackAudioSection() {
   const { t } = useTranslation();
-  const { showErrorToast } = useSettingsToast();
+  const { showErrorToast, showSuccessToast } = useSettingsToast();
   const capabilities = useCapabilities();
+  const [showClearWaveformsDialog, setShowClearWaveformsDialog] =
+    useState(false);
   const isLocal = useAuthBase((store) => store.serverType === "local");
 
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
@@ -85,6 +91,12 @@ export default function PlaybackAudioSection() {
   const setLyricsSource = useApp((store) => store.setLyricsSource);
   const lyricsKeepScreenOn = useApp((store) => store.lyricsKeepScreenOn);
   const setLyricsKeepScreenOn = useApp((store) => store.setLyricsKeepScreenOn);
+  const waveformSeekbarEnabled = useApp(
+    (store) => store.waveformSeekbarEnabled,
+  );
+  const setWaveformSeekbarEnabled = useApp(
+    (store) => store.setWaveformSeekbarEnabled,
+  );
 
   const adjustPreamp = (delta: number) => {
     const next = Math.min(15, Math.max(-15, replayGainPreampDb + delta));
@@ -99,6 +111,17 @@ export default function PlaybackAudioSection() {
     }
   };
 
+  // Also drops the in-memory tier, so a track already on screen re-analyzes
+  // rather than keeping the peaks it was showing.
+  const handleClearWaveformsPress = async () => {
+    setShowClearWaveformsDialog(false);
+    await clearWaveforms();
+    clearWaveformMemory();
+    showSuccessToast(
+      t("app.settings.playbackSettings.waveformCacheSuccessMessage"),
+    );
+  };
+
   const formatBitRate = (value: number | null) =>
     value === null
       ? t("app.settings.streamingSettings.audioQualityOriginal")
@@ -111,6 +134,17 @@ export default function PlaybackAudioSection() {
       title={t("app.settings.menu.playback.title")}
       overlays={
         <>
+          <ConfirmActionDialog
+            isOpen={showClearWaveformsDialog}
+            onClose={() => setShowClearWaveformsDialog(false)}
+            title={t("app.settings.playbackSettings.waveformCacheConfirmTitle")}
+            description={t(
+              "app.settings.playbackSettings.waveformCacheConfirmDescription",
+            )}
+            cancelLabel={t("app.shared.cancel")}
+            confirmLabel={t("app.shared.clear")}
+            onConfirm={handleClearWaveformsPress}
+          />
           <OptionsBottomSheetModal
             modalRef={bottomSheetQueueSyncModalRef}
             header={t("app.settings.playbackSettings.queueSyncLabel")}
@@ -262,6 +296,29 @@ export default function PlaybackAudioSection() {
           onToggle={(value) => setLyricsKeepScreenOn(value)}
           disabled={lyricsSource === "off"}
         />
+        {isAudioWaveformAvailable() && (
+          <>
+            <SettingsToggleRow
+              label={t("app.settings.playbackSettings.waveformSeekbarLabel")}
+              description={t(
+                "app.settings.playbackSettings.waveformSeekbarDescription",
+              )}
+              value={waveformSeekbarEnabled}
+              onToggle={(value) => setWaveformSeekbarEnabled(value)}
+            />
+            {waveformSeekbarEnabled && (
+              <SettingsActionRow
+                variant="danger"
+                label={t("app.settings.playbackSettings.waveformCacheLabel")}
+                description={t(
+                  "app.settings.playbackSettings.waveformCacheDescription",
+                )}
+                actionLabel={t("app.shared.clear")}
+                onPress={() => setShowClearWaveformsDialog(true)}
+              />
+            )}
+          </>
+        )}
         <Divider className="bg-primary-400" />
         <SettingsSectionTitle
           title={t("app.settings.streamingSettings.title")}
