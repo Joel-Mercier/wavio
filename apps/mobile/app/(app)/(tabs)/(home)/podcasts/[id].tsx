@@ -13,7 +13,7 @@ import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/podcast.mjs";
+import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import { useMemo, useRef } from "react";

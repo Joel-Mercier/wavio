@@ -1,17 +1,11 @@
-import { useEffect, useState } from "react";
-import type { LayoutChangeEvent, ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
 import { View } from "react-native";
-import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
-import Animated, {
-  type SharedValue,
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-} from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
+import { GestureDetector } from "react-native-gesture-handler";
+import type { SharedValue } from "react-native-reanimated";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { Uniwind } from "uniwind";
 import BufferingSweep from "@/components/player/BufferingSweep";
+import useScrubGesture from "@/hooks/useScrubGesture";
 
 const CONTAINER_HEIGHT = 24;
 const TRACK_HEIGHT = 6;
@@ -19,7 +13,6 @@ const THUMB_SIZE = 16;
 const TRACK_TOP = (CONTAINER_HEIGHT - TRACK_HEIGHT) / 2;
 const THUMB_TOP = (CONTAINER_HEIGHT - THUMB_SIZE) / 2;
 const TICK_HEIGHT = 22;
-const DEFAULT_SETTLE_EPSILON = 0.01;
 
 type GestureSliderProps = {
   // Current position as a 0..1 fraction. Pass `progress` (a shared value, for a
@@ -55,7 +48,7 @@ export default function GestureSlider({
   disabled = false,
   buffering = false,
   ticks,
-  settleEpsilon = DEFAULT_SETTLE_EPSILON,
+  settleEpsilon,
   resetKey,
   onScrub,
   onComplete,
@@ -75,45 +68,21 @@ export default function GestureSlider({
   const thumb = thumbColor ?? white;
   const tick = tickColor ?? emerald500;
 
-  const [trackWidth, setTrackWidth] = useState(0);
-  const widthSV = useSharedValue(0);
-  // The source of truth: either an externally driven shared value (`progress`)
-  // or a shared value we mirror the controlled `value` into.
-  const controlled = useSharedValue(value ?? 0);
-  const source = progress ?? controlled;
-
-  const isDragging = useSharedValue(false);
-  const dragFrac = useSharedValue(0);
-  const pending = useSharedValue(-1);
-
-  useEffect(() => {
-    if (progress == null && value != null) controlled.value = value;
-  }, [value, progress, controlled]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: shared-value writes are stable; intentionally re-run only when the identity changes.
-  useEffect(() => {
-    isDragging.value = false;
-    pending.value = -1;
-  }, [resetKey]);
-
-  const displayFrac = useDerivedValue(() => {
-    if (isDragging.value) return dragFrac.value;
-    if (pending.value >= 0) return pending.value;
-    return source.value;
+  const {
+    gesture,
+    onLayout,
+    displayFrac,
+    widthSV,
+    width: trackWidth,
+  } = useScrubGesture({
+    value,
+    progress,
+    disabled,
+    settleEpsilon,
+    resetKey,
+    onScrub,
+    onComplete,
   });
-
-  useAnimatedReaction(
-    () => source.value,
-    (cur) => {
-      if (
-        pending.value >= 0 &&
-        Math.abs(cur - pending.value) <= settleEpsilon
-      ) {
-        pending.value = -1;
-      }
-    },
-    [settleEpsilon],
-  );
 
   const fillStyle = useAnimatedStyle(() => {
     const usable = Math.max(0, widthSV.value - THUMB_SIZE);
@@ -127,48 +96,11 @@ export default function GestureSlider({
     return { transform: [{ translateX: p * usable }] };
   });
 
-  const handleLayout = (e: LayoutChangeEvent) => {
-    const w = e.nativeEvent.layout.width;
-    setTrackWidth(w);
-    widthSV.value = w;
-  };
-
-  // A single pan with minDistance 0 handles both a tap (begin -> finalize with no
-  // movement) and a drag, so tapping anywhere on the bar reliably seeks. The
-  // commit lives in onFinalize, which always fires on release; the seek/commit
-  // fires only on release, while dragging just moves the thumb.
-  const gesture = usePanGesture({
-    minDistance: 0,
-    enabled: !disabled,
-    hitSlop: { top: 16, bottom: 16 },
-    onBegin: (e) => {
-      const w = widthSV.value;
-      const frac = w > 0 ? Math.min(1, Math.max(0, e.x / w)) : 0;
-      isDragging.value = true;
-      dragFrac.value = frac;
-      if (onScrub) scheduleOnRN(onScrub, frac);
-    },
-    onUpdate: (e) => {
-      const w = widthSV.value;
-      const frac = w > 0 ? Math.min(1, Math.max(0, e.x / w)) : 0;
-      dragFrac.value = frac;
-      if (onScrub) scheduleOnRN(onScrub, frac);
-    },
-    onFinalize: () => {
-      const frac = dragFrac.value;
-      isDragging.value = false;
-      // Hold the released position until the source catches up, unless it's
-      // already there (a synchronous source needs no hold).
-      if (Math.abs(source.value - frac) > settleEpsilon) pending.value = frac;
-      if (onComplete) scheduleOnRN(onComplete, frac);
-    },
-  });
-
   return (
     <GestureDetector gesture={gesture}>
       <View
         style={[{ height: CONTAINER_HEIGHT, justifyContent: "center" }, style]}
-        onLayout={handleLayout}
+        onLayout={onLayout}
       >
         <View
           style={{

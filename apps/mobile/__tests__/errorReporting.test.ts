@@ -94,18 +94,21 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
-  it.each([
-    502, 503, 504, 521, 524,
-  ])("suppresses a gateway/upstream %s (edge up, origin unreachable)", (status) => {
-    const error = new axios.AxiosError(`Request failed with status ${status}`);
-    error.response = { status } as never;
-    reportError(error, {
-      area: "api",
-      backend: "subsonic",
-      endpoint: "/rest/getAlbumList2",
-    });
-    expect(mockCapture).not.toHaveBeenCalled();
-  });
+  it.each([502, 503, 504, 521, 524])(
+    "suppresses a gateway/upstream %s (edge up, origin unreachable)",
+    (status) => {
+      const error = new axios.AxiosError(
+        `Request failed with status ${status}`,
+      );
+      error.response = { status } as never;
+      reportError(error, {
+        area: "api",
+        backend: "subsonic",
+        endpoint: "/rest/getAlbumList2",
+      });
+      expect(mockCapture).not.toHaveBeenCalled();
+    },
+  );
 
   it("still reports a plain 500 (origin itself erroring, not a gateway)", () => {
     const error = new axios.AxiosError("Request failed with status 500");

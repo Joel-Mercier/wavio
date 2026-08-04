@@ -48,13 +48,13 @@ describe("supportsTopSongsById", () => {
     expect(supportsTopSongsById()).toBe(false);
   });
 
-  it.each([
-    "jellyfin",
-    "local",
-  ])("is true on %s without any extension", (type) => {
-    mockServerType = type;
-    expect(supportsTopSongsById()).toBe(true);
-  });
+  it.each(["jellyfin", "local"])(
+    "is true on %s without any extension",
+    (type) => {
+      mockServerType = type;
+      expect(supportsTopSongsById()).toBe(true);
+    },
+  );
 
   it("is false on navidrome before the extension is advertised", () => {
     // Navidrome only gained it in 0.64 — the static matrix must not assume it.

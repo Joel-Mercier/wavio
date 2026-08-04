@@ -611,7 +611,7 @@ export default function PlayerScreen() {
                 )}
               </HStack>
               {!isRadio && <AudioQualityLine track={playingTrack ?? null} />}
-              {!isRadio && <PlaybackSlider />}
+              {!isRadio && <PlaybackSlider allowWaveform />}
               {isRadio && <Box className="mb-6" />}
               <HStack
                 className={

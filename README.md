@@ -71,7 +71,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net. Navidrome word-by-word karoake style lyrics support with multiple voices, pronunciation and translation support.
-- Downloaders section with [Lidarr](https://lidarr.audio/) integration. Search and add content to your music library directly from the app. See downloads progress and history.
+- Downloaders section with [Lidarr](https://lidarr.audio/) and [SoulSync](https://ssync.net/) integration. Search and add content to your music library directly from the app. See downloads progress and history.
 - [MusicBrainz](https://musicbrainz.org/) integration for local libraries, tag directly from the app using the MusicBrainz api, write to file or write to app data only option, review workflow, tags to replace selection, auto apply toggle, customizable confidence threshold for auto apply
 - Bookmarks support. Easy access to a song or podcast favorite parts
 - Customizable swipe gestures for tracks
