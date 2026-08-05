@@ -1790,7 +1790,8 @@
 					"podcasts": "Подкасты",
 					"radioStations": "Радиостанции",
 					"folders": "Папки",
-					"songs": "Треки"
+					"songs": "Треки",
+					"downloaded": "Downloaded"
 				},
 				"save": "Сохранить",
 				"done": "Готово",
