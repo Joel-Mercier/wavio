@@ -61,6 +61,7 @@
 				"searchPlaceholder": "在音乐库中搜索",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "专辑",
 				"allArtistsSubtitle": "艺人",
 				"search": {
@@ -1225,7 +1226,14 @@
 							"label": "关闭",
 							"description": "不同步。队列仅保留在本设备，不会上传至服务器。"
 						}
-					}
+					},
+					"waveformSeekbarLabel": "Waveform seek bar",
+					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
+					"waveformCacheLabel": "Waveform cache",
+					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
+					"waveformCacheConfirmTitle": "Clear waveform cache?",
+					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
+					"waveformCacheSuccessMessage": "Waveform cache cleared"
 				},
 				"streamingSettings": {
 					"title": "流媒体设置",
@@ -1541,6 +1549,8 @@
 					"artist": "播放自艺人",
 					"likedSongs": "播放自喜欢的歌曲",
 					"allSongs": "Playing from all songs",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "播放自文件夹",
 					"similar": "播放自相似歌曲",
 					"audiomuse": "正在播放来自 AudioMuse-AI 的内容",
@@ -1708,7 +1718,8 @@
 					"podcasts": "播客",
 					"radioStations": "广播电台",
 					"folders": "文件夹",
-					"songs": "歌曲"
+					"songs": "歌曲",
+					"downloaded": "Downloaded"
 				},
 				"save": "保存",
 				"done": "完成",

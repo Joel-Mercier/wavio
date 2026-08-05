@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Busca en tu biblioteca",
 				"allAlbums": "Todos los álbumes",
 				"allArtists": "Todos los artistas",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Álbumes",
 				"allArtistsSubtitle": "Artistas",
 				"search": {
@@ -1239,7 +1240,14 @@
 							"label": "Apagado",
 							"description": "No se sincroniza. Tu cola se queda únicamente en este dispositivo y nunca se envía al servidor."
 						}
-					}
+					},
+					"waveformSeekbarLabel": "Waveform seek bar",
+					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
+					"waveformCacheLabel": "Waveform cache",
+					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
+					"waveformCacheConfirmTitle": "Clear waveform cache?",
+					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
+					"waveformCacheSuccessMessage": "Waveform cache cleared"
 				},
 				"streamingSettings": {
 					"title": "Configuración de streaming",
@@ -1562,6 +1570,8 @@
 					"artist": "Reproducción del artista",
 					"likedSongs": "Reproducir canciones que te gustan",
 					"allSongs": "Reproduciendo todas las canciones",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Reproducción desde una carpeta",
 					"similar": "Reproducción de canciones similares",
 					"audiomuse": "Reproducción desde AudioMuse-AI",
@@ -1733,7 +1743,8 @@
 					"podcasts": "Podcasts",
 					"radioStations": "Emisoras de radio",
 					"folders": "Carpetas",
-					"songs": "Canciones"
+					"songs": "Canciones",
+					"downloaded": "Downloaded"
 				},
 				"save": "Guardar",
 				"done": "Hecho",

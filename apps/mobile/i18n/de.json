@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Durchsuchen Sie Ihre Bibliothek",
 				"allAlbums": "Alle Alben",
 				"allArtists": "Alle Künstler",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Alben",
 				"allArtistsSubtitle": "Interpreten",
 				"search": {
@@ -1239,7 +1240,14 @@
 							"label": "Aus",
 							"description": "Keine Synchronisierung. Deine Warteschlange bleibt ausschließlich auf diesem Gerät gespeichert und wird niemals an den Server gesendet."
 						}
-					}
+					},
+					"waveformSeekbarLabel": "Waveform seek bar",
+					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
+					"waveformCacheLabel": "Waveform cache",
+					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
+					"waveformCacheConfirmTitle": "Clear waveform cache?",
+					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
+					"waveformCacheSuccessMessage": "Waveform cache cleared"
 				},
 				"streamingSettings": {
 					"title": "Streaming-Einstellungen",
@@ -1562,6 +1570,8 @@
 					"artist": "Wiedergabe vom Interpreten",
 					"likedSongs": "Wiedergabe von gemochten Titeln",
 					"allSongs": "Playing from all songs",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Wiedergabe aus einem Ordner",
 					"similar": "Ähnliche Songs abspielen",
 					"audiomuse": "Wiedergabe über AudioMuse-AI",
@@ -1733,7 +1743,8 @@
 					"podcasts": "Podcasts",
 					"radioStations": "Radiosender",
 					"folders": "Ordner",
-					"songs": "Lieder"
+					"songs": "Lieder",
+					"downloaded": "Downloaded"
 				},
 				"save": "Speichern",
 				"done": "Fertig",

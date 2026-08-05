@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Cerca nella tua libreria",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
 				"search": {
@@ -1239,7 +1240,14 @@
 							"label": "Spento",
 							"description": "Non sincronizzare. La tua coda rimane solo su questo dispositivo e non viene mai inviata al server."
 						}
-					}
+					},
+					"waveformSeekbarLabel": "Waveform seek bar",
+					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
+					"waveformCacheLabel": "Waveform cache",
+					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
+					"waveformCacheConfirmTitle": "Clear waveform cache?",
+					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
+					"waveformCacheSuccessMessage": "Waveform cache cleared"
 				},
 				"streamingSettings": {
 					"title": "Impostazioni di streaming",
@@ -1562,6 +1570,8 @@
 					"artist": "Riproduzione dall'artista",
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"allSongs": "Riproduzione da tutti i brani",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
 					"audiomuse": "Riproduzione da AudioMuse-AI",
@@ -1733,7 +1743,8 @@
 					"podcasts": "Podcast",
 					"radioStations": "Stazioni radio",
 					"folders": "Cartelle",
-					"songs": "Canzoni"
+					"songs": "Canzoni",
+					"downloaded": "Downloaded"
 				},
 				"save": "Salva",
 				"done": "Fatto",

@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Поиск в медиатеке",
 				"allAlbums": "Все альбомы",
 				"allArtists": "Все исполнители",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Альбомы",
 				"allArtistsSubtitle": "Исполнители",
 				"search": {
@@ -1267,7 +1268,14 @@
 							"label": "Выкл.",
 							"description": "Без синхронизации. Очередь хранится только на этом устройстве и не отправляется на сервер."
 						}
-					}
+					},
+					"waveformSeekbarLabel": "Waveform seek bar",
+					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
+					"waveformCacheLabel": "Waveform cache",
+					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
+					"waveformCacheConfirmTitle": "Clear waveform cache?",
+					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
+					"waveformCacheSuccessMessage": "Waveform cache cleared"
 				},
 				"streamingSettings": {
 					"title": "Качество аудиостриминга",
@@ -1604,6 +1612,8 @@
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
 					"allSongs": "Из медиатеки",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Из папки",
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
@@ -1783,7 +1793,8 @@
 					"podcasts": "Подкасты",
 					"radioStations": "Радиостанции",
 					"folders": "Папки",
-					"songs": "Треки"
+					"songs": "Треки",
+					"downloaded": "Downloaded"
 				},
 				"save": "Сохранить",
 				"done": "Готово",
