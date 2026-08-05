@@ -18,6 +18,7 @@ import {
   querySongs,
   queryTopSongs,
   queryTrackById,
+  searchTracks,
 } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
@@ -134,6 +135,24 @@ export const getRandomSongs = async (
     fromYear: opts.fromYear,
     toYear: opts.toYear,
   });
+  return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
+};
+
+// Whole-library track browse (title order), or the FTS index when a query is
+// given — the same split the remote backends fold onto one endpoint.
+export const getSongs = async (
+  opts: {
+    query?: string;
+    size?: number;
+    offset?: number;
+    musicFolderId?: string;
+  } = {},
+) => {
+  const limit = opts.size ?? 50;
+  const offset = opts.offset ?? 0;
+  const rows = opts.query
+    ? await searchTracks(opts.query, limit, offset)
+    : await querySongs({ limit, offset });
   return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
 };
 

@@ -87,10 +87,9 @@ export default function AudioMuseResults({
 
   const handleQueuePress = () => {
     if (!tracks?.length) return;
-    enqueueWithoutAutoplay(tracks.map(childToTrack));
-    showSuccessToast(
-      t("app.audiomuse.results.queued", { count: tracks.length }),
-    );
+    const added = enqueueWithoutAutoplay(tracks.map(childToTrack));
+    if (added === 0) return;
+    showSuccessToast(t("app.audiomuse.results.queued", { count: added }));
   };
 
   // The generator answers with ids the library may no longer have; saying so

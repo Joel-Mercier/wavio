@@ -649,20 +649,51 @@ describe("queue store - size cap", () => {
     expect(get().getCurrent()?.id).toBe("t11");
   });
 
-  test("enqueueEnd fills only the remaining capacity", () => {
-    get().setQueue(makeTracks(CAP - 2), 0);
-    get().enqueueEnd(makeTracks(5, "n"));
+  test("enqueueNext at the cap evicts the far end to make room", () => {
+    get().setQueue(makeTracks(CAP), 0);
+    expect(get().enqueueNext(makeTracks(3, "n"))).toBe(3);
     expect(get().queue).toHaveLength(CAP);
-    expect(get().queue[CAP - 1].id).toBe("n2");
-    // At capacity, further enqueues are no-ops.
-    get().enqueueEnd(makeTracks(1, "x"));
-    expect(get().queue).toHaveLength(CAP);
+    // Inserted right after the current track; the tail lost as many entries.
+    expect(ids().slice(0, 5)).toEqual(["t1", "n1", "n2", "n3", "t2"]);
+    expect(get().getCurrent()?.id).toBe("t1");
+    expect(get().queue[CAP - 1].id).toBe(`t${CAP - 3}`);
   });
 
-  test("enqueueNext fills only the remaining capacity", () => {
-    get().setQueue(makeTracks(CAP - 1), 0);
-    get().enqueueNext(makeTracks(3, "n"));
+  test("enqueueNext at the cap evicts played tracks before the far end", () => {
+    get().setQueue(makeTracks(CAP), 500);
+    const upcoming = ids().slice(501);
+    expect(get().enqueueNext(makeTracks(2, "n"))).toBe(2);
     expect(get().queue).toHaveLength(CAP);
-    expect(get().queue[1].id).toBe("n1");
+    // The two oldest played tracks are gone, so the current track shifts down
+    // and everything still ahead of it is untouched.
+    expect(get().currentIndex).toBe(498);
+    expect(get().getCurrent()?.id).toBe("t501");
+    expect(ids()[0]).toBe("t3");
+    expect(ids().slice(499, 501)).toEqual(["n1", "n2"]);
+    expect(ids().slice(501)).toEqual(upcoming);
+  });
+
+  test("enqueueEnd at the cap appends and drops the previous last entry", () => {
+    get().setQueue(makeTracks(CAP), 0);
+    expect(get().enqueueEnd(makeTracks(1, "n"))).toBe(1);
+    expect(get().queue).toHaveLength(CAP);
+    expect(get().queue[CAP - 1].id).toBe("n1");
+    expect(get().queue[CAP - 2].id).toBe(`t${CAP - 1}`);
+    expect(get().getCurrent()?.id).toBe("t1");
+  });
+
+  test("an enqueue never evicts the current track or its own batch", () => {
+    get().setQueue(makeTracks(CAP), 0);
+    // One slot is reserved for the track playing now.
+    expect(get().enqueueNext(makeTracks(CAP + 10, "n"))).toBe(CAP - 1);
+    expect(get().queue).toHaveLength(CAP);
+    expect(ids()[0]).toBe("t1");
+    expect(ids().slice(1)).toEqual(makeTracks(CAP - 1, "n").map((t) => t.id));
+  });
+
+  test("enqueueEnd on an empty queue fills up to the cap", () => {
+    expect(get().enqueueEnd(makeTracks(CAP + 10, "n"))).toBe(CAP);
+    expect(get().queue).toHaveLength(CAP);
+    expect(get().currentIndex).toBe(0);
   });
 });

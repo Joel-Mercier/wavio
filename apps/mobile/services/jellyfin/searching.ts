@@ -26,17 +26,26 @@ async function searchItems(
   limit?: number,
   startIndex?: number,
 ) {
-  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
-    params: {
-      UserId: userId(),
-      Recursive: true,
-      IncludeItemTypes: type,
-      SearchTerm: searchTerm,
-      Limit: limit ?? 20,
-      StartIndex: startIndex ?? 0,
-      Fields: FIELDS,
+  // Artists live outside the library's item hierarchy — the same reason
+  // getMusicDirectory can't browse an artist by ParentId — so /Items never
+  // returns them whatever the filters (verified against 10.11.11: every
+  // MusicArtist query comes back empty, which left artists out of every search
+  // result). /Artists lists them, and honours Limit/StartIndex the same way.
+  const isArtist = type === "MusicArtist";
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
+    isArtist ? "/Artists" : "/Items",
+    {
+      params: {
+        UserId: userId(),
+        Recursive: true,
+        ...(isArtist ? {} : { IncludeItemTypes: type }),
+        SearchTerm: searchTerm,
+        Limit: limit ?? 20,
+        StartIndex: startIndex ?? 0,
+        Fields: FIELDS,
+      },
     },
-  });
+  );
   return rsp.data?.Items ?? [];
 }
 

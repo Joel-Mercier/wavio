@@ -4,6 +4,7 @@
 // - useOfflineAvailability — "can I open/play this offline?" (track/collection/detail)
 // - useOfflineCollection  — reconstruct a saved collection for rendering/playback
 // - useOfflineSearch3     — offline search over downloads + persisted cache
+// - useOfflineTracks      — every downloaded track, for the "All tracks" browse
 
 export {
   type CollectionDownloadStatus,
@@ -26,6 +27,7 @@ export {
 export { useOfflineAlbums } from "./useOfflineAlbums";
 export { useOfflineArtist, useOfflineArtists } from "./useOfflineArtists";
 export {
+  isCollectionAvailableOffline,
   useHasOfflineAlbumCollections,
   useHasPlayableTracks,
   useIsArtistAvailableOffline,
@@ -35,3 +37,4 @@ export {
 } from "./useOfflineAvailability";
 export { useOfflineAlbum, useOfflinePlaylist } from "./useOfflineCollection";
 export { useOfflineSearch3 } from "./useOfflineSearch3";
+export { useOfflineTracks } from "./useOfflineTracks";

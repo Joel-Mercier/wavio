@@ -245,6 +245,125 @@ export const getRandomSongs = async ({
   return fakeEnvelope({ songs });
 };
 
+// How many artist/album name matches a search resolves tracks for.
+const SEARCH_HINTS = 5;
+// How many tracks a search merges over, total. Every page merges this same
+// window and slices it, so paging can't duplicate or skip rows — a per-page
+// window can't: each branch's prefix grows at the *front* as the limit rises,
+// so a later page's union is not a continuation of the earlier one. Matches
+// beyond the window aren't reachable by scrolling, only by refining the query.
+const SEARCH_WINDOW = 200;
+
+const fetchAudio = async (
+  params: Record<string, unknown>,
+  musicFolderId?: string,
+) => {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: {
+      UserId: userId(),
+      Recursive: true,
+      IncludeItemTypes: "Audio",
+      SortBy: "SortName",
+      SortOrder: "Ascending",
+      Fields: FIELDS,
+      ParentId: musicFolderId,
+      ...params,
+    },
+  });
+  return rsp.data?.Items ?? [];
+};
+
+// `SearchTerm` matches item *names* only, so on Audio items it never sees the
+// artist or the album — while the Subsonic counterpart folds onto search3,
+// which matches all three. Resolve the name matches among artists and albums to
+// ids and union their tracks in, so the same query finds the same songs on
+// every backend.
+//
+// Artists live outside the library's item hierarchy (the same reason
+// getMusicDirectory can't browse an artist by ParentId), so a Recursive /Items
+// query scoped to a music folder never returns them. /Artists is the endpoint
+// that does, and its ids are what the ArtistIds filter expects.
+const searchArtistIds = async (query: string, musicFolderId?: string) => {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Artists", {
+    params: {
+      UserId: userId(),
+      SearchTerm: query,
+      Limit: SEARCH_HINTS,
+      ParentId: musicFolderId,
+    },
+  });
+  return (rsp.data?.Items ?? []).map((item) => item.Id).filter(Boolean);
+};
+
+// Albums are ordinary descendants, so they do come back from /Items.
+const searchAlbumIds = async (query: string, musicFolderId?: string) => {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: {
+      UserId: userId(),
+      Recursive: true,
+      IncludeItemTypes: "MusicAlbum",
+      SearchTerm: query,
+      Limit: SEARCH_HINTS,
+      ParentId: musicFolderId,
+    },
+  });
+  return (rsp.data?.Items ?? []).map((item) => item.Id).filter(Boolean);
+};
+
+const searchSongs = async (
+  query: string,
+  size: number,
+  offset: number,
+  musicFolderId?: string,
+) => {
+  const [byName, artistIds, albumIds] = await Promise.all([
+    fetchAudio({ SearchTerm: query, Limit: SEARCH_WINDOW }, musicFolderId),
+    searchArtistIds(query, musicFolderId),
+    searchAlbumIds(query, musicFolderId),
+  ]);
+  const [byArtist, byAlbum] = await Promise.all([
+    artistIds.length
+      ? fetchAudio(
+          { ArtistIds: artistIds.join(","), Limit: SEARCH_WINDOW },
+          musicFolderId,
+        )
+      : [],
+    albumIds.length
+      ? fetchAudio(
+          { AlbumIds: albumIds.join(","), Limit: SEARCH_WINDOW },
+          musicFolderId,
+        )
+      : [],
+  ]);
+  const byId = new Map<string, BaseItemDto>();
+  for (const item of [...byName, ...byArtist, ...byAlbum]) {
+    byId.set(item.Id, item);
+  }
+  return [...byId.values()]
+    .sort((a, b) => (a.Name ?? "").localeCompare(b.Name ?? ""))
+    .slice(offset, offset + size);
+};
+
+// Whole-library track browse, and a search over it (see the Subsonic
+// counterpart, which folds both onto search3).
+export const getSongs = async ({
+  query,
+  size = 50,
+  offset = 0,
+  musicFolderId,
+}: {
+  query?: string;
+  size?: number;
+  offset?: number;
+  musicFolderId?: string;
+} = {}) => {
+  const items = query
+    ? await searchSongs(query, size, offset, musicFolderId)
+    : await fetchAudio({ Limit: size, StartIndex: offset }, musicFolderId);
+  const songs: Songs = { song: items.map(mapBaseItemToChild) };
+  return fakeEnvelope({ songs });
+};
+
 export const getSongsByGenre = async (
   genre: string,
   {
@@ -272,7 +391,26 @@ export const getSongsByGenre = async (
   return fakeEnvelope({ songs });
 };
 
+// Jellyfin has no server-side filter for *favourited artists*. /Items never
+// returns artists at all (see searchItems in searching.ts), and on /Artists both
+// `IsFavorite=true` and `Filters=IsFavorite` match artists that merely *have* a
+// favourite album or song — verified on 10.11.11, where they return an artist
+// whose own UserData.IsFavorite is false, while `IsFavorite=false` returns
+// nothing. So list the artists and keep the ones actually flagged.
+async function getFavoriteArtists() {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Artists", {
+    params: {
+      UserId: userId(),
+      Recursive: true,
+      Fields: FIELDS,
+      SortBy: "SortName",
+    },
+  });
+  return (rsp.data?.Items ?? []).filter((item) => item.UserData?.IsFavorite);
+}
+
 async function getFavorites(type: "MusicAlbum" | "Audio" | "MusicArtist") {
+  if (type === "MusicArtist") return getFavoriteArtists();
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
       UserId: userId(),

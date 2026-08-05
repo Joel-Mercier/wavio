@@ -280,8 +280,9 @@ export default function PlayerSheets({
 
   const handlePlayNextPress = () => {
     if (!playingTrack) return;
-    useQueue.getState().enqueueNext(playingTrack);
+    const added = useQueue.getState().enqueueNext(playingTrack);
     actionsSheetRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -289,7 +290,7 @@ export default function PlayerSheets({
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+            {t("app.shared.addedToPlayNextMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
@@ -298,8 +299,9 @@ export default function PlayerSheets({
 
   const handleAddToQueuePress = () => {
     if (!playingTrack) return;
-    useQueue.getState().enqueueEnd(playingTrack);
+    const added = useQueue.getState().enqueueEnd(playingTrack);
     actionsSheetRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -307,7 +309,7 @@ export default function PlayerSheets({
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToQueueMessage", { count: 1 })}
+            {t("app.shared.addedToQueueMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),

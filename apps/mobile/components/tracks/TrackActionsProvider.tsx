@@ -170,7 +170,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const addToQueue = useCallback(
     (target: Child) => {
-      useQueue.getState().enqueueEnd(childToTrack(target));
+      const added = useQueue.getState().enqueueEnd(childToTrack(target));
+      if (added === 0) return;
       toast.show({
         placement: "top",
         duration: 3000,
@@ -178,7 +179,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
             <ToastDescription>
-              {t("app.shared.addedToQueueMessage", { count: 1 })}
+              {t("app.shared.addedToQueueMessage", { count: added })}
             </ToastDescription>
           </Toast>
         ),
@@ -189,7 +190,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const playNext = useCallback(
     (target: Child) => {
-      useQueue.getState().enqueueNext(childToTrack(target));
+      const added = useQueue.getState().enqueueNext(childToTrack(target));
+      if (added === 0) return;
       toast.show({
         placement: "top",
         duration: 3000,
@@ -197,7 +199,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
             <ToastDescription>
-              {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+              {t("app.shared.addedToPlayNextMessage", { count: added })}
             </ToastDescription>
           </Toast>
         ),
@@ -308,8 +310,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const handlePlayNextPress = () => {
     if (!track) return;
-    useQueue.getState().enqueueNext(childToTrack(track));
+    const added = useQueue.getState().enqueueNext(childToTrack(track));
     bottomSheetModalRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -317,7 +320,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+            {t("app.shared.addedToPlayNextMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
@@ -326,8 +329,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const handleAddToQueuePress = () => {
     if (!track) return;
-    useQueue.getState().enqueueEnd(childToTrack(track));
+    const added = useQueue.getState().enqueueEnd(childToTrack(track));
     bottomSheetModalRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -335,7 +339,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToQueueMessage", { count: 1 })}
+            {t("app.shared.addedToQueueMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
