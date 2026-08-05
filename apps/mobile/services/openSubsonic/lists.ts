@@ -1,7 +1,9 @@
 import {
   folderScopedRequest,
+  okEnvelope,
   subsonicRequest,
 } from "@/services/openSubsonic/index";
+import { search3 } from "@/services/openSubsonic/searching";
 import type {
   AlbumList,
   AlbumList2,
@@ -99,6 +101,36 @@ export const getRandomSongs = async ({
     { size, fromYear, toYear, genre, musicFolderId },
     { songs: {} },
   );
+
+// The whole library, one page at a time. Subsonic has no "get all songs"
+// endpoint: an empty-query search3 is what the spec defines as "everything",
+// and it is already what the extended-offline crawl enumerates the library with
+// (services/offline/librarySyncService.ts stepSongs). A pre-OpenSubsonic server
+// answers error code 10 (required parameter missing) instead.
+// A non-empty `query` goes through the same call, so browsing and searching are
+// the same paginated request.
+export const getSongs = async ({
+  query = "",
+  size,
+  offset,
+  musicFolderId,
+}: {
+  query?: string;
+  size?: number;
+  offset?: number;
+  musicFolderId?: string;
+}) => {
+  const rsp = await search3(query, {
+    songCount: size,
+    songOffset: offset,
+    albumCount: 0,
+    artistCount: 0,
+    musicFolderId,
+  });
+  return okEnvelope<{ songs: Songs }>({
+    songs: { song: rsp.searchResult3?.song ?? [] },
+  });
+};
 
 export const getSongsByGenre = async (
   genre: string,

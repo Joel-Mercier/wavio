@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Search your library",
 				"allAlbums": "All albums",
 				"allArtists": "All artists",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Albums",
 				"allArtistsSubtitle": "Artists",
 				"search": {
@@ -1570,6 +1571,8 @@
 					"artist": "Playing from artist",
 					"likedSongs": "Playing from liked songs",
 					"allSongs": "Playing from all songs",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Playing from folder",
 					"similar": "Playing from similar songs",
 					"audiomuse": "Playing from AudioMuse-AI",

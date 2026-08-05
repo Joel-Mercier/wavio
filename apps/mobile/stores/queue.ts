@@ -10,6 +10,8 @@ export type QueueSource = {
   | "playlist"
   | "artist"
   | "allSongs"
+  // The whole library's track list, not an artist's ("allSongs").
+  | "allTracks"
   | "likedSongs"
   | "folder"
   | "similar"

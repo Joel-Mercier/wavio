@@ -22,6 +22,7 @@ import LibraryListItem, {
   type Favorites,
   type LibraryAllAlbums,
   type LibraryAllArtists,
+  type LibraryAllTracks,
   type LibraryFolder,
   type LibraryPodcast,
   type LibraryRadioStation,
@@ -43,6 +44,7 @@ import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import {
   isCollectionAvailableOffline,
   useDownloadedCollections,
+  useDownloadedTracksCount,
 } from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -147,13 +149,15 @@ export default function LibraryScreen() {
           LibraryFolder &
           LibraryRadioStation &
           LibraryAllAlbums &
-          LibraryAllArtists
+          LibraryAllArtists &
+          LibraryAllTracks
       >
     >(null);
   const musicFolderId = useCurrentMusicFolderId();
   const isOnline = useIsOnline();
   const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
+  const downloadedTracksCount = useDownloadedTracksCount();
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -240,6 +244,11 @@ export default function LibraryScreen() {
       id: "all-albums",
       name: "All albums",
       isAllAlbums: true,
+    };
+    const allTracksItem = {
+      id: "all-tracks",
+      name: "All tracks",
+      isAllTracks: true,
     };
 
     // Offline only: merge saved collections into their bucket so downloaded
@@ -372,17 +381,26 @@ export default function LibraryScreen() {
       addedAt: { value: sortTime, always: true },
       alphabetical: { value: (item) => item.name, always: true },
     });
-    // Pin Favorites + the "all albums/artists" browse entries at the top of the
+    // Pin Favorites + the "all albums/artists/tracks" browse entries at the top of the
     // unfiltered library so the sort never scatters them into the list. Offline
-    // they stay pinned as long as downloaded collections can back the browse
-    // screens (extended offline mode caches the whole library).
-    const hasOfflineCollections = !isOnline && downloadedCollections.length > 0;
+    // they stay pinned as long as downloads can back the browse screens
+    // (extended offline mode caches the whole library) — downloaded tracks
+    // count too, since they back All tracks even with no saved collection.
+    const hasOfflineCollections =
+      !isOnline &&
+      (downloadedCollections.length > 0 || downloadedTracksCount > 0);
     if (
       noBucketFilter &&
       !downloadedFilter &&
       (hasServerData || hasOfflineCollections)
     ) {
-      return [favoritesItem, allArtistsItem, allAlbumsItem, ...sorted];
+      return [
+        favoritesItem,
+        allArtistsItem,
+        allAlbumsItem,
+        allTracksItem,
+        ...sorted,
+      ];
     }
     return sorted;
   }, [
@@ -396,6 +414,7 @@ export default function LibraryScreen() {
     musicFoldersData,
     isOnline,
     downloadedCollections,
+    downloadedTracksCount,
     queryClient,
   ]);
 
@@ -557,7 +576,8 @@ export default function LibraryScreen() {
                 LibraryFolder &
                 LibraryRadioStation &
                 LibraryAllAlbums &
-                LibraryAllArtists
+                LibraryAllArtists &
+                LibraryAllTracks
             >
           }
           keyExtractor={(item) => item.id}

@@ -26,6 +26,7 @@ export const getRandomSongs = dispatch(
   J.getRandomSongs,
   L.getRandomSongs,
 );
+export const getSongs = dispatch(S.getSongs, J.getSongs, L.getSongs);
 export const getSongsByGenre = dispatch(
   S.getSongsByGenre,
   J.getSongsByGenre,
