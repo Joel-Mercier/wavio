@@ -61,6 +61,7 @@
 				"searchPlaceholder": "在音乐库中搜索",
 				"allAlbums": "全部专辑",
 				"allArtists": "全部艺人",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "专辑",
 				"allArtistsSubtitle": "艺人",
 				"search": {
@@ -1548,6 +1549,8 @@
 					"artist": "播放自艺人",
 					"likedSongs": "播放自喜欢的歌曲",
 					"allSongs": "Playing from all songs",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "播放自文件夹",
 					"similar": "播放自相似歌曲",
 					"audiomuse": "正在播放来自 AudioMuse-AI 的内容",
