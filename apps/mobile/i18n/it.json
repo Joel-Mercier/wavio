@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Cerca nella tua libreria",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
 				"search": {
@@ -1569,6 +1570,8 @@
 					"artist": "Riproduzione dall'artista",
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"allSongs": "Riproduzione da tutti i brani",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
 					"audiomuse": "Riproduzione da AudioMuse-AI",
