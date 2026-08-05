@@ -44,13 +44,17 @@ export type DownloadsSort = OfflineTrackSortType;
 export type LibrarySortField = "addedAt" | "alphabetical";
 export type LibrarySort = SortType<LibrarySortField>;
 
-export type LibraryFilter =
+// Buckets select which kinds of rows the library lists; "downloaded" is not one
+// of them — it narrows the selected buckets to offline content.
+export type LibraryBucketFilter =
   | "artists"
   | "albums"
   | "playlists"
   | "podcasts"
   | "radioStations"
   | "folders";
+
+export type LibraryFilter = LibraryBucketFilter | "downloaded";
 
 // list = single-column rows, grid = responsive multi-column cards. Persisted
 // per album-list screen (keyed in `albumScreenLayouts`) via

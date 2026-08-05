@@ -1,5 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -39,7 +40,10 @@ import { Text } from "@/components/ui/text";
 import { useMusicFolders } from "@/hooks/backend/useBrowsing";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
-import { useDownloadedCollections } from "@/hooks/offline";
+import {
+  isCollectionAvailableOffline,
+  useDownloadedCollections,
+} from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -59,6 +63,7 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import useApp, {
+  type LibraryBucketFilter,
   type LibraryFilter,
   type LibrarySortField,
 } from "@/stores/app";
@@ -75,6 +80,22 @@ export type LibraryLayout = "list" | "grid";
 // The list mixes artists, albums, playlists, podcasts, radio stations and
 // folders, so only these two fields mean anything across every row.
 const LIBRARY_SORT_FIELDS: LibrarySortField[] = ["addedAt", "alphabetical"];
+
+// "downloaded" is not a bucket of its own: only albums and playlists exist as
+// offline collections (`OfflineCollection.kind`), so it narrows those two and
+// hides every other bucket instead of listing it unfiltered.
+const DOWNLOADABLE_FILTERS: LibraryBucketFilter[] = ["albums", "playlists"];
+
+// Canonical badge order; "downloaded" is placed separately since it depends on
+// connectivity and on whether it is active.
+const LIBRARY_FILTERS: LibraryBucketFilter[] = [
+  "playlists",
+  "albums",
+  "artists",
+  "podcasts",
+  "radioStations",
+  "folders",
+];
 
 export default function LibraryScreen() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
@@ -114,6 +135,7 @@ export default function LibraryScreen() {
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
+  const filterScrollRef = useRef<ScrollView>(null);
   const listRef =
     useRef<
       FlashListRef<
@@ -130,6 +152,7 @@ export default function LibraryScreen() {
     >(null);
   const musicFolderId = useCurrentMusicFolderId();
   const isOnline = useIsOnline();
+  const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
   const {
     data: starredData,
@@ -150,6 +173,23 @@ export default function LibraryScreen() {
     isFetching: isFetchingMusicFolders,
     refetch: refetchMusicFolders,
   } = useMusicFolders();
+
+  // Active filters slide to the front so the one in use is never buried at the
+  // end of a scrolled-off row; deselecting drops the badge back into its
+  // canonical spot. Offline that spot is first for "downloaded" (the most
+  // useful filter with no server), last when online. The sort is stable, so
+  // badges keep their relative order within the active / inactive groups.
+  const orderedFilters = useMemo(() => {
+    const options = LIBRARY_FILTERS.filter(
+      (option) => option !== "podcasts" || showPodcasts,
+    );
+    const withDownloaded: LibraryFilter[] = isOnline
+      ? [...options, "downloaded"]
+      : ["downloaded", ...options];
+    return withDownloaded.sort(
+      (a, b) => Number(filter.includes(b)) - Number(filter.includes(a)),
+    );
+  }, [filter, isOnline, showPodcasts]);
 
   const handleFilterPress = (type: LibraryFilter) => {
     setFilter(
@@ -182,6 +222,9 @@ export default function LibraryScreen() {
       return null;
     }
 
+    const downloadedFilter = filter.includes("downloaded");
+    const bucketFilters = filter.filter((f) => f !== "downloaded");
+
     const favoritesItem = {
       id: "favorites",
       name: "Favorites",
@@ -206,54 +249,73 @@ export default function LibraryScreen() {
       serverItems: T[],
       kind: "playlist" | "album",
     ): T[] => {
-      if (isOnline) return serverItems;
-      const ids = new Set(serverItems.map((item) => item.id));
-      const offlineItems = downloadedCollections
-        .filter((c) => c.kind === kind && !ids.has(c.id))
-        .map((c) =>
-          kind === "playlist"
-            ? {
-                id: c.id,
-                name: c.name,
-                songCount: c.songCount,
-                coverArt: c.coverArt,
-                owner: c.owner,
-                created: c.savedAt,
-              }
-            : {
-                id: c.id,
-                name: c.name,
-                songCount: c.songCount,
-                coverArt: c.coverArt,
-                artist: c.artist,
-                artistId: c.artistId,
-                year: c.year,
-                created: c.savedAt,
-              },
-        ) as unknown as T[];
-      return [...serverItems, ...offlineItems];
+      let merged = serverItems;
+      if (!isOnline) {
+        const ids = new Set(serverItems.map((item) => item.id));
+        const offlineItems = downloadedCollections
+          .filter((c) => c.kind === kind && !ids.has(c.id))
+          .map((c) =>
+            kind === "playlist"
+              ? {
+                  id: c.id,
+                  name: c.name,
+                  songCount: c.songCount,
+                  coverArt: c.coverArt,
+                  owner: c.owner,
+                  created: c.savedAt,
+                }
+              : {
+                  id: c.id,
+                  name: c.name,
+                  songCount: c.songCount,
+                  coverArt: c.coverArt,
+                  artist: c.artist,
+                  artistId: c.artistId,
+                  year: c.year,
+                  created: c.savedAt,
+                },
+          ) as unknown as T[];
+        merged = [...serverItems, ...offlineItems];
+      }
+      if (downloadedFilter) {
+        // Same criterion as the row's downloaded badge, so the filter can never
+        // hide a row that is badged as downloaded.
+        merged = merged.filter((item) =>
+          isCollectionAvailableOffline(queryClient, kind, item.id),
+        );
+      }
+      return merged;
     };
 
-    const noFilter = filter.length === 0;
+    // "downloaded" combines with the bucket filters instead of adding a bucket,
+    // so a bucket shows only when it is selected AND (when "downloaded" is on)
+    // it can hold downloaded content — never one filter OR the other.
+    const noBucketFilter = bucketFilters.length === 0;
+    const showBucket = (bucket: LibraryBucketFilter) =>
+      (noBucketFilter || bucketFilters.includes(bucket)) &&
+      (!downloadedFilter || DOWNLOADABLE_FILTERS.includes(bucket));
+
     let data = [];
-    if (
-      (noFilter || filter.includes("artists")) &&
-      starredData?.starred2?.artist
-    ) {
+    if (showBucket("artists") && starredData?.starred2?.artist) {
       data.push(starredData.starred2.artist);
     }
-    if (noFilter || filter.includes("albums")) {
+    if (showBucket("albums")) {
       data.push(mergeOffline(starredData?.starred2?.album ?? [], "album"));
     }
-    if (noFilter || filter.includes("playlists")) {
-      if (filter.includes("playlists") && hasServerData) {
+    if (showBucket("playlists")) {
+      // Favorites is a browse entry, not a downloadable collection.
+      if (
+        bucketFilters.includes("playlists") &&
+        hasServerData &&
+        !downloadedFilter
+      ) {
         data.push(favoritesItem);
       }
       data.push(
         mergeOffline(playlistsData?.playlists?.playlist ?? [], "playlist"),
       );
     }
-    if (showPodcasts && (noFilter || filter.includes("podcasts"))) {
+    if (showPodcasts && showBucket("podcasts")) {
       data.push(
         favoritePodcasts.map((p) => ({
           id: p.uuid,
@@ -268,7 +330,7 @@ export default function LibraryScreen() {
         })),
       );
     }
-    if (noFilter || filter.includes("radioStations")) {
+    if (showBucket("radioStations")) {
       data.push(
         favoriteRadioStations.map((r) => ({
           id: r.id,
@@ -283,10 +345,7 @@ export default function LibraryScreen() {
         })),
       );
     }
-    if (
-      (noFilter || filter.includes("folders")) &&
-      musicFoldersData?.musicFolders?.musicFolder
-    ) {
+    if (showBucket("folders") && musicFoldersData?.musicFolders?.musicFolder) {
       data.push(
         musicFoldersData.musicFolders.musicFolder.map((f) => ({
           id: String(f.id),
@@ -318,7 +377,11 @@ export default function LibraryScreen() {
     // they stay pinned as long as downloaded collections can back the browse
     // screens (extended offline mode caches the whole library).
     const hasOfflineCollections = !isOnline && downloadedCollections.length > 0;
-    if (noFilter && (hasServerData || hasOfflineCollections)) {
+    if (
+      noBucketFilter &&
+      !downloadedFilter &&
+      (hasServerData || hasOfflineCollections)
+    ) {
       return [favoritesItem, allArtistsItem, allAlbumsItem, ...sorted];
     }
     return sorted;
@@ -333,6 +396,7 @@ export default function LibraryScreen() {
     musicFoldersData,
     isOnline,
     downloadedCollections,
+    queryClient,
   ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
@@ -353,6 +417,13 @@ export default function LibraryScreen() {
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [sort, filter]);
+
+  // Toggling a filter reorders the badges, so a row the user had scrolled to
+  // the end no longer holds what they were looking at — bring it back to the
+  // start, where the badge they just toggled now sits.
+  useEffect(() => {
+    filterScrollRef.current?.scrollTo({ x: 0, animated: true });
+  }, [filter]);
 
   return (
     <Box className="h-full">
@@ -395,88 +466,30 @@ export default function LibraryScreen() {
           </HStack>
           <Box className="relative -mx-6 my-6">
             <ScrollView
+              ref={filterScrollRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               className="gap-x-4"
               contentContainerStyle={{ paddingHorizontal: 24 }}
             >
-              <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
-                <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800":
-                      filter.includes("playlists"),
-                  })}
+              {orderedFilters.map((option, index) => (
+                <FadeOutScaleDown
+                  key={option}
+                  onPress={() => handleFilterPress(option)}
                 >
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.filters.playlists")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
-                <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800":
-                      filter.includes("albums"),
-                  })}
-                >
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.filters.albums")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
-                <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800":
-                      filter.includes("artists"),
-                    "mr-2": showPodcasts,
-                  })}
-                >
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.filters.artists")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-              {showPodcasts && (
-                <FadeOutScaleDown onPress={() => handleFilterPress("podcasts")}>
                   <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
                       "bg-emerald-500 text-primary-800":
-                        filter.includes("podcasts"),
+                        filter.includes(option),
+                      "mr-2": index < orderedFilters.length - 1,
                     })}
                   >
                     <BadgeText className="normal-case text-md text-white">
-                      {t("app.shared.filters.podcasts")}
+                      {t(`app.shared.filters.${option}`)}
                     </BadgeText>
                   </Badge>
                 </FadeOutScaleDown>
-              )}
-              <FadeOutScaleDown
-                onPress={() => handleFilterPress("radioStations")}
-              >
-                <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
-                    "bg-emerald-500 text-primary-800":
-                      filter.includes("radioStations"),
-                  })}
-                >
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.filters.radioStations")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
-                <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
-                    "bg-emerald-500 text-primary-800":
-                      filter.includes("folders"),
-                  })}
-                >
-                  <BadgeText className="normal-case text-md text-white">
-                    {t("app.shared.filters.folders")}
-                  </BadgeText>
-                </Badge>
-              </FadeOutScaleDown>
+              ))}
             </ScrollView>
             <LinearGradient
               colors={["#000000", "transparent"]}

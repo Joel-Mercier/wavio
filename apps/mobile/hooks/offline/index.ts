@@ -26,6 +26,7 @@ export {
 export { useOfflineAlbums } from "./useOfflineAlbums";
 export { useOfflineArtist, useOfflineArtists } from "./useOfflineArtists";
 export {
+  isCollectionAvailableOffline,
   useHasOfflineAlbumCollections,
   useHasPlayableTracks,
   useIsArtistAvailableOffline,
