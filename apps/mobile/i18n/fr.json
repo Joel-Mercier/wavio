@@ -1740,7 +1740,8 @@
 					"podcasts": "Podcasts",
 					"radioStations": "Stations de radio",
 					"folders": "Dossiers",
-					"songs": "Titres"
+					"songs": "Titres",
+					"downloaded": "Downloaded"
 				},
 				"save": "Enregistrer",
 				"done": "Appliquer",
