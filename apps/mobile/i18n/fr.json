@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Rechercher dans votre bibliothèque",
 				"allAlbums": "Tous les albums",
 				"allArtists": "Tous les artistes",
+				"allTracks": "Toutes les pistes",
 				"allAlbumsSubtitle": "Albums",
 				"allArtistsSubtitle": "Artistes",
 				"search": {
@@ -1569,6 +1570,8 @@
 					"artist": "Lecture depuis l'artiste",
 					"likedSongs": "Lecture depuis les titres aimés",
 					"allSongs": "Tous les titres d'un artiste",
+					"allTracks": "Toutes les pistes",
+					"mostPlayed": "Titres les plus écoutés",
 					"folder": "Lecture depuis le dossier",
 					"similar": "Lecture depuis les titres similaires",
 					"audiomuse": "Lecture depuis AudioMuse-AI",
@@ -1741,7 +1744,7 @@
 					"radioStations": "Stations de radio",
 					"folders": "Dossiers",
 					"songs": "Titres",
-					"downloaded": "Downloaded"
+					"downloaded": "Téléchargés"
 				},
 				"save": "Enregistrer",
 				"done": "Appliquer",
