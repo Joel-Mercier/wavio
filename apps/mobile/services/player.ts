@@ -1371,12 +1371,13 @@ export function restoreServerQueue(
 // currentIndex, and the queue subscription reads that new current track as a
 // cue to play — so "Add to queue" would start playing, which is the Play
 // button's job and not what the label promises.
-export function enqueueWithoutAutoplay(tracks: QueueTrack[]) {
-  if (tracks.length === 0) return;
+// Returns how many tracks were appended, so callers can report what happened.
+export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
+  if (tracks.length === 0) return 0;
   if (useQueue.getState().getCurrent() == null) {
     suppressAutoplayOnce = true;
   }
-  useQueue.getState().enqueueEnd(tracks);
+  return useQueue.getState().enqueueEnd(tracks);
 }
 
 // Take over playback locally from a (now stopped) jukebox session: load the
