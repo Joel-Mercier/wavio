@@ -1715,7 +1715,8 @@
 					"podcasts": "播客",
 					"radioStations": "广播电台",
 					"folders": "文件夹",
-					"songs": "歌曲"
+					"songs": "歌曲",
+					"downloaded": "Downloaded"
 				},
 				"save": "保存",
 				"done": "完成",
