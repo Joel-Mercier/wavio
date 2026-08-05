@@ -61,6 +61,7 @@
 				"searchPlaceholder": "Поиск в медиатеке",
 				"allAlbums": "Все альбомы",
 				"allArtists": "Все исполнители",
+				"allTracks": "All tracks",
 				"allAlbumsSubtitle": "Альбомы",
 				"allArtistsSubtitle": "Исполнители",
 				"search": {
@@ -1611,6 +1612,8 @@
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
 					"allSongs": "Из медиатеки",
+					"allTracks": "Playing from all tracks",
+					"mostPlayed": "Playing from most played",
 					"folder": "Из папки",
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
