@@ -1740,7 +1740,8 @@
 					"podcasts": "Podcast",
 					"radioStations": "Stazioni radio",
 					"folders": "Cartelle",
-					"songs": "Canzoni"
+					"songs": "Canzoni",
+					"downloaded": "Downloaded"
 				},
 				"save": "Salva",
 				"done": "Fatto",
