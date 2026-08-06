@@ -1614,7 +1614,14 @@
 				"jukeboxResumeTitle": "Reprendre le jukebox ?",
 				"jukeboxResumeMessage": "Une session jukebox est toujours en lecture sur le serveur. Reprendre le contrôle ou lire sur cet appareil ?",
 				"jukeboxResumeResume": "Reprendre le contrôle",
-				"jukeboxResumePlayHere": "Lire ici"
+				"jukeboxResumePlayHere": "Lire ici",
+				"output": "Sortie",
+				"outputSpeakersAndTvs": "Enceintes et téléviseurs (UPnP/DLNA)",
+				"outputScanning": "Recherche d'appareils …",
+				"outputNoDevices": "Aucun appareil trouvé sur le réseau",
+				"outputUnverified": "La lecture pourrait ne pas fonctionner",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Lecture impossible sur {{name}}."
 			},
 			"shares": {
 				"title": "Partages",
