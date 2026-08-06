@@ -1614,7 +1614,14 @@
 				"jukeboxResumeTitle": "Jukebox fortsetzen?",
 				"jukeboxResumeMessage": "Auf dem Server läuft noch eine Jukebox-Sitzung. Möchten Sie die Steuerung dieser fortsetzen oder auf diesem Gerät abspielen?",
 				"jukeboxResumeResume": "Kontrolle wiedererlangen",
-				"jukeboxResumePlayHere": "Hier abspielen"
+				"jukeboxResumePlayHere": "Hier abspielen",
+				"output": "Output",
+				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
+				"outputScanning": "Looking for devices…",
+				"outputNoDevices": "No devices found on this network",
+				"outputUnverified": "Might not accept playback",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
 				"title": "Freigaben",
