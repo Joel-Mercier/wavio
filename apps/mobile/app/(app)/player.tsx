@@ -2,17 +2,16 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { type Href, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
-import { CastButton } from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,7 +28,7 @@ import MovingText from "@/components/MovingText";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import AudioQualityLine from "@/components/player/AudioQualityLine";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
-import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
+import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
 import PlayerSheets from "@/components/player/PlayerSheets";
@@ -57,6 +56,7 @@ import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import useUpnp from "@/stores/upnp";
 import { isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
@@ -113,6 +113,10 @@ export default function PlayerScreen() {
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
+  const upnpConnected = useUpnp((s) => s.connected);
+  // One indicator for every output: the button says "not this phone", and the
+  // sheet says which one.
+  const playingRemotely = jukeboxActive || upnpConnected;
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const playingArtwork = useTrackArtwork(playingTrack);
@@ -240,14 +244,14 @@ export default function PlayerScreen() {
     },
   });
 
-  const castSession = useCastSync(playingTrack, isRadio);
+  useCastSync(playingTrack, isRadio);
 
   const handlePresentModalPress = useCallback(() => {
     actionsSheetRef.current?.present();
   }, []);
 
-  const handleJukeboxPress = () => {
-    openJukeboxSheet();
+  const handleOutputPress = () => {
+    openOutputSheet();
   };
 
   const handlePlayPausePress = () => {
@@ -675,27 +679,22 @@ export default function PlayerScreen() {
                   isWideLayout ? "mt-2 mb-2" : "mt-4 mb-6",
                 )}
               >
-                <CastButton
+                <FadeOut
+                  testID="player-output-button"
                   hitSlop={ICON_HIT_SLOP}
-                  style={{ width: 24, height: 24, tintColor: "white" }}
-                />
-                {capabilities.jukebox && !isRadio && !castSession && (
-                  <FadeOut
-                    hitSlop={ICON_HIT_SLOP}
-                    onPress={handleJukeboxPress}
-                    disabled={!isOnline}
-                  >
-                    <Speaker
-                      size={24}
-                      color={jukeboxActive ? emerald500 : "white"}
-                    />
-                    {jukeboxActive && (
-                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                        <Box className="bg-emerald-500 rounded-full size-1" />
-                      </Box>
-                    )}
-                  </FadeOut>
-                )}
+                  onPress={handleOutputPress}
+                  disabled={!isOnline}
+                >
+                  <Cast
+                    size={24}
+                    color={playingRemotely ? emerald500 : "white"}
+                  />
+                  {playingRemotely && (
+                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                      <Box className="bg-emerald-500 rounded-full size-1" />
+                    </Box>
+                  )}
+                </FadeOut>
                 <FadeOut
                   testID="player-queue-button"
                   hitSlop={ICON_HIT_SLOP}

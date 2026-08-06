@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
-import { setDownloaderPickerOpener } from "@/components/downloaders/downloaderPickerController";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -19,6 +18,15 @@ import {
   type Downloader,
   useConnectedDownloaders,
 } from "@/hooks/useDownloaders";
+
+// The downloader picker lives once at the app root (mounted in app/(app)/_layout),
+// so any screen opens it through this module-level opener rather than
+// prop-drilling a ref.
+let opener: ((query: string) => void) | null = null;
+
+export function openDownloaderPicker(query: string) {
+  opener?.(query);
+}
 
 // Asks which downloader to look a name up in. Mounted once at the app root and
 // only ever opened when more than one downloader is connected — with a single
@@ -32,11 +40,13 @@ export default function DownloaderPickerSheet() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    setDownloaderPickerOpener((next) => {
+    opener = (next) => {
       setQuery(next);
       sheetRef.current?.present();
-    });
-    return () => setDownloaderPickerOpener(null);
+    };
+    return () => {
+      opener = null;
+    };
   }, []);
 
   const handlePress = (downloader: Downloader) => {

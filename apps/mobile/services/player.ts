@@ -12,16 +12,6 @@ import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
-  jukeboxGetCurrentTime,
-  jukeboxIsPlaying,
-  jukeboxPause as jukeboxPauseAction,
-  jukeboxPlay as jukeboxPlayAction,
-  jukeboxSeekTo,
-  jukeboxSkipNext,
-  jukeboxSkipPrevious,
-  jukeboxTogglePlayPause,
-} from "@/services/jukebox";
-import {
   getIsOnline,
   getServerReachable,
   probeServer,
@@ -31,6 +21,7 @@ import type {
   AlbumList2,
   Child,
 } from "@/services/openSubsonic/types";
+import { activeRemoteTarget } from "@/services/playback/targets";
 import {
   playbackReportEnabled,
   reportPaused,
@@ -56,7 +47,6 @@ import {
 import useActivity from "@/stores/activity";
 import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
-import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
@@ -1086,9 +1076,9 @@ const queueUnsub = useQueue.subscribe((state) => {
       loadTrack(current, false);
       return;
     }
-    // Jukebox mode owns playback server-side; the local player just tracks
+    // A remote target owns playback elsewhere; the local player just tracks
     // metadata so the UI stays in sync.
-    if (useJukebox.getState().active) {
+    if (activeRemoteTarget()) {
       resetScrobbleState();
       return;
     }
@@ -1299,11 +1289,11 @@ export function playTracks(
   // didn't change (subscription never fired), or the subscription took a silent
   // load path — during hydration or a server-queue restore (suppressAutoplayOnce
   // / !hasHydrated) it loads the track paused and leaves playbackInitialized
-  // false. An explicit user play must start playback regardless. Jukebox owns
-  // playback server-side, so never force the local engine there.
+  // false. An explicit user play must start playback regardless. A remote
+  // target owns playback elsewhere, so never force the local engine there.
   if (
     current.id === previousId ||
-    (!playbackInitialized && !useJukebox.getState().active)
+    (!playbackInitialized && !activeRemoteTarget())
   ) {
     loadAndPlay(current);
   }
@@ -1380,13 +1370,11 @@ export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
   return useQueue.getState().enqueueEnd(tracks);
 }
 
-// Take over playback locally from a (now stopped) jukebox session: load the
-// current queue track and resume it at the position the server reached. Arms the
-// pending-resume seek so it re-applies once the media is ready.
-export function takeOverFromJukebox(
-  positionSeconds: number,
-  shouldPlay = true,
-) {
+// Take over playback locally from a (now stopped) remote target — a jukebox
+// session, a UPnP renderer: load the current queue track and resume it at the
+// position the remote reached. Arms the pending-resume seek so it re-applies
+// once the media is ready.
+export function takeOverFromRemote(positionSeconds: number, shouldPlay = true) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (shouldPlay) {
@@ -1401,14 +1389,15 @@ export function takeOverFromJukebox(
     try {
       player.seekTo(pos);
     } catch (error) {
-      logSwallowed("seek to jukebox takeover position", error);
+      logSwallowed("seek to remote takeover position", error);
     }
   }
 }
 
 export function togglePlayPause() {
-  if (useJukebox.getState().active) {
-    jukeboxTogglePlayPause().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.togglePlayPause();
     return;
   }
   if (player.playing) {
@@ -1428,8 +1417,9 @@ export function pause() {
   // A manual pause during a sleep fade takes over: drop the ramp and restore
   // volume so a later resume isn't stuck quiet.
   cancelSleepFade();
-  if (useJukebox.getState().active) {
-    jukeboxPauseAction().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.pause();
     return;
   }
   // Persist the resume position immediately on pause rather than waiting for
@@ -1445,10 +1435,10 @@ export function pause() {
 
 // Sleep-timer expiry handler: start a volume ramp when playing locally, letting
 // the status tick carry it to zero and then pause. If nothing is actively
-// playing (jukebox, or already paused) there's no tick to drive the ramp, so
-// just pause outright.
+// playing locally (a remote target owns playback, or we're already paused)
+// there's no tick to drive the ramp, so just pause outright.
 function beginSleepFade() {
-  if (useJukebox.getState().active || !player.playing) {
+  if (activeRemoteTarget() || !player.playing) {
     pause();
     return;
   }
@@ -1462,8 +1452,9 @@ export function play() {
   // Resuming during a sleep fade means "keep listening" — abort the ramp and
   // restore full volume before playing.
   cancelSleepFade();
-  if (useJukebox.getState().active) {
-    jukeboxPlayAction().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.play();
     return;
   }
   const current = useQueue.getState().getCurrent();
@@ -1476,12 +1467,14 @@ export function play() {
 }
 
 export function getCurrentTime() {
-  if (useJukebox.getState().active) return jukeboxGetCurrentTime();
+  const remote = activeRemoteTarget();
+  if (remote) return remote.getCurrentTime();
   return effectivePosition(player.currentTime ?? 0);
 }
 
 export function isPlaying() {
-  if (useJukebox.getState().active) return jukeboxIsPlaying();
+  const remote = activeRemoteTarget();
+  if (remote) return remote.isPlaying();
   return player.playing;
 }
 
@@ -1491,16 +1484,18 @@ export function skipNext() {
   if (state.repeatMode === "off") {
     if (state.currentIndex >= state.queue.length - 1) return;
   }
-  if (useJukebox.getState().active) {
-    jukeboxSkipNext().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.skipNext();
     return;
   }
   state.next();
 }
 
 export function skipPrevious(options?: { force?: boolean }) {
-  if (useJukebox.getState().active) {
-    jukeboxSkipPrevious().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.skipPrevious();
     return;
   }
   if (!options?.force && effectivePosition(player.currentTime) > 3) {
@@ -1535,8 +1530,9 @@ function reloadAtOffset(track: QueueTrack, seconds: number) {
 }
 
 export function seekTo(seconds: number) {
-  if (useJukebox.getState().active) {
-    jukeboxSeekTo(seconds).catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.seekTo(seconds);
     return;
   }
   const current = useQueue.getState().getCurrent();

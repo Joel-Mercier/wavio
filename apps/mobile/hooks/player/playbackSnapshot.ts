@@ -1,6 +1,9 @@
 import type { AudioStatus } from "expo-audio";
+import {
+  activeRemoteTarget,
+  subscribeRemoteChange,
+} from "@/services/playback/targets";
 import { getActivePlayer, getStreamStartOffset } from "@/services/player";
-import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 
 export type PlaybackSnapshot = {
@@ -40,40 +43,8 @@ function readLocalSnapshot(): PlaybackSnapshot {
   };
 }
 
-// The jukebox plays server-side and its status is only refreshed by the ~3s
-// poll in services/jukebox.ts, so the raw reported position steps every few
-// seconds — too coarse for a smooth seek bar or synced lyrics. Interpolate
-// between polls off the wall clock: remember the last server position and when
-// it arrived, then advance it while playing. Each poll resets this base to the
-// authoritative position, so interpolation error can never accumulate.
-let jukeboxBasePosition = 0;
-let jukeboxBaseAt = Date.now();
-
-function resetJukeboxInterpolation(position: number) {
-  jukeboxBasePosition = position;
-  jukeboxBaseAt = Date.now();
-}
-
-function readJukeboxSnapshot(): PlaybackSnapshot {
-  const status = useJukebox.getState().status;
-  const current = useQueue.getState().getCurrent();
-  const playing = status?.playing ?? false;
-  const duration = current?.duration ?? 0;
-  const elapsed = playing ? (Date.now() - jukeboxBaseAt) / 1000 : 0;
-  let currentTime = jukeboxBasePosition + elapsed;
-  if (duration > 0) currentTime = Math.min(currentTime, duration);
-  return {
-    playing,
-    buffering: false,
-    currentTime,
-    duration,
-  };
-}
-
 function readSnapshot(): PlaybackSnapshot {
-  return useJukebox.getState().active
-    ? readJukeboxSnapshot()
-    : readLocalSnapshot();
+  return activeRemoteTarget()?.readSnapshot() ?? readLocalSnapshot();
 }
 
 let snapshot: PlaybackSnapshot = readSnapshot();
@@ -100,7 +71,7 @@ function pushSnapshot(next: PlaybackSnapshot) {
 }
 
 getActivePlayer().addListener("playbackStatusUpdate", (status: AudioStatus) => {
-  if (useJukebox.getState().active) return;
+  if (activeRemoteTarget()) return;
   pushSnapshot({
     playing: status.playing,
     buffering: status.isBuffering,
@@ -109,37 +80,32 @@ getActivePlayer().addListener("playbackStatusUpdate", (status: AudioStatus) => {
   });
 });
 
-// Advances the interpolated jukebox position between server polls so the seek
-// bar and synced lyrics move smoothly instead of stepping every ~3s. Only runs
-// while the jukebox is the active source, is playing, and something is actually
-// observing progress.
-let jukeboxTicker: ReturnType<typeof setInterval> | null = null;
-function syncJukeboxTicker() {
-  const shouldRun =
-    useJukebox.getState().active &&
-    (useJukebox.getState().status?.playing ?? false) &&
-    progressListeners.size > 0;
-  if (shouldRun && !jukeboxTicker) {
-    jukeboxTicker = setInterval(() => pushSnapshot(readSnapshot()), 250);
-  } else if (!shouldRun && jukeboxTicker) {
-    clearInterval(jukeboxTicker);
-    jukeboxTicker = null;
+// Advances a remote target's interpolated position between its own updates so
+// the seek bar and synced lyrics move smoothly instead of stepping every 1-3s.
+// Only runs while a remote target is the active source, says it wants
+// interpolating, and something is actually observing progress.
+let remoteTicker: ReturnType<typeof setInterval> | null = null;
+function syncRemoteTicker() {
+  const target = activeRemoteTarget();
+  const shouldRun = !!target?.isInterpolating() && progressListeners.size > 0;
+  if (shouldRun && !remoteTicker) {
+    remoteTicker = setInterval(() => pushSnapshot(readSnapshot()), 250);
+  } else if (!shouldRun && remoteTicker) {
+    clearInterval(remoteTicker);
+    remoteTicker = null;
   }
 }
 
-// Jukebox status changes (poll-driven) and queue track changes both shift the
-// snapshot when jukebox is the active source. Each fresh status is the server's
-// authoritative position, so rebase interpolation onto it.
-useJukebox.subscribe((state, prev) => {
-  if (state.status !== prev.status) {
-    resetJukeboxInterpolation(state.status?.position ?? 0);
-  }
+// A remote target's state moving (its poll landing, a session opening or
+// closing) shifts the snapshot. Each target rebases its own interpolation onto
+// whatever authoritative position came with the change before notifying.
+subscribeRemoteChange(() => {
   pushSnapshot(readSnapshot());
-  syncJukeboxTicker();
+  syncRemoteTicker();
 });
 
 useQueue.subscribe(() => {
-  if (!useJukebox.getState().active) return;
+  if (!activeRemoteTarget()) return;
   pushSnapshot(readSnapshot());
 });
 
@@ -152,10 +118,10 @@ export function subscribePlaybackState(cb: () => void) {
 
 export function subscribePlaybackProgress(cb: () => void) {
   progressListeners.add(cb);
-  syncJukeboxTicker();
+  syncRemoteTicker();
   return () => {
     progressListeners.delete(cb);
-    syncJukeboxTicker();
+    syncRemoteTicker();
   };
 }
 

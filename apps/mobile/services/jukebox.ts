@@ -1,3 +1,4 @@
+import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
 import {
   addJukebox,
   clearJukebox,
@@ -13,7 +14,8 @@ import type {
   JukeboxPlaylist,
   JukeboxStatus,
 } from "@/services/openSubsonic/types";
-import { restoreServerQueue, takeOverFromJukebox } from "@/services/player";
+import { registerRemoteTarget } from "@/services/playback/remoteTarget";
+import { restoreServerQueue, takeOverFromRemote } from "@/services/player";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
@@ -286,7 +288,7 @@ export async function takeOverLocally(): Promise<void> {
   // doesn't silently stop (or unexpectedly start) playback.
   const wasPlaying = useJukebox.getState().status?.playing ?? true;
   const { position } = await deactivate();
-  takeOverFromJukebox(position, wasPlaying);
+  takeOverFromRemote(position, wasPlaying);
 }
 
 // On app launch, if a jukebox session was persisted active, check whether the
@@ -457,3 +459,59 @@ export {
   reconcileFromServer as jukeboxReconcileFromServer,
   refreshStatus as jukeboxRefreshStatus,
 };
+
+// ── Remote target ────────────────────────────────────────────────────────────
+
+// The jukebox plays server-side and its status is only refreshed by the ~3s
+// poll above, so the raw reported position steps every few seconds — too coarse
+// for a smooth seek bar or synced lyrics. Interpolate between polls off the wall
+// clock: remember the last server position and when it arrived, then advance it
+// while playing. Each poll rebases onto the authoritative position, so
+// interpolation error can never accumulate.
+let basePosition = 0;
+let baseAt = Date.now();
+
+registerRemoteTarget({
+  id: "jukebox",
+  isActive: () => useJukebox.getState().active,
+  play: () => {
+    jukeboxPlay().catch(() => {});
+  },
+  pause: () => {
+    jukeboxPause().catch(() => {});
+  },
+  togglePlayPause: () => {
+    jukeboxTogglePlayPause().catch(() => {});
+  },
+  seekTo: (seconds) => {
+    jukeboxSeekTo(seconds).catch(() => {});
+  },
+  skipNext: () => {
+    jukeboxSkipNext().catch(() => {});
+  },
+  skipPrevious: () => {
+    jukeboxSkipPrevious().catch(() => {});
+  },
+  getCurrentTime: jukeboxGetCurrentTime,
+  isPlaying: jukeboxIsPlaying,
+  setVolume: jukeboxSetGain,
+  isInterpolating: () =>
+    useJukebox.getState().active &&
+    (useJukebox.getState().status?.playing ?? false),
+  readSnapshot: (): PlaybackSnapshot => {
+    const playing = useJukebox.getState().status?.playing ?? false;
+    const duration = useQueue.getState().getCurrent()?.duration ?? 0;
+    const elapsed = playing ? (Date.now() - baseAt) / 1000 : 0;
+    let currentTime = basePosition + elapsed;
+    if (duration > 0) currentTime = Math.min(currentTime, duration);
+    return { playing, buffering: false, currentTime, duration };
+  },
+  subscribe: (onChange) =>
+    useJukebox.subscribe((state, prev) => {
+      if (state.status !== prev.status) {
+        basePosition = state.status?.position ?? 0;
+        baseAt = Date.now();
+      }
+      onChange();
+    }),
+});

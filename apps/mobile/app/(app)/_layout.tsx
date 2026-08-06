@@ -18,7 +18,7 @@ import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
-import JukeboxSheet from "@/components/player/JukeboxSheet";
+import OutputSheet from "@/components/player/OutputSheet";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import UpdateGate from "@/components/update/UpdateGate";
 import {
@@ -335,7 +335,7 @@ export default function AppLayout() {
       <LibrarySyncController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
-      <JukeboxSheet />
+      <OutputSheet />
       <UpdateGate />
     </>
   );

@@ -1,6 +1,6 @@
 import { type Href, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
-import { openDownloaderPicker } from "@/components/downloaders/downloaderPickerController";
+import { openDownloaderPicker } from "@/components/downloaders/DownloaderPickerSheet";
 import useLidarr from "@/stores/lidarr";
 import useSoulSync from "@/stores/soulsync";
 

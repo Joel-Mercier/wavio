@@ -85,7 +85,7 @@ function SetBookmarkLabel() {
 
 // The player screen's bottom sheets (track actions, sleep timer, artist picker,
 // share link). The parent owns the actions sheet ref since its trigger lives in
-// the player chrome. The jukebox sheet lives app-wide (see JukeboxSheet in
+// the player chrome. The output sheet lives app-wide (see OutputSheet in
 // app/(app)/_layout).
 export default function PlayerSheets({
   actionsSheetRef,
