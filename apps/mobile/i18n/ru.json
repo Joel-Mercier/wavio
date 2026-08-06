@@ -1656,7 +1656,14 @@
 				"jukeboxResumeTitle": "Возобновить работу Jukebox?",
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
-				"jukeboxResumePlayHere": "Воспроизвести здесь"
+				"jukeboxResumePlayHere": "Воспроизвести здесь",
+				"output": "Output",
+				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
+				"outputScanning": "Looking for devices…",
+				"outputNoDevices": "No devices found on this network",
+				"outputUnverified": "Might not accept playback",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
 				"title": "Общий доступ",
