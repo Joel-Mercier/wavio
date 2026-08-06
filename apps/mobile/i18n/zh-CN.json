@@ -1593,7 +1593,14 @@
 				"jukeboxResumeTitle": "恢复点唱机控制",
 				"jukeboxResumeMessage": "服务器上有点唱机会话正在播放。恢复控制还是在此设备播放？",
 				"jukeboxResumeResume": "恢复控制",
-				"jukeboxResumePlayHere": "在此播放"
+				"jukeboxResumePlayHere": "在此播放",
+				"output": "Output",
+				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
+				"outputScanning": "Looking for devices…",
+				"outputNoDevices": "No devices found on this network",
+				"outputUnverified": "Might not accept playback",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
 				"title": "分享",
