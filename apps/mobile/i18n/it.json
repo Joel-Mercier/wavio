@@ -1614,7 +1614,14 @@
 				"jukeboxResumeTitle": "Riavviare il jukebox?",
 				"jukeboxResumeMessage": "Sul server è ancora in corso una sessione del jukebox. Vuoi riprendere il controllo o riprodurre su questo dispositivo?",
 				"jukeboxResumeResume": "Riprendere il controllo",
-				"jukeboxResumePlayHere": "Riproduci qui"
+				"jukeboxResumePlayHere": "Riproduci qui",
+				"output": "Output",
+				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
+				"outputScanning": "Looking for devices…",
+				"outputNoDevices": "No devices found on this network",
+				"outputUnverified": "Might not accept playback",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
 				"title": "Condivisioni",
