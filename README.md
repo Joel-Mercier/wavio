@@ -53,6 +53,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Library screen with starred playlists, albums, and artists
 - Liked songs screen
 - Player screen with audio controls, navigation gestures, transcoding info and current lyric line
+- Optional waveform seek bar, showing the track's waveform instead of a plain progress bar. Waveforms are analyzed once and cached, never over cellular, with a setting to clear the cache
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song

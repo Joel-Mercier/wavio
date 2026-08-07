@@ -1,7 +1,7 @@
 {
   "name": "wavio",
   "main": "index.js",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "scripts": {
     "start": "eas env:exec --non-interactive development \"expo start\"",
@@ -21,9 +21,9 @@
     "prebuild:store": "EXPO_PUBLIC_DISTRIBUTION=store bunx expo prebuild -p android",
     "build:android:development": "bun run prebuild:github && eas build -p android --profile development --local",
     "build:android:preview": "bun run prebuild:github && eas build -p android --profile preview --local",
-    "build:android:production": "bun run prebuild:store && eas build -p android --profile production --local",
-    "build:android:production-apk": "bun run prebuild:github && eas build -p android --profile production-apk --local",
-    "build:android:production-apk-armv7": "bun run prebuild:github && eas build -p android --profile production-apk-armv7 --local",
+    "build:android:production": "bun run prebuild:store && eas build -p android --profile production --local --output $PWD/../../tmp/wavio-$npm_package_version.aab",
+    "build:android:production-apk": "bun run prebuild:github && eas build -p android --profile production-apk --local --output $PWD/../../tmp/wavio-$npm_package_version-arm64-v8a.apk",
+    "build:android:production-apk-armv7": "bun run prebuild:github && eas build -p android --profile production-apk-armv7 --local --output $PWD/../../tmp/wavio-$npm_package_version-armeabi-v7a.apk",
     "submit:android:closed": "eas submit -p android --profile closed",
     "submit:android:production": "eas submit -p android --profile production"
   },
