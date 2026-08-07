@@ -91,6 +91,7 @@
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
       "./plugins/withWidgets",
+      "./plugins/withShortcuts",
       "./plugins/withDependenciesInfo",
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",

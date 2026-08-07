@@ -79,6 +79,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Landscape mode support
 - Android homescreen widgets
 - Android Auto support
+- Android launcher shortcuts
 - Navidrome smart playlists support
 - Remote playback options like Navidrome/Opensubsonic jukebox mode, Chromecast and uPnP/DLNA
 - Backup and restore
