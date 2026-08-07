@@ -12,6 +12,7 @@ import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import Gauge from "lucide-react-native/dist/esm/icons/gauge.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
@@ -58,7 +59,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
-import useApp from "@/stores/app";
+import useApp, { PODCAST_PLAYBACK_RATES } from "@/stores/app";
 import useAudioMuse, {
   selectSimilarTracksAvailable,
   selectSongPathAvailable,
@@ -89,6 +90,7 @@ function SetBookmarkLabel() {
 // app/(app)/_layout).
 export default function PlayerSheets({
   actionsSheetRef,
+  speedSheetRef,
   playingTrack,
   hideLyricsAction,
   hasKaraoke,
@@ -96,6 +98,7 @@ export default function PlayerSheets({
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
+  speedSheetRef?: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   hideLyricsAction?: boolean;
   hasKaraoke?: boolean;
@@ -115,6 +118,8 @@ export default function PlayerSheets({
   const lyricsSource = useApp((s) => s.lyricsSource);
   const karaokeEnabled = useApp((s) => s.karaokeEnabled);
   const setKaraokeEnabled = useApp((s) => s.setKaraokeEnabled);
+  const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
+  const setPodcastPlaybackRate = useApp((s) => s.setPodcastPlaybackRate);
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -334,6 +339,11 @@ export default function PlayerSheets({
   const handleSleepCancelPress = () => {
     cancelSleepTimer();
     sleepTimerSheetRef.current?.dismiss();
+  };
+
+  const handlePlaybackRatePress = (rate: number) => {
+    setPodcastPlaybackRate(rate);
+    speedSheetRef?.current?.dismiss();
   };
 
   const handleGoToPodcastSeriesPress = () => {
@@ -901,6 +911,51 @@ export default function PlayerSheets({
                   {t("app.player.sleepTimerEndOfTrack")}
                 </Text>
               </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetScrollView>
+      </BottomSheetModalComponent>
+      <BottomSheetModalComponent
+        ref={speedSheetRef}
+        enableHalfExpand={false}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+      >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center mb-6">
+              <Gauge size={24} color={gray200} />
+              <Heading
+                className="ml-4 text-white font-normal"
+                size="lg"
+                numberOfLines={1}
+              >
+                {t("app.player.playbackSpeed")}
+              </Heading>
+            </HStack>
+            <VStack className="gap-y-6">
+              {PODCAST_PLAYBACK_RATES.map((rate) => (
+                <FadeOutScaleDown
+                  key={rate}
+                  onPress={() => handlePlaybackRatePress(rate)}
+                >
+                  <Text
+                    className="text-lg"
+                    style={{
+                      color:
+                        rate === podcastPlaybackRate ? emerald500 : gray200,
+                    }}
+                  >
+                    {rate === 1
+                      ? t("app.player.playbackSpeedNormal")
+                      : t("app.player.playbackSpeedValue", { rate })}
+                  </Text>
+                </FadeOutScaleDown>
+              ))}
             </VStack>
           </Box>
         </BottomSheetScrollView>

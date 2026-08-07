@@ -14,6 +14,7 @@ import type {
   Genre,
   Language,
   PodcastContentType,
+  PodcastSeries,
   SearchContentType,
   SearchMatchType,
   SearchSortOrder,
@@ -21,6 +22,23 @@ import type {
   TaddyType,
 } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
+
+// Inside getPodcastSeries every episode's series is the series being fetched, so
+// the query no longer asks for a nested copy per episode — that was the same
+// object 25 times over, and it omitted fields (websiteUrl) the outer selection
+// already has. Rebuild the link here instead.
+//
+// The attached copy drops `episodes`: pointing episodes at the parent object
+// itself would make the series reference itself through its own episode list,
+// and that cycle breaks JSON.stringify — which both the React Query persister
+// and PodcastListItem's navigation params depend on.
+function linkEpisodesToSeries(series: PodcastSeries, isFavorite: boolean) {
+  series.isFavorite = isFavorite;
+  const seriesRef: PodcastSeries = { ...series, episodes: [] };
+  for (const episode of series.episodes ?? []) {
+    episode.podcastSeries = seriesRef;
+  }
+}
 
 export const usePodcastSeries = ({
   uuid,
@@ -68,13 +86,8 @@ export const usePodcastSeries = ({
 
       if (response.data?.getPodcastSeries) {
         const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
-        const isFavorite = favoriteUuids.has(
-          response.data.getPodcastSeries.uuid,
-        );
-        response.data.getPodcastSeries.isFavorite = isFavorite;
-        for (const episode of response.data.getPodcastSeries.episodes) {
-          episode.podcastSeries.isFavorite = isFavorite;
-        }
+        const series = response.data.getPodcastSeries;
+        linkEpisodesToSeries(series, favoriteUuids.has(series.uuid));
       }
 
       return response;
@@ -186,13 +199,8 @@ export const useInfinitePodcastSeries = ({
       });
       if (response.data?.getPodcastSeries) {
         const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
-        const isFavorite = favoriteUuids.has(
-          response.data.getPodcastSeries.uuid,
-        );
-        response.data.getPodcastSeries.isFavorite = isFavorite;
-        for (const episode of response.data.getPodcastSeries.episodes ?? []) {
-          episode.podcastSeries.isFavorite = isFavorite;
-        }
+        const series = response.data.getPodcastSeries;
+        linkEpisodesToSeries(series, favoriteUuids.has(series.uuid));
       }
       return response;
     },

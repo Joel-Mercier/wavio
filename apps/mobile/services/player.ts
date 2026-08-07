@@ -23,6 +23,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import { activeRemoteTarget } from "@/services/playback/targets";
 import {
+  notePlaybackRateChanged,
   playbackReportEnabled,
   reportPaused,
   reportProgress,
@@ -45,7 +46,7 @@ import {
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import useActivity from "@/stores/activity";
-import { useAppBase } from "@/stores/app";
+import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import usePlayHistory from "@/stores/playHistory";
@@ -137,7 +138,7 @@ function reportNowPlaying(track: QueueTrack) {
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.
   if (playbackReportEnabled()) {
-    reportStarting(track.id);
+    reportStarting(track.id, getPlaybackRateFor(track));
   } else {
     scrobble(track.id, { submission: false }).catch(() => {});
   }
@@ -363,6 +364,32 @@ function scheduleRecentlyPlayedRefresh() {
 function getReplayGainFactor(track: QueueTrack): number {
   const { replayGainMode, replayGainPreampDb } = useAppBase.getState();
   return computeReplayGainFactor(track, replayGainMode, replayGainPreampDb);
+}
+
+// Seek amounts for the podcast transport controls. Asymmetric on purpose: back
+// is for catching a missed sentence, forward is for skipping an ad break.
+export const PODCAST_SEEK_BACKWARD_SECONDS = 15;
+export const PODCAST_SEEK_FORWARD_SECONDS = 30;
+
+// Speed only applies to spoken word — a music track always plays at 1×, so a
+// rate left over from a podcast never bleeds into the next album.
+function getPlaybackRateFor(track: QueueTrack | null): number {
+  if (track?.source !== "podcast") return 1;
+  return clampPodcastPlaybackRate(useAppBase.getState().podcastPlaybackRate);
+}
+
+// Must run after every player.replace(): the rate is a property of the engine,
+// not of the source, but AVPlayer resets it when the item changes.
+// `shouldCorrectPitch` keeps a sped-up voice from sounding like a chipmunk; it
+// is the native default on both platforms but is set explicitly so a future
+// default flip can't silently change how podcasts sound.
+function applyPlaybackRate(track: QueueTrack | null) {
+  try {
+    player.shouldCorrectPitch = true;
+    player.setPlaybackRate(getPlaybackRateFor(track));
+  } catch (error) {
+    logSwallowed("applyPlaybackRate", error);
+  }
 }
 
 // Track ids whose raw stream failed to decode on this device and have since
@@ -605,6 +632,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   });
   player.replace({ uri: url });
   player.volume = getReplayGainFactor(track);
+  applyPlaybackRate(track);
   applyLockScreen(player, track);
   // Moving the active track off the launch track disarms resume so returning
   // to it later starts at 0 rather than its stale bookmark.
@@ -1049,13 +1077,21 @@ statusListeners.push(
 );
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
-  if (
-    state.replayGainMode === prev.replayGainMode &&
-    state.replayGainPreampDb === prev.replayGainPreampDb
-  )
-    return;
   const cur = useQueue.getState().getCurrent();
-  if (cur) player.volume = getReplayGainFactor(cur);
+  if (
+    state.replayGainMode !== prev.replayGainMode ||
+    state.replayGainPreampDb !== prev.replayGainPreampDb
+  ) {
+    if (cur) player.volume = getReplayGainFactor(cur);
+  }
+  // Applied live rather than at the next load so the speed sheet audibly
+  // changes the episode that is playing behind it.
+  if (state.podcastPlaybackRate !== prev.podcastPlaybackRate) {
+    applyPlaybackRate(cur);
+    if (playbackReportEnabled()) {
+      notePlaybackRateChanged(getPlaybackRateFor(cur));
+    }
+  }
 });
 
 let lastTrackId: string | null = null;
@@ -1525,6 +1561,7 @@ function reloadAtOffset(track: QueueTrack, seconds: number) {
   const { url } = resolveTrackUrl(track, streamStartOffset);
   player.replace({ uri: url });
   player.volume = getReplayGainFactor(track);
+  applyPlaybackRate(track);
   pendingResumeId = null;
   if (wasPlaying) player.play();
 }
@@ -1541,4 +1578,20 @@ export function seekTo(seconds: number) {
     return;
   }
   player.seekTo(seconds);
+}
+
+// Relative seek behind the podcast transport's back/forward buttons. Clamped to
+// the media's bounds so a tap near either end lands on the edge instead of being
+// dropped by the engine, and routed through seekTo so it keeps working on a
+// remote output and on a transcoded stream (which seeks by re-requesting).
+// The queue track's own duration wins over the player's: on a transcoded stream
+// the loaded media only spans from the current offset onwards.
+export function seekBy(deltaSeconds: number) {
+  const current = useQueue.getState().getCurrent();
+  const duration =
+    current?.duration && current.duration > 0
+      ? current.duration
+      : (player.duration ?? 0);
+  const target = Math.max(0, getCurrentTime() + deltaSeconds);
+  seekTo(duration > 0 ? Math.min(target, duration) : target);
 }

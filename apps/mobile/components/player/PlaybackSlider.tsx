@@ -16,6 +16,7 @@ import { useTrackBookmarks } from "@/hooks/useTrackBookmarks";
 import { useWaveform } from "@/hooks/useWaveform";
 import { isAudioWaveformAvailable } from "@/modules/audio-waveform";
 import { seekTo } from "@/services/player";
+import { isAnalyzable } from "@/services/waveform";
 import useApp from "@/stores/app";
 import { formatSeconds } from "@/utils/date";
 import { cn } from "@/utils/tailwind";
@@ -32,8 +33,15 @@ export default function PlaybackSlider({
   allowWaveform?: boolean;
 }) {
   const waveformEnabled = useApp((s) => s.waveformSeekbarEnabled);
+  const track = usePlayingTrack();
+  // Tracks the analyzer never touches (podcasts, radio, long-form) would sit
+  // under placeholder bars forever, so they get the plain slider even with the
+  // setting on.
   const showWaveform =
-    allowWaveform && waveformEnabled && isAudioWaveformAvailable();
+    allowWaveform &&
+    waveformEnabled &&
+    isAudioWaveformAvailable() &&
+    isAnalyzable(track);
   return showWaveform ? <WaveformVariant /> : <SliderVariant />;
 }
 

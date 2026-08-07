@@ -1,7 +1,25 @@
 import { streamUrl } from "@/services/backend/streaming";
-import type { PodcastEpisode } from "@/services/openSubsonic/types";
+import type {
+  PodcastChannel,
+  PodcastEpisode,
+} from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
+
+// Feeds rarely give every episode its own artwork, so an episode without one
+// wears its channel's: the channel's cover id when it has one (it resolves
+// through the artwork cache offline like any other id), otherwise the feed image
+// URL the channel carries directly.
+function episodeArtwork(
+  episode: PodcastEpisode,
+  channel?: PodcastChannel,
+): { coverArt?: string; artwork?: string } {
+  const coverArt = episode.coverArt || channel?.coverArt;
+  return {
+    coverArt,
+    artwork: coverArt ? artworkUrl(coverArt) : channel?.originalImageUrl,
+  };
+}
 
 // Builds a player track from a Subsonic podcast episode. Podcast episodes are
 // streamed through their `streamId` (the underlying media file the server
@@ -10,6 +28,7 @@ import { artworkUrl } from "@/utils/artwork";
 export function podcastEpisodeToTrack(
   episode: PodcastEpisode,
   fallbackSeriesName?: string,
+  channel?: PodcastChannel,
 ) {
   const streamableId = episode.streamId ?? episode.id;
   const offlineStore = useOffline.getState();
@@ -21,8 +40,7 @@ export function podcastEpisodeToTrack(
     url,
     title: episode.title,
     artist: episode.artist || fallbackSeriesName,
-    artwork: artworkUrl(episode.coverArt),
-    coverArt: episode.coverArt,
+    ...episodeArtwork(episode, channel),
     duration: episode.duration,
     contentType: episode.contentType,
     source: "podcast" as const,

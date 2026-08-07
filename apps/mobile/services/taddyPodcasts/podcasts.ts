@@ -43,7 +43,11 @@ export const getPodcastSeries = async ({
     const rsp = await taddyPodcastsApiInstance.post<
       TaddyPodcastsResponse<PodcastSeries>
     >("", {
-      query: `query($uuid: ID, $itunesId: Int, $rssUrl: String, $name: String, $page: Int, $limitPerPage: Int, $sortOrder: SortOrder, $searchTerm: String){
+      // itunesId is Float, not Int: iTunes ids outrun GraphQL's 32-bit Int, so
+      // Taddy widened the scalar. GraphQL has no scalar subtyping, so declaring
+      // it Int fails document validation on every call — even one that never
+      // passes an itunesId.
+      query: `query($uuid: ID, $itunesId: Float, $rssUrl: String, $name: String, $page: Int, $limitPerPage: Int, $sortOrder: SortOrder, $searchTerm: String){
         getPodcastSeries(uuid: $uuid, itunesId: $itunesId, rssUrl: $rssUrl, name: $name){
           uuid
           name
@@ -54,7 +58,6 @@ export const getPodcastSeries = async ({
           imageUrl
           websiteUrl
           totalEpisodesCount
-          genres
           authorName
           episodes(sortOrder: $sortOrder, searchTerm: $searchTerm, page: $page, limitPerPage: $limitPerPage){
             uuid
@@ -65,15 +68,6 @@ export const getPodcastSeries = async ({
             audioUrl
             imageUrl
             websiteUrl
-            podcastSeries {
-              uuid
-              name
-              imageUrl
-              description(shouldStripHtmlTags: false)
-              genres
-              language
-              authorName
-            }
           }
         }
       }`,
