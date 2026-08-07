@@ -26,6 +26,10 @@ const PROGRESS_REPORT_INTERVAL_MS = 30_000;
 const STARTUP_GRACE_MS = 1_500;
 
 let currentId: string | null = null;
+// The rate the current track is playing at. The server extrapolates position
+// between the ~30s progress reports, so a podcast at 1.5× would drift half a
+// minute ahead of the server's estimate if this always claimed 1.
+let currentRate = 1;
 let lastPositionMs = 0;
 let lastSentState: PlaybackReportState | null = null;
 let lastProgressSentAt = 0;
@@ -45,13 +49,22 @@ function send(
     mediaId: id,
     state,
     positionMs: Math.max(0, Math.round(positionMs)),
-    playbackRate: 1,
+    playbackRate: currentRate,
     ignoreScrobble,
   }).catch(() => {});
 }
 
-export function reportStarting(id: string) {
+// Re-report the speed of the track already playing, so changing it mid-episode
+// corrects the server's estimate instead of waiting for the next track.
+export function notePlaybackRateChanged(rate: number) {
+  if (!currentId || rate === currentRate) return;
+  currentRate = rate;
+  send(currentId, lastSentState ?? "playing", lastPositionMs);
+}
+
+export function reportStarting(id: string, playbackRate = 1) {
   currentId = id;
+  currentRate = playbackRate;
   lastPositionMs = 0;
   lastSentState = "starting";
   lastProgressSentAt = Date.now();
@@ -91,6 +104,7 @@ export function reportStopped(ignoreScrobble?: boolean) {
   if (!currentId) return;
   send(currentId, "stopped", lastPositionMs, ignoreScrobble);
   currentId = null;
+  currentRate = 1;
   lastSentState = null;
   lastPositionMs = 0;
 }

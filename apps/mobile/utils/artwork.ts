@@ -26,11 +26,15 @@ export const resolveCachedArtwork = (
   return alias ? artworkCache[alias] : undefined;
 };
 
+// Some `coverArt` values are already a URI rather than a server cover id: the
+// local backend stores a `file://` path to the artwork it extracted, and
+// on-device podcasts (which back Navidrome and Jellyfin too, see
+// services/backend/podcasts.ts) store the feed's image URL. Wrapping either in a
+// /getCoverArt request would ask the server for an id it never issued.
+const isArtworkUri = (id?: string) => !!id && /^(https?|file|data):/i.test(id);
+
 export const artworkUrl = (id?: string, size?: number) => {
   const { url, serverType } = useAuthBase.getState();
-  // For the local backend `coverArt` already holds a `file://` URI to the
-  // extracted artwork on disk (see services/local/mappers.ts), so it's used
-  // as-is rather than turned into a /getCoverArt request.
   if (serverType === "local") return id ?? "";
   // Covers cached to disk by the extended-offline library sync replace the
   // server URL while it's unreachable, so offline screens keep their artwork.
@@ -39,6 +43,7 @@ export const artworkUrl = (id?: string, size?: number) => {
     const cached = resolveCachedArtwork(id, artworkCache, artworkAliases);
     if (cached) return cached;
   }
+  if (isArtworkUri(id)) return id as string;
   if (serverType === "jellyfin") return jellyfinArtworkUrl(id, size);
   const sizeParam = size ? `&size=${size}` : "";
   return `${url}/rest/getCoverArt?id=${encodeURIComponent(id ?? "")}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}${sizeParam}`;

@@ -32,6 +32,7 @@ import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
 import PlayerSheets from "@/components/player/PlayerSheets";
+import PodcastSeekButton from "@/components/player/PodcastSeekButton";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
@@ -51,7 +52,14 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
-import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import {
+  PODCAST_SEEK_BACKWARD_SECONDS,
+  PODCAST_SEEK_FORWARD_SECONDS,
+  seekBy,
+  skipNext,
+  skipPrevious,
+  togglePlayPause,
+} from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
@@ -112,6 +120,7 @@ export default function PlayerScreen() {
   const router = useRouter();
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
+  const speedSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
   // One indicator for every output: the button says "not this phone", and the
@@ -195,6 +204,7 @@ export default function PlayerScreen() {
     Math.min(coverArea.width - 48, coverArea.height),
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
+  const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
   const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = isSyncedLyrics(lyrics);
   const coverTranslateX = useSharedValue(0);
@@ -264,6 +274,18 @@ export default function PlayerScreen() {
 
   const handlePreviousPress = () => {
     skipPrevious();
+  };
+
+  const handleSeekBackwardPress = () => {
+    seekBy(-PODCAST_SEEK_BACKWARD_SECONDS);
+  };
+
+  const handleSeekForwardPress = () => {
+    seekBy(PODCAST_SEEK_FORWARD_SECONDS);
+  };
+
+  const handleSpeedPress = () => {
+    speedSheetRef.current?.present();
   };
 
   const handleFavoritePress = () => {
@@ -624,7 +646,10 @@ export default function PlayerScreen() {
                     : "items-center justify-between"
                 }
               >
-                {!isRadio && (
+                {/* Podcasts swap shuffle/repeat — meaningless for an episode —
+                    for the relative seeks, and demote prev/next episode to the
+                    outer slots so the seeks sit under the thumb. */}
+                {!isRadio && !isPodcast && (
                   <ShuffleToggle
                     active={shuffle}
                     hitSlop={ICON_HIT_SLOP}
@@ -636,8 +661,20 @@ export default function PlayerScreen() {
                     testID="player-previous-button"
                     onPress={handlePreviousPress}
                   >
-                    <SkipBack size={36} color="white" fill="white" />
+                    <SkipBack
+                      size={isPodcast ? 28 : 36}
+                      color="white"
+                      fill="white"
+                    />
                   </FadeOut>
+                )}
+                {isPodcast && (
+                  <PodcastSeekButton
+                    testID="player-seek-backward-button"
+                    direction="backward"
+                    seconds={PODCAST_SEEK_BACKWARD_SECONDS}
+                    onPress={handleSeekBackwardPress}
+                  />
                 )}
                 <PlayPauseButton
                   testID="player-play-pause-button"
@@ -648,15 +685,27 @@ export default function PlayerScreen() {
                   color={gray800}
                   className="bg-white"
                 />
+                {isPodcast && (
+                  <PodcastSeekButton
+                    testID="player-seek-forward-button"
+                    direction="forward"
+                    seconds={PODCAST_SEEK_FORWARD_SECONDS}
+                    onPress={handleSeekForwardPress}
+                  />
+                )}
                 {!isRadio && (
                   <FadeOut
                     testID="player-next-button"
                     onPress={handleNextPress}
                   >
-                    <SkipForward size={36} color="white" fill="white" />
+                    <SkipForward
+                      size={isPodcast ? 28 : 36}
+                      color="white"
+                      fill="white"
+                    />
                   </FadeOut>
                 )}
-                {!isRadio && (
+                {!isRadio && !isPodcast && (
                   <RepeatToggle
                     mode={repeatMode}
                     hitSlop={ICON_HIT_SLOP}
@@ -695,6 +744,20 @@ export default function PlayerScreen() {
                     </Box>
                   )}
                 </FadeOut>
+                {isPodcast && (
+                  <FadeOut
+                    testID="player-speed-button"
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={handleSpeedPress}
+                    accessibilityLabel={t("app.player.playbackSpeed")}
+                  >
+                    <Text className="text-white font-bold text-base">
+                      {t("app.player.playbackSpeedValue", {
+                        rate: podcastPlaybackRate,
+                      })}
+                    </Text>
+                  </FadeOut>
+                )}
                 <FadeOut
                   testID="player-queue-button"
                   hitSlop={ICON_HIT_SLOP}
@@ -709,6 +772,7 @@ export default function PlayerScreen() {
       </VStack>
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
+        speedSheetRef={speedSheetRef}
         playingTrack={playingTrack ?? null}
         hasKaraoke={hasKaraoke}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}
