@@ -61,7 +61,7 @@
 				"searchPlaceholder": "Cerca nella tua libreria",
 				"allAlbums": "Tutti gli album",
 				"allArtists": "Tutti gli artisti",
-				"allTracks": "All tracks",
+				"allTracks": "Tutti i brani",
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
 				"search": {
@@ -1241,13 +1241,13 @@
 							"description": "Non sincronizzare. La tua coda rimane solo su questo dispositivo e non viene mai inviata al server."
 						}
 					},
-					"waveformSeekbarLabel": "Waveform seek bar",
-					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
-					"waveformCacheLabel": "Waveform cache",
-					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
-					"waveformCacheConfirmTitle": "Clear waveform cache?",
-					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
-					"waveformCacheSuccessMessage": "Waveform cache cleared"
+					"waveformSeekbarLabel": "Barra di ricerca della forma d'onda",
+					"waveformSeekbarDescription": "Mostra la forma d'onda del brano invece di una semplice barra di avanzamento. Ogni forma d'onda viene analizzata una sola volta, pochi secondi dopo l'inizio del brano, e poi riutilizzata. Per farlo, i brani in streaming scaricano una copia aggiuntiva a bassa qualità, quindi questa funzione consuma più dati — ma mai tramite rete mobile. Questa funzione viene disattivata per i podcast, la radio e i brani di durata superiore a 15 minuti.",
+					"waveformCacheLabel": "Cache delle forme d'onda",
+					"waveformCacheDescription": "Elimina tutte le forme d'onda salvate. Le tracce la cui analisi non è andata a buon fine verranno riprovate alla successiva riproduzione.",
+					"waveformCacheConfirmTitle": "Cancellare la cache delle forme d'onda?",
+					"waveformCacheConfirmDescription": "Tutte le forme d'onda salvate verranno cancellate e rigenerate la prossima volta che riprodurrai ciascuna traccia.",
+					"waveformCacheSuccessMessage": "Cache delle forme d'onda svuotata"
 				},
 				"streamingSettings": {
 					"title": "Impostazioni di streaming",
@@ -1570,8 +1570,8 @@
 					"artist": "Riproduzione dall'artista",
 					"likedSongs": "Riproduzione dei brani preferiti",
 					"allSongs": "Riproduzione da tutti i brani",
-					"allTracks": "Playing from all tracks",
-					"mostPlayed": "Playing from most played",
+					"allTracks": "Riproduzione di tutti i brani",
+					"mostPlayed": "Riproduzione in base ai brani più ascoltati",
 					"folder": "Riproduzione dalla cartella",
 					"similar": "Brani simili",
 					"audiomuse": "Riproduzione da AudioMuse-AI",
@@ -1602,6 +1602,11 @@
 				"sleepTimerEndOfTrack": "Fine del brano",
 				"sleepTimerMinutes": "{{count}} minuti",
 				"sleepTimerActive": "Timer di spegnimento · {{label}}",
+				"playbackSpeed": "Velocità di riproduzione",
+				"playbackSpeedValue": "{{rate}}×",
+				"playbackSpeedNormal": "Normale",
+				"seekBackward": "Indietro {{seconds}} secondi",
+				"seekForward": "Avanti {{seconds}} secondi",
 				"jukebox": "Jukebox",
 				"jukeboxOn": "Il",
 				"jukeboxOff": "Spento",
@@ -1614,7 +1619,14 @@
 				"jukeboxResumeTitle": "Riavviare il jukebox?",
 				"jukeboxResumeMessage": "Sul server è ancora in corso una sessione del jukebox. Vuoi riprendere il controllo o riprodurre su questo dispositivo?",
 				"jukeboxResumeResume": "Riprendere il controllo",
-				"jukeboxResumePlayHere": "Riproduci qui"
+				"jukeboxResumePlayHere": "Riproduci qui",
+				"output": "Risultato",
+				"outputSpeakersAndTvs": "Altoparlanti e TV (UPnP/DLNA)",
+				"outputScanning": "Cerchi dispositivi…",
+				"outputNoDevices": "Nessun dispositivo rilevato su questa rete",
+				"outputUnverified": "Potrebbe non supportare la riproduzione",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}."
 			},
 			"shares": {
 				"title": "Condivisioni",
@@ -1744,7 +1756,7 @@
 					"radioStations": "Stazioni radio",
 					"folders": "Cartelle",
 					"songs": "Canzoni",
-					"downloaded": "Downloaded"
+					"downloaded": "Scaricato"
 				},
 				"save": "Salva",
 				"done": "Fatto",

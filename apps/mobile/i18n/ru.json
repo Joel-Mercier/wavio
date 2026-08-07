@@ -61,7 +61,7 @@
 				"searchPlaceholder": "Поиск в медиатеке",
 				"allAlbums": "Все альбомы",
 				"allArtists": "Все исполнители",
-				"allTracks": "All tracks",
+				"allTracks": "Все треки",
 				"allAlbumsSubtitle": "Альбомы",
 				"allArtistsSubtitle": "Исполнители",
 				"search": {
@@ -1130,7 +1130,7 @@
 					"extendedOfflinePausedDisk": "Приостановлено — память устройства почти заполнена",
 					"extendedOfflineSyncError": "Ошибка синхронизации — пробуем еще раз",
 					"extendedOfflineCompletedToast": "Твоя медиатека полностью закэширована — {{count}} треков",
-					"idMigrationCompletedToast": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact",
+					"idMigrationCompletedToast": "Ваш сервер изменил способ идентификации треков — ссылки на {{count}} были перенаправлены, ваши загрузки остались без изменений",
 					"extendedOfflineUnsupported": "Этот сервер не поддерживает полную синхронизацию медиатеки",
 					"extendedOfflineDisableConfirmTitle": "Удалить кэшированную медиатеку?",
 					"extendedOfflineDisableConfirmDescription": "Загруженные при синхронизации медиатеки треки и обложки удалятся с устройства. Альбомы, плейлисты и треки, сохраненные для офлайна вручную, сохранятся.",
@@ -1269,13 +1269,13 @@
 							"description": "Без синхронизации. Очередь хранится только на этом устройстве и не отправляется на сервер."
 						}
 					},
-					"waveformSeekbarLabel": "Waveform seek bar",
-					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",
-					"waveformCacheLabel": "Waveform cache",
-					"waveformCacheDescription": "Delete every stored waveform. Tracks that failed to analyze are retried the next time you play them.",
-					"waveformCacheConfirmTitle": "Clear waveform cache?",
-					"waveformCacheConfirmDescription": "All stored waveforms will be deleted and generated again the next time you play each track.",
-					"waveformCacheSuccessMessage": "Waveform cache cleared"
+					"waveformSeekbarLabel": "Полоса прокрутки формы сигнала",
+					"waveformSeekbarDescription": "Отображать график сигнала трека вместо обычной полосы прогресса. Каждый график сигнала анализируется один раз — через несколько секунд после начала воспроизведения трека — и затем используется повторно. Для потоковых треков в целях реализации этой функции загружается дополнительная копия низкого качества, поэтому при этом расходуется больше данных — но никогда через сотовую сеть. Эта функция не применяется к подкастам, радиопередачам и трекам продолжительностью более 15 минут.",
+					"waveformCacheLabel": "Кэш сигналов",
+					"waveformCacheDescription": "Удалите все сохраненные формы сигнала. Анализ треков, анализ которых не удалось выполнить, будет повторен при следующем их воспроизведении.",
+					"waveformCacheConfirmTitle": "Очистить кэш сигналов?",
+					"waveformCacheConfirmDescription": "Все сохраненные формы сигнала будут удалены и сгенерированы заново при следующем воспроизведении каждого трека.",
+					"waveformCacheSuccessMessage": "Кэш сигналов очищен"
 				},
 				"streamingSettings": {
 					"title": "Качество аудиостриминга",
@@ -1612,8 +1612,8 @@
 					"artist": "Из треков исполнителя",
 					"likedSongs": "Из любимых треков",
 					"allSongs": "Из медиатеки",
-					"allTracks": "Playing from all tracks",
-					"mostPlayed": "Playing from most played",
+					"allTracks": "Воспроизведение всех треков",
+					"mostPlayed": "Воспроизведение из списка «Самые прослушиваемые»",
 					"folder": "Из папки",
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
@@ -1644,6 +1644,11 @@
 				"sleepTimerEndOfTrack": "В конце трека",
 				"sleepTimerMinutes": "{{count}} минут",
 				"sleepTimerActive": "Таймер сна · {{label}}",
+				"playbackSpeed": "Скорость воспроизведения",
+				"playbackSpeedValue": "{{rate}}×",
+				"playbackSpeedNormal": "Нормальный",
+				"seekBackward": "Назад {{seconds}} секунд",
+				"seekForward": "Переслать {{seconds}} секунд",
 				"jukebox": "Jukebox",
 				"jukeboxOn": "Вкл.",
 				"jukeboxOff": "Выкл.",
@@ -1656,7 +1661,14 @@
 				"jukeboxResumeTitle": "Возобновить работу Jukebox?",
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
-				"jukeboxResumePlayHere": "Воспроизвести здесь"
+				"jukeboxResumePlayHere": "Воспроизвести здесь",
+				"output": "Вывод",
+				"outputSpeakersAndTvs": "Акустические системы и телевизоры (UPnP/DLNA)",
+				"outputScanning": "Ищу устройства…",
+				"outputNoDevices": "В этой сети не обнаружено никаких устройств",
+				"outputUnverified": "Возможно, воспроизведение не будет поддерживаться",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Не удалось воспроизвести файл по адресу {{name}}."
 			},
 			"shares": {
 				"title": "Общий доступ",
@@ -1794,7 +1806,7 @@
 					"radioStations": "Радиостанции",
 					"folders": "Папки",
 					"songs": "Треки",
-					"downloaded": "Downloaded"
+					"downloaded": "Скачано"
 				},
 				"save": "Сохранить",
 				"done": "Готово",
