@@ -1602,6 +1602,11 @@
 				"sleepTimerEndOfTrack": "Fin de la pista",
 				"sleepTimerMinutes": "{{count}} minutos",
 				"sleepTimerActive": "Temporizador de apagado · {{label}}",
+				"playbackSpeed": "Playback speed",
+				"playbackSpeedValue": "{{rate}}×",
+				"playbackSpeedNormal": "Normal",
+				"seekBackward": "Back {{seconds}} seconds",
+				"seekForward": "Forward {{seconds}} seconds",
 				"jukebox": "Máquina de discos",
 				"jukeboxOn": "Encendido",
 				"jukeboxOff": "Apagado",
@@ -1614,7 +1619,14 @@
 				"jukeboxResumeTitle": "¿Reanudar el «jukebox»?",
 				"jukeboxResumeMessage": "Todavía hay una sesión de jukebox en curso en el servidor. ¿Quieres retomar el control o reproducirla en este dispositivo?",
 				"jukeboxResumeResume": "Retomar el control",
-				"jukeboxResumePlayHere": "Reproducir aquí"
+				"jukeboxResumePlayHere": "Reproducir aquí",
+				"output": "Output",
+				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
+				"outputScanning": "Looking for devices…",
+				"outputNoDevices": "No devices found on this network",
+				"outputUnverified": "Might not accept playback",
+				"outputChromecast": "Chromecast",
+				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
 				"title": "Acciones",
