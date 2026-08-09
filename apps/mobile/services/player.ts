@@ -15,6 +15,7 @@ import {
   getIsOnline,
   getServerReachable,
   probeServer,
+  USER_AGENT,
 } from "@/services/network";
 import type {
   AlbumID3,
@@ -466,6 +467,14 @@ function effectivePosition(raw: number): number {
 // vice versa. Always re-check the offline registry at load time. `timeOffset`
 // starts a transcoded stream partway in (seek/resume) and only applies to the
 // streamed branch — local/radio/podcast URLs are seekable and ignore it.
+// expo-audio routes http(s) sources through an OkHttp data source, which sends
+// `okhttp/*` as its User-Agent unless told otherwise — the signature Cloudflare
+// scores as a bot. Identify the app the same way the API clients do. Ignored
+// for offline/file sources, which never reach the network stack.
+function audioSource(uri: string) {
+  return { uri, headers: { "User-Agent": USER_AGENT } };
+}
+
 function resolveTrackUrl(
   track: QueueTrack,
   timeOffset?: number,
@@ -630,7 +639,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     isOffline,
     isRadio: track.isRadio ?? false,
   });
-  player.replace({ uri: url });
+  player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);
   applyLockScreen(player, track);
@@ -1559,7 +1568,7 @@ function reloadAtOffset(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
   streamStartOffset = Math.max(0, seconds);
   const { url } = resolveTrackUrl(track, streamStartOffset);
-  player.replace({ uri: url });
+  player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);
   pendingResumeId = null;

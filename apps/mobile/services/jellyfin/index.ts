@@ -1,6 +1,7 @@
 import axios from "axios";
 import { reportError } from "@/services/errorReporting";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
+import { USER_AGENT } from "@/services/network";
 import { useAuthBase } from "@/stores/auth";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
@@ -29,6 +30,7 @@ jellyfinApiInstance.interceptors.request.use(
   (request) => {
     const { url, jellyfinAccessToken } = useAuthBase.getState();
     request.baseURL = url ? url.replace(/\/+$/, "") : "";
+    request.headers.set("User-Agent", USER_AGENT);
     request.headers.set(
       "X-Emby-Authorization",
       buildAuthorizationHeader(jellyfinAccessToken),

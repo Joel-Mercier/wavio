@@ -61,6 +61,14 @@ describe("persisted query cache", () => {
     expect(shouldPersist(query(LYRICS_KEY, undefined))).toBe(false);
   });
 
+  // The manual picker's candidate list only matters while its sheet is open.
+  it("does not persist the lyrics picker's search results", () => {
+    const results = [{ id: 1, trackName: "t", artistName: "a" }];
+    expect(
+      shouldPersist(query(["lrclib:search", "t", "a", 348], results)),
+    ).toBe(false);
+  });
+
   it("still persists a null from any other query", () => {
     expect(shouldPersist(query(["album", "abc"], null))).toBe(true);
   });

@@ -2,11 +2,26 @@ import NetInfo, {
   type NetInfoState,
   type NetInfoStateType,
 } from "@react-native-community/netinfo";
+import * as Application from "expo-application";
 import { probeUrl } from "@/services/backend/probe";
 import { reportBreadcrumb, scrubUrl } from "@/services/errorReporting";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
+
+// Every outbound request identifies the app. With no explicit header React
+// Native's networking stack (and ExoPlayer's OkHttp data source) sends
+// `okhttp/*`, which Cloudflare's managed bot rules score as automated traffic —
+// so a server fronted by Cloudflare can answer a browser fine while rejecting
+// the app, which surfaces as "can't connect" with nothing wrong server-side.
+// Verified against LRCLIB: `okhttp/*` earns a 520 and an absent agent a 403,
+// where the same request answers 200 with an identifying agent.
+//
+// Consumers in the API clients must read this at *request* time, not when their
+// axios instance is created: this module imports backend/probe, which imports
+// the Jellyfin client, so a module-scope read from there resolves the cycle to
+// `undefined`.
+export const USER_AGENT = `Wavio/${Application.nativeApplicationVersion ?? "1.0.0"}`;
 
 let currentType: NetInfoStateType = "unknown" as NetInfoStateType;
 // Optimistic default — matches the previous per-component useIsOnline behavior

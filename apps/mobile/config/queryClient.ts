@@ -141,6 +141,10 @@ export const persistOptions = {
       defaultShouldDehydrateQuery(query) &&
       // Infinite-list pages don't restore cleanly; skip them.
       !String(query.queryKey[0]).includes(":infinite") &&
+      // The manual lyrics picker's candidate list only means anything while its
+      // sheet is open — persisting a result set per track browsed would grow the
+      // cache blob for nothing.
+      query.queryKey[0] !== "lrclib:search" &&
       !isEmptyLyricsLookup(query),
   },
 } as const;

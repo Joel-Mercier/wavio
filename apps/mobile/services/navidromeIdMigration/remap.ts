@@ -5,6 +5,7 @@ import useActivity from "@/stores/activity";
 import { currentAuthScope } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useLibrarySync from "@/stores/librarySync";
+import useLrclibPicks from "@/stores/lrclibPicks";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
 import usePlayHistory from "@/stores/playHistory";
@@ -165,6 +166,8 @@ function collectIds(): Set<string> {
   }
 
   for (const key of Object.keys(useBookmarks.getState().bookmarks)) add(key);
+
+  for (const key of Object.keys(useLrclibPicks.getState().picks)) add(key);
 
   const playlists = usePlaylists.getState();
   for (const key of Object.keys(playlists.playlistSorts)) add(key);
@@ -377,6 +380,10 @@ function applyRemap(remap: Remap): void {
 
   useBookmarks.setState({
     bookmarks: remapKeys(useBookmarks.getState().bookmarks, remap),
+  });
+
+  useLrclibPicks.setState({
+    picks: remapKeys(useLrclibPicks.getState().picks, remap),
   });
 
   const playlists = usePlaylists.getState();

@@ -48,16 +48,9 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     () => pickSyncedLyrics(list?.filter((l) => (l.kind ?? "main") === "main")),
     [list],
   );
-  const layers = useMemo(() => {
-    return {
-      main: backendLyrics,
-      translations: list?.filter((l) => l.kind === "translation") ?? [],
-      pronunciations: list?.filter((l) => l.kind === "pronunciation") ?? [],
-    };
-  }, [list, backendLyrics]);
-
   const backendSettled = lyricsEligible && !backend.isLoading;
   const lrclib = useLrclibLyrics({
+    trackId,
     trackName: track?.title,
     artistName: track?.artist,
     albumName: track?.album,
@@ -68,8 +61,29 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
   // lrclib's query keeps its cached result after being disabled, so switching
   // away from "all" must also stop surfacing it here — otherwise the
   // last-played track keeps showing its lrclib lyrics.
-  const lyrics =
-    backendLyrics ?? (lyricsSource === "all" ? lrclib.lyrics : null);
+  const lrclibLyrics = lyricsSource === "all" ? lrclib.lyrics : null;
+  // A hand-picked sheet is the one case lrclib outranks the server: the user
+  // chose it *because* the automatic result (server's included) was wrong.
+  const picked = lrclib.isPicked ? lrclibLyrics : null;
+  const lyrics = picked ?? backendLyrics ?? lrclibLyrics;
+
+  const layers = useMemo<{
+    main: StructuredLyrics | null;
+    translations: StructuredLyrics[];
+    pronunciations: StructuredLyrics[];
+  }>(() => {
+    // The kind layers are the backend's, aligned line-for-line against the
+    // backend's own lyrics (alignLayerToMain). A picked sheet has a different
+    // line set entirely, so carrying them over would bucket translations onto
+    // unrelated lines.
+    if (picked) return { main: picked, translations: [], pronunciations: [] };
+    return {
+      main: backendLyrics,
+      translations: list?.filter((l) => l.kind === "translation") ?? [],
+      pronunciations: list?.filter((l) => l.kind === "pronunciation") ?? [],
+    };
+  }, [list, backendLyrics, picked]);
+
   const isLoading = backend.isLoading || lrclib.isLoading;
   return {
     lyrics,

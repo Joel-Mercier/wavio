@@ -1,6 +1,7 @@
 import useActivity from "@/stores/activity";
 import useBookmarks from "@/stores/bookmarks";
 import useLibrarySync from "@/stores/librarySync";
+import useLrclibPicks from "@/stores/lrclibPicks";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
 import usePlayHistory from "@/stores/playHistory";
@@ -96,6 +97,7 @@ export function hasLocalData(): boolean {
   if (useActivity.getState().activity.length > 0) return true;
   if (useOfflineMutations.getState().queue.length > 0) return true;
   if (Object.keys(useBookmarks.getState().bookmarks).length > 0) return true;
+  if (Object.keys(useLrclibPicks.getState().picks).length > 0) return true;
   const playlists = usePlaylists.getState();
   if (Object.keys(playlists.playlistTrackOrders).length > 0) return true;
   if (Object.keys(playlists.playlistSorts).length > 0) return true;

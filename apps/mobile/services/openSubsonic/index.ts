@@ -3,6 +3,7 @@ import i18n from "@/config/i18n";
 import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
+import { USER_AGENT } from "@/services/network";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
@@ -68,6 +69,7 @@ openSubsonicApiInstance.interceptors.request.use(
       f: "json",
     };
     request.baseURL = url || request.baseURL || "";
+    request.headers.set("User-Agent", USER_AGENT);
     return request;
   },
   (error) => Promise.reject(error),

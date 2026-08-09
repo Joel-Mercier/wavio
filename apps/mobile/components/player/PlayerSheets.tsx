@@ -22,6 +22,7 @@ import Radar from "lucide-react-native/dist/esm/icons/radar.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import TextSearch from "lucide-react-native/dist/esm/icons/text-search.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import Waypoints from "lucide-react-native/dist/esm/icons/waypoints.mjs";
@@ -35,6 +36,7 @@ import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
+import LrclibPickerSheet from "@/components/player/LrclibPickerSheet";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
@@ -91,6 +93,7 @@ function SetBookmarkLabel() {
 export default function PlayerSheets({
   actionsSheetRef,
   speedSheetRef,
+  lyricsPickerSheetRef,
   playingTrack,
   hideLyricsAction,
   hasKaraoke,
@@ -99,6 +102,10 @@ export default function PlayerSheets({
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
   speedSheetRef?: RefObject<BottomSheetModal | null>;
+  // Only the player chrome has a button of its own for the lyrics picker; the
+  // lyrics screen reaches it through the action below, so the ref is optional
+  // and falls back to one owned here.
+  lyricsPickerSheetRef?: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   hideLyricsAction?: boolean;
   hasKaraoke?: boolean;
@@ -126,6 +133,8 @@ export default function PlayerSheets({
   const [shareUrl, setShareUrl] = useState("");
   const [showInfoModal, setShowInfoModal] = useState(false);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
+  const ownLyricsPickerSheetRef = useRef<BottomSheetModal>(null);
+  const lyricsPickerRef = lyricsPickerSheetRef ?? ownLyricsPickerSheetRef;
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
@@ -243,6 +252,11 @@ export default function PlayerSheets({
 
   const handleToggleKaraokePress = () => {
     setKaraokeEnabled(!karaokeEnabled);
+  };
+
+  const handleChooseLyricsPress = () => {
+    actionsSheetRef.current?.dismiss();
+    lyricsPickerRef.current?.present();
   };
 
   const handleInfoPress = () => {
@@ -738,6 +752,19 @@ export default function PlayerSheets({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                {lyricsSource === "all" && (
+                  <FadeOutScaleDown
+                    onPress={handleChooseLyricsPress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <TextSearch size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.lyricsPicker")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {capabilities.similarSongs && (
                   <FadeOutScaleDown
                     onPress={handleSimilarSongsPress}
@@ -993,6 +1020,7 @@ export default function PlayerSheets({
           </Box>
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
+      <LrclibPickerSheet sheetRef={lyricsPickerRef} track={playingTrack} />
       <ShareLinkSheet sheetRef={bottomSheetShareModalRef} url={shareUrl} />
       <TrackInfoModal
         isOpen={showInfoModal}

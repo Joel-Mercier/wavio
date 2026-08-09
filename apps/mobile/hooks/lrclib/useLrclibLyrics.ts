@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   getLrclibLyrics,
   isLrclibThrottled,
   LrclibThrottledError,
 } from "@/services/lrclib/lyrics";
+import useLrclibPicks from "@/stores/lrclibPicks";
 import { parseLrcToStructuredLyrics } from "@/utils/lyrics";
 
 // How long a "no lyrics" result is trusted before the lookup is allowed to run
@@ -11,20 +13,34 @@ import { parseLrcToStructuredLyrics } from "@/utils/lyrics";
 // out seven requests per track, short enough that a track recovers on its own.
 const LYRICS_MISS_STALE_MS = 24 * 60 * 60 * 1000;
 
+// `enabled` gates the *network* lookup only. A record the user picked by hand
+// (components/player/LrclibPickerSheet) is always returned, flagged with
+// `isPicked` so the caller can decide precedence — useSyncedLyrics lets it beat
+// the server's own lyrics, which the automatic lookup never does.
 export function useLrclibLyrics({
+  trackId,
   trackName,
   artistName,
   albumName,
   duration,
   enabled = true,
 }: {
+  trackId?: string;
   trackName?: string;
   artistName?: string;
   albumName?: string;
   duration?: number;
   enabled?: boolean;
 }) {
-  const isEnabled = enabled && !!trackName && !!artistName;
+  const pick = useLrclibPicks((state) =>
+    trackId ? state.picks[trackId] : undefined,
+  );
+  const pickedLyrics = useMemo(
+    () => parseLrcToStructuredLyrics(pick ?? null, trackName, artistName),
+    [pick, trackName, artistName],
+  );
+  // A pick carries its own lyrics, so it costs no request.
+  const isEnabled = enabled && !pick && !!trackName && !!artistName;
   const query = useQuery({
     queryKey: ["lrclib", trackName, artistName, albumName, duration],
     queryFn: async () => {
@@ -57,5 +73,9 @@ export function useLrclibLyrics({
       query.state.data ? Number.POSITIVE_INFINITY : LYRICS_MISS_STALE_MS,
   });
 
-  return { lyrics: query.data ?? null, isLoading: query.isLoading };
+  return {
+    lyrics: pickedLyrics ?? query.data ?? null,
+    isLoading: !pick && query.isLoading,
+    isPicked: !!pick,
+  };
 }

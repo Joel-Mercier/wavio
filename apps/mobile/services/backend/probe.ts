@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
+import { USER_AGENT } from "@/services/network";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
 import { useAuthBase } from "@/stores/auth";
 
@@ -31,6 +32,10 @@ const PROBE_DEADLINE_MS = PROBE_TIMEOUT_MS + 1000;
  * an HTTP 401 (jellyfin/index.ts). Probing a fallback that sits behind an SSO
  * proxy, or whose credentials differ, would otherwise end the session instead of
  * simply reporting "not usable".
+ *
+ * `USER_AGENT` is read here rather than at module scope on purpose: this module
+ * is imported by services/network.ts, so the cycle leaves it undefined until
+ * that module's body has run. By call time it always resolves.
  */
 export function createBareClient(
   baseURL: string,
@@ -38,7 +43,7 @@ export function createBareClient(
 ): AxiosInstance {
   return axios.create({
     baseURL,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
     ...(timeout ? { timeout } : {}),
   });
 }
