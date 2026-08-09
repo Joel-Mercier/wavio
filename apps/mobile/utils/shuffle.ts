@@ -24,6 +24,28 @@ export function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
   return shuffle(arr, mulberry32(seed || 1));
 }
 
+// Seeded random subset, for the carousels that draw a handful of items out of a
+// whole-library list (the artist index can be tens of thousands of entries on a
+// large server). Reservoir sampling keeps this O(count) in memory and does one
+// pass, where shuffling the full array first copies it and then swaps every
+// element just to throw all but `count` of them away.
+export function sampleWithSeed<T>(
+  arr: readonly T[],
+  count: number,
+  seed: number,
+): T[] {
+  if (count <= 0) return [];
+  if (arr.length <= count) return shuffle([...arr], mulberry32(seed || 1));
+
+  const rand = mulberry32(seed || 1);
+  const reservoir = arr.slice(0, count);
+  for (let i = count; i < arr.length; i++) {
+    const j = Math.floor(rand() * (i + 1));
+    if (j < count) reservoir[j] = arr[i];
+  }
+  return reservoir;
+}
+
 // A uniform shuffle regularly clusters several tracks by the same artist, which
 // reads as "not shuffled at all" on the playlists people shuffle most. This
 // spreads each group evenly across the output instead of drawing positions

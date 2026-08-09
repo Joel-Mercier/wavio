@@ -1,17 +1,17 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
-import PodcastSeriesListItemSkeleton from "@/components/podcasts/PodcastSeriesListItemSkeleton";
+import { PODCAST_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import ServerPodcastChannelListItem from "@/components/podcasts/ServerPodcastChannelListItem";
 import { useGetPodcasts } from "@/hooks/backend/usePodcasts";
-import { loadingData } from "@/utils/loadingData";
 
 interface PodcastCarouselSectionProps {
-  enabled: boolean;
+  sectionIndex: number;
 }
 
-export default function PodcastCarouselSection({
-  enabled,
-}: PodcastCarouselSectionProps) {
+function PodcastCarouselSection({ sectionIndex }: PodcastCarouselSectionProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
   const { data, isLoading, error } = useGetPodcasts({ enabled });
   const channels = data?.podcasts?.channel?.slice(0, 12);
@@ -22,14 +22,7 @@ export default function PodcastCarouselSection({
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!channels?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <PodcastSeriesListItemSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`podcast-skeleton-${index}`}
-          index={index}
-          layout="horizontal"
-        />
-      ))}
+      skeleton={PODCAST_CAROUSEL_SKELETON}
     >
       {channels?.map((channel, index) => (
         <ServerPodcastChannelListItem
@@ -42,3 +35,5 @@ export default function PodcastCarouselSection({
     </HomeSection>
   );
 }
+
+export default memo(PodcastCarouselSection);

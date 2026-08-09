@@ -1,9 +1,11 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
-import SongCardSkeleton from "@/components/home/sections/SongCardSkeleton";
+import { SONG_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -18,9 +20,12 @@ import { playTracks } from "@/services/player";
 import { useAuthBase } from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
-import { loadingData } from "@/utils/loadingData";
 
-function NowPlayingCard({ entry }: { entry: NowPlayingEntry }) {
+const NowPlayingCard = memo(function NowPlayingCard({
+  entry,
+}: {
+  entry: NowPlayingEntry;
+}) {
   const [white, emerald] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-emerald-500",
@@ -62,15 +67,18 @@ function NowPlayingCard({ entry }: { entry: NowPlayingEntry }) {
       </VStack>
     </FadeOutScaleDown>
   );
-}
+});
 
-export default function NowPlayingSection({ enabled }: { enabled: boolean }) {
+function NowPlayingSection({ sectionIndex }: { sectionIndex: number }) {
+  const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
   const username = useAuthBase((state) => state.username);
   const { data, isLoading, error } = useNowPlaying({ enabled });
   // Other people's activity only — seeing your own playback here isn't useful.
-  const entries = data?.nowPlaying?.entry?.filter(
-    (entry) => entry.username !== username,
+  const entries = useMemo(
+    () =>
+      data?.nowPlaying?.entry?.filter((entry) => entry.username !== username),
+    [data?.nowPlaying?.entry, username],
   );
   return (
     <HomeSection
@@ -78,12 +86,7 @@ export default function NowPlayingSection({ enabled }: { enabled: boolean }) {
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!entries?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <SongCardSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`now-playing-skeleton-${index}`}
-        />
-      ))}
+      skeleton={SONG_CAROUSEL_SKELETON}
     >
       {entries?.map((entry) => (
         <NowPlayingCard key={`${entry.id}-${entry.username}`} entry={entry} />
@@ -91,3 +94,5 @@ export default function NowPlayingSection({ enabled }: { enabled: boolean }) {
     </HomeSection>
   );
 }
+
+export default memo(NowPlayingSection);

@@ -1,20 +1,22 @@
+import { memo } from "react";
+import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
 import SongCard from "@/components/home/sections/SongCard";
-import SongCardSkeleton from "@/components/home/sections/SongCardSkeleton";
+import { SONG_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import {
   useMostPlayedSongs,
   useRandomSongs,
   useSongsByGenre,
 } from "@/hooks/backend/useLists";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import { loadingData } from "@/utils/loadingData";
 
 interface BaseProps {
   title: string;
-  enabled: boolean;
+  sectionIndex: number;
 }
 
-export function RandomSongsSection({ title, enabled }: BaseProps) {
+function RandomSongs({ title, sectionIndex }: BaseProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useRandomSongs(
     { size: 12, musicFolderId },
@@ -27,12 +29,7 @@ export function RandomSongsSection({ title, enabled }: BaseProps) {
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!songs?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <SongCardSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`random-song-skeleton-${index}`}
-        />
-      ))}
+      skeleton={SONG_CAROUSEL_SKELETON}
     >
       {songs?.map((song, index) => (
         <SongCard key={song.id} track={song} trackList={songs} index={index} />
@@ -41,7 +38,8 @@ export function RandomSongsSection({ title, enabled }: BaseProps) {
   );
 }
 
-export function MostPlayedTracksSection({ title, enabled }: BaseProps) {
+function MostPlayedTracks({ title, sectionIndex }: BaseProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useMostPlayedSongs(
     { size: 12, musicFolderId },
@@ -55,12 +53,7 @@ export function MostPlayedTracksSection({ title, enabled }: BaseProps) {
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!songs?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <SongCardSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`most-played-song-skeleton-${index}`}
-        />
-      ))}
+      skeleton={SONG_CAROUSEL_SKELETON}
     >
       {songs?.map((song, index) => (
         <SongCard key={song.id} track={song} trackList={songs} index={index} />
@@ -73,11 +66,8 @@ interface SongsByGenreProps extends BaseProps {
   genre: string;
 }
 
-export function SongsByGenreSection({
-  title,
-  enabled,
-  genre,
-}: SongsByGenreProps) {
+function SongsByGenre({ title, sectionIndex, genre }: SongsByGenreProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useSongsByGenre(
     { genre, count: 12, musicFolderId },
@@ -90,12 +80,7 @@ export function SongsByGenreSection({
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!songs?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <SongCardSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`genre-song-skeleton-${index}`}
-        />
-      ))}
+      skeleton={SONG_CAROUSEL_SKELETON}
     >
       {songs?.map((song, index) => (
         <SongCard key={song.id} track={song} trackList={songs} index={index} />
@@ -103,3 +88,7 @@ export function SongsByGenreSection({
     </HomeSection>
   );
 }
+
+export const RandomSongsSection = memo(RandomSongs);
+export const MostPlayedTracksSection = memo(MostPlayedTracks);
+export const SongsByGenreSection = memo(SongsByGenre);
