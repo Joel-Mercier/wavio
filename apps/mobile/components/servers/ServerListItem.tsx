@@ -11,7 +11,6 @@ import UsersIcon from "lucide-react-native/dist/esm/icons/users.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -481,138 +480,131 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         size="md"
       >
         <AlertDialogBackdrop />
-        <KeyboardAvoidingView
-          behavior="padding"
-          style={{ width: "100%", alignItems: "center" }}
-        >
-          <AlertDialogContent className="bg-primary-800 border-primary-400">
-            <AlertDialogHeader>
-              <Heading className="text-white font-bold" size="md">
-                {t("app.servers.editServer")}
-              </Heading>
-            </AlertDialogHeader>
-            <AlertDialogBody className="mt-3 mb-4">
-              {server.type === "local" ? (
-                <form.Field name="paths">
+        <AlertDialogContent className="bg-primary-800 border-primary-400">
+          <AlertDialogHeader>
+            <Heading className="text-white font-bold" size="md">
+              {t("app.servers.editServer")}
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            {server.type === "local" ? (
+              <form.Field name="paths">
+                {(field) => (
+                  <LocalPathsField
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                  />
+                )}
+              </form.Field>
+            ) : (
+              <>
+                <form.Field name="name">
                   {(field) => (
-                    <LocalPathsField
-                      value={field.state.value}
-                      onChange={field.handleChange}
-                    />
+                    <FormControl
+                      isInvalid={showFieldError(field)}
+                      size="md"
+                      isDisabled={false}
+                      isReadOnly={false}
+                      isRequired={false}
+                      className="my-4"
+                    >
+                      <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                        <InputField
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          onBlur={() => handleFieldBlur(field)}
+                          className="text-md text-white"
+                          placeholder={t("app.servers.namePlaceholder")}
+                        />
+                      </Input>
+                      <FieldError field={field} />
+                    </FormControl>
                   )}
                 </form.Field>
-              ) : (
-                <>
-                  <form.Field name="name">
-                    {(field) => (
-                      <FormControl
-                        isInvalid={showFieldError(field)}
-                        size="md"
-                        isDisabled={false}
-                        isReadOnly={false}
-                        isRequired={false}
-                        className="my-4"
-                      >
-                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                          <InputField
-                            value={field.state.value}
-                            onChangeText={field.handleChange}
-                            onBlur={() => handleFieldBlur(field)}
-                            className="text-md text-white"
-                            placeholder={t("app.servers.namePlaceholder")}
-                          />
-                        </Input>
-                        <FieldError field={field} />
-                      </FormControl>
-                    )}
-                  </form.Field>
-                  <form.Field name="url">
-                    {(field) => (
-                      <FormControl
-                        isInvalid={showFieldError(field)}
-                        size="md"
-                        isDisabled={false}
-                        isReadOnly={false}
-                        isRequired={false}
-                        className="my-4"
-                      >
-                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                          <UrlInputField
-                            value={field.state.value}
-                            onChangeText={field.handleChange}
-                            onBlur={() => handleFieldBlur(field)}
-                            placeholder={t("app.servers.urlPlaceholder")}
-                          />
-                        </Input>
-                        <FieldError field={field} />
-                      </FormControl>
-                    )}
-                  </form.Field>
-                  {/* Matches the login and add-server forms: advanced fields
+                <form.Field name="url">
+                  {(field) => (
+                    <FormControl
+                      isInvalid={showFieldError(field)}
+                      size="md"
+                      isDisabled={false}
+                      isReadOnly={false}
+                      isRequired={false}
+                      className="my-4"
+                    >
+                      <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                        <UrlInputField
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          onBlur={() => handleFieldBlur(field)}
+                          placeholder={t("app.servers.urlPlaceholder")}
+                        />
+                      </Input>
+                      <FieldError field={field} />
+                    </FormControl>
+                  )}
+                </form.Field>
+                {/* Matches the login and add-server forms: advanced fields
                       behind a disclosure, client certificate gated on Android +
                       the native trust module (it does nothing elsewhere). */}
-                  <AdvancedSettingsSection>
-                    <form.Field name="fallbackUrl">
-                      {(field) => (
-                        <FallbackUrlField
-                          field={field}
-                          placeholder={t("app.servers.fallbackUrlPlaceholder")}
-                        />
-                      )}
-                    </form.Field>
-                    <form.Field name="headers">
-                      {(field) => (
-                        <CustomHeadersField
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                        />
-                      )}
-                    </form.Field>
-                    {Platform.OS === "android" && isSslTrustAvailable() && (
-                      <form.Field name="mtlsAlias">
-                        {(field) => (
-                          <form.Subscribe
-                            selector={(state) => state.values.url}
-                          >
-                            {(url) => (
-                              <ClientCertificateField
-                                value={field.state.value || undefined}
-                                host={hostnameFromUrl(url ?? "")}
-                                onChange={(alias) =>
-                                  field.handleChange(alias ?? "")
-                                }
-                              />
-                            )}
-                          </form.Subscribe>
-                        )}
-                      </form.Field>
+                <AdvancedSettingsSection>
+                  <form.Field name="fallbackUrl">
+                    {(field) => (
+                      <FallbackUrlField
+                        field={field}
+                        placeholder={t("app.servers.fallbackUrlPlaceholder")}
+                      />
                     )}
-                  </AdvancedSettingsSection>
-                </>
-              )}
-            </AlertDialogBody>
-            <AlertDialogFooter className="items-center justify-center">
-              <FadeOutScaleDown
-                onPress={handleCloseEditServerModal}
-                className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-              >
-                <Text className="text-white font-bold text-lg">
-                  {t("app.shared.cancel")}
-                </Text>
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                onPress={() => {
-                  isDirty ? form.handleSubmit() : undefined;
-                }}
-                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-              >
-                <Text className="text-primary-800 font-bold text-lg">
-                  {t("app.shared.save")}
-                </Text>
-              </FadeOutScaleDown>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </KeyboardAvoidingView>
+                  </form.Field>
+                  <form.Field name="headers">
+                    {(field) => (
+                      <CustomHeadersField
+                        value={field.state.value}
+                        onChange={field.handleChange}
+                      />
+                    )}
+                  </form.Field>
+                  {Platform.OS === "android" && isSslTrustAvailable() && (
+                    <form.Field name="mtlsAlias">
+                      {(field) => (
+                        <form.Subscribe selector={(state) => state.values.url}>
+                          {(url) => (
+                            <ClientCertificateField
+                              value={field.state.value || undefined}
+                              host={hostnameFromUrl(url ?? "")}
+                              onChange={(alias) =>
+                                field.handleChange(alias ?? "")
+                              }
+                            />
+                          )}
+                        </form.Subscribe>
+                      )}
+                    </form.Field>
+                  )}
+                </AdvancedSettingsSection>
+              </>
+            )}
+          </AlertDialogBody>
+          <AlertDialogFooter className="items-center justify-center">
+            <FadeOutScaleDown
+              onPress={handleCloseEditServerModal}
+              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+            >
+              <Text className="text-white font-bold text-lg">
+                {t("app.shared.cancel")}
+              </Text>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown
+              onPress={() => {
+                isDirty ? form.handleSubmit() : undefined;
+              }}
+              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+            >
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
+              </Text>
+            </FadeOutScaleDown>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </FadeOutScaleDown>
   );
