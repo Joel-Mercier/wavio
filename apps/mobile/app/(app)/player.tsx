@@ -6,6 +6,7 @@ import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
@@ -121,6 +122,7 @@ export default function PlayerScreen() {
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
   const speedSheetRef = useRef<BottomSheetModal>(null);
+  const lyricsPickerSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
   // One indicator for every output: the button says "not this phone", and the
@@ -286,6 +288,10 @@ export default function PlayerScreen() {
 
   const handleSpeedPress = () => {
     speedSheetRef.current?.present();
+  };
+
+  const handleLyricsPickerPress = () => {
+    lyricsPickerSheetRef.current?.present();
   };
 
   const handleFavoritePress = () => {
@@ -758,6 +764,19 @@ export default function PlayerScreen() {
                     </Text>
                   </FadeOut>
                 )}
+                {/* Same slot as the podcast speed button — the two never show
+                    together, so the row keeps its three-slot balance. */}
+                {!isRadio && !isPodcast && lyricsSource === "all" && (
+                  <FadeOut
+                    testID="player-lyrics-picker-button"
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={handleLyricsPickerPress}
+                    disabled={!isOnline}
+                    accessibilityLabel={t("app.player.lyricsPicker")}
+                  >
+                    <Mic2 size={24} color="white" />
+                  </FadeOut>
+                )}
                 <FadeOut
                   testID="player-queue-button"
                   hitSlop={ICON_HIT_SLOP}
@@ -773,6 +792,7 @@ export default function PlayerScreen() {
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
         speedSheetRef={speedSheetRef}
+        lyricsPickerSheetRef={lyricsPickerSheetRef}
         playingTrack={playingTrack ?? null}
         hasKaraoke={hasKaraoke}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}

@@ -13,6 +13,15 @@ export const serverTypeSchema = z.enum([
 ]);
 export type ServerType = z.infer<typeof serverTypeSchema>;
 
+// Custom headers are edited as an ordered list of rows (so a half-typed name
+// doesn't collapse two entries into one) and stored as a record — see
+// `headerRowsToRecord` / `headerRecordToRows`.
+export const headerRowSchema = z.object({
+  key: z.string(),
+  value: z.string(),
+});
+export type HeaderRow = z.infer<typeof headerRowSchema>;
+
 export const serverFormSchema = z.object({
   name: z.string().trim().min(1),
   url: z.url().trim().min(1),
@@ -21,6 +30,8 @@ export const serverFormSchema = z.object({
   mtlsAlias: z.string().trim().optional(),
   // Alternative address for the *same* server — see `Server.fallbackUrl`.
   fallbackUrl: z.string().trim().optional(),
+  // User-defined headers sent to this server — see `Server.headers`.
+  headers: z.array(headerRowSchema).optional(),
 });
 
 // `UrlInputField` always emits `<protocol><host>`, so clearing a URL field
@@ -62,6 +73,137 @@ export function refineFallbackUrl(
   }
 }
 
+// RFC 7230 token: the only characters a header name may contain.
+const HEADER_NAME_RE = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+// A CR/LF (or any control char) in a value is header injection — it would let a
+// pasted string append arbitrary headers to every request. Rejected outright.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: matching them is the point
+const HEADER_VALUE_CONTROL_RE = /[\u0000-\u001F\u007F]/;
+// Headers the transports own: letting a user set these breaks the request
+// itself (framing) rather than authenticating it. Everything else is allowed —
+// including `Authorization` and `User-Agent`, since a WAF that rejects our UA is
+// a real reason to reach for this feature.
+const RESERVED_HEADER_NAMES = new Set([
+  "host",
+  "content-length",
+  "content-type",
+  "transfer-encoding",
+  "connection",
+]);
+export const MAX_CUSTOM_HEADERS = 16;
+
+/** Normalize the form's rows into the record shape the store persists. */
+export function headerRowsToRecord(
+  rows: HeaderRow[] | undefined,
+): Record<string, string> | undefined {
+  if (!rows?.length) return undefined;
+  const record: Record<string, string> = {};
+  for (const row of rows) {
+    const key = (row?.key ?? "").trim();
+    if (!key) continue;
+    record[key] = (row?.value ?? "").trim();
+  }
+  return Object.keys(record).length > 0 ? record : undefined;
+}
+
+/** Seed a form's rows from a saved server's headers. */
+export function headerRecordToRows(
+  headers: Record<string, string> | undefined,
+): HeaderRow[] {
+  if (!headers) return [];
+  return Object.entries(headers).map(([key, value]) => ({ key, value }));
+}
+
+export type HeaderRowIssue = {
+  index: number;
+  field: "key" | "value";
+  /**
+   * An i18n *key*, not a translated string: this module is imported by nearly
+   * every store test, and pulling in config/i18n would drag its zod-ESM locale
+   * graph (which jest can't transform) along with it. CustomHeadersField
+   * translates at render time.
+   */
+  message: string;
+};
+
+/**
+ * Per-row problems, shared by the schema refinement (which only has to block
+ * submit) and by CustomHeadersField (which highlights the offending input). A
+ * row with both fields blank is the trailing empty row the editor always keeps,
+ * so it reads as absent rather than as an error the user has to clear.
+ */
+export function validateHeaderRows(
+  rows: HeaderRow[] | undefined,
+): HeaderRowIssue[] {
+  if (!rows?.length) return [];
+  const issues: HeaderRowIssue[] = [];
+  const seen = new Set<string>();
+  let named = 0;
+  rows.forEach((row, index) => {
+    const key = (row?.key ?? "").trim();
+    const rawValue = row?.value ?? "";
+    if (!key && !rawValue.trim()) return;
+    if (!key) {
+      issues.push({
+        index,
+        field: "key",
+        message: "app.servers.headerNameRequired",
+      });
+      return;
+    }
+    named += 1;
+    const lower = key.toLowerCase();
+    if (!HEADER_NAME_RE.test(key) || RESERVED_HEADER_NAMES.has(lower)) {
+      issues.push({
+        index,
+        field: "key",
+        message: "app.servers.headerNameInvalid",
+      });
+      return;
+    }
+    if (seen.has(lower)) {
+      issues.push({
+        index,
+        field: "key",
+        message: "app.servers.headerNameDuplicate",
+      });
+      return;
+    }
+    seen.add(lower);
+    if (HEADER_VALUE_CONTROL_RE.test(rawValue)) {
+      issues.push({
+        index,
+        field: "value",
+        message: "app.servers.headerValueInvalid",
+      });
+    }
+  });
+  if (named > MAX_CUSTOM_HEADERS) {
+    issues.push({
+      index: -1,
+      field: "key",
+      message: "app.servers.headerTooMany",
+    });
+  }
+  return issues;
+}
+
+// Shared by every form's superRefine. Issues are raised on the `headers` field
+// as a whole (the editor renders the per-row detail itself from
+// `validateHeaderRows`), which is enough to block submit.
+export function refineHeaderRows(
+  rows: HeaderRow[] | undefined,
+  ctx: z.RefinementCtx,
+): void {
+  for (const issue of validateHeaderRows(rows)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["headers"],
+      message: issue.message,
+    });
+  }
+}
+
 // Add-server form variant: `local` servers have no name/URL (auto-named, fixed
 // sentinel URL) and only carry filesystem `paths`, so name/url are validated for
 // remote types only. Mirrors `loginSchema` so the form highlights the right
@@ -77,6 +219,9 @@ export const addServerFormSchema = z
     mtlsAlias: z.string().trim(),
     // Required (empty = none) for the same reason; validated in the refine.
     fallbackUrl: z.string().trim(),
+    // Always present (the form keeps a trailing empty row); validated in the
+    // refine so a half-typed row doesn't block an unrelated field.
+    headers: z.array(headerRowSchema),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -97,6 +242,7 @@ export const addServerFormSchema = z
       });
     }
     refineFallbackUrl(data.fallbackUrl, ctx);
+    refineHeaderRows(data.headers, ctx);
   });
 
 // Edit-server form variant: name is always required (editable for every type,
@@ -110,6 +256,7 @@ export const editServerFormSchema = z
     paths: z.array(z.string()),
     mtlsAlias: z.string().trim(),
     fallbackUrl: z.string().trim(),
+    headers: z.array(headerRowSchema),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -122,6 +269,7 @@ export const editServerFormSchema = z
       });
     }
     refineFallbackUrl(data.fallbackUrl, ctx);
+    refineHeaderRows(data.headers, ctx);
   });
 
 export const serverUserSchema = z.object({
@@ -152,6 +300,13 @@ export type Server = {
   // credentials and content are assumed identical, and only `id` identifies the
   // session — neither URL is part of the storage scope.
   fallbackUrl?: string;
+  // User-defined headers sent on every request to this server, both routes.
+  // Exists for servers fronted by an authenticating reverse proxy (Cloudflare
+  // Access service tokens, Authelia/Authentik, static bearer tokens): the proxy
+  // guards the whole origin, so these have to reach every transport — API,
+  // reachability probe, audio, downloads and images. See
+  // services/serverHeaders.ts.
+  headers?: Record<string, string>;
 };
 
 export type ServerUser = {
@@ -172,6 +327,7 @@ interface ServersStore {
     paths?: string[];
     mtlsAlias?: string;
     fallbackUrl?: string;
+    headers?: Record<string, string>;
   }) => Server;
   editServer: (
     id: string,
@@ -182,6 +338,7 @@ interface ServersStore {
       paths?: string[];
       mtlsAlias?: string;
       fallbackUrl?: string;
+      headers?: Record<string, string>;
     },
   ) => void;
   removeServer: (id: string) => void;
@@ -195,6 +352,24 @@ interface ServersStore {
   syncServerUsers: (serverId: string, usernames: string[]) => void;
 }
 
+// An empty record means "the user cleared every header", which has to be
+// distinguishable from "this caller isn't touching headers" (undefined) —
+// otherwise removing the last header would silently keep the old one.
+const normalizeHeaders = (
+  headers: Record<string, string> | undefined,
+): Record<string, string> | undefined =>
+  headers && Object.keys(headers).length > 0 ? headers : undefined;
+
+const sameHeaders = (
+  a: Record<string, string> | undefined,
+  b: Record<string, string> | undefined,
+): boolean => {
+  const aKeys = Object.keys(a ?? {});
+  const bKeys = Object.keys(b ?? {});
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) => a?.[key] === b?.[key]);
+};
+
 const generateId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -203,11 +378,20 @@ const useServersBase = create<ServersStore>()(
     (set, get) => ({
       servers: [],
       users: [],
-      addServer: ({ name, url, type, paths, mtlsAlias, fallbackUrl }) => {
+      addServer: ({
+        name,
+        url,
+        type,
+        paths,
+        mtlsAlias,
+        fallbackUrl,
+        headers,
+      }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
         const cleanAlias = mtlsAlias?.trim() || undefined;
         const cleanFallback = cleanOptionalUrl(fallbackUrl);
+        const cleanHeaders = normalizeHeaders(headers);
         const existing = get().servers.find((s) => s.url === trimmedUrl);
         if (existing) {
           const patch: Partial<Server> = {};
@@ -221,6 +405,12 @@ const useServersBase = create<ServersStore>()(
             existing.fallbackUrl !== cleanFallback
           ) {
             patch.fallbackUrl = cleanFallback;
+          }
+          if (
+            headers !== undefined &&
+            !sameHeaders(existing.headers, cleanHeaders)
+          ) {
+            patch.headers = cleanHeaders;
           }
           if (Object.keys(patch).length > 0) {
             set((state) => ({
@@ -242,6 +432,7 @@ const useServersBase = create<ServersStore>()(
           ...(paths ? { paths } : {}),
           ...(cleanAlias ? { mtlsAlias: cleanAlias } : {}),
           ...(cleanFallback ? { fallbackUrl: cleanFallback } : {}),
+          ...(cleanHeaders ? { headers: cleanHeaders } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -269,6 +460,9 @@ const useServersBase = create<ServersStore>()(
                     : {}),
                   ...(patch.fallbackUrl !== undefined
                     ? { fallbackUrl: cleanOptionalUrl(patch.fallbackUrl) }
+                    : {}),
+                  ...(patch.headers !== undefined
+                    ? { headers: normalizeHeaders(patch.headers) }
                     : {}),
                 }
               : s,

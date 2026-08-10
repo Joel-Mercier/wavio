@@ -1,5 +1,10 @@
 import { type Link, useRouter } from "expo-router";
-import React, { type ComponentProps, useEffect } from "react";
+import React, {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
 import { Pressable } from "@/components/ui/pressable";
 
@@ -46,34 +51,53 @@ const FadeOutScaleDown = React.forwardRef<
       });
     }, [restingOpacity, opacity]);
 
-    const handlePressIn = () => {
+    const handlePressIn = useCallback(() => {
       opacity.value = withSpring(0.5, {
         duration: 100,
       });
       scale.value = withSpring(0.95, {
         duration: 100,
       });
-    };
+    }, [opacity, scale]);
 
-    const handlePressOut = () => {
+    const handlePressOut = useCallback(() => {
       opacity.value = withSpring(restingOpacity, {
         duration: 100,
       });
       scale.value = withSpring(1, {
         duration: 100,
       });
-    };
+    }, [opacity, scale, restingOpacity]);
+
+    const handlePress = useCallback(
+      (event: Parameters<NonNullable<typeof onPress>>[0]) => {
+        if (href) {
+          router.navigate(href);
+          return;
+        }
+        onPress?.(event);
+      },
+      [href, router, onPress],
+    );
+
+    // Shared values are stable refs, so this object only ever needs building
+    // once. Rebuilding it per render made every list row hand Reanimated a new
+    // style to reprocess on any parent re-render.
+    const animatedStyle = useMemo(
+      () => ({ opacity, transform: [{ scale }] }),
+      [opacity, scale],
+    );
 
     return (
       <AnimatedPressable
         ref={ref}
         testID={testID}
-        onPress={href ? () => router.navigate(href) : onPress}
+        onPress={handlePress}
         onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={className}
-        style={{ opacity, transform: [{ scale }] }}
+        style={animatedStyle}
         disabled={disabled}
       >
         {children}

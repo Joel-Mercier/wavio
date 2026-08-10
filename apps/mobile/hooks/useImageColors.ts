@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getColors, type ImageColorsResult } from "react-native-image-colors";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 
 const useImageColors = (url?: string) => {
   const [colors, setColors] = useState<ImageColorsResult | null>(null);
@@ -14,6 +15,9 @@ const useImageColors = (url?: string) => {
       fallback: "#000",
       cache: true,
       key: url,
+      // Without these the extraction 403s behind an authenticating proxy and
+      // every screen silently falls back to the default tint.
+      headers: requestHeadersForUrl(url),
     })
       .then((result) => {
         if (!cancelled) setColors(result);

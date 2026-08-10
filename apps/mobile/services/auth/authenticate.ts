@@ -130,11 +130,19 @@ async function withSslDetection<T>(
 // not touch any store, so callers stay in control of when the session flips to
 // authenticated. Throws on failure (bad credentials, unreachable server,
 // untrusted TLS certificate -> SslUntrustedError).
+//
+// `headers` are the server's user-configured custom headers. They're passed in
+// rather than resolved from the servers store because on the login screen the
+// server isn't saved yet — `addServer` only runs once authentication succeeds —
+// so a store lookup would find nothing and every request to a proxy-fronted
+// server would be rejected. Same ordering problem `syncSslClientCertificates`
+// solves with its `extra` argument for mTLS.
 export async function authenticateRemote(
   type: ServerType,
   url: string,
   username: string,
   password: string,
+  headers?: Record<string, string>,
 ): Promise<RemoteLoginOptions> {
   const trimmedUrl = url.trim();
   const trimmedUsername = username.trim();
@@ -149,7 +157,12 @@ export async function authenticateRemote(
     // Error would pass — turning every mistyped password into a TLS round trip
     // and, on a self-signed host, into a bogus "certificate not trusted".
     const payload = await withSslDetection(trimmedUrl, () =>
-      jellyfinAuthenticate(trimmedUrl, trimmedUsername, trimmedPassword),
+      jellyfinAuthenticate(
+        trimmedUrl,
+        trimmedUsername,
+        trimmedPassword,
+        headers,
+      ),
     ).catch((error) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         throw new InvalidCredentialsError(
@@ -178,7 +191,7 @@ export async function authenticateRemote(
     subsonicSalt,
   );
 
-  const pingClient = createBareClient(trimmedUrl);
+  const pingClient = createBareClient(trimmedUrl, undefined, headers);
   const ping = (authParams: Record<string, string>) =>
     pingClient.get("/rest/ping", {
       params: {
@@ -230,6 +243,7 @@ export async function authenticateRemote(
         trimmedUrl,
         trimmedUsername,
         trimmedPassword,
+        headers,
       );
       if (payload?.token && payload?.id) {
         navidrome = {
@@ -286,6 +300,7 @@ export async function authenticateWithFallback(
   fallbackUrl: string | undefined,
   username: string,
   password: string,
+  headers?: Record<string, string>,
 ): Promise<{ options: RemoteLoginOptions; activeUrl: string }> {
   const trimmedUrl = url.trim();
   const trimmedFallback = fallbackUrl?.trim();
@@ -295,17 +310,21 @@ export async function authenticateWithFallback(
       trimmedUrl,
       username,
       password,
+      headers,
     );
     return { options, activeUrl: trimmedUrl };
   } catch (primaryError) {
     if (!trimmedFallback || !isUnreachableError(primaryError))
       throw primaryError;
     try {
+      // Both routes are the same server, so they share one header set — the
+      // same assumption that lets them share credentials.
       const options = await authenticateRemote(
         type,
         trimmedFallback,
         username,
         password,
+        headers,
       );
       return { options, activeUrl: trimmedFallback };
     } catch (fallbackError) {

@@ -6,7 +6,9 @@ import { queryClient } from "@/config/queryClient";
 import { zustandStorage } from "@/config/storage";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import {
+  headerRowSchema,
   refineFallbackUrl,
+  refineHeaderRows,
   type ServerType,
   serverTypeSchema,
 } from "@/stores/servers";
@@ -44,10 +46,15 @@ export const loginSchema = z
     // Optional alternative address for the same server (remote types only).
     // Required-but-empty for the same reason as `mtlsAlias`.
     fallbackUrl: z.string().trim(),
+    // User-defined headers for a proxy-fronted server (remote types only).
+    // Always present (the form keeps a trailing empty row); validated in the
+    // refine.
+    headers: z.array(headerRowSchema),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
     refineFallbackUrl(data.fallbackUrl, ctx);
+    refineHeaderRows(data.headers, ctx);
     const url = z.url().min(1).trim().safeParse(data.url);
     if (!url.success) {
       ctx.addIssue({

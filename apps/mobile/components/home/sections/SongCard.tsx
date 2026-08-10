@@ -1,4 +1,5 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import { memo } from "react";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -19,7 +20,7 @@ interface SongCardProps {
   index: number;
 }
 
-export default function SongCard({ track, trackList, index }: SongCardProps) {
+function SongCard({ track, trackList, index }: SongCardProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
@@ -55,3 +56,5 @@ export default function SongCard({ track, trackList, index }: SongCardProps) {
     </FadeOutScaleDown>
   );
 }
+
+export default memo(SongCard);

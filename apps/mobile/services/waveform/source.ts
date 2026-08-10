@@ -2,6 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { analysisUrl } from "@/services/backend/streaming";
 import { parseLocalTrackId } from "@/services/local/keys";
 import { getConnectionType } from "@/services/network";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
@@ -160,6 +161,7 @@ async function downloadAnalysisCopy(
 
   const result = await File.downloadFileAsync(url, target, {
     idempotent: true,
+    headers: requestHeadersForUrl(url),
   });
   if (!result.exists) {
     throw new Error("waveform: analysis download produced no file");

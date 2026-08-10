@@ -1,7 +1,11 @@
 import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  createEnabledSectionsStore,
+  EnabledSectionsProvider,
+} from "@/components/home/enabledSections";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
@@ -34,8 +38,9 @@ const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 50 };
 // Sections within this many slots below the last-seen one are enabled eagerly,
 // so their data is ready before the user scrolls them into view.
 const SECTION_LOOKAHEAD = 2;
-// Index up to which sections are enabled on first mount (above the fold).
-const INITIAL_ENABLED_INDEX = 2;
+// Index up to which sections are enabled on first mount: roughly what's above
+// the fold, plus SECTION_LOOKAHEAD, so the first scroll has data waiting.
+const INITIAL_ENABLED_INDEX = 4;
 // After first paint, the tail of the feed is unlocked in small batches on an
 // idle timer so scrolling never has to trigger loads — see the backfill effect.
 const BACKFILL_BATCH = 2;
@@ -57,6 +62,9 @@ const HOME_REFRESH_KEYS = [
   ["nowPlaying"],
   ["genres"],
 ] as const;
+
+const keyExtractor = (item: HomeSectionDescriptor) => item.id;
+const getItemType = (item: HomeSectionDescriptor) => item.kind;
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -137,33 +145,31 @@ export default function HomeScreen() {
     ],
   );
 
-  const [lastSeenIndex, setLastSeenIndex] = useState(INITIAL_ENABLED_INDEX);
-  const lastSeenIndexRef = useRef(INITIAL_ENABLED_INDEX);
-
-  // Floor of enabled sections, advanced by the idle backfill independently of
-  // scroll. Both this and lastSeenIndex only ever increase, so once a section
-  // is enabled it stays enabled — the list never tears down loaded content.
-  const [backfillIndex, setBackfillIndex] = useState(INITIAL_ENABLED_INDEX);
-  const backfillRef = useRef(INITIAL_ENABLED_INDEX);
+  // Sections read their gate from this store rather than from a prop computed
+  // here, so scrolling doesn't change renderItem's identity — see
+  // components/home/enabledSections.tsx. Scroll and the idle backfill both feed
+  // the same monotonic counter, so whichever reaches a section first enables it.
+  const [enabledSections] = useState(() =>
+    createEnabledSectionsStore(INITIAL_ENABLED_INDEX),
+  );
 
   const sectionCount = sections.length;
   useEffect(() => {
-    if (backfillRef.current >= sectionCount - 1) return;
+    if (enabledSections.getEnabledThrough() >= sectionCount - 1) return;
     let timer: ReturnType<typeof setTimeout>;
     const schedule = (delay: number) => {
       timer = setTimeout(() => {
         const next = Math.min(
-          backfillRef.current + BACKFILL_BATCH,
+          enabledSections.getEnabledThrough() + BACKFILL_BATCH,
           sectionCount - 1,
         );
-        backfillRef.current = next;
-        setBackfillIndex(next);
+        enabledSections.advanceTo(next);
         if (next < sectionCount - 1) schedule(BACKFILL_INTERVAL_MS);
       }, delay);
     };
     schedule(BACKFILL_START_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [sectionCount]);
+  }, [sectionCount, enabledSections]);
 
   const handleViewableItemsChanged = useCallback(
     ({
@@ -171,37 +177,32 @@ export default function HomeScreen() {
     }: {
       viewableItems: ViewToken<HomeSectionDescriptor>[];
     }) => {
-      let maxIndex = lastSeenIndexRef.current;
+      let maxIndex = -1;
       for (const v of viewableItems) {
         if (typeof v.index === "number" && v.index > maxIndex) {
           maxIndex = v.index;
         }
       }
-      if (maxIndex !== lastSeenIndexRef.current) {
-        lastSeenIndexRef.current = maxIndex;
-        setLastSeenIndex(maxIndex);
+      if (maxIndex >= 0) {
+        enabledSections.advanceTo(maxIndex + SECTION_LOOKAHEAD);
       }
     },
-    [],
+    [enabledSections],
   );
 
   const renderItem = useCallback(
     ({ item, index }: { item: HomeSectionDescriptor; index: number }) => {
-      // Enable a section once it's within the scroll lookahead window or has
-      // been unlocked by the idle backfill, whichever reaches it first.
-      const enabled =
-        index <= Math.max(lastSeenIndex + SECTION_LOOKAHEAD, backfillIndex);
       switch (item.kind) {
         case "recentPlays":
           return <RecentPlaysSection />;
         case "nowPlaying":
-          return <NowPlayingSection enabled={enabled} />;
+          return <NowPlayingSection sectionIndex={index} />;
         case "albumList":
           return (
             <AlbumCarouselSection
               title={t(item.titleKey)}
               type={item.albumType}
-              enabled={enabled}
+              sectionIndex={index}
               seeAllHref={item.seeAllHref}
             />
           );
@@ -211,7 +212,7 @@ export default function HomeScreen() {
               title={t("app.home.albumsByGenre", { genre: item.genre })}
               type="byGenre"
               genre={item.genre}
-              enabled={enabled}
+              sectionIndex={index}
             />
           );
         case "albumsByDecade":
@@ -221,78 +222,86 @@ export default function HomeScreen() {
               type="byYear"
               fromYear={item.fromYear}
               toYear={item.toYear}
-              enabled={enabled}
+              sectionIndex={index}
             />
           );
         case "moreFromArtist":
           return (
-            <ArtistAlbumsSection artistId={item.artistId} enabled={enabled} />
+            <ArtistAlbumsSection
+              artistId={item.artistId}
+              sectionIndex={index}
+            />
           );
         case "songsByGenre":
           return (
             <SongsByGenreSection
               title={t("app.home.songsByGenre", { genre: item.genre })}
               genre={item.genre}
-              enabled={enabled}
+              sectionIndex={index}
             />
           );
         case "randomSongs":
           return (
             <RandomSongsSection
               title={t("app.home.randomSongs")}
-              enabled={enabled}
+              sectionIndex={index}
             />
           );
         case "mostPlayedTracks":
           return (
             <MostPlayedTracksSection
               title={t("app.home.mostPlayedTracks")}
-              enabled={enabled}
+              sectionIndex={index}
             />
           );
         case "randomArtists":
           return (
             <ArtistCarouselSection
-              enabled={enabled}
+              sectionIndex={index}
               shuffleSeed={sessionSeed}
             />
           );
         case "playlists":
           return (
             <PlaylistCarouselSection
-              enabled={enabled}
+              sectionIndex={index}
               shuffleSeed={sessionSeed}
             />
           );
         case "starred":
-          return <StarredSection enabled={enabled} />;
+          return <StarredSection sectionIndex={index} />;
         case "podcasts":
-          return <PodcastCarouselSection enabled={enabled} />;
+          return <PodcastCarouselSection sectionIndex={index} />;
         case "internetRadio":
-          return <InternetRadioSection enabled={enabled} />;
+          return <InternetRadioSection sectionIndex={index} />;
       }
     },
-    [t, lastSeenIndex, backfillIndex, sessionSeed],
+    [t, sessionSeed],
+  );
+
+  const contentContainerStyle = useMemo(
+    () => ({ paddingBottom: screenBottomPadding }),
+    [screenBottomPadding],
   );
 
   return (
     <Box className="flex-1">
       <HomeTabsNav active="music" />
-      <FlashList
-        data={sections}
-        keyExtractor={(item) => item.id}
-        getItemType={(item) => item.kind}
-        renderItem={renderItem}
-        onViewableItemsChanged={handleViewableItemsChanged}
-        viewabilityConfig={VIEWABILITY_CONFIG}
-        drawDistance={500}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: screenBottomPadding,
-        }}
-      />
+      <EnabledSectionsProvider store={enabledSections}>
+        <FlashList
+          data={sections}
+          keyExtractor={keyExtractor}
+          getItemType={getItemType}
+          renderItem={renderItem}
+          onViewableItemsChanged={handleViewableItemsChanged}
+          viewabilityConfig={VIEWABILITY_CONFIG}
+          drawDistance={500}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={contentContainerStyle}
+        />
+      </EnabledSectionsProvider>
     </Box>
   );
 }

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { reportError } from "@/services/errorReporting";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
+import { USER_AGENT } from "@/services/network";
+import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
@@ -29,12 +31,21 @@ jellyfinApiInstance.interceptors.request.use(
   (request) => {
     const { url, jellyfinAccessToken } = useAuthBase.getState();
     request.baseURL = url ? url.replace(/\/+$/, "") : "";
+    request.headers.set("User-Agent", USER_AGENT);
     request.headers.set(
       "X-Emby-Authorization",
       buildAuthorizationHeader(jellyfinAccessToken),
     );
     if (jellyfinAccessToken) {
       request.headers.set("X-Emby-Token", jellyfinAccessToken);
+    }
+    // Applied last so a user-configured value wins on a name collision — see
+    // services/serverHeaders.ts.
+    const custom = customHeadersForUrl(request.baseURL);
+    if (custom) {
+      for (const [name, value] of Object.entries(custom)) {
+        request.headers.set(name, value);
+      }
     }
     return request;
   },

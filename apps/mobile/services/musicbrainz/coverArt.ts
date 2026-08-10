@@ -1,5 +1,8 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { coverArtArchiveUrl } from "@/services/musicbrainz";
+import { looksLikeImage } from "@/utils/imageBytes";
+
+export { looksLikeImage };
 
 // Covers fetched from the Cover Art Archive, kept apart from `local-artwork`
 // (which the indexer owns and prunes) so a rescan never deletes a downloaded
@@ -9,26 +12,6 @@ const coverDir = (): Directory =>
 
 // A cover under this is an error page or a placeholder, not an image.
 const MIN_COVER_BYTES = 1024;
-
-// The Cover Art Archive redirects to archive.org, which serves an HTML error
-// page on a bad day (a plain `curl` of a valid cover returned "500 Internal
-// Server Error" as HTML). Saved under a .jpg name that file looks like a cover:
-// it has a path, so the UI renders an <Image> for it, but every decoder rejects
-// it — which is exactly the "cover shows in the app but colour extraction
-// fails" symptom. Size alone doesn't catch it, since those pages can exceed the
-// minimum, so the leading bytes are checked instead.
-const IMAGE_MAGIC: readonly (readonly number[])[] = [
-  [0xff, 0xd8, 0xff], // JPEG
-  [0x89, 0x50, 0x4e, 0x47], // PNG
-  [0x47, 0x49, 0x46, 0x38], // GIF
-  [0x52, 0x49, 0x46, 0x46], // RIFF container (WebP)
-];
-
-export function looksLikeImage(bytes: Uint8Array): boolean {
-  return IMAGE_MAGIC.some((magic) =>
-    magic.every((byte, index) => bytes[index] === byte),
-  );
-}
 
 // Deduplicates *concurrent* callers and nothing more. The lasting cache is the
 // file on disk (the `target.exists` check below); holding settled promises here

@@ -38,6 +38,7 @@ import {
   shouldWriteAutoCollection,
   songEnumerationBaseline,
 } from "@/services/offline/librarySyncPlan";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useLibrarySync, { isIdMigrationFrozen } from "@/stores/librarySync";
@@ -931,10 +932,11 @@ export class LibrarySyncService {
       const key = artworkCacheKey(coverArt);
       const fileName = `${key.replace(/[^a-zA-Z0-9._-]/g, "_")}_${Date.now()}.jpg`;
       const previous = useOffline.getState().artworkCache[key];
+      const source = artworkUrl(coverArt, ARTWORK_SIZE);
       const result = await File.downloadFileAsync(
-        artworkUrl(coverArt, ARTWORK_SIZE),
+        source,
         new File(dir, fileName),
-        { idempotent: true },
+        { idempotent: true, headers: requestHeadersForUrl(source) },
       );
       if (generation !== this.generation) {
         try {

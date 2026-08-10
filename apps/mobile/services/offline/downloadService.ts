@@ -8,6 +8,7 @@ import {
   subscribeEffectiveOnline,
 } from "@/services/network";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import { useLibrarySyncBase } from "@/stores/librarySync";
@@ -557,6 +558,7 @@ export class OfflineDownloadService {
 
     const downloadResult = await File.downloadFileAsync(url, filePath, {
       idempotent: true,
+      headers: requestHeadersForUrl(url),
     });
 
     if (!downloadResult.exists) {

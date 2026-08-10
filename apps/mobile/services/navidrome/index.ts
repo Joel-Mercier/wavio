@@ -1,7 +1,9 @@
 import axios from "axios";
 import { reauthenticateNavidrome } from "@/services/navidrome/auth";
+import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
+import { USER_AGENT } from "@/utils/userAgent";
 
 export const NAVIDROME_AUTH_HEADER = "X-ND-Authorization";
 
@@ -14,6 +16,20 @@ navidromeApiInstance.interceptors.request.use(
   (request) => {
     const { url, token } = useAuthBase.getState();
     request.baseURL = url ? `${url.replace(/\/+$/, "")}/api` : "";
+    // Set before the custom headers so a user-configured User-Agent still wins,
+    // matching the other instances. Without it this instance keeps RN's default
+    // `okhttp/*`, which Cloudflare-fronted servers reject.
+    request.headers.set("User-Agent", USER_AGENT);
+    // Applied *first* here, unlike the other instances: this endpoint
+    // authenticates with the Navidrome JWT in `Authorization`, so a
+    // user-configured header of that name has to lose or every native-API call
+    // 401s. Any other custom header still goes through untouched.
+    const custom = customHeadersForUrl(url);
+    if (custom) {
+      for (const [name, value] of Object.entries(custom)) {
+        request.headers.set(name, value);
+      }
+    }
     if (token) {
       request.headers.set("Authorization", `Bearer ${token}`);
       request.headers.set(NAVIDROME_AUTH_HEADER, `Bearer ${token}`);
