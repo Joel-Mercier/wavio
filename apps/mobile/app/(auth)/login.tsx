@@ -17,6 +17,7 @@ import LocalLibraryInfoDialog from "@/components/auth/LocalLibraryInfoDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import CustomHeadersField from "@/components/forms/CustomHeadersField";
 import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
@@ -83,6 +84,8 @@ import { flagLocalRescanOnEntry } from "@/stores/localLibrary";
 import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   cleanOptionalUrl,
+  headerRecordToRows,
+  headerRowsToRecord,
   type Server,
   type ServerType,
   type ServerUser,
@@ -194,6 +197,7 @@ export default function LoginScreen() {
       paths: (preselectedServer?.paths ?? []) as string[],
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
+      headers: headerRecordToRows(preselectedServer?.headers),
     },
     validators: {
       onChange: loginSchema,
@@ -260,6 +264,7 @@ export default function LoginScreen() {
         } else {
           const mtlsAlias = value.mtlsAlias?.trim() || undefined;
           const fallbackUrl = cleanOptionalUrl(value.fallbackUrl);
+          const headers = headerRowsToRecord(value.headers);
           // Register the client cert with the native KeyManager before the
           // handshake so mTLS servers get it presented on this first request —
           // for both routes, since either may be the one we end up talking to.
@@ -274,6 +279,7 @@ export default function LoginScreen() {
             fallbackUrl,
             trimmedUsername,
             trimmedPassword,
+            headers,
           );
           const existing = servers.find((s) => s.url === trimmedUrl);
           const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
@@ -283,6 +289,9 @@ export default function LoginScreen() {
             type: serverType,
             mtlsAlias,
             fallbackUrl,
+            // Empty (not undefined) when the user cleared every row, so
+            // re-logging into a saved server drops its old headers.
+            headers: headers ?? {},
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
@@ -654,6 +663,14 @@ export default function LoginScreen() {
                         <FallbackUrlField
                           field={field}
                           placeholder={t("auth.login.fallbackUrlPlaceholder")}
+                        />
+                      )}
+                    </form.Field>
+                    <form.Field name="headers">
+                      {(field) => (
+                        <CustomHeadersField
+                          value={field.state.value}
+                          onChange={field.handleChange}
                         />
                       )}
                     </form.Field>

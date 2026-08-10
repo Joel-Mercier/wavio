@@ -5,6 +5,11 @@ import {
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import {
+  customHeaderHostMap,
+  customHeadersForUrl,
+  subscribeCustomHeaders,
+} from "@/services/serverHeaders";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useQueue from "@/stores/queue";
 import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
@@ -19,6 +24,10 @@ type WidgetNative = {
     bgColor: number;
   }) => void;
   setIsPlaying: (isPlaying: boolean) => void;
+  // host -> headers, as JSON. The widget loads cover art with Glide from its
+  // own process (often with no JS runtime alive at all), so it can't ask for
+  // them on demand — they're persisted natively alongside the rest of its state.
+  setImageHeaders: (json: string) => void;
   updateRecent: (
     items: {
       id: string;
@@ -60,6 +69,7 @@ async function resolveBgColor(coverUrl: string | null): Promise<number> {
       fallback: "#000000",
       cache: true,
       key: coverUrl,
+      headers: customHeadersForUrl(coverUrl),
     });
     let hex: string | undefined;
     if (result.platform === "android") {
@@ -183,9 +193,20 @@ function pushRecent() {
 let initialized = false;
 let lastIsPlaying = false;
 
+// Mirror the configured custom headers into the widget's native store so Glide
+// can authenticate its cover-art requests. Tolerates an older native build that
+// predates the method (JS can ship ahead of a rebuild).
+function pushImageHeaders() {
+  if (typeof Native?.setImageHeaders !== "function") return;
+  Native.setImageHeaders(JSON.stringify(customHeaderHostMap()));
+}
+
 export function initWidget() {
   if (Platform.OS !== "android" || !Native || initialized) return;
   initialized = true;
+
+  pushImageHeaders();
+  subscribeCustomHeaders(pushImageHeaders);
 
   useQueue.subscribe((state) => {
     const current =

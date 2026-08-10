@@ -1,6 +1,7 @@
 import { Directory, File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { downloadUrl } from "@/services/backend/streaming";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { safeFileName } from "@/utils/safeFileName";
 
 type SavableTrack = {
@@ -34,6 +35,7 @@ export async function saveTrackToDevice(track: SavableTrack): Promise<void> {
   if (/^https?:\/\//i.test(source)) {
     const output = await File.downloadFileAsync(source, cacheFile, {
       idempotent: true,
+      headers: requestHeadersForUrl(source),
     });
     if (!output.exists) {
       throw new Error("Download failed - file does not exist");

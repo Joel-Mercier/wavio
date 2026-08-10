@@ -129,4 +129,36 @@ describe("authenticateWithFallback", () => {
     ).rejects.toBeDefined();
     expect(mockJellyfinAuth).toHaveBeenCalledTimes(1);
   });
+
+  it("passes the custom headers to both routes", async () => {
+    // The server isn't in the store yet at login time, so these can only reach
+    // the request as an argument — without them a proxy-fronted server rejects
+    // the sign-in and the user can never save it.
+    const headers = { "CF-Access-Client-Id": "id" };
+    mockJellyfinAuth
+      .mockRejectedValueOnce(unreachable())
+      .mockResolvedValueOnce(ok);
+    await authenticateWithFallback(
+      "jellyfin",
+      PRIMARY,
+      FALLBACK,
+      "alice",
+      "secret",
+      headers,
+    );
+    expect(mockJellyfinAuth).toHaveBeenNthCalledWith(
+      1,
+      PRIMARY,
+      "alice",
+      "secret",
+      headers,
+    );
+    expect(mockJellyfinAuth).toHaveBeenNthCalledWith(
+      2,
+      FALLBACK,
+      "alice",
+      "secret",
+      headers,
+    );
+  });
 });

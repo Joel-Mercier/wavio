@@ -1,6 +1,8 @@
 import {
   addServerFormSchema,
   editServerFormSchema,
+  headerRecordToRows,
+  headerRowsToRecord,
   serverFormSchema,
   serverUserSchema,
   useServersBase,
@@ -361,6 +363,95 @@ describe("fallbackUrl", () => {
   });
 });
 
+describe("custom headers", () => {
+  beforeEach(reset);
+
+  it("stores headers on create and omits an empty map", () => {
+    const withHeaders = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      headers: { "CF-Access-Client-Id": "id" },
+    });
+    expect(withHeaders.headers).toEqual({ "CF-Access-Client-Id": "id" });
+    const without = useServersBase.getState().addServer({
+      name: "B",
+      url: "https://b.example.com",
+      headers: {},
+    });
+    expect(without.headers).toBeUndefined();
+  });
+
+  it("updates and clears headers via editServer", () => {
+    const s = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      headers: { "X-Api-Key": "one" },
+    });
+    useServersBase
+      .getState()
+      .editServer(s.id, { headers: { "X-Api-Key": "two" } });
+    expect(useServersBase.getState().getServerById(s.id)?.headers).toEqual({
+      "X-Api-Key": "two",
+    });
+    // An empty map is how the edit form says "the user removed every row".
+    useServersBase.getState().editServer(s.id, { headers: {} });
+    expect(
+      useServersBase.getState().getServerById(s.id)?.headers,
+    ).toBeUndefined();
+  });
+
+  it("leaves headers alone when the patch omits them", () => {
+    const s = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      headers: { "X-Api-Key": "one" },
+    });
+    useServersBase.getState().editServer(s.id, { name: "Renamed" });
+    expect(useServersBase.getState().getServerById(s.id)?.headers).toEqual({
+      "X-Api-Key": "one",
+    });
+  });
+
+  it("adds headers to an existing row matched by url", () => {
+    const first = useServersBase
+      .getState()
+      .addServer({ name: "Home", url: "https://a.example.com" });
+    const second = useServersBase.getState().addServer({
+      name: "Home",
+      url: "https://a.example.com",
+      headers: { "X-Api-Key": "one" },
+    });
+    expect(second.id).toBe(first.id);
+    expect(useServersBase.getState().getServerById(first.id)?.headers).toEqual({
+      "X-Api-Key": "one",
+    });
+  });
+
+  it("round-trips rows through the form helpers", () => {
+    expect(
+      headerRowsToRecord([
+        { key: " X-Api-Key ", value: " one " },
+        { key: "", value: "ignored" },
+      ]),
+    ).toEqual({ "X-Api-Key": "one" });
+    expect(headerRowsToRecord([{ key: "", value: "" }])).toBeUndefined();
+    expect(headerRowsToRecord(undefined)).toBeUndefined();
+    expect(headerRecordToRows({ "X-Api-Key": "one" })).toEqual([
+      { key: "X-Api-Key", value: "one" },
+    ]);
+    expect(headerRecordToRows(undefined)).toEqual([]);
+  });
+
+  it("keeps the last of two rows sharing a name", () => {
+    expect(
+      headerRowsToRecord([
+        { key: "X-Api-Key", value: "one" },
+        { key: "X-Api-Key", value: "two" },
+      ]),
+    ).toEqual({ "X-Api-Key": "two" });
+  });
+});
+
 describe("server schemas", () => {
   it("serverFormSchema accepts valid input and rejects bad url", () => {
     expect(
@@ -393,6 +484,7 @@ describe("server schemas", () => {
     paths: [],
     mtlsAlias: "",
     fallbackUrl: "",
+    headers: [],
     ...over,
   });
 
@@ -445,6 +537,63 @@ describe("server schemas", () => {
     ).toBe(true);
     expect(
       editServerFormSchema.safeParse(addForm({ fallbackUrl: "nope" })).success,
+    ).toBe(false);
+  });
+
+  it("accepts a trailing empty header row", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ headers: [{ key: "", value: "" }] }),
+      ).success,
+    ).toBe(true);
+  });
+
+  it("rejects a header value carrying a CRLF", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({
+          headers: [{ key: "CF-Access-Client-Id", value: "abc\r\nX-Evil: 1" }],
+        }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("rejects a non-token header name and a reserved one", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ headers: [{ key: "Bad Name", value: "x" }] }),
+      ).success,
+    ).toBe(false);
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ headers: [{ key: "Content-Type", value: "text/plain" }] }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("rejects duplicate header names regardless of case", () => {
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({
+          headers: [
+            { key: "X-Api-Key", value: "a" },
+            { key: "x-api-key", value: "b" },
+          ],
+        }),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("editServerFormSchema validates headers the same way", () => {
+    expect(
+      editServerFormSchema.safeParse(
+        addForm({ headers: [{ key: "X-Api-Key", value: "a" }] }),
+      ).success,
+    ).toBe(true);
+    expect(
+      editServerFormSchema.safeParse(
+        addForm({ headers: [{ key: "Host", value: "a" }] }),
+      ).success,
     ).toBe(false);
   });
 

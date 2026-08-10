@@ -15,6 +15,7 @@ export const authenticateByName = async (
   url: string,
   username: string,
   password: string,
+  extraHeaders?: Record<string, string>,
 ): Promise<JellyfinAuthResponse> => {
   const baseURL = url.replace(/\/+$/, "");
   const rsp = await axios
@@ -23,6 +24,7 @@ export const authenticateByName = async (
       headers: {
         "Content-Type": "application/json",
         "X-Emby-Authorization": buildAuthorizationHeader(null),
+        ...extraHeaders,
       },
     })
     .post<JellyfinAuthResponse>("/Users/AuthenticateByName", {

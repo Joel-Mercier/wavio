@@ -17,6 +17,7 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import CustomHeadersField from "@/components/forms/CustomHeadersField";
 import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
@@ -62,6 +63,8 @@ import useLocalLibrary from "@/stores/localLibrary";
 import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   editServerFormSchema,
+  headerRecordToRows,
+  headerRowsToRecord,
   type Server,
 } from "@/stores/servers";
 import { switchToServer } from "@/utils/switchServer";
@@ -106,6 +109,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       paths: server.paths ?? [],
       mtlsAlias: server.mtlsAlias ?? "",
       fallbackUrl: server.fallbackUrl ?? "",
+      headers: headerRecordToRows(server.headers),
     },
     validators: {
       onChange: editServerFormSchema,
@@ -127,6 +131,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           type: value.type,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
           fallbackUrl: value.fallbackUrl ?? "",
+          // `{}` rather than undefined so clearing the last row clears the
+          // saved headers instead of reading as "not editing them".
+          headers: headerRowsToRecord(value.headers) ?? {},
         });
         // Refresh the native KeyManager so the updated client cert applies, and
         // register the (possibly new) fallback origin with the iOS proxy —
@@ -550,6 +557,14 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                         <FallbackUrlField
                           field={field}
                           placeholder={t("app.servers.fallbackUrlPlaceholder")}
+                        />
+                      )}
+                    </form.Field>
+                    <form.Field name="headers">
+                      {(field) => (
+                        <CustomHeadersField
+                          value={field.state.value}
+                          onChange={field.handleChange}
                         />
                       )}
                     </form.Field>

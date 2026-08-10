@@ -6,6 +6,7 @@ import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
 import { USER_AGENT } from "@/services/network";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
+import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
 
@@ -70,6 +71,15 @@ openSubsonicApiInstance.interceptors.request.use(
     };
     request.baseURL = url || request.baseURL || "";
     request.headers.set("User-Agent", USER_AGENT);
+    // Applied last: a server behind an authenticating proxy needs these on
+    // every request, and the user's value wins on the (rare) name collision —
+    // overriding the User-Agent a WAF rejects is a legitimate use.
+    const custom = customHeadersForUrl(request.baseURL);
+    if (custom) {
+      for (const [name, value] of Object.entries(custom)) {
+        request.headers.set(name, value);
+      }
+    }
     return request;
   },
   (error) => Promise.reject(error),

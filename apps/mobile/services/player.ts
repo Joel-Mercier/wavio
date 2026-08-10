@@ -12,6 +12,11 @@ import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
+  cachedArtworkUri,
+  clearArtworkCache,
+  ensureArtworkCached,
+} from "@/services/lockScreenArtwork";
+import {
   getIsOnline,
   getServerReachable,
   probeServer,
@@ -41,6 +46,10 @@ import {
   recordResumePosition,
 } from "@/services/resumePositions";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
+import {
+  customHeadersForUrl,
+  mergeCustomHeaders,
+} from "@/services/serverHeaders";
 import {
   checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
@@ -472,7 +481,10 @@ function effectivePosition(raw: number): number {
 // scores as a bot. Identify the app the same way the API clients do. Ignored
 // for offline/file sources, which never reach the network stack.
 function audioSource(uri: string) {
-  return { uri, headers: { "User-Agent": USER_AGENT } };
+  return {
+    uri,
+    headers: mergeCustomHeaders(uri, { "User-Agent": USER_AGENT }),
+  };
 }
 
 function resolveTrackUrl(
@@ -564,12 +576,12 @@ let lockScreenActive = false;
 // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a ""
 // (returned for local tracks without cover art) throws MalformedURLException and
 // rejects the whole call.
-function toLockScreenMetadata(track: QueueTrack) {
+function toLockScreenMetadata(track: QueueTrack, artworkUrl?: string) {
   return {
     title: track.title || undefined,
     artist: track.artist || undefined,
     albumTitle: track.album || undefined,
-    artworkUrl: track.artwork || undefined,
+    artworkUrl: artworkUrl || undefined,
     // Seconds → ms. Gives the media notification an authoritative duration so it
     // doesn't rely on the player's live content duration (which is unknown for
     // transcoded streams served without a length).
@@ -580,8 +592,38 @@ function toLockScreenMetadata(track: QueueTrack) {
   };
 }
 
+// Mirror the cover locally and hand the OS controls the file, replacing whatever
+// artwork the initial metadata carried. See services/lockScreenArtwork.ts for
+// why the native fetch can't be authenticated.
+async function upgradeLockScreenArtwork(
+  p: AudioPlayer,
+  track: QueueTrack,
+  remoteUrl: string,
+) {
+  const local = await ensureArtworkCached(remoteUrl);
+  // The download outlived the track it was for, or the controls were torn down
+  // while it ran — either way this metadata is no longer the current one.
+  if (!local || loadedTrackId !== track.id || !lockScreenActive) return;
+  try {
+    p.updateLockScreenMetadata(toLockScreenMetadata(track, local));
+  } catch (error) {
+    logSwallowed("upgradeLockScreenArtwork", error);
+  }
+}
+
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
-  const metadata = toLockScreenMetadata(track);
+  const remoteArtwork = track.artwork || undefined;
+  const cached = cachedArtworkUri(remoteArtwork);
+  // Prefer the mirrored file. Failing that, pass the remote URL only when it
+  // would actually load — with custom headers configured the native fetch is
+  // guaranteed to 403, so sending it just burns a request and logs a failure.
+  // A local (file://) artwork needs no mirroring and passes straight through.
+  const initialArtwork =
+    cached ??
+    (remoteArtwork && customHeadersForUrl(remoteArtwork)
+      ? undefined
+      : remoteArtwork);
+  const metadata = toLockScreenMetadata(track, initialArtwork);
   // try/catch keeps a rejected metadata update from aborting playback.
   try {
     if (lockScreenActive) {
@@ -601,6 +643,12 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
     }
   } catch (error) {
     logSwallowed("applyLockScreen", error);
+  }
+  // Fire-and-forget: the controls are already up with text, and the artwork
+  // lands a moment later. Skipped when the cover is already mirrored (the
+  // metadata above carries it) or isn't a remote URL to begin with.
+  if (remoteArtwork && !cached) {
+    void upgradeLockScreenArtwork(p, track, remoteArtwork);
   }
 }
 
@@ -802,7 +850,7 @@ async function describeFailedSource(resolved: {
     // the body is never read and the request is aborted as soon as the headers
     // land, so a server that ignores Range doesn't stream a whole file either.
     const response = await fetch(resolved.url, {
-      headers: { Range: "bytes=0-1" },
+      headers: mergeCustomHeaders(resolved.url, { Range: "bytes=0-1" }),
       signal: controller.signal,
     });
     return {
@@ -1257,6 +1305,9 @@ export function stopPlayback() {
 }
 
 registerLogoutHandler(stopPlayback);
+// The mirrored covers belong to the server being left, and every one of them is
+// re-derivable, so there's nothing worth keeping across a sign-out.
+registerLogoutHandler(clearArtworkCache);
 
 // React to a route swap (primary <-> fallback for the same server).
 //

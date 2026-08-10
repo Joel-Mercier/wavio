@@ -12,6 +12,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import CustomHeadersField from "@/components/forms/CustomHeadersField";
 import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
@@ -53,6 +54,8 @@ import useAuth from "@/stores/auth";
 import useServers, {
   addServerFormSchema,
   cleanOptionalUrl,
+  type HeaderRow,
+  headerRowsToRecord,
   type ServerType,
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
@@ -114,6 +117,7 @@ export default function ServersDetail() {
       paths: [] as string[],
       mtlsAlias: "",
       fallbackUrl: "",
+      headers: [] as HeaderRow[],
     },
     validators: {
       onChange: addServerFormSchema,
@@ -151,6 +155,7 @@ export default function ServersDetail() {
           type: value.type,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
           fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
+          headers: headerRowsToRecord(value.headers),
         });
         // Refresh the native KeyManager so this server's client cert is
         // presented on future connections, and register the (possibly new)
@@ -398,6 +403,14 @@ export default function ServersDetail() {
                                 placeholder={t(
                                   "app.servers.fallbackUrlPlaceholder",
                                 )}
+                              />
+                            )}
+                          </form.Field>
+                          <form.Field name="headers">
+                            {(field) => (
+                              <CustomHeadersField
+                                value={field.state.value}
+                                onChange={field.handleChange}
                               />
                             )}
                           </form.Field>

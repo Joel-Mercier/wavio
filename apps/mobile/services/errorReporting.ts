@@ -21,6 +21,18 @@ function getServerReachable(): boolean {
     require("@/services/network") as typeof import("@/services/network")
   ).getServerReachable();
 }
+const EMPTY_HEADER_NAMES: ReadonlySet<string> = new Set<string>();
+// Lazy for the same reason, plus one of its own: scrubbing runs inside Sentry's
+// beforeSend, which can fire before the servers store has been touched.
+function getConfiguredHeaderNames(): ReadonlySet<string> {
+  try {
+    return (
+      require("@/services/serverHeaders") as typeof import("@/services/serverHeaders")
+    ).configuredHeaderNames();
+  } catch {
+    return EMPTY_HEADER_NAMES;
+  }
+}
 
 // Central error reporting for the service layer. Every chokepoint (axios
 // interceptors, GraphQL wrappers, the player, the local indexer) routes through
@@ -447,6 +459,11 @@ const SENSITIVE_HEADER_KEYS = new Set([
   "x-user-id",
   "authorization",
   "cookie",
+  // Cloudflare Access service tokens. Also covered dynamically below (they're
+  // the headline case for custom headers), but kept here so a breadcrumb from a
+  // server the user has since deleted is still scrubbed.
+  "cf-access-client-id",
+  "cf-access-client-secret",
 ]);
 
 export function scrubUrl<T extends string | undefined>(url: T): T {
@@ -456,8 +473,12 @@ export function scrubUrl<T extends string | undefined>(url: T): T {
 
 function scrubHeaders(headers?: Record<string, unknown>): void {
   if (!headers) return;
+  // A server's custom headers are named by the user, so no fixed list can cover
+  // them — whatever they configured is a credential by assumption.
+  const configured = getConfiguredHeaderNames();
   for (const key of Object.keys(headers)) {
-    if (SENSITIVE_HEADER_KEYS.has(key.toLowerCase())) {
+    const name = key.toLowerCase();
+    if (SENSITIVE_HEADER_KEYS.has(name) || configured.has(name)) {
       headers[key] = "[Filtered]";
     }
   }

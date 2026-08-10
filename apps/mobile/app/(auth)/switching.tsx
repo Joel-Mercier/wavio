@@ -60,6 +60,7 @@ export default function SwitchingScreen() {
         server.fallbackUrl,
         user.username,
         user.password,
+        server.headers,
       );
       useAuthBase.getState().login({
         serverId: server.id,

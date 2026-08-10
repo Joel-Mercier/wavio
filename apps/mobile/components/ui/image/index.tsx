@@ -5,6 +5,7 @@ import { Image as ExpoImage } from "expo-image";
 import React from "react";
 import { Platform } from "react-native";
 import { withUniwind } from "uniwind";
+import { withServerHeaders } from "@/services/serverHeaders";
 
 const StyledExpoImage = withUniwind(ExpoImage);
 
@@ -37,6 +38,9 @@ const Image = React.forwardRef<
     <UIImage
       cachePolicy="memory-disk"
       {...props}
+      // Cover art from a server behind an authenticating proxy needs that
+      // server's custom headers, and every caller builds its source inline.
+      source={withServerHeaders(props.source)}
       className={imageStyle({ size, class: className })}
       ref={ref}
       style={[
