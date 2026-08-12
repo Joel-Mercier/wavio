@@ -205,6 +205,33 @@ function isNativeEnvironmentFailure(error: unknown): boolean {
   return message.length > 0 && NATIVE_ENVIRONMENT_RE.test(message);
 }
 
+// A TLS handshake the device refused because the server's certificate isn't
+// trusted — a self-signed / private-CA server whose cert was never accepted
+// through the TOFU prompt, or was accepted and has since rotated or been removed
+// from Settings → Trusted certificates.
+//
+// Exported because the offline downloader and the library sync both need the
+// same verdict: it's the one download failure the user can actually fix, so it
+// gets its own message and must not be retried in a loop. Only `isExpectedFailure`
+// treats it as noise, and only for `area: "storage"` — see the note there.
+// Matched on the certificate idioms, NOT on a bare SSLHandshakeException: that
+// is Java's generic "handshake failed" and also covers a cipher-suite or TLS
+// version mismatch and a server aborting mid-handshake — none of which the user
+// fixes by trusting a certificate, and all of which are worth an Issue. A real
+// trust failure nests its cause into the handshake message
+// ("SSLHandshakeException: …CertPathValidatorException: Trust anchor…"), so it
+// still matches here; "Chain validation failed" is the one Conscrypt form that
+// says it without naming an exception. SSLPeerUnverifiedException stays: the
+// hostname verifier in modules/ssl-trust is trust-store-aware, so a rejected
+// peer is the same user-fixable "this host isn't trusted".
+const TLS_TRUST_FAILURE_RE =
+  /CertPathValidatorException|Trust anchor for certification path|CertificateException|Chain validation failed|SSLPeerUnverifiedException/i;
+
+export function isTlsTrustFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.length > 0 && TLS_TRUST_FAILURE_RE.test(message);
+}
+
 // Failures that are expected from the error itself, independent of any request
 // context: network noise plus typed control-flow / user-input errors. Shared by
 // `reportError`'s classifier and `logError` so neither path reports them —
@@ -265,6 +292,16 @@ function isExpectedFailure(
   networkNoise?: boolean,
 ): boolean {
   if (isExpectedNoise(error, networkNoise)) return true;
+  // A handshake the device refused because it doesn't trust the server's
+  // certificate. Expected only for `storage`, where the native downloader talks
+  // to the user's own server: a self-signed / private-CA cert they never
+  // accepted (or that rotated) fails every download and no client change fixes
+  // it. Deliberately NOT silenced app-wide — the same error is what a regression
+  // in our own OkHttp trust wiring looks like (an unapplied patch, a dropped
+  // `buildFromSource` entry, a swallowed factory install), and that one must
+  // still reach Sentry. API-path handshake failures are axios errors with no
+  // response, so isNetworkNoise already covers those.
+  if (ctx.area === "storage" && isTlsTrustFailure(error)) return true;
   // Device has no connectivity at all — a network/API failure is expected. Only
   // applies to `api`; the local library, player engine and metadata extraction
   // work offline, so a failure there is a real bug even with no connectivity.

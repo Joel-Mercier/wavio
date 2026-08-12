@@ -58,6 +58,7 @@ import {
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
@@ -523,7 +524,11 @@ export default function PlayerSheets({
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              {t("app.tracks.downloadErrorMessage")}
+              {t(
+                isTlsTrustFailure(error)
+                  ? "app.tracks.downloadErrorCertificateMessage"
+                  : "app.tracks.downloadErrorMessage",
+              )}
             </ToastDescription>
           </Toast>
         ),

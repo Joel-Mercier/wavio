@@ -1519,6 +1519,7 @@
 				"shareErrorMessage": "An error occurred while sharing the track",
 				"downloadSuccessMessage": "Track successfully downloaded",
 				"downloadErrorMessage": "An error occurred while downloading the track",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Save for offline listening",
 				"downloadingForOffline": "Downloading for offline",
 				"removeOfflineDownload": "Remove offline download",
