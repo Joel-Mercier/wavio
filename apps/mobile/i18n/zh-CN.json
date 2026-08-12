@@ -1496,6 +1496,7 @@
 				"shareErrorMessage": "分享时发生错误",
 				"downloadSuccessMessage": "已下载",
 				"downloadErrorMessage": "下载时发生错误",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "保存到离线",
 				"downloadingForOffline": "正在下载到离线",
 				"removeOfflineDownload": "移除离线下载",
