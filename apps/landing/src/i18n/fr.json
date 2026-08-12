@@ -26,9 +26,9 @@
 		"lead": "Un lecteur de musique Android pour Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale. Conçu pour celles et ceux qui possèdent leur bibliothèque et veulent qu'elle se sente comme chez soi."
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
-		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"getItOn": "DISPONIBLE SUR",
+		"googlePlay": "Google Play",
+		"githubRelease": "Télécharger sur GitHub"
 	},
 	"highlightsLabel": "Ce que vous obtenez",
 	"highlights": [
