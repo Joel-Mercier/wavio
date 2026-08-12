@@ -1556,6 +1556,7 @@
 				"shareErrorMessage": "Произошла ошибка при добавлении трека в общий доступ",
 				"downloadSuccessMessage": "Трек успешно скачан",
 				"downloadErrorMessage": "Произошла ошибка при скачивании трека",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Сохранить для офлайн-прослушивания",
 				"downloadingForOffline": "Скачивание для офлайн-режима",
 				"removeOfflineDownload": "Удалить офлайн-загрузку",
@@ -1757,6 +1758,7 @@
 			"shared": {
 				"sort": {
 					"playlistOrder": "Порядок",
+					"default": "По умолчанию",
 					"addedAt": "Недавние",
 					"downloadedAt": "Недавно загруженные",
 					"alphabetical": "По алфавиту",

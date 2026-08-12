@@ -26,10 +26,9 @@
 		"lead": "Ein Open-Source Android Musikplayer für Navidrome, Jellyfin und OpenSubsonic Server oder eine lokale Mediathek. Entwickelt für alle, die ihre Musiksammlung selbst besitzen und möchten, dass sie sich wie zu Hause anfühlt."
 	},
 	"cta": {
-		"releaseMain": "Neueste Version herunterladen",
-		"releaseNote": "Bald auf Google Play",
-		"starGithub": "Auf GitHub ansehen",
-		"viewSource": "Quellcode ansehen"
+		"getItOn": "GET IT ON",
+		"googlePlay": "Google Play",
+		"githubRelease": "Get it on GitHub"
 	},
 	"highlightsLabel": "Das erwartet Dich",
 	"highlights": [

@@ -26,10 +26,9 @@
 		"lead": "Android-плеер для серверов Navidrome, Jellyfin, OpenSubsonic или локальной медиатеки. Создан для тех, кто владеет своей музыкой и хочет, чтобы плеер ощущался как родной."
 	},
 	"cta": {
-		"releaseMain": "Скачать последний релиз",
-		"releaseNote": "Скоро в Google Play",
-		"starGithub": "Смотреть на GitHub",
-		"viewSource": "Исходный код"
+		"getItOn": "GET IT ON",
+		"googlePlay": "Google Play",
+		"githubRelease": "Get it on GitHub"
 	},
 	"highlightsLabel": "Что ты получаешь",
 	"highlights": [

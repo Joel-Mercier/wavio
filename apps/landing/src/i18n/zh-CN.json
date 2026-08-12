@@ -26,10 +26,9 @@
 		"lead": "一款 Android 音乐播放器，支持 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库。打造仅属于你的音乐库与归属感。"
 	},
 	"cta": {
-		"releaseMain": "获取最新版本",
-		"releaseNote": "即将上架 Google Play",
-		"starGithub": "在 GitHub 上查看",
-		"viewSource": "查看源代码"
+		"getItOn": "GET IT ON",
+		"googlePlay": "Google Play",
+		"githubRelease": "Get it on GitHub"
 	},
 	"highlightsLabel": "亮点速览",
 	"highlights": [
