@@ -1516,6 +1516,7 @@
 				"shareErrorMessage": "Se ha producido un error al compartir la pista",
 				"downloadSuccessMessage": "La pista se ha descargado correctamente",
 				"downloadErrorMessage": "Se ha producido un error al descargar la pista",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Guardar para escuchar sin conexión",
 				"downloadingForOffline": "Descarga para consultar sin conexión",
 				"removeOfflineDownload": "Eliminar la descarga sin conexión",
