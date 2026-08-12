@@ -1516,6 +1516,7 @@
 				"shareErrorMessage": "Beim Teilen des Titels ist ein Fehler aufgetreten",
 				"downloadSuccessMessage": "Titel erfolgreich heruntergeladen",
 				"downloadErrorMessage": "Beim Herunterladen des Titels ist ein Fehler aufgetreten",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Zum Offline-Anhören speichern",
 				"downloadingForOffline": "Herunterladen zur Offline-Nutzung",
 				"removeOfflineDownload": "Offline-Download entfernen",
