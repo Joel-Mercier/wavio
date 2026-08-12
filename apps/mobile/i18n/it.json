@@ -1516,6 +1516,7 @@
 				"shareErrorMessage": "Si è verificato un errore durante la condivisione del brano",
 				"downloadSuccessMessage": "Il brano è stato scaricato con successo",
 				"downloadErrorMessage": "Si è verificato un errore durante il download del brano",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Salva per l'ascolto offline",
 				"downloadingForOffline": "Scarica per la consultazione offline",
 				"removeOfflineDownload": "Rimuovi il download offline",
