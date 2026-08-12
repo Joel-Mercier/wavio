@@ -1714,6 +1714,7 @@
 			"shared": {
 				"sort": {
 					"playlistOrder": "Playlist order",
+					"default": "Default",
 					"addedAt": "Recent",
 					"downloadedAt": "Recently downloaded",
 					"alphabetical": "Alphabetical",

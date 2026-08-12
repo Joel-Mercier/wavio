@@ -5,6 +5,7 @@
 // envelope the All tracks browse consumes.
 const mockFolderScopedRequest = jest.fn();
 const mockJellyfinGet = jest.fn();
+const mockNavidromeGet = jest.fn();
 const mockQuerySongs = jest.fn();
 const mockSearchTracks = jest.fn();
 
@@ -43,6 +44,11 @@ jest.mock("@/services/jellyfin", () => ({
   userId: () => "user",
 }));
 
+jest.mock("@/services/navidrome", () => ({
+  __esModule: true,
+  default: { get: (...args: unknown[]) => mockNavidromeGet(...args) },
+}));
+
 jest.mock("@/services/local/repository", () => ({
   querySongs: (...args: unknown[]) => mockQuerySongs(...args),
   searchTracks: (...args: unknown[]) => mockSearchTracks(...args),
@@ -78,11 +84,13 @@ jest.mock("@/services/jellyfin/mappers", () => ({
 
 import { getSongs as jellyfinGetSongs } from "@/services/jellyfin/lists";
 import { getSongs as localGetSongs } from "@/services/local/lists";
+import { getSongs as navidromeGetSongs } from "@/services/navidrome/songs";
 import { getSongs as subsonicGetSongs } from "@/services/openSubsonic/lists";
 
 beforeEach(() => {
   mockFolderScopedRequest.mockReset();
   mockJellyfinGet.mockReset();
+  mockNavidromeGet.mockReset();
   mockQuerySongs.mockReset();
   mockSearchTracks.mockReset();
 });
@@ -117,6 +125,54 @@ describe("subsonic getSongs", () => {
       query: "radio",
     });
   });
+
+  // search3 has no sort parameter, so a sort can only be silently dropped here
+  // — which is why utils/songSort hides the control for plain OpenSubsonic.
+  it("sends no sort parameter, whatever it is handed", async () => {
+    mockFolderScopedRequest.mockResolvedValue({ searchResult3: {} });
+
+    await subsonicGetSongs({ size: 50, sort: "albumDesc" });
+
+    expect(
+      Object.keys(mockFolderScopedRequest.mock.calls[0][1] as object),
+    ).not.toContain("sort");
+  });
+});
+
+describe("navidrome getSongs", () => {
+  it("orders the whole library through the native API", async () => {
+    mockNavidromeGet.mockResolvedValue({ data: [{ id: "a" }] });
+
+    const rsp = await navidromeGetSongs({
+      size: 50,
+      offset: 100,
+      sort: "playCountDesc",
+    });
+
+    expect(rsp.songs.song?.map((song) => song.id)).toEqual(["a"]);
+    const [path, config] = mockNavidromeGet.mock.calls[0];
+    expect(path).toBe("/song");
+    expect(config.params).toMatchObject({
+      _sort: "playCount",
+      _order: "DESC",
+      _start: 100,
+      // Exclusive, so this asks for exactly `size` rows.
+      _end: 150,
+    });
+  });
+
+  // "recently added" is `createdAt` on media_file; `recently_added` is a
+  // mapping only the album repository has.
+  it("maps addedAt onto the media-file created_at column", async () => {
+    mockNavidromeGet.mockResolvedValue({ data: [] });
+
+    await navidromeGetSongs({ sort: "addedAtAsc" });
+
+    expect(mockNavidromeGet.mock.calls[0][1].params).toMatchObject({
+      _sort: "createdAt",
+      _order: "ASC",
+    });
+  });
 });
 
 describe("jellyfin getSongs", () => {
@@ -136,6 +192,17 @@ describe("jellyfin getSongs", () => {
       StartIndex: 100,
     });
     expect(params.SearchTerm).toBeUndefined();
+  });
+
+  it("overrides the default order with the chosen sort", async () => {
+    mockJellyfinGet.mockResolvedValue({ data: { Items: [] } });
+
+    await jellyfinGetSongs({ size: 50, sort: "yearDesc" });
+
+    expect(mockJellyfinGet.mock.calls[0][1].params).toMatchObject({
+      SortBy: "ProductionYear,SortName",
+      SortOrder: "Descending",
+    });
   });
 
   it("sends a search term when there is a query", async () => {
@@ -267,8 +334,27 @@ describe("local getSongs", () => {
     const rsp = await localGetSongs({ size: 50, offset: 100 });
 
     expect(rsp.songs.song?.map((song) => song.id)).toEqual(["a"]);
-    expect(mockQuerySongs).toHaveBeenCalledWith({ limit: 50, offset: 100 });
+    expect(mockQuerySongs).toHaveBeenCalledWith({
+      limit: 50,
+      offset: 100,
+      // No order: the repository keeps its title default.
+      order: undefined,
+      direction: "asc",
+    });
     expect(mockSearchTracks).not.toHaveBeenCalled();
+  });
+
+  it("passes the chosen order and direction to the query", async () => {
+    mockQuerySongs.mockResolvedValue([]);
+
+    await localGetSongs({ size: 50, sort: "durationDesc" });
+
+    expect(mockQuerySongs).toHaveBeenCalledWith({
+      limit: 50,
+      offset: 0,
+      order: "duration",
+      direction: "desc",
+    });
   });
 
   it("goes through the FTS index when there is one", async () => {
@@ -278,6 +364,16 @@ describe("local getSongs", () => {
 
     expect(rsp.songs.song?.map((song) => song.id)).toEqual(["b"]);
     expect(mockSearchTracks).toHaveBeenCalledWith("radio", 50, 100);
+    expect(mockQuerySongs).not.toHaveBeenCalled();
+  });
+
+  // FTS rows come back in relevance order, which is the point of searching.
+  it("ignores the sort while searching", async () => {
+    mockSearchTracks.mockResolvedValue([]);
+
+    await localGetSongs({ query: "radio", size: 50, sort: "albumAsc" });
+
+    expect(mockSearchTracks).toHaveBeenCalledWith("radio", 50, 0);
     expect(mockQuerySongs).not.toHaveBeenCalled();
   });
 });

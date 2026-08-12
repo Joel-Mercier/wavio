@@ -19,6 +19,8 @@ import type {
   Starred2,
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
+import type { SongSortField, SongSortType } from "@/utils/songSort";
+import { parseSortType } from "@/utils/sort";
 
 const FIELDS =
   "DateCreated,Genres,GenreItems,UserData,ProductionYear,ChildCount,ProviderIds,MediaSources";
@@ -344,22 +346,52 @@ const searchSongs = async (
     .slice(offset, offset + size);
 };
 
+// Secondary keys mirror the client-side track sort (utils/trackSort.ts), so an
+// artist or album sort keeps each album's songs in playing order.
+const SONG_SORT_BY: Partial<Record<SongSortField, string>> = {
+  addedAt: "DateCreated",
+  alphabetical: "SortName",
+  artist: "Artist,Album,ParentIndexNumber,IndexNumber",
+  albumArtist: "AlbumArtist,Album,ParentIndexNumber,IndexNumber",
+  album: "Album,ParentIndexNumber,IndexNumber",
+  year: "ProductionYear,SortName",
+  duration: "Runtime",
+  playCount: "PlayCount",
+};
+
 // Whole-library track browse, and a search over it (see the Subsonic
 // counterpart, which folds both onto search3).
+// A `sort` overrides fetchAudio's SortName/Ascending default. It is ignored
+// while searching: that path merges three requests into one client-side window,
+// so the order there is the merge's, not the server's.
 export const getSongs = async ({
   query,
   size = 50,
   offset = 0,
+  sort,
   musicFolderId,
 }: {
   query?: string;
   size?: number;
   offset?: number;
+  sort?: SongSortType;
   musicFolderId?: string;
 } = {}) => {
+  const { field, direction } = parseSortType(sort ?? "defaultAsc");
+  const sortBy = SONG_SORT_BY[field];
   const items = query
     ? await searchSongs(query, size, offset, musicFolderId)
-    : await fetchAudio({ Limit: size, StartIndex: offset }, musicFolderId);
+    : await fetchAudio(
+        {
+          Limit: size,
+          StartIndex: offset,
+          ...(sortBy && {
+            SortBy: sortBy,
+            SortOrder: direction === "desc" ? "Descending" : "Ascending",
+          }),
+        },
+        musicFolderId,
+      );
   const songs: Songs = { song: items.map(mapBaseItemToChild) };
   return fakeEnvelope({ songs });
 };

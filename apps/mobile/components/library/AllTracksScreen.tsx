@@ -1,7 +1,10 @@
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -14,12 +17,16 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteSongs } from "@/hooks/backend/useLists";
 import { useHasPlayableTracks, useOfflineTracks } from "@/hooks/offline";
@@ -28,15 +35,29 @@ import useDebounce from "@/hooks/useDebounce";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { useSongSort } from "@/hooks/useSongSort";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getRandomSongs, getSongs } from "@/services/backend/lists";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import {
+  DEFAULT_SONG_SORT,
+  OFFLINE_SONG_SORT_FIELDS,
+  SONG_SORT_SPECS,
+  type SongSortType,
+} from "@/utils/songSort";
+import {
+  availableSortFields,
+  effectiveSort,
+  parseSortType,
+  sortItems,
+} from "@/utils/sort";
 
 const PAGE_SIZE = 50;
 // Subsonic caps getRandomSongs at 500, so the play window is filled with a
@@ -72,11 +93,30 @@ export default function AllTracksScreen() {
 
   const isSearching = debouncedQuery.length > 0;
 
-  // Editing the query swaps the result set; without this the list keeps its old
-  // offset and hides the new top matches (notably when deleting characters).
+  // This list is paginated, so — unlike every other sorted list in the app — it
+  // can't be ordered client-side: only the fetched pages are in memory. The
+  // order goes into the backend call instead, which is why not every backend
+  // offers one (see utils/songSort.ts).
+  const sort = useApp((store) => store.allTracksSort);
+  const setAllTracksSort = useApp((store) => store.setAllTracksSort);
+  const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
+  const sortFieldLabel = useSortFieldLabel();
+  // Falls back to the backend's own order when the saved field isn't offerable
+  // here, without overwriting the preference.
+  const {
+    sortFields: serverSortFields,
+    activeSort: serverSort,
+    sortParam: browseSortParam,
+  } = useSongSort();
+  // Searching, the order is the backend's search order on every backend (see
+  // the getSongs implementations), so the control is hidden rather than lying.
+  const sortParam = isSearching ? undefined : browseSortParam;
+
+  // Editing the query — or the sort — swaps the result set; without this the
+  // list keeps its old offset and hides the new top rows.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, sortParam]);
 
   const {
     data,
@@ -88,6 +128,7 @@ export default function AllTracksScreen() {
   } = useInfiniteSongs({
     query: debouncedQuery,
     size: PAGE_SIZE,
+    sort: sortParam,
     musicFolderId,
   });
   const serverSongs = useMemo(
@@ -100,9 +141,28 @@ export default function AllTracksScreen() {
   // tracks, filtered client-side while searching.
   const isOnline = useIsOnline();
   const offlineTracks = useOfflineTracks(!isOnline);
+  const offlineFallbackActive = !isOnline && offlineTracks != null;
+  // The fallback holds the whole downloaded library in one array, so there the
+  // same fields sort client-side. Offered on the same backends as online, minus
+  // the ones a downloaded track carries no data for.
+  const offlineSortFields = useMemo(
+    () =>
+      availableSortFields(
+        offlineTracks ?? [],
+        SONG_SORT_SPECS,
+        serverSortFields.filter((field) =>
+          OFFLINE_SONG_SORT_FIELDS.includes(field),
+        ),
+      ),
+    [offlineTracks, serverSortFields],
+  );
+  const offlineSort = effectiveSort(
+    sort,
+    offlineSortFields,
+    DEFAULT_SONG_SORT,
+  ) as SongSortType;
   const songs = useMemo(() => {
-    if (isOnline) return serverSongs;
-    if (!offlineTracks) return serverSongs;
+    if (!offlineFallbackActive || !offlineTracks) return serverSongs;
     if (isSearching) {
       // A plain substring filter rather than a fuzzy index: offline this list is
       // the whole synced library, and building an index over it would run on
@@ -115,9 +175,20 @@ export default function AllTracksScreen() {
           (track.album ?? "").toLowerCase().includes(needle),
       );
     }
-    return offlineTracks;
-  }, [isOnline, serverSongs, offlineTracks, isSearching, debouncedQuery]);
-  const offlineFallbackActive = !isOnline && offlineTracks != null;
+    return sortItems(offlineTracks, offlineSort, SONG_SORT_SPECS);
+  }, [
+    offlineFallbackActive,
+    serverSongs,
+    offlineTracks,
+    isSearching,
+    debouncedQuery,
+    offlineSort,
+  ]);
+  const sortFields = offlineFallbackActive
+    ? offlineSortFields
+    : serverSortFields;
+  const activeSort = offlineFallbackActive ? offlineSort : serverSort;
+  const activeSortField = parseSortType(activeSort).field;
   const isLoading = isLoadingServer && !offlineFallbackActive;
   // A stale error from a previous online attempt must not block the offline
   // fallback list.
@@ -141,7 +212,7 @@ export default function AllTracksScreen() {
   const setShuffle = useQueue((store) => store.setShuffle);
   const [preparing, setPreparing] = useState(false);
 
-  // Server order, from the top. Offsets come from the running total rather than
+  // The visible order, from the top. Offsets come from the running total rather than
   // the page index, so a short page can't make the next one skip rows, and only
   // an empty page stops the loop (a short page can still have more behind it —
   // same rule as useInfiniteSongs). Not routed through react-query: this window
@@ -154,6 +225,7 @@ export default function AllTracksScreen() {
       const page = await getSongs({
         size: PLAY_PAGE_SIZE,
         offset,
+        sort: sortParam,
         musicFolderId,
       });
       const pageSongs = page.songs?.song ?? [];
@@ -227,6 +299,21 @@ export default function AllTracksScreen() {
     form.setFieldValue("query", "");
   };
 
+  const handlePresentSortModalPress = () => {
+    bottomSheetSortModalRef.current?.present();
+  };
+
+  // "Default" is the backend's own order — there is no reverse of it to flip
+  // to, so re-tapping the row keeps it ascending instead of silently doing
+  // nothing (offline it would reverse the array, which is a different list).
+  const handleSortSelect = (next: SongSortType) => {
+    setAllTracksSort(
+      parseSortType(next).field === "default" ? DEFAULT_SONG_SORT : next,
+    );
+  };
+
+  const showSortControl = sortFields.length > 0 && !isSearching;
+
   return (
     <Box className="h-full flex-1">
       <Box
@@ -296,19 +383,37 @@ export default function AllTracksScreen() {
         }
         ListHeaderComponent={
           <VStack className="px-6">
-            <HStack className="items-center justify-end mb-4 gap-x-4">
-              <ShuffleToggle active={shuffle} onPress={handleShufflePress} />
-              <PlayPauseButton
-                isPlaying={isPlayingFromList && isPlaying}
-                onPress={handlePlayPress}
-                size={48}
-                iconSize={24}
-                color={white}
-                className="bg-emerald-500"
-                disabled={
-                  preparing || (!isPlayingFromList && !hasPlayableTracks)
-                }
-              />
+            <HStack className="items-center justify-between mb-4 gap-x-4">
+              {showSortControl ? (
+                <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                  <HStack className="items-center gap-x-2">
+                    {activeSort.endsWith("Desc") ? (
+                      <ArrowDown size={16} color={white} />
+                    ) : (
+                      <ArrowUp size={16} color={white} />
+                    )}
+                    <Text className="text-white font-bold">
+                      {sortFieldLabel(activeSortField)}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ) : (
+                <Box />
+              )}
+              <HStack className="items-center gap-x-4">
+                <ShuffleToggle active={shuffle} onPress={handleShufflePress} />
+                <PlayPauseButton
+                  isPlaying={isPlayingFromList && isPlaying}
+                  onPress={handlePlayPress}
+                  size={48}
+                  iconSize={24}
+                  color={white}
+                  className="bg-emerald-500"
+                  disabled={
+                    preparing || (!isPlayingFromList && !hasPlayableTracks)
+                  }
+                />
+              </HStack>
             </HStack>
             {error && <ErrorDisplay error={error as Error} />}
           </VStack>
@@ -329,6 +434,12 @@ export default function AllTracksScreen() {
           }
         }}
         onEndReachedThreshold={0.5}
+      />
+      <SortOptionsSheet
+        ref={bottomSheetSortModalRef}
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={handleSortSelect}
       />
     </Box>
   );

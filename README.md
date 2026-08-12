@@ -24,6 +24,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 ## How to install
 
 Wavio is now available on the Google Play Store 🎉
+If you enjoy the app please leave a review on the Google Play Store to help us grow the community.
 
 <p align="center">
 <a href="https://play.google.com/store/apps/details?id=com.jmercier.wavio">
