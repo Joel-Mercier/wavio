@@ -2,6 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { getArtists } from "@/services/backend/browsing";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import { search3 } from "@/services/backend/searching";
+import { isTlsTrustFailure } from "@/services/errorReporting";
 import {
   getConnectionType,
   getIsEffectivelyOnline,
@@ -134,6 +135,12 @@ export class LibrarySyncService {
   // covers lost to a transient blip is exactly what leaves scattered rows on
   // their fallback icon once the device goes offline.
   private artworkAttempts: Map<string, number> = new Map();
+  // Set when a cover fetch fails the TLS handshake. Every other cover comes from
+  // the same host, so they would all fail identically — retrying the pass just
+  // burns ARTWORK_ATTEMPTS per cover on every backfill. Cleared by reset() and
+  // by startIfNeeded(), so re-trusting the certificate resumes artwork on the
+  // next app foreground / reconnection rather than needing a server switch.
+  private artworkTrustBlocked = false;
   // Backoff state for transient step failures — reset on any successful step.
   private failureCount = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -182,10 +189,19 @@ export class LibrarySyncService {
     if (!url || !username || serverType === "local") return;
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return;
+    // Give artwork one more chance per entry: the certificate may have been
+    // trusted since the block. Still untrusted just re-blocks on the first
+    // cover, which costs one failed handshake rather than the whole backfill.
+    // Runs before the phase branch so a completed pass — where the backfill is
+    // the only thing that still fetches covers — recovers too.
+    this.artworkTrustBlocked = false;
     if (sync.phase === "idle") {
       this.beginPass();
     } else if (sync.phase === "complete") {
-      if (!isSyncStale(sync.lastSyncCompletedAt, Date.now())) return;
+      if (!isSyncStale(sync.lastSyncCompletedAt, Date.now())) {
+        this.backfillArtworkQueue();
+        return;
+      }
       this.beginPass();
     }
     this.backfillArtworkQueue();
@@ -199,6 +215,7 @@ export class LibrarySyncService {
     this.artworkQueue = [];
     this.artworkPending.clear();
     this.artworkAttempts.clear();
+    this.artworkTrustBlocked = false;
     this.syncPendingArtwork();
     this.failureCount = 0;
     if (this.retryTimer) {
@@ -858,6 +875,10 @@ export class LibrarySyncService {
   // missing covers from the registered collections after a restart.
   private enqueueArtwork(coverArt?: string): void {
     if (!coverArt) return;
+    // Accepting covers the drain refuses to touch would leave artworkProgress
+    // stuck on a "caching artwork x/y" row that never advances for the rest of
+    // the session, since the crawl keeps enqueuing long after the block.
+    if (this.artworkTrustBlocked) return;
     const { artworkCache, artworkCachedAt } = useOffline.getState();
     const key = artworkCacheKey(coverArt);
     // A fresh cache entry is kept; a stale one is re-fetched so covers
@@ -890,6 +911,7 @@ export class LibrarySyncService {
   private processArtworkQueue(): void {
     const { downloadsWifiOnly } = useAppBase.getState();
     if (downloadsWifiOnly && getConnectionType() !== "wifi") return;
+    if (this.artworkTrustBlocked) return;
     while (this.artworkActive < ARTWORK_CONCURRENCY) {
       const coverArt = this.artworkQueue.shift();
       if (!coverArt) return;
@@ -898,6 +920,16 @@ export class LibrarySyncService {
       void this.downloadArtwork(coverArt, generation).then((ok) => {
         this.artworkActive--;
         const key = artworkCacheKey(coverArt);
+        // An untrusted certificate blocks every cover on this host equally, so
+        // abandon the pass instead of re-queueing each one until it exhausts its
+        // attempts. Covers already on disk stay; the rest wait for a reset().
+        if (this.artworkTrustBlocked) {
+          this.artworkQueue = [];
+          this.artworkPending.clear();
+          this.artworkAttempts.clear();
+          this.syncPendingArtwork();
+          return;
+        }
         const attempts = (this.artworkAttempts.get(key) ?? 0) + 1;
         if (
           !ok &&
@@ -954,6 +986,21 @@ export class LibrarySyncService {
       }
       return true;
     } catch (error) {
+      // An untrusted server certificate is not a per-cover failure: it fails the
+      // handshake for every cover on this host. Flag it so processArtworkQueue
+      // abandons the pass rather than logging one line per cover forever.
+      if (isTlsTrustFailure(error)) {
+        // A cover still in flight against the previous server must not block
+        // the incoming one — nothing but reset()/startIfNeeded() clears this.
+        if (generation !== this.generation) return true;
+        this.artworkTrustBlocked = true;
+        if (__DEV__) {
+          console.log(
+            "Library sync: artwork paused — the server's certificate isn't trusted",
+          );
+        }
+        return false;
+      }
       // Artwork is decorative — a failure is retried in-pass and then on the
       // next backfill, never surfaced as a sync error.
       if (__DEV__) {

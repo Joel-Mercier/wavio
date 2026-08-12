@@ -75,6 +75,7 @@ import {
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { isTlsTrustFailure } from "@/services/errorReporting";
 import type { Child } from "@/services/openSubsonic/types";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useAudioMuse, {
@@ -484,7 +485,11 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              {t("app.tracks.downloadErrorMessage")}
+              {t(
+                isTlsTrustFailure(error)
+                  ? "app.tracks.downloadErrorCertificateMessage"
+                  : "app.tracks.downloadErrorMessage",
+              )}
             </ToastDescription>
           </Toast>
         ),

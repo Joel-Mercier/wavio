@@ -137,7 +137,7 @@ function baseUrl(): string {
 
 function authParam(): string {
   const token = useAuthBase.getState().jellyfinAccessToken ?? "";
-  return `api_key=${encodeURIComponent(token)}&DeviceId=${encodeURIComponent(
+  return `ApiKey=${encodeURIComponent(token)}&DeviceId=${encodeURIComponent(
     getDeviceId(),
   )}&Client=${encodeURIComponent(client)}`;
 }

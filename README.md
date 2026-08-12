@@ -11,7 +11,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [![License](https://img.shields.io/github/license/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/blob/main/LICENSE.txt)
 [![Latest release](https://img.shields.io/github/v/release/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/releases/latest)
 
-[Presentation website](https://wavio-app.vercel.app)
+[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio)
 
 ## Table of contents
 - [How to install](#how-to-install)
@@ -23,11 +23,20 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 ## How to install
 
-For now you can only install the app from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
+Wavio is now available on the Google Play Store 🎉
+If you enjoy the app please leave a review on the Google Play Store to help us grow the community.
+
+<p align="center">
+<a href="https://play.google.com/store/apps/details?id=com.jmercier.wavio">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/google-play-badge.svg" alt="Get it on Google Play" height="80">
+</a>
+</p>
+
+Alternatively, you can install the APK from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
 
 Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architectures (x86, x86_64) are not provided.
 
-We are nearing a official release on the Google Play Store ! Production access request has been submitted. 
+APK installs need an extra step to show up in Android Auto (see below), so the Play Store install is the recommended one.
 
 ### Use Android Auto with a APK install
 

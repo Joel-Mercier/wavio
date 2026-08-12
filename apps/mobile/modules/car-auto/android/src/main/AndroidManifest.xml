@@ -9,5 +9,16 @@
         <action android:name="android.media.browse.MediaBrowserService" />
       </intent-filter>
     </service>
+
+    <!--
+      Cover art for the car host, which resolves these URIs from its own process
+      with no grant from us — hence exported, as in Google's reference sample.
+      The provider only opens paths this app registered; see CarArtworkProvider.
+    -->
+    <provider
+      android:name="expo.modules.carauto.CarArtworkProvider"
+      android:authorities="${applicationId}.carartwork"
+      android:exported="true"
+      android:grantUriPermissions="true" />
   </application>
 </manifest>

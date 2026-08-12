@@ -242,6 +242,16 @@ export async function recordPlay(
   );
 }
 
+export type SongOrder =
+  | "addedAt"
+  | "alphabetical"
+  | "artist"
+  | "albumArtist"
+  | "album"
+  | "year"
+  | "duration"
+  | "playCount";
+
 export type SongFilter = {
   limit?: number;
   offset?: number;
@@ -249,10 +259,60 @@ export type SongFilter = {
   fromYear?: number;
   toYear?: number;
   random?: boolean;
+  order?: SongOrder;
+  direction?: "asc" | "desc";
 };
 
+// `key` takes the caller's direction; `tiebreakers` always sort ascending, so
+// an album's songs stay in playing order whichever way the primary key runs
+// (same rule as the client-side engine in utils/sort.ts). NULLS LAST keeps
+// untagged tracks at the bottom in both directions there too.
+const TRACK_ORDER_SQL: Record<
+  SongOrder,
+  { key: string; tiebreakers?: string }
+> = {
+  addedAt: { key: "t.indexed_at", tiebreakers: "t.title COLLATE NOCASE ASC" },
+  alphabetical: { key: "t.title COLLATE NOCASE" },
+  artist: {
+    key: "t.artist COLLATE NOCASE",
+    tiebreakers:
+      "t.album COLLATE NOCASE ASC, t.disc_number ASC, t.track_number ASC",
+  },
+  albumArtist: {
+    key: "t.album_artist COLLATE NOCASE",
+    tiebreakers:
+      "t.album COLLATE NOCASE ASC, t.disc_number ASC, t.track_number ASC",
+  },
+  album: {
+    key: "t.album COLLATE NOCASE",
+    tiebreakers: "t.disc_number ASC, t.track_number ASC",
+  },
+  year: { key: "t.year", tiebreakers: "t.album COLLATE NOCASE ASC" },
+  duration: {
+    key: "t.duration_ms",
+    tiebreakers: "t.title COLLATE NOCASE ASC",
+  },
+  // Projected as COALESCE(s.play_count, 0), so never NULL.
+  playCount: { key: "play_count", tiebreakers: "t.title COLLATE NOCASE ASC" },
+};
+
+function songOrderSql(order: SongOrder, direction: "asc" | "desc"): string {
+  const { key, tiebreakers } = TRACK_ORDER_SQL[order];
+  const primary = `${key} ${direction === "desc" ? "DESC" : "ASC"} NULLS LAST`;
+  return `ORDER BY ${tiebreakers ? `${primary}, ${tiebreakers}` : primary}`;
+}
+
 export async function querySongs(filter: SongFilter = {}): Promise<TrackRow[]> {
-  const { limit = 100, offset = 0, genre, fromYear, toYear, random } = filter;
+  const {
+    limit = 100,
+    offset = 0,
+    genre,
+    fromYear,
+    toYear,
+    random,
+    order,
+    direction = "asc",
+  } = filter;
   const where: string[] = [];
   const params: (string | number)[] = [];
   if (genre) {
@@ -270,7 +330,7 @@ export async function querySongs(filter: SongFilter = {}): Promise<TrackRow[]> {
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
   const orderSql = random
     ? "ORDER BY RANDOM()"
-    : "ORDER BY t.title COLLATE NOCASE ASC";
+    : songOrderSql(order ?? "alphabetical", direction);
   const db = await getLocalLibraryDb();
   return db.getAllAsync<TrackRow>(
     `${TRACK_SELECT} ${whereSql} ${orderSql} LIMIT ? OFFSET ?`,

@@ -11,6 +11,7 @@ import {
   getStarred,
   getStarred2,
 } from "@/services/backend/lists";
+import type { SongSortType } from "@/utils/songSort";
 
 export const useAlbumList = (params: {
   type: AlbumListType;
@@ -133,8 +134,16 @@ export const useRandomSongs = (
 // The whole library, paginated. `query` is part of the key, so typing swaps to
 // a fresh infinite query — browsing and searching share one hook because they
 // share one backend call (see services/backend/lists.ts getSongs).
+// `sort` is part of the key too, and is `undefined` for the backend's own order
+// (utils/songSort.ts songSortParam) — JSON.stringify drops it, so an unsorted
+// browse keeps the exact key it had before this screen could sort.
 export const useInfiniteSongs = (
-  params: { query?: string; size?: number; musicFolderId?: string } = {},
+  params: {
+    query?: string;
+    size?: number;
+    sort?: SongSortType;
+    musicFolderId?: string;
+  } = {},
   options?: { enabled?: boolean },
 ) => {
   const size = params.size ?? 50;

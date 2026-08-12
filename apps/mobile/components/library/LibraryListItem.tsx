@@ -32,6 +32,7 @@ import {
   useOfflineModeEnabled,
 } from "@/hooks/offline";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useSongSort } from "@/hooks/useSongSort";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
@@ -187,6 +188,7 @@ export default function LibraryListItem({
   const isOnline = useIsOnline();
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderId = useCurrentMusicFolderId();
+  const { sortParam } = useSongSort();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
@@ -380,13 +382,19 @@ export default function LibraryListItem({
       case "allArtists":
         return ["artists", { musicFolderId }];
       case "allTracks":
-        return ["songs:infinite", { query: "", size: 50, musicFolderId }];
+        // `sort` is undefined in the backend's own order, and JSON.stringify
+        // drops it — so the unsorted key is byte-identical to what it was
+        // before the browse could sort.
+        return [
+          "songs:infinite",
+          { query: "", size: 50, sort: sortParam, musicFolderId },
+        ];
       case "folder":
         return ["indexes", { musicFolderId: item.id }];
       default:
         return null;
     }
-  }, [type.id, item.id, musicFolderId]);
+  }, [type.id, item.id, musicFolderId, sortParam]);
   const isDetailCached = useIsDetailCached(detailKey);
 
   // Downloaded badge: albums/playlists show it when the collection is available

@@ -12,6 +12,7 @@ import type {
   Starred,
   Starred2,
 } from "@/services/openSubsonic/types";
+import type { SongSortType } from "@/utils/songSort";
 
 export type AlbumListType =
   | "random"
@@ -109,6 +110,10 @@ export const getRandomSongs = async ({
 // answers error code 10 (required parameter missing) instead.
 // A non-empty `query` goes through the same call, so browsing and searching are
 // the same paginated request.
+// `sort` is accepted (this is the signature `dispatch` types the whole backend
+// off) but ignored: search3 takes no sort parameter, so the browse is only
+// sortable on the backends that have a real one — see utils/songSort.ts, which
+// hides the control here.
 export const getSongs = async ({
   query = "",
   size,
@@ -119,6 +124,7 @@ export const getSongs = async ({
   size?: number;
   offset?: number;
   musicFolderId?: string;
+  sort?: SongSortType;
 }) => {
   const rsp = await search3(query, {
     songCount: size,

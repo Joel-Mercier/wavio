@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
+import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 
@@ -130,6 +131,8 @@ interface AppStore {
   setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => void;
   favoritesSort: TrackSortType;
   setFavoritesSort: (favoritesSort: TrackSortType) => void;
+  allTracksSort: SongSortType;
+  setAllTracksSort: (allTracksSort: SongSortType) => void;
   downloadsSort: DownloadsSort;
   setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
@@ -268,6 +271,12 @@ export const useAppBase = create<AppStore>()(
       favoritesSort: "addedAtAsc",
       setFavoritesSort: (favoritesSort: TrackSortType) => {
         set({ favoritesSort });
+      },
+      // The whole-library browse is sorted by the backend, so its default is
+      // the backend's own order (utils/songSort.ts).
+      allTracksSort: DEFAULT_SONG_SORT,
+      setAllTracksSort: (allTracksSort: SongSortType) => {
+        set({ allTracksSort });
       },
       downloadsSort: "alphabeticalAsc",
       setDownloadsSort: (downloadsSort: DownloadsSort) => {

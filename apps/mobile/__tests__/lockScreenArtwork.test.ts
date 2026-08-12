@@ -4,12 +4,25 @@
 // Navidrome) an updated-at token, so keying on it verbatim would re-download
 // every cover after each login and on every unrelated entity touch.
 
+const JPEG = [0xff, 0xd8, 0xff, 0xe0];
+
+// A body that passes the size floor, with `magic` as its first bytes.
+const bodyWith = (magic: number[], length = 4096) => {
+  const bytes = new Uint8Array(length);
+  bytes.set(magic, 0);
+  return bytes;
+};
+
 const mockFs = {
   files: new Map<string, Uint8Array>(),
-  downloads: [] as { url: string; headers?: Record<string, string> }[],
-  body: new Uint8Array([0xff, 0xd8, 0xff, 0xe0]), // JPEG magic
-  size: 4096,
   modificationTime: undefined as number | undefined,
+};
+
+const mockNet = {
+  requests: [] as { url: string; headers?: Record<string, string> }[],
+  body: bodyWith(JPEG),
+  ok: true,
+  status: 200,
 };
 
 jest.mock("expo-file-system", () => {
@@ -21,17 +34,17 @@ jest.mock("expo-file-system", () => {
     get exists() {
       return mockFs.files.has(this.uri);
     }
-    get size() {
-      return mockFs.size;
-    }
     get modificationTime() {
       return mockFs.modificationTime;
     }
+    create() {
+      mockFs.files.set(this.uri, new Uint8Array());
+    }
+    write(bytes: Uint8Array) {
+      mockFs.files.set(this.uri, bytes);
+    }
     delete() {
       mockFs.files.delete(this.uri);
-    }
-    async bytes() {
-      return mockFs.files.get(this.uri) ?? mockFs.body;
     }
   }
   return {
@@ -53,19 +66,7 @@ jest.mock("expo-file-system", () => {
         return this.uri;
       }
     },
-    File: Object.assign(MockFile, {
-      downloadFileAsync: async (
-        url: string,
-        target: { uri: string },
-        options?: { headers?: Record<string, string> },
-      ) => {
-        mockFs.downloads.push({ url, headers: options?.headers });
-        mockFs.files.set(target.uri, mockFs.body);
-        return Object.assign(Object.create(MockFile.prototype), {
-          uri: target.uri,
-        }) as MockFile;
-      },
-    }),
+    File: MockFile,
   };
 });
 
@@ -84,12 +85,25 @@ const HEADERS = { "CF-Access-Client-Id": "id" };
 
 beforeEach(() => {
   mockFs.files.clear();
-  mockFs.downloads = [];
-  mockFs.size = 4096;
-  mockFs.body = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
   mockFs.modificationTime = undefined;
+  mockNet.requests = [];
+  mockNet.body = bodyWith(JPEG);
+  mockNet.ok = true;
+  mockNet.status = 200;
   mockHeaders.mockReset();
   mockHeaders.mockReturnValue(HEADERS);
+  // The mirror goes through RN's fetch, not expo-file-system's downloader —
+  // only fetch carries the custom SSL socket factory a self-signed server needs.
+  global.fetch = jest.fn(
+    async (url: string, init?: { headers?: Record<string, string> }) => {
+      mockNet.requests.push({ url, headers: init?.headers });
+      return {
+        ok: mockNet.ok,
+        status: mockNet.status,
+        arrayBuffer: async () => mockNet.body.buffer,
+      };
+    },
+  ) as unknown as typeof fetch;
   clearArtworkCache();
 });
 
@@ -111,7 +125,7 @@ describe("cache identity", () => {
     expect(b).toBe(a);
     expect(c).toBe(a);
     // Only the first one hit the network.
-    expect(mockFs.downloads).toHaveLength(1);
+    expect(mockNet.requests).toHaveLength(1);
   });
 
   it("keeps different covers apart", async () => {
@@ -122,7 +136,7 @@ describe("cache identity", () => {
       "https://music.example.com/rest/getCoverArt?id=mf-def_1&u=joel",
     );
     expect(a).not.toBe(b);
-    expect(mockFs.downloads).toHaveLength(2);
+    expect(mockNet.requests).toHaveLength(2);
   });
 
   it("keeps the same cover id on two servers apart", async () => {
@@ -134,7 +148,7 @@ describe("cache identity", () => {
       "https://two.example.com/rest/getCoverArt?id=mf-abc_1&u=joel",
     );
     expect(a).not.toBe(b);
-    expect(mockFs.downloads).toHaveLength(2);
+    expect(mockNet.requests).toHaveLength(2);
   });
 
   it("keys Jellyfin path-style artwork on the path, ignoring the query", async () => {
@@ -145,7 +159,7 @@ describe("cache identity", () => {
       "https://jf.example.com/Items/abc/Images/Primary?tag=v1&maxWidth=600",
     );
     expect(b).toBe(a);
-    expect(mockFs.downloads).toHaveLength(1);
+    expect(mockNet.requests).toHaveLength(1);
   });
 });
 
@@ -153,7 +167,7 @@ describe("ensureArtworkCached", () => {
   it("sends the server's custom headers", async () => {
     const url = "https://music.example.com/rest/getCoverArt?id=mf-abc_1";
     await ensureArtworkCached(url);
-    expect(mockFs.downloads[0]?.headers).toEqual(HEADERS);
+    expect(mockNet.requests[0]?.headers).toEqual(HEADERS);
     expect(mockHeaders).toHaveBeenCalledWith(url);
   });
 
@@ -163,24 +177,35 @@ describe("ensureArtworkCached", () => {
     ).toBeUndefined();
     expect(await ensureArtworkCached(undefined)).toBeUndefined();
     expect(await ensureArtworkCached("")).toBeUndefined();
-    expect(mockFs.downloads).toHaveLength(0);
+    expect(mockNet.requests).toHaveLength(0);
   });
 
   it("discards an HTML error page served under an image URL", async () => {
     // What a proxy returns when the headers are missing — 403 with an HTML body.
-    mockFs.body = new Uint8Array([0x3c, 0x21, 0x44, 0x4f]); // "<!DO"
+    mockNet.body = bodyWith([0x3c, 0x21, 0x44, 0x4f]); // "<!DO"
+    const result = await ensureArtworkCached(
+      "https://music.example.com/rest/getCoverArt?id=mf-abc_1",
+    );
+    expect(result).toBeUndefined();
+    expect(mockFs.files.size).toBe(0);
+  });
+
+  it("discards a truncated download", async () => {
+    mockNet.body = bodyWith(JPEG, 12);
     const result = await ensureArtworkCached(
       "https://music.example.com/rest/getCoverArt?id=mf-abc_1",
     );
     expect(result).toBeUndefined();
   });
 
-  it("discards a truncated download", async () => {
-    mockFs.size = 12;
+  it("writes nothing when the server refuses the request", async () => {
+    mockNet.ok = false;
+    mockNet.status = 403;
     const result = await ensureArtworkCached(
       "https://music.example.com/rest/getCoverArt?id=mf-abc_1",
     );
     expect(result).toBeUndefined();
+    expect(mockFs.files.size).toBe(0);
   });
 
   it("collapses concurrent callers into a single download", async () => {
@@ -192,7 +217,7 @@ describe("ensureArtworkCached", () => {
     ]);
     expect(b).toBe(a);
     expect(c).toBe(a);
-    expect(mockFs.downloads).toHaveLength(1);
+    expect(mockNet.requests).toHaveLength(1);
   });
 });
 
