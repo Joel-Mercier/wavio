@@ -1516,6 +1516,7 @@
 				"shareErrorMessage": "Une erreur s'est produite lors du partage du titre",
 				"downloadSuccessMessage": "Titre téléchargé",
 				"downloadErrorMessage": "Une erreur s'est produite lors du téléchargement du titre",
+				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
 				"downloadForOffline": "Enregistrer pour écoute hors ligne",
 				"downloadingForOffline": "Téléchargement en mode hors ligne",
 				"removeOfflineDownload": "Supprimer le téléchargement en mode hors ligne",
