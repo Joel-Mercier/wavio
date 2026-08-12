@@ -1713,6 +1713,7 @@
 			"shared": {
 				"sort": {
 					"playlistOrder": "Ordine playlist",
+					"default": "Predefinito",
 					"addedAt": "Recenti",
 					"downloadedAt": "Scaricati di recente",
 					"alphabetical": "Ordine alfabetico",
