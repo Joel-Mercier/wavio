@@ -1691,6 +1691,7 @@
 			"shared": {
 				"sort": {
 					"playlistOrder": "播放列表顺序",
+					"default": "默认",
 					"addedAt": "最近",
 					"downloadedAt": "最近下载的",
 					"alphabetical": "按字母顺序排列",
