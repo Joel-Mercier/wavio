@@ -38,8 +38,7 @@ async function hasAudioMuseAi(): Promise<boolean> {
   try {
     await axios.get(`${url.replace(/\/+$/, "")}/AudioMuseAI/info`, {
       headers: {
-        "X-Emby-Authorization": buildAuthorizationHeader(jellyfinAccessToken),
-        "X-Emby-Token": jellyfinAccessToken,
+        Authorization: buildAuthorizationHeader(jellyfinAccessToken),
       },
       timeout: 8000,
     });

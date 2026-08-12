@@ -23,8 +23,11 @@ export const authenticateByName = async (
       baseURL,
       headers: {
         "Content-Type": "application/json",
-        "X-Emby-Authorization": buildAuthorizationHeader(null),
         ...extraHeaders,
+        // After `extraHeaders`: this carries the client/device identity the
+        // server needs to open the session, so a user-configured
+        // `Authorization` header must not shadow it.
+        Authorization: buildAuthorizationHeader(null),
       },
     })
     .post<JellyfinAuthResponse>("/Users/AuthenticateByName", {
@@ -50,7 +53,7 @@ export const getSystemInfo = async (
       baseURL,
       headers: {
         "Content-Type": "application/json",
-        "X-Emby-Authorization": buildAuthorizationHeader(null),
+        Authorization: buildAuthorizationHeader(null),
       },
     })
     .get<JellyfinSystemInfo>("/System/Info/Public");

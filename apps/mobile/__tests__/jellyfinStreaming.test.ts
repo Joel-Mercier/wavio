@@ -40,7 +40,13 @@ jest.mock("@/stores/app", () => ({
 }));
 
 import { trackTranscodeInfo } from "@/services/backend/streaming";
-import { willDirectPlay } from "@/services/jellyfin/streaming";
+import {
+  downloadUrl,
+  hlsStreamUrl,
+  offlineStreamUrl,
+  streamUrl,
+  willDirectPlay,
+} from "@/services/jellyfin/streaming";
 import type { StreamFormat } from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
 
@@ -118,5 +124,29 @@ describe("trackTranscodeInfo", () => {
   it("is inactive for the on-device library", () => {
     authState.serverType = "local";
     expect(trackTranscodeInfo(alacM4a).active).toBe(false);
+  });
+});
+
+// Jellyfin 12 turns `EnableLegacyAuthorization` off by default (PR #16992), and
+// the legacy `api_key` query param is gated behind it. `ApiKey` is the ungated
+// spelling and is read all the way back to 10.8, so these URLs must never
+// regress to the lowercase form — every stream/download would 401.
+describe("query-string auth", () => {
+  beforeEach(() => {
+    authState.serverType = "jellyfin";
+  });
+
+  it.each([
+    ["streamUrl", () => streamUrl("1")],
+    ["hlsStreamUrl", () => hlsStreamUrl("1")],
+    ["downloadUrl", () => downloadUrl("1")],
+    [
+      "offlineStreamUrl",
+      () => offlineStreamUrl("1", "raw" as StreamFormat, null),
+    ],
+  ])("%s authenticates with ApiKey, not api_key", (_name, build) => {
+    const url = build();
+    expect(url).toContain("ApiKey=token");
+    expect(url).not.toContain("api_key=");
   });
 });

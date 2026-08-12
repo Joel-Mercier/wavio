@@ -33,17 +33,17 @@ jellyfinApiInstance.interceptors.request.use(
     request.baseURL = url ? url.replace(/\/+$/, "") : "";
     request.headers.set("User-Agent", USER_AGENT);
     request.headers.set(
-      "X-Emby-Authorization",
+      "Authorization",
       buildAuthorizationHeader(jellyfinAccessToken),
     );
-    if (jellyfinAccessToken) {
-      request.headers.set("X-Emby-Token", jellyfinAccessToken);
-    }
     // Applied last so a user-configured value wins on a name collision — see
-    // services/serverHeaders.ts.
+    // services/serverHeaders.ts. `Authorization` is the exception: it now
+    // carries the Jellyfin session, so letting a custom value win would
+    // deauthenticate every request.
     const custom = customHeadersForUrl(request.baseURL);
     if (custom) {
       for (const [name, value] of Object.entries(custom)) {
+        if (name.toLowerCase() === "authorization") continue;
         request.headers.set(name, value);
       }
     }

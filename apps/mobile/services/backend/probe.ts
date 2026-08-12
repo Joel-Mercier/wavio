@@ -109,8 +109,7 @@ async function probeJellyfin(
   ).get("/System/Info", {
     signal,
     headers: {
-      "X-Emby-Authorization": buildAuthorizationHeader(jellyfinAccessToken),
-      ...(jellyfinAccessToken ? { "X-Emby-Token": jellyfinAccessToken } : {}),
+      Authorization: buildAuthorizationHeader(jellyfinAccessToken),
     },
   });
   return response.status === 200 && !!response.data?.Version;

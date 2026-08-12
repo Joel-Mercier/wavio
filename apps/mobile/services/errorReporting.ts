@@ -447,8 +447,9 @@ export function reportBreadcrumb(
 // (`p`) — or token/salt (`t`/`s`) — directly in the request query string. The
 // default HTTP-breadcrumb integration and event request data would otherwise
 // ship those credentials to Sentry. Strip them from any URL, plus the Jellyfin
-// (`X-Emby-Token`/`X-Emby-Authorization`) and Taddy (`X-API-KEY`/`X-USER-ID`)
-// auth headers, before anything leaves the device.
+// (`Authorization`, plus the legacy `X-Emby-Token`/`X-Emby-Authorization` we no
+// longer send but may still see in old breadcrumbs) and Taddy
+// (`X-API-KEY`/`X-USER-ID`) auth headers, before anything leaves the device.
 const SENSITIVE_PARAM_RE =
   /([?&](?:p|password|u|username|s|t|salt|token|api[-_]?key)=)[^&#]*/gi;
 
