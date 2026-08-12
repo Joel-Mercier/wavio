@@ -310,8 +310,9 @@ export default function AlbumDetail() {
     const songs = data?.album?.song;
     if (!songs || songs.length === 0) return;
     const tracks = songs.map(childToTrack);
-    useQueue.getState().enqueueNext(tracks);
+    const added = useQueue.getState().enqueueNext(tracks);
     bottomSheetModalRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -319,7 +320,7 @@ export default function AlbumDetail() {
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToPlayNextMessage", { count: tracks.length })}
+            {t("app.shared.addedToPlayNextMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
@@ -330,8 +331,9 @@ export default function AlbumDetail() {
     const songs = data?.album?.song;
     if (!songs || songs.length === 0) return;
     const tracks = songs.map(childToTrack);
-    useQueue.getState().enqueueEnd(tracks);
+    const added = useQueue.getState().enqueueEnd(tracks);
     bottomSheetModalRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -339,7 +341,7 @@ export default function AlbumDetail() {
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToQueueMessage", { count: tracks.length })}
+            {t("app.shared.addedToQueueMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),

@@ -5,7 +5,7 @@ import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -35,7 +35,7 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
   }
 }
 
-export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
+function HomeShortcut({ recentPlay }: HomeShortcutProps) {
   const { t } = useTranslation();
   const [blue500, emerald500] = Uniwind.getCSSVariable([
     "--color-blue-500",
@@ -128,3 +128,5 @@ export default function HomeShortcut({ recentPlay }: HomeShortcutProps) {
     </FadeOutScaleDown>
   );
 }
+
+export default memo(HomeShortcut);

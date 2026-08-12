@@ -6,12 +6,12 @@ import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
+import CustomHeadersField from "@/components/forms/CustomHeadersField";
 import FallbackUrlField from "@/components/forms/FallbackUrlField";
 import FieldError, {
   handleFieldBlur,
@@ -53,6 +53,8 @@ import useAuth from "@/stores/auth";
 import useServers, {
   addServerFormSchema,
   cleanOptionalUrl,
+  type HeaderRow,
+  headerRowsToRecord,
   type ServerType,
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
@@ -114,6 +116,7 @@ export default function ServersDetail() {
       paths: [] as string[],
       mtlsAlias: "",
       fallbackUrl: "",
+      headers: [] as HeaderRow[],
     },
     validators: {
       onChange: addServerFormSchema,
@@ -151,6 +154,7 @@ export default function ServersDetail() {
           type: value.type,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
           fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
+          headers: headerRowsToRecord(value.headers),
         });
         // Refresh the native KeyManager so this server's client cert is
         // presented on future connections, and register the (possibly new)
@@ -245,213 +249,212 @@ export default function ServersDetail() {
           size="md"
         >
           <AlertDialogBackdrop />
-          <KeyboardAvoidingView
-            behavior="padding"
-            style={{ width: "100%", alignItems: "center" }}
-          >
-            <AlertDialogContent className="bg-primary-800 border-primary-400">
-              <AlertDialogHeader>
-                <Heading className="text-white font-bold" size="md">
-                  {t("app.servers.addServer")}
-                </Heading>
-              </AlertDialogHeader>
-              <AlertDialogBody className="mt-3 mb-4">
-                <form.Field name="type">
-                  {(field) =>
-                    hasLocalServer ? (
-                      // Only the three remote types: keep the compact single-row
-                      // layout (stacked icon over label) rather than a 2+1 grid.
-                      <HStack className="my-2 gap-2">
-                        {serverTypeOptions.map((opt) => {
-                          const selected = field.state.value === opt.value;
-                          return (
-                            <FadeOutScaleDown
-                              key={opt.value}
-                              onPress={() => field.handleChange(opt.value)}
-                              className={`flex-1 rounded-md border ${
-                                selected
-                                  ? "border-emerald-500 bg-emerald-500"
-                                  : "border-primary-600 bg-primary-600"
-                              }`}
-                            >
-                              <VStack className="items-center justify-center py-3 px-2 gap-y-2">
-                                <ServerTypeIcon type={opt.value} size={28} />
-                                <Text
-                                  className={`text-xs text-center ${
+          <AlertDialogContent className="bg-primary-800 border-primary-400">
+            <AlertDialogHeader>
+              <Heading className="text-white font-bold" size="md">
+                {t("app.servers.addServer")}
+              </Heading>
+            </AlertDialogHeader>
+            <AlertDialogBody className="mt-3 mb-4">
+              <form.Field name="type">
+                {(field) =>
+                  hasLocalServer ? (
+                    // Only the three remote types: keep the compact single-row
+                    // layout (stacked icon over label) rather than a 2+1 grid.
+                    <HStack className="my-2 gap-2">
+                      {serverTypeOptions.map((opt) => {
+                        const selected = field.state.value === opt.value;
+                        return (
+                          <FadeOutScaleDown
+                            key={opt.value}
+                            onPress={() => field.handleChange(opt.value)}
+                            className={`flex-1 rounded-md border ${
+                              selected
+                                ? "border-emerald-500 bg-emerald-500"
+                                : "border-primary-600 bg-primary-600"
+                            }`}
+                          >
+                            <VStack className="items-center justify-center py-3 px-2 gap-y-2">
+                              <ServerTypeIcon type={opt.value} size={28} />
+                              <Text
+                                className={`text-xs text-center ${
+                                  selected
+                                    ? "text-primary-800 font-bold"
+                                    : "text-white"
+                                }`}
+                              >
+                                {opt.label}
+                              </Text>
+                            </VStack>
+                          </FadeOutScaleDown>
+                        );
+                      })}
+                    </HStack>
+                  ) : (
+                    <VStack className="mb-2 gap-y-4">
+                      {serverTypeRows.map(([a, b]) => (
+                        <HStack key={a.value} className="gap-x-4">
+                          {[a, b].map((opt) => {
+                            if (!opt) return null;
+                            const selected = field.state.value === opt.value;
+                            return (
+                              <FadeOutScaleDown
+                                key={opt.value}
+                                onPress={() => field.handleChange(opt.value)}
+                                className="flex-1"
+                              >
+                                <HStack
+                                  className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
                                     selected
-                                      ? "text-primary-800 font-bold"
-                                      : "text-white"
+                                      ? "border-emerald-500"
+                                      : "border-primary-600"
                                   }`}
                                 >
-                                  {opt.label}
-                                </Text>
-                              </VStack>
-                            </FadeOutScaleDown>
-                          );
-                        })}
-                      </HStack>
-                    ) : (
-                      <VStack className="mb-2 gap-y-4">
-                        {serverTypeRows.map(([a, b]) => (
-                          <HStack key={a.value} className="gap-x-4">
-                            {[a, b].map((opt) => {
-                              if (!opt) return null;
-                              const selected = field.state.value === opt.value;
-                              return (
-                                <FadeOutScaleDown
-                                  key={opt.value}
-                                  onPress={() => field.handleChange(opt.value)}
-                                  className="flex-1"
-                                >
-                                  <HStack
-                                    className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
-                                      selected
-                                        ? "border-emerald-500"
-                                        : "border-primary-600"
-                                    }`}
+                                  <ServerTypeIcon type={opt.value} size={28} />
+                                  <Text
+                                    className="text-sm text-white font-bold flex-1"
+                                    numberOfLines={2}
                                   >
-                                    <ServerTypeIcon
-                                      type={opt.value}
-                                      size={28}
-                                    />
-                                    <Text
-                                      className="text-sm text-white font-bold flex-1"
-                                      numberOfLines={2}
-                                    >
-                                      {opt.label}
-                                    </Text>
-                                  </HStack>
-                                </FadeOutScaleDown>
-                              );
-                            })}
-                          </HStack>
-                        ))}
-                      </VStack>
-                    )
-                  }
-                </form.Field>
-                <form.Subscribe selector={(state) => state.values.type}>
-                  {(type) =>
-                    type === "local" ? (
-                      <form.Field name="paths">
+                                    {opt.label}
+                                  </Text>
+                                </HStack>
+                              </FadeOutScaleDown>
+                            );
+                          })}
+                        </HStack>
+                      ))}
+                    </VStack>
+                  )
+                }
+              </form.Field>
+              <form.Subscribe selector={(state) => state.values.type}>
+                {(type) =>
+                  type === "local" ? (
+                    <form.Field name="paths">
+                      {(field) => (
+                        <LocalPathsField
+                          value={field.state.value}
+                          onChange={field.handleChange}
+                        />
+                      )}
+                    </form.Field>
+                  ) : (
+                    <>
+                      <form.Field name="name">
                         {(field) => (
-                          <LocalPathsField
-                            value={field.state.value}
-                            onChange={field.handleChange}
-                          />
+                          <FormControl
+                            isInvalid={showFieldError(field)}
+                            size="md"
+                            isDisabled={false}
+                            isReadOnly={false}
+                            isRequired={false}
+                            className="my-4"
+                          >
+                            <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                              <InputField
+                                value={field.state.value}
+                                onChangeText={field.handleChange}
+                                onBlur={() => handleFieldBlur(field)}
+                                className="text-md text-white"
+                                placeholder={t("app.servers.namePlaceholder")}
+                              />
+                            </Input>
+                            <FieldError field={field} />
+                          </FormControl>
                         )}
                       </form.Field>
-                    ) : (
-                      <>
-                        <form.Field name="name">
-                          {(field) => (
-                            <FormControl
-                              isInvalid={showFieldError(field)}
-                              size="md"
-                              isDisabled={false}
-                              isReadOnly={false}
-                              isRequired={false}
-                              className="my-4"
-                            >
-                              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                                <InputField
-                                  value={field.state.value}
-                                  onChangeText={field.handleChange}
-                                  onBlur={() => handleFieldBlur(field)}
-                                  className="text-md text-white"
-                                  placeholder={t("app.servers.namePlaceholder")}
-                                />
-                              </Input>
-                              <FieldError field={field} />
-                            </FormControl>
-                          )}
-                        </form.Field>
-                        <form.Field name="url">
-                          {(field) => (
-                            <FormControl
-                              isInvalid={showFieldError(field)}
-                              size="md"
-                              isDisabled={false}
-                              isReadOnly={false}
-                              isRequired={false}
-                              className="my-4"
-                            >
-                              <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                                <UrlInputField
-                                  value={field.state.value}
-                                  onChangeText={field.handleChange}
-                                  onBlur={() => handleFieldBlur(field)}
-                                  placeholder={t("app.servers.urlPlaceholder")}
-                                />
-                              </Input>
-                              <FieldError field={field} />
-                            </FormControl>
-                          )}
-                        </form.Field>
-                        {/* Cross-platform section; only the client certificate
-                            is gated on Android + the native trust module. */}
-                        <AdvancedSettingsSection>
-                          <form.Field name="fallbackUrl">
-                            {(field) => (
-                              <FallbackUrlField
-                                field={field}
-                                placeholder={t(
-                                  "app.servers.fallbackUrlPlaceholder",
-                                )}
+                      <form.Field name="url">
+                        {(field) => (
+                          <FormControl
+                            isInvalid={showFieldError(field)}
+                            size="md"
+                            isDisabled={false}
+                            isReadOnly={false}
+                            isRequired={false}
+                            className="my-4"
+                          >
+                            <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                              <UrlInputField
+                                value={field.state.value}
+                                onChangeText={field.handleChange}
+                                onBlur={() => handleFieldBlur(field)}
+                                placeholder={t("app.servers.urlPlaceholder")}
                               />
+                            </Input>
+                            <FieldError field={field} />
+                          </FormControl>
+                        )}
+                      </form.Field>
+                      {/* Cross-platform section; only the client certificate
+                            is gated on Android + the native trust module. */}
+                      <AdvancedSettingsSection>
+                        <form.Field name="fallbackUrl">
+                          {(field) => (
+                            <FallbackUrlField
+                              field={field}
+                              placeholder={t(
+                                "app.servers.fallbackUrlPlaceholder",
+                              )}
+                            />
+                          )}
+                        </form.Field>
+                        <form.Field name="headers">
+                          {(field) => (
+                            <CustomHeadersField
+                              value={field.state.value}
+                              onChange={field.handleChange}
+                            />
+                          )}
+                        </form.Field>
+                        {Platform.OS === "android" && isSslTrustAvailable() && (
+                          <form.Field name="mtlsAlias">
+                            {(field) => (
+                              <form.Subscribe
+                                selector={(state) => state.values.url}
+                              >
+                                {(url) => (
+                                  <ClientCertificateField
+                                    value={field.state.value || undefined}
+                                    host={hostnameFromUrl(url ?? "")}
+                                    onChange={(alias) =>
+                                      field.handleChange(alias ?? "")
+                                    }
+                                  />
+                                )}
+                              </form.Subscribe>
                             )}
                           </form.Field>
-                          {Platform.OS === "android" &&
-                            isSslTrustAvailable() && (
-                              <form.Field name="mtlsAlias">
-                                {(field) => (
-                                  <form.Subscribe
-                                    selector={(state) => state.values.url}
-                                  >
-                                    {(url) => (
-                                      <ClientCertificateField
-                                        value={field.state.value || undefined}
-                                        host={hostnameFromUrl(url ?? "")}
-                                        onChange={(alias) =>
-                                          field.handleChange(alias ?? "")
-                                        }
-                                      />
-                                    )}
-                                  </form.Subscribe>
-                                )}
-                              </form.Field>
-                            )}
-                        </AdvancedSettingsSection>
-                      </>
-                    )
-                  }
-                </form.Subscribe>
-              </AlertDialogBody>
-              <AlertDialogFooter className="items-center justify-center">
-                <FadeOutScaleDown
-                  onPress={() => {
-                    form.reset();
-                    handleCloseAddServerModal();
-                  }}
-                  className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-                >
-                  <Text className="text-white font-bold text-lg">
-                    {t("app.shared.cancel")}
-                  </Text>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown
-                  onPress={() => {
-                    isDirty ? form.handleSubmit() : undefined;
-                  }}
-                  className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-                >
-                  <Text className="text-primary-800 font-bold text-lg">
-                    {t("app.shared.save")}
-                  </Text>
-                </FadeOutScaleDown>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </KeyboardAvoidingView>
+                        )}
+                      </AdvancedSettingsSection>
+                    </>
+                  )
+                }
+              </form.Subscribe>
+            </AlertDialogBody>
+            <AlertDialogFooter className="items-center justify-center">
+              <FadeOutScaleDown
+                onPress={() => {
+                  form.reset();
+                  handleCloseAddServerModal();
+                }}
+                className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
+              >
+                <Text className="text-white font-bold text-lg">
+                  {t("app.shared.cancel")}
+                </Text>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                onPress={() => {
+                  isDirty ? form.handleSubmit() : undefined;
+                }}
+                className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+              >
+                <Text className="text-primary-800 font-bold text-lg">
+                  {t("app.shared.save")}
+                </Text>
+              </FadeOutScaleDown>
+            </AlertDialogFooter>
+          </AlertDialogContent>
         </AlertDialog>
       </Box>
     </Box>

@@ -7,15 +7,22 @@ import {
   withStyleContext,
 } from "@gluestack-ui/utils/nativewind-utils";
 import React from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { useKeyboardState } from "react-native-keyboard-controller";
 import Animated, {
   Easing,
   FadeIn,
   FadeOut,
   ZoomIn,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SCOPE = "ALERT_DIALOG";
+
+// Breathing room kept between the dialog and the edges of the usable area.
+const VERTICAL_MARGIN = 24;
+// Floor so a tall keyboard on a short screen can't collapse the dialog entirely.
+const MIN_CONTENT_HEIGHT = 160;
 
 const RootComponent = withStyleContext(View, SCOPE);
 
@@ -63,14 +70,17 @@ const alertDialogCloseButtonStyle = tva({
 });
 
 const alertDialogHeaderStyle = tva({
-  base: "justify-between items-center flex-row",
+  base: "justify-between items-center flex-row shrink-0",
 });
 
 const alertDialogFooterStyle = tva({
-  base: "flex-row justify-end items-center gap-3",
+  base: "flex-row justify-end items-center gap-3 shrink-0",
 });
 
-const alertDialogBodyStyle = tva({ base: "" });
+// `shrink` lets the body give way once the content is capped by the dialog's
+// max height, so overflow scrolls inside it instead of pushing the header and
+// footer off screen.
+const alertDialogBodyStyle = tva({ base: "shrink" });
 
 const alertDialogBackdropStyle = tva({
   base: "absolute left-0 top-0 right-0 bottom-0 bg-black/50 web:cursor-default",
@@ -129,8 +139,25 @@ const AlertDialog = React.forwardRef<
 const AlertDialogContent = React.forwardRef<
   React.ComponentRef<typeof UIAccessibleAlertDialog.Content>,
   IAlertDialogContentProps
->(function AlertDialogContent({ className, size, ...props }, ref) {
+>(function AlertDialogContent({ className, size, style, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardState((state) => state.height);
+
+  // The body scroll view sizes itself to its content, so without a cap a long
+  // form grows the dialog past the screen and takes the header and footer with
+  // it, out of reach. `marginBottom` re-centers what's left in the space above
+  // the keyboard (the parent centers content box + margins), which is why no
+  // dialog needs a KeyboardAvoidingView wrapper of its own.
+  const maxHeight = Math.max(
+    MIN_CONTENT_HEIGHT,
+    windowHeight -
+      insets.top -
+      insets.bottom -
+      keyboardHeight -
+      VERTICAL_MARGIN * 2,
+  );
 
   return (
     <UIAccessibleAlertDialog.Content
@@ -139,6 +166,7 @@ const AlertDialogContent = React.forwardRef<
       exiting={FadeOut.duration(200)}
       ref={ref}
       {...props}
+      style={[{ maxHeight, marginBottom: keyboardHeight }, style]}
       className={alertDialogContentStyle({
         parentVariants: {
           size: parentSize,

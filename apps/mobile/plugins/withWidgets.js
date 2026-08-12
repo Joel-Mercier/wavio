@@ -366,6 +366,7 @@ const KT_WIDGET_STATE = `package ${PACKAGE}.widget
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -393,6 +394,7 @@ object WidgetState {
     private const val K_PLAYING = "np_playing"
     private const val K_BG = "np_bg"
     private const val K_RECENT = "recent_json"
+    private const val K_IMAGE_HEADERS = "image_headers_json"
 
     private fun prefs(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -443,6 +445,28 @@ object WidgetState {
         prefs(ctx).edit().putString(K_RECENT, arr.toString()).apply()
     }
 
+    // User-defined headers for servers behind an authenticating reverse proxy
+    // (Cloudflare Access and friends), as a host -> {name: value} JSON map.
+    // Persisted because the widget renders with no JS runtime alive, so it can't
+    // ask for them at load time. See services/serverHeaders.ts.
+    fun setImageHeaders(ctx: Context, json: String) {
+        prefs(ctx).edit().putString(K_IMAGE_HEADERS, json).apply()
+    }
+
+    fun getImageHeaders(ctx: Context, url: String?): Map<String, String> {
+        if (url.isNullOrEmpty()) return emptyMap()
+        val raw = prefs(ctx).getString(K_IMAGE_HEADERS, null) ?: return emptyMap()
+        return try {
+            val host = Uri.parse(url).host?.lowercase() ?: return emptyMap()
+            val forHost = JSONObject(raw).optJSONObject(host) ?: return emptyMap()
+            val out = mutableMapOf<String, String>()
+            forHost.keys().forEach { key -> out[key] = forHost.optString(key) }
+            out
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
     fun getRecent(ctx: Context): List<RecentItem> {
         val raw = prefs(ctx).getString(K_RECENT, null) ?: return emptyList()
         return try {
@@ -477,6 +501,8 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.RemoteViews
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -555,6 +581,9 @@ object WidgetRenderer {
             onReady(null)
             return
         }
+        // Bound to a non-null local before the lambda: the model below is typed
+        // Any, which a String? wouldn't satisfy.
+        val coverUrl: String = url
         executor.execute {
             val bmp = try {
                 val density = ctx.resources.displayMetrics.density
@@ -563,7 +592,19 @@ object WidgetRenderer {
                 // baked into the bitmap and survives being displayed 1:1 (fitXY),
                 // matching the favorites tile's 8dp corners.
                 val radiusPx = (sizePx * 8f / 56f).toInt()
-                var request = Glide.with(ctx.applicationContext).asBitmap().load(url)
+                // A server fronted by an authenticating proxy answers 403 to a
+                // bare GET, so the cover has to carry that server's configured
+                // headers. Plain String load when there are none, so unconfigured
+                // servers keep Glide's default URL cache key.
+                val headers = WidgetState.getImageHeaders(ctx, coverUrl)
+                val model: Any = if (headers.isEmpty()) {
+                    coverUrl
+                } else {
+                    val builder = LazyHeaders.Builder()
+                    headers.forEach { (name, value) -> builder.addHeader(name, value) }
+                    GlideUrl(coverUrl, builder.build())
+                }
+                var request = Glide.with(ctx.applicationContext).asBitmap().load(model)
                 request = if (circle) {
                     request.transform(CircleCrop())
                 } else if (rounded) {
@@ -749,6 +790,14 @@ class WavioWidgetModule(reactCtx: ReactApplicationContext) : ReactContextBaseJav
         WidgetState.setNowPlaying(ctx, title, artist, coverUrl, isPlaying, bgColor)
         NowPlayingWidgetProvider.refreshAll(ctx)
         RecentPlaysWidgetProvider.refreshAll(ctx)
+    }
+
+    // No widget refresh: the headers only change how an already-queued cover is
+    // fetched, and JS pushes them before the now-playing/recent updates that do
+    // trigger a redraw.
+    @ReactMethod
+    fun setImageHeaders(json: String) {
+        WidgetState.setImageHeaders(reactApplicationContext.applicationContext, json)
     }
 
     @ReactMethod

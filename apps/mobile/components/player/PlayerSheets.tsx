@@ -12,6 +12,7 @@ import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import Gauge from "lucide-react-native/dist/esm/icons/gauge.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
@@ -21,6 +22,7 @@ import Radar from "lucide-react-native/dist/esm/icons/radar.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
+import TextSearch from "lucide-react-native/dist/esm/icons/text-search.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
 import Waypoints from "lucide-react-native/dist/esm/icons/waypoints.mjs";
@@ -34,6 +36,7 @@ import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
+import LrclibPickerSheet from "@/components/player/LrclibPickerSheet";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
@@ -55,10 +58,11 @@ import {
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import { useSleepTimer } from "@/services/sleepTimer";
-import useApp from "@/stores/app";
+import useApp, { PODCAST_PLAYBACK_RATES } from "@/stores/app";
 import useAudioMuse, {
   selectSimilarTracksAvailable,
   selectSongPathAvailable,
@@ -85,10 +89,12 @@ function SetBookmarkLabel() {
 
 // The player screen's bottom sheets (track actions, sleep timer, artist picker,
 // share link). The parent owns the actions sheet ref since its trigger lives in
-// the player chrome. The jukebox sheet lives app-wide (see JukeboxSheet in
+// the player chrome. The output sheet lives app-wide (see OutputSheet in
 // app/(app)/_layout).
 export default function PlayerSheets({
   actionsSheetRef,
+  speedSheetRef,
+  lyricsPickerSheetRef,
   playingTrack,
   hideLyricsAction,
   hasKaraoke,
@@ -96,6 +102,11 @@ export default function PlayerSheets({
   onRemoveFavoritePodcast,
 }: {
   actionsSheetRef: RefObject<BottomSheetModal | null>;
+  speedSheetRef?: RefObject<BottomSheetModal | null>;
+  // Only the player chrome has a button of its own for the lyrics picker; the
+  // lyrics screen reaches it through the action below, so the ref is optional
+  // and falls back to one owned here.
+  lyricsPickerSheetRef?: RefObject<BottomSheetModal | null>;
   playingTrack: QueueTrack | null;
   hideLyricsAction?: boolean;
   hasKaraoke?: boolean;
@@ -115,12 +126,16 @@ export default function PlayerSheets({
   const lyricsSource = useApp((s) => s.lyricsSource);
   const karaokeEnabled = useApp((s) => s.karaokeEnabled);
   const setKaraokeEnabled = useApp((s) => s.setKaraokeEnabled);
+  const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
+  const setPodcastPlaybackRate = useApp((s) => s.setPodcastPlaybackRate);
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [shareUrl, setShareUrl] = useState("");
   const [showInfoModal, setShowInfoModal] = useState(false);
   const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
+  const ownLyricsPickerSheetRef = useRef<BottomSheetModal>(null);
+  const lyricsPickerRef = lyricsPickerSheetRef ?? ownLyricsPickerSheetRef;
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const sleepEndsAt = useSleepTimer((s) => s.endsAt);
@@ -240,6 +255,11 @@ export default function PlayerSheets({
     setKaraokeEnabled(!karaokeEnabled);
   };
 
+  const handleChooseLyricsPress = () => {
+    actionsSheetRef.current?.dismiss();
+    lyricsPickerRef.current?.present();
+  };
+
   const handleInfoPress = () => {
     actionsSheetRef.current?.dismiss();
     setShowInfoModal(true);
@@ -280,8 +300,9 @@ export default function PlayerSheets({
 
   const handlePlayNextPress = () => {
     if (!playingTrack) return;
-    useQueue.getState().enqueueNext(playingTrack);
+    const added = useQueue.getState().enqueueNext(playingTrack);
     actionsSheetRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -289,7 +310,7 @@ export default function PlayerSheets({
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToPlayNextMessage", { count: 1 })}
+            {t("app.shared.addedToPlayNextMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
@@ -298,8 +319,9 @@ export default function PlayerSheets({
 
   const handleAddToQueuePress = () => {
     if (!playingTrack) return;
-    useQueue.getState().enqueueEnd(playingTrack);
+    const added = useQueue.getState().enqueueEnd(playingTrack);
     actionsSheetRef.current?.dismiss();
+    if (added === 0) return;
     toast.show({
       placement: "top",
       duration: 3000,
@@ -307,7 +329,7 @@ export default function PlayerSheets({
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
           <ToastDescription>
-            {t("app.shared.addedToQueueMessage", { count: 1 })}
+            {t("app.shared.addedToQueueMessage", { count: added })}
           </ToastDescription>
         </Toast>
       ),
@@ -332,6 +354,11 @@ export default function PlayerSheets({
   const handleSleepCancelPress = () => {
     cancelSleepTimer();
     sleepTimerSheetRef.current?.dismiss();
+  };
+
+  const handlePlaybackRatePress = (rate: number) => {
+    setPodcastPlaybackRate(rate);
+    speedSheetRef?.current?.dismiss();
   };
 
   const handleGoToPodcastSeriesPress = () => {
@@ -497,7 +524,11 @@ export default function PlayerSheets({
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
-              {t("app.tracks.downloadErrorMessage")}
+              {t(
+                isTlsTrustFailure(error)
+                  ? "app.tracks.downloadErrorCertificateMessage"
+                  : "app.tracks.downloadErrorMessage",
+              )}
             </ToastDescription>
           </Toast>
         ),
@@ -726,6 +757,19 @@ export default function PlayerSheets({
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                {lyricsSource === "all" && (
+                  <FadeOutScaleDown
+                    onPress={handleChooseLyricsPress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <TextSearch size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.player.lyricsPicker")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {capabilities.similarSongs && (
                   <FadeOutScaleDown
                     onPress={handleSimilarSongsPress}
@@ -904,6 +948,51 @@ export default function PlayerSheets({
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <BottomSheetModalComponent
+        ref={speedSheetRef}
+        enableHalfExpand={false}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+      >
+        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center mb-6">
+              <Gauge size={24} color={gray200} />
+              <Heading
+                className="ml-4 text-white font-normal"
+                size="lg"
+                numberOfLines={1}
+              >
+                {t("app.player.playbackSpeed")}
+              </Heading>
+            </HStack>
+            <VStack className="gap-y-6">
+              {PODCAST_PLAYBACK_RATES.map((rate) => (
+                <FadeOutScaleDown
+                  key={rate}
+                  onPress={() => handlePlaybackRatePress(rate)}
+                >
+                  <Text
+                    className="text-lg"
+                    style={{
+                      color:
+                        rate === podcastPlaybackRate ? emerald500 : gray200,
+                    }}
+                  >
+                    {rate === 1
+                      ? t("app.player.playbackSpeedNormal")
+                      : t("app.player.playbackSpeedValue", { rate })}
+                  </Text>
+                </FadeOutScaleDown>
+              ))}
+            </VStack>
+          </Box>
+        </BottomSheetScrollView>
+      </BottomSheetModalComponent>
+      <BottomSheetModalComponent
         ref={bottomSheetArtistsModalRef}
         enableHalfExpand={false}
         backgroundStyle={{
@@ -936,6 +1025,7 @@ export default function PlayerSheets({
           </Box>
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
+      <LrclibPickerSheet sheetRef={lyricsPickerRef} track={playingTrack} />
       <ShareLinkSheet sheetRef={bottomSheetShareModalRef} url={shareUrl} />
       <TrackInfoModal
         isOpen={showInfoModal}

@@ -1,25 +1,26 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ArtistListItem from "@/components/artists/ArtistListItem";
-import ArtistListItemSkeleton from "@/components/artists/ArtistListItemSkeleton";
+import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
+import { ARTIST_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useArtists } from "@/hooks/backend/useBrowsing";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import { loadingData } from "@/utils/loadingData";
-import { shuffleWithSeed } from "@/utils/shuffle";
+import { sampleWithSeed } from "@/utils/shuffle";
 
 interface ArtistCarouselSectionProps {
-  enabled: boolean;
+  sectionIndex: number;
   size?: number;
   shuffleSeed?: number;
 }
 
-export default function ArtistCarouselSection({
-  enabled,
+function ArtistCarouselSection({
+  sectionIndex,
   size = 12,
   shuffleSeed,
 }: ArtistCarouselSectionProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
   const musicFolderId = useCurrentMusicFolderId();
   const [mountSeed] = useState(() => Date.now());
@@ -28,8 +29,8 @@ export default function ArtistCarouselSection({
   const artists = useMemo<ArtistID3[]>(() => {
     const all =
       data?.artists?.index?.flatMap((index) => index.artist ?? []) ?? [];
-    return shuffleWithSeed(all, seed).slice(0, size);
-  }, [data, seed, size]);
+    return sampleWithSeed(all, size, seed);
+  }, [data?.artists?.index, seed, size]);
   return (
     <HomeSection
       title={t("app.home.artists")}
@@ -37,14 +38,7 @@ export default function ArtistCarouselSection({
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!artists.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <ArtistListItemSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`artist-skeleton-${index}`}
-          index={index}
-          layout="horizontal"
-        />
-      ))}
+      skeleton={ARTIST_CAROUSEL_SKELETON}
     >
       {artists.map((artist, index) => (
         <ArtistListItem
@@ -57,3 +51,5 @@ export default function ArtistCarouselSection({
     </HomeSection>
   );
 }
+
+export default memo(ArtistCarouselSection);

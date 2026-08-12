@@ -1,6 +1,8 @@
 import axios, { type AxiosInstance } from "axios";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
+import { USER_AGENT } from "@/services/network";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
+import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
 // Reachability probe for one specific server URL, used by the failover in
@@ -31,14 +33,27 @@ const PROBE_DEADLINE_MS = PROBE_TIMEOUT_MS + 1000;
  * an HTTP 401 (jellyfin/index.ts). Probing a fallback that sits behind an SSO
  * proxy, or whose credentials differ, would otherwise end the session instead of
  * simply reporting "not usable".
+ *
+ * `USER_AGENT` is read here rather than at module scope on purpose: this module
+ * is imported by services/network.ts, so the cycle leaves it undefined until
+ * that module's body has run. By call time it always resolves.
+ *
+ * `extraHeaders` carries a server's user-configured headers. It's a parameter
+ * rather than a store lookup because the login flow probes a server that isn't
+ * saved yet (see services/auth/authenticate.ts).
  */
 export function createBareClient(
   baseURL: string,
   timeout?: number,
+  extraHeaders?: Record<string, string>,
 ): AxiosInstance {
   return axios.create({
     baseURL,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": USER_AGENT,
+      ...extraHeaders,
+    },
     ...(timeout ? { timeout } : {}),
   });
 }
@@ -63,7 +78,11 @@ async function probeSubsonic(
     useTokenAuth === false
       ? { u: username, p: encodePasswordParam(password) }
       : { u: username, t: subsonicToken, s: subsonicSalt };
-  const response = await createBareClient(url).get("/rest/ping", {
+  const response = await createBareClient(
+    url,
+    undefined,
+    customHeadersForUrl(url),
+  ).get("/rest/ping", {
     signal,
     params: {
       ...authParams,
@@ -83,16 +102,16 @@ async function probeJellyfin(
   signal: AbortSignal,
 ): Promise<boolean> {
   const { jellyfinAccessToken } = useAuthBase.getState();
-  const response = await createBareClient(url.replace(/\/+$/, "")).get(
-    "/System/Info",
-    {
-      signal,
-      headers: {
-        "X-Emby-Authorization": buildAuthorizationHeader(jellyfinAccessToken),
-        ...(jellyfinAccessToken ? { "X-Emby-Token": jellyfinAccessToken } : {}),
-      },
+  const response = await createBareClient(
+    url.replace(/\/+$/, ""),
+    undefined,
+    customHeadersForUrl(url),
+  ).get("/System/Info", {
+    signal,
+    headers: {
+      Authorization: buildAuthorizationHeader(jellyfinAccessToken),
     },
-  );
+  });
   return response.status === 200 && !!response.data?.Version;
 }
 

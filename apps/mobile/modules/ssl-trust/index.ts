@@ -227,6 +227,25 @@ export function resolveServerBase(url: string): string {
 }
 
 /**
+ * Reverse of `resolveServerBase`: given a URL that may already have been
+ * rewritten to the loopback proxy, return the upstream base URL it fronts (or
+ * undefined when it isn't a proxied URL).
+ *
+ * Needed by anything that has to key off the *real* server for an already-
+ * resolved URL — the proxy origin is `127.0.0.1`, which matches no saved
+ * server. See services/serverHeaders.ts.
+ */
+export function upstreamBaseForUrl(url: string): string | undefined {
+  if (Platform.OS !== "ios" || !cachedProxyInfo) return undefined;
+  const prefix = `http://127.0.0.1:${cachedProxyInfo.port}/`;
+  if (!url.startsWith(prefix)) return undefined;
+  const rest = url.slice(prefix.length);
+  const slash = rest.indexOf("/");
+  const token = slash === -1 ? rest : rest.slice(0, slash);
+  return cachedProxyInfo.upstreams.find((u) => u.token === token)?.baseUrl;
+}
+
+/**
  * Re-register the set of trusted upstreams with the native proxy (iOS only).
  * On failure the cached proxy info is cleared (so `resolveServerBase` stops
  * routing to a proxy we couldn't (re)start) and the error is re-thrown — the

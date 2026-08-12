@@ -6,10 +6,12 @@ import {
   getMostPlayedSongs,
   getNowPlaying,
   getRandomSongs,
+  getSongs,
   getSongsByGenre,
   getStarred,
   getStarred2,
 } from "@/services/backend/lists";
+import type { SongSortType } from "@/utils/songSort";
 
 export const useAlbumList = (params: {
   type: AlbumListType;
@@ -124,6 +126,43 @@ export const useRandomSongs = (
     queryKey: ["randomSongs", params],
     queryFn: () => {
       return getRandomSongs(params);
+    },
+    enabled: options?.enabled,
+  });
+};
+
+// The whole library, paginated. `query` is part of the key, so typing swaps to
+// a fresh infinite query — browsing and searching share one hook because they
+// share one backend call (see services/backend/lists.ts getSongs).
+// `sort` is part of the key too, and is `undefined` for the backend's own order
+// (utils/songSort.ts songSortParam) — JSON.stringify drops it, so an unsorted
+// browse keeps the exact key it had before this screen could sort.
+export const useInfiniteSongs = (
+  params: {
+    query?: string;
+    size?: number;
+    sort?: SongSortType;
+    musicFolderId?: string;
+  } = {},
+  options?: { enabled?: boolean },
+) => {
+  const size = params.size ?? 50;
+  return useInfiniteQuery({
+    queryKey: ["songs:infinite", { ...params, size }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      return getSongs({ ...params, size, offset: pageParam });
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // Stop only on an empty page (a short page can still have more behind it)
+      // and offset by the running total so variable page sizes don't skip rows.
+      if ((lastPage?.songs?.song?.length ?? 0) === 0) {
+        return undefined;
+      }
+      return allPages.reduce(
+        (total, page) => total + (page?.songs?.song?.length ?? 0),
+        0,
+      );
     },
     enabled: options?.enabled,
   });

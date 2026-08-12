@@ -256,6 +256,7 @@ describe("auth login schema", () => {
       paths: [],
       mtlsAlias: "",
       fallbackUrl: "",
+      headers: [],
     });
     expect(result.success).toBe(true);
   });
@@ -269,6 +270,7 @@ describe("auth login schema", () => {
       paths: ["/storage/emulated/0/Music"],
       mtlsAlias: "",
       fallbackUrl: "",
+      headers: [],
     });
     expect(result.success).toBe(true);
   });
@@ -281,6 +283,7 @@ describe("auth login schema", () => {
       type: "navidrome" as const,
       paths: [],
       mtlsAlias: "",
+      headers: [],
     };
     expect(
       loginSchema.safeParse({

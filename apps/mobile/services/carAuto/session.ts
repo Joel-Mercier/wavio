@@ -5,12 +5,21 @@ import {
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import {
+  cachedCarArtwork,
+  clearCarArtworkCache,
+  ensureCarArtwork,
+} from "@/services/carAuto/artworkMirror";
+import {
   CarAutoBridge,
   type NowPlayingPayload,
 } from "@/services/carAuto/bridge";
 import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
 import { handleBrowsePlay } from "@/services/carAuto/play";
-import { buildBrowseTree, getSnapshot } from "@/services/carAuto/tree";
+import {
+  buildBrowseTree,
+  getSnapshot,
+  localizeTreeArtwork,
+} from "@/services/carAuto/tree";
 import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
@@ -28,7 +37,11 @@ import {
   applyStartupLocale,
   hydratePlaybackStores,
 } from "@/services/startupHydration";
-import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import {
+  currentAuthScope,
+  registerLogoutHandler,
+  useAuthBase,
+} from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -62,8 +75,18 @@ const log = (message: string, error?: unknown) => {
   else console.log(`[carauto] ${message}`);
 };
 
+type QueueEntry = ReturnType<typeof useQueue.getState>["queue"][number];
+
+// Prefer an already-mirrored copy of the cover. Unlike the browse tree, the
+// now-playing cover is loaded by media3's BitmapLoader *in this process*, so a
+// remote URL does work — until the server needs custom headers or a self-signed
+// certificate, neither of which that loader carries. A local file covers those
+// too, and is what the native side turns into a content:// URI for the host.
+const carArtwork = (url: string | undefined): string | undefined =>
+  url ? (cachedCarArtwork(url) ?? url) : undefined;
+
 const trackToNowPlaying = (
-  track: ReturnType<typeof useQueue.getState>["queue"][number] | null,
+  track: QueueEntry | null,
 ): NowPlayingPayload | null => {
   if (!track) return null;
   return {
@@ -73,7 +96,7 @@ const trackToNowPlaying = (
     title: track.title || undefined,
     artist: track.artist || undefined,
     album: track.album || undefined,
-    artworkUrl: track.artwork || undefined,
+    artworkUrl: carArtwork(track.artwork || undefined),
     durationMs: Math.round((track.duration ?? 0) * 1000),
   };
 };
@@ -173,6 +196,11 @@ async function wire() {
   if (Platform.OS === "ios") setupCarPlay();
   if (!CarAutoBridge.available && Platform.OS !== "ios") return;
 
+  // The mirrored covers belong to the server being left, and every one is
+  // re-derivable — same reasoning as the lock screen's mirror in
+  // services/player.ts.
+  registerLogoutHandler(clearCarArtworkCache);
+
   // A headless boot renders nothing under app/, so the startup work the React
   // tree normally owns has to happen here: the saved locale (or the tree would
   // be English, and setNodes would overwrite the native disk cache with it), the
@@ -194,6 +222,11 @@ async function wire() {
   let pushedAt = 0;
   let building = false;
   let rebuildQueued = false;
+  // Bumped on every push. The artwork mirror below runs after the tree is
+  // already in the car's hands and can easily outlive it (hundreds of covers vs
+  // a rebuild triggered by a track change), so its re-push has to prove the tree
+  // it localised is still the current one.
+  let treeGeneration = 0;
 
   const rebuild = () => {
     if (timer) clearTimeout(timer);
@@ -248,8 +281,21 @@ async function wire() {
         pushedSignature = null;
         log("rebuild: build incomplete, staying retryable");
       }
+      const generation = ++treeGeneration;
       if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
       if (Platform.OS === "ios") updateCarPlayTree(build.tree);
+      // Deliberately after the push and not awaited: the car gets a usable tree
+      // immediately, and covers land as they're mirrored. Blocking the push on a
+      // few hundred image fetches would leave a cold car session staring at an
+      // empty screen for as long as they take.
+      void localizeTreeArtwork(build.tree)
+        .then((changed) => {
+          if (!changed || generation !== treeGeneration) return;
+          log("rebuild: re-pushing tree with local artwork");
+          if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
+          if (Platform.OS === "ios") updateCarPlayTree(build.tree);
+        })
+        .catch((e) => log("localizeTreeArtwork threw", e));
     } finally {
       building = false;
       if (rebuildQueued) {
@@ -278,6 +324,20 @@ async function wire() {
   let lastTrackId: string | null = null;
   let lastQueueSig: string | null = null;
   let lastQueueIndex: number | null = null;
+  // One fetch per track change, and only when the cover isn't mirrored already.
+  // Re-pushes so the head unit swaps the remote URL it was given for the local
+  // file — the only artwork that survives a server it can't authenticate to.
+  const mirrorNowPlayingArtwork = async (track: QueueEntry | null) => {
+    const remote = track?.artwork;
+    if (!remote || cachedCarArtwork(remote)) return;
+    const local = await ensureCarArtwork(remote).catch(() => undefined);
+    if (!local) return;
+    // The track moved on while the fetch was in flight; the push this would
+    // refresh is no longer the one on screen.
+    if (useQueue.getState().getCurrent()?.id !== track?.id) return;
+    CarAutoBridge.setNowPlaying(trackToNowPlaying(track));
+  };
+
   const pushNowPlaying = () => {
     if (!CarAutoBridge.available) return;
     const current = useQueue.getState().getCurrent();
@@ -285,6 +345,7 @@ async function wire() {
     if (id === lastTrackId) return;
     lastTrackId = id;
     CarAutoBridge.setNowPlaying(trackToNowPlaying(current));
+    void mirrorNowPlayingArtwork(current);
   };
 
   const pushQueue = () => {

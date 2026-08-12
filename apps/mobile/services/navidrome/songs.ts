@@ -2,6 +2,8 @@ import navidromeApiInstance from "@/services/navidrome";
 import type { NavidromeSong } from "@/services/navidrome/types";
 import type { Child, Songs } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
+import type { SongSortField, SongSortType } from "@/utils/songSort";
+import { parseSortType } from "@/utils/sort";
 
 // Adapts a Navidrome native-API song to the Subsonic `Child` shape so the rest
 // of the app stays protocol-agnostic. Navidrome's media-file ids are shared with
@@ -67,4 +69,53 @@ export const getMostPlayedSongs = async ({
     .filter((s) => (s.playCount ?? 0) > 0)
     .map(mapNavidromeSongToChild);
   return { songs: { song } };
+};
+
+// `_sort` values are camelCase names of the underlying media_file / annotation
+// columns (Navidrome snake_cases them and, for title/artist/album, swaps in its
+// order_* sort columns). Verified against the schema of a 0.63 and a develop
+// instance. Note "recently added" is `createdAt` here — `recently_added` is a
+// mapping the *album* repository has and the media-file one doesn't.
+const SONG_SORT_PARAM: Partial<Record<SongSortField, string>> = {
+  addedAt: "createdAt",
+  alphabetical: "title",
+  artist: "artist",
+  albumArtist: "albumArtist",
+  album: "album",
+  year: "year",
+  duration: "duration",
+  playCount: "playCount",
+};
+
+// The whole-library track browse, sorted. The Subsonic surface can't do this
+// (its browse is an empty-query search3, which takes no sort parameter), so a
+// sorted browse goes through the native REST API instead — the same call as
+// getMostPlayedSongs above, with the field the user picked. Unsorted browsing
+// stays on search3: see services/backend/lists.ts, which only routes here when a
+// sort is actually asked for, and utils/songSort.ts, which only offers the
+// control when the native session exists.
+export const getSongs = async ({
+  size = 50,
+  offset = 0,
+  sort,
+  musicFolderId,
+}: {
+  query?: string;
+  size?: number;
+  offset?: number;
+  sort?: SongSortType;
+  musicFolderId?: string;
+} = {}): Promise<{ songs: Songs }> => {
+  const { field, direction } = parseSortType(sort ?? "defaultAsc");
+  const rsp = await navidromeApiInstance.get<NavidromeSong[]>("/song", {
+    params: {
+      _sort: SONG_SORT_PARAM[field],
+      _order: direction === "desc" ? "DESC" : "ASC",
+      _start: offset,
+      // `_end` is exclusive, so this asks for exactly `size` rows.
+      _end: offset + size,
+      library_id: musicFolderId,
+    },
+  });
+  return { songs: { song: (rsp.data ?? []).map(mapNavidromeSongToChild) } };
 };

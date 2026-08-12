@@ -37,17 +37,22 @@ export const SCOPED_STORE_NAMES = [
   "soulsyncStore",
   "musicBrainzStore",
   "audioMuseStore",
+  "lrclibPicksStore",
 ] as const;
 
-// Scoped stores that must NOT travel in a backup file — both hold state that is
-// only true of the device that wrote it. The offline-mutations queue is
-// transient sync state: restoring it later (or on another device) would replay
-// stale actions against the server — duplicating playlist adds or deleting a
-// playlist the user has since re-created — possibly after the original device
-// already synced them. The library-sync store tracks which tracks are on *this*
-// device's filesystem, so restoring it elsewhere would report a synced library
-// with nothing actually downloaded.
+// Scoped stores that must NOT travel in a backup file. The first two hold state
+// that is only true of the device that wrote it: the offline-mutations queue is
+// transient sync state, and restoring it later (or on another device) would
+// replay stale actions against the server — duplicating playlist adds or
+// deleting a playlist the user has since re-created — possibly after the
+// original device already synced them; the library-sync store tracks which
+// tracks are on *this* device's filesystem, so restoring it elsewhere would
+// report a synced library with nothing actually downloaded. The LRCLIB picks
+// store is excluded for a different reason — it carries whole lyrics sheets, so
+// it would dominate an export that goes out through the OS share sheet, and a
+// lost pick is one tap to redo.
 export const BACKUP_EXCLUDED_SCOPED_STORE_NAMES = [
   "offlineMutations",
   "librarySyncStore",
+  "lrclibPicksStore",
 ] as const;

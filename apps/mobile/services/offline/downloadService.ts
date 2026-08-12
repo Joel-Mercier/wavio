@@ -1,6 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { offlineFileInfo } from "@/services/backend/streaming";
-import { reportError } from "@/services/errorReporting";
+import { isTlsTrustFailure, reportError } from "@/services/errorReporting";
 import {
   getConnectionType,
   getIsEffectivelyOnline,
@@ -8,6 +8,7 @@ import {
   subscribeEffectiveOnline,
 } from "@/services/network";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import { useLibrarySyncBase } from "@/stores/librarySync";
@@ -53,6 +54,14 @@ const QUEUE_RETRY_BACKOFF_STEPS_MS = [5_000, 15_000, 60_000, 300_000];
 // everything. Parking instead keeps the queue intact so it drains on its own
 // once space is freed.
 const STORAGE_FULL_PAUSE_MS = 30 * 60 * 1000;
+
+// How long the queue stays parked after a download fails the TLS handshake.
+// Same reasoning as the storage park, and the same stakes: every track comes
+// from the host whose certificate was rejected, so retrying dumps the whole
+// queue into "failed" for the user to re-queue by hand. The real fix (trusting
+// the certificate again) re-enters through login, whose scope change calls
+// resume() and lifts the park — this window is only the fallback.
+const TLS_UNTRUSTED_PAUSE_MS = 30 * 60 * 1000;
 
 // Subsonic reports API errors as HTTP 200 with a JSON/XML envelope (and a
 // misconfigured reverse proxy can 200 an HTML page), so a "successful" download
@@ -100,6 +109,7 @@ type DownloadFailureKind =
   | "bad-url"
   | "missing-file"
   | "server-error"
+  | "tls"
   | "unknown";
 
 function downloadFailureKind(error: unknown): DownloadFailureKind {
@@ -111,6 +121,10 @@ function downloadFailureKind(error: unknown): DownloadFailureKind {
   if (/ENOSPC|No space left on device|disk is full/i.test(message)) {
     return "disk-full";
   }
+  // Before the generic socket test below: a rejected handshake is not transient
+  // connectivity, it's a certificate the device won't trust. Only a fresh sign-in
+  // can re-trust it, so it gets its own kind, message and queue park.
+  if (isTlsTrustFailure(error)) return "tls";
   if (
     /SocketTimeoutException|SocketException|UnknownHostException|ConnectException|Connection reset|connection abort/i.test(
       message,
@@ -144,6 +158,8 @@ export class OfflineDownloadService {
   // Set when a download failed for lack of storage; the queue stays parked
   // until then instead of failing every remaining track against a full disk.
   private storageFullUntil = 0;
+  // Same, for a server certificate the device won't trust.
+  private tlsBlockedUntil = 0;
 
   private constructor() {
     subscribeConnectionType((type) => {
@@ -170,18 +186,23 @@ export class OfflineDownloadService {
     this.processQueue();
   }
 
-  // The storage park has no other wake-up: freeing space changes no signal the
-  // service listens to, and every drain kicked from executeDownload's finally
-  // just re-parks. Without this timer the queue stays paused until the app
-  // restarts (or the user happens to switch networks).
-  private scheduleStorageRetry(): void {
+  private parkedUntil(): number {
+    return Math.max(this.storageFullUntil, this.tlsBlockedUntil);
+  }
+
+  // A park has no other wake-up: freeing space or trusting a certificate changes
+  // no signal the service listens to, and every drain kicked from
+  // executeDownload's finally just re-parks. Without this timer the queue stays
+  // paused until the app restarts (or the user happens to switch networks).
+  private scheduleParkRetry(): void {
     if (this.retryTimer) return;
-    const delay = Math.max(0, this.storageFullUntil - Date.now());
+    const delay = Math.max(0, this.parkedUntil() - Date.now());
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
       this.storageFullUntil = 0;
-      // The park *was* the backoff, so a disk-full cascade shouldn't also
-      // escalate the circuit breaker's next delay.
+      this.tlsBlockedUntil = 0;
+      // The park *was* the backoff, so the cascade that caused it shouldn't
+      // also escalate the circuit breaker's next delay.
       this.consecutiveFailures = 0;
       this.processQueue();
     }, delay);
@@ -335,6 +356,7 @@ export class OfflineDownloadService {
     this.attempts.clear();
     this.consecutiveFailures = 0;
     this.storageFullUntil = 0;
+    this.tlsBlockedUntil = 0;
     if (this.retryTimer) {
       clearTimeout(this.retryTimer);
       this.retryTimer = null;
@@ -403,12 +425,12 @@ export class OfflineDownloadService {
       return;
     }
 
-    // The device had no space left on the last attempt. Nothing will change by
-    // trying again right away, so hold the queue (paused, not failed) until the
-    // window elapses.
-    if (Date.now() < this.storageFullUntil) {
+    // The device had no space left on the last attempt, or the server's
+    // certificate was rejected. Nothing will change by trying again right away,
+    // so hold the queue (paused, not failed) until the window elapses.
+    if (Date.now() < this.parkedUntil()) {
       this.pauseQueued();
-      this.scheduleStorageRetry();
+      this.scheduleParkRetry();
       return;
     }
 
@@ -444,6 +466,7 @@ export class OfflineDownloadService {
     const resolvers = this.resolvers.get(track.id);
     const generation = this.generation;
     const storageParkAtStart = this.storageFullUntil;
+    const tlsParkAtStart = this.tlsBlockedUntil;
 
     try {
       await this.writeTrackToDisk(track, generation);
@@ -457,6 +480,11 @@ export class OfflineDownloadService {
       // draining the rest of the queue into it.
       if (this.storageFullUntil === storageParkAtStart) {
         this.storageFullUntil = 0;
+      }
+      // A completed handshake is proof the certificate is trusted again, under
+      // the same caveat: a park set while this one was in flight stands.
+      if (this.tlsBlockedUntil === tlsParkAtStart) {
+        this.tlsBlockedUntil = 0;
       }
       resolvers?.resolve();
     } catch (error) {
@@ -473,15 +501,23 @@ export class OfflineDownloadService {
         this.attempts.set(track.id, attempts - 1);
         this.storageFullUntil = Date.now() + STORAGE_FULL_PAUSE_MS;
       }
+      // An untrusted certificate isn't this track's fault either: it fails the
+      // handshake for every track on the host until the user trusts it, so the
+      // same refund-and-park applies rather than burning down the queue.
+      if (kind === "tls") {
+        this.attempts.set(track.id, attempts - 1);
+        this.tlsBlockedUntil = Date.now() + TLS_UNTRUSTED_PAUSE_MS;
+      }
       const retryable =
         kind === "disk-full" ||
+        kind === "tls" ||
         error instanceof DownloadCancelledError ||
         !getIsEffectivelyOnline() ||
         attempts < MAX_TRACK_ATTEMPTS;
       if (retryable) {
         // Logged out / switched servers, connectivity dropped under it, the
-        // device ran out of space, or a failure we haven't yet seen enough of to
-        // call permanent. Keep the item
+        // device ran out of space, the certificate isn't trusted, or a failure
+        // we haven't yet seen enough of to call permanent. Keep the item
         // queued so it resumes (next login, connectivity recovery, or backoff),
         // reflect that it's waiting, and don't report it. Dequeuing here is what
         // let a 2.5s connectivity blip burn down the whole queue: every failure
@@ -504,8 +540,9 @@ export class OfflineDownloadService {
         // fingerprints on, so a bad stream URL, a missing offline directory and
         // a denied permission each get their own Issue instead of sharing one
         // opaque "downloadFileAsync rejected" bucket. Environmental causes
-        // (disk-full, sockets, a track the server no longer has) are dropped by
-        // the classifier — isNativeEnvironmentFailure / notFoundIsExpected.
+        // (disk-full, sockets, a track the server no longer has) and an
+        // untrusted server certificate are dropped by the classifier —
+        // isNativeEnvironmentFailure / isTlsTrustFailure / notFoundIsExpected.
         reportError(error, {
           area: "storage",
           endpoint: `download:${kind}`,
@@ -557,6 +594,7 @@ export class OfflineDownloadService {
 
     const downloadResult = await File.downloadFileAsync(url, filePath, {
       idempotent: true,
+      headers: requestHeadersForUrl(url),
     });
 
     if (!downloadResult.exists) {

@@ -8,6 +8,14 @@ import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
 
+// Re-exported for the existing importers; defined in utils/userAgent.ts, which
+// has no store/i18n dependencies. Consumers in the API clients must still read
+// it at *request* time rather than when their axios instance is created if they
+// import it from here: this module imports backend/probe, which imports the
+// Jellyfin client, so a module-scope read through that cycle resolves to
+// `undefined`. Importing from utils/userAgent directly avoids the cycle.
+export { USER_AGENT } from "@/utils/userAgent";
+
 let currentType: NetInfoStateType = "unknown" as NetInfoStateType;
 // Optimistic default — matches the previous per-component useIsOnline behavior
 // of assuming online until the first NetInfo result arrives.

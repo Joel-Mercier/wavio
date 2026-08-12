@@ -26,10 +26,9 @@
 		"lead": "Un lettore musicale Android per i server Navidrome, Jellyfin e OpenSubsonic o per una libreria locale. Pensato per chi possiede una propria libreria e desidera sentirsi come a casa."
 	},
 	"cta": {
-		"releaseMain": "Scarica l'ultima versione",
-		"releaseNote": "Prossimamente su Google Play",
-		"starGithub": "Visualizza su GitHub",
-		"viewSource": "Visualizza il codice sorgente"
+		"getItOn": "Scaricalo su",
+		"googlePlay": "Google Play",
+		"githubRelease": "Scaricalo da GitHub"
 	},
 	"highlightsLabel": "Cosa ottieni",
 	"highlights": [

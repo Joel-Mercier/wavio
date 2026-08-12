@@ -2,17 +2,17 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { type Href, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
-import { CastButton } from "react-native-google-cast";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,10 +29,11 @@ import MovingText from "@/components/MovingText";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import AudioQualityLine from "@/components/player/AudioQualityLine";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
-import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
+import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
 import PlayerSheets from "@/components/player/PlayerSheets";
+import PodcastSeekButton from "@/components/player/PodcastSeekButton";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import { Box } from "@/components/ui/box";
@@ -52,11 +53,19 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
-import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
+import {
+  PODCAST_SEEK_BACKWARD_SECONDS,
+  PODCAST_SEEK_FORWARD_SECONDS,
+  seekBy,
+  skipNext,
+  skipPrevious,
+  togglePlayPause,
+} from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import useUpnp from "@/stores/upnp";
 import { isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
@@ -112,7 +121,13 @@ export default function PlayerScreen() {
   const router = useRouter();
   const toast = useToast();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
+  const speedSheetRef = useRef<BottomSheetModal>(null);
+  const lyricsPickerSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
+  const upnpConnected = useUpnp((s) => s.connected);
+  // One indicator for every output: the button says "not this phone", and the
+  // sheet says which one.
+  const playingRemotely = jukeboxActive || upnpConnected;
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const playingArtwork = useTrackArtwork(playingTrack);
@@ -191,6 +206,7 @@ export default function PlayerScreen() {
     Math.min(coverArea.width - 48, coverArea.height),
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
+  const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
   const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = isSyncedLyrics(lyrics);
   const coverTranslateX = useSharedValue(0);
@@ -240,14 +256,14 @@ export default function PlayerScreen() {
     },
   });
 
-  const castSession = useCastSync(playingTrack, isRadio);
+  useCastSync(playingTrack, isRadio);
 
   const handlePresentModalPress = useCallback(() => {
     actionsSheetRef.current?.present();
   }, []);
 
-  const handleJukeboxPress = () => {
-    openJukeboxSheet();
+  const handleOutputPress = () => {
+    openOutputSheet();
   };
 
   const handlePlayPausePress = () => {
@@ -260,6 +276,22 @@ export default function PlayerScreen() {
 
   const handlePreviousPress = () => {
     skipPrevious();
+  };
+
+  const handleSeekBackwardPress = () => {
+    seekBy(-PODCAST_SEEK_BACKWARD_SECONDS);
+  };
+
+  const handleSeekForwardPress = () => {
+    seekBy(PODCAST_SEEK_FORWARD_SECONDS);
+  };
+
+  const handleSpeedPress = () => {
+    speedSheetRef.current?.present();
+  };
+
+  const handleLyricsPickerPress = () => {
+    lyricsPickerSheetRef.current?.present();
   };
 
   const handleFavoritePress = () => {
@@ -620,7 +652,10 @@ export default function PlayerScreen() {
                     : "items-center justify-between"
                 }
               >
-                {!isRadio && (
+                {/* Podcasts swap shuffle/repeat — meaningless for an episode —
+                    for the relative seeks, and demote prev/next episode to the
+                    outer slots so the seeks sit under the thumb. */}
+                {!isRadio && !isPodcast && (
                   <ShuffleToggle
                     active={shuffle}
                     hitSlop={ICON_HIT_SLOP}
@@ -632,8 +667,20 @@ export default function PlayerScreen() {
                     testID="player-previous-button"
                     onPress={handlePreviousPress}
                   >
-                    <SkipBack size={36} color="white" fill="white" />
+                    <SkipBack
+                      size={isPodcast ? 28 : 36}
+                      color="white"
+                      fill="white"
+                    />
                   </FadeOut>
+                )}
+                {isPodcast && (
+                  <PodcastSeekButton
+                    testID="player-seek-backward-button"
+                    direction="backward"
+                    seconds={PODCAST_SEEK_BACKWARD_SECONDS}
+                    onPress={handleSeekBackwardPress}
+                  />
                 )}
                 <PlayPauseButton
                   testID="player-play-pause-button"
@@ -644,15 +691,27 @@ export default function PlayerScreen() {
                   color={gray800}
                   className="bg-white"
                 />
+                {isPodcast && (
+                  <PodcastSeekButton
+                    testID="player-seek-forward-button"
+                    direction="forward"
+                    seconds={PODCAST_SEEK_FORWARD_SECONDS}
+                    onPress={handleSeekForwardPress}
+                  />
+                )}
                 {!isRadio && (
                   <FadeOut
                     testID="player-next-button"
                     onPress={handleNextPress}
                   >
-                    <SkipForward size={36} color="white" fill="white" />
+                    <SkipForward
+                      size={isPodcast ? 28 : 36}
+                      color="white"
+                      fill="white"
+                    />
                   </FadeOut>
                 )}
-                {!isRadio && (
+                {!isRadio && !isPodcast && (
                   <RepeatToggle
                     mode={repeatMode}
                     hitSlop={ICON_HIT_SLOP}
@@ -675,25 +734,47 @@ export default function PlayerScreen() {
                   isWideLayout ? "mt-2 mb-2" : "mt-4 mb-6",
                 )}
               >
-                <CastButton
+                <FadeOut
+                  testID="player-output-button"
                   hitSlop={ICON_HIT_SLOP}
-                  style={{ width: 24, height: 24, tintColor: "white" }}
-                />
-                {capabilities.jukebox && !isRadio && !castSession && (
+                  onPress={handleOutputPress}
+                  disabled={!isOnline}
+                >
+                  <Cast
+                    size={24}
+                    color={playingRemotely ? emerald500 : "white"}
+                  />
+                  {playingRemotely && (
+                    <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                      <Box className="bg-emerald-500 rounded-full size-1" />
+                    </Box>
+                  )}
+                </FadeOut>
+                {isPodcast && (
                   <FadeOut
+                    testID="player-speed-button"
                     hitSlop={ICON_HIT_SLOP}
-                    onPress={handleJukeboxPress}
-                    disabled={!isOnline}
+                    onPress={handleSpeedPress}
+                    accessibilityLabel={t("app.player.playbackSpeed")}
                   >
-                    <Speaker
-                      size={24}
-                      color={jukeboxActive ? emerald500 : "white"}
-                    />
-                    {jukeboxActive && (
-                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
-                        <Box className="bg-emerald-500 rounded-full size-1" />
-                      </Box>
-                    )}
+                    <Text className="text-white font-bold text-base">
+                      {t("app.player.playbackSpeedValue", {
+                        rate: podcastPlaybackRate,
+                      })}
+                    </Text>
+                  </FadeOut>
+                )}
+                {/* Same slot as the podcast speed button — the two never show
+                    together, so the row keeps its three-slot balance. */}
+                {!isRadio && !isPodcast && lyricsSource === "all" && (
+                  <FadeOut
+                    testID="player-lyrics-picker-button"
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={handleLyricsPickerPress}
+                    disabled={!isOnline}
+                    accessibilityLabel={t("app.player.lyricsPicker")}
+                  >
+                    <Mic2 size={24} color="white" />
                   </FadeOut>
                 )}
                 <FadeOut
@@ -710,6 +791,8 @@ export default function PlayerScreen() {
       </VStack>
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
+        speedSheetRef={speedSheetRef}
+        lyricsPickerSheetRef={lyricsPickerSheetRef}
         playingTrack={playingTrack ?? null}
         hasKaraoke={hasKaraoke}
         onAddFavoritePodcast={handleAddFavoritePodcastPress}

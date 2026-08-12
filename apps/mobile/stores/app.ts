@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import createSelectors from "@/utils/createSelectors";
+import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 
@@ -44,7 +45,9 @@ export type DownloadsSort = OfflineTrackSortType;
 export type LibrarySortField = "addedAt" | "alphabetical";
 export type LibrarySort = SortType<LibrarySortField>;
 
-export type LibraryFilter =
+// Buckets select which kinds of rows the library lists; "downloaded" is not one
+// of them — it narrows the selected buckets to offline content.
+export type LibraryBucketFilter =
   | "artists"
   | "albums"
   | "playlists"
@@ -52,10 +55,30 @@ export type LibraryFilter =
   | "radioStations"
   | "folders";
 
+export type LibraryFilter = LibraryBucketFilter | "downloaded";
+
 // list = single-column rows, grid = responsive multi-column cards. Persisted
 // per album-list screen (keyed in `albumScreenLayouts`) via
 // `useAlbumScreenLayout`.
 export type AlbumScreenLayout = "list" | "grid";
+
+// Speed presets offered for podcast episodes; music always plays at 1×, so this
+// only ever applies to spoken word. The ceiling is 2 because Android's ExoPlayer
+// coerces the rate into 0.1–2.0 — a higher preset would silently do nothing.
+export const PODCAST_PLAYBACK_RATES = [0.5, 0.8, 1, 1.2, 1.5, 1.8, 2] as const;
+
+const MIN_PODCAST_PLAYBACK_RATE = 0.5;
+const MAX_PODCAST_PLAYBACK_RATE = 2;
+
+// Guards both the setter and the persisted value: a rate outside the engine's
+// range is coerced natively, leaving the UI showing a speed that isn't playing.
+export const clampPodcastPlaybackRate = (rate: number) =>
+  Number.isFinite(rate)
+    ? Math.min(
+        MAX_PODCAST_PLAYBACK_RATE,
+        Math.max(MIN_PODCAST_PLAYBACK_RATE, rate),
+      )
+    : 1;
 
 // Action fired when a track row is swiped. "off" disables the gesture. Named
 // per side (swipeLeftAction = the left-anchored, right-drag action) to leave
@@ -108,6 +131,8 @@ interface AppStore {
   setAlbumScreenLayout: (screenKey: string, layout: AlbumScreenLayout) => void;
   favoritesSort: TrackSortType;
   setFavoritesSort: (favoritesSort: TrackSortType) => void;
+  allTracksSort: SongSortType;
+  setAllTracksSort: (allTracksSort: SongSortType) => void;
   downloadsSort: DownloadsSort;
   setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
@@ -131,6 +156,8 @@ interface AppStore {
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
   setReplayGainPreampDb: (db: number) => void;
+  podcastPlaybackRate: number;
+  setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
   // See services/playQueueSync.ts.
@@ -245,6 +272,12 @@ export const useAppBase = create<AppStore>()(
       setFavoritesSort: (favoritesSort: TrackSortType) => {
         set({ favoritesSort });
       },
+      // The whole-library browse is sorted by the backend, so its default is
+      // the backend's own order (utils/songSort.ts).
+      allTracksSort: DEFAULT_SONG_SORT,
+      setAllTracksSort: (allTracksSort: SongSortType) => {
+        set({ allTracksSort });
+      },
       downloadsSort: "alphabeticalAsc",
       setDownloadsSort: (downloadsSort: DownloadsSort) => {
         set({ downloadsSort });
@@ -284,6 +317,12 @@ export const useAppBase = create<AppStore>()(
       replayGainPreampDb: 0,
       setReplayGainPreampDb: (replayGainPreampDb: number) => {
         set({ replayGainPreampDb });
+      },
+      podcastPlaybackRate: 1,
+      setPodcastPlaybackRate: (podcastPlaybackRate: number) => {
+        set({
+          podcastPlaybackRate: clampPodcastPlaybackRate(podcastPlaybackRate),
+        });
       },
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {

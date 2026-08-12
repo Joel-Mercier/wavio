@@ -162,6 +162,8 @@ export function mapBaseItemToArtistWithAlbums(
 ): ArtistWithAlbumsID3 {
   return {
     ...mapBaseItemToArtist(item),
+    // /Artists never reports AlbumCount, but here the albums are in hand.
+    albumCount: albums.length,
     album: albums.map(mapBaseItemToAlbum),
   };
 }

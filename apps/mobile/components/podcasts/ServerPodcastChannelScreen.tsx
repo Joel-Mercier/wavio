@@ -122,6 +122,18 @@ export default function ServerPodcastChannelScreen() {
       ? artworkUrl(channel?.coverArt || params.coverArt)
       : undefined);
   const episodes = useMemo(() => channel?.episode ?? [], [channel]);
+  // Episodes without their own artwork inherit the channel's. It may not have
+  // loaded yet (or the query is paused offline), so the route params — which
+  // carry it from the list the user tapped — stand in.
+  const channelArtwork = useMemo(
+    () =>
+      ({
+        ...channel,
+        coverArt: channel?.coverArt ?? params.coverArt,
+        originalImageUrl: channel?.originalImageUrl ?? params.imageUrl,
+      }) as PodcastChannel,
+    [channel, params.coverArt, params.imageUrl],
+  );
   const colors = useImageColors(image);
   const topColor =
     (colors?.platform === "ios"
@@ -206,7 +218,9 @@ export default function ServerPodcastChannelScreen() {
       togglePlayPause();
       return;
     }
-    const tracks = playableEpisodes.map((e) => podcastEpisodeToTrack(e, title));
+    const tracks = playableEpisodes.map((e) =>
+      podcastEpisodeToTrack(e, title, channelArtwork),
+    );
     const start = Math.max(
       0,
       tracks.findIndex((track) => track.id === episode.id),
@@ -378,6 +392,7 @@ export default function ServerPodcastChannelScreen() {
         <PodcastEpisodeRow
           episode={item}
           seriesName={title}
+          channelCoverArt={channelArtwork.coverArt}
           isCurrent={playingTrack?.id === item.id}
           isPlaying={playingTrack?.id === item.id && isPlaying}
           onPlayPress={() => handlePlayEpisode(item)}
@@ -620,6 +635,7 @@ export default function ServerPodcastChannelScreen() {
 function PodcastEpisodeRow({
   episode,
   seriesName,
+  channelCoverArt,
   isCurrent,
   isPlaying,
   onPlayPress,
@@ -627,6 +643,7 @@ function PodcastEpisodeRow({
 }: {
   episode: PodcastEpisode;
   seriesName: string;
+  channelCoverArt?: string;
   isCurrent: boolean;
   isPlaying: boolean;
   onPlayPress: () => void;
@@ -659,6 +676,7 @@ function PodcastEpisodeRow({
       await offlineDownloadService.downloadTrack({
         ...episode,
         artist: episode.artist || seriesName,
+        coverArt: episode.coverArt || channelCoverArt,
       });
     } catch {
       toast.show({

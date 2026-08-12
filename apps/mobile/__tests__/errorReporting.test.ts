@@ -242,6 +242,36 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses an untrusted server certificate (user-correctable, not a bug)", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: javax.net.ssl.SSLHandshakeException: java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.",
+      ),
+      { area: "storage", endpoint: "download:tls" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports a handshake failure with no certificate cause (cipher/protocol mismatch)", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: javax.net.ssl.SSLHandshakeException: Connection closed by peer",
+      ),
+      { area: "storage", endpoint: "download:unknown" },
+    );
+    expect(mockCapture).toHaveBeenCalled();
+  });
+
+  it("still reports a handshake failure outside the downloader", () => {
+    reportError(
+      new Error(
+        "javax.net.ssl.SSLHandshakeException: java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.",
+      ),
+      { area: "player", endpoint: "stream" },
+    );
+    expect(mockCapture).toHaveBeenCalled();
+  });
+
   it("still reports a download failure the app itself caused", () => {
     reportError(
       new Error(

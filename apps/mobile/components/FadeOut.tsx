@@ -11,6 +11,7 @@ interface FadeOutProps {
   onPress?: ComponentProps<typeof Pressable>["onPress"];
   disabled?: boolean;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -18,44 +19,59 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const FadeOut = React.forwardRef<
   React.ElementRef<typeof Pressable>,
   FadeOutProps
->(({ children, className, href, hitSlop, onPress, disabled, testID }, ref) => {
-  const router = useRouter();
-  const restingOpacity = disabled ? 0.6 : 1;
-  const opacity = useSharedValue(restingOpacity);
+>(
+  (
+    {
+      children,
+      className,
+      href,
+      hitSlop,
+      onPress,
+      disabled,
+      testID,
+      accessibilityLabel,
+    },
+    ref,
+  ) => {
+    const router = useRouter();
+    const restingOpacity = disabled ? 0.6 : 1;
+    const opacity = useSharedValue(restingOpacity);
 
-  useEffect(() => {
-    opacity.value = withSpring(restingOpacity, {
-      duration: 100,
-    });
-  }, [restingOpacity, opacity]);
+    useEffect(() => {
+      opacity.value = withSpring(restingOpacity, {
+        duration: 100,
+      });
+    }, [restingOpacity, opacity]);
 
-  const handlePressIn = () => {
-    opacity.value = withSpring(0.5, {
-      duration: 100,
-    });
-  };
+    const handlePressIn = () => {
+      opacity.value = withSpring(0.5, {
+        duration: 100,
+      });
+    };
 
-  const handlePressOut = () => {
-    opacity.value = withSpring(restingOpacity, {
-      duration: 100,
-    });
-  };
+    const handlePressOut = () => {
+      opacity.value = withSpring(restingOpacity, {
+        duration: 100,
+      });
+    };
 
-  return (
-    <AnimatedPressable
-      ref={ref}
-      testID={testID}
-      onPress={href ? () => router.navigate(href) : onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      hitSlop={hitSlop}
-      disabled={disabled}
-      className={className}
-      style={{ opacity }}
-    >
-      {children}
-    </AnimatedPressable>
-  );
-});
+    return (
+      <AnimatedPressable
+        ref={ref}
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        onPress={href ? () => router.navigate(href) : onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        hitSlop={hitSlop}
+        disabled={disabled}
+        className={className}
+        style={{ opacity }}
+      >
+        {children}
+      </AnimatedPressable>
+    );
+  },
+);
 
 export default FadeOut;

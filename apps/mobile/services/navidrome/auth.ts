@@ -1,17 +1,19 @@
 import axios from "axios";
 import type { NavidromeAuthPayload } from "@/services/navidrome/types";
+import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
 export const nativeLogin = async (
   url: string,
   username: string,
   password: string,
+  extraHeaders?: Record<string, string>,
 ): Promise<NavidromeAuthPayload> => {
   const baseURL = url.replace(/\/+$/, "");
   const rsp = await axios
     .create({
       baseURL,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...extraHeaders },
     })
     .post<NavidromeAuthPayload>("/auth/login", { username, password });
   return rsp.data;
@@ -34,7 +36,14 @@ export const reauthenticateNavidrome = (): Promise<string | null> => {
     const { url, username, password } = useAuthBase.getState();
     if (!url || !username || !password) return null;
     try {
-      const payload = await nativeLogin(url, username, password);
+      // The server is saved by the time a silent re-auth runs, so the headers
+      // come from the store rather than being passed in.
+      const payload = await nativeLogin(
+        url,
+        username,
+        password,
+        customHeadersForUrl(url),
+      );
       if (payload?.token && payload?.id) {
         useAuthBase.getState().setNavidromeSession({
           token: payload.token,

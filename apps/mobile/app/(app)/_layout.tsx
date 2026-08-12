@@ -18,7 +18,7 @@ import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
-import JukeboxSheet from "@/components/player/JukeboxSheet";
+import OutputSheet from "@/components/player/OutputSheet";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import UpdateGate from "@/components/update/UpdateGate";
 import {
@@ -53,6 +53,7 @@ import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLibrarySync from "@/stores/librarySync";
 import useLidarr from "@/stores/lidarr";
 import useLocalLibrary, { consumeLocalRescanFlag } from "@/stores/localLibrary";
+import useLrclibPicks from "@/stores/lrclibPicks";
 import useMusicBrainz from "@/stores/musicbrainz";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -159,6 +160,7 @@ export default function AppLayout() {
         useOfflineMutations.getState().__reset();
         useLocalLibrary.getState().__reset();
         useBookmarks.getState().__reset();
+        useLrclibPicks.getState().__reset();
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
         useSoulSync.getState().__reset();
@@ -207,6 +209,7 @@ export default function AppLayout() {
     offlineDownloadService.resume();
     useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
+    useLrclibPicks.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
     useSoulSync.persist.rehydrate();
@@ -335,7 +338,7 @@ export default function AppLayout() {
       <LibrarySyncController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
-      <JukeboxSheet />
+      <OutputSheet />
       <UpdateGate />
     </>
   );

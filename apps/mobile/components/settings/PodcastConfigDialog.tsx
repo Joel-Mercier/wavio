@@ -3,7 +3,6 @@ import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -198,220 +197,215 @@ export default function PodcastConfigDialog({
   return (
     <AlertDialog isOpen={isOpen} onClose={onClose} size="md">
       <AlertDialogBackdrop />
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{ width: "100%", alignItems: "center" }}
-      >
-        <AlertDialogContent className="bg-primary-800 border-primary-400">
-          <AlertDialogHeader>
-            <Heading className="text-white font-bold" size="md">
-              {t("app.settings.podcastSettings.podcastConfigFormTitle")}
-            </Heading>
-          </AlertDialogHeader>
-          <AlertDialogBody
-            className="mt-3 mb-4"
-            showsVerticalScrollIndicator={false}
+      <AlertDialogContent className="bg-primary-800 border-primary-400">
+        <AlertDialogHeader>
+          <Heading className="text-white font-bold" size="md">
+            {t("app.settings.podcastSettings.podcastConfigFormTitle")}
+          </Heading>
+        </AlertDialogHeader>
+        <AlertDialogBody
+          className="mt-3 mb-4"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="text-primary-50" size="sm">
+            {t("app.settings.podcastSettings.podcastConfigFormDescription")}
+          </Text>
+          <podcastConfigForm.Field name="userId">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="my-4"
+              >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <InputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
+                    placeholder={t(
+                      "app.settings.podcastSettings.userIdPlaceholder",
+                    )}
+                    autoCapitalize="none"
+                    keyboardType="numeric"
+                  />
+                </Input>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </podcastConfigForm.Field>
+          <podcastConfigForm.Field name="apiKey">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="my-4"
+              >
+                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                  <InputField
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={() => handleFieldBlur(field)}
+                    className="text-md text-white"
+                    placeholder={t(
+                      "app.settings.podcastSettings.apiKeyPlaceholder",
+                    )}
+                    autoCapitalize="none"
+                    secureTextEntry
+                  />
+                </Input>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </podcastConfigForm.Field>
+          <podcastConfigForm.Field name="country">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="my-4"
+              >
+                <Select
+                  selectedValue={taddyPodcastCountry}
+                  onValueChange={(value) =>
+                    field.handleChange(value as keyof typeof Country)
+                  }
+                  onClose={() => handleFieldBlur(field)}
+                  closeOnOverlayClick
+                  isInvalid={showFieldError(field)}
+                >
+                  <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
+                    <SelectInput
+                      className="flex-1 text-md text-white"
+                      placeholder={t(
+                        "app.settings.podcastSettings.countryPlaceholder",
+                      )}
+                    />
+                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent
+                      style={{ backgroundColor: "rgb(41, 41, 41)" }}
+                    >
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectSearchInput onChangeText={setCountryQuery} />
+                      <SelectFlatList
+                        data={countryOptions}
+                        keyExtractor={(item) => item as string}
+                        renderItem={({ item }) => (
+                          <SelectItem
+                            label={(item as string).replaceAll("_", " ")}
+                            value={item as string}
+                            textStyle={{
+                              className: "text-white",
+                            }}
+                          />
+                        )}
+                      />
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </podcastConfigForm.Field>
+          <podcastConfigForm.Field name="language">
+            {(field) => (
+              <FormControl
+                isInvalid={showFieldError(field)}
+                size="md"
+                isDisabled={false}
+                isReadOnly={false}
+                isRequired={false}
+                className="my-4"
+              >
+                <Select
+                  selectedValue={taddyPodcastLanguage}
+                  onValueChange={(value) =>
+                    field.handleChange(value as keyof typeof Language)
+                  }
+                  onClose={() => handleFieldBlur(field)}
+                  closeOnOverlayClick
+                  isInvalid={showFieldError(field)}
+                >
+                  <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
+                    <SelectInput
+                      className="flex-1 text-md text-white"
+                      placeholder={t(
+                        "app.settings.podcastSettings.languagePlaceholder",
+                      )}
+                    />
+                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent
+                      style={{ backgroundColor: "rgb(41, 41, 41)" }}
+                    >
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectSearchInput onChangeText={setLanguageQuery} />
+                      <SelectFlatList
+                        data={languageOptions}
+                        keyExtractor={(item) => item as string}
+                        renderItem={({ item }) => (
+                          <SelectItem
+                            label={(item as string).replaceAll("_", " ")}
+                            value={item as string}
+                            textStyle={{
+                              className: "text-white",
+                            }}
+                          />
+                        )}
+                      />
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+                <FieldError field={field} />
+              </FormControl>
+            )}
+          </podcastConfigForm.Field>
+        </AlertDialogBody>
+        <AlertDialogFooter className="items-center justify-center">
+          <FadeOutScaleDown
+            onPress={onClose}
+            className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
           >
-            <Text className="text-primary-50" size="sm">
-              {t("app.settings.podcastSettings.podcastConfigFormDescription")}
+            <Text className="text-white font-bold text-lg">
+              {t("app.shared.cancel")}
             </Text>
-            <podcastConfigForm.Field name="userId">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t(
-                        "app.settings.podcastSettings.userIdPlaceholder",
-                      )}
-                      autoCapitalize="none"
-                      keyboardType="numeric"
-                    />
-                  </Input>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </podcastConfigForm.Field>
-            <podcastConfigForm.Field name="apiKey">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                    <InputField
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                      onBlur={() => handleFieldBlur(field)}
-                      className="text-md text-white"
-                      placeholder={t(
-                        "app.settings.podcastSettings.apiKeyPlaceholder",
-                      )}
-                      autoCapitalize="none"
-                      secureTextEntry
-                    />
-                  </Input>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </podcastConfigForm.Field>
-            <podcastConfigForm.Field name="country">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Select
-                    selectedValue={taddyPodcastCountry}
-                    onValueChange={(value) =>
-                      field.handleChange(value as keyof typeof Country)
-                    }
-                    onClose={() => handleFieldBlur(field)}
-                    closeOnOverlayClick
-                    isInvalid={showFieldError(field)}
-                  >
-                    <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
-                      <SelectInput
-                        className="flex-1 text-md text-white"
-                        placeholder={t(
-                          "app.settings.podcastSettings.countryPlaceholder",
-                        )}
-                      />
-                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectBackdrop />
-                      <SelectContent
-                        style={{ backgroundColor: "rgb(41, 41, 41)" }}
-                      >
-                        <SelectDragIndicatorWrapper>
-                          <SelectDragIndicator />
-                        </SelectDragIndicatorWrapper>
-                        <SelectSearchInput onChangeText={setCountryQuery} />
-                        <SelectFlatList
-                          data={countryOptions}
-                          keyExtractor={(item) => item as string}
-                          renderItem={({ item }) => (
-                            <SelectItem
-                              label={(item as string).replaceAll("_", " ")}
-                              value={item as string}
-                              textStyle={{
-                                className: "text-white",
-                              }}
-                            />
-                          )}
-                        />
-                      </SelectContent>
-                    </SelectPortal>
-                  </Select>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </podcastConfigForm.Field>
-            <podcastConfigForm.Field name="language">
-              {(field) => (
-                <FormControl
-                  isInvalid={showFieldError(field)}
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={false}
-                  isRequired={false}
-                  className="my-4"
-                >
-                  <Select
-                    selectedValue={taddyPodcastLanguage}
-                    onValueChange={(value) =>
-                      field.handleChange(value as keyof typeof Language)
-                    }
-                    onClose={() => handleFieldBlur(field)}
-                    closeOnOverlayClick
-                    isInvalid={showFieldError(field)}
-                  >
-                    <SelectTrigger className="bg-primary-600 border border-primary-600 rounded-md px-6 py-3 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500">
-                      <SelectInput
-                        className="flex-1 text-md text-white"
-                        placeholder={t(
-                          "app.settings.podcastSettings.languagePlaceholder",
-                        )}
-                      />
-                      <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectBackdrop />
-                      <SelectContent
-                        style={{ backgroundColor: "rgb(41, 41, 41)" }}
-                      >
-                        <SelectDragIndicatorWrapper>
-                          <SelectDragIndicator />
-                        </SelectDragIndicatorWrapper>
-                        <SelectSearchInput onChangeText={setLanguageQuery} />
-                        <SelectFlatList
-                          data={languageOptions}
-                          keyExtractor={(item) => item as string}
-                          renderItem={({ item }) => (
-                            <SelectItem
-                              label={(item as string).replaceAll("_", " ")}
-                              value={item as string}
-                              textStyle={{
-                                className: "text-white",
-                              }}
-                            />
-                          )}
-                        />
-                      </SelectContent>
-                    </SelectPortal>
-                  </Select>
-                  <FieldError field={field} />
-                </FormControl>
-              )}
-            </podcastConfigForm.Field>
-          </AlertDialogBody>
-          <AlertDialogFooter className="items-center justify-center">
-            <FadeOutScaleDown
-              onPress={onClose}
-              className="items-center justify-center py-3 px-8 border border-white rounded-full mr-4"
-            >
-              <Text className="text-white font-bold text-lg">
-                {t("app.shared.cancel")}
+          </FadeOutScaleDown>
+          <FadeOutScaleDown
+            disabled={isValidating}
+            onPress={() => {
+              if (isPodcastConfigDirty && !isValidating)
+                podcastConfigForm.handleSubmit();
+            }}
+            className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
+          >
+            {isValidating ? (
+              <Spinner color="rgb(41, 41, 41)" />
+            ) : (
+              <Text className="text-primary-800 font-bold text-lg">
+                {t("app.shared.save")}
               </Text>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown
-              disabled={isValidating}
-              onPress={() => {
-                if (isPodcastConfigDirty && !isValidating)
-                  podcastConfigForm.handleSubmit();
-              }}
-              className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4"
-            >
-              {isValidating ? (
-                <Spinner color="rgb(41, 41, 41)" />
-              ) : (
-                <Text className="text-primary-800 font-bold text-lg">
-                  {t("app.shared.save")}
-                </Text>
-              )}
-            </FadeOutScaleDown>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </KeyboardAvoidingView>
+            )}
+          </FadeOutScaleDown>
+        </AlertDialogFooter>
+      </AlertDialogContent>
     </AlertDialog>
   );
 }

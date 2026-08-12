@@ -1,6 +1,7 @@
 import type { QueryKey } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Href } from "expo-router";
+import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
@@ -23,6 +24,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  useDownloadedTracksCount,
   useHasOfflineAlbumCollections,
   useIsArtistAvailableOffline,
   useIsCollectionAvailableOffline,
@@ -30,6 +32,7 @@ import {
   useOfflineModeEnabled,
 } from "@/hooks/offline";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useSongSort } from "@/hooks/useSongSort";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
 import type {
   AlbumID3,
@@ -69,6 +72,9 @@ export type LibraryAllAlbums = {
 export type LibraryAllArtists = {
   isAllArtists?: boolean;
 };
+export type LibraryAllTracks = {
+  isAllTracks?: boolean;
+};
 export type LibraryRadioStation = {
   isRadioStation?: boolean;
   imageUrl?: string;
@@ -86,7 +92,8 @@ interface LibraryListItemProps {
     LibraryFolder &
     LibraryRadioStation &
     LibraryAllAlbums &
-    LibraryAllArtists;
+    LibraryAllArtists &
+    LibraryAllTracks;
   layout: LibraryLayout;
 }
 
@@ -103,6 +110,9 @@ function LibraryListItemIcon({ type }: { type: string }) {
   }
   if (type === "allArtists") {
     return <Users size={32} color={white} />;
+  }
+  if (type === "allTracks") {
+    return <AudioLines size={32} color={white} />;
   }
   if (type === "artist") {
     return <User size={32} color={white} />;
@@ -127,9 +137,13 @@ function LibraryListItemSubtitle({
   item: LibraryListItemProps["item"];
 }) {
   const { t } = useTranslation();
-  // The "All albums" / "All artists" rows already say what they are in their
-  // title, so they get no subtitle.
-  if (type.id === "allAlbums" || type.id === "allArtists") {
+  // The "All albums" / "All artists" / "All tracks" rows already say what they
+  // are in their title, so they get no subtitle.
+  if (
+    type.id === "allAlbums" ||
+    type.id === "allArtists" ||
+    type.id === "allTracks"
+  ) {
     return null;
   }
   const songCount = t("app.shared.songCount", { count: item.songCount ?? 0 });
@@ -141,8 +155,12 @@ function LibraryListItemSubtitle({
           : type.label;
       case "radioStation":
         return item.tags ? `${type.label} ⦁ ${item.tags}` : type.label;
+      // Backends that don't report a count (Jellyfin) get the bare label rather
+      // than a wrong "0 albums".
       case "artist":
-        return `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount ?? 0 })}`;
+        return item.albumCount
+          ? `${type.label} ⦁ ${t("app.shared.albumCount", { count: item.albumCount })}`
+          : type.label;
       case "folder":
         return type.label;
       case "playlist":
@@ -170,6 +188,7 @@ export default function LibraryListItem({
   const isOnline = useIsOnline();
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderId = useCurrentMusicFolderId();
+  const { sortParam } = useSongSort();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
@@ -191,6 +210,13 @@ export default function LibraryListItem({
         id: "allAlbums",
         label: t("app.library.allAlbums"),
         url: "/albums",
+      };
+    }
+    if (item.isAllTracks) {
+      return {
+        id: "allTracks",
+        label: t("app.library.allTracks"),
+        url: "/tracks",
       };
     }
     if (item.isFolder) {
@@ -255,7 +281,11 @@ export default function LibraryListItem({
         } as Href,
       };
     }
-    if (item.albumCount) {
+    // Presence, not truthiness: Jellyfin's /Artists never returns a count
+    // (no Fields combination produces AlbumCount/ChildCount), so its artists
+    // map to albumCount 0 and used to fall through to the playlist branch —
+    // rendering a starred artist as a 0-track playlist whose detail 404s.
+    if (item.albumCount !== undefined) {
       return {
         id: "artist",
         label: t("app.shared.artist_one"),
@@ -351,12 +381,20 @@ export default function LibraryListItem({
         ];
       case "allArtists":
         return ["artists", { musicFolderId }];
+      case "allTracks":
+        // `sort` is undefined in the backend's own order, and JSON.stringify
+        // drops it — so the unsorted key is byte-identical to what it was
+        // before the browse could sort.
+        return [
+          "songs:infinite",
+          { query: "", size: 50, sort: sortParam, musicFolderId },
+        ];
       case "folder":
         return ["indexes", { musicFolderId: item.id }];
       default:
         return null;
     }
-  }, [type.id, item.id, musicFolderId]);
+  }, [type.id, item.id, musicFolderId, sortParam]);
   const isDetailCached = useIsDetailCached(detailKey);
 
   // Downloaded badge: albums/playlists show it when the collection is available
@@ -373,13 +411,16 @@ export default function LibraryListItem({
   // The "All albums"/"All artists" browse screens and ArtistDetail fall back
   // to downloaded album collections (extended offline mode caches the whole
   // library), so those rows stay tappable offline without a cached list query.
+  // "All tracks" falls back to the downloaded tracks themselves.
   const hasOfflineAlbumCollections = useHasOfflineAlbumCollections();
+  const downloadedTracksCount = useDownloadedTracksCount();
   const isArtistAvailableOffline = useIsArtistAvailableOffline(
     type.id === "artist" ? item.id : undefined,
   );
   const offlineBrowseAvailable =
     ((type.id === "allAlbums" || type.id === "allArtists") &&
       hasOfflineAlbumCollections) ||
+    (type.id === "allTracks" && downloadedTracksCount > 0) ||
     isArtistAvailableOffline;
 
   return (
@@ -470,7 +511,10 @@ export default function LibraryListItem({
             numberOfLines={layout === "grid" ? 2 : 1}
             className="text-white text-md font-normal"
           >
-            {item.isFavorites || item.isAllAlbums || item.isAllArtists
+            {item.isFavorites ||
+            item.isAllAlbums ||
+            item.isAllArtists ||
+            item.isAllTracks
               ? type.label
               : item.name}
           </Heading>

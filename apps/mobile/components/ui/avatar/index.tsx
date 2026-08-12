@@ -4,6 +4,7 @@ import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
 import { tva, withStyleContext } from "@gluestack-ui/utils/nativewind-utils";
 import React from "react";
 import { Image, Text, View } from "react-native";
+import { withServerHeaders } from "@/services/serverHeaders";
 
 const SCOPE = "AVATAR";
 
@@ -109,6 +110,9 @@ const AvatarImage = React.forwardRef<
     <UIAvatar.Image
       ref={ref}
       {...props}
+      // See components/ui/image: proxy-fronted servers need their headers on
+      // artwork requests too.
+      source={withServerHeaders(props.source)}
       className={avatarImageStyle({
         class: className,
       })}

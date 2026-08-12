@@ -12,26 +12,24 @@ import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
-  jukeboxGetCurrentTime,
-  jukeboxIsPlaying,
-  jukeboxPause as jukeboxPauseAction,
-  jukeboxPlay as jukeboxPlayAction,
-  jukeboxSeekTo,
-  jukeboxSkipNext,
-  jukeboxSkipPrevious,
-  jukeboxTogglePlayPause,
-} from "@/services/jukebox";
+  cachedArtworkUri,
+  clearArtworkCache,
+  ensureArtworkCached,
+} from "@/services/lockScreenArtwork";
 import {
   getIsOnline,
   getServerReachable,
   probeServer,
+  USER_AGENT,
 } from "@/services/network";
 import type {
   AlbumID3,
   AlbumList2,
   Child,
 } from "@/services/openSubsonic/types";
+import { activeRemoteTarget } from "@/services/playback/targets";
 import {
+  notePlaybackRateChanged,
   playbackReportEnabled,
   reportPaused,
   reportProgress,
@@ -49,14 +47,17 @@ import {
 } from "@/services/resumePositions";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
 import {
+  customHeadersForUrl,
+  mergeCustomHeaders,
+} from "@/services/serverHeaders";
+import {
   checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
 import useActivity from "@/stores/activity";
-import { useAppBase } from "@/stores/app";
+import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
-import useJukebox from "@/stores/jukebox";
 import useOffline from "@/stores/offline";
 import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
@@ -147,7 +148,7 @@ function reportNowPlaying(track: QueueTrack) {
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.
   if (playbackReportEnabled()) {
-    reportStarting(track.id);
+    reportStarting(track.id, getPlaybackRateFor(track));
   } else {
     scrobble(track.id, { submission: false }).catch(() => {});
   }
@@ -375,6 +376,32 @@ function getReplayGainFactor(track: QueueTrack): number {
   return computeReplayGainFactor(track, replayGainMode, replayGainPreampDb);
 }
 
+// Seek amounts for the podcast transport controls. Asymmetric on purpose: back
+// is for catching a missed sentence, forward is for skipping an ad break.
+export const PODCAST_SEEK_BACKWARD_SECONDS = 15;
+export const PODCAST_SEEK_FORWARD_SECONDS = 30;
+
+// Speed only applies to spoken word — a music track always plays at 1×, so a
+// rate left over from a podcast never bleeds into the next album.
+function getPlaybackRateFor(track: QueueTrack | null): number {
+  if (track?.source !== "podcast") return 1;
+  return clampPodcastPlaybackRate(useAppBase.getState().podcastPlaybackRate);
+}
+
+// Must run after every player.replace(): the rate is a property of the engine,
+// not of the source, but AVPlayer resets it when the item changes.
+// `shouldCorrectPitch` keeps a sped-up voice from sounding like a chipmunk; it
+// is the native default on both platforms but is set explicitly so a future
+// default flip can't silently change how podcasts sound.
+function applyPlaybackRate(track: QueueTrack | null) {
+  try {
+    player.shouldCorrectPitch = true;
+    player.setPlaybackRate(getPlaybackRateFor(track));
+  } catch (error) {
+    logSwallowed("applyPlaybackRate", error);
+  }
+}
+
 // Track ids whose raw stream failed to decode on this device and have since
 // been re-armed to stream through a forced server transcode. Bounded by the
 // queue, and one retry per track keeps a genuinely broken source from looping.
@@ -449,6 +476,17 @@ function effectivePosition(raw: number): number {
 // vice versa. Always re-check the offline registry at load time. `timeOffset`
 // starts a transcoded stream partway in (seek/resume) and only applies to the
 // streamed branch — local/radio/podcast URLs are seekable and ignore it.
+// expo-audio routes http(s) sources through an OkHttp data source, which sends
+// `okhttp/*` as its User-Agent unless told otherwise — the signature Cloudflare
+// scores as a bot. Identify the app the same way the API clients do. Ignored
+// for offline/file sources, which never reach the network stack.
+function audioSource(uri: string) {
+  return {
+    uri,
+    headers: mergeCustomHeaders(uri, { "User-Agent": USER_AGENT }),
+  };
+}
+
 function resolveTrackUrl(
   track: QueueTrack,
   timeOffset?: number,
@@ -538,12 +576,12 @@ let lockScreenActive = false;
 // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a ""
 // (returned for local tracks without cover art) throws MalformedURLException and
 // rejects the whole call.
-function toLockScreenMetadata(track: QueueTrack) {
+function toLockScreenMetadata(track: QueueTrack, artworkUrl?: string) {
   return {
     title: track.title || undefined,
     artist: track.artist || undefined,
     albumTitle: track.album || undefined,
-    artworkUrl: track.artwork || undefined,
+    artworkUrl: artworkUrl || undefined,
     // Seconds → ms. Gives the media notification an authoritative duration so it
     // doesn't rely on the player's live content duration (which is unknown for
     // transcoded streams served without a length).
@@ -554,8 +592,38 @@ function toLockScreenMetadata(track: QueueTrack) {
   };
 }
 
+// Mirror the cover locally and hand the OS controls the file, replacing whatever
+// artwork the initial metadata carried. See services/lockScreenArtwork.ts for
+// why the native fetch can't be authenticated.
+async function upgradeLockScreenArtwork(
+  p: AudioPlayer,
+  track: QueueTrack,
+  remoteUrl: string,
+) {
+  const local = await ensureArtworkCached(remoteUrl);
+  // The download outlived the track it was for, or the controls were torn down
+  // while it ran — either way this metadata is no longer the current one.
+  if (!local || loadedTrackId !== track.id || !lockScreenActive) return;
+  try {
+    p.updateLockScreenMetadata(toLockScreenMetadata(track, local));
+  } catch (error) {
+    logSwallowed("upgradeLockScreenArtwork", error);
+  }
+}
+
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
-  const metadata = toLockScreenMetadata(track);
+  const remoteArtwork = track.artwork || undefined;
+  const cached = cachedArtworkUri(remoteArtwork);
+  // Prefer the mirrored file. Failing that, pass the remote URL only when it
+  // would actually load — with custom headers configured the native fetch is
+  // guaranteed to 403, so sending it just burns a request and logs a failure.
+  // A local (file://) artwork needs no mirroring and passes straight through.
+  const initialArtwork =
+    cached ??
+    (remoteArtwork && customHeadersForUrl(remoteArtwork)
+      ? undefined
+      : remoteArtwork);
+  const metadata = toLockScreenMetadata(track, initialArtwork);
   // try/catch keeps a rejected metadata update from aborting playback.
   try {
     if (lockScreenActive) {
@@ -575,6 +643,12 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
     }
   } catch (error) {
     logSwallowed("applyLockScreen", error);
+  }
+  // Fire-and-forget: the controls are already up with text, and the artwork
+  // lands a moment later. Skipped when the cover is already mirrored (the
+  // metadata above carries it) or isn't a remote URL to begin with.
+  if (remoteArtwork && !cached) {
+    void upgradeLockScreenArtwork(p, track, remoteArtwork);
   }
 }
 
@@ -613,8 +687,9 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     isOffline,
     isRadio: track.isRadio ?? false,
   });
-  player.replace({ uri: url });
+  player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
+  applyPlaybackRate(track);
   applyLockScreen(player, track);
   // Moving the active track off the launch track disarms resume so returning
   // to it later starts at 0 rather than its stale bookmark.
@@ -775,7 +850,7 @@ async function describeFailedSource(resolved: {
     // the body is never read and the request is aborted as soon as the headers
     // land, so a server that ignores Range doesn't stream a whole file either.
     const response = await fetch(resolved.url, {
-      headers: { Range: "bytes=0-1" },
+      headers: mergeCustomHeaders(resolved.url, { Range: "bytes=0-1" }),
       signal: controller.signal,
     });
     return {
@@ -1059,13 +1134,21 @@ statusListeners.push(
 );
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
-  if (
-    state.replayGainMode === prev.replayGainMode &&
-    state.replayGainPreampDb === prev.replayGainPreampDb
-  )
-    return;
   const cur = useQueue.getState().getCurrent();
-  if (cur) player.volume = getReplayGainFactor(cur);
+  if (
+    state.replayGainMode !== prev.replayGainMode ||
+    state.replayGainPreampDb !== prev.replayGainPreampDb
+  ) {
+    if (cur) player.volume = getReplayGainFactor(cur);
+  }
+  // Applied live rather than at the next load so the speed sheet audibly
+  // changes the episode that is playing behind it.
+  if (state.podcastPlaybackRate !== prev.podcastPlaybackRate) {
+    applyPlaybackRate(cur);
+    if (playbackReportEnabled()) {
+      notePlaybackRateChanged(getPlaybackRateFor(cur));
+    }
+  }
 });
 
 let lastTrackId: string | null = null;
@@ -1086,9 +1169,9 @@ const queueUnsub = useQueue.subscribe((state) => {
       loadTrack(current, false);
       return;
     }
-    // Jukebox mode owns playback server-side; the local player just tracks
+    // A remote target owns playback elsewhere; the local player just tracks
     // metadata so the UI stays in sync.
-    if (useJukebox.getState().active) {
+    if (activeRemoteTarget()) {
       resetScrobbleState();
       return;
     }
@@ -1222,6 +1305,9 @@ export function stopPlayback() {
 }
 
 registerLogoutHandler(stopPlayback);
+// The mirrored covers belong to the server being left, and every one of them is
+// re-derivable, so there's nothing worth keeping across a sign-out.
+registerLogoutHandler(clearArtworkCache);
 
 // React to a route swap (primary <-> fallback for the same server).
 //
@@ -1299,11 +1385,11 @@ export function playTracks(
   // didn't change (subscription never fired), or the subscription took a silent
   // load path — during hydration or a server-queue restore (suppressAutoplayOnce
   // / !hasHydrated) it loads the track paused and leaves playbackInitialized
-  // false. An explicit user play must start playback regardless. Jukebox owns
-  // playback server-side, so never force the local engine there.
+  // false. An explicit user play must start playback regardless. A remote
+  // target owns playback elsewhere, so never force the local engine there.
   if (
     current.id === previousId ||
-    (!playbackInitialized && !useJukebox.getState().active)
+    (!playbackInitialized && !activeRemoteTarget())
   ) {
     loadAndPlay(current);
   }
@@ -1371,21 +1457,20 @@ export function restoreServerQueue(
 // currentIndex, and the queue subscription reads that new current track as a
 // cue to play — so "Add to queue" would start playing, which is the Play
 // button's job and not what the label promises.
-export function enqueueWithoutAutoplay(tracks: QueueTrack[]) {
-  if (tracks.length === 0) return;
+// Returns how many tracks were appended, so callers can report what happened.
+export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
+  if (tracks.length === 0) return 0;
   if (useQueue.getState().getCurrent() == null) {
     suppressAutoplayOnce = true;
   }
-  useQueue.getState().enqueueEnd(tracks);
+  return useQueue.getState().enqueueEnd(tracks);
 }
 
-// Take over playback locally from a (now stopped) jukebox session: load the
-// current queue track and resume it at the position the server reached. Arms the
-// pending-resume seek so it re-applies once the media is ready.
-export function takeOverFromJukebox(
-  positionSeconds: number,
-  shouldPlay = true,
-) {
+// Take over playback locally from a (now stopped) remote target — a jukebox
+// session, a UPnP renderer: load the current queue track and resume it at the
+// position the remote reached. Arms the pending-resume seek so it re-applies
+// once the media is ready.
+export function takeOverFromRemote(positionSeconds: number, shouldPlay = true) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (shouldPlay) {
@@ -1400,14 +1485,15 @@ export function takeOverFromJukebox(
     try {
       player.seekTo(pos);
     } catch (error) {
-      logSwallowed("seek to jukebox takeover position", error);
+      logSwallowed("seek to remote takeover position", error);
     }
   }
 }
 
 export function togglePlayPause() {
-  if (useJukebox.getState().active) {
-    jukeboxTogglePlayPause().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.togglePlayPause();
     return;
   }
   if (player.playing) {
@@ -1427,8 +1513,9 @@ export function pause() {
   // A manual pause during a sleep fade takes over: drop the ramp and restore
   // volume so a later resume isn't stuck quiet.
   cancelSleepFade();
-  if (useJukebox.getState().active) {
-    jukeboxPauseAction().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.pause();
     return;
   }
   // Persist the resume position immediately on pause rather than waiting for
@@ -1444,10 +1531,10 @@ export function pause() {
 
 // Sleep-timer expiry handler: start a volume ramp when playing locally, letting
 // the status tick carry it to zero and then pause. If nothing is actively
-// playing (jukebox, or already paused) there's no tick to drive the ramp, so
-// just pause outright.
+// playing locally (a remote target owns playback, or we're already paused)
+// there's no tick to drive the ramp, so just pause outright.
 function beginSleepFade() {
-  if (useJukebox.getState().active || !player.playing) {
+  if (activeRemoteTarget() || !player.playing) {
     pause();
     return;
   }
@@ -1461,8 +1548,9 @@ export function play() {
   // Resuming during a sleep fade means "keep listening" — abort the ramp and
   // restore full volume before playing.
   cancelSleepFade();
-  if (useJukebox.getState().active) {
-    jukeboxPlayAction().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.play();
     return;
   }
   const current = useQueue.getState().getCurrent();
@@ -1475,12 +1563,14 @@ export function play() {
 }
 
 export function getCurrentTime() {
-  if (useJukebox.getState().active) return jukeboxGetCurrentTime();
+  const remote = activeRemoteTarget();
+  if (remote) return remote.getCurrentTime();
   return effectivePosition(player.currentTime ?? 0);
 }
 
 export function isPlaying() {
-  if (useJukebox.getState().active) return jukeboxIsPlaying();
+  const remote = activeRemoteTarget();
+  if (remote) return remote.isPlaying();
   return player.playing;
 }
 
@@ -1490,16 +1580,18 @@ export function skipNext() {
   if (state.repeatMode === "off") {
     if (state.currentIndex >= state.queue.length - 1) return;
   }
-  if (useJukebox.getState().active) {
-    jukeboxSkipNext().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.skipNext();
     return;
   }
   state.next();
 }
 
 export function skipPrevious(options?: { force?: boolean }) {
-  if (useJukebox.getState().active) {
-    jukeboxSkipPrevious().catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.skipPrevious();
     return;
   }
   if (!options?.force && effectivePosition(player.currentTime) > 3) {
@@ -1527,15 +1619,17 @@ function reloadAtOffset(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
   streamStartOffset = Math.max(0, seconds);
   const { url } = resolveTrackUrl(track, streamStartOffset);
-  player.replace({ uri: url });
+  player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
+  applyPlaybackRate(track);
   pendingResumeId = null;
   if (wasPlaying) player.play();
 }
 
 export function seekTo(seconds: number) {
-  if (useJukebox.getState().active) {
-    jukeboxSeekTo(seconds).catch(() => {});
+  const remote = activeRemoteTarget();
+  if (remote) {
+    remote.seekTo(seconds);
     return;
   }
   const current = useQueue.getState().getCurrent();
@@ -1544,4 +1638,20 @@ export function seekTo(seconds: number) {
     return;
   }
   player.seekTo(seconds);
+}
+
+// Relative seek behind the podcast transport's back/forward buttons. Clamped to
+// the media's bounds so a tap near either end lands on the edge instead of being
+// dropped by the engine, and routed through seekTo so it keeps working on a
+// remote output and on a transcoded stream (which seeks by re-requesting).
+// The queue track's own duration wins over the player's: on a transcoded stream
+// the loaded media only spans from the current offset onwards.
+export function seekBy(deltaSeconds: number) {
+  const current = useQueue.getState().getCurrent();
+  const duration =
+    current?.duration && current.duration > 0
+      ? current.duration
+      : (player.duration ?? 0);
+  const target = Math.max(0, getCurrentTime() + deltaSeconds);
+  seekTo(duration > 0 ? Math.min(target, duration) : target);
 }

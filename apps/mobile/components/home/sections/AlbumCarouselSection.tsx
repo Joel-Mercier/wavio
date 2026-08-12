@@ -1,16 +1,17 @@
 import type { Href } from "expo-router";
+import { memo } from "react";
 import AlbumListItem from "@/components/albums/AlbumListItem";
-import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
+import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import type { AlbumListType } from "@/services/backend/lists";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-import { loadingData } from "@/utils/loadingData";
 
 interface AlbumCarouselSectionProps {
   title: string;
   type: AlbumListType;
-  enabled: boolean;
+  sectionIndex: number;
   seeAllHref?: Href;
   genre?: string;
   fromYear?: number;
@@ -18,16 +19,17 @@ interface AlbumCarouselSectionProps {
   size?: number;
 }
 
-export default function AlbumCarouselSection({
+function AlbumCarouselSection({
   title,
   type,
-  enabled,
+  sectionIndex,
   seeAllHref,
   genre,
   fromYear,
   toYear,
   size = 12,
 }: AlbumCarouselSectionProps) {
+  const enabled = useSectionEnabled(sectionIndex);
   const musicFolderId = useCurrentMusicFolderId();
   const { data, isLoading, error } = useAlbumList2(
     { type, size, musicFolderId, genre, fromYear, toYear },
@@ -41,14 +43,7 @@ export default function AlbumCarouselSection({
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!albums?.length}
-      skeleton={loadingData(4).map((_, index) => (
-        <AlbumListItemSkeleton
-          // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-          key={`album-skeleton-${index}`}
-          index={index}
-          layout="horizontal"
-        />
-      ))}
+      skeleton={ALBUM_CAROUSEL_SKELETON}
     >
       {albums?.map((album, index) => (
         <AlbumListItem
@@ -61,3 +56,5 @@ export default function AlbumCarouselSection({
     </HomeSection>
   );
 }
+
+export default memo(AlbumCarouselSection);

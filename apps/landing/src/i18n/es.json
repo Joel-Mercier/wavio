@@ -26,10 +26,9 @@
 		"lead": "Un reproductor de música para Android compatible con los servidores Navidrome, Jellyfin y OpenSubsonic, así como con una biblioteca local. Diseñado para quienes tienen su propia biblioteca y quieren sentirse como en casa."
 	},
 	"cta": {
-		"releaseMain": "Descarga la última versión",
-		"releaseNote": "Próximamente en Google Play",
-		"starGithub": "Ver en GitHub",
-		"viewSource": "Ver código fuente"
+		"getItOn": "GET IT ON",
+		"googlePlay": "Google Play",
+		"githubRelease": "Get it on GitHub"
 	},
 	"highlightsLabel": "Lo que obtienes",
 	"highlights": [

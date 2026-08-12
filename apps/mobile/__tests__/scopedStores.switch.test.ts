@@ -44,6 +44,7 @@ import { withScopedWritesSuspended } from "@/config/storage";
 import { useAudioMuseBase } from "@/stores/audioMuse";
 import useBookmarksBase from "@/stores/bookmarks";
 import { useLidarrBase } from "@/stores/lidarr";
+import useLrclibPicksBase from "@/stores/lrclibPicks";
 import { useSoulSyncBase } from "@/stores/soulsync";
 
 // What app/(app)/_layout.tsx does when the active (server, user) scope changes.
@@ -53,13 +54,21 @@ const switchScope = (to: string) => {
     useLidarrBase.getState().__reset();
     useSoulSyncBase.getState().__reset();
     useBookmarksBase.getState().__reset();
+    useLrclibPicksBase.getState().__reset();
     useAudioMuseBase.getState().__reset();
   });
   useLidarrBase.persist.rehydrate();
   useSoulSyncBase.persist.rehydrate();
   useBookmarksBase.persist.rehydrate();
+  useLrclibPicksBase.persist.rehydrate();
   useAudioMuseBase.persist.rehydrate();
 };
+
+const lrclibRecord = (id: number) => ({
+  id,
+  trackName: "Track",
+  artistName: "Artist",
+});
 
 describe("scoped stores across a server switch", () => {
   it("restores server A's state after a round trip through server B", () => {
@@ -72,6 +81,7 @@ describe("scoped stores across a server switch", () => {
       .setConfig({ serverUrl: "http://soulsync.a", apiKey: "SS_KEY_A" });
     useSoulSyncBase.getState().setConnected(true);
     useBookmarksBase.getState().addBookmark("track-a", 42);
+    useLrclibPicksBase.getState().setPick("track-a", lrclibRecord(1));
     useAudioMuseBase
       .getState()
       .setConfig({ serverUrl: "http://audiomuse.a", apiToken: "TOKEN_A" });
@@ -83,10 +93,12 @@ describe("scoped stores across a server switch", () => {
     expect(useSoulSyncBase.getState().serverUrl).toBe("");
     expect(useSoulSyncBase.getState().isConnected).toBe(false);
     expect(useBookmarksBase.getState().bookmarks).toEqual({});
+    expect(useLrclibPicksBase.getState().picks).toEqual({});
     expect(useAudioMuseBase.getState().serverUrl).toBe("");
     expect(useAudioMuseBase.getState().isConnected).toBe(false);
 
     useBookmarksBase.getState().addBookmark("track-b", 7);
+    useLrclibPicksBase.getState().setPick("track-b", lrclibRecord(2));
 
     switchScope("serverA_alice");
     expect(useLidarrBase.getState().serverUrl).toBe("http://lidarr.a");
@@ -99,9 +111,12 @@ describe("scoped stores across a server switch", () => {
     expect(useAudioMuseBase.getState().apiToken).toBe("TOKEN_A");
     expect(useBookmarksBase.getState().bookmarks["track-a"]).toEqual([42]);
     expect(useBookmarksBase.getState().bookmarks["track-b"]).toBeUndefined();
+    expect(useLrclibPicksBase.getState().picks["track-a"]?.id).toBe(1);
+    expect(useLrclibPicksBase.getState().picks["track-b"]).toBeUndefined();
 
     switchScope("serverB_bob");
     expect(useBookmarksBase.getState().bookmarks["track-b"]).toEqual([7]);
+    expect(useLrclibPicksBase.getState().picks["track-b"]?.id).toBe(2);
     expect(useLidarrBase.getState().serverUrl).toBe("");
     expect(useSoulSyncBase.getState().serverUrl).toBe("");
   });

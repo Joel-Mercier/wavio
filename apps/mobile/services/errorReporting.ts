@@ -21,6 +21,18 @@ function getServerReachable(): boolean {
     require("@/services/network") as typeof import("@/services/network")
   ).getServerReachable();
 }
+const EMPTY_HEADER_NAMES: ReadonlySet<string> = new Set<string>();
+// Lazy for the same reason, plus one of its own: scrubbing runs inside Sentry's
+// beforeSend, which can fire before the servers store has been touched.
+function getConfiguredHeaderNames(): ReadonlySet<string> {
+  try {
+    return (
+      require("@/services/serverHeaders") as typeof import("@/services/serverHeaders")
+    ).configuredHeaderNames();
+  } catch {
+    return EMPTY_HEADER_NAMES;
+  }
+}
 
 // Central error reporting for the service layer. Every chokepoint (axios
 // interceptors, GraphQL wrappers, the player, the local indexer) routes through
@@ -193,6 +205,33 @@ function isNativeEnvironmentFailure(error: unknown): boolean {
   return message.length > 0 && NATIVE_ENVIRONMENT_RE.test(message);
 }
 
+// A TLS handshake the device refused because the server's certificate isn't
+// trusted — a self-signed / private-CA server whose cert was never accepted
+// through the TOFU prompt, or was accepted and has since rotated or been removed
+// from Settings → Trusted certificates.
+//
+// Exported because the offline downloader and the library sync both need the
+// same verdict: it's the one download failure the user can actually fix, so it
+// gets its own message and must not be retried in a loop. Only `isExpectedFailure`
+// treats it as noise, and only for `area: "storage"` — see the note there.
+// Matched on the certificate idioms, NOT on a bare SSLHandshakeException: that
+// is Java's generic "handshake failed" and also covers a cipher-suite or TLS
+// version mismatch and a server aborting mid-handshake — none of which the user
+// fixes by trusting a certificate, and all of which are worth an Issue. A real
+// trust failure nests its cause into the handshake message
+// ("SSLHandshakeException: …CertPathValidatorException: Trust anchor…"), so it
+// still matches here; "Chain validation failed" is the one Conscrypt form that
+// says it without naming an exception. SSLPeerUnverifiedException stays: the
+// hostname verifier in modules/ssl-trust is trust-store-aware, so a rejected
+// peer is the same user-fixable "this host isn't trusted".
+const TLS_TRUST_FAILURE_RE =
+  /CertPathValidatorException|Trust anchor for certification path|CertificateException|Chain validation failed|SSLPeerUnverifiedException/i;
+
+export function isTlsTrustFailure(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.length > 0 && TLS_TRUST_FAILURE_RE.test(message);
+}
+
 // Failures that are expected from the error itself, independent of any request
 // context: network noise plus typed control-flow / user-input errors. Shared by
 // `reportError`'s classifier and `logError` so neither path reports them —
@@ -253,6 +292,16 @@ function isExpectedFailure(
   networkNoise?: boolean,
 ): boolean {
   if (isExpectedNoise(error, networkNoise)) return true;
+  // A handshake the device refused because it doesn't trust the server's
+  // certificate. Expected only for `storage`, where the native downloader talks
+  // to the user's own server: a self-signed / private-CA cert they never
+  // accepted (or that rotated) fails every download and no client change fixes
+  // it. Deliberately NOT silenced app-wide — the same error is what a regression
+  // in our own OkHttp trust wiring looks like (an unapplied patch, a dropped
+  // `buildFromSource` entry, a swallowed factory install), and that one must
+  // still reach Sentry. API-path handshake failures are axios errors with no
+  // response, so isNetworkNoise already covers those.
+  if (ctx.area === "storage" && isTlsTrustFailure(error)) return true;
   // Device has no connectivity at all — a network/API failure is expected. Only
   // applies to `api`; the local library, player engine and metadata extraction
   // work offline, so a failure there is a real bug even with no connectivity.
@@ -435,8 +484,9 @@ export function reportBreadcrumb(
 // (`p`) — or token/salt (`t`/`s`) — directly in the request query string. The
 // default HTTP-breadcrumb integration and event request data would otherwise
 // ship those credentials to Sentry. Strip them from any URL, plus the Jellyfin
-// (`X-Emby-Token`/`X-Emby-Authorization`) and Taddy (`X-API-KEY`/`X-USER-ID`)
-// auth headers, before anything leaves the device.
+// (`Authorization`, plus the legacy `X-Emby-Token`/`X-Emby-Authorization` we no
+// longer send but may still see in old breadcrumbs) and Taddy
+// (`X-API-KEY`/`X-USER-ID`) auth headers, before anything leaves the device.
 const SENSITIVE_PARAM_RE =
   /([?&](?:p|password|u|username|s|t|salt|token|api[-_]?key)=)[^&#]*/gi;
 
@@ -447,6 +497,11 @@ const SENSITIVE_HEADER_KEYS = new Set([
   "x-user-id",
   "authorization",
   "cookie",
+  // Cloudflare Access service tokens. Also covered dynamically below (they're
+  // the headline case for custom headers), but kept here so a breadcrumb from a
+  // server the user has since deleted is still scrubbed.
+  "cf-access-client-id",
+  "cf-access-client-secret",
 ]);
 
 export function scrubUrl<T extends string | undefined>(url: T): T {
@@ -456,8 +511,12 @@ export function scrubUrl<T extends string | undefined>(url: T): T {
 
 function scrubHeaders(headers?: Record<string, unknown>): void {
   if (!headers) return;
+  // A server's custom headers are named by the user, so no fixed list can cover
+  // them — whatever they configured is a credential by assumption.
+  const configured = getConfiguredHeaderNames();
   for (const key of Object.keys(headers)) {
-    if (SENSITIVE_HEADER_KEYS.has(key.toLowerCase())) {
+    const name = key.toLowerCase();
+    if (SENSITIVE_HEADER_KEYS.has(name) || configured.has(name)) {
       headers[key] = "[Filtered]";
     }
   }

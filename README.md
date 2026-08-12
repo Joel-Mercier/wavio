@@ -11,7 +11,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [![License](https://img.shields.io/github/license/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/blob/main/LICENSE.txt)
 [![Latest release](https://img.shields.io/github/v/release/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/releases/latest)
 
-[Presentation website](https://wavio-app.vercel.app)
+[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio)
 
 ## Table of contents
 - [How to install](#how-to-install)
@@ -23,11 +23,20 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 
 ## How to install
 
-For now you can only install the app from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
+Wavio is now available on the Google Play Store 🎉
+If you enjoy the app please leave a review on the Google Play Store to help us grow the community.
+
+<p align="center">
+<a href="https://play.google.com/store/apps/details?id=com.jmercier.wavio">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/google-play-badge.svg" alt="Get it on Google Play" height="80">
+</a>
+</p>
+
+Alternatively, you can install the APK from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
 
 Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architectures (x86, x86_64) are not provided.
 
-We are nearing a official release on the Google Play Store ! Production access request has been submitted. 
+APK installs need an extra step to show up in Android Auto (see below), so the Play Store install is the recommended one.
 
 ### Wear OS companion
 
@@ -59,12 +68,14 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Library screen with starred playlists, albums, and artists
 - Liked songs screen
 - Player screen with audio controls, navigation gestures, transcoding info and current lyric line
+- Optional waveform seek bar, showing the track's waveform instead of a plain progress bar. Waveforms are analyzed once and cached, never over cellular, with a setting to clear the cache
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
 - [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity : prompt to playlist, sonic fingerprint playlist, playlist from similar songs, search sounds and lyrics and artist similarity. (Navidrome and Jellyfin only)
 - [Octo-Fiesta](https://github.com/V1ck3s/octo-fiesta) proxy server support. Automatically fetch songs not in your library. (Navidrome and OpenSubsonic only)
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
+- Podcast playback controls: adjustable playback speed (0.5× to 2×) and skip back 15s / forward 30s
 - Add your own favorite podcasts through RSS feeds
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs or full library caching, downloads management screen, queued changes screen
@@ -84,8 +95,9 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Landscape mode support
 - Android homescreen widgets
 - Android Auto support
+- Android launcher shortcuts
 - Navidrome smart playlists support
-- Navidrome/Opensubsonic jukebox mode support
+- Remote playback options like Navidrome/Opensubsonic jukebox mode, Chromecast and uPnP/DLNA
 - Backup and restore
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
 - English, French, German, Italian, Spanish, Chinese and Russian translations

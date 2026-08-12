@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { offlineDownloadService } from "@/services/offline";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
@@ -56,10 +56,35 @@ export function useCollectionDownload(
     return { total, downloadedCount, status };
   }, [songs, downloadedTracks, downloadProgress]);
 
+  const isRegistered = useOffline((s) =>
+    meta ? meta.id in s.downloadedCollections : true,
+  );
+
+  // Heal collections downloaded before the registration moved ahead of the
+  // download: their tracks are on disk but no store entry was ever written, so
+  // they are missing from the offline Library and the "downloaded" filter — and
+  // the action has already flipped to "remove downloads", leaving no way to
+  // save them again. Registering here also covers a collection whose tracks all
+  // arrived through other saves, which the offline badge already counts as
+  // available.
+  useEffect(() => {
+    if (!meta || isRegistered || status !== "all" || !songs?.length) return;
+    useOffline.getState().addDownloadedCollection({
+      ...meta,
+      trackIds: songs.map((song) => song.id),
+      songCount: songs.length,
+      savedAt: new Date().toISOString(),
+    });
+  }, [meta, isRegistered, status, songs]);
+
   const saveAll = useCallback(async () => {
     if (!songs?.length) return;
-    const pending = songs.filter((song) => !(song.id in downloadedTracks));
-    await offlineDownloadService.downloadTracks(pending);
+    // Register the collection before the tracks download, not after:
+    // `downloadTracks` resolves only once every track has landed and rejects if
+    // one of them fails, so registering afterwards left the collection out of
+    // the offline Library — and out of the "downloaded" filter — for the whole
+    // download, or permanently when a single track failed. The library sync
+    // registers its collections the same way, ahead of the queued tracks.
     if (meta) {
       useOffline.getState().addDownloadedCollection({
         ...meta,
@@ -68,6 +93,8 @@ export function useCollectionDownload(
         savedAt: new Date().toISOString(),
       });
     }
+    const pending = songs.filter((song) => !(song.id in downloadedTracks));
+    await offlineDownloadService.downloadTracks(pending);
   }, [songs, downloadedTracks, meta]);
 
   const removeAll = useCallback(async () => {

@@ -22,12 +22,32 @@ export const defaultLang: Lang = "en";
 
 export type UiStrings = typeof en;
 
+type Dict = Record<string, unknown>;
+
+/** Locale files lag behind `en.json` until Crowdin syncs, so fill missing keys with English. */
+function withFallback(dict: Dict, fallback: Dict = en): UiStrings {
+  const merged: Dict = { ...fallback };
+  for (const [key, value] of Object.entries(dict)) {
+    const base = fallback[key];
+    const mergeable =
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value) &&
+      typeof base === "object" &&
+      base !== null;
+    merged[key] = mergeable
+      ? withFallback(value as Dict, base as Dict)
+      : value;
+  }
+  return merged as UiStrings;
+}
+
 export const ui: Record<Lang, UiStrings> = {
   en,
-  ru,
-  fr,
-  de,
-  it,
-  es,
-  "zh-cn": zhCn,
+  ru: withFallback(ru),
+  fr: withFallback(fr),
+  de: withFallback(de),
+  it: withFallback(it),
+  es: withFallback(es),
+  "zh-cn": withFallback(zhCn),
 };

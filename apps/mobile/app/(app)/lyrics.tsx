@@ -4,24 +4,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
-import { useCastSession } from "react-native-google-cast";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
-import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
 import LyricsLayersSheet from "@/components/player/LyricsLayersSheet";
 import LyricsLine, { LYRICS_LINE_HEIGHT } from "@/components/player/LyricsLine";
+import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerSheets from "@/components/player/PlayerSheets";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
@@ -49,6 +48,7 @@ import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { seekTo, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
+import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
 import {
   agentAlign,
@@ -269,6 +269,9 @@ export default function LyricsScreen() {
   const layersSheetRef = useRef<BottomSheetModal>(null);
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
+  const upnpConnected = useUpnp((s) => s.connected);
+  const playingRemotely = jukeboxActive || upnpConnected;
+  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
   const isPlaying = useIsPlaying();
   const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
   const playingTrack = usePlayingTrack();
@@ -277,7 +280,6 @@ export default function LyricsScreen() {
     useSyncedLyrics(playingTrack);
   const hasLayers = hasTranslations || hasPronunciation;
   useKeepScreenAwake(lyricsKeepScreenOn && isPlaying, "lyrics");
-  const castSession = useCastSession();
   const doShare = useCreateShare();
   const isRadio = !!playingTrack?.isRadio;
   const headerTextShadow = {
@@ -297,8 +299,8 @@ export default function LyricsScreen() {
     else router.replace("/player");
   };
 
-  const handleJukeboxPress = () => {
-    openJukeboxSheet();
+  const handleOutputPress = () => {
+    openOutputSheet();
   };
 
   const handleToggleKaraoke = () => {
@@ -452,17 +454,17 @@ export default function LyricsScreen() {
         <LyricsBody lyrics={lyrics} layers={layers} />
         <VStack className="px-6 pt-4">
           <HStack className="items-center justify-between mb-4">
-            {capabilities.jukebox && !isRadio && !castSession ? (
+            {hasOutputs && !isRadio ? (
               <FadeOut
                 hitSlop={ICON_HIT_SLOP}
-                onPress={handleJukeboxPress}
+                onPress={handleOutputPress}
                 disabled={!isOnline}
               >
-                <Speaker
+                <Cast
                   size={24}
-                  color={jukeboxActive ? emerald500 : "white"}
+                  color={playingRemotely ? emerald500 : "white"}
                 />
-                {jukeboxActive && (
+                {playingRemotely && (
                   <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
                     <Box className="bg-emerald-500 rounded-full size-1" />
                   </Box>

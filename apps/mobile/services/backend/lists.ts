@@ -1,4 +1,4 @@
-import { dispatch } from "@/services/backend/dispatch";
+import { dispatch, isNavidrome } from "@/services/backend/dispatch";
 import * as J from "@/services/jellyfin/lists";
 import * as L from "@/services/local/lists";
 import * as N from "@/services/navidrome/songs";
@@ -25,6 +25,16 @@ export const getRandomSongs = dispatch(
   S.getRandomSongs,
   J.getRandomSongs,
   L.getRandomSongs,
+);
+// Navidrome answers a *sorted* whole-library browse from its native API: the
+// Subsonic surface has none (the browse is an empty-query search3, which takes
+// no sort parameter). Unsorted, it stays on search3 like every other Subsonic
+// server — same shape as the isNavidrome() ternary in services/backend/browsing.
+export const getSongs = dispatch(
+  (params: Parameters<typeof S.getSongs>[0]) =>
+    isNavidrome() && params?.sort ? N.getSongs(params) : S.getSongs(params),
+  J.getSongs,
+  L.getSongs,
 );
 export const getSongsByGenre = dispatch(
   S.getSongsByGenre,

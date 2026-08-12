@@ -18,6 +18,7 @@ import {
   querySongs,
   queryTopSongs,
   queryTrackById,
+  searchTracks,
 } from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
@@ -28,6 +29,8 @@ import type {
   Child,
 } from "@/services/openSubsonic/types";
 import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
+import type { SongSortType } from "@/utils/songSort";
+import { parseSortType } from "@/utils/sort";
 
 // Maps a Subsonic album-list `type` onto how we serve it locally.
 //  - SQLite orders: play counts ("plays"=frequent) and last-played ("played"=
@@ -134,6 +137,33 @@ export const getRandomSongs = async (
     fromYear: opts.fromYear,
     toYear: opts.toYear,
   });
+  return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
+};
+
+// Whole-library track browse (title order unless `sort` says otherwise), or the
+// FTS index when a query is given — the same split the remote backends fold onto
+// one endpoint. `sort` is ignored while searching: FTS rows come back in
+// relevance order, which is the point of searching.
+export const getSongs = async (
+  opts: {
+    query?: string;
+    size?: number;
+    offset?: number;
+    sort?: SongSortType;
+    musicFolderId?: string;
+  } = {},
+) => {
+  const limit = opts.size ?? 50;
+  const offset = opts.offset ?? 0;
+  const { field, direction } = parseSortType(opts.sort ?? "defaultAsc");
+  const rows = opts.query
+    ? await searchTracks(opts.query, limit, offset)
+    : await querySongs({
+        limit,
+        offset,
+        order: field === "default" ? undefined : field,
+        direction,
+      });
   return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
 };
 

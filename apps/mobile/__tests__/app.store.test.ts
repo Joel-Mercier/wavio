@@ -30,7 +30,7 @@ jest.mock("@/config/i18n", () => ({
   },
 }));
 
-import { useAppBase } from "@/stores/app";
+import { PODCAST_PLAYBACK_RATES, useAppBase } from "@/stores/app";
 
 const reset = () =>
   useAppBase.setState(
@@ -46,6 +46,7 @@ const reset = () =>
       downloadsWifiOnly: false,
       replayGainMode: "off",
       replayGainPreampDb: 0,
+      podcastPlaybackRate: 1,
       endlessPlaybackEnabled: false,
       queueSyncPriority: "off",
     },
@@ -100,6 +101,31 @@ describe("app store", () => {
     expect(useAppBase.getState().libraryFilter).toEqual(["artists", "albums"]);
     useAppBase.getState().setLibraryFilter([]);
     expect(useAppBase.getState().libraryFilter).toEqual([]);
+  });
+
+  it("podcastPlaybackRate defaults to 1", () => {
+    expect(useAppBase.getState().podcastPlaybackRate).toBe(1);
+  });
+
+  it("setPodcastPlaybackRate accepts every offered preset", () => {
+    for (const rate of PODCAST_PLAYBACK_RATES) {
+      useAppBase.getState().setPodcastPlaybackRate(rate);
+      expect(useAppBase.getState().podcastPlaybackRate).toBe(rate);
+    }
+  });
+
+  // The engine coerces an out-of-range rate natively, which would leave the UI
+  // showing a speed that isn't the one playing.
+  it("setPodcastPlaybackRate clamps to the engine's supported range", () => {
+    useAppBase.getState().setPodcastPlaybackRate(4);
+    expect(useAppBase.getState().podcastPlaybackRate).toBe(2);
+    useAppBase.getState().setPodcastPlaybackRate(0.1);
+    expect(useAppBase.getState().podcastPlaybackRate).toBe(0.5);
+  });
+
+  it("setPodcastPlaybackRate falls back to 1 for a non-finite rate", () => {
+    useAppBase.getState().setPodcastPlaybackRate(Number.NaN);
+    expect(useAppBase.getState().podcastPlaybackRate).toBe(1);
   });
 
   it("setMaxBitRate accepts numbers and null", () => {

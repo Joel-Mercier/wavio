@@ -18,6 +18,13 @@ export type BackendCapabilities = {
   playlistDescription: boolean;
   replayGain: boolean;
   jukebox: boolean;
+  // Tracks resolve to a URL another device on the network can fetch for itself,
+  // which is what casting of any kind needs — Chromecast and UPnP/DLNA both hand
+  // the receiver a URL and step back. True wherever a server serves the audio
+  // over HTTP with the credentials in the URL. False for the local library,
+  // whose tracks are `file://` paths on this phone: nothing off-device can reach
+  // them, so casting is not offered rather than offered and silently failing.
+  remoteStreamableUrl: boolean;
   songLists: boolean;
   // A home carousel + "See all" list of the user's globally most-played tracks.
   // Needs a server-side way to sort songs by play count: Jellyfin (Items
@@ -81,6 +88,7 @@ const SUBSONIC: BackendCapabilities = {
   playlistDescription: true,
   replayGain: true,
   jukebox: true,
+  remoteStreamableUrl: true,
   songLists: false,
   mostPlayedTracks: false,
   // Left false for the whole Subsonic family: the `topSongsByArtistId`
@@ -128,6 +136,7 @@ const JELLYFIN: BackendCapabilities = {
   // gain adjustment has no data to act on.
   replayGain: false,
   jukebox: false,
+  remoteStreamableUrl: true,
   songLists: true,
   mostPlayedTracks: true,
   topSongsByArtistId: true,
@@ -173,6 +182,9 @@ const LOCAL: BackendCapabilities = {
   playlistDescription: false,
   replayGain: true,
   jukebox: false,
+  // Tracks are `file://` paths on this phone. Nothing else on the network can
+  // fetch them, so no form of casting can work without serving them ourselves.
+  remoteStreamableUrl: false,
   songLists: true,
   mostPlayedTracks: true,
   topSongsByArtistId: true,

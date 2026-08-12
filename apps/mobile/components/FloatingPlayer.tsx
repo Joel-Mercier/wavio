@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -25,7 +25,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
-import { openJukeboxSheet } from "@/components/player/jukeboxSheetController";
+import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
@@ -50,6 +50,7 @@ import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
+import useUpnp from "@/stores/upnp";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
@@ -89,6 +90,11 @@ export default function FloatingPlayer() {
   ]) as string[];
   const capabilities = useCapabilities();
   const jukeboxActive = useJukebox((s) => s.active);
+  const upnpConnected = useUpnp((s) => s.connected);
+  const playingRemotely = jukeboxActive || upnpConnected;
+  // The sheet is worth opening when there is any output to pick between, not
+  // only when the server happens to have a jukebox.
+  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
@@ -444,17 +450,17 @@ export default function FloatingPlayer() {
             )}
           </HStack>
           <HStack className="items-center justify-between">
-            {capabilities.jukebox && !isRadio && !isPodcast ? (
+            {hasOutputs && !isRadio && !isPodcast ? (
               <Pressable
                 hitSlop={8}
                 disabled={!isOnline}
                 style={{ opacity: isOnline ? 1 : 0.6 }}
                 onPress={(e) => {
                   e.stopPropagation?.();
-                  openJukeboxSheet();
+                  openOutputSheet();
                 }}
               >
-                <Speaker size={20} color={jukeboxActive ? emerald500 : white} />
+                <Cast size={20} color={playingRemotely ? emerald500 : white} />
               </Pressable>
             ) : (
               <Box className="w-5" />
@@ -549,19 +555,19 @@ export default function FloatingPlayer() {
               </Animated.View>
             </HStack>
             <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-              {capabilities.jukebox && !isRadio && !isPodcast && (
+              {hasOutputs && !isRadio && !isPodcast && (
                 <Pressable
                   hitSlop={12}
                   disabled={!isOnline}
                   style={{ opacity: isOnline ? 1 : 0.6 }}
                   onPress={(e) => {
                     e.stopPropagation?.();
-                    openJukeboxSheet();
+                    openOutputSheet();
                   }}
                 >
-                  <Speaker
+                  <Cast
                     size={24}
-                    color={jukeboxActive ? emerald500 : white}
+                    color={playingRemotely ? emerald500 : white}
                   />
                 </Pressable>
               )}

@@ -1,14 +1,15 @@
-import { type QueryKey, useQueryClient } from "@tanstack/react-query";
+import {
+  hashKey,
+  type QueryClient,
+  type QueryKey,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import {
   getIsCacheRestoring,
   subscribeCacheRestoring,
 } from "@/config/queryClient";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import {
-  getIsEffectivelyOnline,
-  subscribeEffectiveOnline,
-} from "@/services/network";
 import { collectionCreditsArtist } from "@/services/offline/collections";
 import type {
   AlbumWithSongsID3,
@@ -22,6 +23,27 @@ import useOffline from "@/stores/offline";
 // (useCollectionDownload).
 
 type CollectionKind = "album" | "playlist";
+
+const noopUnsubscribe = () => {};
+
+function useIsCacheRestoring(): boolean {
+  return useSyncExternalStore(subscribeCacheRestoring, getIsCacheRestoring);
+}
+
+// Watch one query rather than the whole cache. These hooks run once per list
+// row, so a bare `getQueryCache().subscribe(cb)` means every cache event walks
+// hundreds of listeners and re-reads hundreds of snapshots — on a screen like
+// the home feed, while it's being scrolled. Comparing the event's queryHash
+// first keeps a row asleep unless its own query changed.
+function subscribeToQuery(
+  queryClient: QueryClient,
+  queryHash: string,
+  onChange: () => void,
+): () => void {
+  return queryClient.getQueryCache().subscribe((event) => {
+    if (event.query.queryHash === queryHash) onChange();
+  });
+}
 
 // Per-id reactive check: is this track downloaded for the active server? Returns
 // a boolean so a row re-renders only when ITS OWN track flips, not when any
@@ -52,27 +74,31 @@ export function useHasPlayableTracks(
 // cacheable detail (folders/podcasts) to leave them always enabled.
 export function useIsDetailCached(detailKey: QueryKey | null): boolean {
   const queryClient = useQueryClient();
+  // Online (and while the persisted cache is still restoring) the answer is a
+  // constant `true`, so there is nothing in the query cache worth watching —
+  // these two drive the re-render on their own when the state flips.
+  const isOnline = useIsOnline();
+  const isRestoring = useIsCacheRestoring();
+  const readsCache = detailKey !== null && !isOnline && !isRestoring;
+
+  // detailKey is a fresh array each render, so identity can't be a dependency.
+  // Only hashed on the offline path — this runs on every render of every row.
+  const queryHash = readsCache ? hashKey(detailKey) : "";
 
   const subscribe = useCallback(
-    (cb: () => void) => {
-      const unsubOnline = subscribeEffectiveOnline(cb);
-      const unsubRestoring = subscribeCacheRestoring(cb);
-      const unsubCache = queryClient.getQueryCache().subscribe(cb);
-      return () => {
-        unsubOnline();
-        unsubRestoring();
-        unsubCache();
-      };
-    },
-    [queryClient],
+    (cb: () => void) =>
+      readsCache
+        ? subscribeToQuery(queryClient, queryHash, cb)
+        : noopUnsubscribe,
+    [queryClient, readsCache, queryHash],
   );
 
   const getSnapshot = useCallback(() => {
-    if (detailKey === null) return true;
-    if (getIsEffectivelyOnline() || getIsCacheRestoring()) return true;
-    return queryClient.getQueryData(detailKey) !== undefined;
-    // detailKey is a fresh array each render; depend on its serialized form.
-  }, [queryClient, JSON.stringify(detailKey)]);
+    if (!readsCache) return true;
+    // By hash rather than getQueryData(detailKey) so the key isn't re-hashed on
+    // every read; still "has data", not "has a query" (an errored query has none).
+    return queryClient.getQueryCache().get(queryHash)?.state.data !== undefined;
+  }, [queryClient, readsCache, queryHash]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }
@@ -92,36 +118,51 @@ function allTracksDownloaded(songs: Child[] | null | undefined): boolean {
   return songs.every((song) => song.id in downloadedTracks);
 }
 
-// Reactive: is this collection fully available offline? True when it was
-// explicitly saved for offline (in the store) OR its detail is cached AND every
-// track is downloaded. Drives the downloaded badge on list rows and keeps the
-// row tappable offline even when the detail query isn't cached (e.g. after a
-// logout cleared the React Query cache). Re-renders when either the query cache
-// or the offline store changes.
+// Is this collection fully available offline? True when it was explicitly saved
+// for offline (in the store) OR its detail is cached AND every track is
+// downloaded. The single criterion behind both the downloaded badge on a row
+// and the library's "downloaded" filter — reading only one of the two halves
+// let a row wear the badge while the filter hid it.
+export function isCollectionAvailableOffline(
+  queryClient: QueryClient,
+  kind: CollectionKind,
+  id: string | undefined,
+): boolean {
+  if (!id) return false;
+  if (id in useOffline.getState().downloadedCollections) return true;
+  const data = queryClient.getQueryData([kind, id]);
+  return allTracksDownloaded(songsFromCache(data, kind));
+}
+
+// Reactive wrapper over `isCollectionAvailableOffline`; keeps a row tappable
+// offline even when the detail query isn't cached (e.g. after a logout cleared
+// the React Query cache). Re-renders when either the query cache or the offline
+// store changes.
 export function useIsCollectionAvailableOffline(
   kind: CollectionKind,
   id: string | undefined,
 ): boolean {
   const queryClient = useQueryClient();
+  // The result reads exactly one query ([kind, id]) plus the offline store, so
+  // those are the only two things worth waking this row for.
+  const queryHash = useMemo(() => hashKey([kind, id]), [kind, id]);
 
   const subscribe = useCallback(
     (cb: () => void) => {
-      const unsubCache = queryClient.getQueryCache().subscribe(cb);
+      const unsubCache = subscribeToQuery(queryClient, queryHash, cb);
       const unsubOffline = useOffline.subscribe(cb);
       return () => {
         unsubCache();
         unsubOffline();
       };
     },
-    [queryClient],
+    [queryClient, queryHash],
   );
 
-  const getSnapshot = useCallback(() => {
-    if (!id) return false;
-    if (id in useOffline.getState().downloadedCollections) return true;
-    const data = queryClient.getQueryData([kind, id]);
-    return allTracksDownloaded(songsFromCache(data, kind));
-  }, [queryClient, kind, id]);
+  const getSnapshot = useCallback(
+    () => isCollectionAvailableOffline(queryClient, kind, id),
+    [queryClient, kind, id],
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }
