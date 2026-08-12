@@ -1757,6 +1757,7 @@
 			"shared": {
 				"sort": {
 					"playlistOrder": "Порядок",
+					"default": "По умолчанию",
 					"addedAt": "Недавние",
 					"downloadedAt": "Недавно загруженные",
 					"alphabetical": "По алфавиту",
