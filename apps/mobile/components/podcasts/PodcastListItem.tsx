@@ -1,7 +1,6 @@
 import { fromUnixTime } from "date-fns/fromUnixTime";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { File, Paths } from "expo-file-system";
-import { useRouter } from "expo-router";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
@@ -11,12 +10,15 @@ import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import {
+  EpisodeProgressBar,
+  MarkAsPlayedButton,
+} from "@/components/podcasts/EpisodeProgress";
 import { usePodcastEpisodeActions } from "@/components/podcasts/PodcastEpisodeActionsProvider";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -32,6 +34,7 @@ import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
+import { taddyEpisodeToTrack } from "@/utils/podcastEpisodeToTrack";
 import { cn } from "@/utils/tailwind";
 
 interface PodcastListItemProps {
@@ -40,22 +43,6 @@ interface PodcastListItemProps {
   seriesName?: string;
   isFavorite?: boolean;
   episodes?: PodcastEpisode[];
-}
-
-function episodeToTrack(episode: PodcastEpisode, fallbackSeriesName?: string) {
-  return {
-    id: episode.uuid,
-    url: episode.audioUrl,
-    title: episode.name,
-    artist: fallbackSeriesName || episode?.podcastSeries?.name,
-    artwork: episode.imageUrl,
-    duration: episode.duration,
-    source: "podcast" as const,
-    description: episode.description,
-    websiteUrl: episode.websiteUrl,
-    datePublished: episode.datePublished,
-    podcastSeries: episode.podcastSeries,
-  };
 }
 
 export default function PodcastListItem({
@@ -75,7 +62,6 @@ export default function PodcastListItem({
     "--color-black",
   ]) as string[];
   const { t } = useTranslation();
-  const router = useRouter();
   const toast = useToast();
   const { open: openPodcastActions } = usePodcastEpisodeActions();
 
@@ -99,7 +85,7 @@ export default function PodcastListItem({
       const startIndex = episodes.findIndex((e) => e.uuid === podcast.uuid);
       const tracks = episodes
         .filter((e) => !!e.audioUrl)
-        .map((e) => episodeToTrack(e, seriesName));
+        .map((e) => taddyEpisodeToTrack(e, seriesName));
       const start = Math.max(
         0,
         tracks.findIndex((t) => t.id === podcast.uuid),
@@ -109,7 +95,7 @@ export default function PodcastListItem({
         return;
       }
     }
-    playTracks([episodeToTrack(podcast, seriesName)]);
+    playTracks([taddyEpisodeToTrack(podcast, seriesName)]);
   };
 
   const handleSharePress = async () => {
@@ -173,25 +159,28 @@ export default function PodcastListItem({
     }
   };
 
+  // The row's own press feedback comes from FadeOutScaleDown, same as every
+  // other tappable surface in the app — without it nothing said the row opened
+  // anything. The controls inside it are Pressables of their own, so a tap on
+  // one of them becomes the responder and the row neither animates nor
+  // navigates.
   return (
-    <Pressable
-      onPress={() =>
-        router.navigate({
-          pathname: "/podcasts/[id]",
-          params: {
-            id: podcast.uuid,
-            uuid: podcast.uuid,
-            name: podcast.name,
-            description: podcast.description,
-            imageUrl: podcast.imageUrl,
-            datePublished: podcast.datePublished,
-            duration: podcast.duration,
-            audioUrl: podcast.audioUrl,
-            websiteUrl: podcast.websiteUrl,
-            podcastSeries: JSON.stringify(podcast.podcastSeries),
-          },
-        })
-      }
+    <FadeOutScaleDown
+      href={{
+        pathname: "/podcasts/[id]",
+        params: {
+          id: podcast.uuid,
+          uuid: podcast.uuid,
+          name: podcast.name,
+          description: podcast.description,
+          imageUrl: podcast.imageUrl,
+          datePublished: podcast.datePublished,
+          duration: podcast.duration,
+          audioUrl: podcast.audioUrl,
+          websiteUrl: podcast.websiteUrl,
+          podcastSeries: JSON.stringify(podcast.podcastSeries),
+        },
+      }}
       className="px-6"
     >
       <VStack
@@ -234,6 +223,7 @@ export default function PodcastListItem({
         </Text>
         <HStack className="items-center justify-between mb-4">
           <HStack className="items-center gap-x-4">
+            <MarkAsPlayedButton id={podcast.uuid} />
             <FadeOutScaleDown onPress={handleSharePress}>
               <Share2 size={24} color={white} />
             </FadeOutScaleDown>
@@ -241,17 +231,20 @@ export default function PodcastListItem({
               <EllipsisVertical size={24} color={white} />
             </FadeOutScaleDown>
           </HStack>
-          <PlayPauseButton
-            isPlaying={isCurrent && isPlaying}
-            onPress={handlePlayPress}
-            disabled={!isCurrent && !isDeviceOnline}
-            size={40}
-            iconSize={20}
-            color={black}
-            className="bg-white"
-          />
+          <HStack className="items-center gap-x-3">
+            <EpisodeProgressBar id={podcast.uuid} />
+            <PlayPauseButton
+              isPlaying={isCurrent && isPlaying}
+              onPress={handlePlayPress}
+              disabled={!isCurrent && !isDeviceOnline}
+              size={40}
+              iconSize={20}
+              color={black}
+              className="bg-white"
+            />
+          </HStack>
         </HStack>
       </VStack>
-    </Pressable>
+    </FadeOutScaleDown>
   );
 }

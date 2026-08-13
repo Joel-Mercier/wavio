@@ -4,12 +4,9 @@ import {
 } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
-import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import CircleCheckBig from "lucide-react-native/dist/esm/icons/circle-check-big.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
 import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
@@ -29,7 +26,7 @@ import CollapsibleTabs, {
 } from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
-import PlayPauseButton from "@/components/PlayPauseButton";
+import PodcastEpisodeRow from "@/components/podcasts/PodcastEpisodeRow";
 import RichText from "@/components/RichText";
 import {
   AlertDialog,
@@ -55,16 +52,9 @@ import {
   useDeletePodcastEpisode,
   useGetPodcasts,
 } from "@/hooks/backend/usePodcasts";
-import {
-  useDownloadProgress,
-  useIsTrackAvailableOffline,
-} from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import useImageColors from "@/hooks/useImageColors";
-import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
-import { offlineDownloadService } from "@/services/offline";
 import type {
   PodcastChannel,
   PodcastEpisode,
@@ -73,7 +63,6 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import { artworkUrl } from "@/utils/artwork";
-import { formatDistanceToNow } from "@/utils/date";
 import { goBackOrHome } from "@/utils/navigation";
 import {
   isPlayablePodcastEpisode,
@@ -393,10 +382,22 @@ export default function ServerPodcastChannelScreen() {
           episode={item}
           seriesName={title}
           channelCoverArt={channelArtwork.coverArt}
+          channelImageUrl={image}
           isCurrent={playingTrack?.id === item.id}
           isPlaying={playingTrack?.id === item.id && isPlaying}
           onPlayPress={() => handlePlayEpisode(item)}
           onDeletePress={() => setEpisodePendingDelete(item)}
+          onPress={() =>
+            router.navigate({
+              pathname: "/podcast-episodes/[id]",
+              params: {
+                id: item.id,
+                channelId: id,
+                title: item.title,
+                imageUrl: image,
+              },
+            })
+          }
         />
       )}
       ListEmptyComponent={() =>
@@ -629,141 +630,5 @@ export default function ServerPodcastChannelScreen() {
         </AlertDialogContent>
       </AlertDialog>
     </Box>
-  );
-}
-
-function PodcastEpisodeRow({
-  episode,
-  seriesName,
-  channelCoverArt,
-  isCurrent,
-  isPlaying,
-  onPlayPress,
-  onDeletePress,
-}: {
-  episode: PodcastEpisode;
-  seriesName: string;
-  channelCoverArt?: string;
-  isCurrent: boolean;
-  isPlaying: boolean;
-  onPlayPress: () => void;
-  onDeletePress: () => void;
-}) {
-  const [white, black, emerald] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-black",
-    "--color-emerald-500",
-  ]) as string[];
-  const { t } = useTranslation();
-  const toast = useToast();
-  const playable = isPlayablePodcastEpisode(episode);
-
-  // Self-hosted (local) episodes stream from a remote enclosure URL and can be
-  // downloaded on-device for offline playback through the shared offline
-  // pipeline. The episode id encodes that URL (see services/local/keys.ts), so
-  // its presence is the precise "downloadable on this device" signal.
-  const downloadable =
-    episode.streamId != null &&
-    parseLocalPodcastEpisodeId(episode.streamId) != null;
-  const isDownloaded = useIsTrackAvailableOffline(episode.id);
-  const isOnline = useIsOnline();
-  const progress = useDownloadProgress(episode.id);
-  const isDownloading =
-    progress?.status === "downloading" || progress?.status === "pending";
-
-  const handleDownloadPress = async () => {
-    try {
-      await offlineDownloadService.downloadTrack({
-        ...episode,
-        artist: episode.artist || seriesName,
-        coverArt: episode.coverArt || channelCoverArt,
-      });
-    } catch {
-      toast.show({
-        placement: "top",
-        duration: 3000,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.podcasts.downloadEpisodeErrorMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
-  };
-
-  const renderDownloadControl = () => {
-    if (!downloadable) return null;
-    if (isDownloaded) {
-      return (
-        <FadeOutScaleDown
-          onPress={() =>
-            offlineDownloadService.removeDownloadedTrack(episode.id)
-          }
-        >
-          <CircleCheckBig size={22} color={emerald} />
-        </FadeOutScaleDown>
-      );
-    }
-    if (isDownloading) {
-      return (
-        <Text className="text-primary-100 text-sm">
-          {`${Math.round(progress?.progress ?? 0)}%`}
-        </Text>
-      );
-    }
-    return (
-      <FadeOutScaleDown onPress={handleDownloadPress}>
-        <Download size={22} color={white} />
-      </FadeOutScaleDown>
-    );
-  };
-
-  return (
-    <VStack className="px-6 my-3 gap-y-2 border-b border-b-primary-400">
-      <Heading className="text-white text-lg" numberOfLines={2}>
-        {episode.title}
-      </Heading>
-      {!!episode.description && (
-        <RichText className="text-primary-100" numberOfLines={2}>
-          {episode.description}
-        </RichText>
-      )}
-      <Text className="text-white">
-        {episode.publishDate &&
-          t("app.podcasts.publishedAt", {
-            distance: formatDistanceToNow(new Date(episode.publishDate)),
-          })}
-        {episode.duration ? ` ⦁ ${secondsToMinutes(episode.duration)} min` : ""}
-      </Text>
-      <HStack className="items-center justify-between mb-4">
-        <HStack className="flex-1 items-center gap-x-4">
-          <FadeOutScaleDown onPress={onDeletePress}>
-            <Trash size={22} color={white} />
-          </FadeOutScaleDown>
-          <Text className="flex-1 text-primary-100" numberOfLines={1}>
-            {playable
-              ? seriesName
-              : t(`app.podcasts.episodeStatus.${episode.status}`)}
-          </Text>
-        </HStack>
-        <HStack className="items-center gap-x-4">
-          {renderDownloadControl()}
-          {playable && (
-            <PlayPauseButton
-              isPlaying={isPlaying}
-              onPress={onPlayPress}
-              disabled={!isCurrent && !isOnline && !isDownloaded}
-              size={40}
-              iconSize={20}
-              color={black}
-              className="bg-white"
-            />
-          )}
-        </HStack>
-      </HStack>
-    </VStack>
   );
 }

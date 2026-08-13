@@ -196,26 +196,39 @@ export function remapMusicFolderSelections(
 }
 
 /**
- * podcasts / radioStations tag each "server" favorite with the scope it came
- * from and filter on it by equality (podcastFavoritesForScope /
- * radioFavoritesForScope). Miss these and every server favorite silently
- * disappears from the UI while still sitting in storage.
+ * podcasts / radioStations tag each "server" favorite — and, in podcasts, each
+ * "server" episode-progress entry — with the scope it came from, and filter on
+ * it by equality (podcastFavoritesForScope / radioFavoritesForScope /
+ * podcastProgressForScope). Miss one and those entries silently disappear from
+ * the UI while still sitting in storage, with no second chance (the migration is
+ * sentinel-guarded).
+ *
+ * Every scope-tagged field of a store must be swept in this *one* call: each
+ * invocation re-reads raw MMKV and returns a whole fresh state object that the
+ * caller applies with setState, so a second call against the same store would
+ * neither see the first's mutation nor preserve it.
  */
 export function remapFavoriteScopes(
   remap: ScopeRemap,
   storeKey: "podcasts" | "radioStations",
-  field: "favoritePodcasts" | "favoriteRadioStations",
+  fields: readonly (
+    | "favoritePodcasts"
+    | "favoriteRadioStations"
+    | "podcastProgress"
+  )[],
 ): Record<string, unknown> | null {
   return rewriteGlobalBlob(storeKey, (state) => {
-    const favorites = state[field] as Array<{ scope?: string }> | undefined;
-    if (!Array.isArray(favorites)) return false;
     let changed = false;
-    for (const fav of favorites) {
-      if (!fav?.scope) continue;
-      const to = remap.get(fav.scope);
-      if (!to) continue;
-      fav.scope = to;
-      changed = true;
+    for (const field of fields) {
+      const entries = state[field] as Array<{ scope?: string }> | undefined;
+      if (!Array.isArray(entries)) continue;
+      for (const entry of entries) {
+        if (!entry?.scope) continue;
+        const to = remap.get(entry.scope);
+        if (!to) continue;
+        entry.scope = to;
+        changed = true;
+      }
     }
     return changed;
   });
@@ -334,12 +347,13 @@ export function migrateStorageScopes(): {
   // rewritten, since that reads the store back from its new key.
   renameScopedKeys(remap);
   const musicFolders = remapMusicFolderSelections(remap);
-  const podcasts = remapFavoriteScopes(remap, "podcasts", "favoritePodcasts");
-  const radioStations = remapFavoriteScopes(
-    remap,
-    "radioStations",
+  const podcasts = remapFavoriteScopes(remap, "podcasts", [
+    "favoritePodcasts",
+    "podcastProgress",
+  ]);
+  const radioStations = remapFavoriteScopes(remap, "radioStations", [
     "favoriteRadioStations",
-  );
+  ]);
   migrateOfflineDownloads(remap);
   migrateLocalLibraryDatabases(remap);
   return { remap, musicFolders, podcasts, radioStations };

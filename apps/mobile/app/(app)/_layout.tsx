@@ -42,6 +42,7 @@ import {
   initPlayQueueSync,
   stopPlayQueueSync,
 } from "@/services/playQueueSync";
+import { flushPodcastProgress } from "@/services/podcastProgress";
 import { loadResumePositions } from "@/services/resumePositions";
 import { rewriteQueueRoutes } from "@/services/routeSwap";
 import useActivity from "@/stores/activity";
@@ -245,11 +246,15 @@ export default function AppLayout() {
     void probeServer();
   }, [isAuthenticated]);
 
-  // Persist the play queue to the server promptly when leaving the app.
+  // Persist the play queue to the server, and the in-flight podcast position to
+  // storage, promptly when leaving the app.
   useEffect(() => {
     if (!isAuthenticated) return;
     const onChange = (status: AppStateStatus) => {
-      if (status === "background" || status === "inactive") flushPlayQueue();
+      if (status === "background" || status === "inactive") {
+        flushPlayQueue();
+        flushPodcastProgress();
+      }
     };
     const sub = AppState.addEventListener("change", onChange);
     return () => sub.remove();

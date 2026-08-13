@@ -38,6 +38,14 @@ import {
 } from "@/services/playbackReport";
 import { stopPlayQueueSync } from "@/services/playQueueSync";
 import {
+  clearPodcastProgress,
+  flushPodcastProgress,
+  getPodcastResumePosition,
+  isPodcastTrack,
+  recordPodcastProgress,
+  resetPodcastProgressRuntime,
+} from "@/services/podcastProgress";
+import {
   armResume,
   clearResumePosition,
   getResumePosition,
@@ -673,7 +681,11 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   // baked into the URL as a Subsonic `timeOffset` (the stream starts there) and
   // the seek arming below is skipped. A seekable source keeps the arm-and-seek
   // resume path.
-  const resumeAt = getResumePosition(track);
+  // Podcasts resume from their own store on every play, not just for the launch
+  // track — see services/podcastProgress.ts for why they can't use bookmarks.
+  const resumeAt = isPodcastTrack(track)
+    ? getPodcastResumePosition(track)
+    : getResumePosition(track);
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
@@ -1014,7 +1026,14 @@ function handlePlaybackStatus(status: AudioStatus) {
     const cur = useQueue.getState().getCurrent();
     if (cur) {
       reportNowPlaying(cur);
-      recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
+      if (isPodcastTrack(cur)) {
+        // status.duration is what makes a feed that declares no duration work.
+        recordPodcastProgress(cur, effectivePosition(status.currentTime ?? 0), {
+          duration: status.duration,
+        });
+      } else {
+        recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
+      }
     }
   } else if (wasPlaying && !status.didJustFinish && !isLoading) {
     // Playback paused (UI, lock-screen or OS control). Report it for the
@@ -1050,6 +1069,12 @@ function handlePlaybackStatus(status: AudioStatus) {
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
     clearResumePosition(previousId);
+    clearPodcastProgress(previousId);
+    // The queue advance below re-fires the queue subscription, whose skip-flush
+    // would otherwise re-create the entry we just cleared. Only matters when the
+    // episode has no known duration (with one, the flush hits the end guard and
+    // clears anyway) — but that is exactly the RSS-feed case.
+    finishedPodcastId = previousId;
     if (
       !playbackReportEnabled() &&
       previousId &&
@@ -1152,6 +1177,12 @@ const appUnsub = useAppBase.subscribe((state, prev) => {
 });
 
 let lastTrackId: string | null = null;
+// The outgoing track itself, not just its id: flushing a podcast position on a
+// skip needs its duration and source discriminator too.
+let lastTrack: QueueTrack | null = null;
+// Set by the didJustFinish handler so the queue advance it triggers doesn't
+// re-record the episode it just cleared.
+let finishedPodcastId: string | null = null;
 let hasHydrated = false;
 // When restoring a queue saved on the server, we want the same "load but don't
 // auto-play" behaviour as cold-start hydration. This flag tells the next queue
@@ -1162,7 +1193,28 @@ const queueUnsub = useQueue.subscribe((state) => {
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;
   if (id !== lastTrackId) {
+    const outgoing = lastTrack;
+    if (
+      outgoing &&
+      outgoing.id !== finishedPodcastId &&
+      isPodcastTrack(outgoing)
+    ) {
+      // The engine still holds the outgoing episode's position — player.replace
+      // happens further down this same callback. A skip is the only way to leave
+      // an episode without reaching didJustFinish, so without this it loses up
+      // to a full throttle window.
+      recordPodcastProgress(
+        outgoing,
+        effectivePosition(player.currentTime ?? 0),
+        {
+          duration: player.duration,
+          force: true,
+        },
+      );
+    }
+    finishedPodcastId = null;
     lastTrackId = id;
+    lastTrack = current;
     if (suppressAutoplayOnce) {
       suppressAutoplayOnce = false;
       resetScrobbleState();
@@ -1222,6 +1274,7 @@ if (
 function hydratePlayerFromQueue() {
   const current = useQueue.getState().getCurrent();
   lastTrackId = current?.id ?? null;
+  lastTrack = current;
   // The restored current track is the only one eligible to resume from its saved
   // position; arm before loading so the resume read below honours it.
   armResume(current?.id ?? null);
@@ -1274,7 +1327,12 @@ export function resetPlayerForScopeChange() {
   }
   hasHydrated = false;
   playbackInitialized = false;
+  // Persist any in-flight podcast position before dropping the outgoing track:
+  // the store is global, so a scope switch must not lose it.
+  flushPodcastProgress();
+  resetPodcastProgressRuntime();
   lastTrackId = null;
+  lastTrack = null;
   pendingResumeId = null;
   if (useQueue.persist.hasHydrated()) {
     hydratePlayerFromQueue();
@@ -1299,7 +1357,9 @@ export function stopPlayback() {
   }
   playbackInitialized = false;
   hasHydrated = false;
+  flushPodcastProgress();
   lastTrackId = null;
+  lastTrack = null;
   pendingResumeId = null;
   useQueue.getState().clearQueue();
 }
@@ -1444,6 +1504,16 @@ export function restoreServerQueue(
   // Explicit null: the server queue carries no "Playing from …" context.
   useQueue.getState().setQueue(tracks, index, null);
   if (positionSeconds > 0) {
+    // setQueue fired the queue subscription synchronously, so loadTrack has
+    // already armed pendingResumeAt from whatever the track's own resume source
+    // says. Arm the restored position over it (as takeOverFromRemote does)
+    // rather than only raw-seeking: the status listener re-applies the armed
+    // value once the media is ready and would otherwise undo this seek.
+    const current = useQueue.getState().getCurrent();
+    if (current) {
+      pendingResumeId = current.id;
+      pendingResumeAt = positionSeconds;
+    }
     try {
       player.seekTo(positionSeconds);
     } catch (error) {
@@ -1522,9 +1592,21 @@ export function pause() {
   // the next throttled tick that may never come once playback stops.
   const current = useQueue.getState().getCurrent();
   if (current) {
-    recordResumePosition(current, effectivePosition(player.currentTime ?? 0), {
-      force: true,
-    });
+    if (isPodcastTrack(current)) {
+      recordPodcastProgress(
+        current,
+        effectivePosition(player.currentTime ?? 0),
+        { duration: player.duration, force: true },
+      );
+    } else {
+      recordResumePosition(
+        current,
+        effectivePosition(player.currentTime ?? 0),
+        {
+          force: true,
+        },
+      );
+    }
   }
   player.pause();
 }

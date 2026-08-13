@@ -14,7 +14,11 @@ jest.mock("@/config/storage", () => {
   };
 });
 
-import { usePodcastsBase } from "@/stores/podcasts";
+import {
+  type PodcastProgressEntry,
+  podcastProgressForScope,
+  usePodcastsBase,
+} from "@/stores/podcasts";
 
 const get = () => usePodcastsBase.getState();
 
@@ -47,6 +51,7 @@ beforeEach(() => {
       taddyPodcastsLanguage: "ENGLISH",
       taddyPodcastsCountry: "UNITED_STATES_OF_AMERICA",
       favoritePodcasts: [],
+      podcastProgress: [],
       lastUsedGenreIndex: 0,
     },
     false,
@@ -198,6 +203,74 @@ describe("podcasts store - server favorites", () => {
   });
 });
 
+describe("podcasts store - episode progress", () => {
+  const entry = (
+    overrides: Partial<PodcastProgressEntry> = {},
+  ): PodcastProgressEntry => ({
+    id: "e1",
+    source: "taddy",
+    position: 100,
+    updatedAt: 1,
+    ...overrides,
+  });
+
+  it("setPodcastProgress upserts by id and hoists to the front", () => {
+    get().setPodcastProgress(entry({ id: "a" }));
+    get().setPodcastProgress(entry({ id: "b" }));
+    get().setPodcastProgress(entry({ id: "a", position: 250 }));
+    const progress = get().podcastProgress;
+    expect(progress.map((e) => e.id)).toEqual(["a", "b"]);
+    expect(progress[0].position).toBe(250);
+  });
+
+  it("setPodcastProgress caps the list at 50 entries, dropping the oldest", () => {
+    for (let i = 0; i < 60; i++) {
+      get().setPodcastProgress(entry({ id: `e${i}` }));
+    }
+    const progress = get().podcastProgress;
+    expect(progress).toHaveLength(50);
+    expect(progress[0].id).toBe("e59");
+    expect(progress.some((e) => e.id === "e9")).toBe(false);
+  });
+
+  it("clearPodcastProgress drops the matching entry", () => {
+    get().setPodcastProgress(entry({ id: "a" }));
+    get().setPodcastProgress(entry({ id: "b" }));
+    get().clearPodcastProgress("a");
+    expect(get().podcastProgress.map((e) => e.id)).toEqual(["b"]);
+  });
+
+  it("clearPodcastProgress on an unknown id keeps the identical array reference", () => {
+    get().setPodcastProgress(entry({ id: "a" }));
+    const before = get().podcastProgress;
+    get().clearPodcastProgress("nope");
+    // Same reference, not merely equal: a fresh array would notify subscribers
+    // and trigger a persist write on every non-podcast track finishing.
+    expect(get().podcastProgress).toBe(before);
+  });
+
+  it("clearAllPodcastProgress empties the list", () => {
+    get().setPodcastProgress(entry({ id: "a" }));
+    get().clearAllPodcastProgress();
+    expect(get().podcastProgress).toEqual([]);
+  });
+
+  it("podcastProgressForScope keeps taddy entries and scope-matching server ones", () => {
+    const entries = [
+      entry({ id: "taddy-1", source: "taddy" }),
+      entry({ id: "srv-a", source: "server", scope: "scope-a" }),
+      entry({ id: "srv-b", source: "server", scope: "scope-b" }),
+    ];
+    expect(
+      podcastProgressForScope(entries, "scope-a").map((e) => e.id),
+    ).toEqual(["taddy-1", "srv-a"]);
+    // No active scope: only the server-independent Taddy entries survive.
+    expect(
+      podcastProgressForScope(entries, undefined).map((e) => e.id),
+    ).toEqual(["taddy-1"]);
+  });
+});
+
 describe("podcasts store - persistence migration", () => {
   it("migrates v0 favorites by backfilling source 'taddy'", async () => {
     const { zustandStorage } = require("@/config/storage");
@@ -222,6 +295,34 @@ describe("podcasts store - persistence migration", () => {
     await usePodcastsBase.persist.rehydrate();
     const fav = get().favoritePodcasts.find((p) => p.uuid === "legacy-1");
     expect(fav?.source).toBe("taddy");
+  });
+
+  it("hydrates a v1 blob with no podcastProgress key to an empty list", async () => {
+    const { zustandStorage } = require("@/config/storage");
+    zustandStorage.setItem(
+      "podcasts",
+      JSON.stringify({
+        version: 1,
+        state: {
+          favoritePodcasts: [
+            {
+              uuid: "existing-1",
+              name: "Existing",
+              imageUrl: "img",
+              authorName: "Author",
+              isFavorite: true,
+              dateAdded: 1,
+              source: "taddy",
+            },
+          ],
+        },
+      }),
+    );
+    await usePodcastsBase.persist.rehydrate();
+    // The default shallow merge keeps the initializer's [] for the missing key,
+    // so no version bump / migration is needed to introduce the field.
+    expect(get().podcastProgress).toEqual([]);
+    expect(get().favoritePodcasts.map((p) => p.uuid)).toEqual(["existing-1"]);
   });
 });
 
