@@ -28,6 +28,11 @@ const isWideLayout = (orientation: Orientation, windowWidth: number) =>
 // server to transcode to that codec via the Subsonic `format=` param.
 export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 
+// Streaming format used on cellular. "same" defers to the Wi-Fi setting, which
+// is what makes a per-network codec opt-in: the default keeps one format
+// everywhere, and only a deliberate pick differs on cellular.
+export type CellularStreamFormat = StreamFormat | "same";
+
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
@@ -141,6 +146,10 @@ interface AppStore {
   setCellularMaxBitRate: (cellularMaxBitRate: number | null) => void;
   streamingFormat: StreamFormat;
   setStreamingFormat: (streamingFormat: StreamFormat) => void;
+  cellularStreamingFormat: CellularStreamFormat;
+  setCellularStreamingFormat: (
+    cellularStreamingFormat: CellularStreamFormat,
+  ) => void;
   downloadsWifiOnly: boolean;
   setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
   // Format offline downloads are stored in, independent of the streaming
@@ -293,6 +302,12 @@ export const useAppBase = create<AppStore>()(
       streamingFormat: "raw",
       setStreamingFormat: (streamingFormat: StreamFormat) => {
         set({ streamingFormat });
+      },
+      cellularStreamingFormat: "same",
+      setCellularStreamingFormat: (
+        cellularStreamingFormat: CellularStreamFormat,
+      ) => {
+        set({ cellularStreamingFormat });
       },
       downloadsWifiOnly: false,
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {

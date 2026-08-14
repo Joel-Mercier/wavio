@@ -21,8 +21,9 @@ describe("getTranscodeInfo", () => {
     });
     expect(info.active).toBe(true);
     expect(info.fromLabel).toBe("FLAC · 1016 kbps");
-    // Format unchanged on a raw downsample; only the bitrate drops.
-    expect(info.toLabel).toBe("FLAC · 128 kbps");
+    // The server picks the codec on a raw downsample (Navidrome downsamples to
+    // its DefaultDownsamplingFormat, not to FLAC), so only the bitrate is shown.
+    expect(info.toLabel).toBe("128 kbps");
   });
 
   it("is inactive when the cap is above the source bitrate", () => {
@@ -81,6 +82,14 @@ describe("getTranscodeInfo", () => {
     expect(info.toLabel).toBe("AAC · 128 kbps");
   });
 
+  it("omits the codec when the server picks it (no rawTranscodeFormat)", () => {
+    const info = getTranscodeInfo(track({ suffix: "m4a", bitRate: 256 }), {
+      streamingFormat: "raw",
+      effectiveMaxBitRate: 128,
+    });
+    expect(info.toLabel).toBe("128 kbps");
+  });
+
   it("ignores rawTranscodeFormat when a non-raw format drives the transcode", () => {
     const info = getTranscodeInfo(track({ suffix: "flac", bitRate: 1016 }), {
       streamingFormat: "opus",
@@ -88,6 +97,20 @@ describe("getTranscodeInfo", () => {
       rawTranscodeFormat: "aac",
     });
     expect(info.toLabel).toBe("OPUS");
+  });
+
+  it("keeps a non-raw format as the target when only the cap forces the transcode", () => {
+    const info = getTranscodeInfo(track({ suffix: "mp3", bitRate: 256 }), {
+      streamingFormat: "mp3",
+      effectiveMaxBitRate: 128,
+      rawTranscodeFormat: "aac",
+      // Jellyfin direct-plays the container, so nothing about the format forces
+      // a transcode — but the cap does, and the URL still asks for AudioCodec=mp3,
+      // so mp3 is what comes back.
+      formatTranscode: false,
+    });
+    expect(info.active).toBe(true);
+    expect(info.toLabel).toBe("MP3 · 128 kbps");
   });
 
   it("targets rawTranscodeFormat on a raw container-forced transcode (formatTranscode override)", () => {

@@ -58,7 +58,7 @@ export interface TranscodeInfo {
 // that codec, and an effective bitrate cap downsamples only when the source
 // bitrate exceeds it. `rawTranscodeFormat` is the codec a format- or
 // bitrate-forced transcode lands on while the format is "raw" (Jellyfin →
-// "aac"); omit it for backends that keep the source codec. `formatTranscode`
+// "aac"); omit it when the server picks the codec itself. `formatTranscode`
 // overrides the default suffix-vs-format comparison for backends whose
 // negotiation isn't format-based (Jellyfin's container accept-lists).
 export function getTranscodeInfo(
@@ -99,13 +99,17 @@ export function getTranscodeInfo(
     return { active: false, fromLabel: null, toLabel: null };
   }
 
-  // A raw-mode format transcode (container not direct-playable) has no target
-  // codec in `streamingFormat`; it lands on `rawTranscodeFormat` like the
-  // bitrate-forced case.
+  // A concrete format is the target whatever forced the transcode: the requested
+  // codec goes out on every stream URL (Subsonic `format=`, Jellyfin
+  // `AudioCodec=`), so a cap-driven transcode of an already-matching source still
+  // comes back in that codec. Only a raw-mode transcode (bitrate-forced, or a
+  // container the backend can't direct-play) has no target codec in
+  // `streamingFormat`; it lands on `rawTranscodeFormat`. Backends that leave the
+  // choice to the server — Subsonic downsamples to its own
+  // DefaultDownsamplingFormat, which the client can't read — pass none, and the
+  // codec segment is dropped rather than wrongly echoing the source one back.
   const targetFormat =
-    formatTranscode && streamingFormat !== "raw"
-      ? streamingFormat
-      : (rawTranscodeFormat ?? format);
+    streamingFormat !== "raw" ? streamingFormat : rawTranscodeFormat;
   // The streamed bitrate is only known when the cap drives the transcode; a
   // format-only change transcodes at the server's default bitrate (unknown), so
   // the segment is omitted.

@@ -447,13 +447,15 @@ function isServerTranscodeBackend(): boolean {
   return type === "opensubsonic" || type === "navidrome" || type === "jellyfin";
 }
 
-// Whether the current source is a server-transcoded stream, which is served
-// without a seekable length so ExoPlayer can't seek within it (a seekTo just
-// restarts it). Such a stream must instead be reloaded at an offset. False for
-// anything played off a local URL (downloaded, radio, podcast) or the on-device
-// library. True when the decode-error fallback forced a transcode, or the
-// streaming settings predict one for this track.
-function isTranscodedStream(track: QueueTrack): boolean {
+// Whether loading this track *now* would give a server-transcoded stream, which
+// is served without a seekable length so ExoPlayer can't seek within it (a
+// seekTo just restarts it). Such a stream must instead be reloaded at an offset.
+// False for anything played off a local URL (downloaded, radio, podcast) or the
+// on-device library. True when the decode-error fallback forced a transcode, or
+// the streaming settings predict one for this track.
+// A prediction, so it only answers for a track that isn't loaded yet — once one
+// is loaded, `isTranscodedStream` reports what its URL actually asked for.
+function predictTranscodedStream(track: QueueTrack): boolean {
   if (track.isRadio || track.source === "podcast") return false;
   if (!isServerTranscodeBackend()) return false;
   if (
@@ -463,6 +465,22 @@ function isTranscodedStream(track: QueueTrack): boolean {
     return false;
   if (transcodeRetriedIds.has(track.id)) return true;
   return trackTranscodeInfo(track).active;
+}
+
+// What the currently loaded stream actually is, recorded when its URL was built.
+// The prediction depends on the network in use (the cellular streaming format
+// and bitrate cap apply only on cellular), so re-deriving it later answers for
+// the network the *seek* happens on, not the one the stream was loaded on:
+// walking from cellular onto Wi-Fi mid-track would otherwise make a transcoded
+// stream look seekable and a scrub restart it from the beginning.
+let loadedTranscode: { trackId: string; active: boolean } | null = null;
+
+// Whether the source now loaded in the engine is a server-transcoded stream.
+// Falls back to the prediction for a track that isn't loaded yet (the resume
+// decision in loadTrack, which runs before the URL exists).
+function isTranscodedStream(track: QueueTrack): boolean {
+  if (loadedTranscode?.trackId === track.id) return loadedTranscode.active;
+  return predictTranscodedStream(track);
 }
 
 // Seconds a transcoded stream was requested to start at (Subsonic `timeOffset`).
@@ -495,27 +513,33 @@ function audioSource(uri: string) {
   };
 }
 
+// `transcoded` says whether the URL just built asks the server for a transcode,
+// which is what makes the stream unseekable — recorded by the caller so a later
+// seek doesn't have to re-derive it against a network that may have changed.
 function resolveTrackUrl(
   track: QueueTrack,
   timeOffset?: number,
 ): {
   url: string;
   isOffline: boolean;
+  transcoded: boolean;
 } {
   // Internet radio streams its own absolute URL — there's no Subsonic
   // /stream?id endpoint for it, and it's never an offline download.
-  if (track.isRadio && track.url) return { url: track.url, isOffline: false };
+  if (track.isRadio && track.url)
+    return { url: track.url, isOffline: false, transcoded: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
   if (downloaded && !streamOverOfflineIds.has(track.id))
-    return { url: downloaded.path, isOffline: true };
+    return { url: downloaded.path, isOffline: true, transcoded: false };
   if (track.source === "podcast" && track.url)
-    return { url: track.url, isOffline: false };
+    return { url: track.url, isOffline: false, transcoded: false };
   return {
     url: streamUrl(track.id, {
       forceTranscode: transcodeRetriedIds.has(track.id),
       timeOffset,
     }),
     isOffline: false,
+    transcoded: predictTranscodedStream(track),
   };
 }
 
@@ -674,9 +698,13 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     player.pause();
     clearLockScreen(player);
     loadedTrackId = null;
+    loadedTranscode = null;
     return;
   }
   isLoading = true;
+  // Nothing is loaded for this track until the URL below is built, so the resume
+  // decision falls back to the prediction rather than an earlier load's record.
+  loadedTranscode = null;
   // A transcoded stream can't be seeked once loaded, so a saved bookmark is
   // baked into the URL as a Subsonic `timeOffset` (the stream starts there) and
   // the seek arming below is skipped. A seekable source keeps the arm-and-seek
@@ -689,10 +717,11 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
-  const { url, isOffline } = resolveTrackUrl(
+  const { url, isOffline, transcoded } = resolveTrackUrl(
     track,
     transcodeResume ? resumeAt : undefined,
   );
+  loadedTranscode = { trackId: track.id, active: transcoded };
   reportBreadcrumb("player", "load", {
     trackId: track.id,
     source: track.source,
@@ -1700,7 +1729,8 @@ export function skipPrevious(options?: { force?: boolean }) {
 function reloadAtOffset(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
   streamStartOffset = Math.max(0, seconds);
-  const { url } = resolveTrackUrl(track, streamStartOffset);
+  const { url, transcoded } = resolveTrackUrl(track, streamStartOffset);
+  loadedTranscode = { trackId: track.id, active: transcoded };
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);

@@ -13,7 +13,10 @@ import {
   parseLocalPodcastEpisodeId,
   parseLocalTrackId,
 } from "@/services/local/keys";
-import { getEffectiveMaxBitRate } from "@/services/network";
+import {
+  getEffectiveMaxBitRate,
+  getEffectiveStreamingFormat,
+} from "@/services/network";
 import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
 import type { Child } from "@/services/openSubsonic/types";
 import { type StreamFormat, useAppBase } from "@/stores/app";
@@ -34,15 +37,27 @@ function isJellyfin(): boolean {
 // transcoding config.
 const FALLBACK_TRANSCODE_FORMAT = "opus";
 
+// Streaming format for the current network: the cellular pick when there is one
+// and the device is on cellular, the Wi-Fi one otherwise.
+function activeStreamingFormat(): StreamFormat {
+  const { streamingFormat, cellularStreamingFormat } = useAppBase.getState();
+  return getEffectiveStreamingFormat(streamingFormat, cellularStreamingFormat);
+}
+
 // Subsonic transcoding query (`&format=…&maxBitRate=…`) shared by the stream
-// endpoints. `format=raw` is omitted entirely so the server streams the source
-// untouched. `forceTranscode` overrides a "raw" preference with a known-good
-// codec — used to recover from a device that can't decode the source.
+// endpoints. A "raw" format omits the param entirely rather than sending
+// `format=raw`, and the difference matters: Navidrome answers `format=raw` with
+// the untouched source and ignores `maxBitRate`, while an absent format lets a
+// bitrate cap downsample to the server's own DefaultDownsamplingFormat. Omitting
+// it is what makes "original on Wi-Fi, capped on cellular" work at all.
+// `forceTranscode` overrides a "raw" preference with a known-good codec — used
+// to recover from a device that can't decode the source.
 function transcodeParams(forceTranscode: boolean): string {
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
-  const format = forceTranscode ? FALLBACK_TRANSCODE_FORMAT : streamingFormat;
+  const format = forceTranscode
+    ? FALLBACK_TRANSCODE_FORMAT
+    : activeStreamingFormat();
   const parts: string[] = [];
   if (format && format !== "raw") parts.push(`format=${format}`);
   if (effective) parts.push(`maxBitRate=${effective}`);
@@ -151,12 +166,12 @@ export function trackTranscodeInfo(track: QueueTrack | null): TranscodeInfo {
     toLabel: null,
   };
   if (!track) return inactive;
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effectiveMaxBitRate = getEffectiveMaxBitRate(
     maxBitRate,
     cellularMaxBitRate,
   );
+  const streamingFormat = activeStreamingFormat();
   if (isJellyfin()) {
     return getTranscodeInfo(track, {
       streamingFormat,

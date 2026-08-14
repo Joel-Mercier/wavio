@@ -23,7 +23,10 @@ import {
 } from "@/services/equalizer";
 import { clearWaveformMemory } from "@/services/waveform";
 import { clearWaveforms } from "@/services/waveform/cache";
-import useApp, { type StreamFormat } from "@/stores/app";
+import useApp, {
+  type CellularStreamFormat,
+  type StreamFormat,
+} from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 
 const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
@@ -34,6 +37,12 @@ const streamingFormatOptions: StreamFormat[] = [
   "opus",
   "mp3",
   "aac",
+];
+
+// "same" first: the default, and the option that keeps one format everywhere.
+const cellularStreamingFormatOptions: CellularStreamFormat[] = [
+  "same",
+  ...streamingFormatOptions,
 ];
 
 const replayGainOptions: ("off" | "track" | "album")[] = [
@@ -65,6 +74,8 @@ export default function PlaybackAudioSection() {
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetCellularBitRateModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetStreamingFormatModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetCellularStreamingFormatModalRef =
+    useRef<BottomSheetModal>(null);
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
@@ -75,6 +86,12 @@ export default function PlaybackAudioSection() {
   const setCellularMaxBitRate = useApp((store) => store.setCellularMaxBitRate);
   const streamingFormat = useApp((store) => store.streamingFormat);
   const setStreamingFormat = useApp((store) => store.setStreamingFormat);
+  const cellularStreamingFormat = useApp(
+    (store) => store.cellularStreamingFormat,
+  );
+  const setCellularStreamingFormat = useApp(
+    (store) => store.setCellularStreamingFormat,
+  );
   const replayGainMode = useApp((store) => store.replayGainMode);
   const setReplayGainMode = useApp((store) => store.setReplayGainMode);
   const replayGainPreampDb = useApp((store) => store.replayGainPreampDb);
@@ -225,6 +242,24 @@ export default function PlaybackAudioSection() {
             dismissOnSelect
           />
           <OptionsBottomSheetModal
+            modalRef={bottomSheetCellularStreamingFormatModalRef}
+            header={t(
+              "app.settings.streamingSettings.cellularStreamingFormatLabel",
+            )}
+            headerDescription={t(
+              "app.settings.streamingSettings.cellularStreamingFormatDescription",
+            )}
+            options={cellularStreamingFormatOptions.map((option) => ({
+              value: option,
+              label: t(
+                `app.settings.streamingSettings.streamingFormatOptions.${option}`,
+              ),
+            }))}
+            selectedValue={cellularStreamingFormat}
+            onSelect={setCellularStreamingFormat}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
             modalRef={bottomSheetReplayGainModalRef}
             header={t("app.settings.streamingSettings.replayGainLabel")}
             headerDescription={t(
@@ -348,18 +383,34 @@ export default function PlaybackAudioSection() {
           </>
         )}
         {capabilities.streamFormatSelection && (
-          <SettingsSelectRow
-            label={t("app.settings.streamingSettings.streamingFormatLabel")}
-            description={t(
-              "app.settings.streamingSettings.streamingFormatDescription",
-            )}
-            badgeText={t(
-              `app.settings.streamingSettings.streamingFormatOptions.${streamingFormat}`,
-            )}
-            onPress={() =>
-              bottomSheetStreamingFormatModalRef.current?.present()
-            }
-          />
+          <>
+            <SettingsSelectRow
+              label={t("app.settings.streamingSettings.streamingFormatLabel")}
+              description={t(
+                "app.settings.streamingSettings.streamingFormatDescription",
+              )}
+              badgeText={t(
+                `app.settings.streamingSettings.streamingFormatOptions.${streamingFormat}`,
+              )}
+              onPress={() =>
+                bottomSheetStreamingFormatModalRef.current?.present()
+              }
+            />
+            <SettingsSelectRow
+              label={t(
+                "app.settings.streamingSettings.cellularStreamingFormatLabel",
+              )}
+              description={t(
+                "app.settings.streamingSettings.cellularStreamingFormatDescription",
+              )}
+              badgeText={t(
+                `app.settings.streamingSettings.streamingFormatOptions.${cellularStreamingFormat}`,
+              )}
+              onPress={() =>
+                bottomSheetCellularStreamingFormatModalRef.current?.present()
+              }
+            />
+          </>
         )}
         {capabilities.replayGain && (
           <SettingsSelectRow

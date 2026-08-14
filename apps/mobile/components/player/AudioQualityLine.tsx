@@ -178,6 +178,7 @@ export default function AudioQualityLine({
   // the prediction must recompute when streaming settings change or on a
   // WiFi↔cellular handoff.
   useApp((s) => s.streamingFormat);
+  useApp((s) => s.cellularStreamingFormat);
   useApp((s) => s.maxBitRate);
   useApp((s) => s.cellularMaxBitRate);
   useConnectionType();
