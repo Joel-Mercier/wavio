@@ -37,12 +37,16 @@ class WavioCarBrowserService : MediaLibraryService() {
     session = MediaLibrarySession.Builder(this, player, LibraryCallback())
       .setId("WavioCarBrowserSession")
       .build()
+      .also { activeSession = it }
+    CarAutoLog.d("browser service created")
   }
 
   override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
   override fun onDestroy() {
+    CarAutoLog.d("browser service destroyed")
     if (activePlayer === jsPlayer) activePlayer = null
+    if (activeSession === session) activeSession = null
     session?.run { player.release(); release() }
     session = null
     jsPlayer = null
@@ -58,6 +62,7 @@ class WavioCarBrowserService : MediaLibraryService() {
       // A car host opening our browse tree is the earliest reliable signal that
       // the user is about to play something. Start the JS runtime now so it is
       // warm by the time they tap, instead of paying the boot on the tap itself.
+      CarAutoLog.d("onGetLibraryRoot by ${browser.packageName}")
       if (browser.packageName in CAR_HOST_PACKAGES) {
         ReactHostBoot.ensureJsRuntime(applicationContext)
       }
@@ -87,6 +92,29 @@ class WavioCarBrowserService : MediaLibraryService() {
       return Futures.immediateFuture(LibraryResult.ofItem(root, params))
     }
 
+    /**
+     * Accept the browser's subscription and immediately tell it how many
+     * children the parent has.
+     *
+     * `notifyChildrenChanged` only reaches browsers the session considers
+     * subscribed, so this is the hook the whole "push a new tree and have the
+     * open screen update" path hangs off. Answering here also covers the cold
+     * case directly: the host subscribes to a parent we could only answer with
+     * an empty list (JS hadn't built the tree yet), and the notify that follows
+     * the first push is what fills it in.
+     */
+    override fun onSubscribe(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      parentId: String,
+      params: LibraryParams?,
+    ): ListenableFuture<LibraryResult<Void>> {
+      val count = BrowseTreeCache.childCount(parentId)
+      CarAutoLog.d("onSubscribe $parentId count=$count by ${browser.packageName}")
+      session.notifyChildrenChanged(browser, parentId, count, params)
+      return Futures.immediateFuture(LibraryResult.ofVoid())
+    }
+
     override fun onGetItem(
       session: MediaLibrarySession,
       browser: MediaSession.ControllerInfo,
@@ -111,6 +139,9 @@ class WavioCarBrowserService : MediaLibraryService() {
       // requested page bounds each transaction; Android Auto pages through with
       // a sane pageSize, then stops when a short page comes back.
       val all = BrowseTreeCache.getChildren(parentId)
+      CarAutoLog.d(
+        "onGetChildren $parentId page=$page/$pageSize of ${all.size} by ${browser.packageName}",
+      )
       val from = page.toLong() * pageSize.toLong()
       if (from >= all.size) {
         return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
@@ -212,6 +243,12 @@ class WavioCarBrowserService : MediaLibraryService() {
     @Volatile var activePlayer: JsProxyPlayer? = null
       private set
 
+    // Held so a tree pushed from JS can tell subscribed browsers to re-read the
+    // parents that changed — without it a new tree only reaches the car when the
+    // user navigates, which never happens for the screen they are already on.
+    @Volatile var activeSession: MediaLibrarySession? = null
+      private set
+
     // Controllers we treat as "the user is in the car". Other binders (system
     // media resumption, assistants) still work — their first play just pays the
     // runtime boot — but they don't get to spin up JS merely by browsing.
@@ -246,7 +283,7 @@ private fun BrowseNode.toMediaItem(): MediaItem {
       else MediaMetadata.MEDIA_TYPE_FOLDER_MIXED,
     )
     .setExtras(extras)
-  CarArtwork.apply(builder, artworkUrl)
+  CarArtwork.apply(builder, localArtworkUrl, artworkUrl)
   return MediaItem.Builder()
     .setMediaId(id)
     .setMediaMetadata(builder.build())

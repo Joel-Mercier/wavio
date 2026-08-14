@@ -1,5 +1,7 @@
 package expo.modules.carauto
 
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
@@ -10,6 +12,8 @@ import org.json.JSONObject
 
 @OptIn(UnstableApi::class)
 class CarAutoModule : Module() {
+  private val mainHandler = Handler(Looper.getMainLooper())
+
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
@@ -34,10 +38,15 @@ class CarAutoModule : Module() {
       markJsReady()
     }
 
+    Function("setVerbose") { enabled: Boolean ->
+      CarAutoLog.verbose = enabled
+    }
+
     Function("setNodes") { json: String ->
       val context = appContext.reactContext ?: return@Function
-      BrowseTreeCache.setFromJson(context, json)
-      CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()}")
+      val changed = BrowseTreeCache.setFromJson(context, json)
+      CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()} changed=${changed.size}")
+      this@CarAutoModule.notifyChildrenChanged(changed)
     }
 
     Function("setNowPlaying") { json: String? ->
@@ -89,6 +98,34 @@ class CarAutoModule : Module() {
       }
       player.applyPlaybackState(isPlaying, posMs, shuf, repeat)
     }
+  }
+
+  /**
+   * Tell subscribed browsers to re-read the parents a freshly pushed tree
+   * changed. Without this a new tree only reaches the car when the user
+   * navigates somewhere — so the screen they are already looking at (very much
+   * including the top-level list a cold session opens on) keeps rendering the
+   * children it fetched before JS had even built the tree, artwork and all.
+   *
+   * media3 requires session calls on the application thread; `setNodes` arrives
+   * on the JS thread. Same hop as JsProxyPlayer's `runOnMain`.
+   */
+  private fun notifyChildrenChanged(changed: Map<String, Int>) {
+    if (changed.isEmpty()) return
+    val post = {
+      val session = WavioCarBrowserService.activeSession
+      if (session == null) {
+        CarAutoLog.d("notify skipped: no session (${changed.size} parents)")
+      } else {
+        val browsers = session.connectedControllers.size
+        CarAutoLog.d("notify ${changed.size} parents, $browsers controller(s)")
+        for ((parentId, count) in changed) {
+          runCatching { session.notifyChildrenChanged(parentId, count, null) }
+            .onFailure { CarAutoLog.w("notify failed for $parentId", it) }
+        }
+      }
+    }
+    if (Looper.myLooper() == Looper.getMainLooper()) post() else mainHandler.post(post)
   }
 
   fun emitPlayEvent(mediaId: String, parentId: String? = null) {

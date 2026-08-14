@@ -207,7 +207,9 @@ class JsProxyPlayer(
       .setIsBrowsable(false)
       .setIsPlayable(true)
       .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-    val used = CarArtwork.apply(metadata, artworkUrl, embed)
+    // A single already-resolved value: session.ts hands us the mirrored file when
+    // it has one and the server URL otherwise, so `apply` sorts it out by scheme.
+    val used = CarArtwork.apply(metadata, artworkUrl, embed = embed)
     val mi = MediaItem.Builder()
       .setMediaId(id)
       .setMediaMetadata(metadata.build())
