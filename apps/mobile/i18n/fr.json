@@ -1224,6 +1224,8 @@
 					"title": "Lecture",
 					"endlessPlaybackLabel": "Lecture sans fin",
 					"endlessPlaybackDescription": "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Égaliseur",
 					"equalizerDescription": "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours",
 					"equalizerAction": "Ouvrir",
