@@ -1224,6 +1224,8 @@
 					"title": "Playback",
 					"endlessPlaybackLabel": "Endless playback",
 					"endlessPlaybackDescription": "When the queue ends, automatically add similar tracks to keep the music playing.",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Equalizer",
 					"equalizerDescription": "Open the system equalizer to tune the sound for the current playback session.",
 					"equalizerAction": "Open",

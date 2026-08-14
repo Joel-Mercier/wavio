@@ -102,6 +102,8 @@ export default function PlaybackAudioSection() {
   const setEndlessPlaybackEnabled = useApp(
     (store) => store.setEndlessPlaybackEnabled,
   );
+  const showPlayerRating = useApp((store) => store.showPlayerRating);
+  const setShowPlayerRating = useApp((store) => store.setShowPlayerRating);
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const lyricsSource = useApp((store) => store.lyricsSource);
@@ -331,6 +333,16 @@ export default function PlaybackAudioSection() {
           onToggle={(value) => setLyricsKeepScreenOn(value)}
           disabled={lyricsSource === "off"}
         />
+        {capabilities.setRating && (
+          <SettingsToggleRow
+            label={t("app.settings.playbackSettings.playerRatingLabel")}
+            description={t(
+              "app.settings.playbackSettings.playerRatingDescription",
+            )}
+            value={showPlayerRating}
+            onToggle={(value) => setShowPlayerRating(value)}
+          />
+        )}
         {isAudioWaveformAvailable() && (
           <>
             <SettingsToggleRow

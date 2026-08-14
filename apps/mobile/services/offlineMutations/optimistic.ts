@@ -238,6 +238,7 @@ const applySetRating = (
 ) => {
   const userRating = rating > 0 ? rating : undefined;
   patchSongEverywhere(queryClient, id, { userRating });
+  useQueue.getState().updateTrack(id, { userRating });
   queryClient.setQueriesData<AlbumData>({ queryKey: ["album", id] }, (data) =>
     data?.album ? { ...data, album: { ...data.album, userRating } } : data,
   );
@@ -409,4 +410,16 @@ export function applyOptimistic(
       applyPlaylistDelete(queryClient, action.playlistId);
       break;
   }
+}
+
+// Undoes the optimistic writes that landed outside the query cache, for an
+// action that was dropped without ever reaching the server. The query caches
+// heal themselves through the post-drain invalidation; the queue store is
+// persisted and would otherwise keep the fabricated value across restarts.
+export function revertQueueMirror(action: OfflineAction): void {
+  if (action.type !== "setRating") return;
+  const previous = action.previousRating ?? 0;
+  useQueue.getState().updateTrack(action.id, {
+    userRating: previous > 0 ? previous : undefined,
+  });
 }

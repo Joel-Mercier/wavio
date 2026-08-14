@@ -29,6 +29,7 @@ export function childToTrack(child: Child) {
     bitRate: child.bitRate,
     samplingRate: child.samplingRate,
     starred: child.starred,
+    userRating: child.userRating,
     artistId: child.artistId,
     artists: child.artists,
     albumId: child.albumId,

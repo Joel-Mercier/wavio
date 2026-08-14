@@ -169,6 +169,8 @@ interface AppStore {
   setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  showPlayerRating: boolean;
+  setShowPlayerRating: (enabled: boolean) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -342,6 +344,10 @@ export const useAppBase = create<AppStore>()(
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
+      },
+      showPlayerRating: false,
+      setShowPlayerRating: (showPlayerRating: boolean) => {
+        set({ showPlayerRating });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {

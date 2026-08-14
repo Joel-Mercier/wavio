@@ -36,6 +36,7 @@ import PlayerSheets from "@/components/player/PlayerSheets";
 import PodcastSeekButton from "@/components/player/PodcastSeekButton";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import StarRating from "@/components/StarRating";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
@@ -46,7 +47,11 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -66,6 +71,7 @@ import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
+import { formatAudioQuality } from "@/utils/audioQuality";
 import { isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
@@ -134,6 +140,7 @@ export default function PlayerScreen() {
   const colors = useImageColors(playingArtwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doSetRating = useSetRating();
   const repeatMode = useQueue((store) => store.repeatMode);
   const setRepeatMode = useQueue((store) => store.setRepeatMode);
   const shuffle = useQueue((store) => store.shuffle);
@@ -207,6 +214,12 @@ export default function PlayerScreen() {
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
   const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
+  const showPlayerRating = useApp((s) => s.showPlayerRating);
+  const showRating =
+    showPlayerRating && capabilities.setRating && !isRadio && !isPodcast;
+  // Mirrors AudioQualityLine's own null check so the row (and its bottom
+  // margin) collapses when there is neither a quality line nor a rating.
+  const hasQualityLine = !!formatAudioQuality(playingTrack ?? null);
   const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = isSyncedLyrics(lyrics);
   const coverTranslateX = useSharedValue(0);
@@ -368,6 +381,41 @@ export default function PlayerScreen() {
         },
       },
     );
+  };
+
+  // Returns the mutation promise so StarRating can roll back its optimistic
+  // fill when the save is rejected.
+  const handleRatingChange = async (rating: number) => {
+    if (!playingTrack?.id) return;
+    try {
+      await doSetRating.mutateAsync({ id: playingTrack.id, rating });
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.rateSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.rateErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+      throw error;
+    }
   };
 
   const handleAddFavoritePodcastPress = () => {
@@ -642,7 +690,23 @@ export default function PlayerScreen() {
                   />
                 )}
               </HStack>
-              {!isRadio && <AudioQualityLine track={playingTrack ?? null} />}
+              {!isRadio && (hasQualityLine || showRating) && (
+                <HStack className="items-center justify-between gap-x-3 mb-4">
+                  <Box className="flex-1">
+                    <AudioQualityLine track={playingTrack ?? null} />
+                  </Box>
+                  {showRating && (
+                    <StarRating
+                      testID="player-star-rating"
+                      value={playingTrack?.userRating ?? 0}
+                      onChange={handleRatingChange}
+                      size={18}
+                      spacing={4}
+                      emptyColor="rgba(255,255,255,0.4)"
+                    />
+                  )}
+                </HStack>
+              )}
               {!isRadio && <PlaybackSlider allowWaveform />}
               {isRadio && <Box className="mb-6" />}
               <HStack

@@ -11,6 +11,7 @@ import type {
 import useOfflineMutations, {
   type OfflineAction,
 } from "@/stores/offlineMutations";
+import useQueue from "@/stores/queue";
 
 export type QueuedResult = { queued: true };
 
@@ -62,15 +63,28 @@ const labelForAction = (
   }
 };
 
+// Snapshots the queue store's rating before the optimistic patch overwrites it,
+// so a dropped action can put it back (see revertQueueMirror).
+const withPreviousState = (action: OfflineAction): OfflineAction =>
+  action.type === "setRating"
+    ? {
+        ...action,
+        previousRating:
+          useQueue.getState().queue.find((t) => t.id === action.id)
+            ?.userRating ?? 0,
+      }
+    : action;
+
 // Records an action taken while the server is unreachable: stores it for
 // replay and patches the query cache so the UI reflects it immediately.
 export function enqueueOfflineMutation(
   queryClient: QueryClient,
   action: OfflineAction,
 ): QueuedResult {
+  const stored = withPreviousState(action);
   useOfflineMutations
     .getState()
-    .enqueue(action, labelForAction(queryClient, action));
-  applyOptimistic(queryClient, action);
+    .enqueue(stored, labelForAction(queryClient, stored));
+  applyOptimistic(queryClient, stored);
   return { queued: true };
 }

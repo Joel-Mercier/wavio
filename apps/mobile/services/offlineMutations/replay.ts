@@ -15,6 +15,7 @@ import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { revertQueueMirror } from "@/services/offlineMutations/optimistic";
 import { isSubsonicDataNotFound } from "@/services/openSubsonic";
 import { useAuthBase } from "@/stores/auth";
 import { isIdMigrationFrozen } from "@/stores/librarySync";
@@ -224,6 +225,7 @@ export async function drainOfflineMutations(): Promise<void> {
             useOfflineMutations.getState().removeForPlaylist(playlistId);
           } else {
             useOfflineMutations.getState().remove([item.id]);
+            revertQueueMirror(item.action);
           }
           dropped++;
           if (!isNotFoundError(error)) {
@@ -236,6 +238,7 @@ export async function drainOfflineMutations(): Promise<void> {
           }
         } else if (item.retryCount + 1 >= MAX_ATTEMPTS) {
           useOfflineMutations.getState().remove([item.id]);
+          revertQueueMirror(item.action);
           dropped++;
           reportError(error, {
             area: "api",
@@ -268,7 +271,7 @@ export async function drainOfflineMutations(): Promise<void> {
   // made it to the server, so the caches lie until server truth comes back.
   const keys = [
     ...(processed.star || dropped > 0 ? STARRED_AFFECTED_KEYS : []),
-    ...(processed.rating ? RATING_AFFECTED_KEYS : []),
+    ...(processed.rating || dropped > 0 ? RATING_AFFECTED_KEYS : []),
     ...(processed.playlist || dropped > 0 ? PLAYLIST_AFFECTED_KEYS : []),
   ];
   if (keys.length > 0) {

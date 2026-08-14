@@ -203,7 +203,7 @@ export default function AudioQualityLine({
 
   if (transcode.active && transcode.fromLabel && transcode.toLabel) {
     return (
-      <View className="mb-4">
+      <View>
         <GradientSweepText
           from={transcode.fromLabel}
           to={transcode.toLabel}
@@ -214,7 +214,7 @@ export default function AudioQualityLine({
   }
 
   return (
-    <HStack className="items-center gap-x-2 mb-4">
+    <HStack className="items-center gap-x-2">
       <Text className={LINE_CLASS} numberOfLines={1}>
         {label}
       </Text>
