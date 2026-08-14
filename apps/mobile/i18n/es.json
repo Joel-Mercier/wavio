@@ -1224,6 +1224,8 @@
 					"title": "Reproducción",
 					"endlessPlaybackLabel": "Reproducción sin fin",
 					"endlessPlaybackDescription": "Cuando se acabe la lista de reproducción, añade automáticamente canciones similares para que la música siga sonando.",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Ecualizador",
 					"equalizerDescription": "Abre el ecualizador del sistema para ajustar el sonido de la sesión de reproducción actual.",
 					"equalizerAction": "Abrir",
