@@ -436,7 +436,10 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     <FadeOutScaleDown
                       onPress={() => {
                         handleCloseManageUsersDialog();
-                        router.navigate(`/profile/${u.username}`);
+                        router.navigate({
+                          pathname: "/profile/[username]",
+                          params: { username: u.username },
+                        });
                       }}
                       className="flex-1"
                     >

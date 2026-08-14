@@ -214,7 +214,10 @@ export default function ProfileScreen() {
                     <HStack className="mt-4">
                       <FadeOutScaleDown
                         onPress={() =>
-                          router.navigate(`/profile/${username}/edit`)
+                          router.navigate({
+                            pathname: "/profile/[username]/edit",
+                            params: { username },
+                          })
                         }
                         className="items-center justify-center py-2 px-6 border border-white rounded-full"
                       >

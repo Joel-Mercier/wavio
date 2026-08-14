@@ -152,6 +152,7 @@ export default function PlaylistDetail() {
   // collection so a saved playlist stays browsable after a logout clears the
   // React Query cache.
   const playlistData = serverPlaylistData ?? offlinePlaylistData;
+  const owner = playlistData?.playlist?.owner;
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
   const { data: ndPlaylist } = useSmartPlaylist(hasNavidromeNative ? id : null);
   const isSmartPlaylist = !!ndPlaylist?.rules;
@@ -726,23 +727,24 @@ export default function PlaylistDetail() {
                   </Text>
                 )}
               </VStack>
-              {playlistData?.playlist?.owner && (
+              {owner && (
                 <FadeOutScaleDown
                   onPress={() =>
-                    router.navigate(`/profile/${playlistData?.playlist?.owner}`)
+                    router.navigate({
+                      pathname: "/profile/[username]",
+                      params: { username: owner },
+                    })
                   }
                 >
                   <HStack className="mt-4 mb-2 items-center">
                     <Avatar size="sm" className="bg-primary-400 mr-3 w-8 h-8">
-                      <AvatarFallbackText>
-                        {playlistData?.playlist?.owner}
-                      </AvatarFallbackText>
+                      <AvatarFallbackText>{owner}</AvatarFallbackText>
                     </Avatar>
                     <Text
                       className="text-white text-md font-bold"
                       numberOfLines={1}
                     >
-                      {playlistData?.playlist?.owner}
+                      {owner}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>

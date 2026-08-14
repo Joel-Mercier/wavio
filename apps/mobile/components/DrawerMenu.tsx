@@ -178,7 +178,10 @@ export default function DrawerMenu({ onClose }: DrawerMenuProps) {
             className="flex-row flex-1 items-center"
             onPress={() => {
               onClose();
-              router.navigate(`/profile/${username}`);
+              router.navigate({
+                pathname: "/profile/[username]",
+                params: { username },
+              });
             }}
           >
             <Avatar className="mr-4 bg-primary-400 w-10 h-10">

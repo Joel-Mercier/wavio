@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Heading } from "@/components/ui/heading";
@@ -6,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Genre } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
+import { genreHref } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 interface GenreListItemProps {
@@ -19,8 +21,11 @@ export default function GenreListItem({ genre }: GenreListItemProps) {
     serverType !== "jellyfin" &&
     genre.songCount != null &&
     genre.albumCount != null;
+  // FadeOutScaleDown memoizes its press handler on `href`, so a fresh object
+  // per render would hand every recycled tile a new onPress while scrolling.
+  const href = useMemo(() => genreHref(genre.value), [genre.value]);
   return (
-    <FadeOutScaleDown testID="genre-item" href={`/genres/${genre.value}`}>
+    <FadeOutScaleDown testID="genre-item" href={href}>
       <VStack className="bg-primary-600 p-4 w-full h-full rounded-md">
         <Heading
           size="md"
