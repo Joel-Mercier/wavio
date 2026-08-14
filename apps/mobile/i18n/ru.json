@@ -1252,6 +1252,8 @@
 					"title": "Воспроизведение",
 					"endlessPlaybackLabel": "Музыка нон-стоп",
 					"endlessPlaybackDescription": "Включать что-нибудь похожее, когда контент заканчивается.",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Эквалайзер",
 					"equalizerDescription": "Настроить частоты и улучшить звучание.",
 					"equalizerAction": "Открыть",
