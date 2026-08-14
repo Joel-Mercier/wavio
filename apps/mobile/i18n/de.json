@@ -1224,6 +1224,8 @@
 					"title": "Wiedergabe",
 					"endlessPlaybackLabel": "Endlosschleife",
 					"endlessPlaybackDescription": "Wenn die Wiedergabeliste zu Ende ist, werden automatisch ähnliche Titel hinzugefügt, damit die Musik weiterläuft.",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Equalizer",
 					"equalizerDescription": "Öffne den System-Equalizer, um den Klang für die aktuelle Wiedergabe anzupassen.",
 					"equalizerAction": "Öffnen",
