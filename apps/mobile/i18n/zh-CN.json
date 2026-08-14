@@ -1210,6 +1210,8 @@
 					"title": "播放设置",
 					"endlessPlaybackLabel": "无限播放",
 					"endlessPlaybackDescription": "队列播完后自动添加相似曲目，保持音乐持续播放。",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "均衡器",
 					"equalizerDescription": "打开系统均衡器，调节当前播放的音效。",
 					"equalizerAction": "打开",
