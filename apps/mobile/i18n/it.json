@@ -1224,6 +1224,8 @@
 					"title": "Riproduzione",
 					"endlessPlaybackLabel": "Riproduzione continua",
 					"endlessPlaybackDescription": "Quando la coda finisce, aggiungi automaticamente brani simili per continuare ad ascoltare musica.",
+					"playerRatingLabel": "Star rating in player",
+					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Equalizzatore",
 					"equalizerDescription": "Apri l'equalizzatore di sistema per regolare il suono della riproduzione in corso.",
 					"equalizerAction": "Apri",
