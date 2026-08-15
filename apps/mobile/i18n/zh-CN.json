@@ -819,17 +819,17 @@
 							"action": "重置"
 						},
 						"review": {
-							"title": "待审核（{{count}}）",
-							"confidence": "{{confidence}}% 匹配"
+							"confidence": "{{confidence}}% 匹配",
+							"title_other": "Awaiting review ({{count}})"
 						},
 						"unmatched": {
-							"title": "未找到匹配结果（{{count}}）",
 							"description": "无法识别这些歌曲。对于没有专辑标签的曲目，系统会逐一进行匹配，这需要歌曲名称能够被识别。",
 							"reasons": {
 								"no-album-tag": "没有专辑标签，且无法单独识别出任何曲目",
 								"no-results": "在 MusicBrainz 上未找到相关内容",
 								"low-confidence": "找到了结果，但都没有足够接近，无法作为依据"
-							}
+							},
+							"title_other": "No match found ({{count}})"
 						},
 						"album": {
 							"noMatch": "MusicBrainz 中没有与该专辑匹配的发行记录。",
@@ -1068,7 +1068,6 @@
 					"title": "离线模式",
 					"offlineModeLabel": "启用离线模式",
 					"offlineModeDescription": "下载收藏的曲目以便离线收听",
-					"downloadedTracksCount": "已下载 {{count}}/{{total}} 首 ({{size}})",
 					"clearDownloadsLabel": "清除下载",
 					"clearDownloadsDescription": "从设备中移除所有已下载的曲目",
 					"clearDownloadsSuccessMessage": "已清除所有下载",
@@ -1082,10 +1081,8 @@
 					"downloadsWifiOnlyDescription": "使用移动网络时暂停下载，Wi-Fi 连接后恢复下载。",
 					"trackCacheLabel": "Prefetch upcoming tracks",
 					"trackCacheDescription": "Quietly download the next few tracks in the queue so playback keeps going through patchy reception. These copies are temporary and are replaced as you listen — they are not saved downloads.",
-					"trackCacheUsage": "{{count}} tracks prefetched · {{size}}",
 					"trackCacheCountLabel": "Tracks to prefetch",
 					"trackCacheCountDescription": "How far ahead of what’s playing to fetch. Fewer tracks if they don’t fit the storage limit below.",
-					"trackCacheCountValue": "{{count}} tracks",
 					"trackCacheBudgetLabel": "Prefetch storage limit",
 					"trackCacheBudgetDescription": "Never use more than this. Once it’s full, the least-played tracks are removed first.",
 					"trackCacheBudgetMb": "{{size}} MB",
@@ -1101,15 +1098,10 @@
 					"pendingChangesAction": "查看",
 					"extendedOfflineLabel": "缓存整个库",
 					"extendedOfflineDescription": "逐步下载该服务器上的所有内容，以便整个资源库在离线状态下仍可浏览和播放",
-					"extendedOfflineSyncing": "同步音乐库 — {{count}}/{{total}} 首歌曲 ({{size}})",
-					"extendedOfflineCachingArtwork": "《Caching artwork》—— {{count}}/{{total}} 相关内容",
-					"extendedOfflineComplete": "库已更新 — {{count}} 曲目 ({{size}})",
 					"extendedOfflinePausedOffline": "已暂停 — 无法连接到服务器",
 					"extendedOfflinePausedWifi": "已暂停 — 正在等待 Wi-Fi",
 					"extendedOfflinePausedDisk": "已暂停 — 设备存储空间已几乎用尽",
 					"extendedOfflineSyncError": "同步错误——正在自动重试",
-					"extendedOfflineCompletedToast": "您的书库已完全缓存—— {{count}} 记录了可离线阅读的书籍",
-					"idMigrationCompletedToast": "您的服务器更改了识别曲目的方式—— {{count}} 中的链接已重新设置，您的下载内容完好无损",
 					"extendedOfflineUnsupported": "该服务器不支持完整库同步",
 					"extendedOfflineDisableConfirmTitle": "清除缓存的库？",
 					"extendedOfflineDisableConfirmDescription": "由“库同步”缓存的歌曲和封面将从本设备中删除。您单独保存用于离线收听的专辑、播放列表和歌曲将予以保留。",
@@ -1118,7 +1110,15 @@
 					"downloadFormatDescription": "离线下载文件的存储格式。原始格式保留了服务器上的原始文件；其他格式则经过转码以节省空间。",
 					"downloadBitRateLabel": "下载质量",
 					"downloadBitRateDescription": "转码下载的最高比特率",
-					"pendingChangesDescription_other": "{{count}} 项离线更改等待同步"
+					"downloadedTracksProgress_other": "{{done}}/{{count}} tracks downloaded ({{size}})",
+					"trackCacheUsage_other": "{{count}} tracks prefetched · {{size}}",
+					"trackCacheCountValue_other": "{{count}} 首",
+					"pendingChangesDescription_other": "{{count}} 项离线更改等待同步",
+					"extendedOfflineSyncingProgress_other": "Syncing library — {{done}}/{{count}} tracks ({{size}})",
+					"extendedOfflineArtworkProgress_other": "Caching artwork — {{done}}/{{count}} covers",
+					"extendedOfflineComplete_other": "Library up to date — {{count}} tracks ({{size}})",
+					"extendedOfflineCompletedToast_other": "Your library is fully cached — {{count}} tracks available offline",
+					"idMigrationCompletedToast_other": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact"
 				},
 				"updatesSettings": {
 					"title": "更新",
@@ -1175,7 +1175,6 @@
 					"showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏",
 					"homeSectionsLabel": "主页板块",
 					"homeSectionsDescription": "选择在主页上显示哪些板块",
-					"homeSectionsCount": "已显示 {{count}} 个",
 					"homeSectionsSheetTitle": "主页板块",
 					"homeSectionsSheetDescription": "关闭板块以将其从主页上隐藏",
 					"homeSections": {
@@ -1203,7 +1202,8 @@
 						"rate": "评分",
 						"showInfo": "查看歌曲信息",
 						"addToPlaylist": "加入歌单"
-					}
+					},
+					"homeSectionsCount_other": "{{count}} shown"
 				},
 				"hapticsSettings": {
 					"title": "触感反馈",
@@ -1219,8 +1219,8 @@
 					"countryAutomatic": "自动",
 					"tagsLabel": "流派栏",
 					"tagsDescription": "选择在电台界面中显示哪些流派栏。",
-					"tagsCount": "已选 {{count}} 项",
-					"tagsSheetTitle": "流派栏"
+					"tagsSheetTitle": "流派栏",
+					"tagsCount_other": "已选 {{count}} 项"
 				},
 				"playbackSettings": {
 					"title": "播放设置",
@@ -1611,7 +1611,6 @@
 				"sleepTimer": "睡眠定时",
 				"sleepTimerOff": "关闭",
 				"sleepTimerEndOfTrack": "定时到本曲目结束",
-				"sleepTimerMinutes": "{{count}} 分钟",
 				"sleepTimerActive": "睡眠定时 · {{label}}",
 				"playbackSpeed": "播放速度",
 				"playbackSpeedValue": "{{rate}}×",
@@ -1637,7 +1636,8 @@
 				"outputNoDevices": "未在此网络上找到任何设备",
 				"outputUnverified": "可能无法播放",
 				"outputChromecast": "Chromecast",
-				"outputConnectErrorMessage": "无法播放 {{name}}。"
+				"outputConnectErrorMessage": "无法播放 {{name}}。",
+				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
 			"shares": {
 				"title": "分享",
