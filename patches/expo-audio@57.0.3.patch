@@ -1,6 +1,9 @@
 diff --git a/node_modules/expo-audio/.bun-tag-144718d19ce51a97 b/.bun-tag-144718d19ce51a97
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/expo-audio/.bun-tag-4ad8cac3fedafa00 b/.bun-tag-4ad8cac3fedafa00
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
 index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..b7f72781612d263468f185cce3f9174c869e04a8 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
@@ -146,7 +149,7 @@ index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381
  
  enum class InterruptionMode(val value: String) : Enumerable {
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1af3918e92 100644
+index 196a5d57f887c2667a88543bd2f6a80044a044f2..8c0d273eb98de0da45587164eb0eda747d49d899 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -90,6 +90,8 @@ class AudioControlsService : MediaSessionService() {
@@ -196,7 +199,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
        }
  
        style.setShowActionsInCompactView(*compactViewIndices.toIntArray())
-@@ -240,14 +266,37 @@ class AudioControlsService : MediaSessionService() {
+@@ -240,14 +266,38 @@ class AudioControlsService : MediaSessionService() {
      val session = mediaSession ?: return
      val mediaButtons = mutableListOf<CommandButton>()
  
@@ -205,18 +208,19 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
 +    val showSeekBackward = currentOptions?.showSeekBackward == true
 +    val showSeekForward = currentOptions?.showSeekForward == true
 +
-+    // Add skip previous button (primary back slot). Uses the standard player
-+    // command so this button, the lock screen, Android Auto and hardware/Bluetooth
-+    // media buttons all funnel through the same intercepted seekToPrevious path.
-+    if (showSkipPrevious) {
-+      mediaButtons.add(
-+        CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-+          .setDisplayName("Skip Previous")
-+          .setPlayerCommand(Player.COMMAND_SEEK_TO_PREVIOUS)
-+          .setSlots(CommandButton.SLOT_BACK, CommandButton.SLOT_OVERFLOW)
-+          .build()
-+      )
-+    }
++    // No CommandButton is declared for skip previous/next, and must not be.
++    // Media3 strips ACTION_SKIP_TO_PREVIOUS / ACTION_SKIP_TO_NEXT from the legacy
++    // PlaybackState whenever a media button preference occupies SLOT_BACK /
++    // SLOT_FORWARD, on the assumption that legacy controllers should invoke the
++    // custom action instead. Voice assistants and the Bluetooth AVRCP bridge only
++    // understand the standard actions, so declaring a button there makes the app
++    // look like a player that cannot change track at all. Leaving both slots free
++    // keeps the standard actions advertised, and the system media controls fill
++    // them with the usual previous/next buttons because COMMAND_SEEK_TO_PREVIOUS /
++    // COMMAND_SEEK_TO_NEXT are available on the forwarding player below — which
++    // routes them to the JS-managed queue, same as the removed buttons did.
++    // showSkipPrevious / showSkipNext still gate that capability; they only stop
++    // driving the button layout.
 +
      // Add seek backward button if enabled
 -    if (currentOptions?.showSeekBackward == true) {
@@ -236,7 +240,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
            .build()
        )
      }
-@@ -263,13 +312,30 @@ class AudioControlsService : MediaSessionService() {
+@@ -263,17 +313,25 @@ class AudioControlsService : MediaSessionService() {
      )
  
      // Add seek forward button if enabled
@@ -254,22 +258,17 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
            .setSessionCommand(SessionCommand(ACTION_SEEK_FORWARD, Bundle.EMPTY))
 -          .setSlots(CommandButton.SLOT_FORWARD)
 +          .setSlots(*slot)
-+          .build()
-+      )
-+    }
-+
-+    // Add skip next button (primary forward slot). Standard player command, see
-+    // the skip-previous button above.
-+    if (showSkipNext) {
-+      mediaButtons.add(
-+        CommandButton.Builder(CommandButton.ICON_NEXT)
-+          .setDisplayName("Skip Next")
-+          .setPlayerCommand(Player.COMMAND_SEEK_TO_NEXT)
-+          .setSlots(CommandButton.SLOT_FORWARD, CommandButton.SLOT_OVERFLOW)
            .build()
        )
      }
-@@ -322,15 +388,59 @@ class AudioControlsService : MediaSessionService() {
+ 
++    // Skip next is deliberately absent from the forward slot; see the note above
++    // the seek backward button.
++
+     session.setCustomLayout(mediaButtons)
+     session.setMediaButtonPreferences(mediaButtons)
+   }
+@@ -322,15 +380,59 @@ class AudioControlsService : MediaSessionService() {
  
    private fun resolveSessionPlayer(player: AudioPlayer, options: AudioLockScreenOptions?): Player {
      val isLive = options?.isLiveStream ?: player.isLive
@@ -336,7 +335,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
        }
      }
    }
-@@ -371,7 +481,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -371,7 +473,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -350,7 +349,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
            .build()
  
          // Replace the basic media session with a session connected to our playback service.
-@@ -452,7 +567,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -452,7 +559,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -364,7 +363,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..a7da525967a10af8a2e693e8cc480a1a
            .build()
  
          player.mediaSession.release()
-@@ -558,6 +678,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -558,6 +670,8 @@ class AudioControlsService : MediaSessionService() {
  
      const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
      const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
