@@ -94,15 +94,15 @@ function LibrarySyncStatusLine() {
   if (status === "off") return null;
   const statusText =
     status === "syncing"
-      ? t("app.settings.offlineSettings.extendedOfflineSyncing", {
-          count: downloadedCount,
-          total,
+      ? t("app.settings.offlineSettings.extendedOfflineSyncingProgress", {
+          count: total,
+          done: downloadedCount,
           size: niceBytes(size),
         })
       : status === "cachingArtwork"
-        ? t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
-            count: artworkDone,
-            total: artworkTotal,
+        ? t("app.settings.offlineSettings.extendedOfflineArtworkProgress", {
+            count: artworkTotal,
+            done: artworkDone,
           })
         : status === "upToDate"
           ? t("app.settings.offlineSettings.extendedOfflineComplete", {
@@ -128,9 +128,9 @@ function LibrarySyncStatusLine() {
           track count instead of leaving it invisible. */}
       {artworkPending > 0 && status !== "cachingArtwork" && (
         <Text className="text-emerald-400 text-sm">
-          {t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
-            count: artworkDone,
-            total: artworkTotal,
+          {t("app.settings.offlineSettings.extendedOfflineArtworkProgress", {
+            count: artworkTotal,
+            done: artworkDone,
           })}
         </Text>
       )}
@@ -334,9 +334,9 @@ export default function DownloadsOfflineSection() {
         >
           {offlineModeEnabled && (
             <Text className="text-emerald-400 text-sm">
-              {t("app.settings.offlineSettings.downloadedTracksCount", {
-                count: downloadedTracksCount,
-                total: Math.max(totalTracksToDownload, downloadedTracksCount),
+              {t("app.settings.offlineSettings.downloadedTracksProgress", {
+                count: Math.max(totalTracksToDownload, downloadedTracksCount),
+                done: downloadedTracksCount,
                 size: niceBytes(totalDownloadSize),
               })}
             </Text>
