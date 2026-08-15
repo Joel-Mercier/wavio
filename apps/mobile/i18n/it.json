@@ -829,17 +829,19 @@
 							"action": "Reimposta"
 						},
 						"review": {
-							"title": "In attesa di revisione ({{count}})",
-							"confidence": "{{confidence}}% di corrispondenza"
+							"confidence": "{{confidence}}% di corrispondenza",
+							"title_one": "Awaiting review ({{count}})",
+							"title_other": "Awaiting review ({{count}})"
 						},
 						"unmatched": {
-							"title": "Nessun risultato trovato ({{count}})",
 							"description": "Questi non sono stati identificati. I brani privi del tag “album” vengono invece abbinati uno per uno, il che richiede un titolo riconoscibile.",
 							"reasons": {
 								"no-album-tag": "Non è presente alcun tag relativo all'album e non è stato possibile identificare alcun brano singolarmente",
 								"no-results": "Nessun risultato trovato su MusicBrainz",
 								"low-confidence": "Sono stati trovati dei risultati, ma nessuno abbastanza vicino da essere attendibile"
-							}
+							},
+							"title_one": "No match found ({{count}})",
+							"title_other": "No match found ({{count}})"
 						},
 						"album": {
 							"noMatch": "Nessuna pubblicazione su MusicBrainz corrisponde a questo album.",
@@ -1081,7 +1083,6 @@
 					"title": "Modalità offline",
 					"offlineModeLabel": "Modalità offline",
 					"offlineModeDescription": "Scarica i brani preferiti per ascoltarli offline",
-					"downloadedTracksCount": "{{count}}/{{total}} brani scaricati ({{size}})",
 					"clearDownloadsLabel": "Cancella i download",
 					"clearDownloadsDescription": "Elimina tutti i brani scaricati dal dispositivo",
 					"clearDownloadsSuccessMessage": "Tutti i download sono stati completati con successo",
@@ -1095,10 +1096,8 @@
 					"downloadsWifiOnlyDescription": "Metti in pausa la coda di download quando sei connesso alla rete mobile. La riproduzione riprende automaticamente quando torna la connessione Wi-Fi.",
 					"trackCacheLabel": "Prefetch upcoming tracks",
 					"trackCacheDescription": "Quietly download the next few tracks in the queue so playback keeps going through patchy reception. These copies are temporary and are replaced as you listen — they are not saved downloads.",
-					"trackCacheUsage": "{{count}} tracks prefetched · {{size}}",
 					"trackCacheCountLabel": "Tracks to prefetch",
 					"trackCacheCountDescription": "How far ahead of what’s playing to fetch. Fewer tracks if they don’t fit the storage limit below.",
-					"trackCacheCountValue": "{{count}} tracks",
 					"trackCacheBudgetLabel": "Prefetch storage limit",
 					"trackCacheBudgetDescription": "Never use more than this. Once it’s full, the least-played tracks are removed first.",
 					"trackCacheBudgetMb": "{{size}} MB",
@@ -1114,15 +1113,10 @@
 					"pendingChangesAction": "Visualizza",
 					"extendedOfflineLabel": "Memorizza l'intera libreria nella cache",
 					"extendedOfflineDescription": "Scarica gradualmente tutti i contenuti presenti su questo server, in modo che l'intera libreria rimanga consultabile e riproducibile offline",
-					"extendedOfflineSyncing": "Sincronizzazione della libreria — brani di {{count}}/{{total}} ({{size}})",
-					"extendedOfflineCachingArtwork": "Immagini in cache — {{count}}/{{total}} copertine",
-					"extendedOfflineComplete": "Libreria aggiornata — {{count}} tracce ({{size}})",
 					"extendedOfflinePausedOffline": "In pausa — server non raggiungibile",
 					"extendedOfflinePausedWifi": "In pausa — in attesa della connessione Wi-Fi",
 					"extendedOfflinePausedDisk": "In pausa — lo spazio di archiviazione del dispositivo è quasi pieno",
 					"extendedOfflineSyncError": "Errore di sincronizzazione — si riprova automaticamente",
-					"extendedOfflineCompletedToast": "La tua libreria è completamente memorizzata nella cache — {{count}} tiene traccia dei contenuti disponibili offline",
-					"idMigrationCompletedToast": "Il tuo server ha modificato il metodo di identificazione dei brani — i collegamenti a {{count}} sono stati aggiornati, i tuoi download sono intatti",
 					"extendedOfflineUnsupported": "Questo server non supporta la sincronizzazione completa della libreria",
 					"extendedOfflineDisableConfirmTitle": "Rimuovere la libreria memorizzata nella cache?",
 					"extendedOfflineDisableConfirmDescription": "I brani e le copertine memorizzati nella cache tramite la sincronizzazione della libreria verranno eliminati da questo dispositivo. Gli album, le playlist e i brani salvati singolarmente per l'ascolto offline verranno conservati.",
@@ -1131,8 +1125,24 @@
 					"downloadFormatDescription": "Formato in cui vengono salvati i download offline. L'opzione \"Originale\" conserva il file esatto proveniente dal server; gli altri formati vengono transcodificati per risparmiare spazio.",
 					"downloadBitRateLabel": "Qualità del download",
 					"downloadBitRateDescription": "Bitrate massimo per i download transcodificati",
+					"downloadedTracksProgress_one": "{{done}}/{{count}} track downloaded ({{size}})",
+					"downloadedTracksProgress_other": "{{done}}/{{count}} tracks downloaded ({{size}})",
+					"trackCacheUsage_one": "{{count}} track prefetched · {{size}}",
+					"trackCacheUsage_other": "{{count}} tracks prefetched · {{size}}",
+					"trackCacheCountValue_one": "{{count}} brano",
+					"trackCacheCountValue_other": "{{count}} brani",
 					"pendingChangesDescription_one": "{{count}} modifica effettuata offline in attesa di sincronizzazione",
-					"pendingChangesDescription_other": "{{count}} modifiche apportate offline in attesa di sincronizzazione"
+					"pendingChangesDescription_other": "{{count}} modifiche apportate offline in attesa di sincronizzazione",
+					"extendedOfflineSyncingProgress_one": "Syncing library — {{done}}/{{count}} track ({{size}})",
+					"extendedOfflineSyncingProgress_other": "Syncing library — {{done}}/{{count}} tracks ({{size}})",
+					"extendedOfflineArtworkProgress_one": "Caching artwork — {{done}}/{{count}} cover",
+					"extendedOfflineArtworkProgress_other": "Caching artwork — {{done}}/{{count}} covers",
+					"extendedOfflineComplete_one": "Library up to date — {{count}} track ({{size}})",
+					"extendedOfflineComplete_other": "Library up to date — {{count}} tracks ({{size}})",
+					"extendedOfflineCompletedToast_one": "Your library is fully cached — {{count}} track available offline",
+					"extendedOfflineCompletedToast_other": "Your library is fully cached — {{count}} tracks available offline",
+					"idMigrationCompletedToast_one": "Your server changed how it identifies tracks — {{count}} reference was relinked, your downloads are intact",
+					"idMigrationCompletedToast_other": "Your server changed how it identifies tracks — {{count}} references were relinked, your downloads are intact"
 				},
 				"updatesSettings": {
 					"title": "Aggiornamenti",
@@ -1189,7 +1199,6 @@
 					"showEmptyHomeSectionsDescription": "Mostrare le sezioni della home page prive di contenuto invece di nasconderle",
 					"homeSectionsLabel": "Sezioni della home page",
 					"homeSectionsDescription": "Scegli quali sezioni mostrare nella home page",
-					"homeSectionsCount": "{{count}} mostrate",
 					"homeSectionsSheetTitle": "Sezioni della home page",
 					"homeSectionsSheetDescription": "Disattiva le sezioni per nasconderle dalla home page",
 					"homeSections": {
@@ -1217,7 +1226,9 @@
 						"rate": "Tasso",
 						"showInfo": "Ottieni informazioni",
 						"addToPlaylist": "Aggiungi alla playlist"
-					}
+					},
+					"homeSectionsCount_one": "{{count}} shown",
+					"homeSectionsCount_other": "{{count}} shown"
 				},
 				"hapticsSettings": {
 					"title": "Feedback tattile",
@@ -1233,8 +1244,9 @@
 					"countryAutomatic": "Automatico",
 					"tagsLabel": "Generi",
 					"tagsDescription": "Scegli quali generi musicali visualizzare nella schermata delle stazioni radio.",
-					"tagsCount": "{{count}} selezionato",
-					"tagsSheetTitle": "Generi"
+					"tagsSheetTitle": "Generi",
+					"tagsCount_one": "{{count}} selezionato",
+					"tagsCount_other": "{{count}} selezionato"
 				},
 				"playbackSettings": {
 					"title": "Riproduzione",
@@ -1632,7 +1644,6 @@
 				"sleepTimer": "Timer di spegnimento",
 				"sleepTimerOff": "Spento",
 				"sleepTimerEndOfTrack": "Fine del brano",
-				"sleepTimerMinutes": "{{count}} minuti",
 				"sleepTimerActive": "Timer di spegnimento · {{label}}",
 				"playbackSpeed": "Velocità di riproduzione",
 				"playbackSpeedValue": "{{rate}}×",
@@ -1658,7 +1669,9 @@
 				"outputNoDevices": "Nessun dispositivo rilevato su questa rete",
 				"outputUnverified": "Potrebbe non supportare la riproduzione",
 				"outputChromecast": "Chromecast",
-				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}."
+				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}.",
+				"sleepTimerMinutes_one": "{{count}} minuto",
+				"sleepTimerMinutes_other": "{{count}} minuti"
 			},
 			"shares": {
 				"title": "Condivisioni",
