@@ -30,7 +30,8 @@ import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
-import { formatAudioQuality } from "@/utils/audioQuality";
+import useTrackCache from "@/stores/trackCache";
+import { cachedTranscodeInfo, formatAudioQuality } from "@/utils/audioQuality";
 
 const LINE_CLASS = "text-white/70 text-xs font-medium tracking-wide";
 const SWEEP_DURATION = 2800;
@@ -192,14 +193,25 @@ export default function AudioQualityLine({
   const isDownloaded = useOffline((s) =>
     track ? track.id in s.downloadedTracks : false,
   );
+  // A prefetched copy also plays off disk, but — unlike a download, saved in the
+  // format the user picked — it was fetched under whatever format and cap the
+  // network in force at the time imposed, so whether it is untranscoded is a
+  // question only the file itself can answer. This is a readout of what the
+  // engine is actually doing, not a badge of what the user owns, which is why it
+  // knows about the cache when no other UI does.
+  const cacheEntry = useTrackCache((s) =>
+    track ? (s.entries[track.id] ?? null) : null,
+  );
 
   const label = formatAudioQuality(track);
   if (!label) return null;
 
   const transcode =
-    isRemote && !isDownloaded
-      ? trackTranscodeInfo(track)
-      : { active: false as const, fromLabel: null, toLabel: null };
+    !isRemote || isDownloaded
+      ? { active: false as const, fromLabel: null, toLabel: null }
+      : cacheEntry
+        ? cachedTranscodeInfo(track, cacheEntry)
+        : trackTranscodeInfo(track);
 
   if (transcode.active && transcode.fromLabel && transcode.toLabel) {
     return (

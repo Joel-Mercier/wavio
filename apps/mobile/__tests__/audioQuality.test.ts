@@ -1,5 +1,5 @@
 import type { QueueTrack } from "@/stores/queue";
-import { getTranscodeInfo } from "@/utils/audioQuality";
+import { cachedTranscodeInfo, getTranscodeInfo } from "@/utils/audioQuality";
 
 const track = (extra: Partial<QueueTrack>): QueueTrack =>
   ({ id: "1", url: "http://x", ...extra }) as QueueTrack;
@@ -147,6 +147,70 @@ describe("getTranscodeInfo", () => {
       getTranscodeInfo(
         track({ suffix: "mp3", bitRate: 1000, source: "podcast" }),
         { streamingFormat: "opus", effectiveMaxBitRate: 128 },
+      ).active,
+    ).toBe(false);
+  });
+});
+
+describe("cachedTranscodeInfo", () => {
+  // Bytes a file of `kbps` would occupy over `seconds`, so the measured bitrate
+  // comes back out the other side.
+  const bytesFor = (kbps: number, seconds: number) =>
+    (kbps * 1000 * seconds) / 8;
+
+  const entry = (suffix: string, kbps: number, seconds = 200) => ({
+    suffix,
+    bytes: bytesFor(kbps, seconds),
+  });
+
+  it("is inactive for a byte-exact copy", () => {
+    const info = cachedTranscodeInfo(
+      track({ suffix: "flac", bitRate: 1016, duration: 200 }),
+      entry("flac", 1016),
+    );
+    expect(info.active).toBe(false);
+  });
+
+  it("reports the transcode a cellular prefetch actually applied", () => {
+    // The headline case: predicting from the settings in force now (Wi-Fi, raw)
+    // would call this untranscoded, but the file on disk is opus.
+    const info = cachedTranscodeInfo(
+      track({ suffix: "flac", bitRate: 1016, duration: 200 }),
+      entry("opus", 128),
+    );
+    expect(info.active).toBe(true);
+    expect(info.fromLabel).toBe("FLAC · 1016 kbps");
+    expect(info.toLabel).toBe("OPUS · 128 kbps");
+  });
+
+  it("catches a downsample that kept the container", () => {
+    const info = cachedTranscodeInfo(
+      track({ suffix: "mp3", bitRate: 320, duration: 200 }),
+      entry("mp3", 128),
+    );
+    expect(info.active).toBe(true);
+    expect(info.toLabel).toBe("MP3 · 128 kbps");
+  });
+
+  it("does not call an equivalent container a transcode", () => {
+    // The server names the raw file from its own container, so an m4a source can
+    // come back as .mp4 without a byte having changed.
+    const info = cachedTranscodeInfo(
+      track({ suffix: "m4a", bitRate: 256, duration: 200 }),
+      entry("mp4", 256),
+    );
+    expect(info.active).toBe(false);
+  });
+
+  it("is inactive with no cache entry, or for radio", () => {
+    expect(
+      cachedTranscodeInfo(track({ suffix: "flac", bitRate: 1016 }), null)
+        .active,
+    ).toBe(false);
+    expect(
+      cachedTranscodeInfo(
+        track({ suffix: "flac", bitRate: 1016, duration: 200, isRadio: true }),
+        entry("opus", 128),
       ).active,
     ).toBe(false);
   });

@@ -33,6 +33,17 @@ export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
 // everywhere, and only a deliberate pick differs on cellular.
 export type CellularStreamFormat = StreamFormat | "same";
 
+// How many upcoming queue tracks the prefetch cache pins (issue #163), and the
+// disk ceiling it may never exceed. The budget is the harder rule of the two: if
+// the pinned window doesn't fit, the window truncates rather than the cap
+// stretching, so the number of tracks a user picks is a ceiling and not a
+// promise (a lossless library reaches the cap far sooner than a lossy one).
+export const TRACK_CACHE_COUNTS = [3, 5, 10, 20] as const;
+export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
+
+export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
+export type TrackCacheBudgetMb = (typeof TRACK_CACHE_BUDGETS_MB)[number];
+
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
@@ -159,6 +170,24 @@ interface AppStore {
   setDownloadFormat: (downloadFormat: StreamFormat) => void;
   downloadMaxBitRate: number | null;
   setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => void;
+  // Prefetch cache (issue #163). Speculative copies of upcoming queue tracks,
+  // fetched with the *streaming* settings above so a cached track sounds exactly
+  // like the stream it replaces. Unrelated to offline downloads, which are
+  // user-owned and permanent.
+  trackCacheEnabled: boolean;
+  setTrackCacheEnabled: (trackCacheEnabled: boolean) => void;
+  trackCacheCount: TrackCacheCount;
+  setTrackCacheCount: (trackCacheCount: TrackCacheCount) => void;
+  trackCacheBudgetMb: TrackCacheBudgetMb;
+  setTrackCacheBudgetMb: (trackCacheBudgetMb: TrackCacheBudgetMb) => void;
+  // Own setting rather than reusing downloadsWifiOnly: the reported use case is
+  // driving through poor reception, which is cellular by definition, so someone
+  // restricting permanent downloads to Wi-Fi may well still want prefetch on the
+  // road. Off by default all the same — the cache itself is on, but spending
+  // someone's data plan on speculative downloads is not a decision an update
+  // gets to make for them.
+  trackCacheOnCellular: boolean;
+  setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
   replayGainMode: "off" | "track" | "album";
@@ -322,6 +351,22 @@ export const useAppBase = create<AppStore>()(
       downloadMaxBitRate: null,
       setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => {
         set({ downloadMaxBitRate });
+      },
+      trackCacheEnabled: true,
+      setTrackCacheEnabled: (trackCacheEnabled: boolean) => {
+        set({ trackCacheEnabled });
+      },
+      trackCacheCount: 5,
+      setTrackCacheCount: (trackCacheCount: TrackCacheCount) => {
+        set({ trackCacheCount });
+      },
+      trackCacheBudgetMb: 500,
+      setTrackCacheBudgetMb: (trackCacheBudgetMb: TrackCacheBudgetMb) => {
+        set({ trackCacheBudgetMb });
+      },
+      trackCacheOnCellular: false,
+      setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => {
+        set({ trackCacheOnCellular });
       },
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {

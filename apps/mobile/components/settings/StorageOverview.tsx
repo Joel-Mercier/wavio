@@ -9,6 +9,7 @@ import { getPersistedCacheSize } from "@/config/queryClient";
 import { useTotalDownloadSize } from "@/hooks/offline";
 import { useLocalLibrarySize } from "@/hooks/useLocalLibrarySize";
 import { useAuthBase } from "@/stores/auth";
+import useTrackCache from "@/stores/trackCache";
 import { niceBytes } from "@/utils/fileSize";
 
 // Bumped by the parent after clear-cache / clear-downloads so the bar recomputes
@@ -32,6 +33,9 @@ export default function StorageOverview({
   const isLocal = useAuthBase((s) => s.serverType === "local");
   const downloadsBytes = useTotalDownloadSize();
   const libraryBytes = useLocalLibrarySize();
+  // Reactive, unlike the persisted-query-cache reading below: the prefetch cache
+  // grows and evicts on its own while this screen is open.
+  const prefetchBytes = useTrackCache((s) => s.totalBytes);
 
   const { total, segments } = useMemo(() => {
     // refreshToken participates in the dependency list so the values re-read
@@ -57,7 +61,7 @@ export default function StorageOverview({
         };
     const otherBytes = Math.max(
       0,
-      total - available - firstSegment.bytes - cacheBytes,
+      total - available - firstSegment.bytes - cacheBytes - prefetchBytes,
     );
 
     const segments: Segment[] = [
@@ -67,6 +71,12 @@ export default function StorageOverview({
         label: t("app.settings.storageSettings.cache"),
         bytes: cacheBytes,
         color: "bg-blue-500",
+      },
+      {
+        key: "prefetch",
+        label: t("app.settings.storageSettings.prefetchCache"),
+        bytes: prefetchBytes,
+        color: "bg-amber-500",
       },
       {
         key: "other",
@@ -82,7 +92,7 @@ export default function StorageOverview({
       },
     ];
     return { total, segments };
-  }, [downloadsBytes, libraryBytes, isLocal, refreshToken, t]);
+  }, [downloadsBytes, libraryBytes, prefetchBytes, isLocal, refreshToken, t]);
 
   if (total <= 0) return null;
 

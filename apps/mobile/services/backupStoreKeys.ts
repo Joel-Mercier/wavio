@@ -38,6 +38,7 @@ export const SCOPED_STORE_NAMES = [
   "musicBrainzStore",
   "audioMuseStore",
   "lrclibPicksStore",
+  "trackCacheStore",
 ] as const;
 
 // Scoped stores that must NOT travel in a backup file. The first two hold state
@@ -55,4 +56,8 @@ export const BACKUP_EXCLUDED_SCOPED_STORE_NAMES = [
   "offlineMutations",
   "librarySyncStore",
   "lrclibPicksStore",
+  // The prefetch cache's index points at files in this device's cache directory
+  // — restoring it elsewhere (or later) would claim tracks are cached that
+  // aren't, and every entry is re-derivable from the server anyway.
+  "trackCacheStore",
 ] as const;

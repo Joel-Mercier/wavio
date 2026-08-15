@@ -23,7 +23,11 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-import useQueue, { MAX_QUEUE_TRACKS, peekNextTrack } from "@/stores/queue";
+import useQueue, {
+  MAX_QUEUE_TRACKS,
+  peekNextTrack,
+  peekNextTracks,
+} from "@/stores/queue";
 
 type TestTrack = { id: string; url: string };
 
@@ -617,6 +621,85 @@ describe("queue store - peekNextTrack mirrors next()", () => {
     expect(peekNextTrack()).toBeNull();
     useQueue.setState({ queue: makeTracks(2), currentIndex: null });
     expect(peekNextTrack()).toBeNull();
+  });
+});
+
+describe("queue store - peekNextTracks extends peekNextTrack", () => {
+  // The prefetch cache pins whatever this returns, so a wrong answer caches
+  // tracks that never play and misses the ones that do.
+  const ids = (tracks: { id: string }[]) => tracks.map((t) => t.id);
+
+  test("first element always equals peekNextTrack", () => {
+    get().setQueue(makeTracks(5), 1);
+    get().setRemovePlayed(false);
+    expect(peekNextTracks(3)[0].id).toBe(peekNextTrack()?.id);
+  });
+
+  test("walks forward without repeat and stops at the end", () => {
+    get().setQueue(makeTracks(5), 1);
+    get().setRemovePlayed(false);
+    expect(ids(peekNextTracks(3))).toEqual(["t3", "t4", "t5"]);
+    expect(ids(peekNextTracks(10))).toEqual(["t3", "t4", "t5"]);
+  });
+
+  test("repeat-all wraps past the end", () => {
+    get().setQueue(makeTracks(4), 2);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    expect(ids(peekNextTracks(3))).toEqual(["t4", "t1", "t2"]);
+  });
+
+  test("repeat-all never returns the same track twice", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    const window = ids(peekNextTracks(10));
+    expect(window).toEqual(["t2", "t3", "t1"]);
+    expect(new Set(window).size).toBe(window.length);
+  });
+
+  test("shuffled repeat-all stops at the reshuffle boundary", () => {
+    get().setQueue(makeTracks(3), 1);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setShuffle(true);
+    // Only the one remaining track is predictable; the wrap re-randomises.
+    expect(peekNextTracks(5)).toHaveLength(1);
+  });
+
+  test("repeat-one yields only the current track", () => {
+    get().setQueue(makeTracks(3), 1);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("one");
+    expect(ids(peekNextTracks(4))).toEqual(["t2"]);
+  });
+
+  test("removePlayed walks the shrinking queue", () => {
+    get().setQueue(makeTracks(4), 0);
+    get().setRemovePlayed(true);
+    expect(ids(peekNextTracks(3))).toEqual(["t2", "t3", "t4"]);
+  });
+
+  test("removePlayed at the tail steps backwards, mirroring next()", () => {
+    get().setQueue(makeTracks(3), 2);
+    get().setRemovePlayed(true);
+    const window = ids(peekNextTracks(2));
+    expect(window[0]).toBe(peekNextTrack()?.id);
+    expect(window).toEqual(["t2", "t1"]);
+  });
+
+  test("removePlayed on the last remaining track yields nothing", () => {
+    get().setQueue(makeTracks(1), 0);
+    get().setRemovePlayed(true);
+    expect(peekNextTracks(3)).toEqual([]);
+  });
+
+  test("no queue, no current index, or a zero count yields nothing", () => {
+    expect(peekNextTracks(3)).toEqual([]);
+    useQueue.setState({ queue: makeTracks(3), currentIndex: null });
+    expect(peekNextTracks(3)).toEqual([]);
+    get().setQueue(makeTracks(3), 0);
+    expect(peekNextTracks(0)).toEqual([]);
   });
 });
 

@@ -46,6 +46,7 @@ import useBookmarksBase from "@/stores/bookmarks";
 import { useLidarrBase } from "@/stores/lidarr";
 import useLrclibPicksBase from "@/stores/lrclibPicks";
 import { useSoulSyncBase } from "@/stores/soulsync";
+import { useTrackCacheBase } from "@/stores/trackCache";
 
 // What app/(app)/_layout.tsx does when the active (server, user) scope changes.
 const switchScope = (to: string) => {
@@ -56,12 +57,14 @@ const switchScope = (to: string) => {
     useBookmarksBase.getState().__reset();
     useLrclibPicksBase.getState().__reset();
     useAudioMuseBase.getState().__reset();
+    useTrackCacheBase.getState().__reset();
   });
   useLidarrBase.persist.rehydrate();
   useSoulSyncBase.persist.rehydrate();
   useBookmarksBase.persist.rehydrate();
   useLrclibPicksBase.persist.rehydrate();
   useAudioMuseBase.persist.rehydrate();
+  useTrackCacheBase.persist.rehydrate();
 };
 
 const lrclibRecord = (id: number) => ({
@@ -86,6 +89,15 @@ describe("scoped stores across a server switch", () => {
       .getState()
       .setConfig({ serverUrl: "http://audiomuse.a", apiToken: "TOKEN_A" });
     useAudioMuseBase.getState().setConnected(true);
+    useTrackCacheBase.getState().putEntry({
+      id: "cached-a",
+      path: "file:///cache/a",
+      bytes: 1024,
+      suffix: "mp3",
+      cachedAt: 1,
+      lastPlayedAt: 0,
+      playCount: 0,
+    });
 
     switchScope("serverB_bob");
     expect(useLidarrBase.getState().serverUrl).toBe("");
@@ -96,6 +108,10 @@ describe("scoped stores across a server switch", () => {
     expect(useLrclibPicksBase.getState().picks).toEqual({});
     expect(useAudioMuseBase.getState().serverUrl).toBe("");
     expect(useAudioMuseBase.getState().isConnected).toBe(false);
+    // Server B must never see server A's prefetched tracks — the files are
+    // stored per scope and the ids mean nothing on another server.
+    expect(useTrackCacheBase.getState().entries).toEqual({});
+    expect(useTrackCacheBase.getState().totalBytes).toBe(0);
 
     useBookmarksBase.getState().addBookmark("track-b", 7);
     useLrclibPicksBase.getState().setPick("track-b", lrclibRecord(2));
@@ -113,6 +129,9 @@ describe("scoped stores across a server switch", () => {
     expect(useBookmarksBase.getState().bookmarks["track-b"]).toBeUndefined();
     expect(useLrclibPicksBase.getState().picks["track-a"]?.id).toBe(1);
     expect(useLrclibPicksBase.getState().picks["track-b"]).toBeUndefined();
+    expect(useTrackCacheBase.getState().entries["cached-a"]?.bytes).toBe(1024);
+    // Derived on rehydrate rather than persisted, so it has to come back too.
+    expect(useTrackCacheBase.getState().totalBytes).toBe(1024);
 
     switchScope("serverB_bob");
     expect(useBookmarksBase.getState().bookmarks["track-b"]).toEqual([7]);

@@ -27,6 +27,12 @@ import type {
   AlbumList2,
   Child,
 } from "@/services/openSubsonic/types";
+import {
+  hasTranscodeRetried,
+  mustStreamOverOffline,
+  noteStreamOverOffline,
+  noteTranscodeRetried,
+} from "@/services/playback/decodeFallback";
 import { activeRemoteTarget } from "@/services/playback/targets";
 import {
   notePlaybackRateChanged,
@@ -63,6 +69,11 @@ import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
+import {
+  cachedTrackUri,
+  evictTracks,
+  touchCachedTrack,
+} from "@/services/trackCache";
 import useActivity from "@/stores/activity";
 import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
@@ -410,19 +421,6 @@ function applyPlaybackRate(track: QueueTrack | null) {
   }
 }
 
-// Track ids whose raw stream failed to decode on this device and have since
-// been re-armed to stream through a forced server transcode. Bounded by the
-// queue, and one retry per track keeps a genuinely broken source from looping.
-const transcodeRetriedIds = new Set<string>();
-
-// Track ids whose *downloaded* file failed to decode on this device (e.g. an
-// ALAC file saved before the download path learned to transcode it) and have
-// since been forced to stream through a server transcode instead of playing off
-// disk. Only meaningful while online; the download itself is corrected
-// separately (offlineFileInfo transcodes such codecs), so this just bridges
-// already-downloaded raw files.
-const streamOverOfflineIds = new Set<string>();
-
 // Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
 // on. Jellyfin negotiates its own profile and local files play off disk, so a
 // retry there would just reload the identical URL.
@@ -460,10 +458,14 @@ function predictTranscodedStream(track: QueueTrack): boolean {
   if (!isServerTranscodeBackend()) return false;
   if (
     useOffline.getState().getDownloadedTrack(track.id) &&
-    !streamOverOfflineIds.has(track.id)
+    !mustStreamOverOffline(track.id)
   )
     return false;
-  if (transcodeRetriedIds.has(track.id)) return true;
+  // A prefetched copy plays off disk exactly like a download does, so it is
+  // natively seekable and no `timeOffset` reload applies.
+  if (!mustStreamOverOffline(track.id) && cachedTrackUri(track.id) != null)
+    return false;
+  if (hasTranscodeRetried(track.id)) return true;
   return trackTranscodeInfo(track).active;
 }
 
@@ -529,13 +531,23 @@ function resolveTrackUrl(
   if (track.isRadio && track.url)
     return { url: track.url, isOffline: false, transcoded: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
-  if (downloaded && !streamOverOfflineIds.has(track.id))
+  if (downloaded && !mustStreamOverOffline(track.id))
     return { url: downloaded.path, isOffline: true, transcoded: false };
+  // Then the prefetch cache (issue #163). Strictly after downloads: a download is
+  // user-owned and permanent, a cache entry is speculative and evictable, so the
+  // two never compete for the same track.
+  if (!mustStreamOverOffline(track.id)) {
+    const cached = cachedTrackUri(track.id);
+    if (cached) {
+      touchCachedTrack(track.id);
+      return { url: cached, isOffline: true, transcoded: false };
+    }
+  }
   if (track.source === "podcast" && track.url)
     return { url: track.url, isOffline: false, transcoded: false };
   return {
     url: streamUrl(track.id, {
-      forceTranscode: transcodeRetriedIds.has(track.id),
+      forceTranscode: hasTranscodeRetried(track.id),
       timeOffset,
     }),
     isOffline: false,
@@ -544,7 +556,17 @@ function resolveTrackUrl(
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
-  if (useOffline.getState().isTrackDownloaded(track.id)) return true;
+  // Both on-disk answers are conditional on the same thing resolveTrackUrl
+  // checks: a copy this device already failed to decode is not a copy that can
+  // play, and claiming otherwise strands the skip-to-playable scan on a track
+  // whose only remaining source is a server it may not be able to reach.
+  const playsOffDisk = !mustStreamOverOffline(track.id);
+  if (playsOffDisk && useOffline.getState().isTrackDownloaded(track.id))
+    return true;
+  // A prefetched copy is on disk right now, which is the whole point of the
+  // cache: driving into a dead zone keeps playing instead of stalling, and the
+  // skip-to-playable scans below route around whatever wasn't cached in time.
+  if (playsOffDisk && cachedTrackUri(track.id) != null) return true;
   // Radio streams and third-party podcast enclosures play from an absolute URL
   // on another host (see resolveTrackUrl), so they only need the *device* online
   // — an unreachable server, which is the other half of what makes onlineManager
@@ -925,6 +947,19 @@ function handlePlaybackStatus(status: AudioStatus) {
     // offline source as long as we still have network to reach the server.
     const canRecoverOfflineViaStream =
       !!resolved?.isOffline && getIsOnline() && getServerReachable();
+    // The bad bytes were a prefetched copy (offline source, but no download owns
+    // this id). Unlike a download — which the user asked for and we must not
+    // delete under them — a cache entry is ours to throw away, and leaving it
+    // would keep isPlayableNow promising a file that cannot decode. Dropping it
+    // also lets the prefetcher fetch a fresh one.
+    if (
+      current &&
+      resolved?.isOffline &&
+      isDecodeError(status.error) &&
+      !useOffline.getState().isTrackDownloaded(current.id)
+    ) {
+      evictTracks([current.id]);
+    }
     if (
       current &&
       resolved &&
@@ -933,10 +968,10 @@ function handlePlaybackStatus(status: AudioStatus) {
       current.source !== "podcast" &&
       isDecodeError(status.error) &&
       canTranscodeFallback() &&
-      !transcodeRetriedIds.has(current.id)
+      !hasTranscodeRetried(current.id)
     ) {
-      transcodeRetriedIds.add(current.id);
-      if (resolved.isOffline) streamOverOfflineIds.add(current.id);
+      noteTranscodeRetried(current.id);
+      if (resolved.isOffline) noteStreamOverOffline(current.id);
       reportBreadcrumb("player", "transcode-fallback", {
         trackId: current.id,
         error: status.error,
@@ -980,9 +1015,7 @@ function handlePlaybackStatus(status: AudioStatus) {
           suffix: current?.suffix ?? null,
           contentType: current?.contentType ?? null,
           isDecodeError: isDecodeError(errorMessage),
-          transcodeRetried: current
-            ? transcodeRetriedIds.has(current.id)
-            : false,
+          transcodeRetried: current ? hasTranscodeRetried(current.id) : false,
           ...diagnostics,
         },
       });

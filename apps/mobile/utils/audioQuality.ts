@@ -51,6 +51,89 @@ export interface TranscodeInfo {
   toLabel: string | null;
 }
 
+const INACTIVE: TranscodeInfo = {
+  active: false,
+  fromLabel: null,
+  toLabel: null,
+};
+
+// Extensions the same untouched audio can arrive under, so a byte-exact copy the
+// server happened to name differently isn't reported as a transcode. `opus` is
+// deliberately not folded into `ogg`: a vorbis source re-encoded to opus is a
+// real transcode even when both end up in an Ogg container.
+const CONTAINER_ALIASES: Record<string, string> = {
+  m4a: "mp4",
+  m4b: "mp4",
+  mp4: "mp4",
+  alac: "mp4",
+  oga: "ogg",
+};
+
+const normalizeContainer = (format: string | undefined): string | undefined => {
+  if (!format) return undefined;
+  const lower = format.toLowerCase();
+  return CONTAINER_ALIASES[lower] ?? lower;
+};
+
+// How far under the source bitrate the cached file must measure before it counts
+// as downsampled. Container overhead and VBR mean a byte-exact copy rarely
+// measures exactly the reported bitrate; a real cap (320 → 128) is nowhere near
+// this line.
+const CACHED_BITRATE_TOLERANCE = 0.9;
+
+/**
+ * The transcode a *prefetched* copy actually went through, read off the file on
+ * disk instead of predicted from the current settings.
+ *
+ * `getTranscodeInfo` answers "what would streaming this now do?", which is the
+ * wrong question for a cached track: the fetch already happened, possibly on
+ * another network under a different format and cap (the whole point of the
+ * per-network streaming settings). The entry's own container and size are the
+ * only record of what was really fetched — a copy pulled on cellular genuinely
+ * is 128 kbps opus, and saying "ORIGINAL" over it is a lie about the audio the
+ * user is hearing.
+ */
+export function cachedTranscodeInfo(
+  track: QueueTrack | null,
+  entry: { suffix: string; bytes: number } | null,
+): TranscodeInfo {
+  if (!track || !entry || track.isRadio || track.source === "podcast") {
+    return INACTIVE;
+  }
+
+  const format = sourceFormat(track);
+  const cachedFormat = entry.suffix || undefined;
+  const sourceBitRate =
+    typeof track.bitRate === "number" && track.bitRate > 0
+      ? track.bitRate
+      : null;
+  // The average bitrate of what is actually on disk. Only meaningful with a
+  // duration to divide by, which radio-less library tracks always have.
+  const cachedBitRate =
+    typeof track.duration === "number" && track.duration > 0 && entry.bytes > 0
+      ? Math.round((entry.bytes * 8) / track.duration / 1000)
+      : null;
+
+  const formatChanged =
+    normalizeContainer(cachedFormat) != null &&
+    normalizeContainer(format) != null &&
+    normalizeContainer(cachedFormat) !== normalizeContainer(format);
+  const downsampled =
+    sourceBitRate != null &&
+    cachedBitRate != null &&
+    cachedBitRate < sourceBitRate * CACHED_BITRATE_TOLERANCE;
+
+  if (!formatChanged && !downsampled) return INACTIVE;
+
+  return {
+    active: true,
+    fromLabel: compactQuality(format, sourceBitRate),
+    // Measured, not requested: this is the file, so its own numbers are the
+    // honest ones to show.
+    toLabel: compactQuality(cachedFormat ?? format, cachedBitRate),
+  };
+}
+
 // Predicts whether the active streaming settings cause the server to transcode
 // this track, and what the streamed output looks like. Mirrors the URL params
 // built in services/backend/streaming.ts (Subsonic) and services/jellyfin/
