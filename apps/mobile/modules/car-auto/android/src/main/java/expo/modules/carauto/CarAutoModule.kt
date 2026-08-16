@@ -49,18 +49,23 @@ class CarAutoModule : Module() {
       this@CarAutoModule.notifyChildrenChanged(changed)
     }
 
+    // Every mirror push below records into CarPlaybackMirror *before* touching
+    // the player, and keeps going when there is no player: the browser service
+    // is only created once a car host binds it, so playback that started earlier
+    // would otherwise never reach the session at all — see CarPlaybackMirror.
     Function("setNowPlaying") { json: String? ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
+      val player = WavioCarBrowserService.activePlayer
       if (json.isNullOrEmpty() || json == "null") {
-        player.applyNowPlaying(null)
+        CarPlaybackMirror.setNowPlaying(null)
+        player?.applyNowPlaying(null)
         return@Function
       }
       val np = runCatching { parseNowPlaying(json) }.getOrNull() ?: return@Function
-      player.applyNowPlaying(np)
+      CarPlaybackMirror.setNowPlaying(np)
+      player?.applyNowPlaying(np)
     }
 
     Function("setQueue") { json: String ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val arr = o.optJSONArray("tracks") ?: return@Function
       val items = ArrayList<JsProxyPlayer.NowPlaying>(arr.length())
@@ -77,16 +82,17 @@ class CarAutoModule : Module() {
           ),
         )
       }
-      player.applyQueue(items, o.optInt("currentIndex", 0))
+      val index = o.optInt("currentIndex", 0)
+      CarPlaybackMirror.setQueue(items, index)
+      WavioCarBrowserService.activePlayer?.applyQueue(items, index)
     }
 
     Function("setQueueIndex") { index: Int ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
-      player.applyQueueIndex(index)
+      CarPlaybackMirror.setQueueIndex(index)
+      WavioCarBrowserService.activePlayer?.applyQueueIndex(index)
     }
 
     Function("setPlaybackState") { json: String ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val isPlaying = o.optBoolean("isPlaying", false)
       val posMs = o.optLong("positionMs", 0L)
@@ -96,7 +102,8 @@ class CarAutoModule : Module() {
         "all" -> Player.REPEAT_MODE_ALL
         else -> Player.REPEAT_MODE_OFF
       }
-      player.applyPlaybackState(isPlaying, posMs, shuf, repeat)
+      CarPlaybackMirror.setPlaybackState(isPlaying, posMs, shuf, repeat)
+      WavioCarBrowserService.activePlayer?.applyPlaybackState(isPlaying, posMs, shuf, repeat)
     }
   }
 

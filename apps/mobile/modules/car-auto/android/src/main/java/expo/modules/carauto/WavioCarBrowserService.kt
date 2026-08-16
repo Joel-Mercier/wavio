@@ -4,11 +4,13 @@ import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -33,6 +35,12 @@ class WavioCarBrowserService : MediaLibraryService() {
     val player = JsProxyPlayer(applicationContext).also {
       jsPlayer = it
       activePlayer = it
+      // This service is created when a car host binds it, which is routinely
+      // long after playback started — so the player is born empty while JS has
+      // been mirroring all along. Seed it before the session reads it, or the
+      // car gets a session with an empty timeline and media3 swallows every
+      // transport command (issue #161; see CarPlaybackMirror).
+      CarPlaybackMirror.seed(it)
     }
     session = MediaLibrarySession.Builder(this, player, LibraryCallback())
       .setId("WavioCarBrowserSession")
@@ -53,7 +61,45 @@ class WavioCarBrowserService : MediaLibraryService() {
     super.onDestroy()
   }
 
+  /**
+   * Suppress this service's media notification entirely (no super call).
+   *
+   * The proxy owns no audio — expo-audio's `AudioControlsService` does, and it
+   * already posts the real notification. Left to media3, seeding the player at
+   * creation (see [CarPlaybackMirror]) makes this session look like it just
+   * started playing, so it posts a *second* Wavio notification and tries to
+   * `startForegroundService` from a service that was only ever bound, in the
+   * background — the exact thing Android 12+ refuses. Android Auto never reads
+   * the phone's notification, and gearhead's binding keeps the service alive
+   * without the foreground promotion.
+   */
+  override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+    CarAutoLog.d("notification suppressed (foreground=$startInForegroundRequired)")
+  }
+
   private inner class LibraryCallback : MediaLibrarySession.Callback {
+    /**
+     * Every player command a controller sends passes through here with the
+     * caller attached — the only place that identifies *who* asked, since
+     * `JsProxyPlayer`'s handlers see the command with no controller.
+     *
+     * Kept as tracing rather than policy: media3 itself never pauses a player
+     * (verified against 1.4.1 and 1.9.0 — the only `pause()` call sites are the
+     * controller paths), so anything that stops playback out of nowhere came in
+     * through this hook and this is what names it.
+     */
+    override fun onPlayerCommandRequest(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+      playerCommand: Int,
+    ): Int {
+      CarAutoLog.d(
+        "playerCommand ${playerCommandName(playerCommand)} by ${controller.packageName}" +
+          " (v${controller.controllerVersion})",
+      )
+      return SessionResult.RESULT_SUCCESS
+    }
+
     override fun onGetLibraryRoot(
       session: MediaLibrarySession,
       browser: MediaSession.ControllerInfo,
@@ -192,11 +238,42 @@ class WavioCarBrowserService : MediaLibraryService() {
       )
     }
 
+    /**
+     * media3 hands a play request to this callback instead of to the player
+     * whenever the timeline is empty, so on a cold session this — not
+     * `JsProxyPlayer.handleSetPlayWhenReady` — is the only hook the car's play
+     * button ever reaches. Returning a bare failure made it a no-op.
+     *
+     * We can't answer synchronously: the queue to resume lives in MMKV and only
+     * JS can read it. So hand the tap over the same way a browse tap is handled
+     * (parked natively and replayed once the runtime is up), let JS rehydrate
+     * and start playback, and let the mirror pushes that follow fill the session
+     * in. The failure still stands — there is nothing to hand back *now*.
+     *
+     * [isForPlayback] is what keeps that honest: media3 passes `true` only from
+     * an actual play request, and `false` when the system is merely collecting
+     * items to render its media resumption card. Booting the React runtime for
+     * the latter would be a boot-time tax paid for a button nobody pressed.
+     */
     override fun onPlaybackResumption(
       mediaSession: MediaSession,
       controller: MediaSession.ControllerInfo,
-    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> =
-      Futures.immediateFailedFuture(UnsupportedOperationException("no resumption state"))
+      isForPlayback: Boolean,
+    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+      CarAutoLog.d(
+        "onPlaybackResumption by ${controller.packageName} forPlayback=$isForPlayback",
+      )
+      if (isForPlayback) {
+        if (!CarAutoModule.deliverTransport("play", parkWhenCold = true)) {
+          ReactHostBoot.ensureJsRuntime(applicationContext)
+        }
+      }
+      // media3 logs the resulting UnsupportedOperationException at warning level
+      // ("Make sure to implement MediaSession.Callback.onPlaybackResumption()").
+      // Expected: there is nothing to hand back *synchronously* — JS answers by
+      // starting playback and pushing the mirror.
+      return Futures.immediateFailedFuture(UnsupportedOperationException("no resumption state"))
+    }
 
     private fun resolvePlayable(
       mediaId: String,
@@ -258,6 +335,25 @@ class WavioCarBrowserService : MediaLibraryService() {
       "com.google.android.apps.automotive.templates.host",
     )
   }
+}
+
+// Only the commands worth reading in a trace; anything else prints its raw id.
+@OptIn(UnstableApi::class)
+private fun playerCommandName(command: Int): String = when (command) {
+  Player.COMMAND_PLAY_PAUSE -> "PLAY_PAUSE"
+  Player.COMMAND_PREPARE -> "PREPARE"
+  Player.COMMAND_STOP -> "STOP"
+  Player.COMMAND_SEEK_TO_NEXT -> "SEEK_TO_NEXT"
+  Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> "SEEK_TO_NEXT_MEDIA_ITEM"
+  Player.COMMAND_SEEK_TO_PREVIOUS -> "SEEK_TO_PREVIOUS"
+  Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM -> "SEEK_TO_PREVIOUS_MEDIA_ITEM"
+  Player.COMMAND_SEEK_TO_MEDIA_ITEM -> "SEEK_TO_MEDIA_ITEM"
+  Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> "SEEK_IN_CURRENT_MEDIA_ITEM"
+  Player.COMMAND_SET_MEDIA_ITEM -> "SET_MEDIA_ITEM"
+  Player.COMMAND_CHANGE_MEDIA_ITEMS -> "CHANGE_MEDIA_ITEMS"
+  Player.COMMAND_SET_SHUFFLE_MODE -> "SET_SHUFFLE_MODE"
+  Player.COMMAND_SET_REPEAT_MODE -> "SET_REPEAT_MODE"
+  else -> "command#$command"
 }
 
 @OptIn(UnstableApi::class)

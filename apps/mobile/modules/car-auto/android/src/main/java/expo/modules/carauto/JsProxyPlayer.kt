@@ -232,6 +232,7 @@ class JsProxyPlayer(
 
   override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
     val action = if (playWhenReady) "play" else "pause"
+    CarAutoLog.d("transport $action (mirrored playing=$playing)")
     // Nothing is loaded in a cold process, so only a play is worth acting on:
     // booting JS lets it rehydrate the persisted queue and start it (see
     // services/startupHydration.ts). A pause has nothing to pause and is dropped.
@@ -260,8 +261,15 @@ class JsProxyPlayer(
   ): ListenableFuture<*> {
     // Like handleSetPlayWhenReady: `instance != null` is not enough, JS only
     // listens from notifyReady on. Skips against the restored queue still make
-    // sense cold, so they are parked and boot the runtime; a position seek or a
-    // jump to a queue index targets a timeline the cold process doesn't have.
+    // sense while JS is booting, so they are parked and boot the runtime; a
+    // position seek or a jump to a queue index targets a timeline the cold
+    // process doesn't have.
+    //
+    // Note this is only reachable once the timeline has items: `BasePlayer`
+    // drops a skip on an empty one before it ever gets here. A session with a
+    // mirrored queue (the normal case, see CarPlaybackMirror) is fine; a truly
+    // cold one loses the skip, and the play button is the path that recovers it
+    // (WavioCarBrowserService.onPlaybackResumption).
     val skip = when (seekCommand) {
       Player.COMMAND_SEEK_TO_NEXT,
       Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> "next"

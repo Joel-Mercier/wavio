@@ -430,6 +430,7 @@ async function wire() {
 
   // === Transport events from AA → drive expo-audio ===
   CarAutoBridge.onTransport((event) => {
+    log(`transport ${event.action}`);
     switch (event.action) {
       case "play":
         play();
