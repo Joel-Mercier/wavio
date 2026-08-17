@@ -16,15 +16,18 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useLrclibSearch } from "@/hooks/lrclib/useLrclibSearch";
+import { useBackendLyrics } from "@/hooks/player";
 import type { LrclibRecord } from "@/services/lrclib/types";
 import useLrclibPicks from "@/stores/lrclibPicks";
 import type { QueueTrack } from "@/stores/queue";
 import { formatSeconds } from "@/utils/date";
+import { isSyncedLyrics } from "@/utils/lyrics";
 
-// Lets the user override which LRCLIB record a track uses, when the automatic
-// match lands on a cover, a live take or a mistimed sync. Only LRCLIB records
-// are listed — server-embedded lyrics are not a choice here, though a pick does
-// take precedence over them (see hooks/player/useSyncedLyrics).
+// Lets the user override which lyrics a track uses, when the automatic match
+// lands on a cover, a live take or a mistimed sync. The server's own lyrics are
+// listed first when it returned any: they are what the automatic choice
+// resolves to, and a pick takes precedence over them (see
+// hooks/player/useSyncedLyrics).
 export default function LrclibPickerSheet({
   sheetRef,
   track,
@@ -45,6 +48,9 @@ export default function LrclibPickerSheet({
   );
   const setPick = useLrclibPicks((state) => state.setPick);
   const clearPick = useLrclibPicks((state) => state.clearPick);
+  // Shares its query with the player/lyrics screen above, so listing the
+  // server's lyrics here costs no extra request.
+  const { lyrics: serverLyrics } = useBackendLyrics(track);
   const { results, isLoading, isError } = useLrclibSearch({
     trackName: track?.title,
     artistName: track?.artist,
@@ -78,17 +84,52 @@ export default function LrclibPickerSheet({
             </Heading>
           </HStack>
           <VStack className="gap-y-6">
-            <FadeOutScaleDown onPress={handleAutomaticPress}>
-              <HStack className="items-center justify-between">
-                <Text
-                  className="text-lg flex-1"
-                  style={{ color: pick ? gray200 : emerald500 }}
-                >
-                  {t("app.player.lyricsPickerAutomatic")}
-                </Text>
-                {!pick && <Check size={20} color={emerald500} />}
-              </HStack>
-            </FadeOutScaleDown>
+            {/* With server lyrics in hand the automatic choice always resolves
+                to them, so it is shown as that entry rather than as a second,
+                identical "automatic" row. */}
+            {serverLyrics ? (
+              <FadeOutScaleDown onPress={handleAutomaticPress}>
+                <HStack className="items-center justify-between gap-x-4">
+                  <VStack className="flex-1">
+                    <Text
+                      className="text-lg"
+                      style={{ color: pick ? gray200 : emerald500 }}
+                    >
+                      {t("app.player.lyricsPickerServer")}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      className="text-md text-primary-100"
+                    >
+                      {[
+                        serverLyrics.displayTitle || track?.title,
+                        serverLyrics.displayArtist || track?.artist,
+                      ]
+                        .filter(Boolean)
+                        .join(" ⦁ ")}
+                    </Text>
+                    <Text className="text-sm text-primary-200">
+                      {isSyncedLyrics(serverLyrics)
+                        ? t("app.player.lyricsPickerSynced")
+                        : t("app.player.lyricsPickerPlain")}
+                    </Text>
+                  </VStack>
+                  {!pick && <Check size={20} color={emerald500} />}
+                </HStack>
+              </FadeOutScaleDown>
+            ) : (
+              <FadeOutScaleDown onPress={handleAutomaticPress}>
+                <HStack className="items-center justify-between">
+                  <Text
+                    className="text-lg flex-1"
+                    style={{ color: pick ? gray200 : emerald500 }}
+                  >
+                    {t("app.player.lyricsPickerAutomatic")}
+                  </Text>
+                  {!pick && <Check size={20} color={emerald500} />}
+                </HStack>
+              </FadeOutScaleDown>
+            )}
             {isLoading && (
               <Box className="py-6 items-center">
                 <Spinner color={gray200} />
@@ -102,6 +143,11 @@ export default function LrclibPickerSheet({
             {!isLoading && !isError && results.length === 0 && (
               <Text className="text-primary-100 text-md">
                 {t("app.player.lyricsPickerEmpty")}
+              </Text>
+            )}
+            {results.length > 0 && (
+              <Text className="text-sm text-primary-200 uppercase tracking-wider">
+                {t("app.player.lyricsPickerLrclib")}
               </Text>
             )}
             {results.map((record) => {

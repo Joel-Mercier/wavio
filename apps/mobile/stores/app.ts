@@ -133,6 +133,9 @@ interface AppStore {
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
   lyricsKeepScreenOn: boolean;
   setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
+  // Player screen: show the lyrics in place of the cover art.
+  playerInlineLyrics: boolean;
+  setPlayerInlineLyrics: (playerInlineLyrics: boolean) => void;
   waveformSeekbarEnabled: boolean;
   setWaveformSeekbarEnabled: (waveformSeekbarEnabled: boolean) => void;
   librarySort: LibrarySort;
@@ -280,6 +283,10 @@ export const useAppBase = create<AppStore>()(
       lyricsKeepScreenOn: false,
       setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => {
         set({ lyricsKeepScreenOn });
+      },
+      playerInlineLyrics: false,
+      setPlayerInlineLyrics: (playerInlineLyrics: boolean) => {
+        set({ playerInlineLyrics });
       },
       // Off by default: the first play of each track costs a decode, and for a
       // streamed track a one-off download too (see services/waveform).
