@@ -17,8 +17,12 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
-import UrlInputField from "@/components/forms/UrlInputField";
+import UrlInputField, {
+  protocolsForServerType,
+  realignUrlProtocol,
+} from "@/components/forms/UrlInputField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import ServerListItem from "@/components/servers/ServerListItem";
 import {
@@ -46,7 +50,13 @@ import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { isSmbAvailable } from "@/modules/smb";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import {
+  isNetworkShareType,
+  isSingletonServerType,
+} from "@/services/backend/serverTraits";
+import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -114,6 +124,7 @@ export default function ServersDetail() {
       url: "",
       type: "navidrome" as ServerType,
       paths: [] as string[],
+      libraryPath: "",
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [] as HeaderRow[],
@@ -148,10 +159,32 @@ export default function ServersDetail() {
           paths,
         });
       } else {
+        // `z.url()` accepts `smb://host` with no share name, which is the mistake
+        // people actually make. Caught here rather than in the schema because the
+        // stores can't reach i18n (see stores/servers.ts) and this needs to say
+        // what the address should look like.
+        if (value.type === "smb" && !parseSmbUrl(value.url)) {
+          toast.show({
+            placement: "top",
+            duration: 5000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("auth.login.smbUrlInvalid")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+          return;
+        }
         addServer({
           name: value.name,
           url: value.url,
           type: value.type,
+          libraryPath: isNetworkShareType(value.type)
+            ? value.libraryPath?.trim() || undefined
+            : undefined,
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
           fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
           headers: headerRowsToRecord(value.headers),
@@ -181,13 +214,28 @@ export default function ServersDetail() {
 
   const isDirty = useSelector(form.store, (state) => state.isDirty);
 
+  // Re-scheme the URL alongside the type: the field renders the scheme separately
+  // from the value it stores, so an `https://` left over from another type would
+  // fail validation with nothing on screen to explain it.
+  const selectServerType = (next: ServerType) => {
+    form.setFieldValue("type", next);
+    form.setFieldValue("url", (current) =>
+      realignUrlProtocol(current, protocolsForServerType(next)),
+    );
+  };
+
   // The local library is a singleton (fixed `local` URL + scope), so only offer
   // it when none exists yet; an existing one is managed from its list entry.
-  const hasLocalServer = servers.some((s) => s.type === "local");
+  const hasLocalServer = servers.some((s) => isSingletonServerType(s.type));
   const serverTypeOptions: { value: ServerType; label: string }[] = [
     { value: "navidrome", label: t("auth.login.serverTypeNavidrome") },
     { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
     { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
+    { value: "webdav", label: t("auth.login.serverTypeWebdav") },
+    // Only where the SMB native module loaded — see login.tsx.
+    ...(isSmbAvailable()
+      ? [{ value: "smb" as ServerType, label: t("auth.login.serverTypeSmb") }]
+      : []),
     ...(hasLocalServer
       ? []
       : [
@@ -256,76 +304,45 @@ export default function ServersDetail() {
               </Heading>
             </AlertDialogHeader>
             <AlertDialogBody className="mt-3 mb-4">
+              {/* Two per row, always: with five or six types (three remote,
+                  WebDAV, SMB, and the local library when it doesn't exist yet) a
+                  single row leaves no room for a readable label. */}
               <form.Field name="type">
-                {(field) =>
-                  hasLocalServer ? (
-                    // Only the three remote types: keep the compact single-row
-                    // layout (stacked icon over label) rather than a 2+1 grid.
-                    <HStack className="my-2 gap-2">
-                      {serverTypeOptions.map((opt) => {
-                        const selected = field.state.value === opt.value;
-                        return (
-                          <FadeOutScaleDown
-                            key={opt.value}
-                            onPress={() => field.handleChange(opt.value)}
-                            className={`flex-1 rounded-md border ${
-                              selected
-                                ? "border-emerald-500 bg-emerald-500"
-                                : "border-primary-600 bg-primary-600"
-                            }`}
-                          >
-                            <VStack className="items-center justify-center py-3 px-2 gap-y-2">
-                              <ServerTypeIcon type={opt.value} size={28} />
-                              <Text
-                                className={`text-xs text-center ${
+                {(field) => (
+                  <VStack className="mb-2 gap-y-4">
+                    {serverTypeRows.map(([a, b]) => (
+                      <HStack key={a.value} className="gap-x-4">
+                        {[a, b].map((opt) => {
+                          if (!opt) return null;
+                          const selected = field.state.value === opt.value;
+                          return (
+                            <FadeOutScaleDown
+                              key={opt.value}
+                              onPress={() => selectServerType(opt.value)}
+                              className="flex-1"
+                            >
+                              <HStack
+                                className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
                                   selected
-                                    ? "text-primary-800 font-bold"
-                                    : "text-white"
+                                    ? "border-emerald-500"
+                                    : "border-primary-600"
                                 }`}
                               >
-                                {opt.label}
-                              </Text>
-                            </VStack>
-                          </FadeOutScaleDown>
-                        );
-                      })}
-                    </HStack>
-                  ) : (
-                    <VStack className="mb-2 gap-y-4">
-                      {serverTypeRows.map(([a, b]) => (
-                        <HStack key={a.value} className="gap-x-4">
-                          {[a, b].map((opt) => {
-                            if (!opt) return null;
-                            const selected = field.state.value === opt.value;
-                            return (
-                              <FadeOutScaleDown
-                                key={opt.value}
-                                onPress={() => field.handleChange(opt.value)}
-                                className="flex-1"
-                              >
-                                <HStack
-                                  className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
-                                    selected
-                                      ? "border-emerald-500"
-                                      : "border-primary-600"
-                                  }`}
+                                <ServerTypeIcon type={opt.value} size={28} />
+                                <Text
+                                  className="text-sm text-white font-bold flex-1"
+                                  numberOfLines={2}
                                 >
-                                  <ServerTypeIcon type={opt.value} size={28} />
-                                  <Text
-                                    className="text-sm text-white font-bold flex-1"
-                                    numberOfLines={2}
-                                  >
-                                    {opt.label}
-                                  </Text>
-                                </HStack>
-                              </FadeOutScaleDown>
-                            );
-                          })}
-                        </HStack>
-                      ))}
-                    </VStack>
-                  )
-                }
+                                  {opt.label}
+                                </Text>
+                              </HStack>
+                            </FadeOutScaleDown>
+                          );
+                        })}
+                      </HStack>
+                    ))}
+                  </VStack>
+                )}
               </form.Field>
               <form.Subscribe selector={(state) => state.values.type}>
                 {(type) =>
@@ -378,13 +395,23 @@ export default function ServersDetail() {
                                 value={field.state.value}
                                 onChangeText={field.handleChange}
                                 onBlur={() => handleFieldBlur(field)}
-                                placeholder={t("app.servers.urlPlaceholder")}
+                                protocols={protocolsForServerType(type)}
+                                placeholder={
+                                  type === "smb"
+                                    ? t("auth.login.smbUrlPlaceholder")
+                                    : t("app.servers.urlPlaceholder")
+                                }
                               />
                             </Input>
                             <FieldError field={field} />
                           </FormControl>
                         )}
                       </form.Field>
+                      {isNetworkShareType(type) && (
+                        <form.Field name="libraryPath">
+                          {(field) => <LibraryPathField field={field} />}
+                        </form.Field>
+                      )}
                       {/* Cross-platform section; only the client certificate
                             is gated on Android + the native trust module. */}
                       <AdvancedSettingsSection>

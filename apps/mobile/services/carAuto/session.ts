@@ -4,6 +4,7 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import {
   cachedCarArtwork,
   clearCarArtworkCache,
@@ -252,7 +253,7 @@ async function wire() {
     // The on-device library has no url/username, so gate on the session
     // being authenticated and only require credentials for remote servers.
     if (!isAuthenticated) return log("rebuild skipped: not authenticated");
-    if (serverType !== "local" && (!url || !username)) {
+    if (hasNetworkServerType(serverType) && (!url || !username)) {
       return log("rebuild skipped: no credentials");
     }
     const signature = rebuildSignature();

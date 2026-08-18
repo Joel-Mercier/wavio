@@ -14,8 +14,9 @@ class AudioMetadataModule : Module() {
     Name("AudioMetadata")
 
     AsyncFunction("getAudioMetadata") {
-      uri: String, includeArtwork: Boolean, artworkDir: String? ->
-      extract(uri, includeArtwork, artworkDir)
+      uri: String, includeArtwork: Boolean, artworkDir: String?,
+      headers: Map<String, String>? ->
+      extract(uri, includeArtwork, artworkDir, headers)
     }
   }
 
@@ -23,12 +24,18 @@ class AudioMetadataModule : Module() {
     uri: String,
     includeArtwork: Boolean,
     artworkDir: String?,
+    headers: Map<String, String>?,
   ): Map<String, Any?> {
     val retriever = MediaMetadataRetriever()
     try {
       val parsed = Uri.parse(uri)
       when (parsed.scheme) {
         null, "file" -> retriever.setDataSource(parsed.path ?: uri)
+        // A network file share (WebDAV, or SMB via its loopback bridge) is read
+        // over HTTP. The ContentResolver overload below cannot open one, so it
+        // needs the URL+headers overload — which is also the only way to carry
+        // the share's Authorization header.
+        "http", "https" -> retriever.setDataSource(uri, headers ?: emptyMap())
         else -> {
           val context = appContext.reactContext
             ?: throw RuntimeException("AudioMetadata: no React context available")

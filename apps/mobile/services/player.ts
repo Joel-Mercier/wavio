@@ -8,6 +8,7 @@ import {
 import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
+import { isNetworkShareType } from "@/services/backend/serverTraits";
 import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
@@ -78,6 +79,7 @@ import useActivity from "@/stores/activity";
 import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
+import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
@@ -979,6 +981,19 @@ function handlePlaybackStatus(status: AudioStatus) {
       });
       loadTrack(current, true);
       return;
+    }
+    // Past the transcode fallback above, this track is not going to play.
+    //
+    // For a media server that's usually self-evident — the offline banner is
+    // already up, or the next track starts. For a network file share it isn't:
+    // the library is indexed on this device, so it browses perfectly while the
+    // share itself is gone, and playback just silently stops on a track the UI
+    // still shows as present. Say so.
+    if (
+      !current?.isRadio &&
+      isNetworkShareType(useAuthBase.getState().serverType)
+    ) {
+      usePlaybackNotice.getState().raise("PLAYBACK_SOURCE_UNAVAILABLE");
     }
     // `source` is a category discriminator, not the URL — group on what the
     // load actually was so offline-file bugs split from transient streams.

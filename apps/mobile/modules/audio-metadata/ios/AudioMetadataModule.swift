@@ -7,14 +7,17 @@ public class AudioMetadataModule: Module {
     Name("AudioMetadata")
 
     AsyncFunction("getAudioMetadata") {
-      (uri: String, includeArtwork: Bool, artworkDir: String?) -> [String: Any] in
+      (uri: String, includeArtwork: Bool, artworkDir: String?,
+       headers: [String: String]?) -> [String: Any] in
       return AudioMetadataModule.extract(
-        uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir)
+        uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir,
+        headers: headers)
     }
   }
 
   private static func extract(
-    uri: String, includeArtwork: Bool, artworkDir: String?
+    uri: String, includeArtwork: Bool, artworkDir: String?,
+    headers: [String: String]?
   ) -> [String: Any] {
     let url: URL
     if let parsed = URL(string: uri), parsed.scheme != nil {
@@ -23,7 +26,15 @@ public class AudioMetadataModule: Module {
       url = URL(fileURLWithPath: uri)
     }
 
-    let asset = AVURLAsset(url: url)
+    // A network file share (WebDAV, or SMB via its loopback bridge) is read over
+    // HTTP and needs the share's Authorization header on the asset's own
+    // requests — AVURLAsset does its own networking, so nothing we set elsewhere
+    // reaches it.
+    var options: [String: Any] = [:]
+    if let headers, !headers.isEmpty {
+      options["AVURLAssetHTTPHeaderFieldsKey"] = headers
+    }
+    let asset = AVURLAsset(url: url, options: options)
     var result: [String: Any] = [:]
 
     let durationSeconds = CMTimeGetSeconds(asset.duration)

@@ -1,6 +1,11 @@
 import { Platform } from "react-native";
 import { resolveServerBase } from "@/modules/ssl-trust";
 import {
+  filesAreOnDeviceType,
+  isIndexBackedType,
+} from "@/services/backend/serverTraits";
+import { activeFileSource } from "@/services/fileSource";
+import {
   JELLYFIN_DEFAULT_TRANSCODE_CODEC,
   downloadUrl as jellyfinDownloadUrl,
   hlsStreamUrl as jellyfinHlsStreamUrl,
@@ -64,19 +69,26 @@ function transcodeParams(forceTranscode: boolean): string {
   return parts.length ? `&${parts.join("&")}` : "";
 }
 
-// Local media plays straight from a URL the id encodes: a track id decodes to a
-// `file://` URI on disk, a self-hosted podcast episode id decodes to its remote
-// enclosure URL. Either way expo-audio gets the URL directly (no /stream
-// endpoint, no transcoding). Returns null when `id` isn't a recognised local id.
+// Index-backed media plays straight from a URL the id encodes: a track id
+// decodes to the canonical URI its file source addressed it by, a self-hosted
+// podcast episode id decodes to its remote enclosure URL. Either way expo-audio
+// gets the URL directly (no /stream endpoint, no transcoding). Returns null when
+// `id` isn't a recognised index-backed id.
+//
+// Synchronous on purpose — `streamUrl` is called during a track change and
+// cannot yield, which is why `FileSource.playableUrl` is synchronous too.
 function localFileUrl(id: string): string | null {
   // Self-hosted podcast episodes decode to their remote enclosure URL on every
   // backend (Navidrome/Jellyfin reuse the on-device podcast store), so resolve
-  // them regardless of the active server type. Track ids decode to on-disk
-  // `file://` URIs that only exist in local mode, so keep those gated.
+  // them regardless of the active server type. Track ids only decode to a
+  // playable address in index-backed mode, so keep those gated.
   const podcastUrl = parseLocalPodcastEpisodeId(id);
   if (podcastUrl != null) return podcastUrl;
-  if (useAuthBase.getState().serverType !== "local") return null;
-  return parseLocalTrackId(id);
+  if (!isIndexBackedType(useAuthBase.getState().serverType)) return null;
+  const uri = parseLocalTrackId(id);
+  // On the device source this is the identity, so the `file://` URI reaches
+  // expo-audio exactly as before.
+  return uri == null ? null : activeFileSource().playableUrl(uri);
 }
 
 export const hlsStreamUrl = (id: string) => {
@@ -258,9 +270,16 @@ function isOfflineUndecodable(track: CacheableTrack): boolean {
  * cellular inherits the cellular codec/bitrate (#162) and is therefore cheap by
  * construction, while a Wi-Fi prefetch keeps the original.
  *
- * Returns null for anything that must never be cached — local files and
- * self-hosted podcast enclosures already play off a URL of their own, and
- * without an active server there is nothing to fetch.
+ * Returns null for anything that must never be cached — the on-device library's
+ * files are already on this phone, self-hosted podcast enclosures play off a URL
+ * on someone else's host, and without an active server there is nothing to
+ * fetch.
+ *
+ * A network share is the opposite case and does get cached: its bytes are the
+ * ones a replay would otherwise pull over the LAN again, which is the whole
+ * point of the feature. The share serves the file itself, so there is no
+ * /stream endpoint to shape it — the streaming settings below don't apply and
+ * the cached copy is the original.
  *
  * No suffix is returned, deliberately. With a "raw" preference and a bitrate cap
  * the server may downsample to a format it never names up front (Navidrome's
@@ -271,8 +290,13 @@ function isOfflineUndecodable(track: CacheableTrack): boolean {
  * matters because AVURLAsset infers a file's container from its name.
  */
 export const cacheFetchUrl = (track: CacheableTrack): string | null => {
-  if (localFileUrl(track.id) != null) return null;
-  if (!useAuthBase.getState().url) return null;
+  const { url, serverType } = useAuthBase.getState();
+  if (filesAreOnDeviceType(serverType)) return null;
+  if (parseLocalPodcastEpisodeId(track.id) != null) return null;
+  if (!url) return null;
+
+  const shareUrl = localFileUrl(track.id);
+  if (shareUrl != null) return shareUrl;
 
   const format = activeStreamingFormat();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();

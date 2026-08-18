@@ -3,6 +3,10 @@ import NetInfo, {
   type NetInfoStateType,
 } from "@react-native-community/netinfo";
 import { probeUrl } from "@/services/backend/probe";
+import {
+  hasNetworkServerType,
+  isNetworkShareType,
+} from "@/services/backend/serverTraits";
 import { reportBreadcrumb, scrubUrl } from "@/services/errorReporting";
 import {
   type CellularStreamFormat,
@@ -112,10 +116,10 @@ export function getServerReachable(): boolean {
 // The value the app should treat as "online" for fetching/streaming: the device
 // has connectivity AND the active server is reachable.
 export function getIsEffectivelyOnline(): boolean {
-  // The local library lives on-device: there's no server to reach and no
+  // A server-less library lives on-device: there's no server to reach and no
   // network round-trip to stream, so it's always effectively online regardless
   // of device connectivity (airplane mode still plays your on-disk library).
-  if (useAuthBase.getState().serverType === "local") return true;
+  if (!hasNetworkServerType(useAuthBase.getState().serverType)) return true;
   return isOnline && serverReachable;
 }
 
@@ -286,8 +290,8 @@ export async function probeServer({
   if (probeInFlight) return;
   const { isAuthenticated, url, serverType } = useAuthBase.getState();
   // No server to ping for an on-device library — mark it reachable so the
-  // disconnect-on-unreachable logic never fires for local.
-  if (serverType === "local") {
+  // disconnect-on-unreachable logic never fires for it.
+  if (!hasNetworkServerType(serverType)) {
     setServerReachable(true);
     return;
   }
@@ -408,11 +412,19 @@ function probeInternetReachable(): Promise<boolean> {
 // the query cache. Reset our own state first so the next session starts
 // optimistic.
 async function disconnectUnreachable() {
-  // Opt-out (stores/app.ts, default on): when disabled, never force a logout on
+  // Opt-in (stores/app.ts, default off): when disabled, never force a logout on
   // an unreachable server. Leave serverReachable=false (banner stays "server
   // unreachable", offline/cache mode active) and keep the recovery poll running
   // so the session auto-recovers once the server answers again.
   if (!useAppBase.getState().autoSignOutOnServerUnreachable) return;
+  // Never for a network file share. The corroboration below asks "is the wider
+  // internet up?" as evidence that the server specifically has died — but a
+  // WebDAV/SMB share usually lives on the user's LAN, so walking out of the
+  // house produces exactly that signature (share gone, internet fine) with a
+  // perfectly healthy server. Signing out there is both wrong and expensive:
+  // the share's library index, favourites and ratings are all on this device,
+  // and logout clears the credentials needed to get back to them.
+  if (isNetworkShareType(useAuthBase.getState().serverType)) return;
   // Guard against overlapping internet checks from back-to-back recovery polls.
   if (internetCheckInFlight) return;
   internetCheckInFlight = true;

@@ -23,8 +23,12 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
-import UrlInputField from "@/components/forms/UrlInputField";
+import UrlInputField, {
+  protocolsForServerType,
+  realignUrlProtocol,
+} from "@/components/forms/UrlInputField";
 import LoginBackground from "@/components/LoginBackground";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
@@ -67,6 +71,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { isSmbAvailable } from "@/modules/smb";
 import {
   hostnameFromUrl,
   isSslTrustAvailable,
@@ -76,6 +81,7 @@ import {
   authenticateWithFallback,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
+import { isNetworkShareType } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { foldersRemoved, samePaths } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -195,6 +201,7 @@ export default function LoginScreen() {
       url: preselectedServer?.url ?? "https://",
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
       paths: (preselectedServer?.paths ?? []) as string[],
+      libraryPath: preselectedServer?.libraryPath ?? "",
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
       headers: headerRecordToRows(preselectedServer?.headers),
@@ -282,11 +289,25 @@ export default function LoginScreen() {
             headers,
           );
           const existing = servers.find((s) => s.url === trimmedUrl);
+          // Narrowing or widening a share's scanned sub-path changes which files
+          // belong to the library, so the index has to be reconciled. Flagged
+          // here (pre-hydration) for the same reason the local branch does it:
+          // the app layout re-opens the indexing gate once the store rehydrates.
+          if (
+            isNetworkShareType(serverType) &&
+            existing &&
+            (existing.libraryPath ?? "") !== (value.libraryPath?.trim() ?? "")
+          ) {
+            flagLocalRescanOnEntry();
+          }
           const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
           const server = addServer({
             name: existing?.name ?? fallbackName,
             url: trimmedUrl,
             type: serverType,
+            libraryPath: isNetworkShareType(serverType)
+              ? value.libraryPath?.trim() || undefined
+              : undefined,
             mtlsAlias,
             fallbackUrl,
             // Empty (not undefined) when the user cleared every row, so
@@ -420,6 +441,13 @@ export default function LoginScreen() {
     { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
     { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
     { value: "local", label: t("auth.login.serverTypeLocal") },
+    { value: "webdav", label: t("auth.login.serverTypeWebdav") },
+    // SMB needs the native module, which isn't there on web or in Expo Go —
+    // offering it then would let someone create a server that can never load a
+    // track.
+    ...(isSmbAvailable()
+      ? [{ value: "smb" as ServerType, label: t("auth.login.serverTypeSmb") }]
+      : []),
   ];
   const serverTypeRows: [
     (typeof serverTypeOptions)[number],
@@ -505,7 +533,15 @@ export default function LoginScreen() {
                       return (
                         <FadeOutScaleDown
                           key={opt.value}
-                          onPress={() => field.handleChange(opt.value)}
+                          onPress={() => {
+                            field.handleChange(opt.value);
+                            form.setFieldValue("url", (current) =>
+                              realignUrlProtocol(
+                                current,
+                                protocolsForServerType(opt.value),
+                              ),
+                            );
+                          }}
                           className="flex-1"
                         >
                           <HStack
@@ -558,13 +594,23 @@ export default function LoginScreen() {
                             value={field.state.value}
                             onChangeText={field.handleChange}
                             onBlur={() => handleFieldBlur(field)}
-                            placeholder={t("auth.login.urlPlaceholder")}
+                            protocols={protocolsForServerType(type)}
+                            placeholder={
+                              type === "smb"
+                                ? t("auth.login.smbUrlPlaceholder")
+                                : t("auth.login.urlPlaceholder")
+                            }
                           />
                         </Input>
                         <FieldError field={field} />
                       </FormControl>
                     )}
                   </form.Field>
+                  {isNetworkShareType(type) && (
+                    <form.Field name="libraryPath">
+                      {(field) => <LibraryPathField field={field} />}
+                    </form.Field>
+                  )}
                   <form.Field name="username">
                     {(field) => (
                       <FormControl

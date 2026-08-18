@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { authenticateWithFallback } from "@/services/auth/authenticate";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
@@ -48,7 +49,7 @@ export default function SwitchingScreen() {
       .users.find(
         (u) => u.serverId === params.serverId && u.username === params.username,
       );
-    if (!server || server.type === "local" || !user?.password) {
+    if (!server || !hasNetworkServerType(server.type) || !user?.password) {
       goToManualLogin();
       return;
     }

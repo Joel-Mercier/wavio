@@ -27,7 +27,6 @@ import useApp, {
   type CellularStreamFormat,
   type StreamFormat,
 } from "@/stores/app";
-import { useAuthBase } from "@/stores/auth";
 
 const bitRateOptions: (number | null)[] = [null, 64, 96, 128, 192, 256, 320];
 
@@ -69,7 +68,10 @@ export default function PlaybackAudioSection() {
   const capabilities = useCapabilities();
   const [showClearWaveformsDialog, setShowClearWaveformsDialog] =
     useState(false);
-  const isLocal = useAuthBase((store) => store.serverType === "local");
+  // The streaming rows (format + bitrate caps) only mean something on a backend
+  // that transcodes server-side. That is neither the on-device library nor a
+  // network file share, both of which hand the player the file as it is.
+  const canTranscode = capabilities.streamFormatSelection;
 
   const bottomSheetBitRateModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetCellularBitRateModalRef = useRef<BottomSheetModal>(null);
@@ -370,7 +372,7 @@ export default function PlaybackAudioSection() {
         <SettingsSectionTitle
           title={t("app.settings.streamingSettings.title")}
         />
-        {!isLocal && (
+        {canTranscode && (
           <>
             <SettingsSelectRow
               label={t("app.settings.streamingSettings.audioQualityLabel")}

@@ -1,4 +1,5 @@
 import type { BackendCapabilities } from "@/services/backend/capabilities";
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import type { Child } from "@/services/openSubsonic/types";
 import type { ServerType } from "@/stores/servers";
 import {
@@ -61,7 +62,7 @@ export function songSortFields(
 ): SongSortField[] {
   const sortable =
     serverType === "jellyfin" ||
-    serverType === "local" ||
+    isIndexBackedType(serverType) ||
     (serverType === "navidrome" && hasNavidromeNative);
   if (!sortable) return [];
   return SONG_SORT_FIELDS.filter(

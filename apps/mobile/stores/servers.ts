@@ -2,6 +2,7 @@ import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandStorage } from "@/config/storage";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import createSelectors from "@/utils/createSelectors";
 
 export const serverTypeSchema = z.enum([
@@ -10,6 +11,13 @@ export const serverTypeSchema = z.enum([
   "jellyfin",
   // On-device library: no remote server, just filesystem paths (see `paths`).
   "local",
+  // Network file share: indexed on-device like `local`, but the files live on a
+  // WebDAV server (see `libraryPath`).
+  "webdav",
+  // Network file share over SMB2/3. Same as `webdav` from the index's point of
+  // view; `url` carries `smb://host[:port]/Share` and an optional NTLM domain is
+  // typed as `DOMAIN\user` in the username, so it needs no fields of its own.
+  "smb",
 ]);
 export type ServerType = z.infer<typeof serverTypeSchema>;
 
@@ -214,6 +222,10 @@ export const addServerFormSchema = z
     url: z.string().trim(),
     type: serverTypeSchema,
     paths: z.array(z.string()),
+    // Sub-path within a network file share to scan (`type === "webdav"`), empty
+    // meaning the whole share. Required-but-empty like the fields below, so the
+    // inferred input type matches the form's string default.
+    libraryPath: z.string().trim(),
     // Required (empty = no cert) so the inferred input type matches the form's
     // string default; presence of a non-empty alias enables mTLS.
     mtlsAlias: z.string().trim(),
@@ -224,7 +236,7 @@ export const addServerFormSchema = z
     headers: z.array(headerRowSchema),
   })
   .superRefine((data, ctx) => {
-    if (data.type === "local") return;
+    if (!hasNetworkServerType(data.type)) return;
     const name = z.string().min(1).trim().safeParse(data.name);
     if (!name.success) {
       ctx.addIssue({
@@ -254,12 +266,13 @@ export const editServerFormSchema = z
     url: z.string().trim(),
     type: serverTypeSchema,
     paths: z.array(z.string()),
+    libraryPath: z.string().trim(),
     mtlsAlias: z.string().trim(),
     fallbackUrl: z.string().trim(),
     headers: z.array(headerRowSchema),
   })
   .superRefine((data, ctx) => {
-    if (data.type === "local") return;
+    if (!hasNetworkServerType(data.type)) return;
     const url = z.url().min(1).trim().safeParse(data.url);
     if (!url.success) {
       ctx.addIssue({
@@ -290,6 +303,15 @@ export type Server = {
   // folders the on-device indexer scans. There is a single local server (no
   // remote URL, no multiple accounts), so this is where its config lives.
   paths?: string[];
+  // Only set for network file shares (`type === "webdav"`): the sub-path within
+  // the share the indexer scans, relative to `url`. Everything above it is
+  // ignored, so a share that holds more than music doesn't get walked. Empty or
+  // "/" scans the whole share.
+  //
+  // Deliberately *not* folded into `url`: track addresses are stored relative to
+  // `url`, so narrowing or widening the scanned sub-path later doesn't
+  // invalidate the ids of files that stay in scope.
+  libraryPath?: string;
   // Android KeyChain alias for mTLS client-cert auth (Android only). Only the
   // alias is stored; the private key stays in the OS keystore. Its presence is
   // what enables mTLS for this server. See modules/ssl-trust.
@@ -325,6 +347,7 @@ interface ServersStore {
     url: string;
     type?: ServerType;
     paths?: string[];
+    libraryPath?: string;
     mtlsAlias?: string;
     fallbackUrl?: string;
     headers?: Record<string, string>;
@@ -336,6 +359,7 @@ interface ServersStore {
       url?: string;
       type?: ServerType;
       paths?: string[];
+      libraryPath?: string;
       mtlsAlias?: string;
       fallbackUrl?: string;
       headers?: Record<string, string>;
@@ -383,6 +407,7 @@ const useServersBase = create<ServersStore>()(
         url,
         type,
         paths,
+        libraryPath,
         mtlsAlias,
         fallbackUrl,
         headers,
@@ -390,6 +415,7 @@ const useServersBase = create<ServersStore>()(
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
         const cleanAlias = mtlsAlias?.trim() || undefined;
+        const cleanLibraryPath = libraryPath?.trim() || undefined;
         const cleanFallback = cleanOptionalUrl(fallbackUrl);
         const cleanHeaders = normalizeHeaders(headers);
         const existing = get().servers.find((s) => s.url === trimmedUrl);
@@ -397,6 +423,12 @@ const useServersBase = create<ServersStore>()(
           const patch: Partial<Server> = {};
           if (type && existing.type !== type) patch.type = type;
           if (paths) patch.paths = paths;
+          if (
+            libraryPath !== undefined &&
+            existing.libraryPath !== cleanLibraryPath
+          ) {
+            patch.libraryPath = cleanLibraryPath;
+          }
           if (mtlsAlias !== undefined && existing.mtlsAlias !== cleanAlias) {
             patch.mtlsAlias = cleanAlias;
           }
@@ -430,6 +462,7 @@ const useServersBase = create<ServersStore>()(
           current: !hasCurrent,
           type: type ?? "navidrome",
           ...(paths ? { paths } : {}),
+          ...(cleanLibraryPath ? { libraryPath: cleanLibraryPath } : {}),
           ...(cleanAlias ? { mtlsAlias: cleanAlias } : {}),
           ...(cleanFallback ? { fallbackUrl: cleanFallback } : {}),
           ...(cleanHeaders ? { headers: cleanHeaders } : {}),
@@ -455,6 +488,9 @@ const useServersBase = create<ServersStore>()(
                   ...(patch.url !== undefined ? { url: patch.url.trim() } : {}),
                   ...(patch.type !== undefined ? { type: patch.type } : {}),
                   ...(patch.paths !== undefined ? { paths: patch.paths } : {}),
+                  ...(patch.libraryPath !== undefined
+                    ? { libraryPath: patch.libraryPath.trim() || undefined }
+                    : {}),
                   ...(patch.mtlsAlias !== undefined
                     ? { mtlsAlias: patch.mtlsAlias.trim() || undefined }
                     : {}),

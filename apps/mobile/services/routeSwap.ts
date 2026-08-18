@@ -1,3 +1,4 @@
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { useServersBase } from "@/stores/servers";
@@ -22,7 +23,7 @@ const stripSlash = (url: string) => url.replace(/\/+$/, "");
  */
 function routeRewrites(): { active: string; known: string[] } | null {
   const { serverId, url, serverType } = useAuthBase.getState();
-  if (!url || serverType === "local") return null;
+  if (!url || !hasNetworkServerType(serverType)) return null;
   const server = useServersBase.getState().getServerById(serverId);
   if (!server) return null;
   const active = stripSlash(url);

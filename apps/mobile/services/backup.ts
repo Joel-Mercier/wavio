@@ -5,6 +5,7 @@ import Share from "react-native-share";
 import * as z from "zod";
 import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { storage } from "@/config/storage";
+import { isSingletonServerType } from "@/services/backend/serverTraits";
 import {
   BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
   GLOBAL_KEYS,
@@ -52,7 +53,7 @@ function collectScopes(): string[] {
     const server = serverById.get(user.serverId);
     if (!server) continue;
     scopes.add(
-      server.type === "local"
+      isSingletonServerType(server.type)
         ? LOCAL_AUTH_SCOPE
         : getAuthScope(server.id, user.username),
     );

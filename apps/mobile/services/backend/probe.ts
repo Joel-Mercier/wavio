@@ -1,8 +1,15 @@
 import axios, { type AxiosInstance } from "axios";
+import { smbProbe } from "@/modules/smb";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
+import { parseSmbUrl, splitDomainUser } from "@/services/fileSource/smbAddress";
+import { isMultistatus } from "@/services/fileSource/webdavMultistatus";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
 import { USER_AGENT } from "@/services/network";
 import { encodePasswordParam } from "@/services/openSubsonic/auth";
-import { customHeadersForUrl } from "@/services/serverHeaders";
+import {
+  customHeadersForUrl,
+  requestHeadersForUrl,
+} from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
 // Reachability probe for one specific server URL, used by the failover in
@@ -115,6 +122,50 @@ async function probeJellyfin(
   return response.status === 200 && !!response.data?.Version;
 }
 
+// A `PROPFIND` with `Depth: 0` on the share root, requiring a 207 whose body
+// actually parses as a multistatus.
+//
+// The same standard the other two probes hold to, for the same reason (see
+// probeSubsonic): a 200 from *something* at a LAN address proves nothing — on a
+// foreign network that address is somebody's router admin page. A parsed
+// multistatus is the WebDAV equivalent of the Subsonic envelope check.
+async function probeWebdav(url: string, signal: AbortSignal): Promise<boolean> {
+  const base = url.replace(/\/+$/, "");
+  const response = await createBareClient(base, undefined, {
+    ...requestHeadersForUrl(url),
+    Depth: "0",
+    "Content-Type": "application/xml; charset=utf-8",
+  }).request({
+    method: "PROPFIND",
+    url: "/",
+    signal,
+    data: PROPFIND_ROOT_BODY,
+    responseType: "text",
+    transformResponse: [(body: string) => body],
+    validateStatus: () => true,
+  });
+  return response.status === 207 && isMultistatus(response.data as string);
+}
+
+const PROPFIND_ROOT_BODY = `<?xml version="1.0" encoding="utf-8"?>
+<propfind xmlns="DAV:"><prop><resourcetype/></prop></propfind>`;
+
+// A real SMB connect, authenticate and share-root query, which is as strong a
+// check as the other three: nothing but the actual share can answer it. The
+// signal is unused because the native side can't be aborted mid-handshake — it
+// takes the same budget as a timeout instead, and `probeUrl`'s deadline race is
+// the backstop.
+async function probeSmb(url: string): Promise<boolean> {
+  const target = parseSmbUrl(url);
+  if (!target) return false;
+  const { username, password } = useAuthBase.getState();
+  const { domain, user } = splitDomainUser(username);
+  return await smbProbe(
+    { ...target, domain, username: user, password },
+    PROBE_TIMEOUT_MS,
+  );
+}
+
 /**
  * Whether `url` is a usable route to the active server right now.
  *
@@ -123,7 +174,7 @@ async function probeJellyfin(
  */
 export async function probeUrl(url: string): Promise<boolean> {
   const { serverType } = useAuthBase.getState();
-  if (!url || serverType === "local") return false;
+  if (!url || !hasNetworkServerType(serverType)) return false;
 
   const controller = new AbortController();
   const abortTimer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
@@ -132,12 +183,19 @@ export async function probeUrl(url: string): Promise<boolean> {
     deadlineTimer = setTimeout(() => resolve(false), PROBE_DEADLINE_MS);
   });
   try {
-    return await Promise.race([
-      serverType === "jellyfin"
-        ? probeJellyfin(url, controller.signal)
-        : probeSubsonic(url, controller.signal),
-      deadline,
-    ]);
+    const probe = (() => {
+      switch (serverType) {
+        case "jellyfin":
+          return probeJellyfin(url, controller.signal);
+        case "webdav":
+          return probeWebdav(url, controller.signal);
+        case "smb":
+          return probeSmb(url);
+        default:
+          return probeSubsonic(url, controller.signal);
+      }
+    })();
+    return await Promise.race([probe, deadline]);
   } catch {
     return false;
   } finally {

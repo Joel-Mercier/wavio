@@ -14,11 +14,13 @@ import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerShee
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
+import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import OutputSheet from "@/components/player/OutputSheet";
+import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import UpdateGate from "@/components/update/UpdateGate";
 import {
@@ -28,6 +30,7 @@ import {
 } from "@/config/queryClient";
 import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import { probeServer, resetServerReachable } from "@/services/network";
 import { librarySyncService, offlineDownloadService } from "@/services/offline";
@@ -299,11 +302,15 @@ export default function AppLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  // First login into a local library: hold on the indexing screen (spinner +
-  // live scan steps) until the on-device index is built, then fall through to
-  // render the app — which lands on Home. `!localLibReady` covers the brief
-  // window before the saved scan summary has rehydrated, so Home never flashes.
-  if (serverType === "local" && (!localLibReady || lastScanAt === undefined)) {
+  // First login into an index-backed library: hold on the indexing screen
+  // (spinner + live scan steps) until the on-device index is built, then fall
+  // through to render the app — which lands on Home. `!localLibReady` covers the
+  // brief window before the saved scan summary has rehydrated, so Home never
+  // flashes.
+  if (
+    isIndexBackedType(serverType) &&
+    (!localLibReady || lastScanAt === undefined)
+  ) {
     return <LocalLibraryIndexing />;
   }
 
@@ -359,6 +366,8 @@ export default function AppLayout() {
         <FloatingPlayer />
       </AppDrawer>
       <OfflineMutationsSync />
+      <IncompleteScanNotice />
+      <PlaybackNoticeToast />
       <LidarrDownloadsWatcher />
       <DownloaderPickerSheet />
       <OfflineStarredAutoSync />

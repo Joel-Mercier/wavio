@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage } from "@/config/storage";
+import { LOCAL_AUTH_SCOPE } from "@/config/authScope";
+import { createDynamicScopedStorage, storage } from "@/config/storage";
+import { isSingletonServerType } from "@/services/backend/serverTraits";
 import type { ScanPhase, ScanResult } from "@/services/local/indexer";
-import { currentAuthScope } from "@/stores/auth";
+import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import type { ServerType } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
 
 // Scan state for the on-device local-library feature. The source folders are
@@ -18,8 +21,26 @@ export type ScanStatus = {
   processed: number;
   total: number;
   currentFile?: string;
-  error?: string;
+  /** Directories walked so far, during the listing phase. */
+  directories?: number;
+  /**
+   * Why the scan failed, as a code the UI maps to copy.
+   *
+   * A code rather than a message: this used to hold `String(error)`, which the
+   * gate rendered verbatim — so a user on cellular was shown the literal string
+   * `ERR_SCAN_METERED_NETWORK`, and everything else showed a raw AxiosError.
+   * `ERR_SCAN_*` values are the scanner's own; the rest come from
+   * services/fileSource/errors.
+   */
+  errorCode?: string;
+  /**
+   * Present only when there is genuinely nothing better to say — an unclassified
+   * throw. Shown as supporting detail under a generic message, never alone.
+   */
+  errorDetail?: string;
 };
+
+const STORE_NAME = "localLibraryStore";
 
 const idleStatus: ScanStatus = { phase: "idle", processed: 0, total: 0 };
 
@@ -58,6 +79,10 @@ interface LocalLibraryStore {
   // settings "rescan") vs an incremental one (a folder change only needs new
   // files indexed). Ephemeral — reset per app start.
   forceNextScan: boolean;
+  // A scan just finished without seeing the whole library (a folder wouldn't
+  // list). Nothing was pruned, but the result is partial and the user should be
+  // told rather than shown a quietly smaller library. Consumed once and cleared.
+  incompleteScanNotice: boolean;
 
   setStatus: (status: ScanStatus) => void;
   setScanFinished: (result: ScanResult) => void;
@@ -70,6 +95,8 @@ interface LocalLibraryStore {
    * scan only indexes new/changed files (a folder add/remove).
    */
   requestRescan: (force?: boolean) => void;
+  /** Dismiss the one-shot partial-scan warning once it's been shown. */
+  clearIncompleteScanNotice: () => void;
   star: (target: StarTarget) => void;
   unstar: (target: StarTarget) => void;
   /** Set a 1–5 rating for a local id; a rating of 0 clears it (Subsonic). */
@@ -94,6 +121,7 @@ const initialState = {
   status: idleStatus,
   ready: false,
   forceNextScan: false,
+  incompleteScanNotice: false,
 };
 
 const useLocalLibraryBase = create<LocalLibraryStore>()(
@@ -127,7 +155,16 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           lastScanAt: Date.now(),
           lastScanResult: result,
           forceNextScan: false,
+          // Raised here rather than in the gate because the gate unmounts the
+          // instant `lastScanAt` is stamped — it never gets to say anything.
+          // One-shot and ephemeral: the warning is about what just happened, and
+          // re-announcing it on every cold start would be noise.
+          incompleteScanNotice: result.incomplete,
         });
+      },
+
+      clearIncompleteScanNotice: () => {
+        set({ incompleteScanNotice: false });
       },
 
       clearLocalLibraryData: () => {
@@ -183,7 +220,7 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
       },
     }),
     {
-      name: "localLibraryStore",
+      name: STORE_NAME,
       storage: createJSONStorage(() =>
         createDynamicScopedStorage(currentAuthScope),
       ),
@@ -219,4 +256,73 @@ export function consumeLocalRescanFlag(): boolean {
   const pending = pendingLocalRescan;
   pendingLocalRescan = false;
   return pending;
+}
+
+/**
+ * Re-open the indexing gate for a specific saved server, active or not.
+ *
+ * Editing a share's scanned sub-path (or a local library's folders) has to
+ * reconcile *that* server's index, but this store is scope-bound: a bare
+ * `requestRescan` clears the stamp of whichever library is signed in right now
+ * and leaves the edited one untouched — so the wrong library rescans and the
+ * edited one keeps serving files outside its new path.
+ *
+ * For a non-active server the stamp is dropped straight out of the target
+ * scope's persisted blob, so the gate opens the next time that server is
+ * entered. Storage rather than the module-level `flagLocalRescanOnEntry` seam
+ * the login screen uses, because that entry may be days and an app restart away.
+ */
+export function requestRescanForServer(
+  serverId: string,
+  type: ServerType,
+): void {
+  if (serverId === useAuthBase.getState().serverId) {
+    useLocalLibraryBase.getState().requestRescan(false);
+    return;
+  }
+  const current = currentAuthScope();
+  for (const scope of scopesForServer(serverId, type)) {
+    if (scope === current) continue;
+    clearPersistedScanStamp(scope);
+  }
+}
+
+// A singleton type has no id in its scope; every other type may have several
+// scopes for one server (one per user), and a user who has signed in but isn't
+// in the servers store still owns a bucket — so the scopes are read back off
+// storage rather than derived from the users list. Mirrors the recovery scan in
+// services/storageScopeMigration.ts.
+function scopesForServer(serverId: string, type: ServerType): string[] {
+  if (isSingletonServerType(type)) return [LOCAL_AUTH_SCOPE];
+  const prefix = `${serverId.replace(/[^a-zA-Z0-9]/g, "_")}_`;
+  const suffix = `:${STORE_NAME}`;
+  const scopes: string[] = [];
+  for (const key of storage.getAllKeys()) {
+    if (!key.endsWith(suffix)) continue;
+    const scope = key.slice(0, -suffix.length);
+    if (scope.startsWith(prefix)) scopes.push(scope);
+  }
+  return scopes;
+}
+
+// The keys are deleted rather than set to null: `lastScanAt: undefined` is what
+// the gate tests for, and that is exactly what rehydrating a blob without them
+// produces (JSON.stringify drops undefined, so this is the shape persist itself
+// writes). Favourites and ratings in the same blob are left alone.
+function clearPersistedScanStamp(scope: string): void {
+  const key = `${scope}:${STORE_NAME}`;
+  const raw = storage.getString(key);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as {
+      state?: Record<string, unknown>;
+    };
+    if (!parsed.state) return;
+    delete parsed.state.lastScanAt;
+    delete parsed.state.lastScanResult;
+    storage.set(key, JSON.stringify(parsed));
+  } catch {
+    // A blob we can't parse is one persist will discard on rehydrate anyway,
+    // which leaves `lastScanAt` undefined — the gate opens either way.
+  }
 }

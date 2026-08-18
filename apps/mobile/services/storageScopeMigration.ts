@@ -1,6 +1,7 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { getAuthScope } from "@/config/authScope";
 import { storage } from "@/config/storage";
+import { isSingletonServerType } from "@/services/backend/serverTraits";
 import { SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
 import { reportError } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
@@ -91,9 +92,11 @@ export function buildScopeRemap(
   const servers = parsed?.state?.servers ?? [];
   const users = parsed?.state?.users ?? [];
   const remap: ScopeRemap = new Map();
-  // Local libraries keep the historical `local_local` sentinel (see
+  // Singleton libraries keep the historical `local_local` sentinel (see
   // LOCAL_AUTH_SCOPE), so they need no remapping at all.
-  const remoteServers = servers.filter((s) => s?.type !== "local" && s?.id);
+  const remoteServers = servers.filter(
+    (s) => s?.type && !isSingletonServerType(s.type) && s?.id,
+  );
   const serverById = new Map(remoteServers.map((s) => [s.id, s] as const));
 
   // Exact mapping for every known (server, user) pair.

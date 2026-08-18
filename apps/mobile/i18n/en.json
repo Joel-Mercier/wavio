@@ -1178,6 +1178,8 @@
 					"scanMusicLibraryLabel": "Scan music library",
 					"scanMusicLibraryDescription": "Intitiates a rescan of the media libraries on your server",
 					"scanMusicLibraryAction": "Scan",
+					"scanOnWifiOnlyLabel": "Scan on Wi-Fi only",
+					"scanOnWifiOnlyDescription": "A first scan reads tags from every file on the share, which can use a lot of mobile data.",
 					"scanMusicLibrarySuccessDescription": "Scan started successfully",
 					"scanMusicLibraryErrorDescription": "An error occurred while starting a scan",
 					"scanMusicLibraryAdminRequiredDescription": "Starting a scan requires administrator rights on your server",
@@ -1601,6 +1603,9 @@
 			},
 			"player": {
 				"title": "Playing now",
+				"notices": {
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+				},
 				"original": "Original",
 				"playingFrom": {
 					"album": "Playing from album",
@@ -1882,14 +1887,29 @@
 			},
 			"localIndexing": {
 				"title": "Building your library",
+				"notificationText": "Reading your music files. You can keep using your phone.",
 				"listing": "Reading files from your folders…",
 				"indexing": "Extracting metadata…",
 				"pruning": "Cleaning up…",
 				"finishing": "Almost done…",
 				"countLabel": "{{processed}} of {{total}} tracks",
+				"folderCountLabel_one": "{{count}} folder scanned",
+				"folderCountLabel_other": "{{count}} folders scanned",
+				"partialScanWarning_one": "{{count}} folder couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_other": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
 				"errorTitle": "Couldn't build your library",
+				"errors": {
+					"meteredNetwork": "Scanning is set to Wi-Fi only, and you're on mobile data. Connect to Wi-Fi, or turn off the Wi-Fi-only setting in Settings → Music library.",
+					"auth": "Your username or password was rejected. Check the credentials saved for this server.",
+					"notFound": "The music folder couldn't be found. Check the folder path saved for this server.",
+					"unreachable": "Couldn't reach the server. Check that it's switched on and that you're on the same network.",
+					"notSupported": "The server answered, but not in a way Wavio understands. Check the server address.",
+					"server": "The server reported an error while listing your files.",
+					"generic": "Something went wrong while building your library."
+				},
 				"retry": "Retry",
-				"continue": "Continue anyway"
+				"continue": "Continue anyway",
+				"stop": "Stop scanning"
 			},
 			"serverSwitch": {
 				"title": "Switching server",
@@ -1908,6 +1928,8 @@
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
 				"serverTypeLocal": "Local library",
+				"serverTypeWebdav": "WebDAV share",
+				"serverTypeSmb": "SMB share",
 				"urlPlaceholder": "Enter server URL",
 				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Enter username",
@@ -1930,6 +1952,17 @@
 				"localNoPaths": "Add at least one folder to continue",
 				"localRemovePath": "Remove folder",
 				"localSetupHelp": "How does the local library work?",
+				"libraryPathPlaceholder": "Music folder on the share (optional)",
+				"libraryPathHint": "Leave empty to scan the whole share. Example: /Music",
+				"webdavNotAShare": "That address answered, but it isn't a WebDAV share. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavMethodBlocked": "That server refused the WebDAV request. WebDAV may be switched off, or a reverse proxy in front of it may be blocking PROPFIND requests.",
+				"webdavPathNotFound": "That address answered, but there's nothing at that path. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavRedirected": "That address redirected somewhere else, which usually means a sign-in page is in front of the share. Point Wavio straight at the WebDAV URL.",
+				"smbUrlPlaceholder": "host/ShareName",
+				"smbUrlInvalid": "Enter the share as smb://host/ShareName — for example smb://192.168.1.10/Music",
+				"smbShareNotFound": "Connected, but there's no share called \"{{share}}\" on that host. Check the share name.",
+				"smbUnreachable": "Couldn't reach that host on port {{port}}. Check the address, and that the share uses SMB2 or newer — SMB1 isn't supported.",
+				"smbDialectUnsupported": "That host refused the connection because it requires SMB 3. On iPhone and iPad, Wavio speaks SMB 2.1 — allow SMB 2 on the share to connect.",
 				"localInfoTitle": "Local library",
 				"localInfoFormatsTitle": "Supported formats",
 				"localInfoFormats": "Wavio scans the folders you select for MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA and AIFF files.",

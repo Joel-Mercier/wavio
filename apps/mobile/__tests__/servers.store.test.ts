@@ -482,6 +482,7 @@ describe("server schemas", () => {
     url: "https://a.example.com",
     type: "navidrome",
     paths: [],
+    libraryPath: "",
     mtlsAlias: "",
     fallbackUrl: "",
     headers: [],

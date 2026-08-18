@@ -38,7 +38,7 @@ import {
   requestHeadersForUrl,
   withServerHeaders,
 } from "@/services/serverHeaders";
-import { type Server, useServersBase } from "@/stores/servers";
+import { type Server, type ServerUser, useServersBase } from "@/stores/servers";
 import { USER_AGENT } from "@/utils/userAgent";
 
 const HEADERS = { "CF-Access-Client-Id": "id", "CF-Access-Client-Secret": "s" };
@@ -56,8 +56,8 @@ const server = (over: Partial<Server> = {}): Server => ({
   ...over,
 });
 
-const setServers = (servers: Server[]) => {
-  useServersBase.setState({ servers, users: [] }, false);
+const setServers = (servers: Server[], users: ServerUser[] = []) => {
+  useServersBase.setState({ servers, users }, false);
   __resetCustomHeadersCache();
 };
 
@@ -297,5 +297,56 @@ describe("configuredHeaderNames / customHeaderHostMap", () => {
       "192.168.1.10": HEADERS,
       "music.example.com": HEADERS,
     });
+  });
+});
+
+// A share's Basic password is the one header here that must never travel wider
+// than the server it belongs to, and a NAS hosting both a share and a music
+// server is the ordinary deployment — hence the origin, not the host, as key.
+describe("network-share credentials", () => {
+  const share = server({
+    id: "dav",
+    type: "webdav",
+    url: "https://nas.local/dav/music",
+    headers: undefined,
+  });
+  const saved: ServerUser[] = [
+    { serverId: "dav", username: "joel", password: "pw" },
+  ];
+  const BASIC = `Basic ${btoa("joel:pw")}`;
+
+  it("sends Basic auth to the share", () => {
+    setServers([share], saved);
+    expect(requestHeadersForUrl("https://nas.local/dav/music/a.flac")).toEqual({
+      "User-Agent": USER_AGENT,
+      Authorization: BASIC,
+    });
+    expect(
+      mergeCustomHeaders("https://nas.local/dav/music/a.flac", {}),
+    ).toEqual({ Authorization: BASIC });
+  });
+
+  it("treats the scheme's default port and an explicit one as one origin", () => {
+    setServers([share], saved);
+    expect(
+      requestHeadersForUrl("https://nas.local:443/dav/music/a.flac")
+        .Authorization,
+    ).toBe(BASIC);
+  });
+
+  it("does not leak it to another server on the same host", () => {
+    setServers(
+      [share, server({ id: "nd", url: "http://nas.local:4533" })],
+      saved,
+    );
+    const other = requestHeadersForUrl(
+      "http://nas.local:4533/rest/getCoverArt",
+    );
+    expect(other.Authorization).toBeUndefined();
+    // The *user's* headers are host-wide and still apply there.
+    expect(other).toEqual(WITH_AGENT);
+    expect(mergeCustomHeaders("http://nas.local:4533/rest/ping", {})).toEqual(
+      HEADERS,
+    );
   });
 });

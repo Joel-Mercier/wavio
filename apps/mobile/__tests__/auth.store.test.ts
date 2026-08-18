@@ -254,6 +254,7 @@ describe("auth login schema", () => {
       password: "secret",
       type: "navidrome",
       paths: [],
+      libraryPath: "",
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [],
@@ -268,6 +269,7 @@ describe("auth login schema", () => {
       password: "",
       type: "local",
       paths: ["/storage/emulated/0/Music"],
+      libraryPath: "",
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [],
@@ -282,6 +284,7 @@ describe("auth login schema", () => {
       password: "secret",
       type: "navidrome" as const,
       paths: [],
+      libraryPath: "",
       mtlsAlias: "",
       headers: [],
     };

@@ -5,6 +5,7 @@ import {
   refreshProxyUpstreams,
   syncClientCertificates,
 } from "@/modules/ssl-trust";
+import { speaksHttpType } from "@/services/backend/serverTraits";
 import { reportError } from "@/services/errorReporting";
 import { useServersBase } from "@/stores/servers";
 
@@ -19,7 +20,7 @@ import { useServersBase } from "@/stores/servers";
 function savedRemoteBaseUrls(): string[] {
   return useServersBase
     .getState()
-    .servers.filter((s) => s.type !== "local")
+    .servers.filter((s) => speaksHttpType(s.type))
     .flatMap((s) => [s.url, s.fallbackUrl])
     .filter((url): url is string => !!url);
 }
@@ -32,7 +33,7 @@ function savedRemoteBaseUrls(): string[] {
 function savedClientCertificates(): Record<string, string> {
   const map: Record<string, string> = {};
   for (const s of useServersBase.getState().servers) {
-    if (s.type === "local" || !s.mtlsAlias) continue;
+    if (!speaksHttpType(s.type) || !s.mtlsAlias) continue;
     for (const url of [s.url, s.fallbackUrl]) {
       if (!url) continue;
       const host = hostnameFromUrl(url);
