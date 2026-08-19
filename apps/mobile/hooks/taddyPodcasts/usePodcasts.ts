@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { isTaddyPageLimit } from "@/services/taddyPodcasts/index";
 import {
   getLatestPodcastEpisodes,
   getMultiplePodcastEpisodes,
@@ -114,6 +115,9 @@ export const useLatestPodcastEpisodes = (uuids: string[]) => {
   });
 };
 
+// Paginated on purpose: a paid Taddy plan pages through the whole back
+// catalogue of every subscription. The free plan stops at page 1, which the
+// queryFn below detects and turns into a clean end-of-feed rather than an error.
 export const useInfiniteLatestPodcastEpisodes = ({
   uuids,
   limitPerPage = 25,
@@ -130,11 +134,23 @@ export const useInfiniteLatestPodcastEpisodes = ({
     ],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
-      const response = await getLatestPodcastEpisodes({
-        uuids,
-        page: pageParam,
-        limitPerPage,
-      });
+      let response: Awaited<ReturnType<typeof getLatestPodcastEpisodes>>;
+      try {
+        response = await getLatestPodcastEpisodes({
+          uuids,
+          page: pageParam,
+          limitPerPage,
+        });
+      } catch (error) {
+        // A free plan can't reach past page 1. Return an empty page instead of
+        // throwing so getNextPageParam ends the feed: the screen keeps the
+        // pages it has rather than replacing them with an error, and the
+        // request isn't retried three more times on every scroll to the bottom.
+        if (pageParam > 1 && isTaddyPageLimit(error)) {
+          return { data: { getLatestPodcastEpisodes: [] } };
+        }
+        throw error;
+      }
       if (response.data?.getLatestPodcastEpisodes) {
         const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
         for (const episode of response.data.getLatestPodcastEpisodes) {
@@ -187,16 +203,28 @@ export const useInfinitePodcastSeries = ({
     ],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
-      const response = await getPodcastSeries({
-        uuid,
-        itunesId,
-        rssUrl,
-        name,
-        page: pageParam,
-        limitPerPage,
-        sortOrder,
-        searchTerm,
-      });
+      let response: Awaited<ReturnType<typeof getPodcastSeries>>;
+      try {
+        response = await getPodcastSeries({
+          uuid,
+          itunesId,
+          rssUrl,
+          name,
+          page: pageParam,
+          limitPerPage,
+          sortOrder,
+          searchTerm,
+        });
+      } catch (error) {
+        // A free plan can't reach past page 1. Return an empty page rather than
+        // throwing so getNextPageParam ends the list: the screen keeps the
+        // episodes it has instead of replacing them with an error, and the
+        // request isn't retried three more times on every scroll to the bottom.
+        if (pageParam > 1 && isTaddyPageLimit(error)) {
+          return { data: {} } as Awaited<ReturnType<typeof getPodcastSeries>>;
+        }
+        throw error;
+      }
       if (response.data?.getPodcastSeries) {
         const favoriteUuids = new Set(favoritePodcasts.map((fav) => fav.uuid));
         const series = response.data.getPodcastSeries;

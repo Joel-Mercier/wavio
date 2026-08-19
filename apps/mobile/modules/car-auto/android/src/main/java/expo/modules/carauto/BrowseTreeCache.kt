@@ -10,6 +10,10 @@ data class BrowseNode(
   val title: String,
   val subtitle: String?,
   val artworkUrl: String?,
+  // The mirrored copy of [artworkUrl], when JS had one on disk. Preferred, but
+  // it lives in the reclaimable cache dir while this tree's snapshot does not —
+  // so [artworkUrl] stays around as the fallback. See CarArtwork.apply.
+  val localArtworkUrl: String?,
   val playable: Boolean,
   val contentStyle: String?, // "list" | "grid" | null
 )
@@ -25,13 +29,29 @@ object BrowseTreeCache {
   // (album / playlist / home section) instead of just the tapped track.
   @Volatile private var lastBrowsedParent: String? = null
 
-  fun setFromJson(context: Context, json: String) {
-    val parsed = parse(json) ?: return
+  /**
+   * Swap in a tree pushed from JS, returning the parent ids whose children
+   * actually changed, each with its new child count.
+   *
+   * The caller notifies the media session for those ids and no others: a browser
+   * only re-reads children it is told about, and telling it about every parent on
+   * every rebuild would have it re-query the whole tree for nothing. A parent
+   * that disappeared counts as changed — its children are now empty.
+   *
+   * The counts come from here rather than from [getChildren] because that one
+   * records `lastBrowsedParent` as a side effect, and a push is not a browse.
+   */
+  fun setFromJson(context: Context, json: String): Map<String, Int> {
+    val parsed = parse(json) ?: return emptyMap()
+    val previous = nodes
     nodes = parsed
     runCatching {
       File(context.filesDir, SNAPSHOT_FILE).writeText(json)
     }
     loaded = true
+    return (previous.keys + parsed.keys)
+      .filter { previous[it] != parsed[it] }
+      .associateWith { (parsed[it] ?: emptyList()).size }
   }
 
   // Used by the service when JS hasn't pushed a tree yet this process
@@ -52,6 +72,10 @@ object BrowseTreeCache {
     if (children.any { it.playable }) lastBrowsedParent = parentId
     return children
   }
+
+  // Side-effect-free counterpart to getChildren, for callers that only need the
+  // size and must not disturb lastBrowsedParent (a subscription is not a browse).
+  fun childCount(parentId: String): Int = nodes[parentId]?.size ?: 0
 
   fun lastBrowsedParent(): String? = lastBrowsedParent
 
@@ -97,6 +121,7 @@ object BrowseTreeCache {
           title = o.optString("title"),
           subtitle = o.optString("subtitle").takeIf { it.isNotEmpty() },
           artworkUrl = o.optString("artworkUrl").takeIf { it.isNotEmpty() },
+          localArtworkUrl = o.optString("localArtworkUrl").takeIf { it.isNotEmpty() },
           playable = o.optBoolean("playable", false),
           contentStyle = o.optString("contentStyle").takeIf { it.isNotEmpty() },
         )

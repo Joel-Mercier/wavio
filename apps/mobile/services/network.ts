@@ -4,7 +4,11 @@ import NetInfo, {
 } from "@react-native-community/netinfo";
 import { probeUrl } from "@/services/backend/probe";
 import { reportBreadcrumb, scrubUrl } from "@/services/errorReporting";
-import { useAppBase } from "@/stores/app";
+import {
+  type CellularStreamFormat,
+  type StreamFormat,
+  useAppBase,
+} from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
 
@@ -534,4 +538,18 @@ export function getEffectiveMaxBitRate(
     return Math.min(maxBitRate, cellularMaxBitRate);
   }
   return cellularMaxBitRate ?? maxBitRate;
+}
+
+// Streaming format for the current network. Unlike the bitrate caps, the two
+// formats don't combine — the cellular pick replaces the Wi-Fi one outright, and
+// "same" (the default) means there is no cellular-specific pick at all. Lives
+// here so `currentType` stays private to this module, like the bitrate helper.
+export function getEffectiveStreamingFormat(
+  streamingFormat: StreamFormat,
+  cellularStreamingFormat: CellularStreamFormat,
+): StreamFormat {
+  if (currentType !== "cellular" || cellularStreamingFormat === "same") {
+    return streamingFormat;
+  }
+  return cellularStreamingFormat;
 }

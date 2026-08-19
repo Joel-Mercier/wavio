@@ -1,5 +1,5 @@
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {
   GestureDetector,
@@ -18,7 +18,9 @@ import { Pressable } from "@/components/ui/pressable";
 
 type StarRatingProps = {
   value: number;
-  onChange?: (nextValue: number) => void;
+  // May return a promise: a rejection reverts the optimistic fill, so a failed
+  // save never leaves the widget showing a rating the server didn't take.
+  onChange?: (nextValue: number) => unknown;
   max?: number;
   size?: number;
   color?: string;
@@ -26,6 +28,7 @@ type StarRatingProps = {
   spacing?: number;
   disabled?: boolean;
   style?: ViewStyle;
+  testID?: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -39,6 +42,7 @@ const StarItem = memo(function StarItem({
   onPress,
   disabled,
   spacing,
+  isLast,
 }: {
   index: number;
   isActive: boolean;
@@ -48,6 +52,7 @@ const StarItem = memo(function StarItem({
   onPress: (index: number) => void;
   disabled?: boolean;
   spacing: number;
+  isLast: boolean;
 }) {
   const scale = useSharedValue(1);
 
@@ -72,7 +77,7 @@ const StarItem = memo(function StarItem({
       hitSlop={8}
       disabled={disabled}
       onPress={handlePress}
-      style={[{ marginRight: index < 4 ? spacing : 0 }, animatedStyle]}
+      style={[{ marginRight: isLast ? 0 : spacing }, animatedStyle]}
     >
       <Star width={size} height={size} color={starColor} fill={starFill} />
     </AnimatedPressable>
@@ -89,6 +94,7 @@ export const StarRating = memo(function StarRating({
   spacing = 8,
   disabled = false,
   style,
+  testID,
 }: StarRatingProps) {
   const [emerald500, gray400] = Uniwind.getCSSVariable([
     "--color-emerald-500",
@@ -98,32 +104,53 @@ export const StarRating = memo(function StarRating({
   const emptyColor = emptyColorProp ?? gray400;
   const [currentValue, setCurrentValue] = useState(value || 0);
   const clampedValue = Math.max(0, Math.min(max, Math.round(currentValue)));
+  // Last value known to be persisted, so a rejected onChange can roll back to
+  // it. `value` alone can't do that: it keeps its identity when a save fails,
+  // so the effect below never re-fires.
+  const committedValue = useRef(value || 0);
 
   useEffect(() => {
+    committedValue.current = value || 0;
     setCurrentValue(value || 0);
   }, [value]);
 
   const stars = useMemo(() => Array.from({ length: max }, (_, i) => i), [max]);
+
+  const commit = useCallback(
+    (next: number) => {
+      const previous = committedValue.current;
+      committedValue.current = next;
+      setCurrentValue(next);
+      const result = onChange?.(next);
+      if (result instanceof Promise) {
+        result.catch(() => {
+          committedValue.current = previous;
+          setCurrentValue(previous);
+        });
+      }
+    },
+    [onChange],
+  );
 
   const handlePress = useCallback(
     (index: number) => {
       if (disabled) return;
       const next = index + 1; // integer only, no half steps
 
-      // If clicking on the currently selected star, deselect it (set to 0)
-      if (next === currentValue) {
-        setCurrentValue(0);
-        onChange?.(0);
-      } else {
-        setCurrentValue(next);
-        onChange?.(next);
-      }
+      // Tapping the currently selected star deselects it (set to 0)
+      commit(next === currentValue ? 0 : next);
     },
-    [disabled, onChange, currentValue],
+    [disabled, commit, currentValue],
   );
 
   const panGesture = usePanGesture({
     enabled: !disabled,
+    // Horizontal-only: the widget can sit inside a vertically dismissible screen
+    // (the player), where an unconstrained pan would turn a swipe-to-close into
+    // a rating write. Failing on vertical movement also means onDeactivate never
+    // fires for those swipes.
+    activeOffsetX: [-10, 10],
+    failOffsetY: [-10, 10],
     // Intentionally no onBegin: setting the value on touch-down would make a tap
     // land on an already-selected star, tripping the tap-to-deselect logic in
     // StarItem.handlePress. Drag fills via onUpdate; taps go through the per-star
@@ -142,13 +169,16 @@ export const StarRating = memo(function StarRating({
       const starIndex = Math.floor(event.x / starWidth);
       const newValue =
         starIndex < 0 ? 0 : Math.min(max, Math.max(0, starIndex + 1));
-      scheduleOnRN(setCurrentValue, newValue);
-      if (onChange) scheduleOnRN(onChange, newValue);
+      scheduleOnRN(commit, newValue);
     },
   });
 
   return (
-    <GestureHandlerRootView>
+    // Own gesture root so the drag keeps working inside an RN Modal (RatingModal),
+    // which renders in a separate native hierarchy. The explicit style replaces
+    // GestureHandlerRootView's default `flex: 1`, which would otherwise stretch
+    // the widget wherever it sits next to other content.
+    <GestureHandlerRootView style={{ alignSelf: "flex-start" }} testID={testID}>
       <GestureDetector gesture={panGesture}>
         <Animated.View>
           <Box style={[{ flexDirection: "row", alignItems: "center" }, style]}>
@@ -157,6 +187,7 @@ export const StarRating = memo(function StarRating({
                 key={i}
                 index={i}
                 isActive={i < clampedValue}
+                isLast={i === max - 1}
                 size={size}
                 color={color}
                 emptyColor={emptyColor}

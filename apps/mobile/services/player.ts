@@ -27,6 +27,12 @@ import type {
   AlbumList2,
   Child,
 } from "@/services/openSubsonic/types";
+import {
+  hasTranscodeRetried,
+  mustStreamOverOffline,
+  noteStreamOverOffline,
+  noteTranscodeRetried,
+} from "@/services/playback/decodeFallback";
 import { activeRemoteTarget } from "@/services/playback/targets";
 import {
   notePlaybackRateChanged,
@@ -37,6 +43,14 @@ import {
   reportStopped,
 } from "@/services/playbackReport";
 import { stopPlayQueueSync } from "@/services/playQueueSync";
+import {
+  clearPodcastProgress,
+  flushPodcastProgress,
+  getPodcastResumePosition,
+  isPodcastTrack,
+  recordPodcastProgress,
+  resetPodcastProgressRuntime,
+} from "@/services/podcastProgress";
 import {
   armResume,
   clearResumePosition,
@@ -55,6 +69,11 @@ import {
   consumeSleepEndOfTrack,
   registerSleepTimerPauseHandler,
 } from "@/services/sleepTimer";
+import {
+  cachedTrackUri,
+  evictTracks,
+  touchCachedTrack,
+} from "@/services/trackCache";
 import useActivity from "@/stores/activity";
 import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
@@ -402,19 +421,6 @@ function applyPlaybackRate(track: QueueTrack | null) {
   }
 }
 
-// Track ids whose raw stream failed to decode on this device and have since
-// been re-armed to stream through a forced server transcode. Bounded by the
-// queue, and one retry per track keeps a genuinely broken source from looping.
-const transcodeRetriedIds = new Set<string>();
-
-// Track ids whose *downloaded* file failed to decode on this device (e.g. an
-// ALAC file saved before the download path learned to transcode it) and have
-// since been forced to stream through a server transcode instead of playing off
-// disk. Only meaningful while online; the download itself is corrected
-// separately (offlineFileInfo transcodes such codecs), so this just bridges
-// already-downloaded raw files.
-const streamOverOfflineIds = new Set<string>();
-
 // Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
 // on. Jellyfin negotiates its own profile and local files play off disk, so a
 // retry there would just reload the identical URL.
@@ -439,22 +445,44 @@ function isServerTranscodeBackend(): boolean {
   return type === "opensubsonic" || type === "navidrome" || type === "jellyfin";
 }
 
-// Whether the current source is a server-transcoded stream, which is served
-// without a seekable length so ExoPlayer can't seek within it (a seekTo just
-// restarts it). Such a stream must instead be reloaded at an offset. False for
-// anything played off a local URL (downloaded, radio, podcast) or the on-device
-// library. True when the decode-error fallback forced a transcode, or the
-// streaming settings predict one for this track.
-function isTranscodedStream(track: QueueTrack): boolean {
+// Whether loading this track *now* would give a server-transcoded stream, which
+// is served without a seekable length so ExoPlayer can't seek within it (a
+// seekTo just restarts it). Such a stream must instead be reloaded at an offset.
+// False for anything played off a local URL (downloaded, radio, podcast) or the
+// on-device library. True when the decode-error fallback forced a transcode, or
+// the streaming settings predict one for this track.
+// A prediction, so it only answers for a track that isn't loaded yet — once one
+// is loaded, `isTranscodedStream` reports what its URL actually asked for.
+function predictTranscodedStream(track: QueueTrack): boolean {
   if (track.isRadio || track.source === "podcast") return false;
   if (!isServerTranscodeBackend()) return false;
   if (
     useOffline.getState().getDownloadedTrack(track.id) &&
-    !streamOverOfflineIds.has(track.id)
+    !mustStreamOverOffline(track.id)
   )
     return false;
-  if (transcodeRetriedIds.has(track.id)) return true;
+  // A prefetched copy plays off disk exactly like a download does, so it is
+  // natively seekable and no `timeOffset` reload applies.
+  if (!mustStreamOverOffline(track.id) && cachedTrackUri(track.id) != null)
+    return false;
+  if (hasTranscodeRetried(track.id)) return true;
   return trackTranscodeInfo(track).active;
+}
+
+// What the currently loaded stream actually is, recorded when its URL was built.
+// The prediction depends on the network in use (the cellular streaming format
+// and bitrate cap apply only on cellular), so re-deriving it later answers for
+// the network the *seek* happens on, not the one the stream was loaded on:
+// walking from cellular onto Wi-Fi mid-track would otherwise make a transcoded
+// stream look seekable and a scrub restart it from the beginning.
+let loadedTranscode: { trackId: string; active: boolean } | null = null;
+
+// Whether the source now loaded in the engine is a server-transcoded stream.
+// Falls back to the prediction for a track that isn't loaded yet (the resume
+// decision in loadTrack, which runs before the URL exists).
+function isTranscodedStream(track: QueueTrack): boolean {
+  if (loadedTranscode?.trackId === track.id) return loadedTranscode.active;
+  return predictTranscodedStream(track);
 }
 
 // Seconds a transcoded stream was requested to start at (Subsonic `timeOffset`).
@@ -487,32 +515,58 @@ function audioSource(uri: string) {
   };
 }
 
+// `transcoded` says whether the URL just built asks the server for a transcode,
+// which is what makes the stream unseekable — recorded by the caller so a later
+// seek doesn't have to re-derive it against a network that may have changed.
 function resolveTrackUrl(
   track: QueueTrack,
   timeOffset?: number,
 ): {
   url: string;
   isOffline: boolean;
+  transcoded: boolean;
 } {
   // Internet radio streams its own absolute URL — there's no Subsonic
   // /stream?id endpoint for it, and it's never an offline download.
-  if (track.isRadio && track.url) return { url: track.url, isOffline: false };
+  if (track.isRadio && track.url)
+    return { url: track.url, isOffline: false, transcoded: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
-  if (downloaded && !streamOverOfflineIds.has(track.id))
-    return { url: downloaded.path, isOffline: true };
+  if (downloaded && !mustStreamOverOffline(track.id))
+    return { url: downloaded.path, isOffline: true, transcoded: false };
+  // Then the prefetch cache (issue #163). Strictly after downloads: a download is
+  // user-owned and permanent, a cache entry is speculative and evictable, so the
+  // two never compete for the same track.
+  if (!mustStreamOverOffline(track.id)) {
+    const cached = cachedTrackUri(track.id);
+    if (cached) {
+      touchCachedTrack(track.id);
+      return { url: cached, isOffline: true, transcoded: false };
+    }
+  }
   if (track.source === "podcast" && track.url)
-    return { url: track.url, isOffline: false };
+    return { url: track.url, isOffline: false, transcoded: false };
   return {
     url: streamUrl(track.id, {
-      forceTranscode: transcodeRetriedIds.has(track.id),
+      forceTranscode: hasTranscodeRetried(track.id),
       timeOffset,
     }),
     isOffline: false,
+    transcoded: predictTranscodedStream(track),
   };
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
-  if (useOffline.getState().isTrackDownloaded(track.id)) return true;
+  // Both on-disk answers are conditional on the same thing resolveTrackUrl
+  // checks: a copy this device already failed to decode is not a copy that can
+  // play, and claiming otherwise strands the skip-to-playable scan on a track
+  // whose only remaining source is a server it may not be able to reach.
+  const playsOffDisk = !mustStreamOverOffline(track.id);
+  if (playsOffDisk && useOffline.getState().isTrackDownloaded(track.id))
+    return true;
+  // A prefetched copy is on disk right now, which is the whole point of the
+  // cache: driving into a dead zone keeps playing instead of stalling, and the
+  // skip-to-playable scans below route around whatever wasn't cached in time.
+  if (playsOffDisk && cachedTrackUri(track.id) != null) return true;
   // Radio streams and third-party podcast enclosures play from an absolute URL
   // on another host (see resolveTrackUrl), so they only need the *device* online
   // — an unreachable server, which is the other half of what makes onlineManager
@@ -666,21 +720,30 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     player.pause();
     clearLockScreen(player);
     loadedTrackId = null;
+    loadedTranscode = null;
     return;
   }
   isLoading = true;
+  // Nothing is loaded for this track until the URL below is built, so the resume
+  // decision falls back to the prediction rather than an earlier load's record.
+  loadedTranscode = null;
   // A transcoded stream can't be seeked once loaded, so a saved bookmark is
   // baked into the URL as a Subsonic `timeOffset` (the stream starts there) and
   // the seek arming below is skipped. A seekable source keeps the arm-and-seek
   // resume path.
-  const resumeAt = getResumePosition(track);
+  // Podcasts resume from their own store on every play, not just for the launch
+  // track — see services/podcastProgress.ts for why they can't use bookmarks.
+  const resumeAt = isPodcastTrack(track)
+    ? getPodcastResumePosition(track)
+    : getResumePosition(track);
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
-  const { url, isOffline } = resolveTrackUrl(
+  const { url, isOffline, transcoded } = resolveTrackUrl(
     track,
     transcodeResume ? resumeAt : undefined,
   );
+  loadedTranscode = { trackId: track.id, active: transcoded };
   reportBreadcrumb("player", "load", {
     trackId: track.id,
     source: track.source,
@@ -884,6 +947,19 @@ function handlePlaybackStatus(status: AudioStatus) {
     // offline source as long as we still have network to reach the server.
     const canRecoverOfflineViaStream =
       !!resolved?.isOffline && getIsOnline() && getServerReachable();
+    // The bad bytes were a prefetched copy (offline source, but no download owns
+    // this id). Unlike a download — which the user asked for and we must not
+    // delete under them — a cache entry is ours to throw away, and leaving it
+    // would keep isPlayableNow promising a file that cannot decode. Dropping it
+    // also lets the prefetcher fetch a fresh one.
+    if (
+      current &&
+      resolved?.isOffline &&
+      isDecodeError(status.error) &&
+      !useOffline.getState().isTrackDownloaded(current.id)
+    ) {
+      evictTracks([current.id]);
+    }
     if (
       current &&
       resolved &&
@@ -892,10 +968,10 @@ function handlePlaybackStatus(status: AudioStatus) {
       current.source !== "podcast" &&
       isDecodeError(status.error) &&
       canTranscodeFallback() &&
-      !transcodeRetriedIds.has(current.id)
+      !hasTranscodeRetried(current.id)
     ) {
-      transcodeRetriedIds.add(current.id);
-      if (resolved.isOffline) streamOverOfflineIds.add(current.id);
+      noteTranscodeRetried(current.id);
+      if (resolved.isOffline) noteStreamOverOffline(current.id);
       reportBreadcrumb("player", "transcode-fallback", {
         trackId: current.id,
         error: status.error,
@@ -939,9 +1015,7 @@ function handlePlaybackStatus(status: AudioStatus) {
           suffix: current?.suffix ?? null,
           contentType: current?.contentType ?? null,
           isDecodeError: isDecodeError(errorMessage),
-          transcodeRetried: current
-            ? transcodeRetriedIds.has(current.id)
-            : false,
+          transcodeRetried: current ? hasTranscodeRetried(current.id) : false,
           ...diagnostics,
         },
       });
@@ -1014,7 +1088,14 @@ function handlePlaybackStatus(status: AudioStatus) {
     const cur = useQueue.getState().getCurrent();
     if (cur) {
       reportNowPlaying(cur);
-      recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
+      if (isPodcastTrack(cur)) {
+        // status.duration is what makes a feed that declares no duration work.
+        recordPodcastProgress(cur, effectivePosition(status.currentTime ?? 0), {
+          duration: status.duration,
+        });
+      } else {
+        recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
+      }
     }
   } else if (wasPlaying && !status.didJustFinish && !isLoading) {
     // Playback paused (UI, lock-screen or OS control). Report it for the
@@ -1050,6 +1131,12 @@ function handlePlaybackStatus(status: AudioStatus) {
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
     clearResumePosition(previousId);
+    clearPodcastProgress(previousId);
+    // The queue advance below re-fires the queue subscription, whose skip-flush
+    // would otherwise re-create the entry we just cleared. Only matters when the
+    // episode has no known duration (with one, the flush hits the end guard and
+    // clears anyway) — but that is exactly the RSS-feed case.
+    finishedPodcastId = previousId;
     if (
       !playbackReportEnabled() &&
       previousId &&
@@ -1152,6 +1239,12 @@ const appUnsub = useAppBase.subscribe((state, prev) => {
 });
 
 let lastTrackId: string | null = null;
+// The outgoing track itself, not just its id: flushing a podcast position on a
+// skip needs its duration and source discriminator too.
+let lastTrack: QueueTrack | null = null;
+// Set by the didJustFinish handler so the queue advance it triggers doesn't
+// re-record the episode it just cleared.
+let finishedPodcastId: string | null = null;
 let hasHydrated = false;
 // When restoring a queue saved on the server, we want the same "load but don't
 // auto-play" behaviour as cold-start hydration. This flag tells the next queue
@@ -1162,7 +1255,28 @@ const queueUnsub = useQueue.subscribe((state) => {
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;
   if (id !== lastTrackId) {
+    const outgoing = lastTrack;
+    if (
+      outgoing &&
+      outgoing.id !== finishedPodcastId &&
+      isPodcastTrack(outgoing)
+    ) {
+      // The engine still holds the outgoing episode's position — player.replace
+      // happens further down this same callback. A skip is the only way to leave
+      // an episode without reaching didJustFinish, so without this it loses up
+      // to a full throttle window.
+      recordPodcastProgress(
+        outgoing,
+        effectivePosition(player.currentTime ?? 0),
+        {
+          duration: player.duration,
+          force: true,
+        },
+      );
+    }
+    finishedPodcastId = null;
     lastTrackId = id;
+    lastTrack = current;
     if (suppressAutoplayOnce) {
       suppressAutoplayOnce = false;
       resetScrobbleState();
@@ -1222,6 +1336,7 @@ if (
 function hydratePlayerFromQueue() {
   const current = useQueue.getState().getCurrent();
   lastTrackId = current?.id ?? null;
+  lastTrack = current;
   // The restored current track is the only one eligible to resume from its saved
   // position; arm before loading so the resume read below honours it.
   armResume(current?.id ?? null);
@@ -1274,7 +1389,12 @@ export function resetPlayerForScopeChange() {
   }
   hasHydrated = false;
   playbackInitialized = false;
+  // Persist any in-flight podcast position before dropping the outgoing track:
+  // the store is global, so a scope switch must not lose it.
+  flushPodcastProgress();
+  resetPodcastProgressRuntime();
   lastTrackId = null;
+  lastTrack = null;
   pendingResumeId = null;
   if (useQueue.persist.hasHydrated()) {
     hydratePlayerFromQueue();
@@ -1299,7 +1419,9 @@ export function stopPlayback() {
   }
   playbackInitialized = false;
   hasHydrated = false;
+  flushPodcastProgress();
   lastTrackId = null;
+  lastTrack = null;
   pendingResumeId = null;
   useQueue.getState().clearQueue();
 }
@@ -1444,6 +1566,16 @@ export function restoreServerQueue(
   // Explicit null: the server queue carries no "Playing from …" context.
   useQueue.getState().setQueue(tracks, index, null);
   if (positionSeconds > 0) {
+    // setQueue fired the queue subscription synchronously, so loadTrack has
+    // already armed pendingResumeAt from whatever the track's own resume source
+    // says. Arm the restored position over it (as takeOverFromRemote does)
+    // rather than only raw-seeking: the status listener re-applies the armed
+    // value once the media is ready and would otherwise undo this seek.
+    const current = useQueue.getState().getCurrent();
+    if (current) {
+      pendingResumeId = current.id;
+      pendingResumeAt = positionSeconds;
+    }
     try {
       player.seekTo(positionSeconds);
     } catch (error) {
@@ -1522,9 +1654,21 @@ export function pause() {
   // the next throttled tick that may never come once playback stops.
   const current = useQueue.getState().getCurrent();
   if (current) {
-    recordResumePosition(current, effectivePosition(player.currentTime ?? 0), {
-      force: true,
-    });
+    if (isPodcastTrack(current)) {
+      recordPodcastProgress(
+        current,
+        effectivePosition(player.currentTime ?? 0),
+        { duration: player.duration, force: true },
+      );
+    } else {
+      recordResumePosition(
+        current,
+        effectivePosition(player.currentTime ?? 0),
+        {
+          force: true,
+        },
+      );
+    }
   }
   player.pause();
 }
@@ -1618,7 +1762,8 @@ export function skipPrevious(options?: { force?: boolean }) {
 function reloadAtOffset(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
   streamStartOffset = Math.max(0, seconds);
-  const { url } = resolveTrackUrl(track, streamStartOffset);
+  const { url, transcoded } = resolveTrackUrl(track, streamStartOffset);
+  loadedTranscode = { trackId: track.id, active: transcoded };
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);

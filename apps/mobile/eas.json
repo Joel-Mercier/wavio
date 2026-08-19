@@ -12,6 +12,7 @@
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
         "EXPO_PUBLIC_ENV": "development",
+        "APP_VARIANT": "development",
         "EXPO_PUBLIC_DISTRIBUTION": "github"
       }
     },
@@ -26,6 +27,7 @@
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
         "EXPO_PUBLIC_ENV": "preview",
+        "APP_VARIANT": "preview",
         "EXPO_PUBLIC_DISTRIBUTION": "github"
       }
     },
@@ -36,6 +38,7 @@
         "EXPO_PUBLIC_OPENSUBSONIC_API_VERSION": "1.16.1",
         "EXPO_PUBLIC_CLIENT_NAME": "wavio",
         "EXPO_PUBLIC_ENV": "production",
+        "APP_VARIANT": "production",
         "EXPO_PUBLIC_DISTRIBUTION": "store"
       }
     },

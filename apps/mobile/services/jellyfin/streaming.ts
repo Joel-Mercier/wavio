@@ -1,6 +1,9 @@
 import { resolveServerBase } from "@/modules/ssl-trust";
 import { getDeviceId } from "@/services/jellyfin/deviceId";
-import { getEffectiveMaxBitRate } from "@/services/network";
+import {
+  getEffectiveMaxBitRate,
+  getEffectiveStreamingFormat,
+} from "@/services/network";
 import { type StreamFormat, useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
@@ -99,19 +102,24 @@ type StreamOptions = { forceTranscode?: boolean; timeOffset?: number };
 const TICKS_PER_SECOND = 10_000_000;
 
 // The transcode-negotiation query shared by streamUrl/hlsStreamUrl: maps the
-// streamingFormat setting onto the universal endpoint's Container/AudioCodec/
+// network's effective streaming format (the cellular pick on cellular, the Wi-Fi
+// one otherwise) onto the universal endpoint's Container/AudioCodec/
 // TranscodingContainer and passes the effective bitrate cap as both the
 // direct-play ceiling (MaxStreamingBitrate) and the encode target (AudioBitRate).
 // `timeOffset` (seconds) becomes StartTimeTicks so seeking within a transcoded
 // stream re-requests it from that point (ffmpeg -ss) — the stream is served
 // without a seekable length, so a native seekTo would just restart it.
 function transcodeParams(opts?: StreamOptions): string {
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
+  const {
+    maxBitRate,
+    cellularMaxBitRate,
+    streamingFormat,
+    cellularStreamingFormat,
+  } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const format = opts?.forceTranscode
     ? FALLBACK_TRANSCODE_FORMAT
-    : streamingFormat;
+    : getEffectiveStreamingFormat(streamingFormat, cellularStreamingFormat);
   const { audioCodec, transcodingContainer, containers } =
     formatProfile(format);
   const parts = [

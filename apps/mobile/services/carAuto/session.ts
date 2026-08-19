@@ -82,6 +82,8 @@ type QueueEntry = ReturnType<typeof useQueue.getState>["queue"][number];
 // remote URL does work — until the server needs custom headers or a self-signed
 // certificate, neither of which that loader carries. A local file covers those
 // too, and is what the native side turns into a content:// URI for the host.
+// `cachedCarArtwork` checks the file still exists, so an entry the OS reclaimed
+// from the cache dir falls back to the remote URL rather than to nothing.
 const carArtwork = (url: string | undefined): string | undefined =>
   url ? (cachedCarArtwork(url) ?? url) : undefined;
 
@@ -195,6 +197,8 @@ async function boot() {
 async function wire() {
   if (Platform.OS === "ios") setupCarPlay();
   if (!CarAutoBridge.available && Platform.OS !== "ios") return;
+
+  CarAutoBridge.setVerbose(__DEV__);
 
   // The mirrored covers belong to the server being left, and every one is
   // re-derivable — same reasoning as the lock screen's mirror in
@@ -426,6 +430,7 @@ async function wire() {
 
   // === Transport events from AA → drive expo-audio ===
   CarAutoBridge.onTransport((event) => {
+    log(`transport ${event.action}`);
     switch (event.action) {
       case "play":
         play();

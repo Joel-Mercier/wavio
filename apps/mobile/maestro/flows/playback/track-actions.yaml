@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: track-actions
 # Critical path — Track "…" context menu (one session, exhaustive).
 # Exercises every action wired in components/tracks/TrackActionsProvider.tsx by

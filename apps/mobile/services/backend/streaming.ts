@@ -13,7 +13,10 @@ import {
   parseLocalPodcastEpisodeId,
   parseLocalTrackId,
 } from "@/services/local/keys";
-import { getEffectiveMaxBitRate } from "@/services/network";
+import {
+  getEffectiveMaxBitRate,
+  getEffectiveStreamingFormat,
+} from "@/services/network";
 import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
 import type { Child } from "@/services/openSubsonic/types";
 import { type StreamFormat, useAppBase } from "@/stores/app";
@@ -34,15 +37,27 @@ function isJellyfin(): boolean {
 // transcoding config.
 const FALLBACK_TRANSCODE_FORMAT = "opus";
 
+// Streaming format for the current network: the cellular pick when there is one
+// and the device is on cellular, the Wi-Fi one otherwise.
+function activeStreamingFormat(): StreamFormat {
+  const { streamingFormat, cellularStreamingFormat } = useAppBase.getState();
+  return getEffectiveStreamingFormat(streamingFormat, cellularStreamingFormat);
+}
+
 // Subsonic transcoding query (`&format=…&maxBitRate=…`) shared by the stream
-// endpoints. `format=raw` is omitted entirely so the server streams the source
-// untouched. `forceTranscode` overrides a "raw" preference with a known-good
-// codec — used to recover from a device that can't decode the source.
+// endpoints. A "raw" format omits the param entirely rather than sending
+// `format=raw`, and the difference matters: Navidrome answers `format=raw` with
+// the untouched source and ignores `maxBitRate`, while an absent format lets a
+// bitrate cap downsample to the server's own DefaultDownsamplingFormat. Omitting
+// it is what makes "original on Wi-Fi, capped on cellular" work at all.
+// `forceTranscode` overrides a "raw" preference with a known-good codec — used
+// to recover from a device that can't decode the source.
 function transcodeParams(forceTranscode: boolean): string {
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
-  const format = forceTranscode ? FALLBACK_TRANSCODE_FORMAT : streamingFormat;
+  const format = forceTranscode
+    ? FALLBACK_TRANSCODE_FORMAT
+    : activeStreamingFormat();
   const parts: string[] = [];
   if (format && format !== "raw") parts.push(`format=${format}`);
   if (effective) parts.push(`maxBitRate=${effective}`);
@@ -151,12 +166,12 @@ export function trackTranscodeInfo(track: QueueTrack | null): TranscodeInfo {
     toLabel: null,
   };
   if (!track) return inactive;
-  const { maxBitRate, cellularMaxBitRate, streamingFormat } =
-    useAppBase.getState();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effectiveMaxBitRate = getEffectiveMaxBitRate(
     maxBitRate,
     cellularMaxBitRate,
   );
+  const streamingFormat = activeStreamingFormat();
   if (isJellyfin()) {
     return getTranscodeInfo(track, {
       streamingFormat,
@@ -205,7 +220,15 @@ const MP4_CONTAINERS = new Set(["m4a", "mp4", "m4b", "alac"]);
 // Android-only: iOS/AVPlayer decodes ALAC natively, so a raw download plays
 // (lossless, seekable) there — only Android's MediaCodec lacks a reliable ALAC
 // decoder.
-function isOfflineUndecodable(track: Child): boolean {
+// The fields the cache helpers below and `isOfflineUndecodable` actually read.
+// Loose enough to accept a `QueueTrack` (whose metadata rides an index
+// signature) as well as a `Child`, so the prefetcher doesn't have to cast.
+export type CacheableTrack = Pick<
+  Child,
+  "id" | "suffix" | "contentType" | "bitRate" | "duration" | "size"
+>;
+
+function isOfflineUndecodable(track: CacheableTrack): boolean {
   if (Platform.OS !== "android") return false;
   const codec =
     typeof track.contentType === "string"
@@ -226,6 +249,94 @@ function isOfflineUndecodable(track: Child): boolean {
   }
   return false;
 }
+
+/**
+ * Where the prefetch cache (issue #163) gets a track's bytes.
+ *
+ * Unlike `offlineFileInfo`, this follows the *streaming* settings, so a cached
+ * copy is what the wire would have delivered on this network: prefetching on
+ * cellular inherits the cellular codec/bitrate (#162) and is therefore cheap by
+ * construction, while a Wi-Fi prefetch keeps the original.
+ *
+ * Returns null for anything that must never be cached — local files and
+ * self-hosted podcast enclosures already play off a URL of their own, and
+ * without an active server there is nothing to fetch.
+ *
+ * No suffix is returned, deliberately. With a "raw" preference and a bitrate cap
+ * the server may downsample to a format it never names up front (Navidrome's
+ * DefaultDownsamplingFormat), so the container can't be predicted here. The
+ * caller downloads into a *directory* instead and lets expo-file-system name the
+ * file from the response — `URLUtil.guessFileName(url, contentDisposition,
+ * contentType)` on Android, `httpResponse.suggestedFilename` on iOS — which
+ * matters because AVURLAsset infers a file's container from its name.
+ */
+export const cacheFetchUrl = (track: CacheableTrack): string | null => {
+  if (localFileUrl(track.id) != null) return null;
+  if (!useAuthBase.getState().url) return null;
+
+  const format = activeStreamingFormat();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effectiveMaxBitRate = getEffectiveMaxBitRate(
+    maxBitRate,
+    cellularMaxBitRate,
+  );
+
+  // A codec this device can't decode off disk has no way back once cached: the
+  // player's decode-error fallback re-streams through a server transcode, which
+  // is exactly what an unreachable server makes impossible. Force the transcode
+  // now, same as the download path does (OFFLINE_UNDECODABLE_FALLBACK_FORMAT).
+  if (isOfflineUndecodable(track)) {
+    return streamUrl(track.id, { forceTranscode: true });
+  }
+
+  // Raw with no cap is the one case the stream endpoint adds nothing to: ask for
+  // the original file directly so the cached copy is byte-exact.
+  if (format === "raw" && !effectiveMaxBitRate) return downloadUrl(track.id);
+
+  return streamUrl(track.id);
+};
+
+// What a track is assumed to cost when nothing better is known: no duration, no
+// bitrate, no server-reported size. Deliberately pessimistic — the estimate
+// gates admission to a fixed disk budget, so guessing high wastes a slot while
+// guessing low overshoots the cap the user set.
+const CACHE_FALLBACK_ESTIMATE_BYTES = 12 * 1024 * 1024;
+
+/**
+ * Roughly how many bytes `cacheFetchUrl` would pull for this track.
+ *
+ * Used for admission control against the cache's disk budget, which has to be
+ * decided *before* the download starts — a HEAD would not help (against
+ * Navidrome's /rest/stream it runs the whole ffmpeg transcode to answer and
+ * still returns no Content-Length; see services/waveform/source.ts).
+ */
+export const cacheEstimatedBytes = (track: CacheableTrack): number => {
+  const format = activeStreamingFormat();
+  const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
+  const effectiveMaxBitRate = getEffectiveMaxBitRate(
+    maxBitRate,
+    cellularMaxBitRate,
+  );
+
+  // The one exact case: an untouched original, whose size the server reports.
+  if (
+    format === "raw" &&
+    !effectiveMaxBitRate &&
+    !isOfflineUndecodable(track) &&
+    typeof track.size === "number" &&
+    track.size > 0
+  ) {
+    return track.size;
+  }
+
+  // Otherwise the server re-encodes, so the source size says nothing. kbps →
+  // bytes/second is /8*1000, i.e. *125.
+  const kbps = effectiveMaxBitRate ?? track.bitRate;
+  if (track.duration && track.duration > 0 && kbps && kbps > 0) {
+    return Math.round(track.duration * kbps * 125);
+  }
+  return CACHE_FALLBACK_ESTIMATE_BYTES;
+};
 
 // Where an offline download gets its bytes, and the extension the saved file
 // gets. "raw" (the default) downloads the original file; any other

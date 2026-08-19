@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: playlists
 # Critical path — Playlist lifecycle (one session, write path).
 # A full create → open → delete round-trip: create a playlist from the Library

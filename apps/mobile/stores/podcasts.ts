@@ -51,6 +51,46 @@ export function podcastFavoritesForScope(
   );
 }
 
+// Last known playback position for a podcast episode, so replaying it picks up
+// where the user left off. Deliberately NOT a QueueTrack snapshot: a queue
+// track's `url` bakes subsonicAuthQuery() credentials and a server route that
+// routeSwap.ts only repoints for the live queue, so a long-lived copy goes
+// stale and leaky. Keep the *inputs* to the URL and rebuild at play time.
+export interface PodcastProgressEntry {
+  // Player track id: the Taddy uuid, or the Subsonic / local episode id.
+  id: string;
+  source: PodcastSource;
+  // Auth scope of the origin server for "server" entries (their ids are
+  // server-assigned and collide across servers). Undefined for "taddy".
+  scope?: string;
+  // Exactly one is set. "server": streamUrl(streamId) — which decodes a
+  // `local-pod-ep-` id straight back to its enclosure URL on every backend.
+  // "taddy": the third-party enclosure, stable and server-independent.
+  streamId?: string;
+  audioUrl?: string;
+  title?: string;
+  seriesName?: string;
+  artwork?: string;
+  coverArt?: string;
+  // Seconds. `duration` may be absent: an RSS feed need not declare one.
+  duration?: number;
+  position: number;
+  updatedAt: number;
+  // Navigation targets for the Resume card.
+  channelId?: string;
+  seriesUuid?: string;
+}
+
+// Progress entries that belong to the given auth scope, on the same rule as
+// podcastFavoritesForScope: server episode ids are server-assigned and can
+// collide, Taddy episodes are server-independent.
+export function podcastProgressForScope(
+  entries: PodcastProgressEntry[],
+  scope: string | null | undefined,
+): PodcastProgressEntry[] {
+  return entries.filter((e) => e.source !== "server" || e.scope === scope);
+}
+
 export interface RecommendationParams {
   genres?: (keyof typeof Genre)[];
   language?: keyof typeof Language;
@@ -70,6 +110,8 @@ const DEFAULT_TADDY_COUNTRY =
   (process.env.EXPO_PUBLIC_TADDY_PODCASTS_API_COUNTRY as
     | keyof typeof Country
     | undefined) || "UNITED_STATES_OF_AMERICA";
+
+const MAX_PROGRESS_ENTRIES = 50;
 
 const DEFAULT_GENRES: (keyof typeof Genre)[] = [
   "PODCASTSERIES_NEWS_DAILY_NEWS",
@@ -111,6 +153,10 @@ interface PodcastsStore {
     >,
   ) => void;
   clearFavoritePodcasts: () => void;
+  podcastProgress: PodcastProgressEntry[];
+  setPodcastProgress: (entry: PodcastProgressEntry) => void;
+  clearPodcastProgress: (id: string) => void;
+  clearAllPodcastProgress: () => void;
   getRecommendationParams: () => RecommendationParams;
   getGenreRotation: () => (keyof typeof Genre)[];
   getTopGenres: (limit?: number) => (keyof typeof Genre)[];
@@ -206,6 +252,39 @@ export const usePodcastsBase = create<PodcastsStore>()(
       },
       clearFavoritePodcasts: () => {
         set({ favoritePodcasts: [] });
+      },
+      podcastProgress: [],
+      // An entry only exists while the episode is unfinished — finishing it
+      // removes it — so "an entry exists" is itself the unfinished flag and
+      // consumers never compare position against duration to decide visibility.
+      setPodcastProgress: (entry) => {
+        set((state) => {
+          const next = [
+            entry,
+            ...state.podcastProgress.filter((item) => item.id !== entry.id),
+          ];
+          if (next.length > MAX_PROGRESS_ENTRIES) {
+            next.length = MAX_PROGRESS_ENTRIES;
+          }
+          return { podcastProgress: next };
+        });
+      },
+      clearPodcastProgress: (id) => {
+        set((state) => {
+          if (!state.podcastProgress.some((item) => item.id === id)) {
+            // Return the state untouched so a no-op clear (every non-podcast
+            // track finishing) fires no subscribers and no persist write.
+            return state;
+          }
+          return {
+            podcastProgress: state.podcastProgress.filter(
+              (item) => item.id !== id,
+            ),
+          };
+        });
+      },
+      clearAllPodcastProgress: () => {
+        set({ podcastProgress: [] });
       },
       lastUsedGenreIndex: 0,
       setLastUsedGenreIndex: (index: number) => {

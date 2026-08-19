@@ -8,6 +8,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoritePodcastListItem from "@/components/podcasts/FavoritePodcastListItem";
 import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
+import ResumeListeningRow from "@/components/podcasts/ResumeListeningRow";
 import ServerPodcastRow from "@/components/podcasts/ServerPodcastRow";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
@@ -127,7 +128,6 @@ export default function PodcastsScreen() {
             )}
           </HStack>
         )}
-
         {favoriteItems.length > 0 && (
           <VStack className="gap-y-4 px-6 mt-4">
             {favoriteItems
@@ -168,7 +168,7 @@ export default function PodcastsScreen() {
               }, [])}
           </VStack>
         )}
-
+        <ResumeListeningRow />
         {capabilities.podcasts &&
           (serverChannels.length > 0 || isLoadingServer ? (
             <ServerPodcastRow

@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: "subflow: login to Navidrome demo server"
 # Reusable building block: brings the app from a cold, clean state to a
 # logged-in Home screen against the public Navidrome demo server

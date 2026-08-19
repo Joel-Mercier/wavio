@@ -108,14 +108,20 @@ class CarArtworkProvider : ContentProvider() {
     /**
      * The `content://` URI for a local artwork file, registering it on the way
      * out. Null before the provider has been attached (i.e. never, in practice —
-     * providers are created at process start, long before a car host binds).
+     * providers are created at process start, long before a car host binds), and
+     * null for a file that isn't there: the mirror lives in the reclaimable
+     * cache dir, so callers need to hear "no" and fall back rather than hand the
+     * host a URI that can only 404.
      */
     fun contentUri(absolutePath: String): Uri? {
       val auth = authority ?: return null
+      val file = File(absolutePath)
+      val modified = file.lastModified()
+      if (modified == 0L && !file.exists()) return null
       // The mirror rewrites a refreshed cover to the *same* path, and the host
       // caches by URI — so fold the file's mtime into the key, or a cover that
       // changed on the server would keep rendering the old bytes in the car.
-      val key = keyFor("$absolutePath:${File(absolutePath).lastModified()}")
+      val key = keyFor("$absolutePath:$modified")
       paths.put(key, absolutePath)
       return Uri.Builder()
         .scheme(ContentResolver.SCHEME_CONTENT)

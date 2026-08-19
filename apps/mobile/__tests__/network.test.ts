@@ -95,6 +95,7 @@ jest.mock("@/stores/auth", () => ({
 import {
   getConnectionType,
   getEffectiveMaxBitRate,
+  getEffectiveStreamingFormat,
   getIsEffectivelyOnline,
   getIsOnline,
   getServerReachable,
@@ -211,6 +212,25 @@ describe("getEffectiveMaxBitRate", () => {
     expect(getEffectiveMaxBitRate(null, 128)).toBe(128);
     expect(getEffectiveMaxBitRate(192, null)).toBe(192);
     expect(getEffectiveMaxBitRate(null, null)).toBeNull();
+  });
+});
+
+describe("getEffectiveStreamingFormat", () => {
+  it("returns the wifi format off cellular", async () => {
+    await setCurrentType("wifi");
+    expect(getEffectiveStreamingFormat("raw", "opus")).toBe("raw");
+    await setCurrentType("unknown");
+    expect(getEffectiveStreamingFormat("flac", "opus")).toBe("flac");
+  });
+
+  it("returns the cellular format on cellular", async () => {
+    await setCurrentType("cellular");
+    expect(getEffectiveStreamingFormat("raw", "opus")).toBe("opus");
+  });
+
+  it("falls through to the wifi format when cellular is 'same'", async () => {
+    await setCurrentType("cellular");
+    expect(getEffectiveStreamingFormat("mp3", "same")).toBe("mp3");
   });
 });
 

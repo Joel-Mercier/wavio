@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: "subflow: play the first Home album"
 # Reusable building block: from a logged-in Home, opens the first album in the
 # feed and starts playback, leaving the mini-player mounted. Encapsulates the

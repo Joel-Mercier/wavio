@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: navigation
 # Critical path #2 — App navigation surface (one session).
 # Covers the whole secondary-navigation surface without a cold start per screen:

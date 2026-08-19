@@ -19,6 +19,7 @@ import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import {
   CAR_ARTWORK_BUDGET,
   CAR_ARTWORK_SIZE,
+  cachedCarArtwork,
   ensureCarArtwork,
 } from "./artworkMirror";
 import type { BrowseNode, BrowseTree } from "./types";
@@ -28,6 +29,20 @@ import { ROOT_ID } from "./types";
 // CAR_ARTWORK_SIZE. Wrapped so no node builder can forget the argument.
 const coverUrl = (id?: string): string | undefined =>
   id ? artworkUrl(id, CAR_ARTWORK_SIZE) : undefined;
+
+// The cover fields of a node: the server URL, plus the mirrored file when this
+// cover has already been through the mirror. Filling the local half here rather
+// than leaving it to localizeTreeArtwork is what makes a warm session correct on
+// its *first* push — the localize pass runs after the tree is already in the
+// car's hands, so anything it alone provides arrives late.
+const coversForUrl = (
+  url?: string,
+): Pick<BrowseNode, "artworkUrl" | "localArtworkUrl"> => ({
+  artworkUrl: url,
+  localArtworkUrl: cachedCarArtwork(url),
+});
+
+const covers = (id?: string) => coversForUrl(coverUrl(id));
 
 // Cap how many detail requests the browse-tree prefetch keeps in flight at once.
 // An unbounded Promise.all over every starred/recent id opens dozens of parallel
@@ -71,11 +86,25 @@ const recordParentTracks = (parentId: string, nodes: BrowseNode[]) => {
   if (ids.length > 0) snapshot.parentTracks.set(parentId, ids);
 };
 
+const isRemoteCover = (url?: string): url is string =>
+  !!url && /^https?:/i.test(url);
+
+// The cover a track row under `album:<id>` should use: its album's. A track's
+// own cover id differs from its album's on Navidrome (`mf-…` vs `al-…`) while
+// resolving to the same image, so mirroring each one would cost one download per
+// track instead of one per album.
+const albumCoverFor = (parentId: string): string | undefined => {
+  if (!parentId.startsWith("album:")) return undefined;
+  return coverUrl(
+    snapshot.albums.get(parentId.slice("album:".length))?.coverArt,
+  );
+};
+
 const albumNode = (a: AlbumID3, browsable = true): BrowseNode => ({
   id: `album:${a.id}`,
   title: a.name,
   subtitle: a.artist,
-  artworkUrl: coverUrl(a.coverArt),
+  ...covers(a.coverArt),
   playable: !browsable,
   contentStyle: browsable ? "list" : undefined,
 });
@@ -86,7 +115,7 @@ const playlistNode = (p: Playlist | PlaylistWithSongs): BrowseNode => ({
   subtitle: p.songCount
     ? i18n.t("app.carAuto.songCount", { count: p.songCount })
     : undefined,
-  artworkUrl: coverUrl(p.coverArt),
+  ...covers(p.coverArt),
   playable: false,
   contentStyle: "list",
 });
@@ -94,7 +123,7 @@ const playlistNode = (p: Playlist | PlaylistWithSongs): BrowseNode => ({
 const artistNode = (a: ArtistID3): BrowseNode => ({
   id: `artist:${a.id}`,
   title: a.name,
-  artworkUrl: coverUrl(a.coverArt),
+  ...covers(a.coverArt),
   playable: false,
   contentStyle: "list",
 });
@@ -108,11 +137,16 @@ const artistNode = (a: ArtistID3): BrowseNode => ({
 // making each (parent, song) pair its own mediaId we always know the source.
 const trackNode = (c: Child, parentId: string): BrowseNode => {
   snapshot.tracks.set(c.id, c);
+  const own = covers(c.coverArt);
   return {
     id: `track|${parentId}|${c.id}`,
     title: c.title ?? "Unknown",
     subtitle: c.artist,
-    artworkUrl: coverUrl(c.coverArt),
+    ...own,
+    // Only the album's cover is ever mirrored (see albumCoverFor), so a track
+    // row inside one takes that copy rather than going without.
+    localArtworkUrl:
+      own.localArtworkUrl ?? cachedCarArtwork(albumCoverFor(parentId)),
     playable: true,
   };
 };
@@ -236,7 +270,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         return {
           id: `album:${p.id}`,
           title: p.title,
-          artworkUrl: coverUrl(p.coverArt),
+          ...covers(p.coverArt),
           playable: false,
           contentStyle: "list",
         };
@@ -245,7 +279,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         return {
           id: `playlist:${p.id}`,
           title: p.title,
-          artworkUrl: coverUrl(p.coverArt),
+          ...covers(p.coverArt),
           playable: false,
           contentStyle: "list",
         };
@@ -254,7 +288,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         return {
           id: `artist:${p.id}`,
           title: p.title,
-          artworkUrl: coverUrl(p.coverArt),
+          ...covers(p.coverArt),
           playable: false,
           contentStyle: "list",
         };
@@ -263,7 +297,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
       return {
         id: `radio:${p.id}`,
         title: p.title,
-        artworkUrl: coverUrl(p.coverArt),
+        ...covers(p.coverArt),
         playable: true,
       };
     });
@@ -343,7 +377,10 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
       id: `podcast:${p.uuid}`,
       title: p.name,
       subtitle: p.authorName,
-      artworkUrl: p.imageUrl,
+      // A feed image URL, not a server cover id — already a URL, so it skips
+      // coverUrl(). It still goes to the car and still needs mirroring, or every
+      // rebuild would find it unmirrored and trigger a pointless re-push.
+      ...coversForUrl(p.imageUrl),
       playable: false,
       contentStyle: "list",
     }));
@@ -462,32 +499,25 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
   return { tree, complete };
 }
 
-const isRemoteCover = (url?: string): url is string =>
-  !!url && /^https?:/i.test(url);
-
-// The cover a track row under `album:<id>` should use: its album's. A track's
-// own cover id differs from its album's on Navidrome (`mf-…` vs `al-…`) while
-// resolving to the same image, so mirroring each one would cost one download per
-// track instead of one per album.
-const albumCoverFor = (parentId: string): string | undefined => {
-  if (!parentId.startsWith("album:")) return undefined;
-  return coverUrl(
-    snapshot.albums.get(parentId.slice("album:".length))?.coverArt,
-  );
-};
-
 /**
- * Replace remote cover URLs in `tree` with local files, in place.
+ * Fill in `localArtworkUrl` for every node whose cover isn't mirrored yet, in
+ * place.
  *
  * Android Auto renders browse items in the host's process and fetches an
- * `http(s)` icon URI itself — with no access to the server's custom headers, the
- * trust decision for a self-signed certificate, or any deadline of ours. Every
- * one of those makes a cover that loads perfectly in the app silently blank in
- * the car (issue #156). Mirroring first means the native side can hand the host
- * a `content://` URI it can always read.
+ * `http(s)` icon URI itself — a fetch that carries none of what ours does (the
+ * server's custom headers, the trust decision for a self-signed certificate, a
+ * deadline of our choosing) and that competes with every other tile on screen
+ * for the host's image budget at whatever resolution the URL yields. Any of
+ * those makes a cover that loads perfectly in the app silently blank in the car
+ * (issue #156). Mirroring means the native side can hand the host a `content://`
+ * URI it can always read.
+ *
+ * `artworkUrl` is deliberately left alone: native falls back to it when the
+ * mirrored file has been reclaimed from the cache dir, and the tree snapshot on
+ * disk outlives that cache.
  *
  * Best-effort by design: anything that doesn't get mirrored — past the budget,
- * failed fetch, no cover at all — keeps the remote URL it already had, which is
+ * failed fetch, no cover at all — is simply left without a local copy, which is
  * exactly the previous behaviour. Returns whether anything actually changed.
  */
 export async function localizeTreeArtwork(tree: BrowseTree): Promise<boolean> {
@@ -504,11 +534,16 @@ export async function localizeTreeArtwork(tree: BrowseTree): Promise<boolean> {
     into.push(url);
   };
 
+  // Already-mirrored covers are resolved when the node is built, so they must
+  // not spend a budget slot here — otherwise a warm tree starves the cold covers
+  // that actually need one.
   for (const [parentId, nodes] of entries) {
     const inherited = albumCoverFor(parentId);
-    if (isRemoteCover(inherited)) queue(inherited, collections);
+    if (isRemoteCover(inherited) && !cachedCarArtwork(inherited)) {
+      queue(inherited, collections);
+    }
     for (const node of nodes) {
-      if (!isRemoteCover(node.artworkUrl)) continue;
+      if (!isRemoteCover(node.artworkUrl) || node.localArtworkUrl) continue;
       // Track rows under an album ride on the album's cover, queued above.
       if (node.playable && inherited) continue;
       queue(node.artworkUrl, node.playable ? tracks : collections);
@@ -516,27 +551,32 @@ export async function localizeTreeArtwork(tree: BrowseTree): Promise<boolean> {
   }
 
   const budgeted = [...collections, ...tracks].slice(0, CAR_ARTWORK_BUDGET);
-  if (budgeted.length === 0) return false;
-
   const mirrored = new Map<string, string>();
-  await mapWithConcurrency(budgeted, TREE_PREFETCH_CONCURRENCY, async (url) => {
-    const local = await ensureCarArtwork(url).catch(() => undefined);
-    if (local) mirrored.set(url, local);
-  });
-  if (mirrored.size === 0) return false;
+  if (budgeted.length > 0) {
+    await mapWithConcurrency(
+      budgeted,
+      TREE_PREFETCH_CONCURRENCY,
+      async (url) => {
+        const local = await ensureCarArtwork(url).catch(() => undefined);
+        if (local) mirrored.set(url, local);
+      },
+    );
+  }
 
   let changed = false;
   for (const [parentId, nodes] of entries) {
     const inherited = albumCoverFor(parentId);
-    const inheritedLocal = inherited ? mirrored.get(inherited) : undefined;
+    const inheritedLocal = inherited
+      ? (mirrored.get(inherited) ?? cachedCarArtwork(inherited))
+      : undefined;
     for (const node of nodes) {
-      if (!isRemoteCover(node.artworkUrl)) continue;
+      if (!isRemoteCover(node.artworkUrl) || node.localArtworkUrl) continue;
       const local =
         node.playable && inheritedLocal
           ? inheritedLocal
           : mirrored.get(node.artworkUrl);
       if (!local) continue;
-      node.artworkUrl = local;
+      node.localArtworkUrl = local;
       changed = true;
     }
   }

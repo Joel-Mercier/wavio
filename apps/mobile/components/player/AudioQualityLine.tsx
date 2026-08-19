@@ -30,7 +30,11 @@ import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
-import { formatAudioQuality } from "@/utils/audioQuality";
+import useTrackCache from "@/stores/trackCache";
+import {
+  formatAudioQuality,
+  localFileTranscodeInfo,
+} from "@/utils/audioQuality";
 
 const LINE_CLASS = "text-white/70 text-xs font-medium tracking-wide";
 const SWEEP_DURATION = 2800;
@@ -178,6 +182,7 @@ export default function AudioQualityLine({
   // the prediction must recompute when streaming settings change or on a
   // WiFi↔cellular handoff.
   useApp((s) => s.streamingFormat);
+  useApp((s) => s.cellularStreamingFormat);
   useApp((s) => s.maxBitRate);
   useApp((s) => s.cellularMaxBitRate);
   useConnectionType();
@@ -186,23 +191,54 @@ export default function AudioQualityLine({
   // plays untouched files off disk, so it never shows a transcode.
   const isRemote = serverType !== "local";
   // A downloaded track plays straight off disk (see resolveTrackUrl in
-  // services/player.ts), so it's never transcoded regardless of streaming
-  // settings — mirror that guard here so the label matches what's playing.
-  const isDownloaded = useOffline((s) =>
-    track ? track.id in s.downloadedTracks : false,
+  // services/player.ts) whether or not the device is online, so the streaming
+  // settings say nothing about it — but the file itself may well be a transcode:
+  // offlineFileInfo saves it in `downloadFormat`, not necessarily the original.
+  // Read the copy on disk instead of predicting (issue #167).
+  const downloaded = useOffline((s) =>
+    track ? (s.downloadedTracks[track.id] ?? null) : null,
+  );
+  // A prefetched copy also plays off disk, fetched under whatever format and cap
+  // the network in force at the time imposed. This is a readout of what the
+  // engine is actually doing, not a badge of what the user owns, which is why it
+  // knows about the cache when no other UI does.
+  const cacheEntry = useTrackCache((s) =>
+    track ? (s.entries[track.id] ?? null) : null,
   );
 
   const label = formatAudioQuality(track);
   if (!label) return null;
 
-  const transcode =
-    isRemote && !isDownloaded
-      ? trackTranscodeInfo(track)
-      : { active: false as const, fromLabel: null, toLabel: null };
+  // Downloads before cache, mirroring resolveTrackUrl's own precedence.
+  const onDisk = downloaded
+    ? {
+        file: {
+          suffix: downloaded.path.split(".").pop(),
+          bytes: downloaded.size,
+        },
+        source: {
+          suffix: downloaded.sourceSuffix,
+          bitRate: downloaded.sourceBitRate,
+        },
+      }
+    : cacheEntry
+      ? { file: cacheEntry, source: undefined }
+      : null;
+
+  const transcode = !isRemote
+    ? {
+        active: false as const,
+        fromLabel: null,
+        toLabel: null,
+        comparable: true,
+      }
+    : onDisk
+      ? localFileTranscodeInfo(track, onDisk.file, onDisk.source)
+      : { ...trackTranscodeInfo(track), comparable: true };
 
   if (transcode.active && transcode.fromLabel && transcode.toLabel) {
     return (
-      <View className="mb-4">
+      <View>
         <GradientSweepText
           from={transcode.fromLabel}
           to={transcode.toLabel}
@@ -213,11 +249,14 @@ export default function AudioQualityLine({
   }
 
   return (
-    <HStack className="items-center gap-x-2 mb-4">
+    <HStack className="items-center gap-x-2">
       <Text className={LINE_CLASS} numberOfLines={1}>
         {label}
       </Text>
-      {isRemote && (
+      {/* Only claim ORIGINAL when something backed the claim: a predicted-raw
+          stream, or an on-disk copy whose format/bitrate could be checked
+          against the source. */}
+      {isRemote && transcode.comparable && (
         <Text className="text-white/60 text-[10px] border border-white/25 rounded-full px-1.5 py-0.5 uppercase tracking-wide">
           {t("app.player.original")}
         </Text>

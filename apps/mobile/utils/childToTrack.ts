@@ -27,8 +27,14 @@ export function childToTrack(child: Child) {
     contentType: child.contentType,
     suffix: child.suffix,
     bitRate: child.bitRate,
+    // The server-reported size of the original file. Carried so the prefetch
+    // cache's admission control (cacheEstimatedBytes) can use the exact number
+    // for a raw fetch instead of a duration × bitrate guess, which is at its
+    // worst on lossless sources.
+    size: child.size,
     samplingRate: child.samplingRate,
     starred: child.starred,
+    userRating: child.userRating,
     artistId: child.artistId,
     artists: child.artists,
     albumId: child.albumId,

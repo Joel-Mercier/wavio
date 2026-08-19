@@ -8,7 +8,16 @@ const {
   withMainApplication,
 } = require("expo/config-plugins");
 
+// The package the Kotlin sources below are written against. App variants
+// (app.config.js) suffix the real application id, and the generated namespace —
+// hence `R` — follows it, so every occurrence is rewritten to the configured
+// package on the way out. Templates keep the literal so they stay readable.
 const PACKAGE = "com.jmercier.wavio";
+
+const packageOf = (config) => config.android?.package ?? PACKAGE;
+
+const forPackage = (source, pkg) =>
+  pkg === PACKAGE ? source : source.split(PACKAGE).join(pkg);
 
 // ---------- res/xml ----------
 
@@ -949,35 +958,34 @@ const withWidgetResources = (config) =>
         WIDGET_BOTTOM_OVERLAY,
       );
 
+      const pkg = packageOf(cfg);
       const javaRoot = path.join(
         cfg.modRequest.platformProjectRoot,
         "app",
         "src",
         "main",
         "java",
-        ...PACKAGE.split("."),
+        ...pkg.split("."),
         "widget",
       );
-      writeFile(javaRoot, "WidgetState.kt", KT_WIDGET_STATE);
-      writeFile(javaRoot, "WidgetRenderer.kt", KT_WIDGET_RENDERER);
-      writeFile(
-        javaRoot,
-        "NowPlayingWidgetProvider.kt",
-        KT_NOW_PLAYING_PROVIDER,
-      );
-      writeFile(javaRoot, "RecentPlaysWidgetProvider.kt", KT_RECENT_PROVIDER);
-      writeFile(javaRoot, "WidgetActionReceiver.kt", KT_ACTION_RECEIVER);
-      writeFile(javaRoot, "WavioWidgetModule.kt", KT_MODULE);
-      writeFile(javaRoot, "WavioWidgetPackage.kt", KT_PACKAGE);
+      const writeKt = (name, source) =>
+        writeFile(javaRoot, name, forPackage(source, pkg));
+      writeKt("WidgetState.kt", KT_WIDGET_STATE);
+      writeKt("WidgetRenderer.kt", KT_WIDGET_RENDERER);
+      writeKt("NowPlayingWidgetProvider.kt", KT_NOW_PLAYING_PROVIDER);
+      writeKt("RecentPlaysWidgetProvider.kt", KT_RECENT_PROVIDER);
+      writeKt("WidgetActionReceiver.kt", KT_ACTION_RECEIVER);
+      writeKt("WavioWidgetModule.kt", KT_MODULE);
+      writeKt("WavioWidgetPackage.kt", KT_PACKAGE);
 
       return cfg;
     },
   ]);
 
-const ACTION = `${PACKAGE}.WIDGET_ACTION`;
-
 const withWidgetManifest = (config) =>
   withAndroidManifest(config, (cfg) => {
+    const pkg = packageOf(cfg);
+    const action = `${pkg}.WIDGET_ACTION`;
     const app = AndroidConfig.Manifest.getMainApplicationOrThrow(
       cfg.modResults,
     );
@@ -1004,7 +1012,7 @@ const withWidgetManifest = (config) =>
           ]
         : [
             {
-              action: [{ $: { "android:name": ACTION } }],
+              action: [{ $: { "android:name": action } }],
             },
           ];
       if (info) {
@@ -1023,16 +1031,16 @@ const withWidgetManifest = (config) =>
     };
 
     upsertReceiver(
-      `${PACKAGE}.widget.NowPlayingWidgetProvider`,
+      `${pkg}.widget.NowPlayingWidgetProvider`,
       "@xml/widget_now_playing_info",
       true,
     );
     upsertReceiver(
-      `${PACKAGE}.widget.RecentPlaysWidgetProvider`,
+      `${pkg}.widget.RecentPlaysWidgetProvider`,
       "@xml/widget_recent_info",
       true,
     );
-    upsertReceiver(`${PACKAGE}.widget.WidgetActionReceiver`, null, false);
+    upsertReceiver(`${pkg}.widget.WidgetActionReceiver`, null, false);
 
     return cfg;
   });
@@ -1052,7 +1060,7 @@ const withGlide = (config) =>
 
 const withRegisterPackage = (config) =>
   withMainApplication(config, (cfg) => {
-    const importLine = `import ${PACKAGE}.widget.WavioWidgetPackage`;
+    const importLine = `import ${packageOf(cfg)}.widget.WavioWidgetPackage`;
     if (!cfg.modResults.contents.includes(importLine)) {
       cfg.modResults.contents = cfg.modResults.contents.replace(
         /(package [^\n]+\n)/,

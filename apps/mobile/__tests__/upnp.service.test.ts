@@ -68,10 +68,22 @@ jest.mock("@/services/player", () => ({
 }));
 
 const mockStreamingFormat = { value: "raw" as string };
+const mockCellularStreamingFormat = { value: "same" as string };
 jest.mock("@/stores/app", () => ({
   useAppBase: {
-    getState: () => ({ streamingFormat: mockStreamingFormat.value }),
+    getState: () => ({
+      streamingFormat: mockStreamingFormat.value,
+      cellularStreamingFormat: mockCellularStreamingFormat.value,
+    }),
   },
+}));
+
+// Stand-in for the real resolver (covered in network.test.ts): "same" and Wi-Fi
+// fall through to the Wi-Fi format, cellular takes the cellular pick.
+const netState = { isCellular: false };
+jest.mock("@/services/network", () => ({
+  getEffectiveStreamingFormat: (format: string, cellularFormat: string) =>
+    netState.isCellular && cellularFormat !== "same" ? cellularFormat : format,
 }));
 
 type Track = { id: string; duration?: number; suffix?: string };
@@ -303,6 +315,11 @@ describe("remote target", () => {
 });
 
 describe("castMime", () => {
+  beforeEach(() => {
+    mockCellularStreamingFormat.value = "same";
+    netState.isCellular = false;
+  });
+
   it("uses the transcode target when the server is transcoding", () => {
     mockStreamingFormat.value = "mp3";
     // The source is FLAC but MP3 is what will arrive, and the renderer decides
@@ -317,6 +334,15 @@ describe("castMime", () => {
     expect(castMime({ id: "t", url: "u", suffix: "opus" })).toBe("audio/ogg");
     expect(castMime({ id: "t", url: "u", suffix: "m4a" })).toBe("audio/mp4");
     expect(castMime({ id: "t", url: "u", suffix: "wav" })).toBe("audio/wav");
+  });
+
+  it("follows the cellular format, like the stream URL does", () => {
+    mockStreamingFormat.value = "raw";
+    mockCellularStreamingFormat.value = "opus";
+    netState.isCellular = true;
+    // The URL asks for Opus on cellular, so announcing the source FLAC would
+    // describe bytes the server is never going to send.
+    expect(castMime({ id: "t", url: "u", suffix: "flac" })).toBe("audio/ogg");
   });
 
   it("is case-insensitive about the suffix", () => {

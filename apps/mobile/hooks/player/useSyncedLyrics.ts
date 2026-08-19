@@ -27,28 +27,43 @@ function pickSyncedLyrics(
   );
 }
 
-export function useSyncedLyrics(track: QueueTrack | undefined | null) {
+// The server side of the resolution on its own, so consumers that only care
+// about what the server returned (the picker sheet listing it as a choice) can
+// read it without pulling in the LRCLIB fallback.
+export function useBackendLyrics(track: QueueTrack | undefined | null) {
   const lyricsSource = useApp((s) => s.lyricsSource);
   const trackId = track?.id;
   const isRadio = !!track?.isRadio;
   const isPodcast = track?.source === "podcast";
-  const lyricsEligible =
+  const eligible =
     !!trackId && !isRadio && !isPodcast && lyricsSource !== "off";
   const backend = useGetLyricsBySongId(
     trackId ?? "",
     { enhanced: true },
-    lyricsEligible,
+    eligible,
   );
   const list = useMemo(
     () =>
       backend.data?.lyricsList?.structuredLyrics?.map(sanitizeStructuredLyrics),
     [backend.data],
   );
-  const backendLyrics = useMemo(
+  const lyrics = useMemo(
     () => pickSyncedLyrics(list?.filter((l) => (l.kind ?? "main") === "main")),
     [list],
   );
-  const backendSettled = lyricsEligible && !backend.isLoading;
+  return { lyrics, list, eligible, isLoading: backend.isLoading };
+}
+
+export function useSyncedLyrics(track: QueueTrack | undefined | null) {
+  const lyricsSource = useApp((s) => s.lyricsSource);
+  const trackId = track?.id;
+  const {
+    lyrics: backendLyrics,
+    list,
+    eligible: lyricsEligible,
+    isLoading: backendLoading,
+  } = useBackendLyrics(track);
+  const backendSettled = lyricsEligible && !backendLoading;
   const lrclib = useLrclibLyrics({
     trackId,
     trackName: track?.title,
@@ -84,7 +99,7 @@ export function useSyncedLyrics(track: QueueTrack | undefined | null) {
     };
   }, [list, backendLyrics, picked]);
 
-  const isLoading = backend.isLoading || lrclib.isLoading;
+  const isLoading = backendLoading || lrclib.isLoading;
   return {
     lyrics,
     isLoading,

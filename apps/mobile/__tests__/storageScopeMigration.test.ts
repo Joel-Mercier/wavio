@@ -241,6 +241,33 @@ describe("runStorageScopeMigration", () => {
     expect(radio.favoriteRadioStations[0].scope).toBe(NEW);
   });
 
+  it("remaps favorites and episode progress in the same podcasts pass", () => {
+    // Regression guard for the single-pass rule: each remapFavoriteScopes call
+    // re-reads raw MMKV and returns a whole state object the caller applies with
+    // setState, so a second call for podcastProgress would revert the favorites.
+    mockMem.set("servers", remoteServers());
+    mockMem.set(`${OLD}:bookmarks`, "b");
+    mockMem.set(
+      "podcasts",
+      wrap({
+        favoritePodcasts: [{ uuid: "p1", source: "server", scope: OLD }],
+        podcastProgress: [
+          { id: "e1", source: "server", scope: OLD, position: 900 },
+          { id: "e2", source: "taddy", position: 120 },
+        ],
+      }),
+    );
+
+    runStorageScopeMigration();
+
+    expect(mockSetStates.podcasts).toHaveBeenCalledTimes(1);
+    const podcasts = mockSetStates.podcasts.mock.calls[0][0];
+    expect(podcasts.favoritePodcasts[0].scope).toBe(NEW);
+    expect(podcasts.podcastProgress[0].scope).toBe(NEW);
+    // Taddy entries are server-independent and carry no scope.
+    expect(podcasts.podcastProgress[1].scope).toBeUndefined();
+  });
+
   // Navidrome and Jellyfin have no server-hosted podcasts, so their channels
   // live in the scope-keyed SQLite file (services/local/db.ts). Leave it behind
   // and db.ts opens an empty one — useSyncServerPodcastFavorites then reads that

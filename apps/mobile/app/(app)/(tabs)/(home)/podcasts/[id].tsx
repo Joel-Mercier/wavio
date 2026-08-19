@@ -57,6 +57,7 @@ import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { taddyEpisodeToTrack } from "@/utils/podcastEpisodeToTrack";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -196,28 +197,10 @@ export default function PodcastScreen() {
       togglePlayPause();
       return;
     }
-    const fallbackDuration =
-      typeof podcast.duration === "string"
-        ? Number(podcast.duration)
-        : podcast.duration;
-    const buildTrack = (e: PodcastEpisode | typeof podcast) => ({
-      id: e.uuid || (e as typeof podcast).id,
-      url: (e as PodcastEpisode).audioUrl,
-      title: e.name,
-      artist: e.podcastSeries?.name,
-      artwork: e.imageUrl,
-      duration:
-        typeof e.duration === "string" ? Number(e.duration) : e.duration,
-      source: "podcast" as const,
-      description: e.description,
-      websiteUrl: (e as PodcastEpisode).websiteUrl,
-      datePublished: e.datePublished,
-      podcastSeries: e.podcastSeries,
-    });
     if (seriesEpisodes.length > 0) {
       const tracks = seriesEpisodes
         .filter((e) => !!e.audioUrl)
-        .map((e) => buildTrack(e));
+        .map((e) => taddyEpisodeToTrack(e));
       const start = tracks.findIndex((t) => t.id === podcast.uuid);
       if (tracks.length > 0) {
         playTracks(tracks, start >= 0 ? start : 0);
@@ -225,21 +208,7 @@ export default function PodcastScreen() {
       }
     }
     if (!podcast.audioUrl) return;
-    playTracks([
-      {
-        id: podcast.uuid || podcast.id,
-        url: podcast.audioUrl,
-        title: podcast.name,
-        artist: podcast.podcastSeries?.name,
-        artwork: podcast.imageUrl,
-        duration: fallbackDuration,
-        source: "podcast",
-        description: podcast.description,
-        websiteUrl: podcast.websiteUrl,
-        datePublished: podcast.datePublished,
-        podcastSeries: podcast.podcastSeries,
-      },
-    ]);
+    playTracks([taddyEpisodeToTrack(podcast as unknown as PodcastEpisode)]);
   };
 
   const handleSharePress = async () => {
@@ -332,14 +301,23 @@ export default function PodcastScreen() {
       </AnimatedBox>
       <Animated.ScrollView
         contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: insets.top,
           paddingBottom: screenBottomPadding + (isWideLayout ? 48 : 0),
         }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
       >
-        <VStack>
+        {/* The artwork's dominant colour bleeding into black behind the header
+            block, as on the album and channel screens — the sticky app bar
+            above reuses the same colour so the two meet seamlessly on scroll. */}
+        <LinearGradient
+          colors={[topColor, black]}
+          locations={[0, 0.8]}
+          style={{
+            paddingTop: insets.top,
+            paddingHorizontal: 24,
+            paddingBottom: 16,
+          }}
+        >
           <HStack className="mt-6 items-start justify-between">
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
               <ArrowLeft size={24} color={white} />
@@ -424,20 +402,22 @@ export default function PodcastScreen() {
                 />
               </HStack>
             </HStack>
-            {podcast.description && (
-              <RichText className="text-md text-white mt-4">
-                {podcast.description}
-              </RichText>
-            )}
-            <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
-              <HStack className="mt-6 items-center justify-between">
-                <Text className="text-white text-lg">
-                  {t("app.podcasts.seeAllEpisodes")}
-                </Text>
-                <ChevronRight size={24} color={white} />
-              </HStack>
-            </FadeOutScaleDown>
           </VStack>
+        </LinearGradient>
+        <VStack className="px-6">
+          {podcast.description && (
+            <RichText className="text-md text-white mt-4">
+              {podcast.description}
+            </RichText>
+          )}
+          <FadeOutScaleDown onPress={handleGoToPodcastSeriesPress}>
+            <HStack className="mt-6 items-center justify-between">
+              <Text className="text-white text-lg">
+                {t("app.podcasts.seeAllEpisodes")}
+              </Text>
+              <ChevronRight size={24} color={white} />
+            </HStack>
+          </FadeOutScaleDown>
         </VStack>
       </Animated.ScrollView>
       <CenteredBottomSheetModal

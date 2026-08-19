@@ -1,7 +1,8 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
-import { type Href, useRouter } from "expo-router";
+import { type Href, useIsFocused, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Captions from "lucide-react-native/dist/esm/icons/captions.mjs";
 import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
@@ -10,8 +11,9 @@ import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
 import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
 import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
 import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
@@ -29,6 +31,7 @@ import MovingText from "@/components/MovingText";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import AudioQualityLine from "@/components/player/AudioQualityLine";
 import CurrentLyricLine from "@/components/player/CurrentLyricLine";
+import LyricsBody from "@/components/player/LyricsBody";
 import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerBookmarks from "@/components/player/PlayerBookmarks";
@@ -36,6 +39,7 @@ import PlayerSheets from "@/components/player/PlayerSheets";
 import PodcastSeekButton from "@/components/player/PodcastSeekButton";
 import RepeatToggle from "@/components/RepeatToggle";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import StarRating from "@/components/StarRating";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
@@ -46,12 +50,17 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
 import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import {
   PODCAST_SEEK_BACKWARD_SECONDS,
@@ -66,12 +75,14 @@ import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
-import { isSyncedLyrics } from "@/utils/lyrics";
+import { formatAudioQuality } from "@/utils/audioQuality";
+import { hasLyricContent, isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
 const ICON_HIT_SLOP = { top: 16, bottom: 16, left: 16, right: 16 };
+const LYRICS_FADE_MS = 250;
 
 function CoverSlot({
   track,
@@ -134,6 +145,7 @@ export default function PlayerScreen() {
   const colors = useImageColors(playingArtwork);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
+  const doSetRating = useSetRating();
   const repeatMode = useQueue((store) => store.repeatMode);
   const setRepeatMode = useQueue((store) => store.setRepeatMode);
   const shuffle = useQueue((store) => store.shuffle);
@@ -206,16 +218,75 @@ export default function PlayerScreen() {
     Math.min(coverArea.width - 48, coverArea.height),
   );
   const lyricsSource = useApp((s) => s.lyricsSource);
+  const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
+  const inlineLyricsEnabled = useApp((s) => s.playerInlineLyrics);
+  const setPlayerInlineLyrics = useApp((s) => s.setPlayerInlineLyrics);
   const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
-  const { lyrics, hasKaraoke } = useSyncedLyrics(playingTrack);
+  const showPlayerRating = useApp((s) => s.showPlayerRating);
+  const showRating =
+    showPlayerRating && capabilities.setRating && !isRadio && !isPodcast;
+  // Mirrors AudioQualityLine's own null check so the row (and its bottom
+  // margin) collapses when there is neither a quality line nor a rating.
+  const hasQualityLine = !!formatAudioQuality(playingTrack ?? null);
+  const {
+    lyrics,
+    hasKaraoke,
+    layers,
+    isLoading: lyricsLoading,
+  } = useSyncedLyrics(playingTrack);
   const hasSyncedLyrics = isSyncedLyrics(lyrics);
+  // The toggle preference survives tracks that have no lyrics to show: the
+  // cover comes back on its own and the inline view returns with the next
+  // track that does have them. Loading counts as "can show" so skipping tracks
+  // doesn't bounce back to the cover for the length of each fetch.
+  const canShowInlineLyrics =
+    lyricsSource !== "off" &&
+    !isRadio &&
+    !isPodcast &&
+    (hasLyricContent(lyrics) || lyricsLoading);
+  const showInlineLyrics = inlineLyricsEnabled && canShowInlineLyrics;
   const coverTranslateX = useSharedValue(0);
+
+  // LyricsBody renders every line un-virtualized inside a MaskedView, so it is
+  // mounted only while visible — kept alive through the fade-out, then dropped.
+  // The focus check covers the full-screen /lyrics route, which leaves the
+  // player mounted underneath: without it both instances would re-render their
+  // whole line list on every line advance.
+  const isFocused = useIsFocused();
+  const [lyricsMounted, setLyricsMounted] = useState(showInlineLyrics);
+  const lyricsOpacity = useSharedValue(showInlineLyrics ? 1 : 0);
+  const coverOpacity = useSharedValue(showInlineLyrics ? 0 : 1);
+
+  useEffect(() => {
+    if (showInlineLyrics) setLyricsMounted(true);
+    lyricsOpacity.value = withTiming(showInlineLyrics ? 1 : 0, {
+      duration: LYRICS_FADE_MS,
+    });
+    coverOpacity.value = withTiming(
+      showInlineLyrics ? 0 : 1,
+      { duration: LYRICS_FADE_MS },
+      (finished) => {
+        if (finished && !showInlineLyrics) {
+          scheduleOnRN(setLyricsMounted, false);
+        }
+      },
+    );
+  }, [showInlineLyrics, lyricsOpacity, coverOpacity]);
+
+  const coverFadeStyle = useAnimatedStyle(() => ({
+    opacity: coverOpacity.value,
+  }));
+
+  const lyricsFadeStyle = useAnimatedStyle(() => ({
+    opacity: lyricsOpacity.value,
+  }));
 
   const coverRowStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: coverTranslateX.value }],
   }));
 
   const coverPanGesture = usePanGesture({
+    enabled: !showInlineLyrics,
     activeOffsetX: [-15, 15],
     failOffsetY: [-12, 12],
     onUpdate: (e) => {
@@ -257,6 +328,12 @@ export default function PlayerScreen() {
   });
 
   useCastSync(playingTrack, isRadio);
+  // Distinct tag from the /lyrics screen's: this screen stays mounted under it,
+  // so a shared tag would let one screen's cleanup cancel the other's request.
+  useKeepScreenAwake(
+    lyricsKeepScreenOn && isPlaying && showInlineLyrics,
+    "player-lyrics",
+  );
 
   const handlePresentModalPress = useCallback(() => {
     actionsSheetRef.current?.present();
@@ -368,6 +445,41 @@ export default function PlayerScreen() {
         },
       },
     );
+  };
+
+  // Returns the mutation promise so StarRating can roll back its optimistic
+  // fill when the save is rejected.
+  const handleRatingChange = async (rating: number) => {
+    if (!playingTrack?.id) return;
+    try {
+      await doSetRating.mutateAsync({ id: playingTrack.id, rating });
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.rateSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.rateErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+      throw error;
+    }
   };
 
   const handleAddFavoritePodcastPress = () => {
@@ -499,55 +611,80 @@ export default function PlayerScreen() {
               }
             >
               {coverSize > 0 && (
-                <GestureDetector gesture={coverPanGesture}>
-                  <Animated.View
-                    style={[
-                      { width: coverArea.width, height: coverArea.height },
-                      coverRowStyle,
-                    ]}
-                  >
-                    <Box
-                      style={{
-                        position: "absolute",
-                        top: (coverArea.height - coverSize) / 2,
-                        left: (coverArea.width - coverSize) / 2,
-                      }}
+                <Animated.View
+                  style={[StyleSheet.absoluteFill, coverFadeStyle]}
+                  pointerEvents={showInlineLyrics ? "none" : "auto"}
+                >
+                  <GestureDetector gesture={coverPanGesture}>
+                    <Animated.View
+                      style={[
+                        { width: coverArea.width, height: coverArea.height },
+                        coverRowStyle,
+                      ]}
                     >
-                      <CoverSlot
-                        track={playingTrack ?? null}
-                        size={coverSize}
-                      />
-                    </Box>
-                    <Box
-                      style={{
-                        position: "absolute",
-                        top: (coverArea.height - coverSize) / 2,
-                        left:
-                          (coverArea.width - coverSize) / 2 - coverArea.width,
-                      }}
-                    >
-                      <CoverSlot track={prevTrack} size={coverSize} />
-                    </Box>
-                    <Box
-                      style={{
-                        position: "absolute",
-                        top: (coverArea.height - coverSize) / 2,
-                        left:
-                          (coverArea.width - coverSize) / 2 + coverArea.width,
-                      }}
-                    >
-                      <CoverSlot track={nextTrack} size={coverSize} />
-                    </Box>
-                  </Animated.View>
-                </GestureDetector>
+                      <Box
+                        style={{
+                          position: "absolute",
+                          top: (coverArea.height - coverSize) / 2,
+                          left: (coverArea.width - coverSize) / 2,
+                        }}
+                      >
+                        <CoverSlot
+                          track={playingTrack ?? null}
+                          size={coverSize}
+                        />
+                      </Box>
+                      <Box
+                        style={{
+                          position: "absolute",
+                          top: (coverArea.height - coverSize) / 2,
+                          left:
+                            (coverArea.width - coverSize) / 2 - coverArea.width,
+                        }}
+                      >
+                        <CoverSlot track={prevTrack} size={coverSize} />
+                      </Box>
+                      <Box
+                        style={{
+                          position: "absolute",
+                          top: (coverArea.height - coverSize) / 2,
+                          left:
+                            (coverArea.width - coverSize) / 2 + coverArea.width,
+                        }}
+                      >
+                        <CoverSlot track={nextTrack} size={coverSize} />
+                      </Box>
+                    </Animated.View>
+                  </GestureDetector>
+                </Animated.View>
+              )}
+              {lyricsMounted && isFocused && (
+                <Animated.View
+                  style={[StyleSheet.absoluteFill, lyricsFadeStyle]}
+                  pointerEvents={showInlineLyrics ? "auto" : "none"}
+                >
+                  <LyricsBody
+                    lyrics={lyrics}
+                    layers={layers}
+                    isLoading={lyricsLoading}
+                  />
+                </Animated.View>
               )}
             </Box>
-            {lyricsSource !== "off" && hasSyncedLyrics && (
-              <CurrentLyricLine
-                lyrics={lyrics}
-                onPress={() => router.push("/lyrics")}
-              />
-            )}
+            {lyricsSource !== "off" &&
+              // The slot stays reserved while the inline view is up — including
+              // while the next track's lyrics are still loading, when
+              // hasSyncedLyrics is briefly false: letting it collapse would
+              // re-measure coverArea and resize the cover mid-fade.
+              (showInlineLyrics || hasSyncedLyrics) &&
+              (showInlineLyrics ? (
+                <Box className="h-12" />
+              ) : (
+                <CurrentLyricLine
+                  lyrics={lyrics}
+                  onPress={() => setPlayerInlineLyrics(true)}
+                />
+              ))}
           </VStack>
           <VStack className={cn(isWideLayout && "flex-1 justify-center")}>
             <VStack className="px-6">
@@ -642,7 +779,23 @@ export default function PlayerScreen() {
                   />
                 )}
               </HStack>
-              {!isRadio && <AudioQualityLine track={playingTrack ?? null} />}
+              {!isRadio && (hasQualityLine || showRating) && (
+                <HStack className="items-center justify-between gap-x-3 mb-4">
+                  <Box className="flex-1">
+                    <AudioQualityLine track={playingTrack ?? null} />
+                  </Box>
+                  {showRating && (
+                    <StarRating
+                      testID="player-star-rating"
+                      value={playingTrack?.userRating ?? 0}
+                      onChange={handleRatingChange}
+                      size={18}
+                      spacing={4}
+                      emptyColor="rgba(255,255,255,0.4)"
+                    />
+                  )}
+                </HStack>
+              )}
               {!isRadio && <PlaybackSlider allowWaveform />}
               {isRadio && <Box className="mb-6" />}
               <HStack
@@ -734,6 +887,24 @@ export default function PlayerScreen() {
                   isWideLayout ? "mt-2 mb-2" : "mt-4 mb-6",
                 )}
               >
+                {/* Rendered on lyrics-capable tracks even when this one has
+                    none, so the row doesn't reshuffle between tracks. */}
+                {!isRadio && !isPodcast && lyricsSource !== "off" && (
+                  <FadeOut
+                    testID="player-inline-lyrics-button"
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={() => setPlayerInlineLyrics(!inlineLyricsEnabled)}
+                    // Turning it back off stays possible on a track that has no
+                    // lyrics to show, so the preference can never get stuck on.
+                    disabled={!canShowInlineLyrics && !inlineLyricsEnabled}
+                    accessibilityLabel={t("app.player.inlineLyrics")}
+                  >
+                    <Captions
+                      size={24}
+                      color={inlineLyricsEnabled ? emerald500 : "white"}
+                    />
+                  </FadeOut>
+                )}
                 <FadeOut
                   testID="player-output-button"
                   hitSlop={ICON_HIT_SLOP}
@@ -765,7 +936,7 @@ export default function PlayerScreen() {
                   </FadeOut>
                 )}
                 {/* Same slot as the podcast speed button — the two never show
-                    together, so the row keeps its three-slot balance. */}
+                    together. */}
                 {!isRadio && !isPodcast && lyricsSource === "all" && (
                   <FadeOut
                     testID="player-lyrics-picker-button"

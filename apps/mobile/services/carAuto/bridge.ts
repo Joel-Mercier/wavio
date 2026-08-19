@@ -12,6 +12,7 @@ type CarAutoNative = {
   setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
   notifyReady: () => void;
+  setVerbose: (enabled: boolean) => void;
   addListener: (
     event: "play" | "transport",
     listener: (e: Record<string, unknown>) => void,
@@ -109,6 +110,18 @@ export const CarAutoBridge = {
       NativeCarAuto.notifyReady();
     } catch (e) {
       if (__DEV__) console.log("[carauto] notifyReady threw", e);
+    }
+  },
+
+  // The native side's Logcat tracing is off by default. Mirror the JS logger's
+  // gate so a dev build traces both halves of the browse flow under `adb logcat
+  // -s CarAuto`, and a release build stays quiet.
+  setVerbose(enabled: boolean) {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.setVerbose(enabled);
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] setVerbose threw", e);
     }
   },
 

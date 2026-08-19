@@ -42,8 +42,14 @@ import {
   initPlayQueueSync,
   stopPlayQueueSync,
 } from "@/services/playQueueSync";
+import { flushPodcastProgress } from "@/services/podcastProgress";
 import { loadResumePositions } from "@/services/resumePositions";
 import { rewriteQueueRoutes } from "@/services/routeSwap";
+import {
+  clearTrackCacheForScope,
+  discardInFlightCacheWrites,
+} from "@/services/trackCache";
+import { resumeTrackCachePrefetch } from "@/services/trackCache/prefetcher";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useAudioMuse from "@/stores/audioMuse";
@@ -64,6 +70,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import useSoulSync from "@/stores/soulsync";
+import useTrackCache from "@/stores/trackCache";
 import { logError } from "@/utils/log";
 
 // Module-level so it survives AppLayout unmount/remount during the
@@ -134,6 +141,10 @@ export default function AppLayout() {
     // scope's data — so it must not reset either.
     const isScopeChange =
       lastHydratedScope !== null && lastHydratedScope !== scope;
+    // Captured before the reassignment: the prefetch cache's files are stored
+    // under the *outgoing* scope's directory, and by the time the reset below
+    // runs every scope-derived path already points at the incoming server.
+    const outgoingScope = lastHydratedScope;
     lastHydratedScope = scope;
     if (__DEV__) console.log("[app] Hydrating scoped stores for scope", scope);
     if (isScopeChange) {
@@ -166,6 +177,13 @@ export default function AppLayout() {
         useSoulSync.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
+        // The cache files live under the *outgoing* scope's directory and are
+        // re-derivable, so the index is simply dropped rather than migrated.
+        // Any download still writing carries the old scope's ids, hence the
+        // discard alongside it.
+        discardInFlightCacheWrites();
+        useTrackCache.getState().__reset();
+        if (outgoingScope) clearTrackCacheForScope(outgoingScope);
         useServerExtensionsBase.getState().reset();
       });
       // Clear the previous server's reachability state so the new server starts
@@ -207,6 +225,11 @@ export default function AppLayout() {
     // scope's sign-out) instead of waiting for a connectivity change to
     // incidentally kick the queue.
     offlineDownloadService.resume();
+    useTrackCache.persist.rehydrate();
+    // Same reasoning as the resume() above: rehydration is synchronous, so the
+    // restored queue is visible here and prefetching picks up where an app kill
+    // left off instead of waiting for the user to touch the queue.
+    resumeTrackCachePrefetch();
     useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useLrclibPicks.persist.rehydrate();
@@ -245,11 +268,15 @@ export default function AppLayout() {
     void probeServer();
   }, [isAuthenticated]);
 
-  // Persist the play queue to the server promptly when leaving the app.
+  // Persist the play queue to the server, and the in-flight podcast position to
+  // storage, promptly when leaving the app.
   useEffect(() => {
     if (!isAuthenticated) return;
     const onChange = (status: AppStateStatus) => {
-      if (status === "background" || status === "inactive") flushPlayQueue();
+      if (status === "background" || status === "inactive") {
+        flushPlayQueue();
+        flushPodcastProgress();
+      }
     };
     const sub = AppState.addEventListener("change", onChange);
     return () => sub.remove();

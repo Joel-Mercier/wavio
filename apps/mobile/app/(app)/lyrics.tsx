@@ -1,5 +1,4 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import MaskedView from "@react-native-masked-view/masked-view";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -9,17 +8,16 @@ import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import LyricsBody from "@/components/player/LyricsBody";
 import LyricsLayersSheet from "@/components/player/LyricsLayersSheet";
-import LyricsLine, { LYRICS_LINE_HEIGHT } from "@/components/player/LyricsLine";
 import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerSheets from "@/components/player/PlayerSheets";
@@ -36,215 +34,18 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
-import {
-  getPlaybackSnapshot,
-  subscribePlaybackProgress,
-} from "@/hooks/player/playbackSnapshot";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
-import type { StructuredLyrics } from "@/services/openSubsonic/types";
-import { seekTo, togglePlayPause } from "@/services/player";
+import { togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useJukebox from "@/stores/jukebox";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
-import {
-  agentAlign,
-  alignLayerToMain,
-  findCurrentLineIndex,
-  getAgentForLine,
-  getCueLineForLine,
-  isSyncedLyrics,
-  type LyricAlign,
-} from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
-const ALIGN_TEXT: Record<LyricAlign, string> = {
-  left: "text-left",
-  right: "text-right",
-  center: "text-center",
-};
-
 const ICON_HIT_SLOP = { top: 16, bottom: 16, left: 16, right: 16 };
-const MANUAL_SCROLL_GRACE_MS = 4000;
-
-type LyricLayers = {
-  main: StructuredLyrics | null;
-  translations: StructuredLyrics[];
-  pronunciations: StructuredLyrics[];
-};
-
-function LyricsBody({
-  lyrics,
-  layers,
-}: {
-  lyrics: StructuredLyrics | null;
-  layers: LyricLayers;
-}) {
-  const { t } = useTranslation();
-  const scrollRef = useRef<ScrollView>(null);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const userScrollingUntilRef = useRef(0);
-  const lineLayoutsRef = useRef<{ y: number; height: number }[]>([]);
-  const offsetMs = lyrics?.offset ?? 0;
-  const synced = isSyncedLyrics(lyrics);
-  const karaokeEnabled = useApp((s) => s.karaokeEnabled);
-  const translationLang = useApp((s) => s.lyricsTranslationLang);
-  const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
-
-  const selectedTranslation = useMemo(
-    () => layers.translations.find((l) => l.lang === translationLang) ?? null,
-    [layers.translations, translationLang],
-  );
-  const selectedPronunciation = showPronunciation
-    ? (layers.pronunciations[0] ?? null)
-    : null;
-
-  const translationByLine = useMemo(
-    () => alignLayerToMain(lyrics?.line ?? [], selectedTranslation?.line),
-    [lyrics, selectedTranslation],
-  );
-  const pronunciationByLine = useMemo(
-    () => alignLayerToMain(lyrics?.line ?? [], selectedPronunciation?.line),
-    [lyrics, selectedPronunciation],
-  );
-
-  useEffect(() => {
-    lineLayoutsRef.current = [];
-  }, [lyrics]);
-
-  useEffect(() => {
-    // Without timestamps there's no line to follow: keep the sheet static rather
-    // than doing per-tick work to track an index that can't mean anything.
-    if (!synced) {
-      setCurrentIndex(-1);
-      return;
-    }
-    const update = () => {
-      const { currentTime } = getPlaybackSnapshot();
-      const positionMs = (currentTime ?? 0) * 1000 + offsetMs;
-      const next = lyrics ? findCurrentLineIndex(lyrics.line, positionMs) : -1;
-      setCurrentIndex((prev) => (prev === next ? prev : next));
-    };
-    update();
-    return subscribePlaybackProgress(update);
-  }, [lyrics, offsetMs, synced]);
-
-  useEffect(() => {
-    if (currentIndex < 0) return;
-    if (!containerHeight) return;
-    if (Date.now() < userScrollingUntilRef.current) return;
-    const layout = lineLayoutsRef.current[currentIndex];
-    const target = layout
-      ? Math.max(0, layout.y + layout.height / 2 - containerHeight / 2)
-      : Math.max(
-          0,
-          currentIndex * LYRICS_LINE_HEIGHT -
-            containerHeight / 2 +
-            LYRICS_LINE_HEIGHT / 2,
-        );
-    scrollRef.current?.scrollTo({ y: target, animated: true });
-  }, [currentIndex, containerHeight]);
-
-  return (
-    <Box
-      className="flex-1"
-      onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
-    >
-      <MaskedView
-        style={{ flex: 1 }}
-        maskElement={
-          <LinearGradient
-            colors={["transparent", "#000", "#000", "transparent"]}
-            locations={[0, 0.06, 0.94, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ flex: 1 }}
-          />
-        }
-      >
-        <ScrollView
-          ref={scrollRef}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled
-          onScrollBeginDrag={() => {
-            userScrollingUntilRef.current = Date.now() + MANUAL_SCROLL_GRACE_MS;
-          }}
-          contentContainerStyle={{ paddingVertical: 32, paddingHorizontal: 24 }}
-        >
-          {lyrics?.line.map((line, index) => {
-            const { start } = line;
-            const agent = getAgentForLine(lyrics, index);
-            const align = agentAlign(agent?.role);
-            const muted = agent?.role === "bg" || agent?.role === "group";
-            const alignClass = ALIGN_TEXT[align];
-            const pronunciationLines = pronunciationByLine[index] ?? [];
-            const translationLines = translationByLine[index] ?? [];
-            return (
-              <Box
-                key={`${index}-${start ?? 0}`}
-                onLayout={(e) => {
-                  lineLayoutsRef.current[index] = {
-                    y: e.nativeEvent.layout.y,
-                    height: e.nativeEvent.layout.height,
-                  };
-                }}
-              >
-                {pronunciationLines.map((l, i) => (
-                  <Text
-                    // biome-ignore lint/suspicious/noArrayIndexKey: stable ordered lines
-                    key={`p-${i}`}
-                    className={cn("text-primary-200 text-sm mb-1", alignClass)}
-                  >
-                    {l.value}
-                  </Text>
-                ))}
-                <LyricsLine
-                  value={line.value}
-                  isActive={index === currentIndex}
-                  isPast={index < currentIndex}
-                  align={align}
-                  muted={muted}
-                  plain={!synced}
-                  cueLine={
-                    karaokeEnabled && index === currentIndex
-                      ? getCueLineForLine(lyrics, currentIndex)
-                      : undefined
-                  }
-                  offsetMs={offsetMs}
-                  onPress={
-                    synced && start != null
-                      ? () => seekTo(Math.max(0, (start - offsetMs) / 1000))
-                      : undefined
-                  }
-                />
-                {translationLines.map((l, i) => (
-                  <Text
-                    // biome-ignore lint/suspicious/noArrayIndexKey: stable ordered lines
-                    key={`t-${i}`}
-                    className={cn("text-primary-200 text-sm mt-1", alignClass)}
-                  >
-                    {l.value}
-                  </Text>
-                ))}
-              </Box>
-            );
-          })}
-          {!lyrics && (
-            <Box className="flex-1 items-center justify-center pt-12">
-              <Text className="text-white text-center text-lg">
-                {t("app.player.lyricsUnavailable")}
-              </Text>
-            </Box>
-          )}
-        </ScrollView>
-      </MaskedView>
-    </Box>
-  );
-}
 
 export default function LyricsScreen() {
   const [black, emerald500, gray800] = Uniwind.getCSSVariable([
@@ -276,8 +77,14 @@ export default function LyricsScreen() {
   const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
   const playingTrack = usePlayingTrack();
   const colors = useImageColors(playingTrack?.artwork);
-  const { lyrics, hasKaraoke, layers, hasTranslations, hasPronunciation } =
-    useSyncedLyrics(playingTrack);
+  const {
+    lyrics,
+    hasKaraoke,
+    layers,
+    hasTranslations,
+    hasPronunciation,
+    isLoading: lyricsLoading,
+  } = useSyncedLyrics(playingTrack);
   const hasLayers = hasTranslations || hasPronunciation;
   useKeepScreenAwake(lyricsKeepScreenOn && isPlaying, "lyrics");
   const doShare = useCreateShare();
@@ -451,7 +258,7 @@ export default function LyricsScreen() {
             <Box className="w-10 h-10" />
           )}
         </HStack>
-        <LyricsBody lyrics={lyrics} layers={layers} />
+        <LyricsBody lyrics={lyrics} layers={layers} isLoading={lyricsLoading} />
         <VStack className="px-6 pt-4">
           <HStack className="items-center justify-between mb-4">
             {hasOutputs && !isRadio ? (

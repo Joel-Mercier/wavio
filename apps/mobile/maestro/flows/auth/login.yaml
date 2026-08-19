@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: login
 # Critical path #1 — Authentication.
 # A user with no saved server can sign in (here via the one-tap demo server)
