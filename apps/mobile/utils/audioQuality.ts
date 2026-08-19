@@ -81,38 +81,78 @@ const normalizeContainer = (format: string | undefined): string | undefined => {
 // this line.
 const CACHED_BITRATE_TOLERANCE = 0.9;
 
+// The bitrates a transcode actually lands on: the app's own cap options plus the
+// classic MP3/AAC ladder.
+const BITRATE_LADDER = [32, 48, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+// Container headers, tags and embedded cover art all count toward the file's
+// bytes, and its duration divides in whole seconds, so a 320 kbps encode
+// measures a few kbps high — by a different amount on every track. Snap back
+// onto the rung the encoder was aimed at instead of reading 321 on one track and
+// 322 on the next. Deliberately tight: a genuine VBR average (245 kbps) is
+// nowhere near a rung and stays exactly as measured.
+const LADDER_SNAP_TOLERANCE = 0.025;
+
+const snapToLadder = (kbps: number | null): number | null => {
+  if (kbps == null) return null;
+  const rung = BITRATE_LADDER.find(
+    (value) => Math.abs(kbps - value) <= value * LADDER_SNAP_TOLERANCE,
+  );
+  return rung ?? kbps;
+};
+
+export interface LocalFileTranscodeInfo extends TranscodeInfo {
+  // Whether the comparison had evidence on both sides. Without it, an inactive
+  // result means "nothing to compare", not "bit-exact", so the caller must not
+  // badge the track as ORIGINAL.
+  comparable: boolean;
+}
+
+const NOT_COMPARABLE: LocalFileTranscodeInfo = {
+  ...INACTIVE,
+  comparable: false,
+};
+
 /**
- * The transcode a *prefetched* copy actually went through, read off the file on
- * disk instead of predicted from the current settings.
+ * The transcode a copy *on disk* actually went through — a prefetched track or
+ * an offline download — read off the file instead of predicted from the current
+ * settings.
  *
  * `getTranscodeInfo` answers "what would streaming this now do?", which is the
- * wrong question for a cached track: the fetch already happened, possibly on
- * another network under a different format and cap (the whole point of the
- * per-network streaming settings). The entry's own container and size are the
- * only record of what was really fetched — a copy pulled on cellular genuinely
- * is 128 kbps opus, and saying "ORIGINAL" over it is a lie about the audio the
- * user is hearing.
+ * wrong question for both: the fetch already happened. A prefetch may have run
+ * on another network under a different format and cap (the whole point of the
+ * per-network streaming settings), and a download was written in whatever
+ * `downloadFormat` asked for (see offlineFileInfo). The file's own container and
+ * size are the only record of what was really fetched — a copy pulled on
+ * cellular genuinely is 128 kbps opus, and saying "ORIGINAL" over it is a lie
+ * about the audio the user is hearing.
+ *
+ * `source` overrides what the track claims to be, for the case where the queue
+ * entry was itself built from the downloaded file (offlineTrackToChild) and so
+ * already describes the copy rather than the original.
  */
-export function cachedTranscodeInfo(
+export function localFileTranscodeInfo(
   track: QueueTrack | null,
-  entry: { suffix: string; bytes: number } | null,
-): TranscodeInfo {
+  entry: { suffix: string | undefined; bytes: number } | null,
+  source?: { suffix?: string; bitRate?: number },
+): LocalFileTranscodeInfo {
   if (!track || !entry || track.isRadio || track.source === "podcast") {
-    return INACTIVE;
+    return NOT_COMPARABLE;
   }
 
-  const format = sourceFormat(track);
+  const format = source?.suffix || sourceFormat(track);
   const cachedFormat = entry.suffix || undefined;
+  const sourceBitRateRaw = source?.bitRate ?? track.bitRate;
   const sourceBitRate =
-    typeof track.bitRate === "number" && track.bitRate > 0
-      ? track.bitRate
+    typeof sourceBitRateRaw === "number" && sourceBitRateRaw > 0
+      ? sourceBitRateRaw
       : null;
   // The average bitrate of what is actually on disk. Only meaningful with a
   // duration to divide by, which radio-less library tracks always have.
-  const cachedBitRate =
+  const cachedBitRate = snapToLadder(
     typeof track.duration === "number" && track.duration > 0 && entry.bytes > 0
       ? Math.round((entry.bytes * 8) / track.duration / 1000)
-      : null;
+      : null,
+  );
 
   const formatChanged =
     normalizeContainer(cachedFormat) != null &&
@@ -123,13 +163,23 @@ export function cachedTranscodeInfo(
     cachedBitRate != null &&
     cachedBitRate < sourceBitRate * CACHED_BITRATE_TOLERANCE;
 
-  if (!formatChanged && !downsampled) return INACTIVE;
+  // What makes "no transcode detected" mean "bit-exact" rather than "nothing to
+  // compare". Bitrates measure up on their own, but a matching *format* only
+  // counts when the source one was recorded separately: a queue entry built from
+  // the downloaded file (offlineTrackToChild) always agrees with itself, which
+  // is a tautology, not evidence.
+  const comparable =
+    (sourceBitRate != null && cachedBitRate != null) ||
+    (source?.suffix != null && cachedFormat != null);
+
+  if (!formatChanged && !downsampled) return { ...INACTIVE, comparable };
 
   return {
     active: true,
+    comparable: true,
     fromLabel: compactQuality(format, sourceBitRate),
-    // Measured, not requested: this is the file, so its own numbers are the
-    // honest ones to show.
+    // Measured (then snapped to its rung), not requested: this is the file, so
+    // its own numbers are the honest ones to show.
     toLabel: compactQuality(cachedFormat ?? format, cachedBitRate),
   };
 }
