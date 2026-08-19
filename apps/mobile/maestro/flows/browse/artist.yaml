@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: artist
 # Critical path — Artist browsing (one session).
 # Reaches the artist screen from an album's "…" menu (there is no artist tab),

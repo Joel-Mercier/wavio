@@ -94,9 +94,15 @@ without changing the visual tree. `AnimatedHeart` forwards `testID` to its anima
 
 ## Running
 
-Requires a **`preview` or `production`** build installed on a booted device/emulator
-— NOT the `development` build (the Expo dev client's launcher + dev menu block the
-flows). Build with `cd apps/mobile && eas build --profile preview --platform android`.
+Requires the **`preview`** build installed on a booted device/emulator — NOT the
+`development` build (the Expo dev client's launcher + dev menu block the flows).
+Build with `bun run mobile:build:android:preview` (or `cd apps/mobile && eas build
+--profile preview --platform android`).
+
+Every flow declares `appId: com.jmercier.wavio.preview` — the preview variant's
+package (see **App variants** in `CLAUDE.md`), so the flows never latch onto the
+Play Store build sitting on the same device. To run them against a production APK
+instead, point the `appId` lines at `com.jmercier.wavio`.
 
 ```sh
 # from apps/mobile

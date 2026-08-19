@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: "subflow: open the navigation drawer"
 # Reusable building block: opens the left navigation drawer (the slide-in menu
 # with Activity / Queue / Settings / Servers / Logout) from any of the three
