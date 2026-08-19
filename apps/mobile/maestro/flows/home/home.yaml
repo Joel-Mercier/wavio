@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: home
 # Critical path — Home feed navigation.
 # The Home feed is a vertical list of horizontal carousels, each with a "See all"

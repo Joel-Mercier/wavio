@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: "subflow: sort the Library list newest-first"
 # Flips the Library list's "Recent" sort to descending (most-recent-first) so a
 # just-created item lands at the TOP of the list instead of the bottom, where the

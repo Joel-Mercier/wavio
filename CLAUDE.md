@@ -49,6 +49,27 @@ The dev-server scripts (`start` / `android` / `ios` / `web` in `apps/mobile/pack
 
 The `--non-interactive` flag is **required**, not optional: `eas env:exec`'s default (interactive) mode spawns the command with `stdio: ['inherit', 'pipe', 'pipe']`, piping and reformatting stdout/stderr (with `[stdout]`/`[stderr]` prefixes plus banner lines), which breaks Metro's raw-TTY interactive UI — keypresses like `r` (reload) / `j` (debugger) / `m` (menu) stop working. `--non-interactive` switches it to `stdio: 'inherit'`, a pure passthrough that gives Metro the real TTY and emits no banner noise.
 
+### App variants
+
+The `development`, `preview` and `production` builds install **side by side** on one device. `apps/mobile/app.config.js` is a thin overlay on `app.json` (Expo passes the static config in as `config`): it reads `APP_VARIANT` and, for `development` / `preview` only, suffixes the Android package + iOS bundle id, renames the app and prepends a variant-only scheme. `APP_VARIANT` unset or `production` returns `app.json` **verbatim** — the Play Store identity (`com.jmercier.wavio`, name "Wavio") is untouched by design, so never add a `production` entry to the `VARIANTS` map.
+
+| `APP_VARIANT` | package / bundle id | name | schemes |
+| --- | --- | --- | --- |
+| `development` | `com.jmercier.wavio.dev` | Wavio Dev | `wavio-dev`, `wavio` |
+| `preview` | `com.jmercier.wavio.preview` | Wavio Preview | `wavio-preview`, `wavio` |
+| unset / `production` | `com.jmercier.wavio` | Wavio | `wavio` |
+
+`wavio` stays registered on every variant because widget and launcher-shortcut deep links hardcode `wavio://`; they resolve unambiguously anyway since both target the app explicitly (`setPackage` / `targetPackage`), and Expo Router derives the path from the URL rather than from a prefix list.
+
+The identity is baked into `android/` at **prebuild** time, not into the JS bundle, so `APP_VARIANT` has to be set on whichever command generates the native project:
+- `prebuild:development` / `prebuild:preview` (`bun run mobile:prebuild:development` from the root) wrap `prebuild:github` with it, and `build:android:development` / `build:android:preview` call them. The production scripts still use `prebuild:store` / `prebuild:github` with no variant.
+- The dev-server scripts (`start` / `android` / `ios` / `web`) set `APP_VARIANT=development` inline, so `expo run:android` and the dev-client manifest agree with the installed dev build.
+- Each `eas.json` profile also sets `APP_VARIANT` in its `env` — and that copy is the authoritative one. Because `apps/mobile/android/` is gitignored, `resolveWorkflowAsync` classifies the project as **managed**, so *every* `eas build` (cloud **and** `--local`) leaves the local `android/` out of the upload and runs its own `expo prebuild` with the profile's `env`. The `prebuild:*` scripts therefore shape only local `expo run:*` builds (and catch plugin errors early); they can't change what a released artifact contains.
+
+`android/` is reused between prebuilds, and Expo renames the package in place when it changes. If a variant switch ever leaves stale classes behind (duplicate-class or missing-`R` Gradle errors), run the prebuild with `--clean`.
+
+Anything generated that embeds the application id must read it from the config, not hardcode it: `plugins/withWidgets.js` derives the Kotlin package, `R` import, broadcast action, receiver names and `MainApplication` import from `config.android.package` (`packageOf` / `forPackage`), and `plugins/withShortcuts.js` already did. Maestro flows declare `appId: com.jmercier.wavio.preview` (see `apps/mobile/maestro/README.md`).
+
 TS path alias: `@/*` → `apps/mobile/` root.
 
 Don't execute prebuild and building the mobile app yourself. Also don't launch the landing dev server youself. Inform the user to do so.

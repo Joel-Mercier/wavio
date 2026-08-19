@@ -199,3 +199,26 @@ describe("download queue under a full disk", () => {
     expect(state().downloadProgress.d?.status).toBe("paused");
   });
 });
+
+describe("what a completed download records", () => {
+  it("keeps the source format and bitrate, which the saved file no longer shows", async () => {
+    // offlineFileInfo saves this FLAC as mp3 (mocked above, as downloadFormat
+    // "mp3" would). Without the source recorded here, a queue entry built from
+    // the file itself has no way to tell it apart from a genuine mp3 (#167).
+    const { offlineDownloadService, state } = importService();
+    mockDownload.mockImplementation(async (url: string) =>
+      downloaded(String(url).replace("https://server/stream/", "")),
+    );
+
+    offlineDownloadService.enqueueTracks(
+      [{ ...makeChild("flacTrack"), suffix: "flac", bitRate: 1016 }],
+      "user",
+    );
+    await jest.advanceTimersByTimeAsync(0);
+
+    const saved = state().getDownloadedTrack("flacTrack");
+    expect(saved?.path).toMatch(/\.mp3$/);
+    expect(saved?.sourceSuffix).toBe("flac");
+    expect(saved?.sourceBitRate).toBe(1016);
+  });
+});

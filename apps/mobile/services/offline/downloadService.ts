@@ -655,6 +655,8 @@ export class OfflineDownloadService {
       year: track.year,
       genre: track.genre?.trim() || track.genres?.[0]?.name,
       sortName: track.sortName,
+      sourceSuffix: track.suffix,
+      sourceBitRate: track.bitRate,
     };
 
     offlineStore.addDownloadedTrack(offlineTrack);

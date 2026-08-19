@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: favorite-toggle
 # Critical path — Favorite (star) toggle (one session, write path, self-cleaning).
 # Plays a track and toggles its favorite state from the full player heart twice,

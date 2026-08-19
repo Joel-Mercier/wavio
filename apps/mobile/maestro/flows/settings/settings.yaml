@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: settings
 # Critical path #7 — Settings screen.
 # Settings is a long scroll of grouped sections (offline, display, playback,

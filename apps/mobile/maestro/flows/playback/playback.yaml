@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: playback
 # Critical path #4 — Playback (one session).
 # The core music journey: play an album, expand the mini-player into the full

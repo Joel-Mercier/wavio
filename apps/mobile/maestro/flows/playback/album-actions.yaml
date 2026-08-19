@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: album-actions
 # Critical path — Album-screen context actions (one session).
 # Covers the two menus on an album screen back-to-back: the per-track "…" menu

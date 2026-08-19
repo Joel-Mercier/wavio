@@ -9,10 +9,11 @@ const PERMISSION = "android.permission.REQUEST_INSTALL_PACKAGES";
 // cases (app stores, file managers, backup/restore) don't cover a music client,
 // so shipping it in the AAB means a rejection.
 //
-// Both branches write, never skip: android/ is committed, so a prebuild that
-// merely declined to add the permission would leave a previously-generated one
-// in place. Store builds therefore strip it explicitly, making the manifest a
-// function of EXPO_PUBLIC_DISTRIBUTION alone rather than of build order.
+// Both branches write, never skip: android/ is reused across prebuilds (it is
+// gitignored but not wiped, and prebuild runs without --clean), so a prebuild
+// that merely declined to add the permission would leave a previously-generated
+// one in place. Store builds therefore strip it explicitly, making the manifest
+// a function of EXPO_PUBLIC_DISTRIBUTION alone rather than of build order.
 const withInstallApkPermission = (config) =>
   withAndroidManifest(config, (cfg) => {
     const manifest = cfg.modResults.manifest;
