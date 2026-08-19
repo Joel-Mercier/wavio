@@ -282,23 +282,49 @@ const buildId3File = (frames: number[][], audioBytes = 4096): Uint8Array => {
   ]);
 };
 
-/** A FLAC file: "fLaC", a padding block, the comment block, then fake audio. */
-const buildFlacFile = (comment: Uint8Array, audioBytes = 4096): Uint8Array => {
-  const padding = new Array(16).fill(0x00);
-  return Uint8Array.from([
+/**
+ * A FLAC file: "fLaC", a padding block, the comment block, then fake audio.
+ * `paddingBytes` sizes the leading block, which is how a test puts the comment
+ * block beyond the speculative window `readFlac` opens with.
+ */
+const buildFlacFile = (
+  comment: Uint8Array,
+  audioBytes = 4096,
+  paddingBytes = 16,
+): Uint8Array => {
+  const header = Uint8Array.from([
     ...utf8("fLaC"),
     0x01, // PADDING (type 1), not last
-    (padding.length >> 16) & 0xff,
-    (padding.length >> 8) & 0xff,
-    padding.length & 0xff,
-    ...padding,
+    (paddingBytes >> 16) & 0xff,
+    (paddingBytes >> 8) & 0xff,
+    paddingBytes & 0xff,
+  ]);
+  const commentHeader = Uint8Array.from([
     0x84, // VORBIS_COMMENT (type 4), last block
     (comment.length >> 16) & 0xff,
     (comment.length >> 8) & 0xff,
     comment.length & 0xff,
-    ...comment,
-    ...new Array(audioBytes).fill(0xff),
   ]);
+  // Assembled by offset rather than spread: the padding alone can run to tens
+  // of thousands of bytes, which is more than an argument list wants to carry.
+  const size =
+    header.length +
+    paddingBytes +
+    commentHeader.length +
+    comment.length +
+    audioBytes;
+  const file = new Uint8Array(size);
+  let at = 0;
+  const put = (bytes: Uint8Array) => {
+    file.set(bytes, at);
+    at += bytes.length;
+  };
+  put(header);
+  at += paddingBytes; // already zero-filled
+  put(commentHeader);
+  put(comment);
+  file.fill(0xff, at);
+  return file;
 };
 
 describe("readRawTags", () => {
@@ -338,13 +364,33 @@ describe("readRawTags", () => {
 
     expect(result.artists).toEqual(["A"]);
     expect(result.replayGain?.trackGain).toBeCloseTo(-6.6);
-    // Signature+header, the padding block header, the comment block header,
-    // then the comment body — the block walk, and nothing else.
-    expect(ranges.map(([, length]) => length)).toEqual([
-      10,
-      4,
-      4,
-      comment.length,
+    // Signature+header, then one speculative window that the whole block walk
+    // is served out of. Two round trips is what makes this affordable over a
+    // network share, where each one costs an HTTP request plus an SMB open.
+    expect(ranges).toEqual([
+      [0, 10],
+      [0, 64 * 1024],
+    ]);
+  });
+
+  it("falls back to ranged reads when the comment block is past the window", async () => {
+    const comment = buildVorbis("ref", ["ARTIST=Far Out"]);
+    // A seektable big enough to push VORBIS_COMMENT beyond the 64 KB window.
+    const seektable = 70 * 1024;
+    const file = buildFlacFile(comment, 4096, seektable);
+    const { reader, ranges } = fakeReader(file);
+
+    const result = await readRawTags(reader);
+
+    // Correct answer, and the walk stepped outside the window to get it rather
+    // than giving up on what the speculative read happened to cover.
+    expect(result.artists).toEqual(["Far Out"]);
+    const commentHeader = 4 + 4 + seektable;
+    expect(ranges).toEqual([
+      [0, 10],
+      [0, 64 * 1024],
+      [commentHeader, 4],
+      [commentHeader + 4, comment.length],
     ]);
   });
 

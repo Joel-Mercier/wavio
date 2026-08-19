@@ -44,6 +44,11 @@ export type RawTagData = {
 // corrupt/huge declared size. 4 MB comfortably covers tags with embedded art.
 const MAX_TAG_BYTES = 4 * 1024 * 1024;
 
+// How much of a FLAC header to pull in one go before walking its metadata
+// blocks — see `readFlac`. Large enough for a seektable and a comment block,
+// small enough to stay cheaper than the round trips it replaces.
+const FLAC_WINDOW_BYTES = 64 * 1024;
+
 export async function readRawTags(reader: ByteReader): Promise<RawTagData> {
   try {
     // One 10-byte read covers both the container signature and the whole ID3v2
@@ -255,9 +260,21 @@ function decodeTextFrame(data: Uint8Array): string {
 // ---------------------------------------------------------------------------
 
 async function readFlac(reader: ByteReader): Promise<RawTagData> {
+  // Every FLAC metadata block header is four bytes, and walking them with a
+  // ranged read apiece is what a network share charges most for: each one costs
+  // a whole HTTP request plus an SMB open/close (~45 ms against a NAS), for four
+  // bytes. One speculative window covers STREAMINFO + SEEKTABLE +
+  // VORBIS_COMMENT on essentially every real file, so the walk becomes free and
+  // only a file that pushes its comment block past the window pays per read.
+  const window = await reader.read(0, FLAC_WINDOW_BYTES);
+  const at = (offset: number, length: number): Promise<Uint8Array> =>
+    offset + length <= window.length
+      ? Promise.resolve(window.subarray(offset, offset + length))
+      : reader.read(offset, length);
+
   let offset = 4; // past "fLaC"
   for (let guard = 0; guard < 128; guard++) {
-    const blockHeader = await reader.read(offset, 4);
+    const blockHeader = await at(offset, 4);
     if (blockHeader.length < 4) break;
     const isLast = (blockHeader[0] & 0x80) !== 0;
     const blockType = blockHeader[0] & 0x7f;
@@ -266,7 +283,7 @@ async function readFlac(reader: ByteReader): Promise<RawTagData> {
 
     if (blockType === 4) {
       if (length <= 0 || length > MAX_TAG_BYTES) return {};
-      return parseVorbisComments(await reader.read(offset + 4, length));
+      return parseVorbisComments(await at(offset + 4, length));
     }
     if (isLast) break;
     offset += 4 + length;

@@ -39,7 +39,12 @@ final class SmbBridge: @unchecked Sendable {
   // A request head this large is not one of ours.
   private static let headLimit = 16 * 1024
 
-  private static let chunk = 64 * 1024
+  // One SMB read per chunk, awaited one after the next, so this — not the link —
+  // is what bounds a single stream. The vendored client clamps every read to the
+  // session's negotiated `maxReadSize` (and sizes credits from it), so asking for
+  // more than a server allows degrades to that server's maximum rather than
+  // failing. Matches the Android bridge, where 64 KB measured at ~30 ms a chunk.
+  private static let chunk = 1024 * 1024
 
   // Short while reading the request head, so a client that connects and says
   // nothing can't hold a worker; raised for the body, where an SMB read can

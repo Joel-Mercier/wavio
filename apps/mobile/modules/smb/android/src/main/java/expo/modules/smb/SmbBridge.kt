@@ -7,6 +7,7 @@ import java.io.BufferedOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -48,7 +49,15 @@ internal object SmbBridge {
   // A request head this large is not one of ours.
   private const val HEAD_LIMIT = 16 * 1024
 
-  private const val CHUNK = 64 * 1024
+  // One SMB read per chunk, issued one after the next, so this — not the link —
+  // is what bounds a single stream. Measured against a NAS at 64 KB: ~30 ms per
+  // chunk for 1.9 MB/s, while the same megabyte pulled as 16 concurrent range
+  // requests landed in a third of the time. smbj clamps every read to
+  // min(its own 1 MB buffer, the dialect's negotiated max), so asking for more
+  // than a server allows degrades to that server's maximum instead of failing.
+  private const val CHUNK = 1024 * 1024
+
+  private val LOOPBACK_V4 = byteArrayOf(127, 0, 0, 1)
 
   // Short while reading the request head, so a client that connects and says
   // nothing can't hold a worker; raised for the body, where an SMB read can
@@ -89,12 +98,12 @@ internal object SmbBridge {
    * the network.
    */
   fun urlFor(target: SmbTarget, path: String, timeoutMs: Long): String {
-    val port = ensureListening()
+    val authority = ensureListening()
     val token = tokenFor(target)
     targets[token] = target
     timeouts[token] = timeoutMs
     val absolute = if (path.startsWith("/")) path else "/$path"
-    return "http://127.0.0.1:$port/$token${Uri.encode(absolute, "/")}"
+    return "http://$authority/$token${Uri.encode(absolute, "/")}"
   }
 
   fun stop() {
@@ -106,19 +115,50 @@ internal object SmbBridge {
     timeouts.clear()
   }
 
-  private fun ensureListening(): Int {
+  /** The `host:port` every URL above is built from. Binds if it has to. */
+  private fun ensureListening(): String {
     synchronized(lock) {
       val existing = serverSocket
-      if (existing != null && !existing.isClosed) return existing.localPort
-      // Loopback only. Binding the LAN interface would expose the user's whole
-      // share to the network, which is a casting concern and not this.
-      val socket = ServerSocket(0, BACKLOG, InetAddress.getLoopbackAddress())
+      if (existing != null && !existing.isClosed) return authorityOf(existing)
+      val socket = bindLoopback()
       serverSocket = socket
       Thread({ acceptLoop(socket) }, "wavio-smb-accept").apply {
         isDaemon = true
         start()
       }
-      return socket.localPort
+      return authorityOf(socket)
+    }
+  }
+
+  /**
+   * Loopback only. Binding the LAN interface would expose the user's whole share
+   * to the network, which is a casting concern and not this.
+   *
+   * IPv4 explicitly, rather than `InetAddress.getLoopbackAddress()`: that answers
+   * `::1` on some devices, and a listener on `::1` refuses every connection to
+   * `127.0.0.1` — which is what the metadata reader, Media3 and the JS ranged
+   * reads all dial. The symptom is not "unreachable" but "slow": each read fails,
+   * `NuCachedSource2` retries it ten times three seconds apart, and a scan turns
+   * into half a minute per track indexing nothing.
+   */
+  private fun bindLoopback(): ServerSocket =
+    try {
+      ServerSocket(0, BACKLOG, InetAddress.getByAddress(LOOPBACK_V4))
+    } catch (_: IOException) {
+      // A loopback with no IPv4 address is not a thing we expect to meet, but
+      // the authority is derived from whatever actually got bound, so falling
+      // back here can't reintroduce the mismatch above.
+      ServerSocket(0, BACKLOG, InetAddress.getLoopbackAddress())
+    }
+
+  /** Bracketed for IPv6, per RFC 3986 — `::1:8080` parses as neither. */
+  private fun authorityOf(socket: ServerSocket): String {
+    val address = socket.inetAddress
+    val host = address?.hostAddress ?: "127.0.0.1"
+    return if (address is Inet6Address) {
+      "[$host]:${socket.localPort}"
+    } else {
+      "$host:${socket.localPort}"
     }
   }
 
@@ -245,11 +285,14 @@ internal object SmbBridge {
   }
 
   private fun stream(file: SmbFile, start: Long, length: Long, output: OutputStream) {
-    val buffer = ByteArray(CHUNK)
+    // Sized to the response rather than to CHUNK: the JS raw-tag reader asks for
+    // as little as four bytes, and buying a megabyte of heap per such request
+    // would cost more than the request itself.
+    val buffer = ByteArray(min(CHUNK.toLong(), length).toInt())
     var offset = start
     var remaining = length
     while (remaining > 0) {
-      val want = min(CHUNK.toLong(), remaining).toInt()
+      val want = min(buffer.size.toLong(), remaining).toInt()
       val read = file.read(buffer, offset, 0, want)
       if (read <= 0) break
       output.write(buffer, 0, read)

@@ -3,6 +3,15 @@ import CryptoKit
 import ExpoModulesCore
 
 public class AudioMetadataModule: Module {
+  // `AsyncFunction` otherwise runs on one *serial* queue shared by every Expo
+  // module in the app, so a scan is serialized no matter what
+  // `FileSource.extractConcurrency` asks for and unrelated native calls queue
+  // behind each extraction. Concurrent rather than the waveform module's serial
+  // queue: reads here are latency-bound, and the JS side already caps how many
+  // are in flight. Same reasoning as the Android counterpart.
+  private let queue = DispatchQueue(
+    label: "app.wavio.audio-metadata", qos: .userInitiated, attributes: .concurrent)
+
   public func definition() -> ModuleDefinition {
     Name("AudioMetadata")
 
@@ -13,6 +22,7 @@ public class AudioMetadataModule: Module {
         uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir,
         headers: headers)
     }
+    .runOnQueue(queue)
   }
 
   private static func extract(

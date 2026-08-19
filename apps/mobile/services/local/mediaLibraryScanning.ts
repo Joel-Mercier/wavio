@@ -15,7 +15,7 @@ import { localEnvelope } from "@/services/local/unsupported";
 import { getConnectionType } from "@/services/network";
 import type { ScanStatus } from "@/services/openSubsonic/types";
 import { useAppBase } from "@/stores/app";
-import { useAuthBase } from "@/stores/auth";
+import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useLocalLibrary from "@/stores/localLibrary";
 import { logError } from "@/utils/log";
 
@@ -186,6 +186,12 @@ export const getScanStatus = async () => {
 export const cancelScan = (): void => {
   controller?.cancel();
 };
+
+// A scan belongs to the session that started it. Left running across a sign-out
+// it keeps reading the share and writing the departed scope's index — pure waste
+// on a network file source, and it holds that scope's SQLite handle open against
+// anything that later wants to close or delete it.
+registerLogoutHandler(cancelScan);
 
 /** True while a scan is running, so callers don't stack another on top. */
 export const isScanning = (): boolean => controller !== null;
