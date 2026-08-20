@@ -1,5 +1,7 @@
 package expo.modules.carauto
 
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
@@ -10,6 +12,8 @@ import org.json.JSONObject
 
 @OptIn(UnstableApi::class)
 class CarAutoModule : Module() {
+  private val mainHandler = Handler(Looper.getMainLooper())
+
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
@@ -34,24 +38,34 @@ class CarAutoModule : Module() {
       markJsReady()
     }
 
-    Function("setNodes") { json: String ->
-      val context = appContext.reactContext ?: return@Function
-      BrowseTreeCache.setFromJson(context, json)
-      CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()}")
+    Function("setVerbose") { enabled: Boolean ->
+      CarAutoLog.verbose = enabled
     }
 
+    Function("setNodes") { json: String ->
+      val context = appContext.reactContext ?: return@Function
+      val changed = BrowseTreeCache.setFromJson(context, json)
+      CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()} changed=${changed.size}")
+      this@CarAutoModule.notifyChildrenChanged(changed)
+    }
+
+    // Every mirror push below records into CarPlaybackMirror *before* touching
+    // the player, and keeps going when there is no player: the browser service
+    // is only created once a car host binds it, so playback that started earlier
+    // would otherwise never reach the session at all — see CarPlaybackMirror.
     Function("setNowPlaying") { json: String? ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
+      val player = WavioCarBrowserService.activePlayer
       if (json.isNullOrEmpty() || json == "null") {
-        player.applyNowPlaying(null)
+        CarPlaybackMirror.setNowPlaying(null)
+        player?.applyNowPlaying(null)
         return@Function
       }
       val np = runCatching { parseNowPlaying(json) }.getOrNull() ?: return@Function
-      player.applyNowPlaying(np)
+      CarPlaybackMirror.setNowPlaying(np)
+      player?.applyNowPlaying(np)
     }
 
     Function("setQueue") { json: String ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val arr = o.optJSONArray("tracks") ?: return@Function
       val items = ArrayList<JsProxyPlayer.NowPlaying>(arr.length())
@@ -68,16 +82,17 @@ class CarAutoModule : Module() {
           ),
         )
       }
-      player.applyQueue(items, o.optInt("currentIndex", 0))
+      val index = o.optInt("currentIndex", 0)
+      CarPlaybackMirror.setQueue(items, index)
+      WavioCarBrowserService.activePlayer?.applyQueue(items, index)
     }
 
     Function("setQueueIndex") { index: Int ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
-      player.applyQueueIndex(index)
+      CarPlaybackMirror.setQueueIndex(index)
+      WavioCarBrowserService.activePlayer?.applyQueueIndex(index)
     }
 
     Function("setPlaybackState") { json: String ->
-      val player = WavioCarBrowserService.activePlayer ?: return@Function
       val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
       val isPlaying = o.optBoolean("isPlaying", false)
       val posMs = o.optLong("positionMs", 0L)
@@ -87,8 +102,37 @@ class CarAutoModule : Module() {
         "all" -> Player.REPEAT_MODE_ALL
         else -> Player.REPEAT_MODE_OFF
       }
-      player.applyPlaybackState(isPlaying, posMs, shuf, repeat)
+      CarPlaybackMirror.setPlaybackState(isPlaying, posMs, shuf, repeat)
+      WavioCarBrowserService.activePlayer?.applyPlaybackState(isPlaying, posMs, shuf, repeat)
     }
+  }
+
+  /**
+   * Tell subscribed browsers to re-read the parents a freshly pushed tree
+   * changed. Without this a new tree only reaches the car when the user
+   * navigates somewhere — so the screen they are already looking at (very much
+   * including the top-level list a cold session opens on) keeps rendering the
+   * children it fetched before JS had even built the tree, artwork and all.
+   *
+   * media3 requires session calls on the application thread; `setNodes` arrives
+   * on the JS thread. Same hop as JsProxyPlayer's `runOnMain`.
+   */
+  private fun notifyChildrenChanged(changed: Map<String, Int>) {
+    if (changed.isEmpty()) return
+    val post = {
+      val session = WavioCarBrowserService.activeSession
+      if (session == null) {
+        CarAutoLog.d("notify skipped: no session (${changed.size} parents)")
+      } else {
+        val browsers = session.connectedControllers.size
+        CarAutoLog.d("notify ${changed.size} parents, $browsers controller(s)")
+        for ((parentId, count) in changed) {
+          runCatching { session.notifyChildrenChanged(parentId, count, null) }
+            .onFailure { CarAutoLog.w("notify failed for $parentId", it) }
+        }
+      }
+    }
+    if (Looper.myLooper() == Looper.getMainLooper()) post() else mainHandler.post(post)
   }
 
   fun emitPlayEvent(mediaId: String, parentId: String? = null) {

@@ -1,8 +1,11 @@
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import Fuse from "fuse.js";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,19 +19,36 @@ import ArtistSectionHeader from "@/components/artists/ArtistSectionHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import SortOptionsSheet, {
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useArtists } from "@/hooks/backend/useBrowsing";
 import { useOfflineArtists } from "@/hooks/offline";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import type { ArtistID3 } from "@/services/openSubsonic/types";
+import type { ArtistID3, IndexID3 } from "@/services/openSubsonic/types";
 import { buildArtistIndex, hasCJK } from "@/services/pinyinIndex";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import {
+  ARTIST_SORT_FIELDS,
+  type ArtistSortType,
+  artistSortSpecs,
+  DEFAULT_ARTIST_SORT,
+} from "@/utils/artistSort";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import {
+  availableSortFields,
+  effectiveSort,
+  parseSortType,
+  sortItems,
+} from "@/utils/sort";
 
 type ArtistRow =
   | {
@@ -56,16 +76,14 @@ export default function AllArtistsScreen() {
   const listRef = useRef<FlashListRef<ArtistRow>>(null);
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const pinnedSectionRef = useRef(false);
+  const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
+  const sortFieldLabel = useSortFieldLabel();
+  const sort = useApp((store) => store.allArtistsSort);
+  const setAllArtistsSort = useApp((store) => store.setAllArtistsSort);
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
   }, [query, debounce]);
-
-  // Editing the query swaps the result set; without this the list keeps its old
-  // offset and hides the new top matches (notably when deleting characters).
-  useEffect(() => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [debouncedQuery]);
 
   const {
     data: serverData,
@@ -86,23 +104,59 @@ export default function AllArtistsScreen() {
     [data],
   );
 
-  // Browse mode: keep the backend's alphabetical grouping so we can render
-  // section headers and drive the index bar.
+  // Unlike the album and track browses this list isn't paginated — getArtists
+  // returns the whole index in one response on every backend — so the sort runs
+  // client-side, which also makes it work unchanged on the offline fallback.
+  // The specs are built from the server's ignoredArticles so the flat sort
+  // files an article-prefixed name exactly where the section index does.
+  const ignoredArticles = data?.artists?.ignoredArticles;
+  const sortSpecs = useMemo(
+    () => artistSortSpecs(ignoredArticles),
+    [ignoredArticles],
+  );
+  // `availableSortFields` is what hides an option the backend carries no data
+  // for (Jellyfin never reports an artist's album count).
+  const sortFields = useMemo(
+    () => availableSortFields(allArtists, sortSpecs, ARTIST_SORT_FIELDS),
+    [allArtists, sortSpecs],
+  );
+  const activeSort = effectiveSort(sort, sortFields, DEFAULT_ARTIST_SORT);
+  const activeSortField = parseSortType(activeSort).field;
+  const isSectioned = activeSortField === "alphabetical";
+
+  // Browse mode: under an alphabetical sort keep the backend's grouping so we
+  // can render section headers and drive the index bar. Any other field has no
+  // letters to scrub through, so it renders as a flat list instead — the bar
+  // hides itself on an empty `letters`.
   const { rows, letters, headerRowIndex } = useMemo(() => {
+    const rows: ArtistRow[] = [];
+    const letters: string[] = [];
+    const headerRowIndex: number[] = [];
+    if (!isSectioned) {
+      for (const artist of sortItems(allArtists, activeSort, sortSpecs)) {
+        rows.push({ type: "artist", id: artist.id, artist, letterIdx: -1 });
+      }
+      return { rows, letters, headerRowIndex };
+    }
     // Subsonic/Navidrome build the section index server-side and drop CJK names
     // into "#". When the library has any CJK artist, re-bucket client-side so
     // Chinese names land under their pinyin initial; honor the server's
     // ignoredArticles so Latin grouping stays identical. Pure-Latin libraries
     // keep the untouched server index.
     const rebucket = allArtists.some((artist) => hasCJK(artist.name ?? ""));
-    const index = rebucket
-      ? buildArtistIndex(allArtists, {
-          ignoredArticles: data?.artists?.ignoredArticles,
-        })
-      : (data?.artists?.index ?? []);
-    const rows: ArtistRow[] = [];
-    const letters: string[] = [];
-    const headerRowIndex: number[] = [];
+    const ascending = ((rebucket
+      ? buildArtistIndex(allArtists, { ignoredArticles })
+      : (data?.artists?.index ?? [])) ?? []) as IndexID3[];
+    // Z→A reverses the groups *and* each group's artists, so headers keep
+    // sitting above the artists they name.
+    const index = activeSort.endsWith("Desc")
+      ? ascending
+          .map((group) => ({
+            ...group,
+            artist: [...(group.artist ?? [])].reverse(),
+          }))
+          .reverse()
+      : ascending;
     index.forEach((group, letterIdx) => {
       letters.push(group.name);
       headerRowIndex.push(rows.length);
@@ -117,7 +171,18 @@ export default function AllArtistsScreen() {
       }
     });
     return { rows, letters, headerRowIndex };
-  }, [data, allArtists]);
+  }, [data, allArtists, isSectioned, activeSort, sortSpecs, ignoredArticles]);
+
+  // Editing the query — or the sort — swaps the result set; without this the
+  // list keeps its old offset and hides the new top matches (notably when
+  // deleting characters), and the index bar stays highlighting a section the
+  // new order no longer has at the top.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSort is the trigger, not a read value
+  useEffect(() => {
+    pinnedSectionRef.current = false;
+    setCurrentSectionIdx(0);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [debouncedQuery, activeSort]);
 
   const fuse = useMemo(
     () => new Fuse(allArtists, { ignoreDiacritics: true, keys: ["name"] }),
@@ -169,8 +234,19 @@ export default function AllArtistsScreen() {
     },
   ).current;
 
+  // With only the alphabetical field there is nothing to choose between.
+  const showSortControl = sortFields.length > 1 && !debouncedQuery;
+
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
+  };
+
+  const handlePresentSortModalPress = () => {
+    bottomSheetSortModalRef.current?.present();
+  };
+
+  const handleSortSelect = (next: ArtistSortType) => {
+    setAllArtistsSort(next);
   };
 
   return (
@@ -258,6 +334,24 @@ export default function AllArtistsScreen() {
                 />
               );
             }}
+            ListHeaderComponent={
+              showSortControl ? (
+                <HStack className="px-6 mb-4">
+                  <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                    <HStack className="items-center gap-x-2">
+                      {activeSort.endsWith("Desc") ? (
+                        <ArrowDown size={16} color={white} />
+                      ) : (
+                        <ArrowUp size={16} color={white} />
+                      )}
+                      <Text className="text-white font-bold">
+                        {sortFieldLabel(activeSortField)}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                </HStack>
+              ) : null
+            }
             ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
@@ -275,6 +369,12 @@ export default function AllArtistsScreen() {
           )}
         </Box>
       )}
+      <SortOptionsSheet
+        ref={bottomSheetSortModalRef}
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={handleSortSelect}
+      />
     </Box>
   );
 }

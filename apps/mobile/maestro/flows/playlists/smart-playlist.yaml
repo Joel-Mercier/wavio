@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: smart-playlist
 # Critical path — Smart playlist lifecycle (one session, write path, self-cleaning).
 # A full create -> open -> delete round-trip for a *smart* (rule-based) playlist,

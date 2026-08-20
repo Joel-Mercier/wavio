@@ -32,6 +32,14 @@ export type OfflineTrack = {
   year?: number;
   genre?: string;
   sortName?: string;
+  // What the server said the source file was, captured when the download ran.
+  // The saved file's own format and size live in `path`/`size`; these are the
+  // only record of what it was made *from*, so a 320 kbps download of a FLAC
+  // stays tellable from a genuine mp3 source even when the queue entry came from
+  // the offline library (offlineTrackToChild describes the file, not the
+  // source). Absent on downloads made before this existed.
+  sourceSuffix?: string;
+  sourceBitRate?: number;
   metadata?: Record<string, unknown>;
 };
 

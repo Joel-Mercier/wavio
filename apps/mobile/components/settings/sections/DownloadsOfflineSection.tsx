@@ -35,9 +35,17 @@ import {
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { librarySyncService } from "@/services/offline";
-import useApp, { type StreamFormat } from "@/stores/app";
+import { clearTrackCache } from "@/services/trackCache";
+import useApp, {
+  type StreamFormat,
+  TRACK_CACHE_BUDGETS_MB,
+  TRACK_CACHE_COUNTS,
+  type TrackCacheBudgetMb,
+  type TrackCacheCount,
+} from "@/stores/app";
 import useLibrarySync from "@/stores/librarySync";
 import useOfflineMutations from "@/stores/offlineMutations";
+import useTrackCache from "@/stores/trackCache";
 import { niceBytes } from "@/utils/fileSize";
 
 const downloadBitRateOptions: (number | null)[] = [
@@ -48,6 +56,11 @@ const downloadBitRateOptions: (number | null)[] = [
   192,
   256,
   320,
+];
+
+const trackCacheCountOptions: TrackCacheCount[] = [...TRACK_CACHE_COUNTS];
+const trackCacheBudgetOptions: TrackCacheBudgetMb[] = [
+  ...TRACK_CACHE_BUDGETS_MB,
 ];
 
 const downloadFormatOptions: StreamFormat[] = [
@@ -81,15 +94,15 @@ function LibrarySyncStatusLine() {
   if (status === "off") return null;
   const statusText =
     status === "syncing"
-      ? t("app.settings.offlineSettings.extendedOfflineSyncing", {
-          count: downloadedCount,
-          total,
+      ? t("app.settings.offlineSettings.extendedOfflineSyncingProgress", {
+          count: total,
+          done: downloadedCount,
           size: niceBytes(size),
         })
       : status === "cachingArtwork"
-        ? t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
-            count: artworkDone,
-            total: artworkTotal,
+        ? t("app.settings.offlineSettings.extendedOfflineArtworkProgress", {
+            count: artworkTotal,
+            done: artworkDone,
           })
         : status === "upToDate"
           ? t("app.settings.offlineSettings.extendedOfflineComplete", {
@@ -115,9 +128,9 @@ function LibrarySyncStatusLine() {
           track count instead of leaving it invisible. */}
       {artworkPending > 0 && status !== "cachingArtwork" && (
         <Text className="text-emerald-400 text-sm">
-          {t("app.settings.offlineSettings.extendedOfflineCachingArtwork", {
-            count: artworkDone,
-            total: artworkTotal,
+          {t("app.settings.offlineSettings.extendedOfflineArtworkProgress", {
+            count: artworkTotal,
+            done: artworkDone,
           })}
         </Text>
       )}
@@ -190,6 +203,23 @@ export default function DownloadsOfflineSection() {
 
   const bottomSheetDownloadFormatModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetDownloadBitRateModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetTrackCacheCountModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetTrackCacheBudgetModalRef = useRef<BottomSheetModal>(null);
+
+  const trackCacheEnabled = useApp((store) => store.trackCacheEnabled);
+  const setTrackCacheEnabled = useApp((store) => store.setTrackCacheEnabled);
+  const trackCacheCount = useApp((store) => store.trackCacheCount);
+  const setTrackCacheCount = useApp((store) => store.setTrackCacheCount);
+  const trackCacheBudgetMb = useApp((store) => store.trackCacheBudgetMb);
+  const setTrackCacheBudgetMb = useApp((store) => store.setTrackCacheBudgetMb);
+  const trackCacheOnCellular = useApp((store) => store.trackCacheOnCellular);
+  const setTrackCacheOnCellular = useApp(
+    (store) => store.setTrackCacheOnCellular,
+  );
+  // Subscribed rather than read once, so clearing the cache updates the row it
+  // is rendered in without a remount.
+  const cachedTrackCount = useTrackCache((s) => Object.keys(s.entries).length);
+  const trackCacheBytes = useTrackCache((s) => s.totalBytes);
 
   const handleExtendedOfflineToggle = (value: boolean) => {
     if (value) {
@@ -213,6 +243,13 @@ export default function DownloadsOfflineSection() {
       setShowDisableConfirm(false);
     }
   };
+
+  const formatCacheBudget = (value: TrackCacheBudgetMb) =>
+    value >= 1000
+      ? t("app.settings.offlineSettings.trackCacheBudgetGb", {
+          size: value / 1000,
+        })
+      : t("app.settings.offlineSettings.trackCacheBudgetMb", { size: value });
 
   const formatBitRate = (value: number | null) =>
     value === null
@@ -243,6 +280,36 @@ export default function DownloadsOfflineSection() {
             dismissOnSelect
           />
           <OptionsBottomSheetModal
+            modalRef={bottomSheetTrackCacheCountModalRef}
+            header={t("app.settings.offlineSettings.trackCacheCountLabel")}
+            headerDescription={t(
+              "app.settings.offlineSettings.trackCacheCountDescription",
+            )}
+            options={trackCacheCountOptions.map((option) => ({
+              value: option,
+              label: t("app.settings.offlineSettings.trackCacheCountValue", {
+                count: option,
+              }),
+            }))}
+            selectedValue={trackCacheCount}
+            onSelect={setTrackCacheCount}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
+            modalRef={bottomSheetTrackCacheBudgetModalRef}
+            header={t("app.settings.offlineSettings.trackCacheBudgetLabel")}
+            headerDescription={t(
+              "app.settings.offlineSettings.trackCacheBudgetDescription",
+            )}
+            options={trackCacheBudgetOptions.map((option) => ({
+              value: option,
+              label: formatCacheBudget(option),
+            }))}
+            selectedValue={trackCacheBudgetMb}
+            onSelect={setTrackCacheBudgetMb}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
             modalRef={bottomSheetDownloadBitRateModalRef}
             header={t("app.settings.offlineSettings.downloadBitRateLabel")}
             headerDescription={t(
@@ -267,9 +334,9 @@ export default function DownloadsOfflineSection() {
         >
           {offlineModeEnabled && (
             <Text className="text-emerald-400 text-sm">
-              {t("app.settings.offlineSettings.downloadedTracksCount", {
-                count: downloadedTracksCount,
-                total: Math.max(totalTracksToDownload, downloadedTracksCount),
+              {t("app.settings.offlineSettings.downloadedTracksProgress", {
+                count: Math.max(totalTracksToDownload, downloadedTracksCount),
+                done: downloadedTracksCount,
                 size: niceBytes(totalDownloadSize),
               })}
             </Text>
@@ -295,6 +362,79 @@ export default function DownloadsOfflineSection() {
           value={downloadsWifiOnly}
           onToggle={(value) => setDownloadsWifiOnly(value)}
         />
+        {/* Same gate as the extended-offline row: the on-device library's tracks
+            are already files here, so there is nothing to prefetch. */}
+        {capabilities.offlineDownload && (
+          <>
+            <SettingsToggleRow
+              label={t("app.settings.offlineSettings.trackCacheLabel")}
+              description={t(
+                "app.settings.offlineSettings.trackCacheDescription",
+              )}
+              value={trackCacheEnabled}
+              onToggle={(value) => setTrackCacheEnabled(value)}
+            >
+              {cachedTrackCount > 0 && (
+                <Text className="text-primary-100 text-sm">
+                  {t("app.settings.offlineSettings.trackCacheUsage", {
+                    count: cachedTrackCount,
+                    size: niceBytes(trackCacheBytes),
+                  })}
+                </Text>
+              )}
+            </SettingsToggleRow>
+            {trackCacheEnabled && (
+              <SettingsSelectRow
+                label={t("app.settings.offlineSettings.trackCacheCountLabel")}
+                description={t(
+                  "app.settings.offlineSettings.trackCacheCountDescription",
+                )}
+                badgeText={t(
+                  "app.settings.offlineSettings.trackCacheCountValue",
+                  { count: trackCacheCount },
+                )}
+                onPress={() =>
+                  bottomSheetTrackCacheCountModalRef.current?.present()
+                }
+              />
+            )}
+            {trackCacheEnabled && (
+              <SettingsSelectRow
+                label={t("app.settings.offlineSettings.trackCacheBudgetLabel")}
+                description={t(
+                  "app.settings.offlineSettings.trackCacheBudgetDescription",
+                )}
+                badgeText={formatCacheBudget(trackCacheBudgetMb)}
+                onPress={() =>
+                  bottomSheetTrackCacheBudgetModalRef.current?.present()
+                }
+              />
+            )}
+            {trackCacheEnabled && (
+              <SettingsToggleRow
+                label={t(
+                  "app.settings.offlineSettings.trackCacheCellularLabel",
+                )}
+                description={t(
+                  "app.settings.offlineSettings.trackCacheCellularDescription",
+                )}
+                value={trackCacheOnCellular}
+                onToggle={(value) => setTrackCacheOnCellular(value)}
+              />
+            )}
+            <SettingsActionRow
+              label={t("app.settings.offlineSettings.clearTrackCacheLabel")}
+              description={t(
+                "app.settings.offlineSettings.clearTrackCacheDescription",
+              )}
+              actionLabel={t(
+                "app.settings.offlineSettings.clearTrackCacheAction",
+              )}
+              onPress={clearTrackCache}
+              disabled={cachedTrackCount === 0}
+            />
+          </>
+        )}
         {capabilities.streamFormatSelection && (
           <SettingsSelectRow
             label={t("app.settings.offlineSettings.downloadFormatLabel")}

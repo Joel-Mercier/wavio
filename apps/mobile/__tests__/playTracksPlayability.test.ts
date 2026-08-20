@@ -69,7 +69,7 @@ jest.mock("expo-audio", () => ({
 
 jest.mock("@/services/backend/streaming", () => ({
   streamUrl: (id: string) => `https://server/stream/${id}`,
-  trackTranscodeInfo: () => undefined,
+  trackTranscodeInfo: () => ({ active: false, fromLabel: null, toLabel: null }),
 }));
 jest.mock("@/services/backend/mediaAnnotation", () => ({
   scrobble: jest.fn(async () => undefined),

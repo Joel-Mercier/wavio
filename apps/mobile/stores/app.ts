@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
+import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
+import { type ArtistSortType, DEFAULT_ARTIST_SORT } from "@/utils/artistSort";
 import createSelectors from "@/utils/createSelectors";
 import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
@@ -27,6 +29,22 @@ const isWideLayout = (orientation: Orientation, windowWidth: number) =>
 // "raw" streams the source file untouched (bit-perfect); the others ask the
 // server to transcode to that codec via the Subsonic `format=` param.
 export type StreamFormat = "raw" | "flac" | "opus" | "mp3" | "aac";
+
+// Streaming format used on cellular. "same" defers to the Wi-Fi setting, which
+// is what makes a per-network codec opt-in: the default keeps one format
+// everywhere, and only a deliberate pick differs on cellular.
+export type CellularStreamFormat = StreamFormat | "same";
+
+// How many upcoming queue tracks the prefetch cache pins (issue #163), and the
+// disk ceiling it may never exceed. The budget is the harder rule of the two: if
+// the pinned window doesn't fit, the window truncates rather than the cap
+// stretching, so the number of tracks a user picks is a ceiling and not a
+// promise (a lossless library reaches the cap far sooner than a lossy one).
+export const TRACK_CACHE_COUNTS = [3, 5, 10, 20] as const;
+export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
+
+export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
+export type TrackCacheBudgetMb = (typeof TRACK_CACHE_BUDGETS_MB)[number];
 
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
@@ -117,6 +135,9 @@ interface AppStore {
   setLyricsShowPronunciation: (lyricsShowPronunciation: boolean) => void;
   lyricsKeepScreenOn: boolean;
   setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => void;
+  // Player screen: show the lyrics in place of the cover art.
+  playerInlineLyrics: boolean;
+  setPlayerInlineLyrics: (playerInlineLyrics: boolean) => void;
   waveformSeekbarEnabled: boolean;
   setWaveformSeekbarEnabled: (waveformSeekbarEnabled: boolean) => void;
   librarySort: LibrarySort;
@@ -133,6 +154,10 @@ interface AppStore {
   setFavoritesSort: (favoritesSort: TrackSortType) => void;
   allTracksSort: SongSortType;
   setAllTracksSort: (allTracksSort: SongSortType) => void;
+  allAlbumsSort: AlbumSortType;
+  setAllAlbumsSort: (allAlbumsSort: AlbumSortType) => void;
+  allArtistsSort: ArtistSortType;
+  setAllArtistsSort: (allArtistsSort: ArtistSortType) => void;
   downloadsSort: DownloadsSort;
   setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
@@ -141,6 +166,10 @@ interface AppStore {
   setCellularMaxBitRate: (cellularMaxBitRate: number | null) => void;
   streamingFormat: StreamFormat;
   setStreamingFormat: (streamingFormat: StreamFormat) => void;
+  cellularStreamingFormat: CellularStreamFormat;
+  setCellularStreamingFormat: (
+    cellularStreamingFormat: CellularStreamFormat,
+  ) => void;
   downloadsWifiOnly: boolean;
   setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => void;
   // Format offline downloads are stored in, independent of the streaming
@@ -150,6 +179,24 @@ interface AppStore {
   setDownloadFormat: (downloadFormat: StreamFormat) => void;
   downloadMaxBitRate: number | null;
   setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => void;
+  // Prefetch cache (issue #163). Speculative copies of upcoming queue tracks,
+  // fetched with the *streaming* settings above so a cached track sounds exactly
+  // like the stream it replaces. Unrelated to offline downloads, which are
+  // user-owned and permanent.
+  trackCacheEnabled: boolean;
+  setTrackCacheEnabled: (trackCacheEnabled: boolean) => void;
+  trackCacheCount: TrackCacheCount;
+  setTrackCacheCount: (trackCacheCount: TrackCacheCount) => void;
+  trackCacheBudgetMb: TrackCacheBudgetMb;
+  setTrackCacheBudgetMb: (trackCacheBudgetMb: TrackCacheBudgetMb) => void;
+  // Own setting rather than reusing downloadsWifiOnly: the reported use case is
+  // driving through poor reception, which is cellular by definition, so someone
+  // restricting permanent downloads to Wi-Fi may well still want prefetch on the
+  // road. Off by default all the same — the cache itself is on, but spending
+  // someone's data plan on speculative downloads is not a decision an update
+  // gets to make for them.
+  trackCacheOnCellular: boolean;
+  setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
   replayGainMode: "off" | "track" | "album";
@@ -160,6 +207,8 @@ interface AppStore {
   setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  showPlayerRating: boolean;
+  setShowPlayerRating: (enabled: boolean) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -241,6 +290,10 @@ export const useAppBase = create<AppStore>()(
       setLyricsKeepScreenOn: (lyricsKeepScreenOn: boolean) => {
         set({ lyricsKeepScreenOn });
       },
+      playerInlineLyrics: false,
+      setPlayerInlineLyrics: (playerInlineLyrics: boolean) => {
+        set({ playerInlineLyrics });
+      },
       // Off by default: the first play of each track costs a decode, and for a
       // streamed track a one-off download too (see services/waveform).
       waveformSeekbarEnabled: false,
@@ -278,6 +331,18 @@ export const useAppBase = create<AppStore>()(
       setAllTracksSort: (allTracksSort: SongSortType) => {
         set({ allTracksSort });
       },
+      // Also backend-sorted and paginated, but every backend can order albums
+      // (utils/albumSort.ts) — so the default is the order the browse already
+      // had rather than a "backend's own" placeholder.
+      allAlbumsSort: DEFAULT_ALBUM_SORT,
+      setAllAlbumsSort: (allAlbumsSort: AlbumSortType) => {
+        set({ allAlbumsSort });
+      },
+      // Sorted client-side: the artist index comes down whole (utils/artistSort).
+      allArtistsSort: DEFAULT_ARTIST_SORT,
+      setAllArtistsSort: (allArtistsSort: ArtistSortType) => {
+        set({ allArtistsSort });
+      },
       downloadsSort: "alphabeticalAsc",
       setDownloadsSort: (downloadsSort: DownloadsSort) => {
         set({ downloadsSort });
@@ -294,6 +359,12 @@ export const useAppBase = create<AppStore>()(
       setStreamingFormat: (streamingFormat: StreamFormat) => {
         set({ streamingFormat });
       },
+      cellularStreamingFormat: "same",
+      setCellularStreamingFormat: (
+        cellularStreamingFormat: CellularStreamFormat,
+      ) => {
+        set({ cellularStreamingFormat });
+      },
       downloadsWifiOnly: false,
       setDownloadsWifiOnly: (downloadsWifiOnly: boolean) => {
         set({ downloadsWifiOnly });
@@ -305,6 +376,22 @@ export const useAppBase = create<AppStore>()(
       downloadMaxBitRate: null,
       setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => {
         set({ downloadMaxBitRate });
+      },
+      trackCacheEnabled: true,
+      setTrackCacheEnabled: (trackCacheEnabled: boolean) => {
+        set({ trackCacheEnabled });
+      },
+      trackCacheCount: 5,
+      setTrackCacheCount: (trackCacheCount: TrackCacheCount) => {
+        set({ trackCacheCount });
+      },
+      trackCacheBudgetMb: 500,
+      setTrackCacheBudgetMb: (trackCacheBudgetMb: TrackCacheBudgetMb) => {
+        set({ trackCacheBudgetMb });
+      },
+      trackCacheOnCellular: false,
+      setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => {
+        set({ trackCacheOnCellular });
       },
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
@@ -327,6 +414,10 @@ export const useAppBase = create<AppStore>()(
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
+      },
+      showPlayerRating: false,
+      setShowPlayerRating: (showPlayerRating: boolean) => {
+        set({ showPlayerRating });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {

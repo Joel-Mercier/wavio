@@ -31,6 +31,7 @@ import {
   useIsDetailCached,
   useOfflineModeEnabled,
 } from "@/hooks/offline";
+import { useAlbumSort } from "@/hooks/useAlbumSort";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useSongSort } from "@/hooks/useSongSort";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
@@ -189,6 +190,7 @@ export default function LibraryListItem({
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderId = useCurrentMusicFolderId();
   const { sortParam } = useSongSort();
+  const { listParams: albumListParams } = useAlbumSort();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
@@ -375,10 +377,10 @@ export default function LibraryListItem({
       case "favorites":
         return ["starred2"];
       case "allAlbums":
-        return [
-          "albumList2:infinite",
-          { type: "alphabeticalByName", size: 20, musicFolderId },
-        ];
+        // Same rule as allTracks below: `order` is undefined in the album-list
+        // type's own direction and JSON.stringify drops it, so the default sort
+        // reproduces the exact key it had before the browse could be reordered.
+        return ["albumList2:infinite", { ...albumListParams, musicFolderId }];
       case "allArtists":
         return ["artists", { musicFolderId }];
       case "allTracks":
@@ -394,7 +396,7 @@ export default function LibraryListItem({
       default:
         return null;
     }
-  }, [type.id, item.id, musicFolderId, sortParam]);
+  }, [type.id, item.id, musicFolderId, sortParam, albumListParams]);
   const isDetailCached = useIsDetailCached(detailKey);
 
   // Downloaded badge: albums/playlists show it when the collection is available

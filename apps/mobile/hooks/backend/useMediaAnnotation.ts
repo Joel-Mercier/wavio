@@ -88,8 +88,11 @@ export const useSetRating = () => {
       }
       return setRating(id, rating);
     },
-    onSuccess: (data) => {
+    onSuccess: (data, params) => {
       if (isQueuedResult(data)) return;
+      useQueue.getState().updateTrack(params.id, {
+        userRating: params.rating > 0 ? params.rating : undefined,
+      });
       invalidateKeys(queryClient, RATING_AFFECTED_KEYS);
     },
   });

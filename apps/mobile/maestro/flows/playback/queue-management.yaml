@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: queue-management
 # Critical path — Queue management actions (one session).
 # `playback.yaml` opens the queue and toggles edit mode; this flow covers the

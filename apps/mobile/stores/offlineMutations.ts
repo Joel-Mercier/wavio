@@ -11,7 +11,10 @@ export type StarTarget =
 
 export type OfflineAction =
   | { type: "star"; target: StarTarget; starred: boolean }
-  | { type: "setRating"; id: string; rating: number }
+  // `previousRating` (0 = unrated) is captured at enqueue time so a dropped
+  // action can roll back the queue store's copy, which — unlike the query
+  // caches — isn't repaired by the post-drain invalidation.
+  | { type: "setRating"; id: string; rating: number; previousRating?: number }
   | { type: "playlistAddSongs"; playlistId: string; songIds: string[] }
   | { type: "playlistRemoveSongs"; playlistId: string; songIds: string[] }
   | {
@@ -90,8 +93,20 @@ export function applyEnqueue(
           item.action.type === "setRating" && item.action.id === action.id,
       );
       if (existingIndex >= 0) {
+        const existing = queue[existingIndex].action as Extract<
+          OfflineAction,
+          { type: "setRating" }
+        >;
         const next = [...queue];
-        next[existingIndex] = { ...next[existingIndex], action };
+        // Keep the oldest pre-queue rating: it's the only server-truth value
+        // among the merged actions.
+        next[existingIndex] = {
+          ...next[existingIndex],
+          action: {
+            ...action,
+            previousRating: existing.previousRating ?? action.previousRating,
+          },
+        };
         return next;
       }
       return [...queue, makeItem(action)];

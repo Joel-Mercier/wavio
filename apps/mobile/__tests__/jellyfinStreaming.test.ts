@@ -11,8 +11,14 @@ jest.mock("@/services/local/keys", () => ({
   parseLocalTrackId: () => null,
 }));
 
+const netState = { isCellular: false };
 jest.mock("@/services/network", () => ({
-  getEffectiveMaxBitRate: (maxBitRate: number | null) => maxBitRate,
+  getEffectiveMaxBitRate: (
+    maxBitRate: number | null,
+    cellularMaxBitRate: number | null,
+  ) => (netState.isCellular ? (cellularMaxBitRate ?? maxBitRate) : maxBitRate),
+  getEffectiveStreamingFormat: (format: string, cellularFormat: string) =>
+    netState.isCellular && cellularFormat !== "same" ? cellularFormat : format,
 }));
 
 const authState = { serverType: "jellyfin" };
@@ -34,6 +40,7 @@ const appState = {
   maxBitRate: null as number | null,
   cellularMaxBitRate: null as number | null,
   streamingFormat: "raw",
+  cellularStreamingFormat: "same",
 };
 jest.mock("@/stores/app", () => ({
   useAppBase: { getState: () => appState },
@@ -89,7 +96,10 @@ describe("trackTranscodeInfo", () => {
   beforeEach(() => {
     authState.serverType = "jellyfin";
     appState.streamingFormat = "raw";
+    appState.cellularStreamingFormat = "same";
     appState.maxBitRate = null;
+    appState.cellularMaxBitRate = null;
+    netState.isCellular = false;
   });
 
   it("predicts the Jellyfin transcode of a raw-mode ALAC m4a (issue #84)", () => {
@@ -124,6 +134,37 @@ describe("trackTranscodeInfo", () => {
   it("is inactive for the on-device library", () => {
     authState.serverType = "local";
     expect(trackTranscodeInfo(alacM4a).active).toBe(false);
+  });
+
+  it("predicts the cellular format's transcode on cellular", () => {
+    appState.cellularStreamingFormat = "opus";
+    netState.isCellular = true;
+    const info = trackTranscodeInfo(aacM4a);
+    expect(info.active).toBe(true);
+    expect(info.toLabel).toBe("OPUS");
+  });
+});
+
+describe("streamUrl negotiation params", () => {
+  beforeEach(() => {
+    authState.serverType = "jellyfin";
+    appState.streamingFormat = "raw";
+    appState.cellularStreamingFormat = "same";
+    netState.isCellular = false;
+  });
+
+  it("negotiates the cellular format on cellular", () => {
+    appState.cellularStreamingFormat = "opus";
+    netState.isCellular = true;
+    const url = streamUrl("1");
+    expect(url).toContain("Container=opus,ogg");
+    expect(url).toContain("AudioCodec=opus");
+    expect(url).toContain("TranscodingContainer=ogg");
+  });
+
+  it("keeps the permissive raw accept-list on Wi-Fi", () => {
+    appState.cellularStreamingFormat = "opus";
+    expect(streamUrl("1")).toContain("AudioCodec=aac");
   });
 });
 

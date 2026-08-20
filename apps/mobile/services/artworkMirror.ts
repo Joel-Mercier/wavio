@@ -14,9 +14,14 @@ import { looksLikeImage } from "@/utils/imageBytes";
 //   - the Android Auto host, which renders browse items in its own process and
 //     fetches any `http(s)` icon URI itself.
 // Neither carries the server's custom headers, its client certificate, or the
-// trust decision for a self-signed certificate, and both swallow the failure —
-// so artwork silently doesn't appear. Handing them a local file (or, for the car,
-// a `content://` URI backed by one) sidesteps the foreign fetch entirely.
+// trust decision for a self-signed certificate; the car host additionally
+// answers to its own network policy and its own image budget, so a screenful of
+// full-size tiles can fail where one cover succeeds. All of them swallow the
+// failure, so artwork silently doesn't appear — issue #156 was reported against
+// a plain-http server, which rules the certificate case out as *the* explanation
+// while leaving the mechanism intact. Handing these consumers a local file (or,
+// for the car, a `content://` URI backed by one) sidesteps the foreign fetch
+// entirely, whatever its reason for failing.
 //
 // Callers get an instance via `createArtworkMirror`; each instance owns its own
 // directory and entry cap, because the sizes they request differ (the lock

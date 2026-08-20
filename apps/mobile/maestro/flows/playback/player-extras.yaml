@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: player-extras
 # Critical path — Player "…" menu secondary actions (one session).
 # Beyond transport (covered by `playback.yaml`), the full player's "…" menu

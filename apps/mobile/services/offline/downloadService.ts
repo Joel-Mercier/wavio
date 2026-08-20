@@ -655,6 +655,8 @@ export class OfflineDownloadService {
       year: track.year,
       genre: track.genre?.trim() || track.genres?.[0]?.name,
       sortName: track.sortName,
+      sourceSuffix: track.suffix,
+      sourceBitRate: track.bitRate,
     };
 
     offlineStore.addDownloadedTrack(offlineTrack);
@@ -783,6 +785,19 @@ export class OfflineDownloadService {
   getDownloadProgress(trackId: string): DownloadProgress | null {
     const offlineStore = useOffline.getState();
     return offlineStore.downloadProgress[trackId] || null;
+  }
+
+  // Whether a download is transferring right now. Read by the prefetch cache,
+  // which is speculative and must yield the connection to a download the user
+  // actually asked for (services/trackCache/prefetcher.ts).
+  //
+  // Deliberately in-flight only, not "queue is non-empty": a queue parked by
+  // downloadsWifiOnly on cellular is competing for nothing, and treating it as
+  // busy would switch the prefetch cache off for exactly the drive it exists
+  // for. While a queue really is draining, its three concurrent transfers keep
+  // this true often enough to hold prefetch back anyway.
+  hasActiveWork(): boolean {
+    return this.activeIds.size > 0;
   }
 
   isTrackDownloading(trackId: string): boolean {

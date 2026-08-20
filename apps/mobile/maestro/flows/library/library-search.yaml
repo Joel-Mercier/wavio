@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: library-search
 # Critical path — Library search screen.
 # The Library tab has its own search (reached via the header search icon),

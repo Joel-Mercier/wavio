@@ -89,6 +89,12 @@ const SUBSONIC: BackendCapabilities = {
   replayGain: true,
   jukebox: true,
   remoteStreamableUrl: true,
+  // Off since fd0cb8b7, which removed the song sections from the home feed for
+  // this family without recording why. Both endpoints behind it are standard
+  // and Navidrome serves them, but until #169 their responses were read off the
+  // wrong envelope key and always came back empty — which is the likeliest
+  // reason the sections looked broken. Worth re-testing against a real server
+  // before flipping back on.
   songLists: false,
   mostPlayedTracks: false,
   // Left false for the whole Subsonic family: the `topSongsByArtistId`

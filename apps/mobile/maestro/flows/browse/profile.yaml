@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: profile
 # Critical path — User profile (one session).
 # The drawer header doubles as a profile link ("See profile"): tapping it opens

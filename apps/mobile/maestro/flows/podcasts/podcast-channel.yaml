@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: podcast-channel
 # Critical path — Server podcast channel lifecycle (write path, self-cleaning).
 # Subscribes the server to a podcast by its RSS feed from the Library "+" sheet,

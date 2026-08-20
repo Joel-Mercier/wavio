@@ -7,10 +7,12 @@
 // rebuild into thousands of requests.
 
 const mockEnsure = jest.fn<Promise<string | undefined>, [string]>();
+const mockCached = jest.fn<string | undefined, [string | undefined]>();
 jest.mock("@/services/carAuto/artworkMirror", () => ({
   CAR_ARTWORK_SIZE: 600,
   CAR_ARTWORK_BUDGET: 3,
   ensureCarArtwork: (url: string) => mockEnsure(url),
+  cachedCarArtwork: (url?: string) => mockCached(url),
 }));
 
 jest.mock("@/utils/artwork", () => ({
@@ -70,6 +72,9 @@ const track = (id: string, coverArt: string): BrowseNode => ({
 
 beforeEach(() => {
   mockEnsure.mockReset();
+  mockCached.mockReset();
+  // Cold mirror by default: nothing has been downloaded yet.
+  mockCached.mockReturnValue(undefined);
   mockEnsure.mockImplementation(async (url) => {
     const id = url.match(/id=([^&]+)/)?.[1];
     return `file:///cache/car-artwork/${id}`;
@@ -106,10 +111,57 @@ describe("localizeTreeArtwork", () => {
     expect(mockEnsure).toHaveBeenCalledTimes(1);
     expect(mockEnsure).toHaveBeenCalledWith(remote("al-1"));
     const local = "file:///cache/car-artwork/al-1";
-    expect(tree["lib:albums"][0].artworkUrl).toBe(local);
+    expect(tree["lib:albums"][0].localArtworkUrl).toBe(local);
     for (const node of tree["album:a1"]) {
-      expect(node.artworkUrl).toBe(local);
+      expect(node.localArtworkUrl).toBe(local);
     }
+  });
+
+  it("keeps the remote URL next to the mirrored copy", async () => {
+    // The mirror lives in the reclaimable cache dir while the tree snapshot
+    // native persists does not, so the server URL has to survive as the fallback.
+    const tree: BrowseTree = {
+      "lib:albums": [collection("album:a1", "al-1")],
+    };
+
+    await localizeTreeArtwork(tree);
+
+    expect(tree["lib:albums"][0]).toMatchObject({
+      artworkUrl: remote("al-1"),
+      localArtworkUrl: "file:///cache/car-artwork/al-1",
+    });
+  });
+
+  it("skips covers already mirrored when the node was built", async () => {
+    // A warm session resolves these in the node builders, so the first push to
+    // the car is already local and this pass has nothing to add.
+    const warm = collection("album:a1", "al-1");
+    warm.localArtworkUrl = "file:///cache/car-artwork/al-1";
+    const tree: BrowseTree = { "lib:albums": [warm] };
+
+    const changed = await localizeTreeArtwork(tree);
+
+    expect(changed).toBe(false);
+    expect(mockEnsure).not.toHaveBeenCalled();
+  });
+
+  it("inherits an album cover mirrored by an earlier build", async () => {
+    // Nothing to download, but the track rows still need the album's local copy
+    // — their own cover ids are never mirrored.
+    registerAlbum("a1", "al-1");
+    const local = "file:///cache/car-artwork/al-1";
+    mockCached.mockImplementation((url) =>
+      url === remote("al-1") ? local : undefined,
+    );
+    const tree: BrowseTree = {
+      "album:a1": [track("track|album:a1|t1", "mf-1")],
+    };
+
+    const changed = await localizeTreeArtwork(tree);
+
+    expect(changed).toBe(true);
+    expect(mockEnsure).not.toHaveBeenCalled();
+    expect(tree["album:a1"][0].localArtworkUrl).toBe(local);
   });
 
   it("mirrors each cover once when the same one appears in several places", async () => {
@@ -142,12 +194,13 @@ describe("localizeTreeArtwork", () => {
 
     const requested = mockEnsure.mock.calls.map(([url]) => url);
     expect(requested).toEqual([remote("al-1"), remote("al-2"), remote("al-3")]);
-    // Past the budget the remote URL stays — degraded, never worse than before.
-    expect(tree["lib:albums"][3].artworkUrl).toBe(remote("al-4"));
-    expect(tree["playlist:p1"][0].artworkUrl).toBe(remote("mf-9"));
+    // Past the budget there's no local copy — the remote URL native falls back
+    // to is all these keep, which is no worse than before.
+    expect(tree["lib:albums"][3].localArtworkUrl).toBeUndefined();
+    expect(tree["playlist:p1"][0].localArtworkUrl).toBeUndefined();
   });
 
-  it("keeps the remote URL when a cover can't be mirrored", async () => {
+  it("leaves a cover that can't be mirrored without a local copy", async () => {
     mockEnsure.mockResolvedValue(undefined);
     const tree: BrowseTree = {
       "lib:albums": [collection("album:a1", "al-1")],
@@ -156,6 +209,7 @@ describe("localizeTreeArtwork", () => {
     const changed = await localizeTreeArtwork(tree);
 
     expect(changed).toBe(false);
+    expect(tree["lib:albums"][0].localArtworkUrl).toBeUndefined();
     expect(tree["lib:albums"][0].artworkUrl).toBe(remote("al-1"));
   });
 
@@ -189,5 +243,6 @@ describe("localizeTreeArtwork", () => {
     expect(tree["tab:home"][1].artworkUrl).toBe(
       "file:///doc/local-artwork/cover.jpg",
     );
+    expect(tree["tab:home"][1].localArtworkUrl).toBeUndefined();
   });
 });

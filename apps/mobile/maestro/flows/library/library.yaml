@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: library
 # Critical path — Library tab (one session).
 # Exercises the two related Library behaviors in a single session: the filter

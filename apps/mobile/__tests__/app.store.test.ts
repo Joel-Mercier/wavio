@@ -143,6 +143,14 @@ describe("app store", () => {
     expect(useAppBase.getState().cellularMaxBitRate).toBeNull();
   });
 
+  it("cellularStreamingFormat defaults to following the Wi-Fi format", () => {
+    expect(useAppBase.getState().cellularStreamingFormat).toBe("same");
+    useAppBase.getState().setCellularStreamingFormat("opus");
+    expect(useAppBase.getState().cellularStreamingFormat).toBe("opus");
+    useAppBase.getState().setCellularStreamingFormat("same");
+    expect(useAppBase.getState().cellularStreamingFormat).toBe("same");
+  });
+
   it("setDownloadsWifiOnly toggles the flag", () => {
     expect(useAppBase.getState().downloadsWifiOnly).toBe(false);
     useAppBase.getState().setDownloadsWifiOnly(true);

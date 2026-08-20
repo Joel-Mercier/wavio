@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: search
 # Critical path #3 — Search (one session).
 # Walks the whole search surface end-to-end: the genre grid on the landing

@@ -1,4 +1,4 @@
-appId: com.jmercier.wavio
+appId: com.jmercier.wavio.preview
 name: radio
 # Critical path — Internet radio search.
 # `home.yaml` reaches the radio browse screen via the Radio sub-tab; this flow

@@ -21,11 +21,16 @@ let connected = false;
 let registered = false;
 
 const sectionToItems = (nodes: BrowseNode[]) =>
-  nodes.map((node) => ({
-    text: node.title,
-    detailText: node.subtitle,
-    image: node.artworkUrl ? { uri: node.artworkUrl } : undefined,
-  }));
+  nodes.map((node) => {
+    // The mirrored copy first: it needs no round trip and no credentials. The
+    // server URL is the fallback, for covers the mirror hasn't reached.
+    const cover = node.localArtworkUrl ?? node.artworkUrl;
+    return {
+      text: node.title,
+      detailText: node.subtitle,
+      image: cover ? { uri: cover } : undefined,
+    };
+  });
 
 // Push or play depending on the node type. CarPlay's stack handles back nav.
 const buildList = (

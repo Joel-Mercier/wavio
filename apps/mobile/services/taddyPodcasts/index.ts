@@ -105,6 +105,14 @@ export const toTaddyError = (error: unknown): TaddyError => {
   return new TaddyError(String(error));
 };
 
+// Taddy's free plan serves page 1 of a paginated query and rejects every page
+// after it with BAD_USER_INPUT ("Free users can only request page 1…"). That is
+// a plan limit rather than a failure, and there is no endpoint exposing the
+// plan, so it can only be learned by asking — callers use this to read the
+// rejection as "the feed ends here" and stop paging.
+export const isTaddyPageLimit = (error: unknown): boolean =>
+  error instanceof TaddyError && error.code === "BAD_USER_INPUT";
+
 export const taddyPodcastsErrorCodes: Record<string, string> = {
   API_KEY_INVALID: i18n.t("taddyPodcasts.errorCodes.API_KEY_INVALID"),
   API_RATE_LIMIT_EXCEEDED: i18n.t(

@@ -1,6 +1,10 @@
 import { queryClient, queryPersister } from "@/config/queryClient";
 import { streamUrl } from "@/services/backend/streaming";
 import { offlineDownloadService } from "@/services/offline/downloadService";
+import {
+  clearTrackCache,
+  discardInFlightCacheWrites,
+} from "@/services/trackCache";
 import useActivity from "@/stores/activity";
 import { currentAuthScope } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
@@ -285,6 +289,12 @@ function applyRemap(remap: Remap): void {
   // their result instead; their queue entry survives the remap below and is
   // retried under the canonical id.
   offlineDownloadService.discardInFlightDownloads();
+  // The prefetch cache is keyed by the same pre-migration ids, but unlike
+  // downloads its bytes are speculative and re-derivable — so it is wiped rather
+  // than remapped. The prefetcher refills it from the remapped queue on the next
+  // kick, which is strictly less work than rewriting an index nobody owns.
+  discardInFlightCacheWrites();
+  clearTrackCache();
   const downloadQueue = useOffline.getState().downloadQueue.map((queued) => ({
     ...queued,
     id: remap(queued.id),

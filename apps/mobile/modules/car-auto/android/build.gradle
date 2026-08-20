@@ -30,9 +30,12 @@ dependencies {
   // here. No version pin: the `com.facebook.react.rootproject` plugin applied at
   // the Android root project resolves it for every subproject.
   implementation "com.facebook.react:react-android"
-  // media3 versions must match what expo-audio pulls in. 1.4.x is the version
-  // bundled with expo-audio 55.x.
-  implementation "androidx.media3:media3-session:1.4.1"
-  implementation "androidx.media3:media3-common:1.4.1"
-  implementation "androidx.media3:media3-exoplayer:1.4.1"
+  // media3 must match what expo-audio pulls in (`androidxMedia3Version` in its
+  // android/build.gradle) — both end up in one app, and Gradle resolves the
+  // conflict by taking the highest, so a stale pin here doesn't get us the old
+  // version: it gets us compiling against one API and running against another.
+  // expo-audio 57.x is on 1.9.0.
+  implementation "androidx.media3:media3-session:1.9.0"
+  implementation "androidx.media3:media3-common:1.9.0"
+  implementation "androidx.media3:media3-exoplayer:1.9.0"
 }
