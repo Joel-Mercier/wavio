@@ -1,15 +1,20 @@
 import { subsonicRequest } from "@/services/openSubsonic/index";
 import type { InternetRadioStation } from "@/services/openSubsonic/types";
 
+// Answers an empty envelope, like the sibling mutations below — the created
+// station is never echoed back, so callers have to re-read the list. Declaring
+// a `radioStation` payload here compiled but described a response the server
+// never sends (the generic is a cast, not a runtime check).
 export const createInternetRadioStation = async (
   streamUrl: string,
   name: string,
   homePageUrl?: string,
 ) =>
-  subsonicRequest<{ radioStation: InternetRadioStation }>(
-    "/rest/createInternetRadioStation",
-    { streamUrl, name, homepageUrl: homePageUrl },
-  );
+  subsonicRequest<Record<string, never>>("/rest/createInternetRadioStation", {
+    streamUrl,
+    name,
+    homepageUrl: homePageUrl,
+  });
 
 export const getInternetRadioStations = async () =>
   subsonicRequest<{

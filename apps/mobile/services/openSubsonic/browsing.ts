@@ -2,6 +2,7 @@ import openSubsonicApiInstance, {
   folderScopedRequest,
   isSubsonicDataNotFound,
   type OpenSubsonicResponse,
+  okEnvelope,
   subsonicRequest,
 } from "@/services/openSubsonic/index";
 import { search3 } from "@/services/openSubsonic/searching";
@@ -23,6 +24,7 @@ import type {
   SimilarSongs,
   SimilarSongs2,
   SongsExistResult,
+  SonicMatch,
   SonicSimilarTracks,
   TopSongs,
   VideoInfo,
@@ -125,14 +127,24 @@ export const getSimilarSongs2 = async (
     count,
   });
 
+// The matches come back as a top-level `sonicMatch` array, not under the
+// `sonicSimilarTracks` wrapper the name suggests, so they are lifted into the
+// wrapper Jellyfin already produces. Reading the wrapper straight off the
+// envelope compiled fine and always yielded undefined, which made the
+// sonicSimilarity extension silently fall through to getSimilarSongs2 (see
+// services/similarSongs.ts) — the same defect as getRandomSongs (#169).
 export const getSonicSimilarTracks = async (
   id: string,
   { count }: { count?: number },
-) =>
-  subsonicRequest<{ sonicSimilarTracks: SonicSimilarTracks }>(
+) => {
+  const rsp = await subsonicRequest<{ sonicMatch?: SonicMatch[] }>(
     "/rest/getSonicSimilarTracks",
     { id, count },
   );
+  return okEnvelope<{ sonicSimilarTracks: SonicSimilarTracks }>({
+    sonicSimilarTracks: { sonicMatch: rsp.sonicMatch ?? [] },
+  });
+};
 
 export const getSong = async (id: string) =>
   subsonicRequest<{ song: Child }>("/rest/getSong", { id });

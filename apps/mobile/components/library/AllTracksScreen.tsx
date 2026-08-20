@@ -267,13 +267,31 @@ export default function AllTracksScreen() {
     try {
       // Searching, the visible results *are* the list — playing something else
       // would ignore what the user just typed.
-      const tracks =
+      let tracks =
         isSearching || offlineFallbackActive
           ? songs
           : shuffle
             ? await buildRandomWindow()
             : await buildOrderedWindow();
-      if (tracks.length === 0) return;
+      // A server that doesn't serve getRandomSongs leaves the shuffle window
+      // empty. The random draw only widens the pool past the first
+      // MAX_QUEUE_TRACKS in server order — playNow still shuffles the queue and
+      // playTracks still picks a random lead — so falling back to the ordered
+      // window costs reach, not shuffling.
+      if (
+        tracks.length === 0 &&
+        shuffle &&
+        !isSearching &&
+        !offlineFallbackActive
+      ) {
+        tracks = await buildOrderedWindow();
+      }
+      // Whatever the reason, an empty window has to say so: silently returning
+      // here is what hid #169 for as long as it did.
+      if (tracks.length === 0) {
+        showErrorToast(t("app.home.playErrorMessage"));
+        return;
+      }
       // Offline none of these may be downloaded, in which case playTracks
       // leaves the queue alone rather than stranding the player.
       if (

@@ -131,6 +131,13 @@ export const getNowPlaying = async () =>
     { notFoundIsExpected: true },
   );
 
+// The wire key is `randomSongs`, not the `songs` every caller reads (Jellyfin
+// and the local library both answer `songs`) — so the payload is renamed here
+// rather than at each call site. The generic is a plain cast with no runtime
+// check, so declaring `songs` directly compiles and then silently yields
+// undefined; that was issue #169. The `folderScopedRequest` fallback has to be
+// spelled in wire keys too, so a code-70 empty folder flows through the same
+// rename.
 export const getRandomSongs = async ({
   size,
   fromYear,
@@ -143,12 +150,14 @@ export const getRandomSongs = async ({
   toYear?: number;
   genre?: string;
   musicFolderId?: string;
-}) =>
-  folderScopedRequest<{ songs: Songs }>(
+}) => {
+  const rsp = await folderScopedRequest<{ randomSongs: Songs }>(
     "/rest/getRandomSongs",
     { size, fromYear, toYear, genre, musicFolderId },
-    { songs: {} },
+    { randomSongs: {} },
   );
+  return okEnvelope<{ songs: Songs }>({ songs: rsp.randomSongs ?? {} });
+};
 
 // The whole library, one page at a time. Subsonic has no "get all songs"
 // endpoint: an empty-query search3 is what the spec defines as "everything",
@@ -185,6 +194,7 @@ export const getSongs = async ({
   });
 };
 
+// Renamed from the wire key for the same reason as getRandomSongs above.
 export const getSongsByGenre = async (
   genre: string,
   {
@@ -192,12 +202,14 @@ export const getSongsByGenre = async (
     offset,
     musicFolderId,
   }: { count?: number; offset?: number; musicFolderId?: string },
-) =>
-  folderScopedRequest<{ songs: Songs }>(
+) => {
+  const rsp = await folderScopedRequest<{ songsByGenre: Songs }>(
     "/rest/getSongsByGenre",
     { genre, count, offset, musicFolderId },
-    { songs: {} },
+    { songsByGenre: {} },
   );
+  return okEnvelope<{ songs: Songs }>({ songs: rsp.songsByGenre ?? {} });
+};
 
 // Favorites are a user-level, server-wide concept — not folder-scoped (mirrors
 // Jellyfin/local, which ignore the folder too, and the playlists endpoint).
