@@ -20,7 +20,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
 import type { SongSortField, SongSortType } from "@/utils/songSort";
-import { parseSortType } from "@/utils/sort";
+import { parseSortType, type SortDirection } from "@/utils/sort";
 
 const FIELDS =
   "DateCreated,Genres,GenreItems,UserData,ProductionYear,ChildCount,ProviderIds,MediaSources";
@@ -45,6 +45,9 @@ function paramsFor(
     toYear?: number;
     genre?: string;
     musicFolderId?: string;
+    // Applied by albumParams below rather than here, so each `case` keeps
+    // stating the direction it serves by default.
+    order?: SortDirection;
   },
 ) {
   const base: Record<string, string | number | boolean | undefined> = {
@@ -112,6 +115,21 @@ function paramsFor(
   }
 }
 
+// Jellyfin, unlike the Subsonic surface, takes a SortOrder — so a caller that
+// asks for one overrides whatever direction the album-list type defaults to.
+// `Random` has no direction, so it is left alone.
+function albumParams(
+  type: AlbumListType,
+  opts: Parameters<typeof paramsFor>[1],
+) {
+  const params = paramsFor(type, opts);
+  if (!opts.order || type === "random") return params;
+  return {
+    ...params,
+    SortOrder: opts.order === "desc" ? "Descending" : "Ascending",
+  };
+}
+
 export const getAlbumList = async (
   type: AlbumListType,
   opts: Parameters<typeof paramsFor>[1],
@@ -136,7 +154,9 @@ async function fetchAlbums(
   // The Latest endpoint groups Audio items by album, but Limit counts tracks
   // (pre-grouping) and StartIndex is unsupported — so we use it only for the
   // first page, then fall back to /Items?SortBy=DateCreated for pagination.
-  if (type === "newest" && !opts.offset) {
+  // ...and only for the newest-first direction the Latest endpoint serves; an
+  // ascending "recently added" has to go through /Items like everything else.
+  if (type === "newest" && !opts.offset && opts.order !== "asc") {
     const size = opts.size ?? 20;
     const rsp = await jellyfinApiInstance.get<BaseItemDto[]>(
       `/Users/${userId()}/Items/Latest`,
@@ -157,7 +177,7 @@ async function fetchAlbums(
     return (rsp.data ?? []).slice(0, size);
   }
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
-    params: paramsFor(type, opts),
+    params: albumParams(type, opts),
   });
   return rsp.data?.Items ?? [];
 }

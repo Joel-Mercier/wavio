@@ -13,6 +13,7 @@ import type {
   Starred2,
 } from "@/services/openSubsonic/types";
 import type { SongSortType } from "@/utils/songSort";
+import type { SortDirection } from "@/utils/sort";
 
 export type AlbumListType =
   | "random"
@@ -50,6 +51,38 @@ export const getAlbumList = async (
     { albumList: {} },
   );
 
+// Bounds wide enough to mean "every album" for a `byYear` browse that is really
+// a sort rather than a year filter. Subsonic requires both, and returns reverse
+// chronological order when the first is the later of the two — which is the
+// only direction control getAlbumList2 has.
+//
+// "Every album" is as close as the spec allows, not a guarantee: a year sort
+// can only be spelled as a year range here, so any album the server can't place
+// in one is unreachable in this browse. Navidrome is safe — `min_year`/
+// `max_year` are non-null and an untagged album carries 0, which the range
+// covers — and it takes the native path for an unbounded byYear anyway
+// (services/backend/lists.ts). A server that stores an unknown year as NULL
+// would drop those albums, and nothing sendable here would bring them back.
+const YEAR_SORT_BOUNDS = { min: 0, max: 9999 };
+
+// `byYear` is the one album-list type whose direction the caller can pick, so
+// `order` is folded into the year bounds here. Every other type serves exactly
+// one direction (see utils/albumSort.ts, which locks those rows in the sheet).
+function yearBounds(
+  type: AlbumListType,
+  fromYear: number | undefined,
+  toYear: number | undefined,
+  order: SortDirection | undefined,
+): { fromYear?: number; toYear?: number } {
+  if (type !== "byYear") return { fromYear, toYear };
+  const from = fromYear ?? YEAR_SORT_BOUNDS.min;
+  const to = toYear ?? YEAR_SORT_BOUNDS.max;
+  const [low, high] = from <= to ? [from, to] : [to, from];
+  return order === "desc"
+    ? { fromYear: high, toYear: low }
+    : { fromYear: low, toYear: high };
+}
+
 export const getAlbumList2 = async (
   type: AlbumListType,
   {
@@ -59,6 +92,7 @@ export const getAlbumList2 = async (
     toYear,
     genre,
     musicFolderId,
+    order,
   }: {
     size?: number;
     offset?: number;
@@ -66,11 +100,24 @@ export const getAlbumList2 = async (
     toYear?: number;
     genre?: string;
     musicFolderId?: string;
+    // Accepted (this is the signature `dispatch` types the whole backend off)
+    // but honoured only for `byYear`: the Subsonic spec gives getAlbumList2 no
+    // sort-order parameter, so every other type is stuck with the direction it
+    // serves. utils/albumSort.ts locks those rows rather than letting the UI
+    // promise an order this backend can't produce.
+    order?: SortDirection;
   },
 ) =>
   folderScopedRequest<{ albumList2: AlbumList2 }>(
     "/rest/getAlbumList2",
-    { type, size, offset, fromYear, toYear, genre, musicFolderId },
+    {
+      type,
+      size,
+      offset,
+      ...yearBounds(type, fromYear, toYear, order),
+      genre,
+      musicFolderId,
+    },
     { albumList2: {} },
   );
 
