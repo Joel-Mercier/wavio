@@ -1013,8 +1013,10 @@
 							"lastUpdated": "Updated {{time}} ago",
 							"less": "Less",
 							"more": "More",
-							"bucketA11y": "{{label}}: {{count}} listens",
-							"heatmapCellA11y": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
+							"bucketA11y_one": "{{label}}: {{count}} listen",
+							"bucketA11y_other": "{{label}}: {{count}} listens",
+							"heatmapCellA11y_one": "{{row}} at {{hour}}:00 UTC, {{count}} listen",
+							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
 						},
 						"createdForYou": {
 							"poweredBy": "Powered by ListenBrainz",
