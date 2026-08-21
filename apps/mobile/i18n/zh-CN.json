@@ -1826,6 +1826,8 @@
 				"notAvailableOfflineMessage": "无法离线收听。请下载该内容以便在没有网络连接时收听。",
 				"advancedSettings": "高级设置",
 				"fallbackUrlHelp": "当无法访问主URL时使用。必须指向同一台服务器。",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "取消",
 				"close": "关闭",
 				"create": "创建",
