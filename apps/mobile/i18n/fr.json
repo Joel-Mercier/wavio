@@ -370,6 +370,9 @@
 				"popularInLanguage": "Populaires en {{language, titlecase}}",
 				"seeAllEpisodes": "Voir tous les épisodes",
 				"publishedAt": "il y a {{distance}}",
+				"resumeListening": "Reprendre l'écoute",
+				"timeLeft": "{{minutes}} min restantes",
+				"inProgress": "En cours",
 				"configureTaddyPodcasts": "Configurer dans les paramètres",
 				"taddyPodcastsNotConfigured": "L'accès aux podcasts n'est pas configuré",
 				"yourPodcasts": "Vos podcasts",
@@ -826,17 +829,19 @@
 							"action": "Réinitialiser"
 						},
 						"review": {
-							"title": "En attente de vérification ({{count}})",
-							"confidence": "{{confidence}}% de correspondance"
+							"confidence": "{{confidence}}% de correspondance",
+							"title_one": "Awaiting review ({{count}})",
+							"title_other": "Awaiting review ({{count}})"
 						},
 						"unmatched": {
-							"title": "Aucune correspondance trouvée ({{count}})",
 							"description": "Ces pistes n'ont pas pu être identifiés. Les pistes sans tag d'album sont assorties une par une à la place, ce qui nécessite un titre reconnaissable.",
 							"reasons": {
 								"no-album-tag": "Aucun tag d'album n'était présent, et aucun morceau n'a pu être identifié individuellement",
 								"no-results": "Aucun résultat trouvé sur MusicBrainz",
 								"low-confidence": "Des résultats ont été trouvés, mais aucun n'est suffisamment proche pour être fiable"
-							}
+							},
+							"title_one": "No match found ({{count}})",
+							"title_other": "No match found ({{count}})"
 						},
 						"album": {
 							"noMatch": "Aucune sortie répertoriée sur MusicBrainz ne correspond à cet album.",
@@ -1078,7 +1083,6 @@
 					"title": "Mode hors ligne",
 					"offlineModeLabel": "Mode hors ligne",
 					"offlineModeDescription": "Télécharger les titres favoris pour le mode hors ligne",
-					"downloadedTracksCount": "{{count}}/{{total}} titres téléchargés ({{size}})",
 					"clearDownloadsLabel": "Effacer les téléchargements",
 					"clearDownloadsDescription": "Supprimer tous les téléchargements de l'appareil",
 					"clearDownloadsSuccessMessage": "Tous les téléchargements ont été effacé",
@@ -1090,21 +1094,29 @@
 					"manageDownloadsAction": "Gérer",
 					"downloadsWifiOnlyLabel": "Télécharger en Wi-Fi uniquement",
 					"downloadsWifiOnlyDescription": "Met en pause la file de téléchargement en données mobiles. Reprend automatiquement dès le retour du Wi-Fi.",
+					"trackCacheLabel": "Précharger les pistes à venir",
+					"trackCacheDescription": "Télécharge silencieusement les prochaines pistes de la file d'attente afin que la lecture se poursuive même en cas de réception instable. Ces copies sont temporaires et sont remplacées au fur et à mesure que vous écoutez ; il ne s'agit pas de téléchargements enregistrés.",
+					"trackCacheCountLabel": "Pistes à précharger",
+					"trackCacheCountDescription": "Combien de titres à l'avance par rapport à celui en cours de lecture. Moins de titres s'ils ne respectent pas la limite de stockage indiquée ci-dessous.",
+					"trackCacheBudgetLabel": "Limite de stockage du préchargement",
+					"trackCacheBudgetDescription": "N'en ajoute jamais plus que cela. Une fois la liste pleine, les titres les moins écoutés sont supprimés en premier.",
+					"trackCacheBudgetMb": "{{size}} Mo",
+					"trackCacheBudgetGb": "{{size}} Go",
+					"trackCacheCellularLabel": "Préchargement sur réseau mobile",
+					"trackCacheCellularDescription": "Conservez le préchargement lorsque vous utilisez les données mobiles. Cette fonctionnalité utilise les paramètres de qualité audio de votre réseau mobile, ce qui le rend bien moins coûteux qu'un téléchargement.",
+					"clearTrackCacheLabel": "Effacer les pistes préchargées",
+					"clearTrackCacheDescription": "Libérez l'espace occupé par le préchargement. Vos téléchargements enregistrés ne sont pas concernés.",
+					"clearTrackCacheAction": "Vider",
 					"autoSignOutLabel": "Déconnexion si le serveur est injoignable",
 					"autoSignOutDescription": "Déconnecte automatiquement lorsque votre serveur est injoignable alors qu'Internet fonctionne. Désactivez pour rester connecté et continuer à parcourir les morceaux téléchargés.",
 					"pendingChangesLabel": "Modifications en attente",
 					"pendingChangesAction": "Voir",
 					"extendedOfflineLabel": "Mettre toute la bibliothèque en cache",
 					"extendedOfflineDescription": "Téléchargez progressivement l'intégralité du contenu de ce serveur afin que l'ensemble de la bibliothèque reste consultable et accessible hors ligne.",
-					"extendedOfflineSyncing": "Synchronisation de la bibliothèque — {{count}}/{{total}} titres ({{size}})",
-					"extendedOfflineCachingArtwork": "Mise en cache - couvertures {{count}}/{{total}}",
-					"extendedOfflineComplete": "Bibliothèque à jour — {{count}} pistes ({{size}})",
 					"extendedOfflinePausedOffline": "Mis en pause — serveur injoignable",
 					"extendedOfflinePausedWifi": "Mis en pause — en attente de Wi-Fi",
 					"extendedOfflinePausedDisk": "Mis en pause — le stockage de l'appareil est presque plein",
 					"extendedOfflineSyncError": "Erreur de synchronisation — nouvelle tentative automatique",
-					"extendedOfflineCompletedToast": "Votre bibliothèque est entièrement mise en cache — {{count}} pistes disponibles hors ligne",
-					"idMigrationCompletedToast": "Votre serveur a modifié la manière dont il identifie les titres — {{count}} liens ont été mis à jour, vos téléchargements sont intacts",
 					"extendedOfflineUnsupported": "Ce serveur ne prend pas en charge la synchronisation complète de la bibliothèque",
 					"extendedOfflineDisableConfirmTitle": "Supprimer la bibliothèque mise en cache ?",
 					"extendedOfflineDisableConfirmDescription": "Les titres et les pochettes mis en cache par la synchronisation de la bibliothèque seront supprimés de cet appareil. Les albums, listes de lecture et titres que vous avez enregistrés individuellement pour une écoute hors ligne seront conservés.",
@@ -1113,8 +1125,24 @@
 					"downloadFormatDescription": "Format dans lequel les téléchargements hors ligne sont enregistrés. L'option « Original » conserve le fichier tel qu'il est sur le serveur ; les autres formats sont transcodés pour économiser de l'espace.",
 					"downloadBitRateLabel": "Qualité de téléchargement",
 					"downloadBitRateDescription": "Débit maximal pour les téléchargements transcodés",
+					"downloadedTracksProgress_one": "{{done}}/{{count}} piste téléchargée ({{size}})",
+					"downloadedTracksProgress_other": "{{done}}/{{count}} pistes téléchargées ({{size}})",
+					"trackCacheUsage_one": "{{count}} piste préchargée · {{size}}",
+					"trackCacheUsage_other": "{{count}} pistes préchargées · {{size}}",
+					"trackCacheCountValue_one": "{{count}} titre",
+					"trackCacheCountValue_other": "{{count}} titres",
 					"pendingChangesDescription_one": "{{count}} modification effectuée hors ligne en attente de synchronisation",
-					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation"
+					"pendingChangesDescription_other": "{{count}} modifications effectuées hors ligne en attente de synchronisation",
+					"extendedOfflineSyncingProgress_one": "Synchronisation de la bibliothèque — {{done}}/{{count}} titre ({{size}})",
+					"extendedOfflineSyncingProgress_other": "Synchronisation de la bibliothèque — {{done}}/{{count}} titres ({{size}})",
+					"extendedOfflineArtworkProgress_one": "Mise en cache - couverture {{done}}/{{count}}",
+					"extendedOfflineArtworkProgress_other": "Mise en cache - couvertures {{done}}/{{count}}",
+					"extendedOfflineComplete_one": "Bibliothèque à jour — {{count}} piste ({{size}})",
+					"extendedOfflineComplete_other": "Bibliothèque à jour — {{count}} pistes ({{size}})",
+					"extendedOfflineCompletedToast_one": "Votre bibliothèque est entièrement mise en cache — {{count}} piste disponible hors ligne",
+					"extendedOfflineCompletedToast_other": "Votre bibliothèque est entièrement mise en cache — {{count}} pistes disponibles hors ligne",
+					"idMigrationCompletedToast_one": "Votre serveur a modifié la manière dont il identifie les titres — {{count}} lien a été mis à jour, vos téléchargements sont intacts",
+					"idMigrationCompletedToast_other": "Votre serveur a modifié la manière dont il identifie les titres — {{count}} liens ont été mis à jour, vos téléchargements sont intacts"
 				},
 				"updatesSettings": {
 					"title": "Mises à jour",
@@ -1133,6 +1161,7 @@
 					"downloads": "Téléchargements Wavio",
 					"importedLibrary": "Bibliothèque importée",
 					"cache": "Cache Wavio",
+					"prefetchCache": "Titres préchargés",
 					"otherAppData": "Autres données d'app",
 					"available": "Disponible"
 				},
@@ -1170,7 +1199,6 @@
 					"showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
 					"homeSectionsLabel": "Sections de l'accueil",
 					"homeSectionsDescription": "Choisissez les sections à afficher sur l'écran d'accueil",
-					"homeSectionsCount": "{{count}} affichées",
 					"homeSectionsSheetTitle": "Sections de l'accueil",
 					"homeSectionsSheetDescription": "Désactivez des sections pour les masquer de l'écran d'accueil",
 					"homeSections": {
@@ -1198,7 +1226,9 @@
 						"rate": "Noter",
 						"showInfo": "Obtenir des informations",
 						"addToPlaylist": "Ajouter à la playlist"
-					}
+					},
+					"homeSectionsCount_one": "{{count}} shown",
+					"homeSectionsCount_other": "{{count}} shown"
 				},
 				"hapticsSettings": {
 					"title": "Retour haptique",
@@ -1214,13 +1244,16 @@
 					"countryAutomatic": "Automatique",
 					"tagsLabel": "Rangées de genres",
 					"tagsDescription": "Choisissez les rangées de genres affichées sur l'écran des stations de radio.",
-					"tagsCount": "{{count}} sélectionné(s)",
-					"tagsSheetTitle": "Rangées de genres"
+					"tagsSheetTitle": "Rangées de genres",
+					"tagsCount_one": "{{count}} sélectionné",
+					"tagsCount_other": "{{count}} sélectionnés"
 				},
 				"playbackSettings": {
 					"title": "Lecture",
 					"endlessPlaybackLabel": "Lecture sans fin",
 					"endlessPlaybackDescription": "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
+					"playerRatingLabel": "Évaluation par étoiles dans le lecteur",
+					"playerRatingDescription": "Affichez une note de cinq étoiles à côté de la qualité audio sur l'écran de lecture en cours, afin de pouvoir noter le morceau en cours sans avoir à ouvrir de menu.",
 					"equalizerLabel": "Égaliseur",
 					"equalizerDescription": "Ouvrir l'égaliseur système pour ajuster le son de la session de lecture en cours",
 					"equalizerAction": "Ouvrir",
@@ -1251,7 +1284,7 @@
 				},
 				"streamingSettings": {
 					"title": "Paramètres de streaming",
-					"audioQualityLabel": "Qualité audio",
+					"audioQualityLabel": "Qualité audio (Wi-Fi)",
 					"audioQualityDescription": "Limite le débit maximum utilisé pour le streaming. Une valeur plus basse économise la bande passante, une valeur plus haute améliore la qualité.",
 					"audioQualityOriginal": "Original (sans limite)",
 					"audioQualityKbps": "{{bitrate}} kbps",
@@ -1259,7 +1292,10 @@
 					"cellularAudioQualityDescription": "Limite le débit en données mobiles pour économiser. La valeur la plus basse entre celle-ci et celle du Wi-Fi est utilisée.",
 					"streamingFormatLabel": "Format de streaming",
 					"streamingFormatDescription": "Demande au serveur de transcoder les flux dans ce format. Gardez Original pour une lecture sans perte ; choisissez un format si certains fichiers ne se lisent pas (par ex. ALAC).",
+					"cellularStreamingFormatLabel": "Format de streaming (données mobiles)",
+					"cellularStreamingFormatDescription": "Transcodage vers un autre format lorsque vous êtes connecté au réseau mobile. Avec l'option « Identique au Wi-Fi », un flux original est tout de même sous-échantillonné en fonction de la limite de débit du réseau mobile, en utilisant le format préféré de votre serveur.",
 					"streamingFormatOptions": {
+						"same": "Identique au Wi-Fi",
 						"raw": "Original",
 						"flac": "FLAC (sans perte)",
 						"opus": "Opus",
@@ -1516,7 +1552,7 @@
 				"shareErrorMessage": "Une erreur s'est produite lors du partage du titre",
 				"downloadSuccessMessage": "Titre téléchargé",
 				"downloadErrorMessage": "Une erreur s'est produite lors du téléchargement du titre",
-				"downloadErrorCertificateMessage": "Your server's certificate isn't trusted. Sign in to the server again to trust it — the download stays queued until then.",
+				"downloadErrorCertificateMessage": "Le certificat de votre serveur n'est pas considéré comme fiable. Connectez-vous à nouveau au serveur pour le valider ; le téléchargement restera en attente jusqu'à ce que vous l'ayez fait.",
 				"downloadForOffline": "Enregistrer pour écoute hors ligne",
 				"downloadingForOffline": "Téléchargement en mode hors ligne",
 				"removeOfflineDownload": "Supprimer le téléchargement en mode hors ligne",
@@ -1591,6 +1627,7 @@
 				"share": "Partager",
 				"download": "Télécharger",
 				"lyrics": "Paroles",
+				"inlineLyrics": "Show lyrics",
 				"karaoke": "Karaoké",
 				"lyricsLayers": "Couches de paroles",
 				"translation": "Traduction",
@@ -1600,6 +1637,8 @@
 				"lyricsUnavailable": "Les paroles de ce morceau ne sont pas disponibles.",
 				"lyricsPicker": "Sélectionner des paroles",
 				"lyricsPickerAutomatic": "Automatique (meilleure correspondance)",
+				"lyricsPickerServer": "From your server",
+				"lyricsPickerLrclib": "LRCLIB",
 				"lyricsPickerEmpty": "Aucunes paroles trouvées sur LRCLIB pour cette piste.",
 				"lyricsPickerError": "Impossible de charger les résultats depuis LRCLIB. Veuillez réessayer plus tard.",
 				"lyricsPickerSynced": "Synchronisées",
@@ -1608,7 +1647,6 @@
 				"sleepTimer": "Minuteur de veille",
 				"sleepTimerOff": "Désactivé",
 				"sleepTimerEndOfTrack": "Fin du titre",
-				"sleepTimerMinutes": "{{count}} minutes",
 				"sleepTimerActive": "Minuteur · {{label}}",
 				"playbackSpeed": "Vitesse de lecture",
 				"playbackSpeedValue": "{{rate}}×",
@@ -1634,7 +1672,9 @@
 				"outputNoDevices": "Aucun appareil trouvé sur le réseau",
 				"outputUnverified": "La lecture pourrait ne pas fonctionner",
 				"outputChromecast": "Chromecast",
-				"outputConnectErrorMessage": "Lecture impossible sur {{name}}."
+				"outputConnectErrorMessage": "Lecture impossible sur {{name}}.",
+				"sleepTimerMinutes_one": "{{count}} minute",
+				"sleepTimerMinutes_other": "{{count}} minutes"
 			},
 			"shares": {
 				"title": "Partages",
@@ -1725,6 +1765,9 @@
 					"genre": "Genre",
 					"duration": "Durée",
 					"playCount": "Nombre d'écoutes",
+					"lastPlayed": "Joués récemment",
+					"favoritedAt": "Recently favorited",
+					"random": "Au hasard",
 					"rating": "Note",
 					"size": "Taille du fichier",
 					"songCount": "Titres",
