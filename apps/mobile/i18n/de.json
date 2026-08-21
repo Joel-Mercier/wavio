@@ -1867,6 +1867,8 @@
 				"notAvailableOfflineMessage": "Offline nicht verfügbar. Laden Sie die Datei herunter, um sie ohne Internetverbindung anzuhören.",
 				"advancedSettings": "Erweiterte Einstellungen",
 				"fallbackUrlHelp": "Wird verwendet, wenn die Haupt-URL nicht erreichbar ist. Muss auf denselben Server verweisen.",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "Abbrechen",
 				"close": "Schließen",
 				"create": "Erstellen",
