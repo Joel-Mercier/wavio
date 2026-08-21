@@ -1037,8 +1037,6 @@
 							"lastUpdated": "Updated {{time}} ago",
 							"less": "Less",
 							"more": "More",
-							"bucketA11y": "{{label}}: {{count}} listens",
-							"heatmapCellA11y": "{{row}} at {{hour}}:00 UTC, {{count}} listens",
 							"listens_one": "{{formattedCount}} listen",
 							"listens_few": "{{formattedCount}} listens",
 							"listens_many": "{{formattedCount}} listens",
@@ -1046,7 +1044,15 @@
 							"artistCount_one": "{{count}} artist",
 							"artistCount_few": "{{count}} artists",
 							"artistCount_many": "{{count}} artists",
-							"artistCount_other": "{{count}} artists"
+							"artistCount_other": "{{count}} artists",
+							"bucketA11y_one": "{{label}}: {{count}} listen",
+							"bucketA11y_few": "{{label}}: {{count}} listens",
+							"bucketA11y_many": "{{label}}: {{count}} listens",
+							"bucketA11y_other": "{{label}}: {{count}} listens",
+							"heatmapCellA11y_one": "{{row}} at {{hour}}:00 UTC, {{count}} listen",
+							"heatmapCellA11y_few": "{{row}} at {{hour}}:00 UTC, {{count}} listens",
+							"heatmapCellA11y_many": "{{row}} at {{hour}}:00 UTC, {{count}} listens",
+							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
 						},
 						"createdForYou": {
 							"poweredBy": "Powered by ListenBrainz",
