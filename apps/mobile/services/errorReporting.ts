@@ -61,6 +61,7 @@ export type ReportApi =
   | "soulsync"
   | "musicbrainz"
   | "audiomuse"
+  | "listenbrainz"
   | "github";
 
 export type ReportContext = {

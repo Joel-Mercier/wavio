@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { MIN_QUERY_LENGTH } from "@/hooks/audioMuse/useAudioMuseTextSearch";
-import { retryUnlessClientError } from "@/services/audioMuse";
 import { searchPathTracks } from "@/services/audioMuse/path";
+import { retryUnlessClientError } from "@/services/retry";
 import useAudioMuse, { selectSongPathAvailable } from "@/stores/audioMuse";
 
 // Autocomplete for the path endpoint picker. Searches AudioMuse's own catalogue

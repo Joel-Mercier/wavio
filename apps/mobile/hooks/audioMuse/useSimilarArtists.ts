@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { retryUnlessClientError } from "@/services/audioMuse";
 import {
   findSimilarArtists,
   SIMILAR_ARTISTS_DEFAULT_RESULTS,
 } from "@/services/audioMuse/artists";
+import { retryUnlessClientError } from "@/services/retry";
 import useAudioMuse, {
   selectSimilarArtistsAvailable,
 } from "@/stores/audioMuse";

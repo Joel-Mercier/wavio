@@ -24,9 +24,11 @@ import useAudioMuse from "@/stores/audioMuse";
 
 // Two writers produce the same playlist by different routes: the app creates it
 // as the signed-in user through the active backend, or AudioMuse creates it on
-// the media server with the credentials it was configured with. Which one runs
-// is the stored `saveTarget` preference and nothing else — this dialog reports
-// it rather than offering the same choice a second time.
+// the media server with the credentials it was configured with. For an AudioMuse
+// generator, which one runs is the stored `saveTarget` preference and nothing
+// else — this dialog reports it rather than offering the same choice a second
+// time. A caller that is not an AudioMuse generator passes `target` explicitly
+// and that preference does not apply to it at all.
 //
 // AudioMuse hardcodes an "_instant" suffix on everything it creates (see
 // create_instant_playlist in its Navidrome and Jellyfin backends) with no
@@ -34,16 +36,25 @@ import useAudioMuse from "@/stores/audioMuse";
 // lands on the server. Saying so up front beats discovering it afterwards.
 const AUDIOMUSE_NAME_SUFFIX = "_instant";
 
+export type SavePlaylistTarget = "backend" | "audiomuse";
+
+// The i18n keys stay under app.audiomuse.save.* even though this component now
+// serves other callers: the strings are generic ("Save as playlist", "Playlist
+// name") and already translated into every locale, so renaming them would churn
+// Crowdin for no user-visible gain.
 export default function SaveGeneratedPlaylistDialog({
   isOpen,
   onClose,
   trackIds,
   defaultName = "",
+  target: targetProp,
 }: {
   isOpen: boolean;
   onClose: () => void;
   trackIds: string[];
   defaultName?: string;
+  /** Forces the writer, for callers the AudioMuse preference doesn't govern. */
+  target?: SavePlaylistTarget;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -52,7 +63,9 @@ export default function SaveGeneratedPlaylistDialog({
     "--color-primary-50",
   ]) as string[];
 
-  const target = useAudioMuse((store) => store.saveTarget);
+  const storedTarget = useAudioMuse((store) => store.saveTarget);
+  const target = targetProp ?? storedTarget;
+  const showTargetChoice = targetProp === undefined;
   const [name, setName] = useState(defaultName);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -110,21 +123,23 @@ export default function SaveGeneratedPlaylistDialog({
                 })}
               </Text>
             )}
-            <VStack className="gap-y-1">
-              <HStack className="items-center justify-between gap-x-4">
-                <Text className="text-primary-100 text-sm">
-                  {t("app.audiomuse.save.targetLabel")}
+            {showTargetChoice && (
+              <VStack className="gap-y-1">
+                <HStack className="items-center justify-between gap-x-4">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.audiomuse.save.targetLabel")}
+                  </Text>
+                  <Text className="text-white text-sm font-bold">
+                    {t(
+                      `app.settings.integrations.audiomuse.saveTarget.${target}`,
+                    )}
+                  </Text>
+                </HStack>
+                <Text className="text-primary-100 text-xs">
+                  {t("app.audiomuse.save.targetHint")}
                 </Text>
-                <Text className="text-white text-sm font-bold">
-                  {t(
-                    `app.settings.integrations.audiomuse.saveTarget.${target}`,
-                  )}
-                </Text>
-              </HStack>
-              <Text className="text-primary-100 text-xs">
-                {t("app.audiomuse.save.targetHint")}
-              </Text>
-            </VStack>
+              </VStack>
+            )}
           </VStack>
         </AlertDialogBody>
         <AlertDialogFooter className="items-center justify-center gap-x-4">

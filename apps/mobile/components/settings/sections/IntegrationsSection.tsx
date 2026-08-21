@@ -13,6 +13,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useAudioMuse from "@/stores/audioMuse";
 import { useAuthBase } from "@/stores/auth";
+import useListenBrainz from "@/stores/listenBrainz";
 import useMusicBrainz from "@/stores/musicbrainz";
 import { cn } from "@/utils/tailwind";
 
@@ -75,6 +76,7 @@ export default function IntegrationsSection() {
   const isLocal = useAuthBase((store) => store.serverType === "local");
   const lastScanAt = useMusicBrainz((store) => store.lastScanAt);
   const isAudioMuseConnected = useAudioMuse((store) => store.isConnected);
+  const listenBrainzUserName = useListenBrainz((store) => store.userName);
 
   return (
     <SettingsScreenScaffold title={t("app.settings.menu.integrations.title")}>
@@ -98,6 +100,15 @@ export default function IntegrationsSection() {
             isConfigured={isAudioMuseConnected}
           />
         )}
+        {/* Offered on every backend, local library included: the app submits
+            listens itself, so it needs nothing from the server — and a local
+            library is the one setup where no server could be scrobbling. */}
+        <IntegrationRow
+          title={t("app.settings.integrations.listenbrainz.title")}
+          description={t("app.settings.integrations.listenbrainz.description")}
+          href="/integrations/listenbrainz"
+          isConfigured={listenBrainzUserName !== null}
+        />
       </VStack>
     </SettingsScreenScaffold>
   );

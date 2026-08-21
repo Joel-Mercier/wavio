@@ -29,6 +29,17 @@ jest.mock("@/stores/offline", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("offline") } },
 }));
+jest.mock("@/stores/listenBrainz", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate: mockRehydrate("listenBrainz") } },
+}));
+
+const mockInitScrobbler = jest.fn(() => {
+  mockOrder.push("scrobblerInit");
+});
+jest.mock("@/services/listenBrainz/scrobbler", () => ({
+  initListenBrainzScrobbler: mockInitScrobbler,
+}));
 
 let mockIsAuthenticated = true;
 jest.mock("@/stores/auth", () => ({
@@ -80,10 +91,22 @@ describe("hydratePlaybackStores", () => {
     await load().hydratePlaybackStores();
     expect(mockOrder[0]).toBe("migration");
     expect(mockOrder.slice(1).sort()).toEqual([
+      "listenBrainz",
       "offline",
       "queue",
       "recentPlays",
+      "scrobblerInit",
     ]);
+  });
+
+  test("starts the ListenBrainz drain loop only after its store has hydrated", async () => {
+    // Playback in the car scrobbles like anywhere else, and nothing under app/
+    // mounts here to do this wiring. Starting the loop before hydration would
+    // drain an empty queue and miss whatever the last session left behind.
+    await load().hydratePlaybackStores();
+    expect(mockOrder.indexOf("scrobblerInit")).toBeGreaterThan(
+      mockOrder.indexOf("listenBrainz"),
+    );
   });
 
   test("hydrates each store once however many times it is called", async () => {

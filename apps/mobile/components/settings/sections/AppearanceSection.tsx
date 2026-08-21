@@ -16,9 +16,9 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { LanguageNames, SupportedLanguages } from "@/config/i18n";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
 import useApp, { type SwipeAction } from "@/stores/app";
-import { HOME_SECTION_CATALOG } from "@/utils/homeFeed";
+import { availableHomeSections } from "@/utils/homeFeed";
 
 const swipeActionOptions: SwipeAction[] = [
   "off",
@@ -31,7 +31,7 @@ const swipeActionOptions: SwipeAction[] = [
 
 export default function AppearanceSection() {
   const { t } = useTranslation();
-  const capabilities = useCapabilities();
+  const availability = useHomeSectionAvailability();
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSwipeActionModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetHomeSectionsModalRef = useRef<BottomSheetModal>(null);
@@ -47,12 +47,10 @@ export default function AppearanceSection() {
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const visibleHomeSectionCount = useMemo(
     () =>
-      HOME_SECTION_CATALOG.filter(
-        (entry) =>
-          (!entry.capability || capabilities[entry.capability]) &&
-          !hiddenHomeSections.includes(entry.key),
+      availableHomeSections(availability).filter(
+        (entry) => !hiddenHomeSections.includes(entry.key),
       ).length,
-    [capabilities, hiddenHomeSections],
+    [availability, hiddenHomeSections],
   );
   const swipeLeftAction = useApp((store) => store.swipeLeftAction);
   const setSwipeLeftAction = useApp((store) => store.setSwipeLeftAction);

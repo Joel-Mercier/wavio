@@ -11,9 +11,9 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
 import useApp from "@/stores/app";
-import { HOME_SECTION_CATALOG } from "@/utils/homeFeed";
+import { availableHomeSections } from "@/utils/homeFeed";
 import { cn } from "@/utils/tailwind";
 
 /** Multi-select of the sections shown on the home screen. */
@@ -25,11 +25,7 @@ export default function HomeSectionsSheet({
   const { t } = useTranslation();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const setHiddenHomeSections = useApp((store) => store.setHiddenHomeSections);
-  const capabilities = useCapabilities();
-
-  const availableSections = HOME_SECTION_CATALOG.filter(
-    (entry) => !entry.capability || capabilities[entry.capability],
-  );
+  const availableSections = availableHomeSections(useHomeSectionAvailability());
 
   const handleToggleSection = (key: string) => {
     setHiddenHomeSections(
