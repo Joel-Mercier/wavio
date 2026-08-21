@@ -1,3 +1,4 @@
+import type { SortDirection } from "@/utils/sort";
 import {
   getLocalLibraryDb,
   type PlaylistRow,
@@ -353,6 +354,8 @@ export type AlbumOrder =
 
 export type AlbumFilter = {
   order?: AlbumOrder;
+  // Overrides the order's own default direction (ALBUM_DEFAULT_DIRECTION).
+  direction?: SortDirection;
   limit?: number;
   offset?: number;
   genre?: string;
@@ -360,15 +363,47 @@ export type AlbumFilter = {
   toYear?: number;
 };
 
-const ALBUM_ORDER_SQL: Record<AlbumOrder, string> = {
-  name: "name COLLATE NOCASE ASC",
-  artist: "album_artist COLLATE NOCASE ASC, name COLLATE NOCASE ASC",
-  year: "year ASC, name COLLATE NOCASE ASC",
-  recent: "indexed_at DESC",
-  random: "RANDOM()",
-  plays: "play_count DESC, last_played_at DESC",
-  played: "last_played_at DESC",
+// Same shape (and same rules) as TRACK_ORDER_SQL above: `key` takes the
+// caller's direction, `tiebreakers` always run ascending so albums by one
+// artist stay in a stable order whichever way the primary key runs, and NULLS
+// LAST keeps untagged albums at the bottom in both directions.
+const ALBUM_ORDER_SQL: Record<
+  AlbumOrder,
+  { key: string; tiebreakers?: string }
+> = {
+  name: { key: "name COLLATE NOCASE" },
+  artist: {
+    key: "album_artist COLLATE NOCASE",
+    tiebreakers: "year ASC, name COLLATE NOCASE ASC",
+  },
+  year: { key: "year", tiebreakers: "name COLLATE NOCASE ASC" },
+  recent: { key: "indexed_at", tiebreakers: "name COLLATE NOCASE ASC" },
+  // Direction-less: a random order has no ascending or descending variant.
+  random: { key: "RANDOM()" },
+  plays: { key: "play_count", tiebreakers: "last_played_at DESC" },
+  played: { key: "last_played_at", tiebreakers: "name COLLATE NOCASE ASC" },
 };
+
+// The direction each order serves when the caller doesn't pick one, so an
+// unsorted browse (home carousels, artist discography) keeps the exact order it
+// had before queryAlbums could take a direction.
+const ALBUM_DEFAULT_DIRECTION: Record<AlbumOrder, SortDirection> = {
+  name: "asc",
+  artist: "asc",
+  year: "asc",
+  recent: "desc",
+  random: "asc",
+  plays: "desc",
+  played: "desc",
+};
+
+function albumOrderSql(order: AlbumOrder, direction?: SortDirection): string {
+  if (order === "random") return "ORDER BY RANDOM()";
+  const { key, tiebreakers } = ALBUM_ORDER_SQL[order];
+  const resolved = direction ?? ALBUM_DEFAULT_DIRECTION[order];
+  const primary = `${key} ${resolved === "desc" ? "DESC" : "ASC"} NULLS LAST`;
+  return `ORDER BY ${tiebreakers ? `${primary}, ${tiebreakers}` : primary}`;
+}
 
 // HAVING for the play-stats orders so unplayed albums are excluded (the
 // "frequent"/"recent" home sections should be empty — and thus auto-hidden —
@@ -383,6 +418,7 @@ export async function queryAlbums(
 ): Promise<AlbumAggRow[]> {
   const {
     order = "name",
+    direction,
     limit = 100,
     offset = 0,
     genre,
@@ -410,7 +446,7 @@ export async function queryAlbums(
      WHERE ${where.join(" AND ")}
      GROUP BY album_key
      ${ALBUM_HAVING_SQL[order] ?? ""}
-     ORDER BY ${ALBUM_ORDER_SQL[order]}
+     ${albumOrderSql(order, direction)}
      LIMIT ? OFFSET ?`,
     ...params,
     limit,

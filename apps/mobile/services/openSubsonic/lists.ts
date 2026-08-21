@@ -13,6 +13,7 @@ import type {
   Starred2,
 } from "@/services/openSubsonic/types";
 import type { SongSortType } from "@/utils/songSort";
+import type { SortDirection } from "@/utils/sort";
 
 export type AlbumListType =
   | "random"
@@ -50,6 +51,38 @@ export const getAlbumList = async (
     { albumList: {} },
   );
 
+// Bounds wide enough to mean "every album" for a `byYear` browse that is really
+// a sort rather than a year filter. Subsonic requires both, and returns reverse
+// chronological order when the first is the later of the two — which is the
+// only direction control getAlbumList2 has.
+//
+// "Every album" is as close as the spec allows, not a guarantee: a year sort
+// can only be spelled as a year range here, so any album the server can't place
+// in one is unreachable in this browse. Navidrome is safe — `min_year`/
+// `max_year` are non-null and an untagged album carries 0, which the range
+// covers — and it takes the native path for an unbounded byYear anyway
+// (services/backend/lists.ts). A server that stores an unknown year as NULL
+// would drop those albums, and nothing sendable here would bring them back.
+const YEAR_SORT_BOUNDS = { min: 0, max: 9999 };
+
+// `byYear` is the one album-list type whose direction the caller can pick, so
+// `order` is folded into the year bounds here. Every other type serves exactly
+// one direction (see utils/albumSort.ts, which locks those rows in the sheet).
+function yearBounds(
+  type: AlbumListType,
+  fromYear: number | undefined,
+  toYear: number | undefined,
+  order: SortDirection | undefined,
+): { fromYear?: number; toYear?: number } {
+  if (type !== "byYear") return { fromYear, toYear };
+  const from = fromYear ?? YEAR_SORT_BOUNDS.min;
+  const to = toYear ?? YEAR_SORT_BOUNDS.max;
+  const [low, high] = from <= to ? [from, to] : [to, from];
+  return order === "desc"
+    ? { fromYear: high, toYear: low }
+    : { fromYear: low, toYear: high };
+}
+
 export const getAlbumList2 = async (
   type: AlbumListType,
   {
@@ -59,6 +92,7 @@ export const getAlbumList2 = async (
     toYear,
     genre,
     musicFolderId,
+    order,
   }: {
     size?: number;
     offset?: number;
@@ -66,11 +100,24 @@ export const getAlbumList2 = async (
     toYear?: number;
     genre?: string;
     musicFolderId?: string;
+    // Accepted (this is the signature `dispatch` types the whole backend off)
+    // but honoured only for `byYear`: the Subsonic spec gives getAlbumList2 no
+    // sort-order parameter, so every other type is stuck with the direction it
+    // serves. utils/albumSort.ts locks those rows rather than letting the UI
+    // promise an order this backend can't produce.
+    order?: SortDirection;
   },
 ) =>
   folderScopedRequest<{ albumList2: AlbumList2 }>(
     "/rest/getAlbumList2",
-    { type, size, offset, fromYear, toYear, genre, musicFolderId },
+    {
+      type,
+      size,
+      offset,
+      ...yearBounds(type, fromYear, toYear, order),
+      genre,
+      musicFolderId,
+    },
     { albumList2: {} },
   );
 
@@ -84,6 +131,13 @@ export const getNowPlaying = async () =>
     { notFoundIsExpected: true },
   );
 
+// The wire key is `randomSongs`, not the `songs` every caller reads (Jellyfin
+// and the local library both answer `songs`) — so the payload is renamed here
+// rather than at each call site. The generic is a plain cast with no runtime
+// check, so declaring `songs` directly compiles and then silently yields
+// undefined; that was issue #169. The `folderScopedRequest` fallback has to be
+// spelled in wire keys too, so a code-70 empty folder flows through the same
+// rename.
 export const getRandomSongs = async ({
   size,
   fromYear,
@@ -96,12 +150,14 @@ export const getRandomSongs = async ({
   toYear?: number;
   genre?: string;
   musicFolderId?: string;
-}) =>
-  folderScopedRequest<{ songs: Songs }>(
+}) => {
+  const rsp = await folderScopedRequest<{ randomSongs: Songs }>(
     "/rest/getRandomSongs",
     { size, fromYear, toYear, genre, musicFolderId },
-    { songs: {} },
+    { randomSongs: {} },
   );
+  return okEnvelope<{ songs: Songs }>({ songs: rsp.randomSongs ?? {} });
+};
 
 // The whole library, one page at a time. Subsonic has no "get all songs"
 // endpoint: an empty-query search3 is what the spec defines as "everything",
@@ -138,6 +194,7 @@ export const getSongs = async ({
   });
 };
 
+// Renamed from the wire key for the same reason as getRandomSongs above.
 export const getSongsByGenre = async (
   genre: string,
   {
@@ -145,12 +202,14 @@ export const getSongsByGenre = async (
     offset,
     musicFolderId,
   }: { count?: number; offset?: number; musicFolderId?: string },
-) =>
-  folderScopedRequest<{ songs: Songs }>(
+) => {
+  const rsp = await folderScopedRequest<{ songsByGenre: Songs }>(
     "/rest/getSongsByGenre",
     { genre, count, offset, musicFolderId },
-    { songs: {} },
+    { songsByGenre: {} },
   );
+  return okEnvelope<{ songs: Songs }>({ songs: rsp.songsByGenre ?? {} });
+};
 
 // Favorites are a user-level, server-wide concept — not folder-scoped (mirrors
 // Jellyfin/local, which ignore the folder too, and the playlists endpoint).

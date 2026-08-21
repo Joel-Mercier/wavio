@@ -43,6 +43,33 @@ export interface NavidromeSong {
   mbzTrackId?: string;
 }
 
+// `GET /api/album`. Field names are the JSON tags of Navidrome's model.Album,
+// i.e. the camelCase form of the `album` table columns.
+export interface NavidromeAlbum {
+  id: string;
+  name: string;
+  albumArtist?: string;
+  albumArtistId?: string;
+  artist?: string;
+  artistId?: string;
+  maxYear?: number;
+  minYear?: number;
+  date?: string;
+  songCount?: number;
+  duration?: number;
+  size?: number;
+  genre?: string;
+  compilation?: boolean;
+  playCount?: number;
+  playDate?: string;
+  rating?: number;
+  starred?: boolean;
+  starredAt?: string;
+  createdAt?: string;
+  mbzAlbumId?: string;
+  sortAlbumName?: string;
+}
+
 export interface NavidromeUser {
   id: string;
   userName: string;

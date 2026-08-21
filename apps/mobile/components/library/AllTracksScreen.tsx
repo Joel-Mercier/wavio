@@ -243,10 +243,14 @@ export default function AllTracksScreen() {
     const byId = new Map<string, Child>();
     for (let attempt = 0; attempt < RANDOM_SEED_ATTEMPTS; attempt++) {
       const before = byId.size;
+      // A server that doesn't implement getRandomSongs rejects rather than
+      // returning nothing, which would skip the caller's ordered-window
+      // fallback and fail the whole press. Stop and hand back what we have.
       const page = await getRandomSongs({
         size: PLAY_PAGE_SIZE,
         musicFolderId,
-      });
+      }).catch(() => null);
+      if (!page) break;
       for (const song of page.songs?.song ?? []) {
         if (byId.size >= MAX_QUEUE_TRACKS) break;
         byId.set(song.id, song);
@@ -267,13 +271,32 @@ export default function AllTracksScreen() {
     try {
       // Searching, the visible results *are* the list — playing something else
       // would ignore what the user just typed.
-      const tracks =
+      let tracks =
         isSearching || offlineFallbackActive
           ? songs
           : shuffle
             ? await buildRandomWindow()
             : await buildOrderedWindow();
-      if (tracks.length === 0) return;
+      // A server that doesn't serve getRandomSongs leaves the shuffle window
+      // empty (buildRandomWindow swallows the rejection so this stays reachable).
+      // The random draw only widens the pool past the first
+      // MAX_QUEUE_TRACKS in server order — playNow still shuffles the queue and
+      // playTracks still picks a random lead — so falling back to the ordered
+      // window costs reach, not shuffling.
+      if (
+        tracks.length === 0 &&
+        shuffle &&
+        !isSearching &&
+        !offlineFallbackActive
+      ) {
+        tracks = await buildOrderedWindow();
+      }
+      // Whatever the reason, an empty window has to say so: silently returning
+      // here is what hid #169 for as long as it did.
+      if (tracks.length === 0) {
+        showErrorToast(t("app.home.playErrorMessage"));
+        return;
+      }
       // Offline none of these may be downloaded, in which case playTracks
       // leaves the queue alone rather than stranding the player.
       if (

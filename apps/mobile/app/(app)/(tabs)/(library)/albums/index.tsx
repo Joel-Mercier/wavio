@@ -1,7 +1,10 @@
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
+import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -15,22 +18,43 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import SortOptionsSheet, {
+  type SortLabels,
+  useSortFieldLabel,
+} from "@/components/SortOptionsSheet";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import { useOfflineAlbums } from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
+import { useAlbumSort } from "@/hooks/useAlbumSort";
 import useDebounce from "@/hooks/useDebounce";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import {
+  ALBUM_SORT_SPECS,
+  type AlbumSortField,
+  type AlbumSortType,
+  DEFAULT_ALBUM_SORT,
+  OFFLINE_ALBUM_SORT_FIELDS,
+} from "@/utils/albumSort";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import {
+  availableSortFields,
+  effectiveSort,
+  parseSortType,
+  sortItems,
+} from "@/utils/sort";
+import { cn } from "@/utils/tailwind";
 
 export default function AllAlbumsScreen() {
   const [white, primary50, emerald500] = Uniwind.getCSSVariable([
@@ -65,11 +89,29 @@ export default function AllAlbumsScreen() {
 
   const isSearching = debouncedQuery.length > 0;
 
-  // Editing the query swaps the result set; without this the list keeps its old
-  // offset and hides the new top matches (notably when deleting characters).
+  // This list is paginated, so it can't be ordered client-side: only the
+  // fetched pages are in memory. The order goes into the backend call as an
+  // album-list type (+ direction where the backend has one) — see
+  // utils/albumSort.ts.
+  const setAllAlbumsSort = useApp((store) => store.setAllAlbumsSort);
+  const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
+  const {
+    sortFields: serverSortFields,
+    activeSort: serverSort,
+    persistedSort,
+    lockedDirections,
+    listParams,
+    isRandom,
+    resolve: resolveSort,
+  } = useAlbumSort({ probeCoverage: true });
+
+  // Editing the query — or the sort — swaps the result set; without this the
+  // list keeps its old offset and hides the new top rows (notably when
+  // deleting characters).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: listParams is the trigger, not a read value
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [debouncedQuery]);
+  }, [debouncedQuery, listParams.type, listParams.order]);
 
   const {
     data: browseData,
@@ -78,8 +120,9 @@ export default function AllAlbumsScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchBrowse,
   } = useInfiniteAlbumList2(
-    { type: "alphabeticalByName", size: 20, musicFolderId },
+    { ...listParams, musicFolderId },
     { enabled: !isSearching },
   );
   const {
@@ -105,6 +148,23 @@ export default function AllAlbumsScreen() {
   // searching.
   const isOnline = useIsOnline();
   const offlineAlbums = useOfflineAlbums(!isOnline);
+  // The fallback holds every downloaded album in one array, so there the same
+  // fields sort client-side. A downloaded collection carries no play count,
+  // last-played date or rating, so `hasSortData` drops those rows on its own.
+  const offlineSortFields = useMemo(
+    () =>
+      availableSortFields(
+        offlineAlbums ?? [],
+        ALBUM_SORT_SPECS,
+        OFFLINE_ALBUM_SORT_FIELDS,
+      ),
+    [offlineAlbums],
+  );
+  const offlineSort = effectiveSort(
+    persistedSort,
+    offlineSortFields,
+    DEFAULT_ALBUM_SORT,
+  );
   const albums = useMemo(() => {
     if (isSearching) {
       if (isOnline) return searchData?.searchResult3?.album ?? [];
@@ -116,28 +176,87 @@ export default function AllAlbumsScreen() {
       );
     }
     if (browseAlbums.length > 0 || isOnline) return browseAlbums;
-    return offlineAlbums ?? [];
+    return offlineAlbums
+      ? sortItems(offlineAlbums, offlineSort, ALBUM_SORT_SPECS)
+      : [];
   }, [
     isSearching,
     isOnline,
     searchData,
     debouncedQuery,
     offlineAlbums,
+    offlineSort,
     browseAlbums,
   ]);
-  const offlineFallbackActive = !isOnline && (offlineAlbums?.length ?? 0) > 0;
+  // Downloaded albums are renderable offline whichever list ends up on screen —
+  // enough to drop the skeletons and to keep a stale error from a previous
+  // online attempt from blocking them.
+  const offlineDataAvailable = !isOnline && (offlineAlbums?.length ?? 0) > 0;
+  // The fallback is only *rendering* when the paginated browse has no cached
+  // pages left to show (see `albums`): going offline mid-session leaves those
+  // pages in memory and they keep the server's order, so the header, the
+  // sheet's field list and the direction locks have to go on describing the
+  // server sort that produced them rather than the offline one.
+  const offlineFallbackActive =
+    offlineDataAvailable && browseAlbums.length === 0;
   const isLoading =
-    (isSearching ? isLoadingSearch : isLoadingBrowse) && !offlineFallbackActive;
-  // A stale error from a previous online attempt must not block the offline
-  // fallback list.
-  const error = offlineFallbackActive
+    (isSearching ? isLoadingSearch : isLoadingBrowse) && !offlineDataAvailable;
+  const error = offlineDataAvailable
     ? null
     : isSearching
       ? searchError
       : browseError;
 
+  // Offline an album's `created` is when it was downloaded, not when the
+  // server gained it (hooks/offline/useOfflineAlbums), so the row is renamed
+  // rather than left claiming something the fallback can't know.
+  const sortLabels = useMemo<SortLabels<AlbumSortField> | undefined>(
+    () =>
+      offlineFallbackActive
+        ? { addedAt: t("app.shared.sort.downloadedAt") }
+        : undefined,
+    [offlineFallbackActive, t],
+  );
+  const sortFieldLabel = useSortFieldLabel(sortLabels);
+
+  const sortFields = offlineFallbackActive
+    ? offlineSortFields
+    : serverSortFields;
+  const activeSort = offlineFallbackActive ? offlineSort : serverSort;
+  const activeSortField = parseSortType(activeSort).field;
+  // Offline the whole list is in memory, so every field flips freely there —
+  // the backend locks only apply to the paginated server browse.
+  const activeLockedDirections = offlineFallbackActive
+    ? undefined
+    : lockedDirections;
+  // The sheet renders no arrow for a direction-less field (random), so the
+  // collapsed trigger must not either — "↑ Random" asserts an order that
+  // doesn't exist.
+  const showSortDirection =
+    activeLockedDirections?.[activeSortField] !== "none";
+  // Search returns relevance order on every backend, so the control is hidden
+  // there rather than lying; > 1 because a single option is no choice.
+  const showSortControl = sortFields.length > 1 && !isSearching;
+
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
+  };
+
+  const handlePresentSortModalPress = () => {
+    bottomSheetSortModalRef.current?.present();
+  };
+
+  const handleSortSelect = (next: AlbumSortType) => {
+    const resolved = offlineFallbackActive ? next : resolveSort(next);
+    // Re-picking the direction-less random row is the only way to ask for a new
+    // shuffle, and it produces the same sort string — so the store write is a
+    // no-op, the query key is unchanged and nothing downstream would react.
+    // Refetch instead: every backend re-seeds a random order per request.
+    if (resolved === activeSort && parseSortType(resolved).field === "random") {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      refetchBrowse();
+    }
+    setAllAlbumsSort(resolved);
   };
 
   return (
@@ -216,6 +335,30 @@ export default function AllAlbumsScreen() {
               />
             )
           }
+          ListHeaderComponent={
+            showSortControl ? (
+              <HStack
+                className={cn(
+                  "mb-4",
+                  // The grid layout already pads the container by 16.
+                  layout === "grid" ? "px-2" : "px-6",
+                )}
+              >
+                <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                  <HStack className="items-center gap-x-2">
+                    {!showSortDirection ? null : activeSort.endsWith("Desc") ? (
+                      <ArrowDown size={16} color={white} />
+                    ) : (
+                      <ArrowUp size={16} color={white} />
+                    )}
+                    <Text className="text-white font-bold">
+                      {sortFieldLabel(activeSortField)}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              </HStack>
+            ) : null
+          }
           ListEmptyComponent={() =>
             isLoading ? null : isSearching && !debouncedQuery ? null : (
               <EmptyDisplay />
@@ -234,13 +377,27 @@ export default function AllAlbumsScreen() {
             paddingHorizontal: layout === "grid" ? 16 : 0,
           }}
           onEndReached={() => {
-            if (!isSearching && hasNextPage && !isFetchingNextPage) {
+            // `random` re-seeds per request, so its single page is the list.
+            if (
+              !isSearching &&
+              !isRandom &&
+              hasNextPage &&
+              !isFetchingNextPage
+            ) {
               fetchNextPage();
             }
           }}
           onEndReachedThreshold={0.5}
         />
       )}
+      <SortOptionsSheet
+        ref={bottomSheetSortModalRef}
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={handleSortSelect}
+        labels={sortLabels}
+        lockedDirections={activeLockedDirections}
+      />
     </Box>
   );
 }

@@ -21,7 +21,14 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
+import {
+  activeOverrides,
+  OVERRIDE_TTL_MS,
+  useCapabilityOverridesBase,
+} from "@/stores/capabilityOverrides";
+
+const overridesNow = () =>
+  activeOverrides(useCapabilityOverridesBase.getState().disabledAt);
 
 describe("capabilityOverrides store", () => {
   beforeEach(() => {
@@ -29,33 +36,51 @@ describe("capabilityOverrides store", () => {
   });
 
   it("has no overrides by default", () => {
-    expect(useCapabilityOverridesBase.getState().overrides).toEqual({});
+    expect(overridesNow()).toEqual({});
   });
 
   it("flips a capability off", () => {
     useCapabilityOverridesBase.getState().disableCapability("sharing");
-    expect(useCapabilityOverridesBase.getState().overrides.sharing).toBe(false);
+    expect(overridesNow().sharing).toBe(false);
   });
 
   it("keeps independent capabilities separate", () => {
     useCapabilityOverridesBase.getState().disableCapability("jukebox");
     useCapabilityOverridesBase.getState().disableCapability("podcasts");
-    expect(useCapabilityOverridesBase.getState().overrides).toEqual({
-      jukebox: false,
-      podcasts: false,
-    });
+    expect(overridesNow()).toEqual({ jukebox: false, podcasts: false });
   });
 
   it("is idempotent — re-disabling does not change the reference", () => {
     useCapabilityOverridesBase.getState().disableCapability("sharing");
-    const first = useCapabilityOverridesBase.getState().overrides;
+    const first = useCapabilityOverridesBase.getState().disabledAt;
     useCapabilityOverridesBase.getState().disableCapability("sharing");
-    expect(useCapabilityOverridesBase.getState().overrides).toBe(first);
+    expect(useCapabilityOverridesBase.getState().disabledAt).toBe(first);
   });
 
   it("__reset() clears overrides", () => {
     useCapabilityOverridesBase.getState().disableCapability("sharing");
     useCapabilityOverridesBase.getState().__reset();
-    expect(useCapabilityOverridesBase.getState().overrides).toEqual({});
+    expect(overridesNow()).toEqual({});
+  });
+
+  // A one-off 501 from a proxy must not hide a feature forever, so the
+  // downgrade lapses and the endpoint gets probed again.
+  it("stops applying a downgrade once it has expired", () => {
+    useCapabilityOverridesBase.getState().disableCapability("songLists");
+    const { disabledAt } = useCapabilityOverridesBase.getState();
+    expect(activeOverrides(disabledAt, Date.now() + OVERRIDE_TTL_MS)).toEqual(
+      {},
+    );
+  });
+
+  it("re-stamps a capability that failed again after expiring", () => {
+    useCapabilityOverridesBase.getState().disableCapability("songLists");
+    const stale = Date.now() - OVERRIDE_TTL_MS - 1;
+    useCapabilityOverridesBase.setState({ disabledAt: { songLists: stale } });
+    useCapabilityOverridesBase.getState().disableCapability("songLists");
+    expect(
+      useCapabilityOverridesBase.getState().disabledAt.songLists,
+    ).toBeGreaterThan(stale);
+    expect(overridesNow().songLists).toBe(false);
   });
 });

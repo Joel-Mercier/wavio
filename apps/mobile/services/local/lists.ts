@@ -30,7 +30,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import useLocalLibrary, { type FavoriteMap } from "@/stores/localLibrary";
 import type { SongSortType } from "@/utils/songSort";
-import { parseSortType } from "@/utils/sort";
+import { parseSortType, type SortDirection } from "@/utils/sort";
 
 // Maps a Subsonic album-list `type` onto how we serve it locally.
 //  - SQLite orders: play counts ("plays"=frequent) and last-played ("played"=
@@ -58,6 +58,9 @@ type ListOpts = {
   toYear?: number;
   genre?: string;
   musicFolderId?: string;
+  // Overrides the direction the list type serves by default, which SQLite can
+  // honour for any order (see repository.ts albumOrderSql).
+  order?: SortDirection;
 };
 
 // Albums whose id the user has rated, highest rating first, resolved back to
@@ -66,10 +69,11 @@ type ListOpts = {
 async function ratedAlbums(
   offset: number,
   size: number,
+  direction: SortDirection = "desc",
 ): Promise<AlbumAggRow[]> {
   const albumIds = Object.entries(useLocalLibrary.getState().ratings)
     .filter(([id]) => parseLocalAlbumId(id) != null)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => (direction === "asc" ? a - b : b - a))
     .map(([id]) => id)
     .slice(offset, offset + size);
   const rows = await Promise.all(
@@ -87,9 +91,12 @@ async function albumsForType(
 ): Promise<AlbumAggRow[]> {
   const order = ORDER_FOR_TYPE[type];
   if (order === "starred") return []; // favourites surface via getStarred2
-  if (order === "rated") return ratedAlbums(opts.offset ?? 0, opts.size ?? 10);
+  if (order === "rated") {
+    return ratedAlbums(opts.offset ?? 0, opts.size ?? 10, opts.order);
+  }
   return queryAlbums({
     order,
+    direction: opts.order,
     limit: opts.size ?? 10,
     offset: opts.offset ?? 0,
     genre: type === "byGenre" ? opts.genre : undefined,

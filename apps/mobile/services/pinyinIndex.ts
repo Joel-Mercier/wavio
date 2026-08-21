@@ -1,5 +1,19 @@
-import { pinyin } from "pinyin-pro";
 import type { ArtistID3, IndexID3 } from "@/services/openSubsonic/types";
+
+// pinyin-pro carries a ~320 KB dictionary that only CJK names ever touch, and
+// this module sits in the cold-start graph (services/backend/browsing pulls in
+// services/jellyfin/browsing, which builds its artist index here). Metro runs
+// with inlineRequires off, so a static import would evaluate that dictionary on
+// every launch — including the headless Android Auto boot that has no UI at
+// all. Load it on the first CJK name instead; a Latin-only library never pays.
+let pinyinFn: typeof import("pinyin-pro").pinyin | undefined;
+
+function getPinyin() {
+  if (!pinyinFn) {
+    pinyinFn = (require("pinyin-pro") as typeof import("pinyin-pro")).pinyin;
+  }
+  return pinyinFn;
+}
 
 const CJK = /[㐀-鿿豈-﫿]/;
 
@@ -39,7 +53,7 @@ export function indexLetter(name: string, ignoredArticles?: string): string {
   const latin = foldDiacritics(first).toUpperCase();
   if (/[A-Z]/.test(latin)) return latin;
   if (hasCJK(first)) {
-    const initial = pinyin(first, PINYIN_FIRST_OPTS)[0];
+    const initial = getPinyin()(first, PINYIN_FIRST_OPTS)[0];
     if (initial) return initial.toUpperCase();
   }
   return "#";
@@ -54,7 +68,7 @@ const PINYIN_FULL_OPTS = {
 export function sortKey(name: string, ignoredArticles?: string): string {
   const meaningful = stripLeadingArticle(name ?? "", ignoredArticles);
   const value = hasCJK(meaningful)
-    ? pinyin(meaningful, PINYIN_FULL_OPTS)
+    ? getPinyin()(meaningful, PINYIN_FULL_OPTS)
     : meaningful;
   return value.toLowerCase();
 }

@@ -12,6 +12,7 @@ import {
   getStarred2,
 } from "@/services/backend/lists";
 import type { SongSortType } from "@/utils/songSort";
+import type { SortDirection } from "@/utils/sort";
 
 export const useAlbumList = (params: {
   type: AlbumListType;
@@ -40,6 +41,7 @@ export const useAlbumList2 = (
     toYear?: number;
     genre?: string;
     musicFolderId?: string;
+    order?: SortDirection;
   },
   options?: { enabled?: boolean },
 ) => {
@@ -61,6 +63,11 @@ export const useInfiniteAlbumList2 = (
     toYear?: number;
     genre?: string;
     musicFolderId?: string;
+    // The direction the browse is sorted in — part of the key, and `undefined`
+    // for a caller that doesn't sort (utils/albumSort.ts). JSON.stringify drops
+    // it, so an unsorted browse keeps the exact key it had before this list
+    // could be reordered.
+    order?: SortDirection;
   },
   options?: { enabled?: boolean },
 ) => {

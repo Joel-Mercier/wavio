@@ -32,6 +32,17 @@ export type SortFieldSpec<T> = {
 
 export type SortFieldSpecs<T, F extends string> = Record<F, SortFieldSpec<T>>;
 
+// Every backend types its date fields as `Date`, but only the local library
+// actually builds one: the JSON APIs hand back ISO strings that nothing
+// revives, so a `.getTime()` on the raw value throws on a server browse.
+export function sortTime(
+  value: Date | string | undefined | null,
+): number | undefined {
+  if (!value) return undefined;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? undefined : ms;
+}
+
 export function parseSortType<F extends string>(
   sort: SortType<F>,
 ): { field: F; direction: SortDirection } {
