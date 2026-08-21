@@ -1867,6 +1867,8 @@
 				"notAvailableOfflineMessage": "Non disponible hors ligne. Téléchargez-le pour l'écouter sans connexion.",
 				"advancedSettings": "Paramètres avancés",
 				"fallbackUrlHelp": "À utiliser lorsque l'URL principale est inaccessible. Doit pointer vers le même serveur.",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "Annuler",
 				"close": "Fermer",
 				"create": "Créer",
