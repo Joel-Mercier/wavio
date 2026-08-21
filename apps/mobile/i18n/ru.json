@@ -1949,6 +1949,8 @@
 				"notAvailableOfflineMessage": "Недоступно в офлайн-режиме. Скачай чтобы слушать без интернета.",
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "Отмена",
 				"close": "Закрыть",
 				"create": "Создать",
