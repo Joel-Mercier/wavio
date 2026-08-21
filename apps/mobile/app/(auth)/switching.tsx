@@ -61,6 +61,7 @@ export default function SwitchingScreen() {
         user.username,
         user.password,
         server.headers,
+        server.plainPasswordAuth,
       );
       useAuthBase.getState().login({
         serverId: server.id,

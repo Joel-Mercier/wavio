@@ -1,10 +1,11 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
+import { noteSubsonicAuthFailure } from "@/services/auth/credentialFailure";
 import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
 import { USER_AGENT } from "@/services/network";
-import { encodePasswordParam } from "@/services/openSubsonic/auth";
+import { subsonicAuthParams } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
 import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
@@ -47,24 +48,10 @@ const openSubsonicApiInstance = axios.create({
 
 openSubsonicApiInstance.interceptors.request.use(
   (request) => {
-    const {
-      url,
-      username,
-      subsonicSalt,
-      subsonicToken,
-      password,
-      useTokenAuth,
-    } = useAuthBase.getState();
-    // Servers that reject Subsonic token auth (OpenSubsonic error 41/42) are
-    // detected at login and fall back to password auth. Send exactly one
-    // mechanism — supplying both `p` and `t`/`s` triggers error 43.
-    const authParams =
-      useTokenAuth === false
-        ? { u: username, p: encodePasswordParam(password) }
-        : { u: username, t: subsonicToken, s: subsonicSalt };
+    const { url } = useAuthBase.getState();
     request.params = {
       ...(request.params ?? {}),
-      ...authParams,
+      ...subsonicAuthParams(),
       v: openSubsonicApiVersion,
       c: clientName,
       f: "json",
@@ -123,11 +110,15 @@ openSubsonicApiInstance.interceptors.response.use(
       // reconcilers that would read our stored ids as deleted content.
       noteServerVersion(version, envelope?.type);
     }
-    // Only log out on genuine credential failures (Subsonic error code 40 =
-    // "Wrong username or password"). Network errors are transient and must not
-    // wipe the session — offline mode depends on the user staying signed in.
+    // Subsonic error code 40 nominally means "wrong username or password", but
+    // servers hand it out for much more than that (see the doc block in
+    // services/auth/credentialFailure.ts), so it doesn't end the session on its
+    // own: it schedules a check that asks the server again before signing out.
+    // Network errors never reach here at all — offline mode depends on the user
+    // staying signed in. Note the Jellyfin client still logs out on any HTTP 401
+    // (services/jellyfin/index.ts); its 401 is far less overloaded than this.
     if (envelope?.status === "failed" && envelope?.error?.code === 40) {
-      useAuthBase.getState().logout();
+      noteSubsonicAuthFailure(response.config?.url);
     }
     return response;
   },

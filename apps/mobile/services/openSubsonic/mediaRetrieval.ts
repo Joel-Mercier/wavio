@@ -2,7 +2,6 @@ import openSubsonicApiInstance, {
   subsonicRequest,
 } from "@/services/openSubsonic/index";
 import type { Lyrics, StructuredLyrics } from "@/services/openSubsonic/types";
-import { arrayBufferToBase64 } from "@/utils/arrayBufferToBase64";
 
 export const download = async (id: string) => {
   const rsp = await openSubsonicApiInstance.get<string>("/rest/download", {
@@ -31,19 +30,6 @@ export const getCaptions = async (id: string, format: "srt" | "vvt") => {
   });
 
   return rsp.data;
-};
-
-export const getCoverArt = async (id: string, { size }: { size?: number }) => {
-  const rsp = await openSubsonicApiInstance.get("/rest/getCoverArt", {
-    responseType: "arraybuffer",
-    responseEncoding: "base64",
-    params: {
-      id,
-      size,
-    },
-  });
-
-  return arrayBufferToBase64(rsp.data);
 };
 
 // Most tracks have no lyrics, and servers report that as code 70 rather than an

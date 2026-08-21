@@ -1868,6 +1868,8 @@
 				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Advanced settings",
 				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "Cancel",
 				"close": "Close",
 				"create": "Create",

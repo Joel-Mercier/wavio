@@ -24,6 +24,7 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import LocalPathsField from "@/components/forms/LocalPathsField";
+import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
 import UrlInputField from "@/components/forms/UrlInputField";
 import LoginBackground from "@/components/LoginBackground";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
@@ -198,6 +199,7 @@ export default function LoginScreen() {
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
       headers: headerRecordToRows(preselectedServer?.headers),
+      plainPasswordAuth: !!preselectedServer?.plainPasswordAuth,
     },
     validators: {
       onChange: loginSchema,
@@ -265,6 +267,10 @@ export default function LoginScreen() {
           const mtlsAlias = value.mtlsAlias?.trim() || undefined;
           const fallbackUrl = cleanOptionalUrl(value.fallbackUrl);
           const headers = headerRowsToRecord(value.headers);
+          // Only meaningful for the Subsonic backends; Jellyfin authenticates
+          // with an access token and never sees these params.
+          const plainPasswordAuth =
+            serverType !== "jellyfin" && !!value.plainPasswordAuth;
           // Register the client cert with the native KeyManager before the
           // handshake so mTLS servers get it presented on this first request —
           // for both routes, since either may be the one we end up talking to.
@@ -280,6 +286,7 @@ export default function LoginScreen() {
             trimmedUsername,
             trimmedPassword,
             headers,
+            plainPasswordAuth,
           );
           const existing = servers.find((s) => s.url === trimmedUrl);
           const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
@@ -292,6 +299,7 @@ export default function LoginScreen() {
             // Empty (not undefined) when the user cleared every row, so
             // re-logging into a saved server drops its old headers.
             headers: headers ?? {},
+            plainPasswordAuth,
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
@@ -395,6 +403,7 @@ export default function LoginScreen() {
     // Without this the previously selected server's fallback would leak into
     // the newly selected one.
     form.setFieldValue("fallbackUrl", server.fallbackUrl ?? "");
+    form.setFieldValue("plainPasswordAuth", !!server.plainPasswordAuth);
     if (server.type !== "local") {
       setTimeout(() => usernameRef.current?.focus(), 250);
     }
@@ -690,6 +699,18 @@ export default function LoginScreen() {
                               />
                             )}
                           </form.Subscribe>
+                        )}
+                      </form.Field>
+                    )}
+                    {/* Subsonic auth mechanism — meaningless for Jellyfin,
+                        which authenticates with an access token. */}
+                    {type !== "jellyfin" && (
+                      <form.Field name="plainPasswordAuth">
+                        {(field) => (
+                          <PlainPasswordAuthField
+                            value={field.state.value}
+                            onChange={field.handleChange}
+                          />
                         )}
                       </form.Field>
                     )}

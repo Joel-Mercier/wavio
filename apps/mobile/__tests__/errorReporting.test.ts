@@ -61,6 +61,28 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a query's Subsonic code 40, which the auth layer owns", () => {
+    // services/auth/credentialFailure.ts sees the same response, corroborates it
+    // with the server and reports the verdict. A second Issue from the query
+    // would say less and arrive for every wrong password too.
+    reportError(
+      { code: 40, message: "Wrong username or password" },
+      { area: "api", backend: "subsonic", endpoint: "genres" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("still reports the auth layer's own corroborated code 40", () => {
+    reportError(
+      {
+        code: 40,
+        message: "Subsonic error 40 on a session the server still accepts",
+      },
+      { area: "auth", backend: "subsonic", endpoint: "/rest/getGenres" },
+    );
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
   it("suppresses a 404 when notFoundIsExpected", () => {
     const error = new axios.AxiosError("Not Found");
     error.response = { status: 404 } as never;

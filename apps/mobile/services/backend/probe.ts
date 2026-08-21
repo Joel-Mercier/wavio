@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from "axios";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
 import { USER_AGENT } from "@/services/network";
-import { encodePasswordParam } from "@/services/openSubsonic/auth";
+import { subsonicAuthParams } from "@/services/openSubsonic/auth";
 import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
@@ -70,14 +70,6 @@ async function probeSubsonic(
   url: string,
   signal: AbortSignal,
 ): Promise<boolean> {
-  const { username, subsonicSalt, subsonicToken, password, useTokenAuth } =
-    useAuthBase.getState();
-  // Send exactly one mechanism — supplying both `p` and `t`/`s` triggers error
-  // 43. Mirrors the interceptor's split in services/openSubsonic/index.ts.
-  const authParams =
-    useTokenAuth === false
-      ? { u: username, p: encodePasswordParam(password) }
-      : { u: username, t: subsonicToken, s: subsonicSalt };
   const response = await createBareClient(
     url,
     undefined,
@@ -85,7 +77,7 @@ async function probeSubsonic(
   ).get("/rest/ping", {
     signal,
     params: {
-      ...authParams,
+      ...subsonicAuthParams(),
       v: openSubsonicApiVersion,
       c: clientName,
       f: "json",

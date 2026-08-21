@@ -18,6 +18,7 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import LocalPathsField from "@/components/forms/LocalPathsField";
+import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
 import UrlInputField from "@/components/forms/UrlInputField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import ServerListItem from "@/components/servers/ServerListItem";
@@ -117,6 +118,7 @@ export default function ServersDetail() {
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [] as HeaderRow[],
+      plainPasswordAuth: false,
     },
     validators: {
       onChange: addServerFormSchema,
@@ -155,6 +157,8 @@ export default function ServersDetail() {
           mtlsAlias: value.mtlsAlias?.trim() || undefined,
           fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
           headers: headerRowsToRecord(value.headers),
+          plainPasswordAuth:
+            value.type !== "jellyfin" && value.plainPasswordAuth,
         });
         // Refresh the native KeyManager so this server's client cert is
         // presented on future connections, and register the (possibly new)
@@ -422,6 +426,16 @@ export default function ServersDetail() {
                                   />
                                 )}
                               </form.Subscribe>
+                            )}
+                          </form.Field>
+                        )}
+                        {type !== "jellyfin" && (
+                          <form.Field name="plainPasswordAuth">
+                            {(field) => (
+                              <PlainPasswordAuthField
+                                value={field.state.value}
+                                onChange={field.handleChange}
+                              />
                             )}
                           </form.Field>
                         )}

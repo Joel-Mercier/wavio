@@ -257,6 +257,7 @@ describe("auth login schema", () => {
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [],
+      plainPasswordAuth: false,
     });
     expect(result.success).toBe(true);
   });
@@ -271,6 +272,7 @@ describe("auth login schema", () => {
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [],
+      plainPasswordAuth: false,
     });
     expect(result.success).toBe(true);
   });
@@ -284,6 +286,7 @@ describe("auth login schema", () => {
       paths: [],
       mtlsAlias: "",
       headers: [],
+      plainPasswordAuth: false,
     };
     expect(
       loginSchema.safeParse({
@@ -316,5 +319,34 @@ describe("auth login schema", () => {
       password: "",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("persist migration", () => {
+  const migrate = (state: unknown, version: number) =>
+    useAuthBase.persist.getOptions().migrate?.(state, version) as Record<
+      string,
+      unknown
+    >;
+
+  it("keeps token auth for a session that has a token and salt", () => {
+    const migrated = migrate({ subsonicToken: "tok", subsonicSalt: "salt" }, 3);
+    expect(migrated.useTokenAuth).toBe(true);
+  });
+
+  it("drops token auth for a session that has no token", () => {
+    // Claiming token auth without a token makes every request go out with no
+    // credentials at all, which a server answers with error 40 — a session that
+    // can never succeed. Password auth is the honest fallback.
+    const migrated = migrate(
+      { useTokenAuth: true, subsonicToken: null, subsonicSalt: null },
+      3,
+    );
+    expect(migrated.useTokenAuth).toBe(false);
+  });
+
+  it("leaves an already-current session untouched", () => {
+    const state = { useTokenAuth: true, subsonicToken: null };
+    expect(migrate(state, 4)).toBe(state);
   });
 });
