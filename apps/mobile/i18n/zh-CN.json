@@ -995,10 +995,10 @@
 							"lastUpdated": "Updated {{time}} ago",
 							"less": "Less",
 							"more": "More",
-							"bucketA11y": "{{label}}: {{count}} listens",
-							"heatmapCellA11y": "{{row}} at {{hour}}:00 UTC, {{count}} listens",
 							"listens_other": "{{formattedCount}} listens",
-							"artistCount_other": "{{count}} artists"
+							"artistCount_other": "{{count}} artists",
+							"bucketA11y_other": "{{label}}: {{count}} listens",
+							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
 						},
 						"createdForYou": {
 							"poweredBy": "Powered by ListenBrainz",
