@@ -87,3 +87,54 @@ describe("buildHomeFeed hidden sections", () => {
     }
   });
 });
+
+// The suite above builds with every capability forced on, so it never exercises
+// a real backend matrix. These pin the Subsonic-family song rows, which shipped
+// disabled from fd0cb8b7 until the #169 envelope fix made them work again.
+const buildWith = (capabilities: BackendCapabilities) =>
+  buildHomeFeed({
+    seedAlbums,
+    genres,
+    capabilities,
+    sessionSeed: 42,
+    hiddenSections: [],
+  });
+
+const dynamicPicks = (sections: ReturnType<typeof buildWith>) =>
+  sections
+    .map((s) => s.id)
+    .filter(
+      (id) =>
+        id.startsWith("moreFromArtist:") ||
+        id.startsWith("albumsByDecade:") ||
+        id.startsWith("albumsByGenre:"),
+    );
+
+describe("buildHomeFeed song sections per backend", () => {
+  it.each(["navidrome", "opensubsonic", "jellyfin", "local"] as const)(
+    "includes the song rows on %s",
+    (serverType) => {
+      const ids = buildWith(getCapabilities(serverType)).map((s) => s.id);
+      expect(ids).toContain("randomSongs");
+      expect(ids.some((id) => id.startsWith("songsByGenre:"))).toBe(true);
+    },
+  );
+
+  it("omits the song rows when songLists is off", () => {
+    const ids = buildWith({
+      ...getCapabilities("navidrome"),
+      songLists: false,
+    }).map((s) => s.id);
+    expect(ids).not.toContain("randomSongs");
+    expect(ids.some((id) => id.startsWith("songsByGenre:"))).toBe(false);
+  });
+
+  // Every RNG draw runs unconditionally before/between the capability gates, so
+  // toggling a capability must never reshuffle the other dynamic picks. This is
+  // the property that makes changing the matrix safe.
+  it("does not perturb dynamic picks when songLists is toggled", () => {
+    const on = getCapabilities("navidrome");
+    const off = { ...on, songLists: false };
+    expect(dynamicPicks(buildWith(off))).toEqual(dynamicPicks(buildWith(on)));
+  });
+});

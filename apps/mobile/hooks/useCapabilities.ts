@@ -4,13 +4,16 @@ import {
   getCapabilities,
 } from "@/services/backend/capabilities";
 import useAuth from "@/stores/auth";
-import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
+import {
+  activeOverrides,
+  useCapabilityOverridesBase,
+} from "@/stores/capabilityOverrides";
 
 export function useCapabilities(): BackendCapabilities {
   const serverType = useAuth((s) => s.serverType);
-  const overrides = useCapabilityOverridesBase((s) => s.overrides);
+  const disabledAt = useCapabilityOverridesBase((s) => s.disabledAt);
   return useMemo(
-    () => ({ ...getCapabilities(serverType), ...overrides }),
-    [serverType, overrides],
+    () => ({ ...getCapabilities(serverType), ...activeOverrides(disabledAt) }),
+    [serverType, disabledAt],
   );
 }
