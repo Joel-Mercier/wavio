@@ -22,6 +22,14 @@ export function isNavidrome(): boolean {
   return activeServerType() === "navidrome";
 }
 
+// Navidrome *with* the native-API session captured at login. The native REST
+// API answers 401 without that JWT, so anything routed to services/navidrome/*
+// beyond the Subsonic surface has to check this, not just the server type.
+export function isNavidromeNative(): boolean {
+  const { serverType, hasNavidromeNative } = useAuthBase.getState();
+  return serverType === "navidrome" && hasNavidromeNative;
+}
+
 // `local` is a first-class server type (chosen at login like Navidrome /
 // Jellyfin). Prefer the trait predicates below over this one: most checks that
 // used to spell `isLocal()` actually meant one of the four properties local

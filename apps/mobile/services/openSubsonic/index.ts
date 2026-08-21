@@ -85,6 +85,30 @@ openSubsonicApiInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// A server says "I don't implement this endpoint" two ways: an HTTP 501, or —
+// per the Subsonic wire protocol — HTTP 200 carrying envelope code 0 "Method not
+// supported". Both mean the same thing, so both flip the matching capability off
+// (persisted per server+user) and the UI stops offering the feature instead of
+// failing again: Navidrome ships sharing/jukebox off by default, and not every
+// OpenSubsonic server hosts podcasts or the song-list endpoints.
+function noteUnsupportedEndpoint(url: string | undefined) {
+  const capability = DYNAMIC_CAPABILITY_ENDPOINTS[url ?? ""];
+  if (capability) {
+    useCapabilityOverridesBase.getState().disableCapability(capability);
+  }
+}
+
+// Code 0 is Subsonic's generic error, so only the message separates a missing
+// method from a real failure. services/errorReporting.ts matches the same shape
+// to keep it out of Sentry.
+function isMethodNotSupported(error: OpenSubsonicErrorResponse) {
+  return (
+    error.code === 0 &&
+    typeof error.message === "string" &&
+    error.message.includes("Method not supported")
+  );
+}
+
 openSubsonicApiInstance.interceptors.response.use(
   (response) => {
     const envelope = response.data?.["subsonic-response"];
@@ -108,15 +132,8 @@ openSubsonicApiInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // A 501 means the server doesn't implement (or has disabled) this endpoint —
-    // Navidrome ships sharing/jukebox off by default and not every OpenSubsonic
-    // server hosts podcasts. Flip the matching capability off (persisted per
-    // server+user) so the UI stops offering the feature instead of failing again.
     if (error?.response?.status === 501) {
-      const capability = DYNAMIC_CAPABILITY_ENDPOINTS[error?.config?.url ?? ""];
-      if (capability) {
-        useCapabilityOverridesBase.getState().disableCapability(capability);
-      }
+      noteUnsupportedEndpoint(error?.config?.url);
     }
     // The classifier drops offline / unreachable-server / cancelled / 501 noise
     // and reports only genuine HTTP failures (4xx/5xx with a response body).
@@ -205,6 +222,11 @@ export function subsonicEnvelope<T>(
       code: -1,
       message: "Invalid or empty response from server",
     };
+    // Unlike a 501 this arrives as a successful HTTP response, so the error
+    // interceptor never sees it — record the downgrade from here instead.
+    if (isMethodNotSupported(error)) {
+      noteUnsupportedEndpoint(rsp.config?.url);
+    }
     // Application-level Subsonic failure (HTTP 200, status "failed"). Code 40 is
     // wrong-credentials, already handled by the response interceptor's logout —
     // don't double-report it. Everything else is a real failing endpoint (the

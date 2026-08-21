@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
+import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
+import { type ArtistSortType, DEFAULT_ARTIST_SORT } from "@/utils/artistSort";
 import createSelectors from "@/utils/createSelectors";
 import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
@@ -152,6 +154,10 @@ interface AppStore {
   setFavoritesSort: (favoritesSort: TrackSortType) => void;
   allTracksSort: SongSortType;
   setAllTracksSort: (allTracksSort: SongSortType) => void;
+  allAlbumsSort: AlbumSortType;
+  setAllAlbumsSort: (allAlbumsSort: AlbumSortType) => void;
+  allArtistsSort: ArtistSortType;
+  setAllArtistsSort: (allArtistsSort: ArtistSortType) => void;
   downloadsSort: DownloadsSort;
   setDownloadsSort: (downloadsSort: DownloadsSort) => void;
   maxBitRate: number | null;
@@ -331,6 +337,18 @@ export const useAppBase = create<AppStore>()(
       allTracksSort: DEFAULT_SONG_SORT,
       setAllTracksSort: (allTracksSort: SongSortType) => {
         set({ allTracksSort });
+      },
+      // Also backend-sorted and paginated, but every backend can order albums
+      // (utils/albumSort.ts) — so the default is the order the browse already
+      // had rather than a "backend's own" placeholder.
+      allAlbumsSort: DEFAULT_ALBUM_SORT,
+      setAllAlbumsSort: (allAlbumsSort: AlbumSortType) => {
+        set({ allAlbumsSort });
+      },
+      // Sorted client-side: the artist index comes down whole (utils/artistSort).
+      allArtistsSort: DEFAULT_ARTIST_SORT,
+      setAllArtistsSort: (allArtistsSort: ArtistSortType) => {
+        set({ allArtistsSort });
       },
       downloadsSort: "alphabeticalAsc",
       setDownloadsSort: (downloadsSort: DownloadsSort) => {
