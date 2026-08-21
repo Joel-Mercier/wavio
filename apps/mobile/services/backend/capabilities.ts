@@ -89,13 +89,14 @@ const SUBSONIC: BackendCapabilities = {
   replayGain: true,
   jukebox: true,
   remoteStreamableUrl: true,
-  // Off since fd0cb8b7, which removed the song sections from the home feed for
-  // this family without recording why. Both endpoints behind it are standard
-  // and Navidrome serves them, but until #169 their responses were read off the
-  // wrong envelope key and always came back empty — which is the likeliest
-  // reason the sections looked broken. Worth re-testing against a real server
-  // before flipping back on.
-  songLists: false,
+  // fd0cb8b7 turned this off for the whole family without recording why. The
+  // cause was #169: getRandomSongs/getSongsByGenre read their responses off the
+  // wrong envelope key, so both sections always came back empty and silently
+  // hid themselves. Both endpoints are standard and the envelope keys are now
+  // fixed (services/openSubsonic/lists.ts), so this is back on — a server that
+  // genuinely lacks them answers 501 or "Method not supported" and gets flipped
+  // off per (server, user) via DYNAMIC_CAPABILITY_ENDPOINTS below.
+  songLists: true,
   mostPlayedTracks: false,
   // Left false for the whole Subsonic family: the `topSongsByArtistId`
   // extension flips it on per-server at runtime (see services/topSongs.ts).
@@ -229,6 +230,8 @@ export const DYNAMIC_CAPABILITY_ENDPOINTS: Record<
   "/rest/deletePodcastChannel": "podcasts",
   "/rest/deletePodcastEpisode": "podcasts",
   "/rest/downloadPodcastEpisode": "podcasts",
+  "/rest/getRandomSongs": "songLists",
+  "/rest/getSongsByGenre": "songLists",
 };
 
 export function getCapabilities(serverType: ServerType): BackendCapabilities {

@@ -7,24 +7,49 @@ import createSelectors from "@/utils/createSelectors";
 
 // Runtime-detected capability downgrades, persisted per (server, user). The
 // static matrix in services/backend/capabilities.ts is optimistic for features
-// that are really a per-server config toggle (sharing, jukebox, podcasts); when
-// the server answers 501 for one of their endpoints the interceptor records the
-// downgrade here so the UI hides the feature on the next render and across
-// restarts (rather than re-offering a broken button every cold start). Only ever
-// flipped to `false` — a missing key means "use the static default".
+// that are really a per-server config toggle (sharing, jukebox, podcasts) or an
+// endpoint not every server implements (the song lists); when the server says it
+// doesn't support one, the interceptor records the downgrade here so the UI
+// hides the feature on the next render and across restarts (rather than
+// re-offering a broken button every cold start).
+//
+// Each downgrade is stamped and expires after OVERRIDE_TTL_MS, so it heals: a
+// one-off 501 from a reverse proxy — or an admin enabling the feature
+// server-side — must not hide it forever. The first request after expiry
+// re-latches it if the server still doesn't support it, and that failure is
+// classified as expected noise, so a genuinely missing endpoint costs one
+// request a week and never surfaces as an error.
+export const OVERRIDE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 export type CapabilityOverrides = Partial<
   Record<keyof BackendCapabilities, boolean>
 >;
 
+type CapabilityDisabledAt = Partial<Record<keyof BackendCapabilities, number>>;
+
 interface CapabilityOverridesStore {
-  overrides: CapabilityOverrides;
+  disabledAt: CapabilityDisabledAt;
   disableCapability: (capability: keyof BackendCapabilities) => void;
   __reset: () => void;
 }
 
 const initialState = {
-  overrides: {} as CapabilityOverrides,
+  disabledAt: {} as CapabilityDisabledAt,
 };
+
+// The overrides still in force, as a map to spread over the static matrix.
+export function activeOverrides(
+  disabledAt: CapabilityDisabledAt,
+  now: number = Date.now(),
+): CapabilityOverrides {
+  const overrides: CapabilityOverrides = {};
+  for (const [capability, at] of Object.entries(disabledAt)) {
+    if (now - at < OVERRIDE_TTL_MS) {
+      overrides[capability as keyof BackendCapabilities] = false;
+    }
+  }
+  return overrides;
+}
 
 const useCapabilityOverridesBase = create<CapabilityOverridesStore>()(
   persist(
@@ -36,9 +61,13 @@ const useCapabilityOverridesBase = create<CapabilityOverridesStore>()(
       },
 
       disableCapability: (capability) => {
-        if (get().overrides[capability] === false) return;
+        // Don't re-stamp one that's already in force: the write would churn the
+        // store (and every capability consumer) on each failing request, and an
+        // expired stamp is exactly what re-probing is meant to produce.
+        const at = get().disabledAt[capability];
+        if (at !== undefined && Date.now() - at < OVERRIDE_TTL_MS) return;
         set((state) => ({
-          overrides: { ...state.overrides, [capability]: false },
+          disabledAt: { ...state.disabledAt, [capability]: Date.now() },
         }));
       },
     }),
@@ -48,7 +77,27 @@ const useCapabilityOverridesBase = create<CapabilityOverridesStore>()(
         createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
-      partialize: (state) => ({ overrides: state.overrides }),
+      version: 1,
+      // v0 stored `overrides: { [capability]: false }` with no stamp. Carry the
+      // downgrades over stamped as of now, so they survive the upgrade and start
+      // their TTL from here rather than all expiring at once.
+      migrate: (persisted, version) => {
+        if (version === 0) {
+          const overrides =
+            (persisted as { overrides?: CapabilityOverrides } | undefined)
+              ?.overrides ?? {};
+          const now = Date.now();
+          const disabledAt: CapabilityDisabledAt = {};
+          for (const [capability, disabled] of Object.entries(overrides)) {
+            if (disabled === false) {
+              disabledAt[capability as keyof BackendCapabilities] = now;
+            }
+          }
+          return { disabledAt } as CapabilityOverridesStore;
+        }
+        return persisted as CapabilityOverridesStore;
+      },
+      partialize: (state) => ({ disabledAt: state.disabledAt }),
     },
   ),
 );

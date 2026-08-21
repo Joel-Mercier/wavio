@@ -79,6 +79,7 @@ jest.mock("@/services/jellyfin/mappers", () => ({
   COMMON_FIELDS: "",
 }));
 
+import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import {
   getRandomSongs as jellyfinGetRandomSongs,
   getSongsByGenre as jellyfinGetSongsByGenre,
@@ -232,5 +233,20 @@ describe("local song lists", () => {
       genre: "rock",
       limit: 12,
     });
+  });
+});
+
+// Flipping songLists on for the whole Subsonic family is only safe because a
+// server that doesn't implement these endpoints says so — HTTP 501, or an
+// envelope "Method not supported" — and gets the capability turned off per
+// (server, user). Keep the two in step.
+describe("songLists dynamic capability", () => {
+  it("maps both song-list endpoints to songLists", () => {
+    expect(DYNAMIC_CAPABILITY_ENDPOINTS["/rest/getRandomSongs"]).toBe(
+      "songLists",
+    );
+    expect(DYNAMIC_CAPABILITY_ENDPOINTS["/rest/getSongsByGenre"]).toBe(
+      "songLists",
+    );
   });
 });
