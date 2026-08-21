@@ -1,0 +1,42 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+	/** SVG imported as an Astro component. */
+	Svg?: any;
+	/**
+	 * Raster logo (webp/png) imported as image metadata. Loaded eagerly: the copy in
+	 * an unselected panel is hidden, and a lazy one there never fetches at all, so the
+	 * logo slot sits empty for a beat when that service is picked.
+	 */
+	image?: ImageMetadata;
+	/** Fallback shown when a service has no logo yet. */
+	initials?: string;
+	/** Brand color, used to tint the initials fallback. */
+	tint: string;
+	/** Extra classes for the initials fallback (type size, radius). */
+	initialsClass?: string;
+}
+
+const { Svg, image, initials, tint, initialsClass = "text-[13px]" } = Astro.props;
+---
+
+{
+	Svg ? (
+		<Svg class="size-full" aria-hidden="true" />
+	) : image ? (
+		<Image src={image} alt="" class="size-full object-contain" loading="eager" aria-hidden="true" />
+	) : (
+		<span
+			class:list={[
+				"flex size-full items-center justify-center rounded-[10px] border border-border-strong bg-surface font-extrabold tracking-[-0.02em]",
+				initialsClass,
+			]}
+			style={`color:${tint}`}
+			aria-hidden="true"
+		>
+			{initials}
+		</span>
+	)
+}
