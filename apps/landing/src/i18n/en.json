@@ -152,6 +152,7 @@
 		"tagline": "A open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic or a local library.",
 		"product": "Product",
 		"features": "Features",
+    "integrations": "Integrations",
 		"download": "Download",
 		"changelog": "Changelog",
 		"openSource": "Open Source",
