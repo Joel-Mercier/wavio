@@ -152,6 +152,7 @@
 		"tagline": "一款开源 Android 音乐播放器，兼容 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库。",
 		"product": "产品",
 		"features": "功能",
+		"integrations": "集成",
 		"download": "下载",
 		"changelog": "更新日志",
 		"openSource": "开源",
