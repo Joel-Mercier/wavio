@@ -222,6 +222,7 @@ export const addServerFormSchema = z
     // Always present (the form keeps a trailing empty row); validated in the
     // refine so a half-typed row doesn't block an unrelated field.
     headers: z.array(headerRowSchema),
+    plainPasswordAuth: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -257,6 +258,7 @@ export const editServerFormSchema = z
     mtlsAlias: z.string().trim(),
     fallbackUrl: z.string().trim(),
     headers: z.array(headerRowSchema),
+    plainPasswordAuth: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -307,6 +309,13 @@ export type Server = {
   // reachability probe, audio, downloads and images. See
   // services/serverHeaders.ts.
   headers?: Record<string, string>;
+  // Force Subsonic legacy password auth (`p=enc:<hex>`) instead of token+salt
+  // (`t`/`s`) for this server. Token auth is the default and is negotiated
+  // automatically — a server that answers error 41/42 already falls back on its
+  // own (services/auth/authenticate.ts). This is the manual override for the
+  // servers that fail some other way, and it costs something: the password
+  // travels in every query string, hex-encoded but not encrypted.
+  plainPasswordAuth?: boolean;
 };
 
 export type ServerUser = {
@@ -328,6 +337,7 @@ interface ServersStore {
     mtlsAlias?: string;
     fallbackUrl?: string;
     headers?: Record<string, string>;
+    plainPasswordAuth?: boolean;
   }) => Server;
   editServer: (
     id: string,
@@ -339,6 +349,7 @@ interface ServersStore {
       mtlsAlias?: string;
       fallbackUrl?: string;
       headers?: Record<string, string>;
+      plainPasswordAuth?: boolean;
     },
   ) => void;
   removeServer: (id: string) => void;
@@ -386,6 +397,7 @@ const useServersBase = create<ServersStore>()(
         mtlsAlias,
         fallbackUrl,
         headers,
+        plainPasswordAuth,
       }) => {
         const trimmedUrl = url.trim();
         const trimmedName = name.trim();
@@ -412,6 +424,12 @@ const useServersBase = create<ServersStore>()(
           ) {
             patch.headers = cleanHeaders;
           }
+          if (
+            plainPasswordAuth !== undefined &&
+            !!existing.plainPasswordAuth !== plainPasswordAuth
+          ) {
+            patch.plainPasswordAuth = plainPasswordAuth;
+          }
           if (Object.keys(patch).length > 0) {
             set((state) => ({
               servers: state.servers.map((s) =>
@@ -433,6 +451,7 @@ const useServersBase = create<ServersStore>()(
           ...(cleanAlias ? { mtlsAlias: cleanAlias } : {}),
           ...(cleanFallback ? { fallbackUrl: cleanFallback } : {}),
           ...(cleanHeaders ? { headers: cleanHeaders } : {}),
+          ...(plainPasswordAuth ? { plainPasswordAuth } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -463,6 +482,9 @@ const useServersBase = create<ServersStore>()(
                     : {}),
                   ...(patch.headers !== undefined
                     ? { headers: normalizeHeaders(patch.headers) }
+                    : {}),
+                  ...(patch.plainPasswordAuth !== undefined
+                    ? { plainPasswordAuth: patch.plainPasswordAuth }
                     : {}),
                 }
               : s,

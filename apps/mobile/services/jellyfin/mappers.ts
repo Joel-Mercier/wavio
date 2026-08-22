@@ -80,7 +80,16 @@ export function mapBaseItemToChild(item: BaseItemDto): Child {
     bookmarkPosition: item.UserData?.PlaybackPositionTicks
       ? ticksToSeconds(item.UserData.PlaybackPositionTicks)
       : undefined,
-    musicBrainzId: item.ProviderIds?.MusicBrainzAlbum,
+    // On a song, Child.musicBrainzId is the *recording* MBID (see
+    // services/listenBrainz/payload.ts) — not the release one this used to read.
+    // This mapper also builds the album-shaped Children in searching.ts/lists.ts,
+    // which have no recording of their own and keep the release id. Servers that
+    // never populated either leave this undefined, which every consumer already
+    // tolerates.
+    musicBrainzId:
+      item.Type === "MusicAlbum"
+        ? item.ProviderIds?.MusicBrainzAlbum
+        : item.ProviderIds?.MusicBrainzRecording,
     displayAlbumArtist: item.AlbumArtist,
     displayComposer: mapComposers(item),
     contributors: mapContributors(item),

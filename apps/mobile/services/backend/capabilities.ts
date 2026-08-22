@@ -73,6 +73,20 @@ export type BackendCapabilities = {
   // getGenres returns per-genre song/album counts, so genre lists can be sorted
   // by them. Jellyfin's genre items carry no counts.
   genreCounts: boolean;
+  // The server can be asked whether it already scrobbles this user's plays to
+  // ListenBrainz, so the app can avoid counting every play twice. Navidrome
+  // answers on its native API; Jellyfin answers only for admin sessions (the
+  // plugin config endpoint requires elevation), so a `true` here means "worth
+  // asking", not "will always get an answer" — see services/listenBrainz/
+  // serverState.ts, which treats an unanswered probe as unknown.
+  serverScrobbleLinkStatus: boolean;
+  // A search query is matched against more than the track title, so a
+  // `"<artist> <title>"` query can find a song. True on the Subsonic family
+  // (the query runs over title/album/artist) and on the local library (whose
+  // FTS5 table indexes title/artist/album/album_artist and ANDs the tokens).
+  // False on Jellyfin, whose `SearchTerm` matches the item name alone — there
+  // such a query returns nothing at all. See services/libraryMatch.ts.
+  multiFieldSearch: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -110,11 +124,18 @@ const SUBSONIC: BackendCapabilities = {
   tagWriting: false,
   songAlbumArtist: true,
   genreCounts: true,
+  // Plain Subsonic/OpenSubsonic exposes no way to read a server-side scrobble
+  // agent's state, so the app can only offer the user a manual switch.
+  serverScrobbleLinkStatus: false,
+  multiFieldSearch: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
   ...SUBSONIC,
   smartPlaylists: true,
+  // GET /api/listenbrainz/link on the native API reports whether the user has
+  // linked a ListenBrainz token server-side.
+  serverScrobbleLinkStatus: true,
   // Navidrome's native REST API can sort songs by play count even though the
   // Subsonic surface can't — served via services/navidrome/songs.ts.
   mostPlayedTracks: true,
@@ -163,6 +184,12 @@ const JELLYFIN: BackendCapabilities = {
   // value and an album-artist sort would duplicate the artist one.
   songAlbumArtist: false,
   genreCounts: false,
+  // jellyfin-plugin-listenbrainz keeps per-user scrobble settings in its plugin
+  // configuration, readable only by an admin session.
+  serverScrobbleLinkStatus: true,
+  // `SearchTerm` matches the item name only, so anything but the bare title
+  // comes back empty.
+  multiFieldSearch: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -205,6 +232,10 @@ const LOCAL: BackendCapabilities = {
   tagWriting: true,
   songAlbumArtist: true,
   genreCounts: true,
+  // No server at all, so nothing else could be scrobbling these plays — which
+  // is exactly why the local library benefits most from app-side scrobbling.
+  serverScrobbleLinkStatus: false,
+  multiFieldSearch: true,
 };
 
 // A few capabilities depend on per-server *config*, not just the server type:

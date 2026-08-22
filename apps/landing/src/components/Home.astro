@@ -11,6 +11,7 @@ import { useImages } from "../i18n/assets";
 import { type Lang, useTranslations } from "../i18n/utils";
 import Layout from "../layouts/Layout.astro";
 import Footer from "./Footer.astro";
+import Integrations from "./Integrations.astro";
 import Nav from "./Nav.astro";
 
 interface Props {
@@ -290,6 +291,9 @@ const wordDelay = () =>
 			</div>
 		</div>
 	</section>
+
+	<!-- ─────────────  Integrations  ───────────── -->
+	<Integrations lang={lang} />
 
 	<!-- ─────────────  Showcase scroll  ───────────── -->
 	<section id="showcase" class="overflow-hidden pb-35 pt-20">

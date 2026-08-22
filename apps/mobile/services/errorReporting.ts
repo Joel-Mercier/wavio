@@ -61,6 +61,7 @@ export type ReportApi =
   | "soulsync"
   | "musicbrainz"
   | "audiomuse"
+  | "listenbrainz"
   | "github";
 
 export type ReportContext = {
@@ -169,6 +170,14 @@ function isServerSubsystemFailure(error: unknown): boolean {
 //   with a non-JSON / empty body (an HTML error page) where the Subsonic JSON was
 //   expected. Environmental, same class as an unreachable origin.
 // Matched narrowly on the plain {code,message} shape the Subsonic layer throws.
+// The `code` of a thrown Subsonic envelope error (subsonicEnvelope throws the
+// envelope's `error` object as-is), or undefined for anything else.
+function subsonicErrorCode(error: unknown): number | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const { code } = error as { code?: unknown };
+  return typeof code === "number" ? code : undefined;
+}
+
 function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const { code, message } = error as { code?: number; message?: string };
@@ -315,6 +324,15 @@ function isExpectedFailure(
   ) {
     return true;
   }
+  // Subsonic code 40 on a query. The failing query is only ever the *symptom*:
+  // services/auth/credentialFailure.ts sees the same response, asks the server
+  // whether the credentials are actually bad, and reports the answer — once per
+  // endpoint, with a verdict attached. Letting the query report it too would
+  // file a second, less informative Issue for every one of them, and would put
+  // a plain wrong password in Sentry (the very thing the login flow takes care
+  // to keep out). Only `api` is silenced; the `auth` report is the one that
+  // knows what the 40 meant.
+  if (ctx.area === "api" && subsonicErrorCode(error) === 40) return true;
   // A backend call the server refused for lack of a valid session: an expired
   // native token (Navidrome's JWT, which services/navidrome/index.ts already
   // re-auths once before giving up), credentials revoked server-side. The auth

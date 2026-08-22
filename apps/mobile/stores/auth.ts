@@ -50,6 +50,9 @@ export const loginSchema = z
     // Always present (the form keeps a trailing empty row); validated in the
     // refine.
     headers: z.array(headerRowSchema),
+    // Force Subsonic legacy password auth for this server (remote Subsonic
+    // types only). Always present, defaulting to false = negotiate as usual.
+    plainPasswordAuth: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "local") return;
@@ -277,8 +280,15 @@ export const useAuthBase = create<AuthStore>()(
           serverType: state.serverType ?? "navidrome",
           jellyfinAccessToken: state.jellyfinAccessToken ?? null,
           jellyfinUserId: state.jellyfinUserId ?? null,
-          // Existing sessions authenticated with token+salt, so default to true.
-          useTokenAuth: state.useTokenAuth ?? true,
+          // Existing sessions authenticated with token+salt, so default to true
+          // — but only if they actually carry a token and salt. Claiming token
+          // auth without one makes every request go out with no credentials at
+          // all, which a server answers with error 40: a session that can never
+          // succeed. Password auth is the honest fallback (see subsonicAuthParams).
+          useTokenAuth:
+            state.subsonicToken && state.subsonicSalt
+              ? (state.useTokenAuth ?? true)
+              : false,
           // v4: `serverId` became the storage scope's identity. It can't be
           // resolved here — that needs the `servers` store, whose rehydration
           // order relative to this one isn't guaranteed — so it's back-filled by

@@ -23,6 +23,7 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import LocalPathsField from "@/components/forms/LocalPathsField";
+import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
 import UrlInputField from "@/components/forms/UrlInputField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
@@ -109,6 +110,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       mtlsAlias: server.mtlsAlias ?? "",
       fallbackUrl: server.fallbackUrl ?? "",
       headers: headerRecordToRows(server.headers),
+      plainPasswordAuth: !!server.plainPasswordAuth,
     },
     validators: {
       onChange: editServerFormSchema,
@@ -133,6 +135,8 @@ export default function ServerListItem({ server }: ServerListItemProps) {
           // `{}` rather than undefined so clearing the last row clears the
           // saved headers instead of reading as "not editing them".
           headers: headerRowsToRecord(value.headers) ?? {},
+          plainPasswordAuth:
+            value.type !== "jellyfin" && value.plainPasswordAuth,
         });
         // Refresh the native KeyManager so the updated client cert applies, and
         // register the (possibly new) fallback origin with the iOS proxy —
@@ -580,6 +584,16 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                             />
                           )}
                         </form.Subscribe>
+                      )}
+                    </form.Field>
+                  )}
+                  {server.type !== "jellyfin" && (
+                    <form.Field name="plainPasswordAuth">
+                      {(field) => (
+                        <PlainPasswordAuthField
+                          value={field.state.value}
+                          onChange={field.handleChange}
+                        />
                       )}
                     </form.Field>
                   )}

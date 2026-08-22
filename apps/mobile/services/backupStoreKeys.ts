@@ -37,10 +37,19 @@ export const SCOPED_STORE_NAMES = [
   "soulsyncStore",
   "musicBrainzStore",
   "audioMuseStore",
+  "listenBrainzStore",
   "lrclibPicksStore",
   "trackCacheStore",
 ] as const;
 
+// The ListenBrainz store is deliberately *not* excluded even though it also
+// carries a pending queue: unlike the mutations below, a listen is idempotent at
+// the destination. ListenBrainz dedupes on (user, listened_at, recording_msid)
+// and every queued listen carries the absolute timestamp it was played at, so a
+// restored queue draining alongside the original device's is collapsed server
+// side rather than double-counted — and restoring the token/settings is the
+// whole point of backing the integration up.
+//
 // Scoped stores that must NOT travel in a backup file. The first two hold state
 // that is only true of the device that wrote it: the offline-mutations queue is
 // transient sync state, and restoring it later (or on another device) would

@@ -4,14 +4,22 @@ import {
 } from "@/services/backend/capabilities";
 import type { AlbumID3, Genre } from "@/services/openSubsonic/types";
 import {
+  availableHomeSections,
   buildHomeFeed,
   HOME_SECTION_CATALOG,
+  type HomeSectionAvailability,
   homeSectionSettingKey,
+  isHomeSectionAvailable,
 } from "@/utils/homeFeed";
 
 const allCapabilities = Object.fromEntries(
   Object.keys(getCapabilities("navidrome")).map((key) => [key, true]),
 ) as BackendCapabilities;
+
+const availability = (listenBrainz = true): HomeSectionAvailability => ({
+  capabilities: allCapabilities,
+  integrations: { listenBrainz },
+});
 
 const seedAlbums = Array.from({ length: 12 }, (_, i) => ({
   id: `album-${i}`,
@@ -25,11 +33,11 @@ const genres = [
   { value: "Jazz", songCount: 8, albumCount: 3 },
 ] as Genre[];
 
-const build = (hiddenSections: readonly string[] = []) =>
+const build = (hiddenSections: readonly string[] = [], listenBrainz = true) =>
   buildHomeFeed({
     seedAlbums,
     genres,
-    capabilities: allCapabilities,
+    availability: availability(listenBrainz),
     sessionSeed: 42,
     hiddenSections,
   });
@@ -88,6 +96,74 @@ describe("buildHomeFeed hidden sections", () => {
   });
 });
 
+describe("integration-gated sections", () => {
+  it("includes the ListenBrainz section only when it is connected", () => {
+    expect(build().map((s) => s.id)).toContain("listenBrainzCreatedForYou");
+    expect(build([], false).map((s) => s.id)).not.toContain(
+      "listenBrainzCreatedForYou",
+    );
+  });
+
+  it("can be hidden by the user while connected", () => {
+    expect(build(["listenBrainzCreatedForYou"]).map((s) => s.id)).not.toContain(
+      "listenBrainzCreatedForYou",
+    );
+  });
+
+  // The whole reason the availability check lives in the terminal filter rather
+  // than at the push site: connecting an account must not reshuffle the seeded
+  // artist/genre/decade picks.
+  it("does not perturb dynamic picks when the integration is absent", () => {
+    const connected = build().map((s) => s.id);
+    const disconnected = build([], false).map((s) => s.id);
+    expect(disconnected).toEqual(
+      connected.filter((id) => id !== "listenBrainzCreatedForYou"),
+    );
+  });
+});
+
+describe("isHomeSectionAvailable", () => {
+  const capabilities = {
+    ...allCapabilities,
+    podcasts: false,
+  } as BackendCapabilities;
+
+  it.each([
+    ["an ungated entry", {}, true],
+    ["a met capability", { capability: "songLists" as const }, true],
+    ["an unmet capability", { capability: "podcasts" as const }, false],
+    ["a met integration", { integration: "listenBrainz" as const }, true],
+    [
+      "both gates met",
+      {
+        capability: "songLists" as const,
+        integration: "listenBrainz" as const,
+      },
+      true,
+    ],
+    [
+      "one of two gates unmet",
+      { capability: "podcasts" as const, integration: "listenBrainz" as const },
+      false,
+    ],
+  ])("resolves %s", (_name, entry, expected) => {
+    expect(
+      isHomeSectionAvailable(entry, {
+        capabilities,
+        integrations: { listenBrainz: true },
+      }),
+    ).toBe(expected);
+  });
+
+  it("drops an unmet integration from the catalog listing", () => {
+    const keys = availableHomeSections(availability(false)).map((e) => e.key);
+    expect(keys).not.toContain("listenBrainzCreatedForYou");
+    expect(availableHomeSections(availability()).map((e) => e.key)).toContain(
+      "listenBrainzCreatedForYou",
+    );
+  });
+});
+
 // The suite above builds with every capability forced on, so it never exercises
 // a real backend matrix. These pin the Subsonic-family song rows, which shipped
 // disabled from fd0cb8b7 until the #169 envelope fix made them work again.
@@ -95,7 +171,7 @@ const buildWith = (capabilities: BackendCapabilities) =>
   buildHomeFeed({
     seedAlbums,
     genres,
-    capabilities,
+    availability: { ...availability(), capabilities },
     sessionSeed: 42,
     hiddenSections: [],
   });

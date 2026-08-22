@@ -9,7 +9,7 @@ jest.mock("@/modules/ssl-trust", () => ({
   isSslTrustAvailable: () => false,
 }));
 jest.mock("@/services/backend/probe", () => ({
-  createBareClient: () => ({ get: jest.fn() }),
+  createBareClient: () => ({ get: mockPingGet }),
 }));
 jest.mock("@/services/jellyfin/auth", () => ({
   authenticateByName: (...args: unknown[]) => mockJellyfinAuth(...args),
@@ -18,14 +18,18 @@ jest.mock("@/services/navidrome/auth", () => ({ nativeLogin: jest.fn() }));
 jest.mock("@/services/openSubsonic", () => ({ openSubsonicErrorCodes: {} }));
 jest.mock("@/services/openSubsonic/auth", () => ({
   computeSubsonicToken: async () => "tok",
-  encodePasswordParam: (p: string) => p,
+  encodePasswordParam: (p: string) => `enc:${p}`,
   generateSalt: () => "salt",
+  isCredentialErrorCode: (code: unknown) =>
+    typeof code === "number" && [40, 41, 42, 43, 44].includes(code),
 }));
 
 const mockJellyfinAuth = jest.fn();
+const mockPingGet = jest.fn();
 
 import axios from "axios";
 import {
+  authenticateRemote,
   authenticateWithFallback,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
@@ -55,6 +59,7 @@ const run = () =>
 
 beforeEach(() => {
   mockJellyfinAuth.mockReset();
+  mockPingGet.mockReset();
 });
 
 describe("authenticateWithFallback", () => {
@@ -160,5 +165,93 @@ describe("authenticateWithFallback", () => {
       "secret",
       headers,
     );
+  });
+});
+
+describe("Subsonic auth mechanism", () => {
+  const pingOk = { data: { "subsonic-response": { status: "ok" } } };
+  const pingFailed = (code: number) => ({
+    data: { "subsonic-response": { status: "failed", error: { code } } },
+  });
+  const paramsOf = (call: number) => mockPingGet.mock.calls[call][1].params;
+
+  it("prefers token+salt", async () => {
+    mockPingGet.mockResolvedValue(pingOk);
+    const options = await authenticateRemote(
+      "opensubsonic",
+      PRIMARY,
+      "alice",
+      "secret",
+    );
+    expect(paramsOf(0)).toMatchObject({ t: "tok", s: "salt" });
+    expect(paramsOf(0).p).toBeUndefined();
+    expect(options.useTokenAuth).toBe(true);
+    expect(options.subsonicToken).toBe("tok");
+  });
+
+  it("falls back to password auth when the server rejects the mechanism", async () => {
+    mockPingGet.mockResolvedValueOnce(pingFailed(41)).mockResolvedValue(pingOk);
+    const options = await authenticateRemote(
+      "opensubsonic",
+      PRIMARY,
+      "alice",
+      "secret",
+    );
+    expect(mockPingGet).toHaveBeenCalledTimes(2);
+    expect(paramsOf(1)).toMatchObject({ p: "enc:secret" });
+    expect(options.useTokenAuth).toBe(false);
+  });
+
+  it("skips token auth entirely when the user forces password auth", async () => {
+    mockPingGet.mockResolvedValue(pingOk);
+    const options = await authenticateRemote(
+      "opensubsonic",
+      PRIMARY,
+      "alice",
+      "secret",
+      undefined,
+      true,
+    );
+    // One ping, password only: no token is ever offered to a server the user
+    // has told us can't handle one.
+    expect(mockPingGet).toHaveBeenCalledTimes(1);
+    expect(paramsOf(0)).toMatchObject({ p: "enc:secret" });
+    expect(paramsOf(0).t).toBeUndefined();
+    expect(paramsOf(0).s).toBeUndefined();
+    // The session must store no token/salt either, or the request interceptor
+    // would go back to sending them.
+    expect(options.useTokenAuth).toBe(false);
+    expect(options.subsonicToken).toBeNull();
+    expect(options.subsonicSalt).toBeNull();
+  });
+
+  it("does not retry with a token when forced password auth is rejected", async () => {
+    mockPingGet.mockResolvedValue(pingFailed(41));
+    await expect(
+      authenticateRemote(
+        "opensubsonic",
+        PRIMARY,
+        "alice",
+        "secret",
+        undefined,
+        true,
+      ),
+    ).rejects.toMatchObject({ name: "InvalidCredentialsError" });
+    expect(mockPingGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("carries the override to the fallback route", async () => {
+    mockPingGet.mockRejectedValueOnce(unreachable()).mockResolvedValue(pingOk);
+    const result = await authenticateWithFallback(
+      "opensubsonic",
+      PRIMARY,
+      FALLBACK,
+      "alice",
+      "secret",
+      undefined,
+      true,
+    );
+    expect(result.activeUrl).toBe(FALLBACK);
+    expect(paramsOf(1)).toMatchObject({ p: "enc:secret" });
   });
 });

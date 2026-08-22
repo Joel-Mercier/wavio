@@ -3,7 +3,6 @@ import {
   download,
   getAvatar,
   getCaptions,
-  getCoverArt,
   getLyrics,
   getLyricsBySongId,
   hls,
@@ -37,20 +36,6 @@ export const useGetCaptions = (
     queryFn: () => {
       return getCaptions(id, format);
     },
-  });
-};
-
-export const useGetCoverArt = (
-  id: string,
-  params: { size?: number },
-  enabled = true,
-) => {
-  return useQuery({
-    queryKey: ["getCoverArt", id, params],
-    queryFn: () => {
-      return getCoverArt(id, params);
-    },
-    enabled,
   });
 };
 

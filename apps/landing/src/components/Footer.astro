@@ -20,12 +20,14 @@ const home = localizePath("/", lang);
 					<Logo width={24} height={24} aria-hidden="true" />
 					Wavio
 				</div>
-				<p class="mt-4 max-w-[280px] text-text-3">{t.footer.tagline}</p>
+				<p class="my-4 max-w-[280px] text-text-3">{t.footer.tagline}</p>
+        <a href="https://crowdin.com/?utm_term=click-badge-add-on"><img style="width:140;height:40px" src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark.png 1x,https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" /></a>
 			</div>
 			<div>
 				<h5 class="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-text-2">{t.footer.product}</h5>
 				<ul class="flex flex-col gap-2.5">
 					<li><a href={`${home}#features`} class="transition-colors hover:text-text">{t.footer.features}</a></li>
+          <li><a href={`${home}#integrations`} class="transition-colors hover:text-text">{t.footer.integrations}</a></li>
 					<li><a href={`${home}#download`} class="transition-colors hover:text-text">{t.footer.download}</a></li>
 					<li><a href={`${GITHUB_URL}/releases`} target="_blank" rel="noopener" class="transition-colors hover:text-text">{t.footer.changelog}</a></li>
 				</ul>

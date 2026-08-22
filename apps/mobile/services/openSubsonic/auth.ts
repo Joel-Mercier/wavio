@@ -34,17 +34,47 @@ export function encodePasswordParam(password: string): string {
   return `enc:${hex}`;
 }
 
-// Auth query-string fragment for Subsonic URLs built outside the axios
-// instance (stream/download/HLS/cover art). Mirrors the request interceptor:
-// token+salt normally, password auth for servers that rejected token auth at
-// login (useTokenAuth false — those sessions store no token/salt at all, so
-// interpolating them would produce a literal `t=null&s=null`).
-export function subsonicAuthQuery(): string {
+// Subsonic codes that mean "these credentials won't do": 40 wrong username or
+// password, 41 token auth not supported, 42 mechanism not supported, 43 multiple
+// conflicting auth mechanisms, 44 invalid API key.
+//
+// Lives here rather than next to its first caller because both the login flow
+// (services/auth/authenticate.ts) and the corroborated sign-out
+// (services/auth/credentialFailure.ts) need it, and this module is a leaf — it
+// imports nothing from services/, so neither of them picks up a cycle.
+const CREDENTIAL_ERROR_CODES = new Set([40, 41, 42, 43, 44]);
+
+export function isCredentialErrorCode(code: unknown): boolean {
+  return typeof code === "number" && CREDENTIAL_ERROR_CODES.has(code);
+}
+
+// The active session's Subsonic auth parameters — the single definition of how
+// this app authenticates a Subsonic request. Token+salt normally, password auth
+// (`p`) for servers that rejected token auth at login (useTokenAuth false, e.g.
+// LMS/Lyrion). Exactly one mechanism is ever sent: supplying both `p` and `t`/`s`
+// triggers error 43.
+//
+// The `!subsonicToken || !subsonicSalt` fallback is not defensive noise. axios
+// drops null/undefined params, so a session that wants token auth but holds no
+// token would send `u` alone — and a server answers that with error 40, the same
+// code as a wrong password, which used to end the session on every request with
+// no way out. Falling back to the password we still hold keeps such a session
+// usable; if there's no password either, the server rejects it once and the
+// corroborated sign-out (services/auth/credentialFailure.ts) ends it cleanly.
+export function subsonicAuthParams(): Record<string, string> {
   const { username, password, subsonicSalt, subsonicToken, useTokenAuth } =
     useAuthBase.getState();
-  const u = `u=${encodeURIComponent(username)}`;
-  if (useTokenAuth === false) {
-    return `${u}&p=${encodeURIComponent(encodePasswordParam(password))}`;
+  if (useTokenAuth !== false && subsonicToken && subsonicSalt) {
+    return { u: username, t: subsonicToken, s: subsonicSalt };
   }
-  return `${u}&t=${subsonicToken}&s=${subsonicSalt}`;
+  return { u: username, p: encodePasswordParam(password) };
+}
+
+// Auth query-string fragment for Subsonic URLs built outside the axios instance
+// (stream/download/HLS/cover art). Same rules as subsonicAuthParams, rendered
+// into a query string.
+export function subsonicAuthQuery(): string {
+  return Object.entries(subsonicAuthParams())
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join("&");
 }

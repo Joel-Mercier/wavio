@@ -11,13 +11,21 @@ export function childToTrack(child: Child) {
   // Use offline track if available, otherwise use streaming URL
   const url = offlineTrack ? offlineTrack.path : streamUrl(child.id);
 
+  // The local library's own mapper already substituted this same placeholder, so
+  // an equal title means "untagged" there too.
+  const unknown = i18n.t("app.shared.unknown");
+  const title = child.title?.trim();
+
   return {
     id: child.id,
     url,
     // type: TrackType.HLS,
     // Local files frequently lack tags; keep consumers (player UI, lock screen,
     // car, widget) from receiving undefined for these display fields.
-    title: child.title ?? i18n.t("app.shared.unknown"),
+    title: title || unknown,
+    // …but consumers that write a permanent record rather than render a row
+    // (ListenBrainz) must skip the track instead of filing it as "Unknown".
+    isUntitled: !title || title === unknown,
     artist: child.artist ?? "",
     album: child.album ?? "",
     artwork: artworkUrl(child.coverArt),
@@ -38,6 +46,7 @@ export function childToTrack(child: Child) {
     artistId: child.artistId,
     artists: child.artists,
     albumId: child.albumId,
+    track: child.track,
     musicBrainzId: child.musicBrainzId,
     replayGain: child.replayGain,
     // Add offline indicator

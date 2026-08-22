@@ -99,7 +99,7 @@ index d58a1320c85b1129c6e965784a0785674747b79b..bd22c2bce0e5dbfe1d86469bb3e6ec83
        .readTimeout(60, TimeUnit.SECONDS)
        .writeTimeout(60, TimeUnit.SECONDS)
 diff --git a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
-index 0472011ffb8bf4cbb49d4433b42646c450b74bd9..4d96b06fb56e232384e0ebc355ba201ba2c23f60 100644
+index 4626dac32067ec203788ae69de4b0f1d5b03eec0..5b00b6c3037de5cd901a10b39424e2e6f624d93d 100644
 --- a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
 +++ b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
 @@ -14,6 +14,7 @@ import android.util.Base64
@@ -110,7 +110,7 @@ index 0472011ffb8bf4cbb49d4433b42646c450b74bd9..4d96b06fb56e232384e0ebc355ba201b
  import expo.modules.core.errors.ModuleDestroyedException
  import expo.modules.kotlin.Promise
  import expo.modules.kotlin.exception.Exceptions
-@@ -1012,7 +1013,15 @@ open class FileSystemLegacyModule : Module() {
+@@ -992,7 +993,15 @@ open class FileSystemLegacyModule : Module() {
    private val okHttpClient: OkHttpClient?
      get() {
        if (client == null) {

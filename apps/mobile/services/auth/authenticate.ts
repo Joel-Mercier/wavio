@@ -14,6 +14,7 @@ import {
   computeSubsonicToken,
   encodePasswordParam,
   generateSalt,
+  isCredentialErrorCode,
 } from "@/services/openSubsonic/auth";
 import type { ServerType } from "@/stores/servers";
 
@@ -61,11 +62,6 @@ export class InvalidCredentialsError extends Error {
     this.name = "InvalidCredentialsError";
   }
 }
-
-// Subsonic codes that mean "these credentials won't do": 40 wrong username or
-// password, 41 token auth not supported, 42 mechanism not supported, 43 multiple
-// conflicting auth mechanisms, 44 invalid API key.
-const CREDENTIAL_ERROR_CODES = new Set([40, 41, 42, 43, 44]);
 
 // A thrown network failure (not a Subsonic credential error) whose message
 // looks like a TLS/certificate problem. Walks `message` / `code` / `cause`
@@ -137,12 +133,17 @@ async function withSslDetection<T>(
 // so a store lookup would find nothing and every request to a proxy-fronted
 // server would be rejected. Same ordering problem `syncSslClientCertificates`
 // solves with its `extra` argument for mTLS.
+//
+// `forcePasswordAuth` is the user's per-server override (Server.plainPasswordAuth):
+// skip token auth entirely and authenticate with `p=enc:<hex>`. Passed in for the
+// same reason as `headers` — on the login screen the server isn't saved yet.
 export async function authenticateRemote(
   type: ServerType,
   url: string,
   username: string,
   password: string,
   headers?: Record<string, string>,
+  forcePasswordAuth?: boolean,
 ): Promise<RemoteLoginOptions> {
   const trimmedUrl = url.trim();
   const trimmedUsername = username.trim();
@@ -206,12 +207,19 @@ export async function authenticateRemote(
   // Negotiate the auth mechanism: prefer Subsonic token auth (`t`/`s`), but fall
   // back to password auth (`p`) for servers that reject token auth — LMS/Lyrion's
   // Subsonic bridge answers OpenSubsonic error 41/42 ("mechanism not supported").
-  let useTokenAuth = true;
+  // The user can also opt out of the negotiation entirely, for a server that
+  // fails token auth without saying so.
+  let useTokenAuth = !forcePasswordAuth;
   let rsp = await withSslDetection(trimmedUrl, () =>
-    ping({ t: subsonicToken, s: subsonicSalt }),
+    ping(
+      useTokenAuth
+        ? { t: subsonicToken, s: subsonicSalt }
+        : { p: encodePasswordParam(trimmedPassword) },
+    ),
   );
   let subsonicResponse = rsp.data?.["subsonic-response"];
   if (
+    useTokenAuth &&
     subsonicResponse?.status !== "ok" &&
     (subsonicResponse?.error?.code === 41 ||
       subsonicResponse?.error?.code === 42)
@@ -231,7 +239,7 @@ export async function authenticateRemote(
     const message =
       (typeof code === "number" ? openSubsonicErrorCodes[code] : undefined) ??
       i18n.t("auth.login.loginErrorMessage");
-    throw typeof code === "number" && CREDENTIAL_ERROR_CODES.has(code)
+    throw isCredentialErrorCode(code)
       ? new InvalidCredentialsError(message)
       : new Error(message);
   }
@@ -301,6 +309,7 @@ export async function authenticateWithFallback(
   username: string,
   password: string,
   headers?: Record<string, string>,
+  forcePasswordAuth?: boolean,
 ): Promise<{ options: RemoteLoginOptions; activeUrl: string }> {
   const trimmedUrl = url.trim();
   const trimmedFallback = fallbackUrl?.trim();
@@ -311,6 +320,7 @@ export async function authenticateWithFallback(
       username,
       password,
       headers,
+      forcePasswordAuth,
     );
     return { options, activeUrl: trimmedUrl };
   } catch (primaryError) {
@@ -325,6 +335,7 @@ export async function authenticateWithFallback(
         username,
         password,
         headers,
+        forcePasswordAuth,
       );
       return { options, activeUrl: trimmedFallback };
     } catch (fallbackError) {

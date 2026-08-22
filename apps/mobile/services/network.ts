@@ -408,7 +408,7 @@ function probeInternetReachable(): Promise<boolean> {
 // the query cache. Reset our own state first so the next session starts
 // optimistic.
 async function disconnectUnreachable() {
-  // Opt-out (stores/app.ts, default on): when disabled, never force a logout on
+  // Opt-in (stores/app.ts, default off): unless enabled, never force a logout on
   // an unreachable server. Leave serverReachable=false (banner stays "server
   // unreachable", offline/cache mode active) and keep the recovery poll running
   // so the session auto-recovers once the server answers again.
