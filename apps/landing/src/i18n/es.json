@@ -152,6 +152,7 @@
 		"tagline": "Un reproductor de música de código abierto para Android. Compatible con Navidrome, Jellyfin y OpenSubsonic, así como con una biblioteca local.",
 		"product": "Producto",
 		"features": "Características",
+		"integrations": "Integraciones",
 		"download": "Descargar",
 		"changelog": "Registro de cambios",
 		"openSource": "Código abierto",

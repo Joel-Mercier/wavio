@@ -152,6 +152,7 @@
 		"tagline": "Un lecteur de musique open source pour Android. Compatible avec Navidrome, Jellyfin et OpenSubsonic ou une bibliothèque locale.",
 		"product": "Produit",
 		"features": "Fonctionnalités",
+		"integrations": "Intégrations",
 		"download": "Télécharger",
 		"changelog": "Journal des modifications",
 		"openSource": "Open source",

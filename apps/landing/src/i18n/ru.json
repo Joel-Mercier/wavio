@@ -152,6 +152,7 @@
 		"tagline": "Музыкальный Android-плеер с открытым кодом. Совместим с Navidrome, Jellyfin, OpenSubsonic и локальными медиатеками.",
 		"product": "Продукт",
 		"features": "Возможности",
+		"integrations": "Интеграции",
 		"download": "Скачать",
 		"changelog": "История изменений",
 		"openSource": "Открытый исходный код",
