@@ -26,9 +26,9 @@
 		"lead": "Un reproductor de música para Android compatible con los servidores Navidrome, Jellyfin y OpenSubsonic, así como con una biblioteca local. Diseñado para quienes tienen su propia biblioteca y quieren sentirse como en casa."
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
+		"getItOn": "¡A POR ELLO!",
 		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"githubRelease": "Consíguelo en GitHub"
 	},
 	"highlightsLabel": "Lo que obtienes",
 	"highlights": [
@@ -107,34 +107,34 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "Se conecta a",
+		"headingPre": "Trae el resto de",
+		"headingEm": "tu estantería.",
+		"sub": "Wavio se integra con los servicios que ya utilizas. Tus etiquetas, tus reproducciones, tus descargas y tus recomendaciones: todo ello se gestiona sin salir de la aplicación.",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "Metadatos",
+				"desc": "Corrige las etiquetas de un álbum local sin salir de la aplicación. Revisa cada cambio antes de que se guarde en el disco, o establece un umbral de confianza y deja que Wavio aplique aquellos de los que esté seguro."
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "Historial de reproducción",
+				"desc": "Registra lo que escuchas y luego obtén estadísticas de escucha, así como las listas de reproducción «Daily Jams», «Weekly Jams» y «Weekly Exploration», creadas a partir de ellas."
 			},
 			"lidarr": {
-				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"role": "Descargas",
+				"desc": "Busca un álbum y envíaselo a Lidarr desde la aplicación. Sigue el proceso de descarga en la pantalla «Descargas» y reprodúcelo en cuanto aparezca en tu biblioteca."
 			},
 			"soulsync": {
-				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"role": "Descargas",
+				"desc": "Añade canciones sueltas directamente a tu biblioteca musical, con un seguimiento en tiempo real del progreso y un historial completo de descargas junto con tus otros programas de descarga."
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "Recomendaciones",
+				"desc": "Similitudes sonoras en tu propia biblioteca. Describe un estado de ánimo y obtén una lista de reproducción, crea una huella a partir de lo que escuchas o empieza por una canción y déjate llevar."
 			},
 			"octo-fiesta": {
 				"role": "Streaming",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "Reproduce una canción que tu servidor no tenga. Octo-Fiesta la recupera al instante de tu biblioteca de Navidrome u OpenSubsonic, por lo que el vacío se llena por sí solo."
 			}
 		}
 	},
