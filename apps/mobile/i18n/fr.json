@@ -1013,10 +1013,10 @@
 							"listens_other": "{{formattedCount}} écoutes",
 							"artistCount_one": "{{count}} artiste",
 							"artistCount_other": "{{count}} artistes",
-							"bucketA11y_one": "{{label}}: {{count}} listen",
-							"bucketA11y_other": "{{label}}: {{count}} listens",
-							"heatmapCellA11y_one": "{{row}} at {{hour}}:00 UTC, {{count}} listen",
-							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
+							"bucketA11y_one": "{{label}}: {{count}} écoute",
+							"bucketA11y_other": "{{label}}: {{count}} écoutes",
+							"heatmapCellA11y_one": "{{row}} à {{hour}}h 00 UTC, {{count}} écoute",
+							"heatmapCellA11y_other": "{{row}} à {{hour}}:00 UTC, {{count}} écoutes"
 						},
 						"createdForYou": {
 							"poweredBy": "Propulsé par ListenBrainz",
