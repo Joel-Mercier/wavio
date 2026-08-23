@@ -107,34 +107,34 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "Se branche sur",
+		"headingPre": "Apportez le reste de",
+		"headingEm": "votre installation",
+		"sub": "Wavio s'intègre aux services que vous utilisez déjà. Vos tags, vos écoutes, vos téléchargements et vos recommandations : tout est géré sans quitter l'application.",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "Métadonnées",
+				"desc": "Corrigez les tags d'un album local sans quitter l'application. Examinez chaque changement avant qu'il ne soit écrit sur le disque, ou définissez un seuil de confiance et laissez Wavio appliquer ceux dont l'application est sûre."
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "Historique d'écoute",
+				"desc": "Enregistrez ce que vous écoutez, puis retrouvez-le sous forme de statistiques d'écoute et dans les playlists « Jams du jour », « Jams de la semaine » et « Découvertes de la semaine » générées à partir de ces données."
 			},
 			"lidarr": {
-				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"role": "Téléchargements",
+				"desc": "Recherchez un album et envoyez-le à Lidarr depuis l'application. Suivez le téléchargement depuis l'écran « Téléchargements » et lancez la lecture dès qu'il apparaît dans votre bibliothèque."
 			},
 			"soulsync": {
-				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"role": "Téléchargements",
+				"desc": "Ajoutez des titres individuels directement à votre bibliothèque musicale, avec un suivi en temps réel et un historique complet des téléchargements, au même titre que vos autres logiciels de téléchargement."
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "Suggestions",
+				"desc": "Similitudes musicales au sein de votre propre bibliothèque. Décrivez une ambiance pour obtenir une playlist, créez un profil musical à partir de vos écoutes, ou partez d'un morceau et laissez-vous guider."
 			},
 			"octo-fiesta": {
 				"role": "Diffusion",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "Lancez un titre que votre serveur ne contient pas. Octo-Fiesta le récupère instantanément depuis votre bibliothèque Navidrome ou OpenSubsonic, comblant ainsi automatiquement le vide."
 			}
 		}
 	},
