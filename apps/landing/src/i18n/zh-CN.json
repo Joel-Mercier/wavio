@@ -26,9 +26,9 @@
 		"lead": "一款 Android 音乐播放器，支持 Navidrome、Jellyfin、OpenSubsonic 及本地音乐库。打造仅属于你的音乐库与归属感。"
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
+		"getItOn": "快来体验吧",
 		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"githubRelease": "在 GitHub 上获取"
 	},
 	"highlightsLabel": "亮点速览",
 	"highlights": [
@@ -107,34 +107,34 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "插入",
+		"headingPre": "把剩下的",
+		"headingEm": "你的置物架。",
+		"sub": "Wavio 可与您正在使用的服务无缝对接。您的标签、播放列表、下载内容和推荐内容，所有操作都无需离开应用即可完成。",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "元数据",
+				"desc": "无需退出应用，即可修正本地相册中的标签。在将更改写入磁盘之前，您可以逐一审核每项更改，或者设置一个置信度阈值，让 Wavio 自动应用那些它确信正确的标签。"
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "收听记录",
+				"desc": "将你播放的歌曲添加到播放记录中，随后即可查看收听统计数据，以及基于这些数据生成的“每日精选”、“每周精选”和“每周探索”播放列表。"
 			},
 			"lidarr": {
-				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"role": "下载",
+				"desc": "在应用中搜索专辑，并将其发送给Lidarr。在“下载中”界面查看下载进度，待专辑进入你的音乐库后即可播放。"
 			},
 			"soulsync": {
-				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"role": "下载",
+				"desc": "将单首歌曲直接添加到您的音乐库中，实时显示下载进度，并可查看完整的下载记录，同时还能查看您其他下载工具的下载情况。"
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "建议",
+				"desc": "在您的个人音乐库中发现音色相似的歌曲。描述一种心情，即可获得一份播放列表；根据您的播放记录生成音乐指纹；或者从一首歌开始，随音乐指引探索更多歌曲。"
 			},
 			"octo-fiesta": {
 				"role": "流媒体设置",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "播放服务器中没有的歌曲。Octo-Fiesta 会通过您的 Navidrome 或 OpenSubsonic 音乐库实时获取该歌曲，从而自动填补空白。"
 			}
 		}
 	},
