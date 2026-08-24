@@ -1334,6 +1334,8 @@
 					"scanMusicLibraryLabel": "Сканировать медиатеку",
 					"scanMusicLibraryDescription": "Запуск повторного сканирования медиатеки на сервере",
 					"scanMusicLibraryAction": "Скан",
+					"scanOnWifiOnlyLabel": "Scan on Wi-Fi only",
+					"scanOnWifiOnlyDescription": "A first scan reads tags from every file on the share, which can use a lot of mobile data.",
 					"scanMusicLibrarySuccessDescription": "Сканирование запущено",
 					"scanMusicLibraryErrorDescription": "Не удалось запустить сканирование",
 					"scanMusicLibraryAdminRequiredDescription": "Для запуска сканирования требуются права администратора на вашем сервере",
@@ -1530,21 +1532,18 @@
 				},
 				"podcastSettings": {
 					"title": "Настройки подкастов",
-					"configurePodcastsLabel": "Настроить подкасты",
-					"configurePodcastsDescription": "Настрой подкасты для прослушивания через приложение",
-					"configurePodcastsAction": "Настроить",
+					"configurePodcastsDescription": "Connect a Taddy account to discover and stream podcasts from the app.",
 					"configurePodcastsSuccessMessage": "Подкасты успешно настроены",
 					"configurePodcastsErrorMessage": "Произошла ошибка при настройке подкастов",
-					"podcastConfigFormTitle": "Настройка подкастов",
-					"podcastConfigFormDescription": "Введи свой ID пользователя и API-ключ для настройки подкастов",
+					"testAndSaveAction": "Проверить и сохранить",
 					"userId": "ID пользователя",
 					"userIdPlaceholder": "ID пользователя",
 					"apiKey": "API-ключ",
 					"apiKeyPlaceholder": "API-ключ",
-					"languagePlaceholder": "Выбери язык",
-					"countryPlaceholder": "Выбери страну",
-					"apiStatusLabel": "Статус API",
-					"apiStatusDescription": "Отображает статус API для твоих подкастов",
+					"countryLabel": "Страна",
+					"countryDescription": "Country used to tailor podcast recommendations and charts.",
+					"languageLabel": "Язык приложения",
+					"languageDescription": "Language used to tailor podcast recommendations and charts.",
 					"statuses": {
 						"active": "Активен",
 						"inactive": "Неактивен"
@@ -1553,9 +1552,7 @@
 					"removePodcastConfigConfirmLabel": "Удалить конфигурацию подкастов",
 					"removePodcastConfigConfirmDescription": "Удаление конфигурации приведет к потере доступа к подкастам. Подтверди действие, чтобы продолжить.",
 					"removePodcastConfigSuccessMessage": "Конфигурация подкастов удалена",
-					"getApiKeyLabel": "Получить API-ключ Taddy",
-					"getApiKeyDescription": "Зарегистрируйся на taddy.org, чтобы получить ID пользователя и API-ключ, необходимые для настройки подкастов.",
-					"getApiKeyAction": "taddy.org/developers/podcast-api"
+					"getApiKeyAction": "Get a Taddy user ID and API key on taddy.org"
 				}
 			},
 			"internetRadioStations": {
@@ -1774,6 +1771,9 @@
 			},
 			"player": {
 				"title": "Играет сейчас",
+				"notices": {
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+				},
 				"original": "Оригинал",
 				"playingFrom": {
 					"album": "Из альбома",
@@ -2103,14 +2103,33 @@
 			},
 			"localIndexing": {
 				"title": "Создание медиатеки",
+				"notificationText": "Reading your music files. You can keep using your phone.",
 				"listing": "Чтение файлов из папок…",
 				"indexing": "Извлечение метаданных…",
 				"pruning": "Очистка…",
 				"finishing": "Почти готово…",
 				"countLabel": "{{processed}} из {{total}} треков",
 				"errorTitle": "Не удалось создать медиатеку",
+				"errors": {
+					"meteredNetwork": "Scanning is set to Wi-Fi only, and you're on mobile data. Connect to Wi-Fi, or turn off the Wi-Fi-only setting in Settings → Music library.",
+					"auth": "Your username or password was rejected. Check the credentials saved for this server.",
+					"notFound": "The music folder couldn't be found. Check the folder path saved for this server.",
+					"unreachable": "Couldn't reach the server. Check that it's switched on and that you're on the same network.",
+					"notSupported": "The server answered, but not in a way Wavio understands. Check the server address.",
+					"server": "The server reported an error while listing your files.",
+					"generic": "Something went wrong while building your library."
+				},
 				"retry": "Повторить",
-				"continue": "Продолжить"
+				"continue": "Продолжить",
+				"stop": "Stop scanning",
+				"folderCountLabel_one": "{{count}} folder scanned",
+				"folderCountLabel_few": "{{count}} folders scanned",
+				"folderCountLabel_many": "{{count}} folders scanned",
+				"folderCountLabel_other": "{{count}} folders scanned",
+				"partialScanWarning_one": "{{count}} folder couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_few": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_many": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_other": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable."
 			},
 			"serverSwitch": {
 				"title": "Смена сервера",
@@ -2128,7 +2147,10 @@
 				"serverTypeNavidrome": "Navidrome",
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
-				"serverTypeLocal": "Локальная медиатека",
+				"serverTypeLibrary": "My library",
+				"serverTypeWebdav": "WebDAV share",
+				"serverTypeSmb": "SMB share",
+				"libraryTabLocal": "Это устройство",
 				"urlPlaceholder": "URL сервера",
 				"fallbackUrlPlaceholder": "URL резервного сервера (необязательно)",
 				"usernamePlaceholder": "Имя пользователя",
@@ -2151,6 +2173,18 @@
 				"localNoPaths": "Для продолжения добавь хотя бы одну папку",
 				"localRemovePath": "Удалить папку",
 				"localSetupHelp": "Как работает локальная медиатека?",
+				"libraryPathPlaceholder": "Music folder on the share (optional)",
+				"libraryPathHint": "Leave empty to scan the whole share. Example: /Music",
+				"webdavNotAShare": "That address answered, but it isn't a WebDAV share. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavMethodBlocked": "That server refused the WebDAV request. WebDAV may be switched off, or a reverse proxy in front of it may be blocking PROPFIND requests.",
+				"webdavPathNotFound": "That address answered, but there's nothing at that path. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavRedirected": "That address redirected somewhere else, which usually means a sign-in page is in front of the share. Point Wavio straight at the WebDAV URL.",
+				"smbUrlPlaceholder": "host/ShareName",
+				"smbFallbackUrlPlaceholder": "Fallback host/ShareName (optional)",
+				"smbUrlInvalid": "Enter the share as smb://host/ShareName — for example smb://192.168.1.10/Music",
+				"smbShareNotFound": "Connected, but there's no share called \"{{share}}\" on that host. Check the share name.",
+				"smbUnreachable": "Couldn't reach that host on port {{port}}. Check the address, and that the share uses SMB2 or newer — SMB1 isn't supported.",
+				"smbDialectUnsupported": "That host refused the connection because it requires SMB 3. On iPhone and iPad, Wavio speaks SMB 2.1 — allow SMB 2 on the share to connect.",
 				"localInfoTitle": "Локальная медиатека",
 				"localInfoFormatsTitle": "Поддерживаемые форматы",
 				"localInfoFormats": "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",
