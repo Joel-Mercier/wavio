@@ -1,16 +1,13 @@
-// Unit tests for the pure raw-frame parsers in `modules/audio-metadata/rawTags`.
-// They operate on hand-built byte buffers, so they exercise the ID3v2 / Vorbis
-// frame decoding without any device or `expo-file-system` access. The module
-// imports `expo-file-system` at the top for `readRawTags`, which these tests
-// don't touch — mock it so the import resolves under jest.
-jest.mock("expo-file-system", () => ({
-  File: class {},
-  FileMode: { ReadOnly: "r" },
-}));
-
+// Unit tests for `modules/audio-metadata/rawTags`. They operate on hand-built
+// byte buffers, so they exercise the ID3v2 / Vorbis frame decoding without any
+// device access. The module takes its I/O as a `ByteReader` and imports nothing,
+// so `readRawTags` itself is exercised here too — against a fake reader that
+// records which ranges were requested.
 import {
+  type ByteReader,
   parseId3Frames,
   parseVorbisComments,
+  readRawTags,
 } from "@/modules/audio-metadata/rawTags";
 
 const utf8 = (s: string): number[] => [...Buffer.from(s, "utf8")];
@@ -252,5 +249,180 @@ describe("parseVorbisComments", () => {
   it("recovers the year from a DATE comment, ignoring the day/month", () => {
     const bytes = buildVorbis("v", ["DATE=2019-03-08"]);
     expect(parseVorbisComments(bytes).year).toBe(2019);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readRawTags — container detection and the read ranges it asks for
+// ---------------------------------------------------------------------------
+
+/** A reader over a fixed buffer that records every requested range. */
+const fakeReader = (bytes: Uint8Array) => {
+  const ranges: [number, number][] = [];
+  const reader: ByteReader = {
+    read(offset, length) {
+      ranges.push([offset, length]);
+      return Promise.resolve(bytes.subarray(offset, offset + length));
+    },
+  };
+  return { reader, ranges };
+};
+
+/** A complete ID3v2.4-tagged file: header, tag body, then fake audio. */
+const buildId3File = (frames: number[][], audioBytes = 4096): Uint8Array => {
+  const body = frames.flat();
+  return Uint8Array.from([
+    ...utf8("ID3"),
+    0x04,
+    0x00, // v2.4.0
+    0x00, // no flags
+    ...synchsafe(body.length),
+    ...body,
+    ...new Array(audioBytes).fill(0xff),
+  ]);
+};
+
+/**
+ * A FLAC file: "fLaC", a padding block, the comment block, then fake audio.
+ * `paddingBytes` sizes the leading block, which is how a test puts the comment
+ * block beyond the speculative window `readFlac` opens with.
+ */
+const buildFlacFile = (
+  comment: Uint8Array,
+  audioBytes = 4096,
+  paddingBytes = 16,
+): Uint8Array => {
+  const header = Uint8Array.from([
+    ...utf8("fLaC"),
+    0x01, // PADDING (type 1), not last
+    (paddingBytes >> 16) & 0xff,
+    (paddingBytes >> 8) & 0xff,
+    paddingBytes & 0xff,
+  ]);
+  const commentHeader = Uint8Array.from([
+    0x84, // VORBIS_COMMENT (type 4), last block
+    (comment.length >> 16) & 0xff,
+    (comment.length >> 8) & 0xff,
+    comment.length & 0xff,
+  ]);
+  // Assembled by offset rather than spread: the padding alone can run to tens
+  // of thousands of bytes, which is more than an argument list wants to carry.
+  const size =
+    header.length +
+    paddingBytes +
+    commentHeader.length +
+    comment.length +
+    audioBytes;
+  const file = new Uint8Array(size);
+  let at = 0;
+  const put = (bytes: Uint8Array) => {
+    file.set(bytes, at);
+    at += bytes.length;
+  };
+  put(header);
+  at += paddingBytes; // already zero-filled
+  put(commentHeader);
+  put(comment);
+  file.fill(0xff, at);
+  return file;
+};
+
+describe("readRawTags", () => {
+  it("reads an ID3v2 tag in two ranges and never touches the audio", async () => {
+    const frames = [
+      id3Frame(
+        "TPE1",
+        [0x03, ...utf8("Artist A"), NUL, ...utf8("Artist B")],
+        4,
+      ),
+    ];
+    const file = buildId3File(frames);
+    const { reader, ranges } = fakeReader(file);
+
+    const result = await readRawTags(reader);
+
+    expect(result.artists).toEqual(["Artist A", "Artist B"]);
+    // One 10-byte read covers signature + header, then exactly the declared tag
+    // region. Two round trips is what makes this affordable over a network share.
+    expect(ranges).toHaveLength(2);
+    expect(ranges[0]).toEqual([0, 10]);
+    expect(ranges[1][0]).toBe(10);
+    // The audio payload starts after the tag; nothing may read into it.
+    const tagEnd = 10 + ranges[1][1];
+    expect(tagEnd).toBeLessThan(file.length);
+  });
+
+  it("walks FLAC metadata blocks and reads only the comment block", async () => {
+    const comment = buildVorbis("ref", [
+      "ARTIST=A",
+      "REPLAYGAIN_TRACK_GAIN=-6.6 dB",
+    ]);
+    const file = buildFlacFile(comment);
+    const { reader, ranges } = fakeReader(file);
+
+    const result = await readRawTags(reader);
+
+    expect(result.artists).toEqual(["A"]);
+    expect(result.replayGain?.trackGain).toBeCloseTo(-6.6);
+    // Signature+header, then one speculative window that the whole block walk
+    // is served out of. Two round trips is what makes this affordable over a
+    // network share, where each one costs an HTTP request plus an SMB open.
+    expect(ranges).toEqual([
+      [0, 10],
+      [0, 64 * 1024],
+    ]);
+  });
+
+  it("falls back to ranged reads when the comment block is past the window", async () => {
+    const comment = buildVorbis("ref", ["ARTIST=Far Out"]);
+    // A seektable big enough to push VORBIS_COMMENT beyond the 64 KB window.
+    const seektable = 70 * 1024;
+    const file = buildFlacFile(comment, 4096, seektable);
+    const { reader, ranges } = fakeReader(file);
+
+    const result = await readRawTags(reader);
+
+    // Correct answer, and the walk stepped outside the window to get it rather
+    // than giving up on what the speculative read happened to cover.
+    expect(result.artists).toEqual(["Far Out"]);
+    const commentHeader = 4 + 4 + seektable;
+    expect(ranges).toEqual([
+      [0, 10],
+      [0, 64 * 1024],
+      [commentHeader, 4],
+      [commentHeader + 4, comment.length],
+    ]);
+  });
+
+  it("returns an empty object for an unrecognised container", async () => {
+    const { reader } = fakeReader(Uint8Array.from(utf8("RIFFxxxxWAVE")));
+    expect(await readRawTags(reader)).toEqual({});
+  });
+
+  it("returns an empty object for a file shorter than a header", async () => {
+    const { reader } = fakeReader(Uint8Array.from([0x49, 0x44]));
+    expect(await readRawTags(reader)).toEqual({});
+  });
+
+  it("refuses a declared tag size beyond the sanity cap", async () => {
+    // 8 MB declared, over the 4 MB MAX_TAG_BYTES valve.
+    const header = Uint8Array.from([
+      ...utf8("ID3"),
+      0x04,
+      0x00,
+      0x00,
+      ...synchsafe(8 * 1024 * 1024),
+    ]);
+    const { reader, ranges } = fakeReader(header);
+    expect(await readRawTags(reader)).toEqual({});
+    // Bailed on the header alone — never asked for the bogus region.
+    expect(ranges).toHaveLength(1);
+  });
+
+  it("swallows a reader failure rather than breaking extraction", async () => {
+    const reader: ByteReader = {
+      read: () => Promise.reject(new Error("connection reset")),
+    };
+    expect(await readRawTags(reader)).toEqual({});
   });
 });

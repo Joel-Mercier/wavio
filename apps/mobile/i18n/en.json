@@ -17,6 +17,7 @@
 				"random": "Random",
 				"randomSongs": "Random songs",
 				"artists": "Artists",
+				"createdForYou": "Created for you",
 				"yourPlaylists": "Your playlists",
 				"starred": "Your favorites",
 				"songsByGenre": "{{genre}} songs",
@@ -944,6 +945,97 @@
 							"audiomuse": "AudioMuse-AI",
 							"audiomuseDescription": "AudioMuse-AI creates the playlist on your server, using the credentials it was set up with. It always adds \"_instant\" to the end of the name you choose."
 						}
+					},
+					"listenbrainz": {
+						"title": "ListenBrainz",
+						"description": "Send the music you play to your ListenBrainz history",
+						"signedInAs": "Signed in as {{userName}}",
+						"getTokenAction": "Get your token on listenbrainz.org",
+						"tokenLabel": "User token",
+						"tokenPlaceholder": "Paste your ListenBrainz token",
+						"baseUrlLabel": "Server URL",
+						"baseUrlDescription": "Leave empty to use listenbrainz.org. Set this only if you run your own ListenBrainz-compatible server.",
+						"connectAction": "Connect",
+						"connectionSuccess": "Connected as {{userName}}",
+						"connectionFailed": "Couldn't reach ListenBrainz. Check your connection and the server URL.",
+						"tokenRejected": "ListenBrainz rejected this token.",
+						"removedMessage": "ListenBrainz disconnected",
+						"scrobbling": {
+							"title": "Scrobbling",
+							"serverWarning": "Your music server is already sending your plays to ListenBrainz. Turning this on as well will count every play twice.",
+							"enabledLabel": "Scrobble my plays",
+							"enabledDescription": "A track is submitted once you've heard half of it, or four minutes, whichever comes first. Plays made offline are sent the next time you have a connection.",
+							"nowPlayingLabel": "Show what I'm playing",
+							"nowPlayingDescription": "Updates the “playing now” entry on your ListenBrainz profile while a track plays."
+						},
+						"queue": {
+							"pendingLabel": "Waiting to be sent",
+							"pendingDescription_one": "{{count}} play hasn't reached ListenBrainz yet.",
+							"pendingDescription_other": "{{count}} plays haven't reached ListenBrainz yet.",
+							"pendingDescriptionEmpty": "Everything you've played has been sent.",
+							"syncAction": "Send now",
+							"syncingAction": "Sending…"
+						},
+						"stats": {
+							"title": "Your listening",
+							"entryLabel": "Your listening",
+							"entryDescription": "Your top artists, albums and tracks, worked out by ListenBrainz",
+							"listens_one": "{{formattedCount}} listen",
+							"listens_other": "{{formattedCount}} listens",
+							"ranges": {
+								"week": "Week",
+								"month": "Month",
+								"year": "Year",
+								"all_time": "All time"
+							},
+							"topArtists": "Top artists",
+							"topAlbums": "Top albums",
+							"topTracks": "Top tracks",
+							"listeningActivity": "Listening activity",
+							"dailyActivity": "Daily activity",
+							"dailyActivityDescription": "Listens by weekday and hour of the day, added up over the selected period.",
+							"genreActivity": "Genre activity",
+							"genreActivityDescription": "Which hours of the day you play each genre, added up over the selected period.",
+							"hourAxis": "Hour of the day (UTC, as ListenBrainz records it)",
+							"musicByDecade": "Music by decade",
+							"musicByDecadeDescription": "When the music you played was released — not when you played it.",
+							"decade": "{{decade}}s",
+							"artistEvolution": "Artist evolution",
+							"artistEvolutionDescription": "Your top artists over time. Each column is a day, a month or a year, depending on the period selected.",
+							"artistOrigins": "Artist origins",
+							"otherArtists": "Others",
+							"artistCount_one": "{{count}} artist",
+							"artistCount_other": "{{count}} artists",
+							"notComputed": "Not worked out yet",
+							"notComputedDescription": "ListenBrainz recalculates these about once a day, and a newly connected account takes a while to show up. Shorter periods are often the last to appear.",
+							"noListens": "No listens in this period.",
+							"unreachable": "Couldn't reach ListenBrainz.",
+							"lastUpdated": "Updated {{time}} ago",
+							"less": "Less",
+							"more": "More",
+							"bucketA11y_one": "{{label}}: {{count}} listen",
+							"bucketA11y_other": "{{label}}: {{count}} listens",
+							"heatmapCellA11y_one": "{{row}} at {{hour}}:00 UTC, {{count}} listen",
+							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
+						},
+						"createdForYou": {
+							"poweredBy": "Powered by ListenBrainz",
+							"dailyJams": "Daily Jams",
+							"dailyJamsDescription": "Music you already love, refreshed every day",
+							"weeklyJams": "Weekly Jams",
+							"weeklyJamsDescription": "Your favourites from the past week",
+							"weeklyExploration": "Weekly Exploration",
+							"weeklyExplorationDescription": "Artists you haven't heard yet, picked for you",
+							"empty": "ListenBrainz hasn't built you any playlists yet. They appear once you've been listening for a while.",
+							"offline": "Connect to your server to match these tracks with your library.",
+							"unavailable": "Couldn't load this playlist from ListenBrainz.",
+							"missing_one": "{{count}} track isn't in your library",
+							"missing_other": "{{count}} tracks aren't in your library",
+							"saveOnlyMatched_one": "Only the {{count}} track in your library will be saved.",
+							"saveOnlyMatched_other": "Only the {{count}} tracks in your library will be saved.",
+							"queued_one": "{{count}} song added to the queue",
+							"queued_other": "{{count}} songs added to the queue"
+						}
 					}
 				},
 				"downloaders": {
@@ -1178,6 +1270,8 @@
 					"scanMusicLibraryLabel": "Scan music library",
 					"scanMusicLibraryDescription": "Intitiates a rescan of the media libraries on your server",
 					"scanMusicLibraryAction": "Scan",
+					"scanOnWifiOnlyLabel": "Scan on Wi-Fi only",
+					"scanOnWifiOnlyDescription": "A first scan reads tags from every file on the share, which can use a lot of mobile data.",
 					"scanMusicLibrarySuccessDescription": "Scan started successfully",
 					"scanMusicLibraryErrorDescription": "An error occurred while starting a scan",
 					"scanMusicLibraryAdminRequiredDescription": "Starting a scan requires administrator rights on your server",
@@ -1370,21 +1464,18 @@
 				},
 				"podcastSettings": {
 					"title": "Podcasts",
-					"configurePodcastsLabel": "Configure podcasts",
-					"configurePodcastsDescription": "Configure your podcasts to stream from the app",
-					"configurePodcastsAction": "Configure",
+					"configurePodcastsDescription": "Connect a Taddy account to discover and stream podcasts from the app.",
 					"configurePodcastsSuccessMessage": "Podcasts successfully configured",
 					"configurePodcastsErrorMessage": "An error occurred while configuring the podcasts",
-					"podcastConfigFormTitle": "Configure podcasts",
-					"podcastConfigFormDescription": "Enter your user ID and API key to configure your podcasts",
+					"testAndSaveAction": "Test & save",
 					"userId": "User ID",
 					"userIdPlaceholder": "Enter your user ID",
 					"apiKey": "API key",
 					"apiKeyPlaceholder": "Enter your API key",
-					"languagePlaceholder": "Select your language",
-					"countryPlaceholder": "Select your country",
-					"apiStatusLabel": "API status",
-					"apiStatusDescription": "Indicates the API status of your podcasts",
+					"countryLabel": "Country",
+					"countryDescription": "Country used to tailor podcast recommendations and charts.",
+					"languageLabel": "Language",
+					"languageDescription": "Language used to tailor podcast recommendations and charts.",
 					"statuses": {
 						"active": "Active",
 						"inactive": "Inactive"
@@ -1393,9 +1484,7 @@
 					"removePodcastConfigConfirmLabel": "Remove podcast configuration",
 					"removePodcastConfigConfirmDescription": "Removing podcast configuration will remove access to your podcasts. Please confirm if you want to proceed.",
 					"removePodcastConfigSuccessMessage": "Podcast configuration removed",
-					"getApiKeyLabel": "Get a Taddy API key",
-					"getApiKeyDescription": "Sign up on taddy.org to get the user ID and API key needed to configure podcasts.",
-					"getApiKeyAction": "taddy.org/developers/podcast-api"
+					"getApiKeyAction": "Get a Taddy user ID and API key on taddy.org"
 				}
 			},
 			"internetRadioStations": {
@@ -1601,6 +1690,9 @@
 			},
 			"player": {
 				"title": "Playing now",
+				"notices": {
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+				},
 				"original": "Original",
 				"playingFrom": {
 					"album": "Playing from album",
@@ -1613,6 +1705,7 @@
 					"folder": "Playing from folder",
 					"similar": "Playing from similar songs",
 					"audiomuse": "Playing from AudioMuse-AI",
+					"listenbrainz": "Playing from ListenBrainz",
 					"albumList": "Playing from albums",
 					"playlistList": "Playing from playlists"
 				},
@@ -1777,6 +1870,8 @@
 				"notAvailableOfflineMessage": "Not available offline. Download it to listen without a connection.",
 				"advancedSettings": "Advanced settings",
 				"fallbackUrlHelp": "Used when the main URL can't be reached. Must point to the same server.",
+				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
 				"cancel": "Cancel",
 				"close": "Close",
 				"create": "Create",
@@ -1878,21 +1973,46 @@
 					"bugReport": "Report a bug",
 					"changelog": "Changelog"
 				},
-				"fileSizes": ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+				"fileSizes": [
+					"bytes",
+					"KB",
+					"MB",
+					"GB",
+					"TB",
+					"PB",
+					"EB",
+					"ZB",
+					"YB"
+				]
 			},
 			"localLibrary": {
 				"unsupported": "The local library doesn't support this operation"
 			},
 			"localIndexing": {
 				"title": "Building your library",
+				"notificationText": "Reading your music files. You can keep using your phone.",
 				"listing": "Reading files from your folders…",
 				"indexing": "Extracting metadata…",
 				"pruning": "Cleaning up…",
 				"finishing": "Almost done…",
 				"countLabel": "{{processed}} of {{total}} tracks",
+				"folderCountLabel_one": "{{count}} folder scanned",
+				"folderCountLabel_other": "{{count}} folders scanned",
+				"partialScanWarning_one": "{{count}} folder couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_other": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
 				"errorTitle": "Couldn't build your library",
+				"errors": {
+					"meteredNetwork": "Scanning is set to Wi-Fi only, and you're on mobile data. Connect to Wi-Fi, or turn off the Wi-Fi-only setting in Settings → Music library.",
+					"auth": "Your username or password was rejected. Check the credentials saved for this server.",
+					"notFound": "The music folder couldn't be found. Check the folder path saved for this server.",
+					"unreachable": "Couldn't reach the server. Check that it's switched on and that you're on the same network.",
+					"notSupported": "The server answered, but not in a way Wavio understands. Check the server address.",
+					"server": "The server reported an error while listing your files.",
+					"generic": "Something went wrong while building your library."
+				},
 				"retry": "Retry",
-				"continue": "Continue anyway"
+				"continue": "Continue anyway",
+				"stop": "Stop scanning"
 			},
 			"serverSwitch": {
 				"title": "Switching server",
@@ -1910,7 +2030,10 @@
 				"serverTypeNavidrome": "Navidrome",
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
-				"serverTypeLocal": "Local library",
+				"serverTypeLibrary": "My library",
+				"serverTypeWebdav": "WebDAV share",
+				"serverTypeSmb": "SMB share",
+				"libraryTabLocal": "This device",
 				"urlPlaceholder": "Enter server URL",
 				"fallbackUrlPlaceholder": "Fallback server URL (optional)",
 				"usernamePlaceholder": "Enter username",
@@ -1933,6 +2056,18 @@
 				"localNoPaths": "Add at least one folder to continue",
 				"localRemovePath": "Remove folder",
 				"localSetupHelp": "How does the local library work?",
+				"libraryPathPlaceholder": "Music folder on the share (optional)",
+				"libraryPathHint": "Leave empty to scan the whole share. Example: /Music",
+				"webdavNotAShare": "That address answered, but it isn't a WebDAV share. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavMethodBlocked": "That server refused the WebDAV request. WebDAV may be switched off, or a reverse proxy in front of it may be blocking PROPFIND requests.",
+				"webdavPathNotFound": "That address answered, but there's nothing at that path. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavRedirected": "That address redirected somewhere else, which usually means a sign-in page is in front of the share. Point Wavio straight at the WebDAV URL.",
+				"smbUrlPlaceholder": "host/ShareName",
+				"smbFallbackUrlPlaceholder": "Fallback host/ShareName (optional)",
+				"smbUrlInvalid": "Enter the share as smb://host/ShareName — for example smb://192.168.1.10/Music",
+				"smbShareNotFound": "Connected, but there's no share called \"{{share}}\" on that host. Check the share name.",
+				"smbUnreachable": "Couldn't reach that host on port {{port}}. Check the address, and that the share uses SMB2 or newer — SMB1 isn't supported.",
+				"smbDialectUnsupported": "That host refused the connection because it requires SMB 3. On iPhone and iPad, Wavio speaks SMB 2.1 — allow SMB 2 on the share to connect.",
 				"localInfoTitle": "Local library",
 				"localInfoFormatsTitle": "Supported formats",
 				"localInfoFormats": "Wavio scans the folders you select for MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA and AIFF files.",

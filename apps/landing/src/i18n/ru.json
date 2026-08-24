@@ -106,6 +106,38 @@
 			"desc": "Управляй музыкой прямо с главного экрана. Текущий трек, недавние треки — всегда под рукой. Не нужно лишний раз открывать приложение"
 		}
 	},
+	"integrations": {
+		"tag": "Plugs into",
+		"headingPre": "Bring the rest of",
+		"headingEm": "your rack.",
+		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"items": {
+			"musicbrainz": {
+				"role": "Metadata",
+				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+			},
+			"listenbrainz": {
+				"role": "Listening history",
+				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+			},
+			"lidarr": {
+				"role": "Downloads",
+				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+			},
+			"soulsync": {
+				"role": "Downloads",
+				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+			},
+			"audiomuse-ai": {
+				"role": "Recommendations",
+				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+			},
+			"octo-fiesta": {
+				"role": "Стриминг",
+				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+			}
+		}
+	},
 	"showcase": {
 		"headingPre": "Всё продумано",
 		"headingEm": "до мелочей.",

@@ -59,27 +59,24 @@ beforeEach(() => {
 });
 
 describe("podcasts store - config", () => {
-  it("setTaddyPodcastsConfig updates all fields", () => {
-    get().setTaddyPodcastsConfig({
-      apiKey: "k",
-      userId: "u",
-      language: "FRENCH" as any,
-      country: "FRANCE" as any,
-    });
+  it("setTaddyPodcastsCredentials updates apiKey and userId", () => {
+    get().setTaddyPodcastsCredentials({ apiKey: "k", userId: "u" });
     const s = get();
     expect(s.taddyPodcastsApiKey).toBe("k");
     expect(s.taddyPodcastsUserId).toBe("u");
+  });
+
+  it("setTaddyPodcastsCredentials leaves language and country untouched", () => {
+    get().setTaddyPodcastsLanguage("FRENCH" as any);
+    get().setTaddyPodcastsCountry("FRANCE" as any);
+    get().setTaddyPodcastsCredentials({ apiKey: "k", userId: "u" });
+    const s = get();
     expect(s.taddyPodcastsLanguage).toBe("FRENCH");
     expect(s.taddyPodcastsCountry).toBe("FRANCE");
   });
 
   it("clearTaddyPodcastsConfig clears apiKey and userId", () => {
-    get().setTaddyPodcastsConfig({
-      apiKey: "k",
-      userId: "u",
-      language: "ENGLISH" as any,
-      country: "UNITED_STATES_OF_AMERICA" as any,
-    });
+    get().setTaddyPodcastsCredentials({ apiKey: "k", userId: "u" });
     get().clearTaddyPodcastsConfig();
     expect(get().taddyPodcastsApiKey).toBe("");
     expect(get().taddyPodcastsUserId).toBe("");

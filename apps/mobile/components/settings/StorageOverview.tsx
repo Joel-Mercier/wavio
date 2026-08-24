@@ -8,6 +8,7 @@ import { VStack } from "@/components/ui/vstack";
 import { getPersistedCacheSize } from "@/config/queryClient";
 import { useTotalDownloadSize } from "@/hooks/offline";
 import { useLocalLibrarySize } from "@/hooks/useLocalLibrarySize";
+import { filesAreOnDeviceType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
 import useTrackCache from "@/stores/trackCache";
 import { niceBytes } from "@/utils/fileSize";
@@ -30,7 +31,7 @@ export default function StorageOverview({
   refreshToken,
 }: StorageOverviewProps) {
   const { t } = useTranslation();
-  const isLocal = useAuthBase((s) => s.serverType === "local");
+  const filesOnDevice = useAuthBase((s) => filesAreOnDeviceType(s.serverType));
   const downloadsBytes = useTotalDownloadSize();
   const libraryBytes = useLocalLibrarySize();
   // Reactive, unlike the persisted-query-cache reading below: the prefetch cache
@@ -44,9 +45,10 @@ export default function StorageOverview({
     const total = Paths.totalDiskSpace || 0;
     const available = Paths.availableDiskSpace || 0;
     const cacheBytes = getPersistedCacheSize();
-    // Local mode has no Wavio downloads; the imported library files are the
-    // app-attributable chunk of used disk instead, so carve them out of "other".
-    const firstSegment: Segment = isLocal
+    // A library whose files are already on the device has no Wavio downloads;
+    // the imported files are the app-attributable chunk of used disk instead,
+    // so carve them out of "other".
+    const firstSegment: Segment = filesOnDevice
       ? {
           key: "library",
           label: t("app.settings.storageSettings.importedLibrary"),
@@ -92,7 +94,14 @@ export default function StorageOverview({
       },
     ];
     return { total, segments };
-  }, [downloadsBytes, libraryBytes, prefetchBytes, isLocal, refreshToken, t]);
+  }, [
+    downloadsBytes,
+    libraryBytes,
+    prefetchBytes,
+    filesOnDevice,
+    refreshToken,
+    t,
+  ]);
 
   if (total <= 0) return null;
 

@@ -24,10 +24,10 @@ import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { useConnectionType } from "@/hooks/useIsOnline";
 import { trackTranscodeInfo } from "@/services/backend/streaming";
 import useApp from "@/stores/app";
-import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
 import useTrackCache from "@/stores/trackCache";
@@ -186,10 +186,11 @@ export default function AudioQualityLine({
   useApp((s) => s.maxBitRate);
   useApp((s) => s.cellularMaxBitRate);
   useConnectionType();
-  const serverType = useAuthBase((s) => s.serverType);
-  // Every remote backend transcodes server-side; only the on-device library
-  // plays untouched files off disk, so it never shows a transcode.
-  const isRemote = serverType !== "local";
+  // Whether the *backend* can transcode, not whether the files are remote: a
+  // network file share is remote and still serves the bytes untouched, so it can
+  // no more show a transcode than the on-device library can. This is the same
+  // set of backends services/player.ts calls `isServerTranscodeBackend`.
+  const isRemote = useCapabilities().streamFormatSelection;
   // A downloaded track plays straight off disk (see resolveTrackUrl in
   // services/player.ts) whether or not the device is online, so the streaming
   // settings say nothing about it — but the file itself may well be a transcode:

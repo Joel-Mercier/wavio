@@ -14,7 +14,8 @@
       "requireFullScreen": true,
       "infoPlist": {
         "UIBackgroundModes": ["audio"],
-        "AppStoreID": ""
+        "AppStoreID": "",
+        "NSLocalNetworkUsageDescription": "Allow $(PRODUCT_NAME) to reach music servers and network shares on your local network."
       },
       "icon": {
         "dark": "./assets/images/ios-dark.png",

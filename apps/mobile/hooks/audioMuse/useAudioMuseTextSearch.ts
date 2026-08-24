@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { retryUnlessClientError } from "@/services/audioMuse";
 import { lyricsSearch, soundSearch } from "@/services/audioMuse/search";
+import { retryUnlessClientError } from "@/services/retry";
 import useAudioMuse from "@/stores/audioMuse";
 
 // AudioMuse's own floor moved from 3 characters to 1 across releases, so the

@@ -23,8 +23,14 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
-import UrlInputField from "@/components/forms/UrlInputField";
+import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
+import ServerTypeSelector from "@/components/forms/ServerTypeSelector";
+import UrlInputField, {
+  protocolsForServerType,
+  realignUrlProtocol,
+} from "@/components/forms/UrlInputField";
 import LoginBackground from "@/components/LoginBackground";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
@@ -76,7 +82,13 @@ import {
   authenticateWithFallback,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
+import {
+  isNetworkShareType,
+  speaksHttpType,
+  usesSubsonicAuthType,
+} from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
+import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved, samePaths } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
@@ -86,6 +98,7 @@ import useServers, {
   cleanOptionalUrl,
   headerRecordToRows,
   headerRowsToRecord,
+  isBlankUrlInput,
   type Server,
   type ServerType,
   type ServerUser,
@@ -195,9 +208,11 @@ export default function LoginScreen() {
       url: preselectedServer?.url ?? "https://",
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
       paths: (preselectedServer?.paths ?? []) as string[],
+      libraryPath: preselectedServer?.libraryPath ?? "",
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
       headers: headerRecordToRows(preselectedServer?.headers),
+      plainPasswordAuth: !!preselectedServer?.plainPasswordAuth,
     },
     validators: {
       onChange: loginSchema,
@@ -262,9 +277,45 @@ export default function LoginScreen() {
             useRecentPlays.getState().clearRecentPlays();
           }
         } else {
-          const mtlsAlias = value.mtlsAlias?.trim() || undefined;
+          // The same shape check the server forms run before saving: `z.url()`
+          // accepts `smb://host` with no share name, so without this the only
+          // feedback is a failed sign-in — and the message that explains the
+          // right shape needs i18n, which the schema can't reach.
+          const smbAddresses =
+            serverType === "smb"
+              ? [trimmedUrl, value.fallbackUrl].filter(
+                  (address) => !isBlankUrlInput(address),
+                )
+              : [];
+          if (smbAddresses.some((address) => !parseSmbUrl(address))) {
+            toast.show({
+              placement: "top",
+              duration: 5000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("auth.login.smbUrlInvalid")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+            return;
+          }
+          const mtlsAlias = speaksHttpType(serverType)
+            ? value.mtlsAlias?.trim() || undefined
+            : undefined;
           const fallbackUrl = cleanOptionalUrl(value.fallbackUrl);
-          const headers = headerRowsToRecord(value.headers);
+          // SMB speaks its own wire protocol, so there is no request to put a
+          // header on — services/serverHeaders.ts drops them for it anyway.
+          const headers = speaksHttpType(serverType)
+            ? headerRowsToRecord(value.headers)
+            : undefined;
+          // Only meaningful for the Subsonic backends; Jellyfin authenticates
+          // with an access token, and the index-backed types have no Subsonic
+          // endpoint at all, so neither ever sees these params.
+          const plainPasswordAuth =
+            usesSubsonicAuthType(serverType) && !!value.plainPasswordAuth;
           // Register the client cert with the native KeyManager before the
           // handshake so mTLS servers get it presented on this first request —
           // for both routes, since either may be the one we end up talking to.
@@ -280,18 +331,34 @@ export default function LoginScreen() {
             trimmedUsername,
             trimmedPassword,
             headers,
+            plainPasswordAuth,
           );
           const existing = servers.find((s) => s.url === trimmedUrl);
+          // Narrowing or widening a share's scanned sub-path changes which files
+          // belong to the library, so the index has to be reconciled. Flagged
+          // here (pre-hydration) for the same reason the local branch does it:
+          // the app layout re-opens the indexing gate once the store rehydrates.
+          if (
+            isNetworkShareType(serverType) &&
+            existing &&
+            (existing.libraryPath ?? "") !== (value.libraryPath?.trim() ?? "")
+          ) {
+            flagLocalRescanOnEntry();
+          }
           const fallbackName = `${t("app.servers.defaultServer")} (${formatISO(new Date())})`;
           const server = addServer({
             name: existing?.name ?? fallbackName,
             url: trimmedUrl,
             type: serverType,
+            libraryPath: isNetworkShareType(serverType)
+              ? value.libraryPath?.trim() || undefined
+              : undefined,
             mtlsAlias,
             fallbackUrl,
             // Empty (not undefined) when the user cleared every row, so
             // re-logging into a saved server drops its old headers.
             headers: headers ?? {},
+            plainPasswordAuth,
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
@@ -395,6 +462,7 @@ export default function LoginScreen() {
     // Without this the previously selected server's fallback would leak into
     // the newly selected one.
     form.setFieldValue("fallbackUrl", server.fallbackUrl ?? "");
+    form.setFieldValue("plainPasswordAuth", !!server.plainPasswordAuth);
     if (server.type !== "local") {
       setTimeout(() => usernameRef.current?.focus(), 250);
     }
@@ -415,19 +483,21 @@ export default function LoginScreen() {
     Linking.openURL("https://jellyfin.org/docs/general/quick-start");
   };
 
-  const serverTypeOptions: { value: ServerType; label: string }[] = [
-    { value: "navidrome", label: t("auth.login.serverTypeNavidrome") },
-    { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
-    { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
-    { value: "local", label: t("auth.login.serverTypeLocal") },
-  ];
-  const serverTypeRows: [
-    (typeof serverTypeOptions)[number],
-    (typeof serverTypeOptions)[number]?,
-  ][] = [];
-  for (let i = 0; i < serverTypeOptions.length; i += 2) {
-    serverTypeRows.push([serverTypeOptions[i], serverTypeOptions[i + 1]]);
-  }
+  const selectServerType = (next: ServerType) => {
+    form.setFieldValue("type", next);
+    const protocols = protocolsForServerType(next);
+    form.setFieldValue("url", (current) =>
+      realignUrlProtocol(current, protocols),
+    );
+    // The fallback is a second route to the same server, so it changes scheme
+    // with it. Left blank it stays blank — re-scheming an empty field would
+    // only show the user a protocol they never typed.
+    form.setFieldValue("fallbackUrl", (current) =>
+      isBlankUrlInput(current)
+        ? current
+        : realignUrlProtocol(current, protocols),
+    );
+  };
 
   const triggerLabel =
     preselectedServer?.name ?? t("auth.login.serverPlaceholder");
@@ -494,43 +564,13 @@ export default function LoginScreen() {
               </Text>
             </Box>
           )}
-          <form.Field name="type">
-            {(field) => (
-              <VStack className="mb-4 gap-y-4">
-                {serverTypeRows.map(([a, b]) => (
-                  <HStack key={a.value} className="gap-x-4">
-                    {[a, b].map((opt) => {
-                      if (!opt) return null;
-                      const selected = field.state.value === opt.value;
-                      return (
-                        <FadeOutScaleDown
-                          key={opt.value}
-                          onPress={() => field.handleChange(opt.value)}
-                          className="flex-1"
-                        >
-                          <HStack
-                            className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
-                              selected
-                                ? "border-emerald-500"
-                                : "border-primary-600"
-                            }`}
-                          >
-                            <ServerTypeIcon type={opt.value} size={28} />
-                            <Text
-                              className="text-sm text-white font-bold flex-1"
-                              numberOfLines={2}
-                            >
-                              {opt.label}
-                            </Text>
-                          </HStack>
-                        </FadeOutScaleDown>
-                      );
-                    })}
-                  </HStack>
-                ))}
-              </VStack>
+          <form.Subscribe selector={(state) => state.values.type}>
+            {(type) => (
+              <Box className="mb-4">
+                <ServerTypeSelector value={type} onChange={selectServerType} />
+              </Box>
             )}
-          </form.Field>
+          </form.Subscribe>
           <form.Subscribe selector={(state) => state.values.type}>
             {(type) =>
               type === "local" ? (
@@ -558,13 +598,23 @@ export default function LoginScreen() {
                             value={field.state.value}
                             onChangeText={field.handleChange}
                             onBlur={() => handleFieldBlur(field)}
-                            placeholder={t("auth.login.urlPlaceholder")}
+                            protocols={protocolsForServerType(type)}
+                            placeholder={
+                              type === "smb"
+                                ? t("auth.login.smbUrlPlaceholder")
+                                : t("auth.login.urlPlaceholder")
+                            }
                           />
                         </Input>
                         <FieldError field={field} />
                       </FormControl>
                     )}
                   </form.Field>
+                  {isNetworkShareType(type) && (
+                    <form.Field name="libraryPath">
+                      {(field) => <LibraryPathField field={field} />}
+                    </form.Field>
+                  )}
                   <form.Field name="username">
                     {(field) => (
                       <FormControl
@@ -655,41 +705,64 @@ export default function LoginScreen() {
                     </CheckboxLabel>
                   </Checkbox>
                   {/* The section itself is cross-platform now that it holds the
-                      fallback URL; only the client certificate stays gated on
-                      Android + the native trust module. */}
+                      fallback URL; the client certificate stays gated on
+                      Android + the native trust module, and on speaking HTTP at
+                      all — SMB's handshake has no TLS layer to present one to. */}
                   <AdvancedSettingsSection>
                     <form.Field name="fallbackUrl">
                       {(field) => (
                         <FallbackUrlField
                           field={field}
-                          placeholder={t("auth.login.fallbackUrlPlaceholder")}
+                          protocols={protocolsForServerType(type)}
+                          placeholder={
+                            type === "smb"
+                              ? t("auth.login.smbFallbackUrlPlaceholder")
+                              : t("auth.login.fallbackUrlPlaceholder")
+                          }
                         />
                       )}
                     </form.Field>
-                    <form.Field name="headers">
-                      {(field) => (
-                        <CustomHeadersField
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                        />
-                      )}
-                    </form.Field>
-                    {Platform.OS === "android" && isSslTrustAvailable() && (
-                      <form.Field name="mtlsAlias">
+                    {speaksHttpType(type) && (
+                      <form.Field name="headers">
                         {(field) => (
-                          <form.Subscribe
-                            selector={(state) => state.values.url}
-                          >
-                            {(url) => (
-                              <ClientCertificateField
-                                value={field.state.value || undefined}
-                                host={hostnameFromUrl(url ?? "")}
-                                onChange={(alias) =>
-                                  field.handleChange(alias ?? "")
-                                }
-                              />
-                            )}
-                          </form.Subscribe>
+                          <CustomHeadersField
+                            value={field.state.value}
+                            onChange={field.handleChange}
+                          />
+                        )}
+                      </form.Field>
+                    )}
+                    {speaksHttpType(type) &&
+                      Platform.OS === "android" &&
+                      isSslTrustAvailable() && (
+                        <form.Field name="mtlsAlias">
+                          {(field) => (
+                            <form.Subscribe
+                              selector={(state) => state.values.url}
+                            >
+                              {(url) => (
+                                <ClientCertificateField
+                                  value={field.state.value || undefined}
+                                  host={hostnameFromUrl(url ?? "")}
+                                  onChange={(alias) =>
+                                    field.handleChange(alias ?? "")
+                                  }
+                                />
+                              )}
+                            </form.Subscribe>
+                          )}
+                        </form.Field>
+                      )}
+                    {/* Subsonic auth mechanism — meaningless for Jellyfin
+                        (access token) and for WebDAV/SMB shares, which
+                        authenticate against the share itself. */}
+                    {usesSubsonicAuthType(type) && (
+                      <form.Field name="plainPasswordAuth">
+                        {(field) => (
+                          <PlainPasswordAuthField
+                            value={field.state.value}
+                            onChange={field.handleChange}
+                          />
                         )}
                       </form.Field>
                     )}

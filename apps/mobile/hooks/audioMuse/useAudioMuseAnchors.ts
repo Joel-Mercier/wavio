@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { retryUnlessClientError } from "@/services/audioMuse";
 import { listAnchors } from "@/services/audioMuse/anchors";
+import { retryUnlessClientError } from "@/services/retry";
 import useAudioMuse, { selectSimilarTracksAvailable } from "@/stores/audioMuse";
 
 // The deployment's saved Alchemy anchors, shared by every surface that accepts

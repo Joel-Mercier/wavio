@@ -1,7 +1,8 @@
 import { requireOptionalNativeModule } from "expo";
-import { type RawTagData, readRawTags } from "./rawTags";
+import { File, FileMode } from "expo-file-system";
+import { type ByteReader, type RawTagData, readRawTags } from "./rawTags";
 
-export type { ReplayGain } from "./rawTags";
+export type { ByteReader, ReplayGain } from "./rawTags";
 
 /**
  * Normalized audio tag metadata extracted from a local file.
@@ -72,6 +73,7 @@ type AudioMetadataNativeModule = {
     uri: string,
     includeArtwork: boolean,
     artworkDir: string | null,
+    headers: Record<string, string> | null,
   ): Promise<AudioMetadata>;
 };
 
@@ -101,10 +103,23 @@ export const isAudioMetadataAvailable = (): boolean => Native != null;
  *   JS to recover bucket-B fields (ReplayGain, lyrics, multi-artist,
  *   MusicBrainz id) the native APIs don't surface. Adds a small partial-file
  *   read; best-effort, so a parse failure leaves the native fields intact.
+ * @param options.openReader Supplies the byte reader `enrich` uses. Defaults to
+ *   reading `uri` off this device; a network file source passes its own so the
+ *   same parser runs over ranged reads (see services/fileSource).
+ * @param options.headers Sent by the native reader when `uri` is `http(s)`.
+ *   Required for a network file share, whose every request must carry the
+ *   share's credentials — the native APIs do their own networking, so no header
+ *   set elsewhere in the app reaches them.
  */
 export async function getAudioMetadata(
   uri: string,
-  options?: { includeArtwork?: boolean; artworkDir?: string; enrich?: boolean },
+  options?: {
+    includeArtwork?: boolean;
+    artworkDir?: string;
+    enrich?: boolean;
+    openReader?: (uri: string) => Promise<ByteReader & { close(): void }>;
+    headers?: Record<string, string> | null;
+  },
 ): Promise<AudioMetadata> {
   if (!Native) {
     throw new Error(
@@ -117,12 +132,38 @@ export async function getAudioMetadata(
     uri,
     toFile || (options?.includeArtwork ?? false),
     options?.artworkDir ?? null,
+    options?.headers ?? null,
   );
   if (!options?.enrich) return base;
   // `readRawTags` swallows its own errors and returns `{}` on failure, so this
-  // never regresses the native result.
-  const raw = await readRawTags(uri);
-  return mergeRawTags(base, raw);
+  // never regresses the native result. Opening the reader can throw (a file
+  // that vanished mid-scan), so it gets the same treatment.
+  let reader: (ByteReader & { close(): void }) | undefined;
+  try {
+    reader = await (options.openReader ?? openDeviceReader)(uri);
+    return mergeRawTags(base, await readRawTags(reader));
+  } catch {
+    return base;
+  } finally {
+    reader?.close();
+  }
+}
+
+// Default reader: the file as it sits on this device. Kept here rather than in
+// rawTags.ts so the parser itself stays free of any I/O dependency.
+async function openDeviceReader(
+  uri: string,
+): Promise<ByteReader & { close(): void }> {
+  const handle = new File(uri).open(FileMode.ReadOnly);
+  return {
+    read(offset: number, length: number) {
+      handle.offset = offset;
+      return Promise.resolve(handle.readBytes(length));
+    },
+    close() {
+      handle.close();
+    },
+  };
 }
 
 /** Layer bucket-B raw-frame fields onto the native result without clobbering. */

@@ -1,0 +1,270 @@
+---
+import AudioMuseAi from "../assets/audiomuse-ai.webp";
+import Lidarr from "../assets/lidarr.svg";
+import ListenBrainz from "../assets/listenbrainz.svg";
+import MusicBrainz from "../assets/musicbrainz.svg";
+import SoulSync from "../assets/soulsync.webp";
+import { type Lang, useTranslations } from "../i18n/utils";
+import IntegrationLogo from "./IntegrationLogo.astro";
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const ti = t.integrations;
+const copy = ti.items as Record<string, { role: string; desc: string }>;
+
+/**
+ * Adding a service: append an entry here and add its `role` / `desc` to the
+ * `integrations.items` block in `i18n/en.json` under the same id. `tint` is the
+ * service's brand color and drives the panel glow; services with no logo fall
+ * back to `initials`.
+ */
+const integrations = [
+	{
+		id: "musicbrainz",
+		name: "MusicBrainz",
+		url: "https://musicbrainz.org/",
+		host: "musicbrainz.org",
+		tint: "#ba478f",
+		Svg: MusicBrainz,
+	},
+	{
+		id: "listenbrainz",
+		name: "ListenBrainz",
+		url: "https://listenbrainz.org/",
+		host: "listenbrainz.org",
+		tint: "#eb743b",
+		Svg: ListenBrainz,
+	},
+	{
+		id: "lidarr",
+		name: "Lidarr",
+		url: "https://lidarr.audio/",
+		host: "lidarr.audio",
+		tint: "#009252",
+		Svg: Lidarr,
+	},
+	{
+		id: "soulsync",
+		name: "SoulSync",
+		url: "https://ssync.net/",
+		host: "ssync.net",
+		tint: "#8b5cf6",
+		image: SoulSync,
+	},
+	{
+		id: "audiomuse-ai",
+		name: "AudioMuse-AI",
+		url: "https://github.com/NeptuneHub/AudioMuse-AI",
+		host: "github.com/NeptuneHub",
+		tint: "#f4728e",
+		image: AudioMuseAi,
+	},
+	{
+		id: "octo-fiesta",
+		name: "Octo-Fiesta",
+		url: "https://github.com/V1ck3s/octo-fiesta",
+		host: "github.com/V1ck3s",
+		tint: "#10b981",
+		initials: "OF",
+	},
+];
+---
+
+<section id="integrations" class="relative pb-25 pt-20">
+	<div class="mx-auto max-w-[1280px] px-8">
+		<div class="mb-14 grid grid-cols-1 items-end gap-x-15 gap-y-6 lg:grid-cols-2">
+			<div>
+				<div class="mb-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+					<span class="h-px w-8 bg-accent"></span> {ti.tag}
+				</div>
+				<h2 class="text-[clamp(40px,5.5vw,76px)] font-extrabold leading-[1.02] tracking-[-0.04em] text-balance">
+					{ti.headingPre} <em class="font-extrabold italic text-accent pr-[0.12em]">{ti.headingEm}</em>
+				</h2>
+			</div>
+			<p class="self-end text-lg text-text-2 text-pretty">{ti.sub}</p>
+		</div>
+
+		<div class="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,360px)_1fr]">
+			<div
+				role="tablist"
+				aria-label={ti.tag}
+				aria-orientation="horizontal"
+				class="int-rail flex overflow-x-auto overscroll-x-contain rounded-[20px] border border-border bg-bg-2 lg:block lg:self-start lg:overflow-hidden"
+			>
+				{
+					integrations.map((item, i) => (
+						<button
+							type="button"
+							role="tab"
+							id={`int-tab-${item.id}`}
+							aria-controls={`int-panel-${item.id}`}
+							aria-selected={i === 0 ? "true" : "false"}
+							tabindex={i === 0 ? 0 : -1}
+							data-int-tab={item.id}
+							class:list={[
+								"int-row relative flex shrink-0 items-center gap-2.5 px-3.5 py-3 text-left transition-colors duration-200 lg:w-full lg:shrink lg:gap-4 lg:px-5 lg:py-4",
+								i > 0 && "border-l border-border lg:border-l-0 lg:border-t",
+							]}
+						>
+							<span class="int-marker absolute inset-x-0 bottom-0 h-[3px] bg-accent transition-opacity duration-200 lg:inset-x-auto lg:inset-y-0 lg:left-0 lg:h-auto lg:w-[3px]" />
+							<span class="int-logo flex size-7 shrink-0 items-center justify-center transition duration-300 lg:size-9">
+								<IntegrationLogo Svg={item.Svg} image={item.image} initials={item.initials} tint={item.tint} />
+							</span>
+							<span class="min-w-0">
+								<span class="int-name block truncate whitespace-nowrap text-sm font-bold tracking-[-0.01em] transition-colors duration-200 lg:text-base">
+									{item.name}
+								</span>
+								<span class="int-role hidden text-[10px] font-bold uppercase tracking-[0.16em] transition-colors duration-200 lg:block">
+									{copy[item.id].role}
+								</span>
+							</span>
+						</button>
+					))
+				}
+			</div>
+
+			<div class="flex flex-col gap-3.5">
+				{
+					integrations.map((item) => (
+						<div
+							id={`int-panel-${item.id}`}
+							role="tabpanel"
+							aria-labelledby={`int-tab-${item.id}`}
+							tabindex="0"
+							data-int-panel={item.id}
+							class="int-panel relative isolate flex items-center overflow-hidden rounded-[20px] border border-border bg-bg-2 p-8 sm:p-10 lg:min-h-[434px]"
+						>
+							<span
+								class="pointer-events-none absolute inset-0 -z-10"
+								style={`background: radial-gradient(ellipse 58% 72% at 82% 45%, ${item.tint}33, transparent 68%)`}
+							/>
+							<span
+								class="pointer-events-none absolute inset-x-0 top-0 h-px"
+								style={`background: linear-gradient(270deg, ${item.tint}, transparent 62%)`}
+							/>
+
+							<div class="flex w-full flex-col-reverse items-start gap-9 lg:flex-row lg:items-center lg:gap-12">
+								<div class="min-w-0 flex-1">
+									<div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-accent">
+										{copy[item.id].role}
+									</div>
+									<h3 class="mb-3.5 text-[clamp(26px,3vw,34px)] font-bold leading-[1.1] tracking-[-0.02em]">
+										{item.name}
+									</h3>
+									<p class="mb-9 max-w-[46ch] text-[15px] text-text-2 text-pretty">{copy[item.id].desc}</p>
+									<a
+										href={item.url}
+										target="_blank"
+										rel="noopener"
+										class="inline-flex w-fit items-center gap-2.5 rounded-[14px] border border-border-strong px-5 py-3 text-sm font-medium text-text-2 transition-colors duration-200 hover:border-accent hover:bg-accent-soft hover:text-text"
+									>
+										{item.host}
+										<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+											<path d="M7 17 17 7M9 7h8v8" />
+										</svg>
+									</a>
+								</div>
+								<span class="flex size-20 shrink-0 items-center justify-center sm:size-24 lg:size-44">
+									<IntegrationLogo
+										Svg={item.Svg}
+										image={item.image}
+										initials={item.initials}
+										tint={item.tint}
+										initialsClass="text-[26px] lg:rounded-[18px] lg:text-[52px]"
+									/>
+								</span>
+							</div>
+						</div>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	const root = document.getElementById('integrations');
+	const tabs = root ? [...root.querySelectorAll<HTMLButtonElement>('[data-int-tab]')] : [];
+	const panels = root ? [...root.querySelectorAll<HTMLElement>('[data-int-panel]')] : [];
+
+	if (tabs.length) {
+		const rail = root!.querySelector<HTMLElement>('[role="tablist"]')!;
+		const wide = window.matchMedia('(min-width: 1024px)');
+		const syncOrientation = () =>
+			rail.setAttribute('aria-orientation', wide.matches ? 'vertical' : 'horizontal');
+		syncOrientation();
+		wide.addEventListener('change', syncOrientation);
+
+		// Nudges the rail's own scroll only, so this can never move the page. Scrolls
+		// instantly on purpose: `behavior: 'smooth'` is dropped outright in throttled
+		// rendering contexts, which would leave the chosen chip off-screen.
+		const revealInRail = (tab: HTMLElement) => {
+			const railBox = rail.getBoundingClientRect();
+			const tabBox = tab.getBoundingClientRect();
+			if (tabBox.left < railBox.left) rail.scrollBy({ left: tabBox.left - railBox.left - 16 });
+			else if (tabBox.right > railBox.right) rail.scrollBy({ left: tabBox.right - railBox.right + 16 });
+		};
+
+		const select = (id: string, moveFocus = false) => {
+			for (const tab of tabs) {
+				const active = tab.dataset.intTab === id;
+				tab.setAttribute('aria-selected', String(active));
+				tab.tabIndex = active ? 0 : -1;
+				if (active && moveFocus) tab.focus();
+				if (active) revealInRail(tab);
+			}
+			for (const panel of panels) panel.hidden = panel.dataset.intPanel !== id;
+		};
+
+		// Panels ship visible so the section still reads without JS; collapse to one here.
+		select(tabs[0].dataset.intTab!);
+
+		tabs.forEach((tab, i) => {
+			tab.addEventListener('click', () => select(tab.dataset.intTab!));
+			tab.addEventListener('keydown', (e) => {
+				let next = i;
+				if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+				else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
+				else if (e.key === 'Home') next = 0;
+				else if (e.key === 'End') next = tabs.length - 1;
+				else return;
+				e.preventDefault();
+				select(tabs[next].dataset.intTab!, true);
+			});
+		});
+	}
+</script>
+
+<style>
+	.int-rail { scrollbar-width: none; }
+	.int-rail::-webkit-scrollbar { display: none; }
+	.int-row { background: transparent; }
+	.int-name { color: var(--color-text-2); }
+	.int-role { color: var(--color-text-3); }
+	.int-marker { opacity: 0; }
+
+	/* Each service keeps its own color, but only once it's the one on screen. */
+	.int-logo { filter: grayscale(0.72) brightness(1.15); opacity: 0.6; }
+	.int-row:hover .int-logo { filter: grayscale(0.3); opacity: 0.95; }
+	.int-row:hover .int-name { color: var(--color-text); }
+
+	.int-row[aria-selected='true'] { background: var(--color-surface); }
+	.int-row[aria-selected='true'] .int-logo { filter: none; opacity: 1; }
+	.int-row[aria-selected='true'] .int-name { color: var(--color-text); }
+	.int-row[aria-selected='true'] .int-role { color: var(--color-accent); }
+	.int-row[aria-selected='true'] .int-marker { opacity: 1; }
+
+	.int-row:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+	.int-panel:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+	/* Tailwind's `.flex` would otherwise win over the `[hidden]` attribute. */
+	.int-panel[hidden] { display: none; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.int-row, .int-row * { transition-duration: 0.01ms !important; }
+	}
+</style>

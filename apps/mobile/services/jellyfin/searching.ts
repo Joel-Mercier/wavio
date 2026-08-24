@@ -49,6 +49,20 @@ async function searchItems(
   return rsp.data?.Items ?? [];
 }
 
+// Subsonic expresses "don't search this kind" as a count of 0, and callers that
+// want songs only (the library sync crawl, the ListenBrainz resolver) pass it for
+// the other two. Honouring it turns a 50-track resolve from 150 requests into 50.
+// `undefined` still means "server default", so existing callers are unaffected.
+async function searchItemsOrSkip(
+  type: "MusicAlbum" | "MusicArtist" | "Audio",
+  searchTerm: string,
+  limit?: number,
+  startIndex?: number,
+) {
+  if (limit === 0) return [];
+  return searchItems(type, searchTerm, limit, startIndex);
+}
+
 export const search = async (_opts: {
   artist?: string;
   album?: string;
@@ -74,9 +88,14 @@ export const search2 = async (
   },
 ) => {
   const [albums, artists, songs] = await Promise.all([
-    searchItems("MusicAlbum", query, opts.albumCount, opts.albumOffset),
-    searchItems("MusicArtist", query, opts.artistCount, opts.artistOffset),
-    searchItems("Audio", query, opts.songCount, opts.songOffset),
+    searchItemsOrSkip("MusicAlbum", query, opts.albumCount, opts.albumOffset),
+    searchItemsOrSkip(
+      "MusicArtist",
+      query,
+      opts.artistCount,
+      opts.artistOffset,
+    ),
+    searchItemsOrSkip("Audio", query, opts.songCount, opts.songOffset),
   ]);
   const result: SearchResult2 = {
     album: albums.map((i) => ({ ...mapBaseItemToChild(i), isDir: true })),
@@ -98,9 +117,14 @@ export const search3 = async (
   },
 ) => {
   const [albums, artists, songs] = await Promise.all([
-    searchItems("MusicAlbum", query, opts.albumCount, opts.albumOffset),
-    searchItems("MusicArtist", query, opts.artistCount, opts.artistOffset),
-    searchItems("Audio", query, opts.songCount, opts.songOffset),
+    searchItemsOrSkip("MusicAlbum", query, opts.albumCount, opts.albumOffset),
+    searchItemsOrSkip(
+      "MusicArtist",
+      query,
+      opts.artistCount,
+      opts.artistOffset,
+    ),
+    searchItemsOrSkip("Audio", query, opts.songCount, opts.songOffset),
   ]);
   const result: SearchResult3 = {
     album: albums.map(mapBaseItemToAlbum),

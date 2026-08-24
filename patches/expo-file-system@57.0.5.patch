@@ -1,0 +1,129 @@
+diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt b/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
+index 0222bdc1bf39968fc4ecc43fa81c8fd0bd1326c5..95a499ab5b26602c6d201b6e6029e011a808db52 100644
+--- a/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
++++ b/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
+@@ -1,6 +1,7 @@
+ package expo.modules.filesystem
+ 
+ import android.webkit.URLUtil
++import com.facebook.react.modules.network.OkHttpClientProvider
+ import expo.modules.kotlin.services.FilePermissionService
+ import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.currentCoroutineContext
+@@ -9,7 +10,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
+ import kotlinx.coroutines.withContext
+ import okhttp3.Call
+ import okhttp3.Callback
+-import okhttp3.OkHttpClient
+ import okhttp3.Request
+ import okhttp3.Response
+ import java.io.File
+@@ -18,6 +18,7 @@ import java.io.IOException
+ import java.io.InputStream
+ import java.net.URI
+ import java.util.concurrent.ConcurrentHashMap
++import java.util.concurrent.TimeUnit
+ import kotlin.coroutines.resume
+ import kotlin.coroutines.resumeWithException
+ 
+@@ -40,8 +41,31 @@ class DownloadTaskStore {
+   }
+ }
+ 
+-/** Shared OkHttpClient instance reused across all downloads. */
+-private val sharedHttpClient = OkHttpClient()
++/**
++ * Shared OkHttpClient instance reused across all downloads.
++ *
++ * Built through React Native's `OkHttpClientProvider.createClient()` so it picks up
++ * any custom `OkHttpClientFactory` the app installed — for Wavio that is the
++ * ssl-trust module's factory, which carries the SSLSocketFactory backing
++ * self-signed / private-CA TOFU trust and mTLS client certs. A bare
++ * `OkHttpClient()` uses only the system trust store, so downloads from such a
++ * server fail the handshake with `CertPathValidatorException: Trust anchor for
++ * certification path not found` even though streaming and browsing work.
++ *
++ * `createClient()` — NOT `createClientBuilder()`: only the former consults the
++ * factory (the latter returns a plain builder, and is what the sibling
++ * FileSystemDownloadTask used, which is why it had the same bug).
++ *
++ * Timeouts are set explicitly because `createClient()` inherits RN's 0ms
++ * (infinite) defaults, whereas the bare client this replaces had OkHttp's 10s.
++ * Without them a stalled download would hang forever.
++ */
++private val sharedHttpClient = OkHttpClientProvider.createClient()
++  .newBuilder()
++  .connectTimeout(30, TimeUnit.SECONDS)
++  .readTimeout(60, TimeUnit.SECONDS)
++  .writeTimeout(60, TimeUnit.SECONDS)
++  .build()
+ 
+ /**
+  * Executes a file download with optional progress reporting.
+diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
+index 44dd86d624d0065081dbae4073d0f1a272f643a0..1d533d217c18843ed20dc2d095f5db2500532f53 100644
+--- a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
++++ b/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
+@@ -42,7 +42,13 @@ class DownloadTaskOptions : Record {
+  */
+ class FileSystemDownloadTask : SharedObject() {
+   companion object {
+-    private val client = OkHttpClientProvider.createClientBuilder()
++    // `createClient()`, not `createClientBuilder()`: only the former consults a
++    // custom `OkHttpClientFactory`. `createClientBuilder()` returns a plain
++    // builder, so this client never saw the ssl-trust module's SSLSocketFactory
++    // and every download from a self-signed / private-CA server failed the
++    // handshake. Same fix as FileSystemDownload.kt's sharedHttpClient.
++    private val client = OkHttpClientProvider.createClient()
++      .newBuilder()
+       .connectTimeout(60, TimeUnit.SECONDS)
+       .readTimeout(60, TimeUnit.SECONDS)
+       .writeTimeout(60, TimeUnit.SECONDS)
+diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
+index d58a1320c85b1129c6e965784a0785674747b79b..bd22c2bce0e5dbfe1d86469bb3e6ec8381295c77 100644
+--- a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
++++ b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
+@@ -69,7 +69,13 @@ class UploadTaskResult : Record {
+  */
+ class FileSystemUploadTask : SharedObject() {
+   companion object {
+-    private val client = OkHttpClientProvider.createClientBuilder()
++    // `createClient()`, not `createClientBuilder()`: only the former consults a
++    // custom `OkHttpClientFactory`. Same fix as the two download paths — an
++    // upload to a self-signed / private-CA server would otherwise never see the
++    // ssl-trust module's SSLSocketFactory and fail the handshake. Nothing in the
++    // app uploads today; patched so it can't reintroduce the bug silently.
++    private val client = OkHttpClientProvider.createClient()
++      .newBuilder()
+       .connectTimeout(60, TimeUnit.SECONDS)
+       .readTimeout(60, TimeUnit.SECONDS)
+       .writeTimeout(60, TimeUnit.SECONDS)
+diff --git a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
+index 4626dac32067ec203788ae69de4b0f1d5b03eec0..5b00b6c3037de5cd901a10b39424e2e6f624d93d 100644
+--- a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
++++ b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
+@@ -14,6 +14,7 @@ import android.util.Base64
+ import android.util.Log
+ import androidx.core.content.FileProvider
+ import androidx.documentfile.provider.DocumentFile
++import com.facebook.react.modules.network.OkHttpClientProvider
+ import expo.modules.core.errors.ModuleDestroyedException
+ import expo.modules.kotlin.Promise
+ import expo.modules.kotlin.exception.Exceptions
+@@ -992,7 +993,15 @@ open class FileSystemLegacyModule : Module() {
+   private val okHttpClient: OkHttpClient?
+     get() {
+       if (client == null) {
+-        val builder = OkHttpClient.Builder()
++        // Built through `OkHttpClientProvider.createClient()` so it consults the
++        // app's custom `OkHttpClientFactory` (the ssl-trust module's, carrying
++        // self-signed / private-CA TOFU trust). A bare `OkHttpClient.Builder()`
++        // sees only the system trust store, which is the bug the two download
++        // paths had. The app uses this module for SAF / getContentUriAsync only,
++        // never its network APIs; patched so that stays true by accident-proofing
++        // rather than by luck.
++        val builder = OkHttpClientProvider.createClient()
++          .newBuilder()
+           .connectTimeout(60, TimeUnit.SECONDS)
+           .readTimeout(60, TimeUnit.SECONDS)
+           .writeTimeout(60, TimeUnit.SECONDS)

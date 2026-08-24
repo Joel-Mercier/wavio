@@ -4,18 +4,42 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.Executors
 
 class AudioMetadataModule : Module() {
+  // `AsyncFunction` bodies run on one HandlerThread shared by every Expo module
+  // in the app, and they block rather than suspend — so without our own pool a
+  // scan is serialized no matter what `FileSource.extractConcurrency` asks for,
+  // and every other module's async call queues behind each extraction. That was
+  // invisible while this only ever read local files in milliseconds; over a
+  // network share each call is seconds long. Same reasoning as modules/smb and
+  // modules/audio-waveform.
+  private val executor = Executors.newFixedThreadPool(EXTRACT_THREADS) { r ->
+    Thread(r, "wavio-audio-metadata").apply { isDaemon = true }
+  }
+
   override fun definition() = ModuleDefinition {
     Name("AudioMetadata")
 
     AsyncFunction("getAudioMetadata") {
-      uri: String, includeArtwork: Boolean, artworkDir: String? ->
-      extract(uri, includeArtwork, artworkDir)
+      uri: String, includeArtwork: Boolean, artworkDir: String?,
+      headers: Map<String, String>?, promise: Promise ->
+      executor.execute {
+        try {
+          promise.resolve(extract(uri, includeArtwork, artworkDir, headers))
+        } catch (e: Exception) {
+          promise.reject("ERR_AUDIO_METADATA", e.message ?: "Extraction failed", e)
+        }
+      }
+    }
+
+    OnDestroy {
+      executor.shutdownNow()
     }
   }
 
@@ -23,12 +47,18 @@ class AudioMetadataModule : Module() {
     uri: String,
     includeArtwork: Boolean,
     artworkDir: String?,
+    headers: Map<String, String>?,
   ): Map<String, Any?> {
     val retriever = MediaMetadataRetriever()
     try {
       val parsed = Uri.parse(uri)
       when (parsed.scheme) {
         null, "file" -> retriever.setDataSource(parsed.path ?: uri)
+        // A network file share (WebDAV, or SMB via its loopback bridge) is read
+        // over HTTP. The ContentResolver overload below cannot open one, so it
+        // needs the URL+headers overload — which is also the only way to carry
+        // the share's Authorization header.
+        "http", "https" -> retriever.setDataSource(uri, headers ?: emptyMap())
         else -> {
           val context = appContext.reactContext
             ?: throw RuntimeException("AudioMetadata: no React context available")
@@ -103,6 +133,13 @@ class AudioMetadataModule : Module() {
     } finally {
       retriever.release()
     }
+  }
+
+  private companion object {
+    // The JS side bounds concurrency per file source (4 on device, 6 for SMB,
+    // 12 for WebDAV); this only has to be wide enough not to become the new
+    // bottleneck under the largest of them.
+    const val EXTRACT_THREADS = 12
   }
 }
 

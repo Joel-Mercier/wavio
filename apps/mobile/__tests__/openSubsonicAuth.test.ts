@@ -22,6 +22,7 @@ import {
   computeSubsonicToken,
   encodePasswordParam,
   generateSalt,
+  subsonicAuthParams,
   subsonicAuthQuery,
 } from "@/services/openSubsonic/auth";
 
@@ -50,6 +51,53 @@ describe("openSubsonic auth", () => {
   it("encodes spaces and unicode as UTF-8 hex", () => {
     // "é" is two UTF-8 bytes (0xc3 0xa9); a space is 0x20.
     expect(encodePasswordParam("a é")).toBe("enc:6120c3a9");
+  });
+});
+
+describe("subsonicAuthParams", () => {
+  beforeEach(() => {
+    authState.username = "joel";
+    authState.password = "sesame";
+    authState.subsonicSalt = "salt";
+    authState.subsonicToken = "tok";
+    authState.useTokenAuth = true;
+  });
+
+  it("sends token+salt for token-auth sessions", () => {
+    expect(subsonicAuthParams()).toEqual({ u: "joel", t: "tok", s: "salt" });
+  });
+
+  it("sends the enc: password when the server rejected token auth", () => {
+    authState.useTokenAuth = false;
+    authState.subsonicSalt = null;
+    authState.subsonicToken = null;
+    expect(subsonicAuthParams()).toEqual({
+      u: "joel",
+      p: "enc:736573616d65",
+    });
+  });
+
+  it("falls back to password auth when a token-auth session has no token", () => {
+    // axios drops null params, so this session would otherwise send `u` alone —
+    // which a server answers with error 40, the same code as a wrong password.
+    // A session that can never succeed and used to sign itself out on every
+    // request is worse than one that authenticates the old way.
+    authState.useTokenAuth = true;
+    authState.subsonicSalt = null;
+    authState.subsonicToken = null;
+    expect(subsonicAuthParams()).toEqual({
+      u: "joel",
+      p: "enc:736573616d65",
+    });
+  });
+
+  it("never sends two auth mechanisms at once", () => {
+    // Supplying both `p` and `t`/`s` is Subsonic error 43.
+    for (const state of [true, false]) {
+      authState.useTokenAuth = state;
+      const params = subsonicAuthParams();
+      expect("p" in params && "t" in params).toBe(false);
+    }
   });
 });
 

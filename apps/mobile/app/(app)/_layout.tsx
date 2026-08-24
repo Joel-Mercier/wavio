@@ -14,11 +14,13 @@ import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerShee
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
+import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import OutputSheet from "@/components/player/OutputSheet";
+import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import UpdateGate from "@/components/update/UpdateGate";
 import {
@@ -28,7 +30,13 @@ import {
 } from "@/config/queryClient";
 import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
+import {
+  initListenBrainzScrobbler,
+  resetListenBrainzScrobbler,
+  stopListenBrainzScrobbler,
+} from "@/services/listenBrainz/scrobbler";
 import { probeServer, resetServerReachable } from "@/services/network";
 import { librarySyncService, offlineDownloadService } from "@/services/offline";
 import {
@@ -58,6 +66,7 @@ import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
 import useLibrarySync from "@/stores/librarySync";
 import useLidarr from "@/stores/lidarr";
+import useListenBrainz from "@/stores/listenBrainz";
 import useLocalLibrary, { consumeLocalRescanFlag } from "@/stores/localLibrary";
 import useLrclibPicks from "@/stores/lrclibPicks";
 import useMusicBrainz from "@/stores/musicbrainz";
@@ -177,6 +186,10 @@ export default function AppLayout() {
         useSoulSync.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
+        // Stop the drain loop before wiping the queue, so an in-flight batch
+        // can't remove listens from the incoming scope's freshly hydrated queue.
+        resetListenBrainzScrobbler();
+        useListenBrainz.getState().__reset();
         // The cache files live under the *outgoing* scope's directory and are
         // re-derivable, so the index is simply dropped rather than migrated.
         // Any download still writing carries the old scope's ids, hence the
@@ -238,6 +251,10 @@ export default function AppLayout() {
     useSoulSync.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
     useAudioMuse.persist.rehydrate();
+    useListenBrainz.persist.onFinishHydration(() => {
+      initListenBrainzScrobbler();
+    });
+    useListenBrainz.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });
@@ -291,6 +308,7 @@ export default function AppLayout() {
     needsRehydrate = true;
     stopPlayQueueSync();
     stopOfflineMutationReplay();
+    stopListenBrainzScrobbler();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
@@ -299,11 +317,15 @@ export default function AppLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  // First login into a local library: hold on the indexing screen (spinner +
-  // live scan steps) until the on-device index is built, then fall through to
-  // render the app — which lands on Home. `!localLibReady` covers the brief
-  // window before the saved scan summary has rehydrated, so Home never flashes.
-  if (serverType === "local" && (!localLibReady || lastScanAt === undefined)) {
+  // First login into an index-backed library: hold on the indexing screen
+  // (spinner + live scan steps) until the on-device index is built, then fall
+  // through to render the app — which lands on Home. `!localLibReady` covers the
+  // brief window before the saved scan summary has rehydrated, so Home never
+  // flashes.
+  if (
+    isIndexBackedType(serverType) &&
+    (!localLibReady || lastScanAt === undefined)
+  ) {
     return <LocalLibraryIndexing />;
   }
 
@@ -359,6 +381,8 @@ export default function AppLayout() {
         <FloatingPlayer />
       </AppDrawer>
       <OfflineMutationsSync />
+      <IncompleteScanNotice />
+      <PlaybackNoticeToast />
       <LidarrDownloadsWatcher />
       <DownloaderPickerSheet />
       <OfflineStarredAutoSync />

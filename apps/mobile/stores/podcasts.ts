@@ -127,17 +127,15 @@ interface PodcastsStore {
   taddyPodcastsUserId: string;
   taddyPodcastsLanguage: keyof typeof Language;
   taddyPodcastsCountry: keyof typeof Country;
-  setTaddyPodcastsConfig: ({
+  setTaddyPodcastsCredentials: ({
     apiKey,
     userId,
-    language,
-    country,
   }: {
     apiKey: string;
     userId: string;
-    language: keyof typeof Language;
-    country: keyof typeof Country;
   }) => void;
+  setTaddyPodcastsLanguage: (language: keyof typeof Language) => void;
+  setTaddyPodcastsCountry: (country: keyof typeof Country) => void;
   clearTaddyPodcastsConfig: () => void;
   favoritePodcasts: FavoritePodcast[];
   addFavoritePodcast: (podcast: PodcastSeries) => void;
@@ -172,13 +170,17 @@ export const usePodcastsBase = create<PodcastsStore>()(
       taddyPodcastsUserId: DEFAULT_TADDY_USER_ID,
       taddyPodcastsLanguage: DEFAULT_TADDY_LANGUAGE,
       taddyPodcastsCountry: DEFAULT_TADDY_COUNTRY,
-      setTaddyPodcastsConfig: ({ apiKey, userId, language, country }) => {
+      setTaddyPodcastsCredentials: ({ apiKey, userId }) => {
         set({
           taddyPodcastsApiKey: apiKey,
           taddyPodcastsUserId: userId,
-          taddyPodcastsLanguage: language,
-          taddyPodcastsCountry: country,
         });
+      },
+      setTaddyPodcastsLanguage: (language) => {
+        set({ taddyPodcastsLanguage: language });
+      },
+      setTaddyPodcastsCountry: (country) => {
+        set({ taddyPodcastsCountry: country });
       },
       clearTaddyPodcastsConfig: () => {
         set({

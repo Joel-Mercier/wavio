@@ -2,6 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { getArtists } from "@/services/backend/browsing";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import { search3 } from "@/services/backend/searching";
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import {
   getConnectionType,
@@ -181,12 +182,12 @@ export class LibrarySyncService {
   // reconnection). Starts a fresh pass when idle, restarts a stale completed
   // pass (delta resync), otherwise resumes from the persisted cursor.
   startIfNeeded(): void {
-    // The local backend has no server to crawl and its covers are already
-    // file:// URIs on disk — feeding one to downloadFileAsync throws
+    // An index-backed backend has no server API to crawl and its covers are
+    // already file:// URIs on disk — feeding one to downloadFileAsync throws
     // "URI is not absolute". The crawl loop guards this via canProceed(), but
     // backfillArtworkQueue() below runs before it, so gate here too.
     const { url, username, serverType } = useAuthBase.getState();
-    if (!url || !username || serverType === "local") return;
+    if (!url || !username || isIndexBackedType(serverType)) return;
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return;
     // Give artwork one more chance per entry: the certificate may have been
@@ -416,7 +417,7 @@ export class LibrarySyncService {
     // every locally-stored id as deleted server-side and wipe the files.
     if (isIdMigrationFrozen()) return false;
     const { url, username, serverType } = useAuthBase.getState();
-    if (!url || !username || serverType === "local") return false;
+    if (!url || !username || isIndexBackedType(serverType)) return false;
     return getIsEffectivelyOnline();
   }
 

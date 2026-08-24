@@ -25,7 +25,7 @@ import InternetRadioStationListItem, {
 import InternetRadioStationListItemSkeleton from "@/components/internetRadioStations/InternetRadioStationListItemSkeleton";
 import SearchableSelectSheet, {
   type SelectOption,
-} from "@/components/internetRadioStations/SearchableSelectSheet";
+} from "@/components/SearchableSelectSheet";
 import SheetSearchInput from "@/components/SheetSearchInput";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";

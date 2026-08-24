@@ -8,7 +8,6 @@ export const hls = dispatch(S.hls, J.hls);
 export const download = dispatch(S.download, J.download);
 export const getAvatar = dispatch(S.getAvatar, J.getAvatar);
 export const getCaptions = dispatch(S.getCaptions, J.getCaptions);
-export const getCoverArt = dispatch(S.getCoverArt, J.getCoverArt);
 export const getLyrics = dispatch(S.getLyrics, J.getLyrics, L.getLyrics);
 export const getLyricsBySongId = dispatch(
   S.getLyricsBySongId,

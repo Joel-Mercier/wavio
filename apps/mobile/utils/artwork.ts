@@ -1,3 +1,4 @@
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { artworkUrl as jellyfinArtworkUrl } from "@/services/jellyfin/streaming";
 import { getIsEffectivelyOnline } from "@/services/network";
 import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
@@ -35,7 +36,7 @@ const isArtworkUri = (id?: string) => !!id && /^(https?|file|data):/i.test(id);
 
 export const artworkUrl = (id?: string, size?: number) => {
   const { url, serverType } = useAuthBase.getState();
-  if (serverType === "local") return id ?? "";
+  if (isIndexBackedType(serverType)) return id ?? "";
   // Covers cached to disk by the extended-offline library sync replace the
   // server URL while it's unreachable, so offline screens keep their artwork.
   if (id && !getIsEffectivelyOnline()) {

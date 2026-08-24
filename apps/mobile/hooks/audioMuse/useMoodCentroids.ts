@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { retryUnlessClientError } from "@/services/audioMuse";
 import { getMoodCentroids } from "@/services/audioMuse/similar";
+import { retryUnlessClientError } from "@/services/retry";
 import useAudioMuse, { selectSimilarTracksAvailable } from "@/stores/audioMuse";
 
 // The mood catalogue is a ~1MB file the server parses once and then answers

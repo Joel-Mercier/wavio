@@ -119,17 +119,6 @@ export function audioMuseErrorMessage(error: unknown): string | null {
   return typeof data?.error === "string" && data.error ? data.error : null;
 }
 
-// A 4xx from AudioMuse is a verdict on the request itself — the feature is off,
-// the query is empty, the server id is unknown — so repeating it verbatim can
-// only produce the same answer. Retries stay on for everything else.
-export function retryUnlessClientError(failureCount: number, error: unknown) {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status ?? 0;
-    if (status >= 400 && status < 500) return false;
-  }
-  return failureCount < 2;
-}
-
 // One AudioMuse deployment can analyse several media servers, and it translates
 // every item_id it returns into the selected server's own provider ids. Getting
 // this wrong doesn't error — it silently returns ids from another library — so

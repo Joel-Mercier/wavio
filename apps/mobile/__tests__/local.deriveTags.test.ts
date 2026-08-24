@@ -118,4 +118,46 @@ describe("deriveTrackTags", () => {
     );
     expect(d.artist).toBe("X");
   });
+
+  it("never reads a share address's scheme as a folder name", () => {
+    // Network-share addresses are `webdav:` / `smb:` + a share-relative path, so
+    // a file at the share root has the scheme where its parent folder would be.
+    for (const prefix of ["webdav:", "smb:"]) {
+      const root = deriveTrackTags(
+        `${prefix}/Riff Raff - Song.mp3`,
+        "Riff Raff - Song.mp3",
+        NONE,
+      );
+      expect(root.artist).toBe("Riff Raff");
+      // Nothing to group by: left undefined so it renders as "Unknown album"
+      // rather than as the scheme.
+      expect(root.album).toBeUndefined();
+
+      const untitled = deriveTrackTags(
+        `${prefix}/voice-clip.mp3`,
+        "voice-clip.mp3",
+        NONE,
+      );
+      expect(untitled.album).toBeUndefined();
+
+      // One level down the scheme sat where the *artist* folder would be.
+      const nested = deriveTrackTags(
+        `${prefix}/Rap/01 Song.mp3`,
+        "01 Song.mp3",
+        NONE,
+      );
+      expect(nested.album).toBe("Rap");
+      expect(nested.artist).toBeUndefined();
+    }
+  });
+
+  it("still strips the file:// scheme for device paths", () => {
+    const d = deriveTrackTags(
+      "file:///storage/emulated/0/Music/Pink Floyd/The Wall/01 Time.mp3",
+      "01 Time.mp3",
+      NONE,
+    );
+    expect(d.artist).toBe("Pink Floyd");
+    expect(d.album).toBe("The Wall");
+  });
 });

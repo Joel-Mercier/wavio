@@ -8,9 +8,16 @@ import {
 import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
+import { isNetworkShareType } from "@/services/backend/serverTraits";
 import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
+import {
+  enqueueListen,
+  isSubmittableDuration,
+  submissionThresholdSeconds,
+  submitNowPlaying as submitNowPlayingToListenBrainz,
+} from "@/services/listenBrainz/scrobbler";
 import {
   cachedArtworkUri,
   clearArtworkCache,
@@ -78,6 +85,7 @@ import useActivity from "@/stores/activity";
 import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
+import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
 import { computeReplayGainFactor } from "@/utils/replayGain";
@@ -142,6 +150,11 @@ let submittedScrobbleId: string | null = null;
 // the play.
 let earlyScrobbledId: string | null = null;
 let scrobbleStartedAt: number | null = null;
+// ListenBrainz submits on its own schedule (half the track / 4 minutes), which
+// is much later than the server scrobble at COUNT_PLAY_AFTER_SECONDS — so it
+// needs its own "already submitted this track" marker rather than sharing
+// `submittedScrobbleId`.
+let listenBrainzSubmittedId: string | null = null;
 // Tracks the last observed playing flag so the status listener can detect the
 // play→pause edge for playbackReport's "paused" report.
 let wasPlaying = false;
@@ -164,6 +177,9 @@ function reportNowPlaying(track: QueueTrack) {
     useActivity.getState().recordPlay(track, useQueue.getState().source);
   }
   if (!isScrobblable(track)) return;
+  // Independent of the server's now-playing: ListenBrainz has its own, and a
+  // user may be scrobbling there while the server does nothing.
+  submitNowPlayingToListenBrainz(track);
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.
   if (playbackReportEnabled()) {
@@ -283,12 +299,37 @@ function notePlayCounted(track: QueueTrack) {
 // skip before this window doesn't count (nor scrobble to Last.fm/ListenBrainz).
 const COUNT_PLAY_AFTER_SECONDS = 5;
 
+// ListenBrainz asks for a listen once half the track (or four minutes) has been
+// heard, which is deliberately much later than COUNT_PLAY_AFTER_SECONDS above:
+// that early mark exists to reorder the server's "recently played" quickly, and
+// submitting it to ListenBrainz would over-report skipped tracks. Queued rather
+// than sent, so it survives being offline.
+function maybeSubmitListen(
+  current: QueueTrack,
+  position: number,
+  duration: number,
+) {
+  if (listenBrainzSubmittedId === current.id) return;
+  if (!isSubmittableDuration(duration)) return;
+  if (position < submissionThresholdSeconds(duration)) return;
+  listenBrainzSubmittedId = current.id;
+  enqueueListen(current, scrobbleStartedAt ?? Date.now());
+}
+
 function maybeSubmitScrobble(status: AudioStatus) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (!isScrobblable(current)) return;
   const position = effectivePosition(status.currentTime ?? 0);
-  const duration = status.duration ?? current.duration ?? 0;
+  // `||`, not `??`: a transcoded or chunked stream of unknown length reports a
+  // duration of 0, which is no more usable than undefined — fall through to the
+  // track's own metadata rather than letting the 0 stick.
+  const duration = status.duration || current.duration || 0;
+
+  // Before the playbackReport branch below, which returns early: ListenBrainz
+  // submission is independent of how the *server* counts a play, so it must run
+  // on both paths.
+  if (status.playing) maybeSubmitListen(current, position, duration);
 
   if (playbackReportEnabled()) {
     // Progress reports keep the server's now-playing session alive. Only while
@@ -355,6 +396,7 @@ function resetScrobbleState() {
   submittedScrobbleId = null;
   earlyScrobbledId = null;
   scrobbleStartedAt = null;
+  listenBrainzSubmittedId = null;
 }
 
 // A counted play bumps Navidrome's play_date/play_count, which reorders the
@@ -980,6 +1022,19 @@ function handlePlaybackStatus(status: AudioStatus) {
       loadTrack(current, true);
       return;
     }
+    // Past the transcode fallback above, this track is not going to play.
+    //
+    // For a media server that's usually self-evident — the offline banner is
+    // already up, or the next track starts. For a network file share it isn't:
+    // the library is indexed on this device, so it browses perfectly while the
+    // share itself is gone, and playback just silently stops on a track the UI
+    // still shows as present. Say so.
+    if (
+      !current?.isRadio &&
+      isNetworkShareType(useAuthBase.getState().serverType)
+    ) {
+      usePlaybackNotice.getState().raise("PLAYBACK_SOURCE_UNAVAILABLE");
+    }
     // `source` is a category discriminator, not the URL — group on what the
     // load actually was so offline-file bugs split from transient streams.
     const kind = resolved
@@ -1151,6 +1206,15 @@ function handlePlaybackStatus(status: AudioStatus) {
         time: scrobbleStartedAt ?? Date.now(),
       }).catch(() => {});
       scheduleRecentlyPlayedRefresh();
+    }
+    // Rescue for a stream that never reported a duration: nothing could clear
+    // the halfway threshold while it played, but it has now finished, so how
+    // long it played *is* its duration. Runs on both scrobble paths, and
+    // maybeSubmitListen's own id guard makes a second call a no-op.
+    if (previous && isScrobblable(previous)) {
+      const played =
+        effectivePosition(status.currentTime ?? 0) || previous.duration || 0;
+      maybeSubmitListen(previous, played, played);
     }
     if (consumeSleepEndOfTrack()) {
       player.pause();

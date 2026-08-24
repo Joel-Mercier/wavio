@@ -312,6 +312,15 @@ describe("fallbackUrl", () => {
       fallbackUrl: "https://",
     });
     expect(b.fallbackUrl).toBeUndefined();
+    // `smb://` is a *valid* URL to `z.url()`, so an emptied SMB fallback only
+    // reads as absent because the blank check matches any scheme.
+    const c = useServersBase.getState().addServer({
+      name: "C",
+      url: "smb://nas.local/Music",
+      type: "smb",
+      fallbackUrl: "smb://",
+    });
+    expect(c.fallbackUrl).toBeUndefined();
   });
 
   it("updates and clears fallbackUrl via editServer", () => {
@@ -360,6 +369,68 @@ describe("fallbackUrl", () => {
     expect(useServersBase.getState().getServerById(first.id)?.fallbackUrl).toBe(
       "https://music.example.com",
     );
+  });
+});
+
+describe("plainPasswordAuth", () => {
+  it("omits the flag entirely when it is off", () => {
+    // A saved server that never saw the toggle must stay byte-identical to what
+    // earlier versions wrote: the field is optional and absent means "negotiate".
+    const s = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      plainPasswordAuth: false,
+    });
+    expect("plainPasswordAuth" in s).toBe(false);
+  });
+
+  it("stores the flag when it is on", () => {
+    const s = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      plainPasswordAuth: true,
+    });
+    expect(s.plainPasswordAuth).toBe(true);
+  });
+
+  it("updates a saved server when re-logging in with the flag toggled", () => {
+    const created = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      plainPasswordAuth: true,
+    });
+    const again = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      plainPasswordAuth: false,
+    });
+    expect(again.id).toBe(created.id);
+    expect(again.plainPasswordAuth).toBe(false);
+  });
+
+  it("leaves the flag alone when the caller doesn't mention it", () => {
+    const created = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      plainPasswordAuth: true,
+    });
+    useServersBase.getState().editServer(created.id, { name: "B" });
+    expect(
+      useServersBase.getState().getServerById(created.id)?.plainPasswordAuth,
+    ).toBe(true);
+  });
+
+  it("toggles the flag via editServer", () => {
+    const created = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+    });
+    useServersBase
+      .getState()
+      .editServer(created.id, { plainPasswordAuth: true });
+    expect(
+      useServersBase.getState().getServerById(created.id)?.plainPasswordAuth,
+    ).toBe(true);
   });
 });
 
@@ -482,9 +553,11 @@ describe("server schemas", () => {
     url: "https://a.example.com",
     type: "navidrome",
     paths: [],
+    libraryPath: "",
     mtlsAlias: "",
     fallbackUrl: "",
     headers: [],
+    plainPasswordAuth: false,
     ...over,
   });
 

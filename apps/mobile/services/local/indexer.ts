@@ -1,6 +1,9 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, Paths } from "expo-file-system";
 import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
+import { activeFileSource } from "@/services/fileSource";
+import type { FileSource, RemoteEntry } from "@/services/fileSource/types";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { logError } from "@/utils/log";
 import { getLocalLibraryDb } from "./db";
 import { deriveTrackTags } from "./deriveTags";
@@ -33,11 +36,8 @@ const MAX_DEPTH = 12;
 // Rows are written in batches inside one transaction for throughput; extraction
 // itself happens outside any transaction (it's slow, native I/O).
 const WRITE_BATCH_SIZE = 50;
-// Files extracted in parallel. Each extraction is native I/O plus a JS-side
-// raw-tag read, so a small pool overlaps the two without flooding either.
-const EXTRACT_CONCURRENCY = 4;
-// `dir.list()` is synchronous; yield to the event loop every N directories so
-// a large walk doesn't starve the UI thread.
+// The device source lists synchronously; yield to the event loop every N
+// directories so a large walk doesn't starve the UI thread.
 const LIST_YIELD_EVERY = 25;
 // A scan raises an Issue only when it fails on both enough files and a large
 // enough share of them: individual unreadable files are a fact of any real
@@ -61,6 +61,12 @@ export type ScanProgress = {
   total: number;
   /** Display name of the file currently being processed. */
   currentFile?: string;
+  /**
+   * Directories walked so far. The listing phase has no total to count against
+   * (that's what it's computing), and on a network share it's the slow half of
+   * the scan — so this is the only thing that tells the user it's moving.
+   */
+  directories?: number;
 };
 
 export type ScanResult = {
@@ -74,6 +80,13 @@ export type ScanResult = {
   failed: number;
   /** True when the scan stopped early via the controller. */
   cancelled: boolean;
+  /**
+   * True when at least one directory couldn't be listed, so the walk never saw
+   * the whole library. Suppresses the prune — see `scanLibrary`.
+   */
+  incomplete: boolean;
+  /** How many directories failed to list, for the "partial scan" warning. */
+  unreadable: number;
 };
 
 /** Cooperative cancellation token. Pass into `scanLibrary` and call `cancel()`. */
@@ -102,6 +115,13 @@ type ScannedFile = {
 };
 
 type ExistingRow = { id: string; mtime: number | null; size: number | null };
+
+/** Running state of the directory walk, threaded through the recursion. */
+type ListingState = {
+  dirs: number;
+  failed: number;
+  onProgress?: (dirs: number) => void;
+};
 
 /** Directory embedded artwork is written to (content-hashed by the native side). */
 export const artworkDir = (): Directory =>
@@ -135,32 +155,48 @@ export async function scanLibrary(
     removed: 0,
     failed: 0,
     cancelled: false,
+    incomplete: false,
+    unreadable: 0,
   };
 
   onProgress?.({ phase: "listing", processed: 0, total: 0 });
 
   // 1. Gather every audio file under the selected folders (de-duplicated by URI
   //    in case folders overlap or nest).
+  const source = activeFileSource();
   const seen = new Map<string, ScannedFile>();
-  const listed = { dirs: 0 };
+  const listed: ListingState = {
+    dirs: 0,
+    failed: 0,
+    onProgress: (dirs) =>
+      onProgress?.({
+        phase: "listing",
+        processed: 0,
+        total: 0,
+        directories: dirs,
+      }),
+  };
   for (const folder of folders) {
     if (controller?.cancelled) {
       result.cancelled = true;
       return result;
     }
     try {
-      // SAF folders picked on Android are content:// tree URIs; bare absolute
-      // paths get the file:// scheme. Anything already carrying a scheme
-      // (content://, file://) is passed through untouched.
-      const normalized = /^[a-z][a-z0-9+.-]*:\/\//i.test(folder)
-        ? folder
-        : `file://${folder}`;
-      const dir = new Directory(normalized);
-      if (dir.exists) await collectAudioFiles(dir, seen, 0, listed, folder);
+      const root = source.normalizeRoot(folder);
+      // `exists` now answers false only when the source positively said the
+      // path isn't there; anything else throws and lands below as a failure.
+      // That distinction is what keeps a dropped link from reading as "the user
+      // deleted this folder" — see services/fileSource/errors.ts.
+      if (await source.exists(root)) {
+        await collectAudioFiles(source, root, seen, 0, listed, folder);
+      }
     } catch (error) {
+      listed.failed++;
       logError(`[localLibrary] Failed to list folder ${folder}`, error);
     }
   }
+  result.unreadable = listed.failed;
+  result.incomplete = listed.failed > 0;
 
   const db = await getLocalLibraryDb();
 
@@ -226,9 +262,14 @@ export async function scanLibrary(
         currentFile: file.name,
       });
       try {
-        const metadata = await getAudioMetadata(file.uri, {
+        const playable = source.playableUrl(file.uri);
+        const metadata = await getAudioMetadata(playable, {
           artworkDir: dest.uri,
           enrich,
+          openReader: () => source.openReader(file.uri),
+          // Undefined for a `file://` URI; a network share's credentials for an
+          // http(s) one. Same accessor every other native fetcher uses.
+          headers: requestHeadersForUrl(playable),
         });
         batch.push(toTrackInsert(file, metadata));
         result.indexed++;
@@ -246,8 +287,9 @@ export async function scanLibrary(
     }
   };
   await Promise.all(
-    Array.from({ length: Math.min(EXTRACT_CONCURRENCY, work.length) }, () =>
-      worker(),
+    Array.from(
+      { length: Math.min(source.extractConcurrency, work.length) },
+      () => worker(),
     ),
   );
   await flush();
@@ -280,8 +322,15 @@ export async function scanLibrary(
   }
 
   // 4. Prune rows whose files are gone — but only after a *complete* scan, since
-  //    a cancelled run hasn't observed the full folder set.
-  if (!result.cancelled) {
+  //    a run that didn't observe the full folder set can't tell a deleted file
+  //    from one it simply never reached.
+  //
+  //    `cancelled` covers a user/controller stop. `incomplete` covers the case
+  //    that matters on a network share: a directory that failed to list. Without
+  //    it, a Wi-Fi drop or an expired credential mid-scan makes the share look
+  //    empty and this loop deletes the entire library — including the tag
+  //    corrections below, which cannot be recovered.
+  if (!result.cancelled && !result.incomplete) {
     onProgress?.({
       phase: "pruning",
       processed: result.indexed,
@@ -353,36 +402,53 @@ export async function deleteTracksByFolders(
 // --- internals -------------------------------------------------------------
 
 async function collectAudioFiles(
-  dir: Directory,
+  source: FileSource,
+  path: string,
   out: Map<string, ScannedFile>,
   depth: number,
-  listed: { dirs: number },
+  listed: ListingState,
   sourceFolder: string,
 ): Promise<void> {
   if (depth > MAX_DEPTH) return;
   if (++listed.dirs % LIST_YIELD_EVERY === 0) {
+    // The yield point is also the reporting point: emitting per directory would
+    // thrash subscribers on a fast local tree, and this already fires often
+    // enough to look continuous.
+    listed.onProgress?.(listed.dirs);
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
-  let entries: (File | Directory)[];
+  let entries: RemoteEntry[];
   try {
-    entries = dir.list();
+    entries = await source.list(path);
   } catch (error) {
-    logError(`[localLibrary] Failed to list ${dir.uri}`, error);
+    // Counted, not just logged. The walk still continues — one unreadable
+    // folder shouldn't abandon the rest of the library — but the count marks
+    // the scan incomplete, which is what stops the prune from deleting every
+    // track this walk failed to reach.
+    listed.failed++;
+    logError(`[localLibrary] Failed to list ${path}`, error);
     return;
   }
   for (const entry of entries) {
-    if (entry instanceof File) {
+    if (entry.isDirectory) {
+      await collectAudioFiles(
+        source,
+        entry.path,
+        out,
+        depth + 1,
+        listed,
+        sourceFolder,
+      );
+    } else {
       if (!isAudioFile(entry.name)) continue;
-      if (out.has(entry.uri)) continue;
-      out.set(entry.uri, {
-        uri: entry.uri,
+      if (out.has(entry.path)) continue;
+      out.set(entry.path, {
+        uri: entry.path,
         name: entry.name,
-        size: entry.size ?? 0,
-        mtime: entry.modificationTime ?? 0,
+        size: entry.size,
+        mtime: entry.mtime,
         sourceFolder,
       });
-    } else {
-      await collectAudioFiles(entry, out, depth + 1, listed, sourceFolder);
     }
   }
 }

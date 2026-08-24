@@ -73,6 +73,20 @@ export type BackendCapabilities = {
   // getGenres returns per-genre song/album counts, so genre lists can be sorted
   // by them. Jellyfin's genre items carry no counts.
   genreCounts: boolean;
+  // The server can be asked whether it already scrobbles this user's plays to
+  // ListenBrainz, so the app can avoid counting every play twice. Navidrome
+  // answers on its native API; Jellyfin answers only for admin sessions (the
+  // plugin config endpoint requires elevation), so a `true` here means "worth
+  // asking", not "will always get an answer" — see services/listenBrainz/
+  // serverState.ts, which treats an unanswered probe as unknown.
+  serverScrobbleLinkStatus: boolean;
+  // A search query is matched against more than the track title, so a
+  // `"<artist> <title>"` query can find a song. True on the Subsonic family
+  // (the query runs over title/album/artist) and on the local library (whose
+  // FTS5 table indexes title/artist/album/album_artist and ANDs the tokens).
+  // False on Jellyfin, whose `SearchTerm` matches the item name alone — there
+  // such a query returns nothing at all. See services/libraryMatch.ts.
+  multiFieldSearch: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -110,11 +124,18 @@ const SUBSONIC: BackendCapabilities = {
   tagWriting: false,
   songAlbumArtist: true,
   genreCounts: true,
+  // Plain Subsonic/OpenSubsonic exposes no way to read a server-side scrobble
+  // agent's state, so the app can only offer the user a manual switch.
+  serverScrobbleLinkStatus: false,
+  multiFieldSearch: true,
 };
 
 const NAVIDROME: BackendCapabilities = {
   ...SUBSONIC,
   smartPlaylists: true,
+  // GET /api/listenbrainz/link on the native API reports whether the user has
+  // linked a ListenBrainz token server-side.
+  serverScrobbleLinkStatus: true,
   // Navidrome's native REST API can sort songs by play count even though the
   // Subsonic surface can't — served via services/navidrome/songs.ts.
   mostPlayedTracks: true,
@@ -163,6 +184,12 @@ const JELLYFIN: BackendCapabilities = {
   // value and an album-artist sort would duplicate the artist one.
   songAlbumArtist: false,
   genreCounts: false,
+  // jellyfin-plugin-listenbrainz keeps per-user scrobble settings in its plugin
+  // configuration, readable only by an admin session.
+  serverScrobbleLinkStatus: true,
+  // `SearchTerm` matches the item name only, so anything but the bare title
+  // comes back empty.
+  multiFieldSearch: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -205,6 +232,32 @@ const LOCAL: BackendCapabilities = {
   tagWriting: true,
   songAlbumArtist: true,
   genreCounts: true,
+  // No server at all, so nothing else could be scrobbling these plays — which
+  // is exactly why the local library benefits most from app-side scrobbling.
+  serverScrobbleLinkStatus: false,
+  multiFieldSearch: true,
+};
+
+// Network file share (WebDAV): the same on-device index as LOCAL — the indexer
+// fills it the same way and every read path is identical — with two deltas that
+// follow from the files being remote.
+//
+// `offlineDownload` is the point of the feature: the files are across a network
+// that isn't there on the train, and services/offline/downloadService.ts already
+// works from a `{url, headers}` pair, which is exactly what the file source
+// produces. `tagWriting` goes off because correcting a tag would mean
+// download → retag → re-upload, and an interrupted upload corrupts the user's
+// only copy — a v1 risk not worth taking (see issue #157's plan).
+//
+// `remoteStreamableUrl` stays false even though a WebDAV URL *is* fetchable off
+// this device: a Chromecast/UPnP receiver is handed a URL and then talks to it
+// alone, with no way to carry the Authorization header the share requires. For
+// SMB it's more absolute — the URL is a loopback bridge on this phone, which no
+// other device can reach at all.
+const NETWORK_SHARE: BackendCapabilities = {
+  ...LOCAL,
+  offlineDownload: true,
+  tagWriting: false,
 };
 
 // A few capabilities depend on per-server *config*, not just the server type:
@@ -242,6 +295,9 @@ export function getCapabilities(serverType: ServerType): BackendCapabilities {
       return NAVIDROME;
     case "local":
       return LOCAL;
+    case "webdav":
+    case "smb":
+      return NETWORK_SHARE;
     default:
       return SUBSONIC;
   }

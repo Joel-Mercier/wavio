@@ -42,7 +42,17 @@ export type HomeSectionDescriptor =
   | { id: string; kind: "playlists" }
   | { id: string; kind: "starred" }
   | { id: string; kind: "podcasts" }
-  | { id: string; kind: "internetRadio" };
+  | { id: string; kind: "internetRadio" }
+  | { id: string; kind: "listenBrainzCreatedForYou" };
+
+/**
+ * A third-party account, rather than a server feature, that a section needs.
+ *
+ * Kept separate from BackendCapabilities because it answers a different
+ * question: capabilities describe what the music server can do, integrations
+ * whether the user has connected something else entirely.
+ */
+export type HomeSectionIntegration = "listenBrainz";
 
 // One entry per user-toggleable section, in feed order. `key` is the stable
 // value persisted in stores/app.ts hiddenHomeSections; dynamic kinds
@@ -61,6 +71,11 @@ const HOME_SECTION_CATALOG_ENTRIES = [
     labelKey: "app.settings.displaySettings.homeSections.moreFromArtist",
   },
   { key: "randomArtists", labelKey: "app.home.artists" },
+  {
+    key: "listenBrainzCreatedForYou",
+    labelKey: "app.home.createdForYou",
+    integration: "listenBrainz",
+  },
   {
     key: "songsByGenre",
     labelKey: "app.settings.displaySettings.homeSections.songsByGenre",
@@ -107,16 +122,50 @@ const HOME_SECTION_CATALOG_ENTRIES = [
   key: string;
   labelKey: string;
   capability?: keyof BackendCapabilities;
+  integration?: HomeSectionIntegration;
 }[];
 
 export type HomeSectionSettingKey =
   (typeof HOME_SECTION_CATALOG_ENTRIES)[number]["key"];
 
-export const HOME_SECTION_CATALOG: readonly {
+export interface HomeSectionCatalogEntry {
   key: HomeSectionSettingKey;
   labelKey: string;
   capability?: keyof BackendCapabilities;
-}[] = HOME_SECTION_CATALOG_ENTRIES;
+  integration?: HomeSectionIntegration;
+}
+
+export const HOME_SECTION_CATALOG: readonly HomeSectionCatalogEntry[] =
+  HOME_SECTION_CATALOG_ENTRIES;
+
+export type HomeSectionAvailability = {
+  capabilities: BackendCapabilities;
+  integrations: Record<HomeSectionIntegration, boolean>;
+};
+
+/**
+ * Whether a section can appear at all, ignoring the user's own preference.
+ *
+ * One function rather than the predicate inlined at each call site: the feed,
+ * the settings sheet and the "N sections" badge all have to agree, and they
+ * previously carried two verbatim copies of the capability half of this.
+ */
+export function isHomeSectionAvailable(
+  entry: Pick<HomeSectionCatalogEntry, "capability" | "integration">,
+  { capabilities, integrations }: HomeSectionAvailability,
+): boolean {
+  if (entry.capability && !capabilities[entry.capability]) return false;
+  if (entry.integration && !integrations[entry.integration]) return false;
+  return true;
+}
+
+export function availableHomeSections(
+  availability: HomeSectionAvailability,
+): readonly HomeSectionCatalogEntry[] {
+  return HOME_SECTION_CATALOG.filter((entry) =>
+    isHomeSectionAvailable(entry, availability),
+  );
+}
 
 export function homeSectionSettingKey(
   descriptor: HomeSectionDescriptor,
@@ -129,7 +178,7 @@ export function homeSectionSettingKey(
 export interface BuildHomeFeedInput {
   seedAlbums: AlbumID3[];
   genres: Genre[];
-  capabilities: BackendCapabilities;
+  availability: HomeSectionAvailability;
   sessionSeed: number;
   hiddenSections: readonly string[];
 }
@@ -156,10 +205,11 @@ function pickDecade(
 export function buildHomeFeed({
   seedAlbums,
   genres,
-  capabilities,
+  availability,
   sessionSeed,
   hiddenSections,
 }: BuildHomeFeedInput): HomeSectionDescriptor[] {
+  const { capabilities } = availability;
   const rand = mulberry32(sessionSeed || 1);
 
   const sections: HomeSectionDescriptor[] = [];
@@ -216,6 +266,14 @@ export function buildHomeFeed({
   }
 
   sections.push({ id: "randomArtists", kind: "randomArtists" });
+
+  // Pushed unconditionally; the terminal filter drops it when ListenBrainz isn't
+  // connected. Gating the push instead would be equivalent today but is exactly
+  // the mistake the comment at the bottom of this function warns about.
+  sections.push({
+    id: "listenBrainzCreatedForYou",
+    kind: "listenBrainzCreatedForYou",
+  });
 
   // Genres from Navidrome's per-library endpoint carry no counts; treat them as
   // eligible for both rows (an empty byGenre section hides itself anyway).
@@ -335,10 +393,17 @@ export function buildHomeFeed({
   }
 
   // Filter after building (not by skipping pushes) so the seeded RNG consumes
-  // the same sequence regardless of hidden sections — toggling one section
-  // never reshuffles the other dynamic picks.
+  // the same sequence regardless of hidden or unavailable sections — toggling
+  // one section, or connecting an integration, never reshuffles the other
+  // dynamic picks.
   const hidden = new Set(hiddenSections);
-  return sections.filter(
-    (section) => !hidden.has(homeSectionSettingKey(section)),
+  const byKey = new Map(
+    HOME_SECTION_CATALOG.map((entry) => [entry.key, entry]),
   );
+  return sections.filter((section) => {
+    const key = homeSectionSettingKey(section);
+    if (hidden.has(key)) return false;
+    const entry = byKey.get(key);
+    return !entry || isHomeSectionAvailable(entry, availability);
+  });
 }

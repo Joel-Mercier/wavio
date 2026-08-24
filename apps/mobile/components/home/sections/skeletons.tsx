@@ -54,6 +54,17 @@ export const INTERNET_RADIO_CAROUSEL_SKELETON = PLACEHOLDERS.map((_, index) => (
   />
 ));
 
+// Exactly three, because that section is never longer: Daily Jams, Weekly Jams
+// and Weekly Exploration are all ListenBrainz builds for a user.
+export const CREATED_FOR_YOU_SKELETON = loadingData(3).map((_, index) => (
+  <PlaylistListItemSkeleton
+    // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+    key={`created-for-you-skeleton-${index}`}
+    index={index}
+    layout="horizontal"
+  />
+));
+
 export const SONG_CAROUSEL_SKELETON = PLACEHOLDERS.map((_, index) => (
   <SongCardSkeleton
     // biome-ignore lint/suspicious/noArrayIndexKey: skeleton

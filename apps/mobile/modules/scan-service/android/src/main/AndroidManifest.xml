@@ -1,0 +1,19 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <!-- API 34+ requires the specific type as its own permission. A library scan
+       is dataSync: it reads files from a share and writes an index, with no
+       user interaction while it runs. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+  <!-- Posting the ongoing notification. Not requested at runtime: on API 33+ a
+       denied POST_NOTIFICATIONS silently hides the notification but does not
+       stop the service, which is the behaviour we want — the scan matters, its
+       notification is a courtesy. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <application>
+    <service
+      android:name="expo.modules.scanservice.ScanForegroundService"
+      android:exported="false"
+      android:foregroundServiceType="dataSync" />
+  </application>
+</manifest>

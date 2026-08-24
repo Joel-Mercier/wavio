@@ -4,9 +4,11 @@ import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
+import { initListenBrainzScrobbler } from "@/services/listenBrainz/scrobbler";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import useListenBrainz from "@/stores/listenBrainz";
 import useOffline from "@/stores/offline";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
@@ -66,6 +68,11 @@ export function hydratePlaybackStores(): Promise<void> {
     Promise.resolve(useRecentPlays.persist.rehydrate()),
     Promise.resolve(useOffline.persist.rehydrate()),
     Promise.resolve(useQueue.persist.rehydrate()),
+    // Playback in the car scrobbles like any other playback, and nothing under
+    // app/ mounts here to hydrate this store or start the drain loop.
+    Promise.resolve(useListenBrainz.persist.rehydrate()).then(() => {
+      initListenBrainzScrobbler();
+    }),
   ]).then(() => undefined);
   return scopedHydration;
 }

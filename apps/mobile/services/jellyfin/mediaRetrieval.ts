@@ -28,8 +28,6 @@ export const getAvatar = async (_username: string) => "";
 
 export const getCaptions = async (_id: string, _format: "srt" | "vvt") => "";
 
-export const getCoverArt = async (_id: string, _opts: { size?: number }) => "";
-
 export const getLyrics = async (_opts: { artist?: string; title?: string }) => {
   const lyrics: Lyrics = { value: "" };
   return fakeEnvelope({ lyrics });

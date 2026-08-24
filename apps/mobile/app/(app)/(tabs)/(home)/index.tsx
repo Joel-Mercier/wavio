@@ -10,6 +10,7 @@ import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
 import ArtistCarouselSection from "@/components/home/sections/ArtistCarouselSection";
+import CreatedForYouSection from "@/components/home/sections/CreatedForYouSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
 import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
 import PlaylistCarouselSection from "@/components/home/sections/PlaylistCarouselSection";
@@ -24,7 +25,7 @@ import StarredSection from "@/components/home/sections/StarredSection";
 import { Box } from "@/components/ui/box";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { getIsEffectivelyOnline } from "@/services/network";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -61,6 +62,9 @@ const HOME_REFRESH_KEYS = [
   ["playlists"],
   ["nowPlaying"],
   ["genres"],
+  // Only the playlist *list*. The resolve keys are deliberately absent: they
+  // each cost ~60 backend searches, which is not what a pull on Home asks for.
+  ["listenbrainz", "createdFor"],
 ] as const;
 
 const keyExtractor = (item: HomeSectionDescriptor) => item.id;
@@ -69,7 +73,7 @@ const getItemType = (item: HomeSectionDescriptor) => item.kind;
 export default function HomeScreen() {
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
-  const capabilities = useCapabilities();
+  const availability = useHomeSectionAvailability();
   const musicFolderId = useCurrentMusicFolderId();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const queryClient = useQueryClient();
@@ -132,14 +136,14 @@ export default function HomeScreen() {
       buildHomeFeed({
         seedAlbums,
         genres: genresData?.genres?.genre ?? [],
-        capabilities,
+        availability,
         sessionSeed,
         hiddenSections: hiddenHomeSections,
       }),
     [
       seedAlbums,
       genresData?.genres?.genre,
-      capabilities,
+      availability,
       sessionSeed,
       hiddenHomeSections,
     ],
@@ -268,6 +272,8 @@ export default function HomeScreen() {
               shuffleSeed={sessionSeed}
             />
           );
+        case "listenBrainzCreatedForYou":
+          return <CreatedForYouSection sectionIndex={index} />;
         case "starred":
           return <StarredSection sectionIndex={index} />;
         case "podcasts":

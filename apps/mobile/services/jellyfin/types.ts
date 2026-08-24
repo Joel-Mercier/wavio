@@ -49,7 +49,16 @@ export type BaseItemDto = {
     LastPlayedDate?: string;
     Rating?: number;
   };
-  ProviderIds?: { MusicBrainzAlbum?: string; MusicBrainzArtist?: string };
+  // Jellyfin keeps three distinct MusicBrainz ids on an audio item
+  // (MediaBrowser.Providers/MediaInfo/AudioFileProber.cs): MusicBrainzAlbum is
+  // the *release*, MusicBrainzTrack the *release track*, and MusicBrainzRecording
+  // the *recording* — the last read from the confusingly-named `MusicBrainz Track
+  // Id` tag. Only the recording id is what Subsonic's Child.musicBrainzId means.
+  ProviderIds?: {
+    MusicBrainzAlbum?: string;
+    MusicBrainzArtist?: string;
+    MusicBrainzRecording?: string;
+  };
   MediaSources?: {
     Bitrate?: number;
     Size?: number;

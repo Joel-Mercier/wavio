@@ -1,5 +1,6 @@
 import axios from "axios";
 import i18n from "@/config/i18n";
+import { smbProbe } from "@/modules/smb";
 import {
   getCertificateInfo,
   isCertificateTrusted,
@@ -7,6 +8,13 @@ import {
   isSslTrustAvailable,
 } from "@/modules/ssl-trust";
 import { createBareClient } from "@/services/backend/probe";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
+import {
+  parseSmbUrl,
+  type SmbTarget,
+  splitDomainUser,
+} from "@/services/fileSource/smbAddress";
+import { isMultistatus } from "@/services/fileSource/webdavMultistatus";
 import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
@@ -14,8 +22,10 @@ import {
   computeSubsonicToken,
   encodePasswordParam,
   generateSalt,
+  isCredentialErrorCode,
 } from "@/services/openSubsonic/auth";
 import type { ServerType } from "@/stores/servers";
+import { basicAuthHeader } from "@/utils/basicAuth";
 
 // Options object accepted by the auth store's `login()`. Produced here so both
 // the login form and the silent server-switch screen share one authentication
@@ -62,10 +72,60 @@ export class InvalidCredentialsError extends Error {
   }
 }
 
-// Subsonic codes that mean "these credentials won't do": 40 wrong username or
-// password, 41 token auth not supported, 42 mechanism not supported, 43 multiple
-// conflicting auth mechanisms, 44 invalid API key.
-const CREDENTIAL_ERROR_CODES = new Set([40, 41, 42, 43, 44]);
+// Longer than the reachability probe's budget: this runs once, with the user
+// watching, and an SMB handshake against a NAS waking from sleep is slow.
+const SMB_LOGIN_TIMEOUT_MS = 12000;
+
+/**
+ * i18n key explaining why a URL that answered isn't usable as a WebDAV share.
+ *
+ * The distinction is worth drawing because the fixes differ: a blocked PROPFIND
+ * is a server/proxy setting, a 404 is the wrong base path (Nextcloud in
+ * particular hides its share under `/remote.php/dav/files/<user>`), and a
+ * redirect means an auth portal is intercepting the request.
+ */
+function webdavSetupHint(status: number): string {
+  if (status === 405 || status === 501) return "auth.login.webdavMethodBlocked";
+  if (status === 404) return "auth.login.webdavPathNotFound";
+  if (status >= 300 && status < 400) return "auth.login.webdavRedirected";
+  return "auth.login.webdavNotAShare";
+}
+
+/**
+ * Turns the native module's coded SMB failures into the message the login screen
+ * should show. Only a rejected credential is an `InvalidCredentialsError` — the
+ * rest are the user's *address*, or the server's configuration, which the sign-in
+ * flow can't fix by re-prompting for a password.
+ */
+function translateSmbFailure(error: unknown, target: SmbTarget): Error {
+  const code = (error as { code?: unknown })?.code;
+  if (code === "ERR_SMB_AUTH") {
+    return new InvalidCredentialsError(
+      openSubsonicErrorCodes[40] ?? i18n.t("auth.login.loginErrorMessage"),
+    );
+  }
+  if (code === "ERR_SMB_NO_SHARE") {
+    return new Error(
+      i18n.t("auth.login.smbShareNotFound", { share: target.share }),
+    );
+  }
+  if (code === "ERR_SMB_UNREACHABLE") {
+    // Keeps the code on the translated error: `isUnreachableError` reads it to
+    // decide whether a server's fallback address is worth trying, and without it
+    // an SMB share would silently never fail over.
+    return Object.assign(
+      new Error(i18n.t("auth.login.smbUnreachable", { port: target.port })),
+      { code },
+    );
+  }
+  // iOS only: the Swift client implements SMB 2.x but not 3.x, so a share that
+  // mandates SMB 3 is refused where Android would connect. Different advice from
+  // "check the address", hence its own code.
+  if (code === "ERR_SMB_DIALECT") {
+    return new Error(i18n.t("auth.login.smbDialectUnsupported"));
+  }
+  return error instanceof Error ? error : new Error(String(error));
+}
 
 // A thrown network failure (not a Subsonic credential error) whose message
 // looks like a TLS/certificate problem. Walks `message` / `code` / `cause`
@@ -137,12 +197,17 @@ async function withSslDetection<T>(
 // so a store lookup would find nothing and every request to a proxy-fronted
 // server would be rejected. Same ordering problem `syncSslClientCertificates`
 // solves with its `extra` argument for mTLS.
+//
+// `forcePasswordAuth` is the user's per-server override (Server.plainPasswordAuth):
+// skip token auth entirely and authenticate with `p=enc:<hex>`. Passed in for the
+// same reason as `headers` — on the login screen the server isn't saved yet.
 export async function authenticateRemote(
   type: ServerType,
   url: string,
   username: string,
   password: string,
   headers?: Record<string, string>,
+  forcePasswordAuth?: boolean,
 ): Promise<RemoteLoginOptions> {
   const trimmedUrl = url.trim();
   const trimmedUsername = username.trim();
@@ -181,8 +246,66 @@ export async function authenticateRemote(
     };
   }
 
-  if (type === "local") {
-    throw new Error("authenticateRemote does not support local libraries");
+  if (type === "webdav") {
+    // There is no login endpoint in WebDAV — credentials are proven by making an
+    // authenticated request. A `PROPFIND Depth: 0` on the root is the cheapest
+    // one, and requiring a parseable 207 also rules out a URL that answers but
+    // isn't a WebDAV share at all (a plain web server, a captive portal).
+    const authorization = basicAuthHeader(trimmedUsername, trimmedPassword);
+    const response = await withSslDetection(trimmedUrl, () =>
+      createBareClient(trimmedUrl.replace(/\/+$/, ""), undefined, {
+        ...headers,
+        Authorization: authorization,
+        Depth: "0",
+        "Content-Type": "application/xml; charset=utf-8",
+      }).request({
+        method: "PROPFIND",
+        url: "/",
+        data: `<?xml version="1.0" encoding="utf-8"?>\n<propfind xmlns="DAV:"><prop><resourcetype/></prop></propfind>`,
+        responseType: "text",
+        transformResponse: [(body: string) => body],
+        validateStatus: () => true,
+      }),
+    );
+    if (response.status === 401 || response.status === 403) {
+      throw new InvalidCredentialsError(
+        openSubsonicErrorCodes[40] ?? i18n.t("auth.login.loginErrorMessage"),
+      );
+    }
+    if (response.status !== 207 || !isMultistatus(response.data as string)) {
+      // "Not a WebDAV share" used to cover all of these at once, which sent the
+      // user to re-check the URL even when the URL was right. They have
+      // genuinely different fixes: a 405 means PROPFIND is being blocked (often
+      // by a reverse proxy), a 404 means the base path is wrong, and a redirect
+      // means a login page is standing in front of the share.
+      throw new Error(i18n.t(webdavSetupHint(response.status)));
+    }
+    return { serverType: "webdav" };
+  }
+
+  if (type === "smb") {
+    // Same idea as WebDAV: there is no login step, so credentials are proven by
+    // connecting and querying the share root. The native module distinguishes the
+    // three ways this goes wrong, which is worth doing here — "wrong password",
+    // "no share by that name" and "nothing answered" need very different advice.
+    const target = parseSmbUrl(trimmedUrl);
+    if (!target) {
+      throw new Error(i18n.t("auth.login.smbUrlInvalid"));
+    }
+    const { domain, user } = splitDomainUser(trimmedUsername);
+    try {
+      await smbProbe(
+        { ...target, domain, username: user, password: trimmedPassword },
+        SMB_LOGIN_TIMEOUT_MS,
+      );
+    } catch (error) {
+      throw translateSmbFailure(error, target);
+    }
+    return { serverType: "smb" };
+  }
+
+  if (!hasNetworkServerType(type)) {
+    throw new Error("authenticateRemote does not support on-device libraries");
   }
 
   const subsonicSalt = generateSalt();
@@ -206,12 +329,19 @@ export async function authenticateRemote(
   // Negotiate the auth mechanism: prefer Subsonic token auth (`t`/`s`), but fall
   // back to password auth (`p`) for servers that reject token auth — LMS/Lyrion's
   // Subsonic bridge answers OpenSubsonic error 41/42 ("mechanism not supported").
-  let useTokenAuth = true;
+  // The user can also opt out of the negotiation entirely, for a server that
+  // fails token auth without saying so.
+  let useTokenAuth = !forcePasswordAuth;
   let rsp = await withSslDetection(trimmedUrl, () =>
-    ping({ t: subsonicToken, s: subsonicSalt }),
+    ping(
+      useTokenAuth
+        ? { t: subsonicToken, s: subsonicSalt }
+        : { p: encodePasswordParam(trimmedPassword) },
+    ),
   );
   let subsonicResponse = rsp.data?.["subsonic-response"];
   if (
+    useTokenAuth &&
     subsonicResponse?.status !== "ok" &&
     (subsonicResponse?.error?.code === 41 ||
       subsonicResponse?.error?.code === 42)
@@ -231,7 +361,7 @@ export async function authenticateRemote(
     const message =
       (typeof code === "number" ? openSubsonicErrorCodes[code] : undefined) ??
       i18n.t("auth.login.loginErrorMessage");
-    throw typeof code === "number" && CREDENTIAL_ERROR_CODES.has(code)
+    throw isCredentialErrorCode(code)
       ? new InvalidCredentialsError(message)
       : new Error(message);
   }
@@ -275,7 +405,14 @@ export async function authenticateRemote(
  * URL is reachable and the problem lies elsewhere.
  */
 function isUnreachableError(err: unknown): boolean {
-  return axios.isAxiosError(err) && !err.response;
+  // An HTTP request that never got a response: DNS, refused, timeout, TLS.
+  if (axios.isAxiosError(err) && !err.response) return true;
+  // SMB failures never come back as axios errors — they're native coded
+  // exceptions — so without this an SMB server with a fallback address
+  // configured would never try it. Only "couldn't reach the host" qualifies: a
+  // rejected password or a missing share will fail the same way on the other
+  // route, and retrying just doubles the wait before the real message.
+  return (err as { code?: unknown })?.code === "ERR_SMB_UNREACHABLE";
 }
 
 /**
@@ -301,6 +438,7 @@ export async function authenticateWithFallback(
   username: string,
   password: string,
   headers?: Record<string, string>,
+  forcePasswordAuth?: boolean,
 ): Promise<{ options: RemoteLoginOptions; activeUrl: string }> {
   const trimmedUrl = url.trim();
   const trimmedFallback = fallbackUrl?.trim();
@@ -311,6 +449,7 @@ export async function authenticateWithFallback(
       username,
       password,
       headers,
+      forcePasswordAuth,
     );
     return { options, activeUrl: trimmedUrl };
   } catch (primaryError) {
@@ -325,6 +464,7 @@ export async function authenticateWithFallback(
         username,
         password,
         headers,
+        forcePasswordAuth,
       );
       return { options, activeUrl: trimmedFallback };
     } catch (fallbackError) {
