@@ -177,6 +177,8 @@ const reportBackend = () => {
   const { serverType } = useAuthBase.getState();
   if (serverType === "jellyfin") return "jellyfin" as const;
   if (serverType === "local") return "local" as const;
+  if (serverType === "webdav") return "webdav" as const;
+  if (serverType === "smb") return "smb" as const;
   return "subsonic" as const;
 };
 

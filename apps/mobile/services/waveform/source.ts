@@ -1,6 +1,8 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { analysisUrl } from "@/services/backend/streaming";
+import { activeFileSource } from "@/services/fileSource";
 import { parseLocalTrackId } from "@/services/local/keys";
+import { queryTrackById } from "@/services/local/repository";
 import { getConnectionType } from "@/services/network";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
@@ -71,11 +73,35 @@ export async function resolveAnalysisSource(
 
   const localUri = parseLocalTrackId(track.id);
   if (localUri != null) {
-    return {
-      uri: localUri,
-      temporary: false,
-      fingerprint: analysisFingerprint(track.id),
-    };
+    const source = activeFileSource();
+    if (source.kind === "device") {
+      return {
+        uri: localUri,
+        temporary: false,
+        fingerprint: analysisFingerprint(track.id),
+      };
+    }
+    // A network share's address (`webdav:/Music/a.flac`, `smb:/…`) is ours, not
+    // something the native decoder can open, so it has to be fetched like a
+    // streamed track — over the source's playable URL, under the same metered
+    // gate and byte budget, and with the same "delete after decoding" contract.
+    if (getConnectionType() === "cellular") return "metered";
+    const budget = analysisByteBudget(track.duration);
+    // Unlike the streamed branch below, no server is transcoding here: these are
+    // the original bytes, and the scan already recorded how many there are. So
+    // the budget is applied *before* the transfer rather than after it — a
+    // lossless album would otherwise pull every track across the LAN in full
+    // (holding an SMB bridge worker for the duration) only to throw each one
+    // away. Permanent by nature, which is what "unsupported" tells the caller.
+    const size = await shareTrackSize(track);
+    if (size != null && size > budget) return "unsupported";
+    const copied = await downloadAnalysisCopy(
+      track.id,
+      source.playableUrl(localUri),
+      addressSuffix(localUri),
+      budget,
+    );
+    return { uri: copied, temporary: true, fingerprint: null };
   }
 
   // No active server yet — a sign-out or scope switch racing the settle delay.
@@ -96,6 +122,26 @@ export async function resolveAnalysisSource(
     analysisByteBudget(track.duration),
   );
   return { uri, temporary: true, fingerprint: null };
+}
+
+/**
+ * A share track's file size, without touching the network.
+ *
+ * The queue item carries it whenever it came through the local mappers, which
+ * is the ordinary path; the index is consulted only when it didn't — a queue
+ * restored from a persisted blob written before the field existed, or a track
+ * the waveform was handed by id alone. Null when neither knows, which leaves
+ * `downloadAnalysisCopy`'s post-download check as the backstop.
+ */
+async function shareTrackSize(track: QueueTrack): Promise<number | null> {
+  if (typeof track.size === "number") return track.size;
+  try {
+    return (await queryTrackById(track.id))?.size ?? null;
+  } catch {
+    // The index is an optimisation on this path, never the gate: failing to
+    // read it must not refuse a waveform the download would have produced.
+    return null;
+  }
 }
 
 /** How many bytes are worth pulling to analyze a track this long. */
@@ -121,6 +167,11 @@ function analysisByteBudget(durationSeconds: number | undefined): number {
 export function analysisFingerprint(trackId: string): string | null {
   const uri = parseLocalTrackId(trackId);
   if (uri == null) return null;
+  // A share's address isn't a file on this device, and asking the source for its
+  // size and mtime would mean a network round trip on a path that runs before
+  // every cache lookup. Null instead — the cache then validates on version alone,
+  // exactly as it does for a `content://` URI.
+  if (activeFileSource().kind !== "device") return null;
   try {
     const file = new File(uri);
     if (!file.exists) return null;
@@ -132,13 +183,14 @@ export function analysisFingerprint(trackId: string): string | null {
   }
 }
 
-// Deliberately no size pre-check. A HEAD against Navidrome's /rest/stream runs
+// Deliberately no size pre-check *here*. A HEAD against Navidrome's /rest/stream runs
 // the whole ffmpeg transcode to answer, and still returns no Content-Length
 // (the transcoded body is chunked), so it doubles the server's work and learns
 // nothing — verified against a debug-level instance. The only server a
 // Content-Length would come from is one serving a static original, which is
 // exactly what the budget below catches; being one download late is the cheaper
-// trade.
+// trade. The network-share caller is the exception and screens on the indexed
+// size first, because there it costs nothing.
 async function downloadAnalysisCopy(
   id: string,
   url: string,
@@ -213,3 +265,11 @@ function safeDelete(file: File): void {
 // Track ids are opaque (Subsonic ids, Jellyfin GUIDs, hex-encoded local URIs),
 // so keep only what is safe in a filename.
 const sanitize = (id: string): string => id.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+// The container of a file source address, for naming the fetched copy — which is
+// load-bearing on iOS, where AVURLAsset infers the container from the filename.
+const addressSuffix = (address: string): string => {
+  const name = address.slice(address.lastIndexOf("/") + 1);
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot + 1).toLowerCase() : "mp3";
+};

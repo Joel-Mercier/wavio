@@ -13,13 +13,19 @@ import { Text } from "@/components/ui/text";
  * Optional second address for the same server, shown under "Advanced settings"
  * in all three server forms. Shared so the field, its help text and its
  * validation stay identical across them.
+ *
+ * `protocols` must be the same set the primary URL field offers for the server's
+ * type: the fallback is another route to the *same* server, so it speaks the
+ * same protocol — an SMB share's second address is `smb://`, never `https://`.
  */
 export default function FallbackUrlField({
   field,
   placeholder,
+  protocols,
 }: {
   field: AnyFieldApi;
   placeholder: string;
+  protocols?: string[];
 }) {
   const { t } = useTranslation();
   return (
@@ -36,6 +42,7 @@ export default function FallbackUrlField({
           value={field.state.value ?? ""}
           onChangeText={field.handleChange}
           onBlur={() => handleFieldBlur(field)}
+          protocols={protocols}
           placeholder={placeholder}
         />
       </Input>

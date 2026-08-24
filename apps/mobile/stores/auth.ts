@@ -4,6 +4,12 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { queryClient } from "@/config/queryClient";
 import { zustandStorage } from "@/config/storage";
+import { smbDisconnect } from "@/modules/smb";
+import {
+  hasNetworkServerType,
+  isSingletonServerType,
+} from "@/services/backend/serverTraits";
+import { setSessionCredentials } from "@/services/serverHeaders";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import {
   headerRowSchema,
@@ -39,6 +45,12 @@ export const loginSchema = z
     // login form always supplies this (defaults to []), so it's required here to
     // match the form's value shape for the StandardSchema validator.
     paths: z.array(z.string()),
+    // Sub-path within a network file share to scan (`type === "webdav"`), empty
+    // meaning the whole share. Required-but-empty for the same reason as
+    // `mtlsAlias`: it keeps the inferred input type matching the form's string
+    // default. Any string is valid — a path that doesn't exist is caught by the
+    // scan, which reports it far more usefully than a regex could.
+    libraryPath: z.string().trim(),
     // Android KeyChain alias for mTLS client-cert auth (remote types, Android
     // only); presence enables mTLS. Required (empty = none) so the inferred
     // input type matches the login form's string default; no refinement.
@@ -55,7 +67,7 @@ export const loginSchema = z
     plainPasswordAuth: z.boolean(),
   })
   .superRefine((data, ctx) => {
-    if (data.type === "local") return;
+    if (!hasNetworkServerType(data.type)) return;
     refineFallbackUrl(data.fallbackUrl, ctx);
     refineHeaderRows(data.headers, ctx);
     const url = z.url().min(1).trim().safeParse(data.url);
@@ -300,6 +312,40 @@ export const useAuthBase = create<AuthStore>()(
   ),
 );
 
+// Keep services/serverHeaders in step with the session's credentials. A network
+// file share authenticates every request with HTTP Basic, and the pieces that
+// need it — the player, the downloader, the waveform analyser, the scan's tag
+// reads — are native fetchers that resolve headers per host rather than going
+// through an axios instance. Pushing from here (instead of letting that module
+// read this one) keeps the Sentry/query-client graph out of every network path.
+const publishSessionCredentials = (state: AuthStore): void => {
+  setSessionCredentials(
+    state.serverType === "webdav" && state.password
+      ? {
+          serverId: state.serverId,
+          username: state.username,
+          password: state.password,
+        }
+      : null,
+  );
+};
+publishSessionCredentials(useAuthBase.getState());
+useAuthBase.subscribe(publishSessionCredentials);
+
+// SMB is the other half of that: its credentials stay inside the native module,
+// which holds an authenticated session and a bound loopback listener for as long
+// as the share is the active server. Release both when it stops being — otherwise
+// switching away leaves an idle TCP session on the user's NAS and a token still
+// mapped to the old share's credentials. A stale session would also heal itself on
+// the next call (the cache is keyed on the target), so this is about releasing
+// what nothing is going to ask for again.
+let smbSessionActive = useAuthBase.getState().serverType === "smb";
+useAuthBase.subscribe((state) => {
+  const active = state.serverType === "smb";
+  if (smbSessionActive && !active) void smbDisconnect();
+  smbSessionActive = active;
+});
+
 // The active session's storage scope. Every scoped store, the query cache, the
 // download directory and the local SQLite file resolve their bucket through
 // this, so it is the single definition of "whose data is this".
@@ -309,7 +355,7 @@ export const useAuthBase = create<AuthStore>()(
 // a different server. See services/network.ts.
 export function currentAuthScope(): string {
   const { serverId, username, serverType } = useAuthBase.getState();
-  if (serverType === "local") return LOCAL_AUTH_SCOPE;
+  if (isSingletonServerType(serverType)) return LOCAL_AUTH_SCOPE;
   return getAuthScope(serverId, username);
 }
 
@@ -320,7 +366,7 @@ export function useCurrentAuthScope(): string | undefined {
   const serverId = useAuthBase((s) => s.serverId);
   const username = useAuthBase((s) => s.username);
   const serverType = useAuthBase((s) => s.serverType);
-  if (serverType === "local") return LOCAL_AUTH_SCOPE;
+  if (isSingletonServerType(serverType)) return LOCAL_AUTH_SCOPE;
   if (!serverId || !username) return undefined;
   return getAuthScope(serverId, username);
 }

@@ -17,10 +17,14 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
 import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
-import UrlInputField from "@/components/forms/UrlInputField";
-import ServerTypeIcon from "@/components/ServerTypeIcon";
+import ServerTypeSelector from "@/components/forms/ServerTypeSelector";
+import UrlInputField, {
+  protocolsForServerType,
+  realignUrlProtocol,
+} from "@/components/forms/UrlInputField";
 import ServerListItem from "@/components/servers/ServerListItem";
 import {
   AlertDialog,
@@ -42,12 +46,18 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { VStack } from "@/components/ui/vstack";
 import { useUsers } from "@/hooks/backend/useUsers";
 import { useUsers as useNavidromeUsers } from "@/hooks/navidrome/useUsers";
 import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import {
+  isNetworkShareType,
+  isSingletonServerType,
+  speaksHttpType,
+  usesSubsonicAuthType,
+} from "@/services/backend/serverTraits";
+import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
@@ -56,6 +66,7 @@ import useServers, {
   cleanOptionalUrl,
   type HeaderRow,
   headerRowsToRecord,
+  isBlankUrlInput,
   type ServerType,
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
@@ -115,6 +126,7 @@ export default function ServersDetail() {
       url: "",
       type: "navidrome" as ServerType,
       paths: [] as string[],
+      libraryPath: "",
       mtlsAlias: "",
       fallbackUrl: "",
       headers: [] as HeaderRow[],
@@ -150,15 +162,48 @@ export default function ServersDetail() {
           paths,
         });
       } else {
+        // `z.url()` accepts `smb://host` with no share name, which is the mistake
+        // people actually make — and it accepts it for the fallback too. Caught
+        // here rather than in the schema because the stores can't reach i18n
+        // (see stores/servers.ts) and this needs to say what the address should
+        // look like.
+        const smbAddresses =
+          value.type === "smb"
+            ? [value.url, value.fallbackUrl].filter(
+                (address) => !isBlankUrlInput(address),
+              )
+            : [];
+        if (smbAddresses.some((address) => !parseSmbUrl(address))) {
+          toast.show({
+            placement: "top",
+            duration: 5000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("auth.login.smbUrlInvalid")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+          return;
+        }
         addServer({
           name: value.name,
           url: value.url,
           type: value.type,
-          mtlsAlias: value.mtlsAlias?.trim() || undefined,
+          libraryPath: isNetworkShareType(value.type)
+            ? value.libraryPath?.trim() || undefined
+            : undefined,
+          mtlsAlias: speaksHttpType(value.type)
+            ? value.mtlsAlias?.trim() || undefined
+            : undefined,
           fallbackUrl: cleanOptionalUrl(value.fallbackUrl),
-          headers: headerRowsToRecord(value.headers),
+          headers: speaksHttpType(value.type)
+            ? headerRowsToRecord(value.headers)
+            : undefined,
           plainPasswordAuth:
-            value.type !== "jellyfin" && value.plainPasswordAuth,
+            usesSubsonicAuthType(value.type) && value.plainPasswordAuth,
         });
         // Refresh the native KeyManager so this server's client cert is
         // presented on future connections, and register the (possibly new)
@@ -185,29 +230,27 @@ export default function ServersDetail() {
 
   const isDirty = useSelector(form.store, (state) => state.isDirty);
 
+  // Re-scheme the URL alongside the type: the field renders the scheme separately
+  // from the value it stores, so an `https://` left over from another type would
+  // fail validation with nothing on screen to explain it.
+  const selectServerType = (next: ServerType) => {
+    form.setFieldValue("type", next);
+    const protocols = protocolsForServerType(next);
+    form.setFieldValue("url", (current) =>
+      realignUrlProtocol(current, protocols),
+    );
+    // Same treatment for the fallback: it is a second route to the *same*
+    // server, so it speaks the same protocol. A blank one stays blank.
+    form.setFieldValue("fallbackUrl", (current) =>
+      isBlankUrlInput(current)
+        ? current
+        : realignUrlProtocol(current, protocols),
+    );
+  };
+
   // The local library is a singleton (fixed `local` URL + scope), so only offer
   // it when none exists yet; an existing one is managed from its list entry.
-  const hasLocalServer = servers.some((s) => s.type === "local");
-  const serverTypeOptions: { value: ServerType; label: string }[] = [
-    { value: "navidrome", label: t("auth.login.serverTypeNavidrome") },
-    { value: "opensubsonic", label: t("auth.login.serverTypeOpenSubsonic") },
-    { value: "jellyfin", label: t("auth.login.serverTypeJellyfin") },
-    ...(hasLocalServer
-      ? []
-      : [
-          {
-            value: "local" as ServerType,
-            label: t("auth.login.serverTypeLocal"),
-          },
-        ]),
-  ];
-  const serverTypeRows: [
-    (typeof serverTypeOptions)[number],
-    (typeof serverTypeOptions)[number]?,
-  ][] = [];
-  for (let i = 0; i < serverTypeOptions.length; i += 2) {
-    serverTypeRows.push([serverTypeOptions[i], serverTypeOptions[i + 1]]);
-  }
+  const hasLocalServer = servers.some((s) => isSingletonServerType(s.type));
 
   const handleAddServerPress = () => {
     setShowAddServerModal(true);
@@ -260,77 +303,17 @@ export default function ServersDetail() {
               </Heading>
             </AlertDialogHeader>
             <AlertDialogBody className="mt-3 mb-4">
-              <form.Field name="type">
-                {(field) =>
-                  hasLocalServer ? (
-                    // Only the three remote types: keep the compact single-row
-                    // layout (stacked icon over label) rather than a 2+1 grid.
-                    <HStack className="my-2 gap-2">
-                      {serverTypeOptions.map((opt) => {
-                        const selected = field.state.value === opt.value;
-                        return (
-                          <FadeOutScaleDown
-                            key={opt.value}
-                            onPress={() => field.handleChange(opt.value)}
-                            className={`flex-1 rounded-md border ${
-                              selected
-                                ? "border-emerald-500 bg-emerald-500"
-                                : "border-primary-600 bg-primary-600"
-                            }`}
-                          >
-                            <VStack className="items-center justify-center py-3 px-2 gap-y-2">
-                              <ServerTypeIcon type={opt.value} size={28} />
-                              <Text
-                                className={`text-xs text-center ${
-                                  selected
-                                    ? "text-primary-800 font-bold"
-                                    : "text-white"
-                                }`}
-                              >
-                                {opt.label}
-                              </Text>
-                            </VStack>
-                          </FadeOutScaleDown>
-                        );
-                      })}
-                    </HStack>
-                  ) : (
-                    <VStack className="mb-2 gap-y-4">
-                      {serverTypeRows.map(([a, b]) => (
-                        <HStack key={a.value} className="gap-x-4">
-                          {[a, b].map((opt) => {
-                            if (!opt) return null;
-                            const selected = field.state.value === opt.value;
-                            return (
-                              <FadeOutScaleDown
-                                key={opt.value}
-                                onPress={() => field.handleChange(opt.value)}
-                                className="flex-1"
-                              >
-                                <HStack
-                                  className={`items-center rounded-md bg-primary-600 border-2 py-3 px-3 gap-x-3 ${
-                                    selected
-                                      ? "border-emerald-500"
-                                      : "border-primary-600"
-                                  }`}
-                                >
-                                  <ServerTypeIcon type={opt.value} size={28} />
-                                  <Text
-                                    className="text-sm text-white font-bold flex-1"
-                                    numberOfLines={2}
-                                  >
-                                    {opt.label}
-                                  </Text>
-                                </HStack>
-                              </FadeOutScaleDown>
-                            );
-                          })}
-                        </HStack>
-                      ))}
-                    </VStack>
-                  )
-                }
-              </form.Field>
+              <form.Subscribe selector={(state) => state.values.type}>
+                {(type) => (
+                  <Box className="mb-2">
+                    <ServerTypeSelector
+                      value={type}
+                      onChange={selectServerType}
+                      includeLocal={!hasLocalServer}
+                    />
+                  </Box>
+                )}
+              </form.Subscribe>
               <form.Subscribe selector={(state) => state.values.type}>
                 {(type) =>
                   type === "local" ? (
@@ -382,13 +365,23 @@ export default function ServersDetail() {
                                 value={field.state.value}
                                 onChangeText={field.handleChange}
                                 onBlur={() => handleFieldBlur(field)}
-                                placeholder={t("app.servers.urlPlaceholder")}
+                                protocols={protocolsForServerType(type)}
+                                placeholder={
+                                  type === "smb"
+                                    ? t("auth.login.smbUrlPlaceholder")
+                                    : t("app.servers.urlPlaceholder")
+                                }
                               />
                             </Input>
                             <FieldError field={field} />
                           </FormControl>
                         )}
                       </form.Field>
+                      {isNetworkShareType(type) && (
+                        <form.Field name="libraryPath">
+                          {(field) => <LibraryPathField field={field} />}
+                        </form.Field>
+                      )}
                       {/* Cross-platform section; only the client certificate
                             is gated on Android + the native trust module. */}
                       <AdvancedSettingsSection>
@@ -396,40 +389,47 @@ export default function ServersDetail() {
                           {(field) => (
                             <FallbackUrlField
                               field={field}
-                              placeholder={t(
-                                "app.servers.fallbackUrlPlaceholder",
-                              )}
+                              protocols={protocolsForServerType(type)}
+                              placeholder={
+                                type === "smb"
+                                  ? t("auth.login.smbFallbackUrlPlaceholder")
+                                  : t("app.servers.fallbackUrlPlaceholder")
+                              }
                             />
                           )}
                         </form.Field>
-                        <form.Field name="headers">
-                          {(field) => (
-                            <CustomHeadersField
-                              value={field.state.value}
-                              onChange={field.handleChange}
-                            />
-                          )}
-                        </form.Field>
-                        {Platform.OS === "android" && isSslTrustAvailable() && (
-                          <form.Field name="mtlsAlias">
+                        {speaksHttpType(type) && (
+                          <form.Field name="headers">
                             {(field) => (
-                              <form.Subscribe
-                                selector={(state) => state.values.url}
-                              >
-                                {(url) => (
-                                  <ClientCertificateField
-                                    value={field.state.value || undefined}
-                                    host={hostnameFromUrl(url ?? "")}
-                                    onChange={(alias) =>
-                                      field.handleChange(alias ?? "")
-                                    }
-                                  />
-                                )}
-                              </form.Subscribe>
+                              <CustomHeadersField
+                                value={field.state.value}
+                                onChange={field.handleChange}
+                              />
                             )}
                           </form.Field>
                         )}
-                        {type !== "jellyfin" && (
+                        {speaksHttpType(type) &&
+                          Platform.OS === "android" &&
+                          isSslTrustAvailable() && (
+                            <form.Field name="mtlsAlias">
+                              {(field) => (
+                                <form.Subscribe
+                                  selector={(state) => state.values.url}
+                                >
+                                  {(url) => (
+                                    <ClientCertificateField
+                                      value={field.state.value || undefined}
+                                      host={hostnameFromUrl(url ?? "")}
+                                      onChange={(alias) =>
+                                        field.handleChange(alias ?? "")
+                                      }
+                                    />
+                                  )}
+                                </form.Subscribe>
+                              )}
+                            </form.Field>
+                          )}
+                        {usesSubsonicAuthType(type) && (
                           <form.Field name="plainPasswordAuth">
                             {(field) => (
                               <PlainPasswordAuthField

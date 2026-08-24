@@ -22,9 +22,12 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
 import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
-import UrlInputField from "@/components/forms/UrlInputField";
+import UrlInputField, {
+  protocolsForServerType,
+} from "@/components/forms/UrlInputField";
 import ServerTypeIcon from "@/components/ServerTypeIcon";
 import {
   AlertDialog,
@@ -56,15 +59,24 @@ import { LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { createScopedStorage } from "@/config/storage";
 import { useIsDeviceOnline } from "@/hooks/useIsOnline";
 import { hostnameFromUrl, isSslTrustAvailable } from "@/modules/ssl-trust";
+import {
+  hasNetworkServerType,
+  isNetworkShareType,
+  isSingletonServerType,
+  speaksHttpType,
+  usesSubsonicAuthType,
+} from "@/services/backend/serverTraits";
+import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import { useAuthBase } from "@/stores/auth";
-import useLocalLibrary from "@/stores/localLibrary";
+import useLocalLibrary, { requestRescanForServer } from "@/stores/localLibrary";
 import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   editServerFormSchema,
   headerRecordToRows,
   headerRowsToRecord,
+  isBlankUrlInput,
   type Server,
 } from "@/stores/servers";
 import { switchToServer } from "@/utils/switchServer";
@@ -107,6 +119,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       url: server.url,
       type: server.type,
       paths: server.paths ?? [],
+      libraryPath: server.libraryPath ?? "",
       mtlsAlias: server.mtlsAlias ?? "",
       fallbackUrl: server.fallbackUrl ?? "",
       headers: headerRecordToRows(server.headers),
@@ -121,22 +134,64 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         editServer(server.id, { paths: value.paths });
         // Folders changed: re-open the indexing gate (incremental) so added
         // folders get indexed and removed ones pruned without a manual rescan.
-        useLocalLibrary.getState().requestRescan(false);
+        // Targeted at the edited server, which need not be the signed-in one.
+        requestRescanForServer(server.id, value.type);
         // A dropped folder prunes its albums, so home shortcuts pointing at them
         // would go stale — clear them (favourites shortcut is kept).
         if (removed) useRecentPlays.getState().clearRecentPlays();
       } else {
+        // A share's scanned sub-path decides which files belong to the
+        // library, so changing it has to reconcile the index — same reason the
+        // local branch above rescans when its folders change.
+        // See ServersDetail: `z.url()` lets `smb://host` (no share name) through
+        // — for the fallback as well as the main address — and the message
+        // explaining the right shape needs i18n.
+        const smbAddresses =
+          value.type === "smb"
+            ? [value.url, value.fallbackUrl].filter(
+                (address) => !isBlankUrlInput(address),
+              )
+            : [];
+        if (smbAddresses.some((address) => !parseSmbUrl(address))) {
+          toast.show({
+            placement: "top",
+            duration: 5000,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("auth.login.smbUrlInvalid")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+          return;
+        }
+        if (
+          isNetworkShareType(value.type) &&
+          (server.libraryPath ?? "") !== (value.libraryPath?.trim() ?? "")
+        ) {
+          requestRescanForServer(server.id, value.type);
+        }
         editServer(server.id, {
           name: value.name,
           url: value.url,
           type: value.type,
-          mtlsAlias: value.mtlsAlias?.trim() || undefined,
+          libraryPath: isNetworkShareType(value.type)
+            ? value.libraryPath?.trim() || undefined
+            : undefined,
+          mtlsAlias: speaksHttpType(value.type)
+            ? value.mtlsAlias?.trim() || undefined
+            : undefined,
           fallbackUrl: value.fallbackUrl ?? "",
           // `{}` rather than undefined so clearing the last row clears the
-          // saved headers instead of reading as "not editing them".
-          headers: headerRowsToRecord(value.headers) ?? {},
+          // saved headers instead of reading as "not editing them". SMB has no
+          // HTTP request to carry one, so it never keeps any.
+          headers: speaksHttpType(value.type)
+            ? (headerRowsToRecord(value.headers) ?? {})
+            : {},
           plainPasswordAuth:
-            value.type !== "jellyfin" && value.plainPasswordAuth,
+            usesSubsonicAuthType(value.type) && value.plainPasswordAuth,
         });
         // Refresh the native KeyManager so the updated client cert applies, and
         // register the (possibly new) fallback origin with the iOS proxy —
@@ -177,7 +232,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     // re-runs the indexing gate; the stale SQLite rows are pruned by that scan
     // (deleting the DB file here would close its connection mid-query — the
     // native close race — and crash the app).
-    if (server.type === "local") {
+    if (isSingletonServerType(server.type)) {
       if (server.current) {
         // Active scope: reset in-memory (keeping `ready`) so a same-scope
         // re-login still fires the indexing gate; persist flushes the clear.
@@ -222,7 +277,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
   // (not current-server reachability) so an unreachable current server doesn't
   // block switching to a reachable one on the same LAN.
   const isDeviceOnline = useIsDeviceOnline();
-  const switchDisabled = !isDeviceOnline && server.type !== "local";
+  const switchDisabled = !isDeviceOnline && hasNetworkServerType(server.type);
 
   return (
     <FadeOutScaleDown
@@ -302,7 +357,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              {server.type !== "local" && (
+              {!isSingletonServerType(server.type) && (
                 <FadeOutScaleDown
                   onPress={() => {
                     bottomSheetModalRef.current?.dismiss();
@@ -543,13 +598,23 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                           value={field.state.value}
                           onChangeText={field.handleChange}
                           onBlur={() => handleFieldBlur(field)}
-                          placeholder={t("app.servers.urlPlaceholder")}
+                          protocols={protocolsForServerType(server.type)}
+                          placeholder={
+                            server.type === "smb"
+                              ? t("auth.login.smbUrlPlaceholder")
+                              : t("app.servers.urlPlaceholder")
+                          }
                         />
                       </Input>
                       <FieldError field={field} />
                     </FormControl>
                   )}
                 </form.Field>
+                {isNetworkShareType(server.type) && (
+                  <form.Field name="libraryPath">
+                    {(field) => <LibraryPathField field={field} />}
+                  </form.Field>
+                )}
                 {/* Matches the login and add-server forms: advanced fields
                       behind a disclosure, client certificate gated on Android +
                       the native trust module (it does nothing elsewhere). */}
@@ -558,36 +623,47 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                     {(field) => (
                       <FallbackUrlField
                         field={field}
-                        placeholder={t("app.servers.fallbackUrlPlaceholder")}
+                        protocols={protocolsForServerType(server.type)}
+                        placeholder={
+                          server.type === "smb"
+                            ? t("auth.login.smbFallbackUrlPlaceholder")
+                            : t("app.servers.fallbackUrlPlaceholder")
+                        }
                       />
                     )}
                   </form.Field>
-                  <form.Field name="headers">
-                    {(field) => (
-                      <CustomHeadersField
-                        value={field.state.value}
-                        onChange={field.handleChange}
-                      />
-                    )}
-                  </form.Field>
-                  {Platform.OS === "android" && isSslTrustAvailable() && (
-                    <form.Field name="mtlsAlias">
+                  {speaksHttpType(server.type) && (
+                    <form.Field name="headers">
                       {(field) => (
-                        <form.Subscribe selector={(state) => state.values.url}>
-                          {(url) => (
-                            <ClientCertificateField
-                              value={field.state.value || undefined}
-                              host={hostnameFromUrl(url ?? "")}
-                              onChange={(alias) =>
-                                field.handleChange(alias ?? "")
-                              }
-                            />
-                          )}
-                        </form.Subscribe>
+                        <CustomHeadersField
+                          value={field.state.value}
+                          onChange={field.handleChange}
+                        />
                       )}
                     </form.Field>
                   )}
-                  {server.type !== "jellyfin" && (
+                  {speaksHttpType(server.type) &&
+                    Platform.OS === "android" &&
+                    isSslTrustAvailable() && (
+                      <form.Field name="mtlsAlias">
+                        {(field) => (
+                          <form.Subscribe
+                            selector={(state) => state.values.url}
+                          >
+                            {(url) => (
+                              <ClientCertificateField
+                                value={field.state.value || undefined}
+                                host={hostnameFromUrl(url ?? "")}
+                                onChange={(alias) =>
+                                  field.handleChange(alias ?? "")
+                                }
+                              />
+                            )}
+                          </form.Subscribe>
+                        )}
+                      </form.Field>
+                    )}
+                  {usesSubsonicAuthType(server.type) && (
                     <form.Field name="plainPasswordAuth">
                       {(field) => (
                         <PlainPasswordAuthField

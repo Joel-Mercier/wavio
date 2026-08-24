@@ -1,4 +1,5 @@
 import type { useRouter } from "expo-router";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
 
@@ -6,11 +7,11 @@ type Router = ReturnType<typeof useRouter>;
 
 // Resolve which saved user to silently re-authenticate as when switching to a
 // server. A username (avatar tap) wins; otherwise we only auto-resolve when
-// exactly one user on the server has saved credentials. Local servers never
-// qualify (no remote credentials to replay).
+// exactly one user on the server has saved credentials. Servers with no remote
+// endpoint never qualify (no credentials to replay).
 function resolveSavedCredential(serverId: string, username?: string) {
   const server = useServersBase.getState().getServerById(serverId);
-  if (!server || server.type === "local") return null;
+  if (!server || !hasNetworkServerType(server.type)) return null;
   const users = useServersBase
     .getState()
     .users.filter((u) => u.serverId === serverId && !!u.password);

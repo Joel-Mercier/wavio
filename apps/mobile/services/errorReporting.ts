@@ -51,7 +51,12 @@ export type ReportArea =
   | "storage"
   | "ui";
 
-export type ReportBackend = "subsonic" | "jellyfin" | "local";
+export type ReportBackend =
+  | "subsonic"
+  | "jellyfin"
+  | "local"
+  | "webdav"
+  | "smb";
 
 export type ReportApi =
   | "taddy"

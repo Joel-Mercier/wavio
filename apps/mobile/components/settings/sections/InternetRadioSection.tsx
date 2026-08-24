@@ -3,7 +3,7 @@ import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import RadioFeedTagsSheet from "@/components/internetRadioStations/RadioFeedTagsSheet";
-import SearchableSelectSheet from "@/components/internetRadioStations/SearchableSelectSheet";
+import SearchableSelectSheet from "@/components/SearchableSelectSheet";
 import {
   SettingsSelectRow,
   SettingsToggleRow,

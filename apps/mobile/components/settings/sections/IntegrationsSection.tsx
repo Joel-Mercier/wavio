@@ -11,6 +11,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { isIndexBackedType } from "@/services/backend/serverTraits";
 import useAudioMuse from "@/stores/audioMuse";
 import { useAuthBase } from "@/stores/auth";
 import useListenBrainz from "@/stores/listenBrainz";
@@ -73,7 +74,9 @@ export default function IntegrationsSection() {
   const capabilities = useCapabilities();
   // AudioMuse-AI analyses a media server's library and answers in that server's
   // item ids, so it has nothing to say about an on-device library.
-  const isLocal = useAuthBase((store) => store.serverType === "local");
+  const indexBacked = useAuthBase((store) =>
+    isIndexBackedType(store.serverType),
+  );
   const lastScanAt = useMusicBrainz((store) => store.lastScanAt);
   const isAudioMuseConnected = useAudioMuse((store) => store.isConnected);
   const listenBrainzUserName = useListenBrainz((store) => store.userName);
@@ -92,7 +95,7 @@ export default function IntegrationsSection() {
             isConfigured={lastScanAt !== null}
           />
         )}
-        {!isLocal && (
+        {!indexBacked && (
           <IntegrationRow
             title={t("app.settings.integrations.audiomuse.title")}
             description={t("app.settings.integrations.audiomuse.description")}

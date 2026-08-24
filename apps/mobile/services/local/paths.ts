@@ -1,11 +1,19 @@
+import { isNetworkShareType } from "@/services/backend/serverTraits";
 import useServers from "@/stores/servers";
 
-// The local library's source folders live on the active local server entry
-// (stores/servers.ts → Server.paths). Centralised here so every local backend
-// section reads them the same way.
+// Roots the indexer scans, read off the active server entry. The on-device
+// library holds a list of filesystem paths (`Server.paths`); a network share
+// holds one sub-path within the share (`Server.libraryPath`), empty meaning the
+// whole share. Centralised here so every local backend section reads them the
+// same way, and so the indexer stays unaware of which kind it's walking.
 export function localFolders(): string[] {
   const server = useServers.getState().getCurrentServer();
-  return server?.type === "local" ? (server.paths ?? []) : [];
+  if (!server) return [];
+  if (server.type === "local") return server.paths ?? [];
+  if (isNetworkShareType(server.type)) {
+    return [server.libraryPath?.trim() || "/"];
+  }
+  return [];
 }
 
 // Order-insensitive equality of two folder lists. Used to tell whether the

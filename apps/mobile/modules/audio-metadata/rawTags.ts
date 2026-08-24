@@ -1,15 +1,24 @@
-import { File, FileMode } from "expo-file-system";
-
 // Raw tag-frame reader for the fields the OS metadata APIs
 // (`MediaMetadataRetriever` / `AVMetadataItem`) don't surface: ReplayGain,
 // embedded lyrics, multi-value artists and MusicBrainz IDs. It reads only the
 // tag region at the front of the file (ID3v2's header declares its own size;
 // FLAC metadata blocks precede the audio), never the audio payload, so it stays
 // cheap and memory-safe even for large files. Runs identically on iOS and
-// Android since it's pure JS over `expo-file-system` byte reads.
+// Android since it's pure JS over byte reads.
+//
+// I/O arrives as a `ByteReader` rather than being opened here, so the same
+// parser serves a file on this device and a ranged HTTP GET against a network
+// share. The structural type is declared locally (not imported from
+// services/fileSource) to keep this module self-contained — `modules/*` are
+// standalone packages and must not depend on `services/*`.
 //
 // Supported containers: MP3 (ID3v2.2 / 2.3 / 2.4) and FLAC (Vorbis comments).
 // M4A/MP4 freeform atoms are not parsed yet — those tracks just skip enrichment.
+
+/** Structurally identical to `ByteReader` in services/fileSource/types.ts. */
+export type ByteReader = {
+  read(offset: number, length: number): Promise<Uint8Array>;
+};
 
 export type ReplayGain = {
   trackGain?: number;
@@ -35,48 +44,49 @@ export type RawTagData = {
 // corrupt/huge declared size. 4 MB comfortably covers tags with embedded art.
 const MAX_TAG_BYTES = 4 * 1024 * 1024;
 
-export async function readRawTags(uri: string): Promise<RawTagData> {
-  let handle: ReturnType<File["open"]> | undefined;
+// How much of a FLAC header to pull in one go before walking its metadata
+// blocks — see `readFlac`. Large enough for a seektable and a comment block,
+// small enough to stay cheaper than the round trips it replaces.
+const FLAC_WINDOW_BYTES = 64 * 1024;
+
+export async function readRawTags(reader: ByteReader): Promise<RawTagData> {
   try {
-    handle = new File(uri).open(FileMode.ReadOnly);
-    handle.offset = 0;
-    const signature = handle.readBytes(4);
+    // One 10-byte read covers both the container signature and the whole ID3v2
+    // header, so the common case costs two round trips (header, then the
+    // declared tag region) rather than three — which matters once `reader` is a
+    // ranged HTTP GET across a LAN.
+    const header = await reader.read(0, 10);
+    if (header.length < 4) return {};
 
     // "ID3"
-    if (
-      signature[0] === 0x49 &&
-      signature[1] === 0x44 &&
-      signature[2] === 0x33
-    ) {
-      return readId3(handle);
+    if (header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) {
+      return await readId3(reader, header);
     }
     // "fLaC"
     if (
-      signature[0] === 0x66 &&
-      signature[1] === 0x4c &&
-      signature[2] === 0x61 &&
-      signature[3] === 0x43
+      header[0] === 0x66 &&
+      header[1] === 0x4c &&
+      header[2] === 0x61 &&
+      header[3] === 0x43
     ) {
-      return readFlac(handle);
+      return await readFlac(reader);
     }
     return {};
   } catch {
     // Enrichment is best-effort; never let it break extraction.
     return {};
-  } finally {
-    handle?.close();
   }
 }
-
-type Handle = ReturnType<File["open"]>;
 
 // ---------------------------------------------------------------------------
 // ID3v2 (MP3)
 // ---------------------------------------------------------------------------
 
-function readId3(handle: Handle): RawTagData {
-  handle.offset = 0;
-  const header = handle.readBytes(10);
+async function readId3(
+  reader: ByteReader,
+  header: Uint8Array,
+): Promise<RawTagData> {
+  if (header.length < 10) return {};
   const major = header[3];
   const flags = header[5];
   const unsync = (flags & 0x80) !== 0;
@@ -84,8 +94,7 @@ function readId3(handle: Handle): RawTagData {
   const tagSize = synchsafe(header, 6);
   if (tagSize <= 0 || tagSize > MAX_TAG_BYTES) return {};
 
-  handle.offset = 10;
-  let body: Uint8Array = handle.readBytes(tagSize);
+  let body: Uint8Array = await reader.read(10, tagSize);
   if (unsync) body = deunsynchronize(body);
 
   let pos = 0;
@@ -250,11 +259,22 @@ function decodeTextFrame(data: Uint8Array): string {
 // FLAC (Vorbis comments)
 // ---------------------------------------------------------------------------
 
-function readFlac(handle: Handle): RawTagData {
+async function readFlac(reader: ByteReader): Promise<RawTagData> {
+  // Every FLAC metadata block header is four bytes, and walking them with a
+  // ranged read apiece is what a network share charges most for: each one costs
+  // a whole HTTP request plus an SMB open/close (~45 ms against a NAS), for four
+  // bytes. One speculative window covers STREAMINFO + SEEKTABLE +
+  // VORBIS_COMMENT on essentially every real file, so the walk becomes free and
+  // only a file that pushes its comment block past the window pays per read.
+  const window = await reader.read(0, FLAC_WINDOW_BYTES);
+  const at = (offset: number, length: number): Promise<Uint8Array> =>
+    offset + length <= window.length
+      ? Promise.resolve(window.subarray(offset, offset + length))
+      : reader.read(offset, length);
+
   let offset = 4; // past "fLaC"
   for (let guard = 0; guard < 128; guard++) {
-    handle.offset = offset;
-    const blockHeader = handle.readBytes(4);
+    const blockHeader = await at(offset, 4);
     if (blockHeader.length < 4) break;
     const isLast = (blockHeader[0] & 0x80) !== 0;
     const blockType = blockHeader[0] & 0x7f;
@@ -263,8 +283,7 @@ function readFlac(handle: Handle): RawTagData {
 
     if (blockType === 4) {
       if (length <= 0 || length > MAX_TAG_BYTES) return {};
-      handle.offset = offset + 4;
-      return parseVorbisComments(handle.readBytes(length));
+      return parseVorbisComments(await at(offset + 4, length));
     }
     if (isLast) break;
     offset += 4 + length;
