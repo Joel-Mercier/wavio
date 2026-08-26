@@ -238,6 +238,28 @@ const LOCAL: BackendCapabilities = {
   multiFieldSearch: true,
 };
 
+// Network file share (WebDAV): the same on-device index as LOCAL — the indexer
+// fills it the same way and every read path is identical — with two deltas that
+// follow from the files being remote.
+//
+// `offlineDownload` is the point of the feature: the files are across a network
+// that isn't there on the train, and services/offline/downloadService.ts already
+// works from a `{url, headers}` pair, which is exactly what the file source
+// produces. `tagWriting` goes off because correcting a tag would mean
+// download → retag → re-upload, and an interrupted upload corrupts the user's
+// only copy — a v1 risk not worth taking (see issue #157's plan).
+//
+// `remoteStreamableUrl` stays false even though a WebDAV URL *is* fetchable off
+// this device: a Chromecast/UPnP receiver is handed a URL and then talks to it
+// alone, with no way to carry the Authorization header the share requires. For
+// SMB it's more absolute — the URL is a loopback bridge on this phone, which no
+// other device can reach at all.
+const NETWORK_SHARE: BackendCapabilities = {
+  ...LOCAL,
+  offlineDownload: true,
+  tagWriting: false,
+};
+
 // A few capabilities depend on per-server *config*, not just the server type:
 // Navidrome ships sharing and the jukebox disabled by default (returning HTTP
 // 501 for their endpoints), and not every OpenSubsonic server hosts podcasts.
@@ -273,6 +295,9 @@ export function getCapabilities(serverType: ServerType): BackendCapabilities {
       return NAVIDROME;
     case "local":
       return LOCAL;
+    case "webdav":
+    case "smb":
+      return NETWORK_SHARE;
     default:
       return SUBSONIC;
   }

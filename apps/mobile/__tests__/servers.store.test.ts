@@ -312,6 +312,15 @@ describe("fallbackUrl", () => {
       fallbackUrl: "https://",
     });
     expect(b.fallbackUrl).toBeUndefined();
+    // `smb://` is a *valid* URL to `z.url()`, so an emptied SMB fallback only
+    // reads as absent because the blank check matches any scheme.
+    const c = useServersBase.getState().addServer({
+      name: "C",
+      url: "smb://nas.local/Music",
+      type: "smb",
+      fallbackUrl: "smb://",
+    });
+    expect(c.fallbackUrl).toBeUndefined();
   });
 
   it("updates and clears fallbackUrl via editServer", () => {
@@ -544,6 +553,7 @@ describe("server schemas", () => {
     url: "https://a.example.com",
     type: "navidrome",
     paths: [],
+    libraryPath: "",
     mtlsAlias: "",
     fallbackUrl: "",
     headers: [],

@@ -56,6 +56,12 @@ const GENERIC_FOLDERS = new Set([
 
 const EXT_RE = /\.[^./]+$/;
 const SPLIT_RE = /\s+-\s+/;
+// Leading source scheme: `file://` for device files, `webdav:` / `smb:` for a
+// network share's addresses (which are the share-relative path behind that
+// prefix). Stripped before the folder heuristics run, or the scheme reads as the
+// containing folder and a file sitting at the share root gets "webdav:" for its
+// album — and, one level down, for its artist too.
+const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\/?/i;
 
 function basename(value: string): string {
   return value.replace(EXT_RE, "").trim();
@@ -149,8 +155,9 @@ export type DerivedTags = {
 
 /**
  * Fill missing title/artist/album/track for a local file. `path` is the file's
- * absolute path (scheme stripped is fine); `fileName` is its basename. Embedded
- * metadata always wins; heuristics only fill the gaps.
+ * absolute path or share address (`file://…`, `webdav:/…`, `smb:/…` — the scheme
+ * is stripped here); `fileName` is its basename. Embedded metadata always wins;
+ * heuristics only fill the gaps.
  */
 export function deriveTrackTags(
   path: string,
@@ -159,10 +166,7 @@ export function deriveTrackTags(
 ): DerivedTags {
   const fromName = parseFileName(fileName);
 
-  const parts = path
-    .replace(/^file:\/\//, "")
-    .split("/")
-    .filter(Boolean);
+  const parts = path.replace(SCHEME_RE, "").split("/").filter(Boolean);
   // parts[last] is the file itself.
   const parentName = parts.length >= 2 ? parts[parts.length - 2] : undefined;
   const grandparentName =

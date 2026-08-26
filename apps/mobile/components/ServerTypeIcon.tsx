@@ -1,3 +1,5 @@
+import HardDriveIcon from "lucide-react-native/dist/esm/icons/hard-drive.mjs";
+import NetworkIcon from "lucide-react-native/dist/esm/icons/network.mjs";
 import SmartPhoneIcon from "lucide-react-native/dist/esm/icons/smartphone.mjs";
 import Jellyfin from "@/assets/images/jellyfin.svg";
 import Navidrome from "@/assets/images/navidrome.svg";
@@ -20,6 +22,10 @@ export default function ServerTypeIcon({
       return <OpenSubsonic width={size} height={size} fill="white" />;
     case "local":
       return <SmartPhoneIcon size={size} color="white" />;
+    case "webdav":
+      return <HardDriveIcon size={size} color="white" />;
+    case "smb":
+      return <NetworkIcon size={size} color="white" />;
     default:
       return <Navidrome width={size} height={size} />;
   }

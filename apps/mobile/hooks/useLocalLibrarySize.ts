@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { filesAreOnDeviceType } from "@/services/backend/serverTraits";
 import { queryLibrarySize } from "@/services/local/repository";
 import { useAuthBase } from "@/stores/auth";
 
@@ -8,11 +9,11 @@ import { useAuthBase } from "@/stores/auth";
 // The cache is invalidated after a rescan (see LocalLibraryIndexing), so this
 // re-reads once newly indexed files change the total.
 export const useLocalLibrarySize = (): number => {
-  const isLocal = useAuthBase((s) => s.serverType === "local");
+  const filesOnDevice = useAuthBase((s) => filesAreOnDeviceType(s.serverType));
   const { data } = useQuery({
     queryKey: ["localLibrarySize"],
     queryFn: queryLibrarySize,
-    enabled: isLocal,
+    enabled: filesOnDevice,
   });
   return data ?? 0;
 };

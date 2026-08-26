@@ -1,5 +1,7 @@
 import { hostnameFromUrl, upstreamBaseForUrl } from "@/modules/ssl-trust";
-import { useServersBase } from "@/stores/servers";
+import { speaksHttpType } from "@/services/backend/serverTraits";
+import { type Server, useServersBase } from "@/stores/servers";
+import { basicAuthHeader } from "@/utils/basicAuth";
 import { USER_AGENT } from "@/utils/userAgent";
 
 // User-defined headers for a server, resolved for an arbitrary request URL.
@@ -9,6 +11,7 @@ import { USER_AGENT } from "@/utils/userAgent";
 // problem and is the model for the `extra` threading on the login screen.
 
 let cache: Map<string, Record<string, string>> | null = null;
+let auth: Map<string, AuthEntry> | null = null;
 let outbound: Map<string, Record<string, string>> | null = null;
 let wrapped: Map<string, { uri: string; headers: Record<string, string> }> =
   new Map();
@@ -22,7 +25,7 @@ const listeners = new Set<() => void>();
 function buildCache(): Map<string, Record<string, string>> {
   const map = new Map<string, Record<string, string>>();
   for (const server of useServersBase.getState().servers) {
-    if (server.type === "local" || !server.headers) continue;
+    if (!speaksHttpType(server.type) || !server.headers) continue;
     if (Object.keys(server.headers).length === 0) continue;
     for (const url of [server.url, server.fallbackUrl]) {
       if (!url) continue;
@@ -40,6 +43,128 @@ function headerMap(): Map<string, Record<string, string>> {
   return cache;
 }
 
+const DEFAULT_PORTS: Record<string, string> = { http: "80", https: "443" };
+
+/**
+ * `host:port` for a URL, with the scheme's default port filled in so
+ * `https://nas.local` and `https://nas.local:443` resolve to the same key.
+ *
+ * Only the credential map keys on this; everything else here keys on the
+ * hostname alone. A password must reach exactly the server it belongs to, and
+ * one host routinely fronts several: a NAS running Navidrome on `:4533` and a
+ * WebDAV share on `:443` is the ordinary setup, and host-keying would attach the
+ * share's Basic header to every request to the other one.
+ */
+function originKeyFromUrl(url: string): string {
+  const match = /^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)/i.exec(url.trim());
+  if (!match) return "";
+  // Drop any `user:pass@` prefix so the authority is host[:port] alone.
+  const authority = match[2].slice(match[2].lastIndexOf("@") + 1);
+  const port = /:(\d+)$/.exec(authority);
+  const host = (
+    port ? authority.slice(0, port.index) : authority
+  ).toLowerCase();
+  if (!host) return "";
+  return `${host}:${port?.[1] ?? DEFAULT_PORTS[match[1].toLowerCase()] ?? ""}`;
+}
+
+// The hostname is carried alongside so `outboundMap()` can still merge the
+// user's host-keyed headers over the credentials.
+type AuthEntry = { host: string; headers: Record<string, string> };
+
+// Credentials the app itself must send, as opposed to headers the *user*
+// configured. A WebDAV share authenticates with HTTP Basic on every request —
+// listing, ranged tag read, playback, download, waveform — and those last three
+// happen in native fetchers that never see the axios instances. Registering the
+// header origin-keyed here is what makes them all work without threading
+// credentials through six call sites.
+//
+// Kept out of `headerMap()` on purpose. That map answers "what did the user
+// configure": it feeds `customHeaderHostMap()`, which mirrors headers into the
+// Android widget's native store, and the settings UI. Neither should ever carry
+// a password.
+function buildAuthCache(): Map<string, AuthEntry> {
+  const map = new Map<string, AuthEntry>();
+  const { servers, users } = useServersBase.getState();
+
+  const register = (server: Server, username: string, password: string) => {
+    const value = basicAuthHeader(username, password);
+    for (const url of [server.url, server.fallbackUrl]) {
+      if (!url) continue;
+      const origin = originKeyFromUrl(url);
+      const host = hostnameFromUrl(url);
+      if (origin && host)
+        map.set(origin, { host, headers: { Authorization: value } });
+    }
+  };
+
+  for (const server of servers) {
+    if (server.type !== "webdav") continue;
+    // A *saved* password, which only exists when the user opted in. Covers
+    // servers other than the active one — a download that outlives a server
+    // switch still resolves its credentials (same reason this map is
+    // address-keyed rather than keyed by server id).
+    const user = users.find((u) => u.serverId === server.id && u.password);
+    if (user?.password) register(server, user.username, user.password);
+  }
+
+  // The active session last, so it wins. This is what makes a share work
+  // without opting into saving the password: the signed-in session always has
+  // one, so playback, downloads and the scan's tag reads all authenticate on a
+  // plain sign-in.
+  const active = session;
+  if (active) {
+    const server = servers.find((s) => s.id === active.serverId);
+    if (server) register(server, active.username, active.password);
+  }
+  return map;
+}
+
+/** Credentials for the signed-in session, when it's a network file share. */
+export type SessionCredentials = {
+  serverId: string;
+  username: string;
+  password: string;
+} | null;
+
+let session: SessionCredentials = null;
+
+/**
+ * Publish the active session's share credentials.
+ *
+ * Pushed by stores/auth rather than pulled from it. Reaching into the auth store
+ * from here would drag config/queryClient — and through it services/
+ * errorReporting and the Sentry SDK — into every network path that only wanted a
+ * header, plus the test graph of anything touching one. Same inversion, and the
+ * same reason, as the `logoutHandlers` seam in stores/auth.ts.
+ */
+export function setSessionCredentials(next: SessionCredentials): void {
+  const unchanged =
+    session?.serverId === next?.serverId &&
+    session?.username === next?.username &&
+    session?.password === next?.password;
+  if (unchanged) return;
+  session = next;
+  invalidate();
+}
+
+function authMap(): Map<string, AuthEntry> {
+  if (!auth) auth = buildAuthCache();
+  return auth;
+}
+
+function authHeadersForUrl(
+  url: string | undefined,
+): Record<string, string> | undefined {
+  if (!url) return undefined;
+  const map = authMap();
+  if (map.size === 0) return undefined;
+  const direct = map.get(originKeyFromUrl(url));
+  if (direct) return direct.headers;
+  const upstream = upstreamBaseForUrl(url);
+  return upstream ? map.get(originKeyFromUrl(upstream))?.headers : undefined;
+}
+
 // The headers every *native* fetcher should send. Native image loaders and
 // downloaders don't go through an axios instance, so without this they inherit
 // the platform default (`Dalvik/…` on Android, `okhttp/…` for the ExoPlayer data
@@ -53,26 +178,45 @@ const DEFAULT_REQUEST_HEADERS: Record<string, string> = Object.freeze({
   "User-Agent": USER_AGENT,
 });
 
-// Per-host merge of the default agent with the server's configured headers. The
-// user's values win, so someone overriding a User-Agent their WAF rejects still
-// gets their way — same precedence as the axios instances.
+// Merge of the default agent with the server's configured headers. The user's
+// values win, so someone overriding a User-Agent their WAF rejects still gets
+// their way — same precedence as the axios instances.
+//
+// Two key spaces in one map, which is safe because an origin key always contains
+// a `:` and a hostname never does: hostnames carry the user's headers, and the
+// narrower origin keys carry those *plus* credentials. `lookupOutbound` tries the
+// origin first, so a sibling server on another port of the same host gets the
+// headers without the password.
 function outboundMap(): Map<string, Record<string, string>> {
   if (!outbound) {
     outbound = new Map();
-    for (const [host, custom] of headerMap()) {
-      outbound.set(host, { "User-Agent": USER_AGENT, ...custom });
+    for (const [host, headers] of headerMap()) {
+      outbound.set(host, { "User-Agent": USER_AGENT, ...headers });
+    }
+    for (const [origin, { host, headers }] of authMap()) {
+      // Credentials first so a user-configured Authorization still wins — the
+      // reverse-proxy case (a service token fronting the share) is exactly when
+      // someone would set one deliberately.
+      outbound.set(origin, {
+        "User-Agent": USER_AGENT,
+        ...headers,
+        ...headerMap().get(host),
+      });
     }
   }
   return outbound;
 }
 
-useServersBase.subscribe(() => {
+function invalidate(): void {
   cache = null;
+  auth = null;
   outbound = null;
   wrapped = new Map();
   names = null;
   for (const listener of listeners) listener();
-});
+}
+
+useServersBase.subscribe(invalidate);
 
 /**
  * Observe changes to the configured headers. Used by the pieces that have to
@@ -129,11 +273,18 @@ export function requestHeadersForUrl(
   if (!url) return DEFAULT_REQUEST_HEADERS;
   const map = outboundMap();
   if (map.size === 0) return DEFAULT_REQUEST_HEADERS;
-  const direct = map.get(hostnameFromUrl(url));
+  const direct = lookupOutbound(map, url);
   if (direct) return direct;
   const upstream = upstreamBaseForUrl(url);
-  const viaUpstream = upstream ? map.get(hostnameFromUrl(upstream)) : undefined;
+  const viaUpstream = upstream ? lookupOutbound(map, upstream) : undefined;
   return viaUpstream ?? DEFAULT_REQUEST_HEADERS;
+}
+
+function lookupOutbound(
+  map: Map<string, Record<string, string>>,
+  url: string,
+): Record<string, string> | undefined {
+  return map.get(originKeyFromUrl(url)) ?? map.get(hostnameFromUrl(url));
 }
 
 /**
@@ -145,8 +296,13 @@ export function mergeCustomHeaders(
   url: string | undefined,
   base: Record<string, string>,
 ): Record<string, string> {
+  // Includes the credentials a network file share needs, not only user-defined
+  // headers — this is what expo-audio is handed for playback, so a WebDAV track
+  // would 401 without it.
+  const credentials = authHeadersForUrl(url);
   const custom = customHeadersForUrl(url);
-  return custom ? { ...base, ...custom } : base;
+  if (!credentials && !custom) return base;
+  return { ...base, ...credentials, ...custom };
 }
 
 function isRemote(uri: string): boolean {
@@ -220,6 +376,9 @@ export function configuredHeaderNames(): Set<string> {
   for (const headers of headerMap().values()) {
     for (const name of Object.keys(headers)) next.add(name.toLowerCase());
   }
+  // Not user-configured, but it carries a WebDAV share's password and reaches
+  // the same breadcrumbs, so it belongs on the same scrub list.
+  if (authMap().size > 0) next.add("authorization");
   names = next;
   return next;
 }
@@ -227,6 +386,8 @@ export function configuredHeaderNames(): Set<string> {
 /** Test seam: drop the memoized maps. */
 export function __resetCustomHeadersCache(): void {
   cache = null;
+  auth = null;
+  session = null;
   outbound = null;
   wrapped = new Map();
   names = null;

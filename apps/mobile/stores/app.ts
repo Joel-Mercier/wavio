@@ -199,6 +199,13 @@ interface AppStore {
   setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
+  // Only scan a network file share's library over Wi-Fi. A first scan reads the
+  // tag region of every file on the share, which on a large library is a lot of
+  // metered data — and unlike playback it isn't something the user asked for at
+  // that moment. On by default for the same reason trackCacheOnCellular is off:
+  // spending someone's data plan is not a decision the app gets to make.
+  scanOnWifiOnly: boolean;
+  setScanOnWifiOnly: (enabled: boolean) => void;
   replayGainMode: "off" | "track" | "album";
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
@@ -396,6 +403,10 @@ export const useAppBase = create<AppStore>()(
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
         set({ autoSignOutOnServerUnreachable: enabled });
+      },
+      scanOnWifiOnly: true,
+      setScanOnWifiOnly: (enabled: boolean) => {
+        set({ scanOnWifiOnly: enabled });
       },
       replayGainMode: "off",
       setReplayGainMode: (replayGainMode: "off" | "track" | "album") => {

@@ -21,14 +21,15 @@ export interface SelectOption {
 type SearchableSelectSheetProps = {
   ref: React.RefObject<BottomSheetModal | null>;
   title: string;
-  anyLabel: string;
+  /** Header row that clears the selection; omit when the value is required. */
+  anyLabel?: string;
   options: SelectOption[];
   selectedValue: string | undefined;
   onSelect: (value: string) => void;
   emerald: string;
 };
 
-/** Single-select picker with a search box and an "any" header row. */
+/** Single-select picker with a search box and an optional "any" header row. */
 export default function SearchableSelectSheet({
   ref,
   title,
@@ -66,12 +67,16 @@ export default function SearchableSelectSheet({
         keyExtractor={(item) => item.value}
         renderScrollComponent={renderScrollComponent}
         ListHeaderComponent={
-          <FadeOutScaleDown onPress={() => onSelect("")}>
-            <HStack className="items-center justify-between px-6 py-3">
-              <Text className="text-md text-white flex-1 pr-4">{anyLabel}</Text>
-              {!selectedValue && <Check size={20} color={emerald} />}
-            </HStack>
-          </FadeOutScaleDown>
+          anyLabel ? (
+            <FadeOutScaleDown onPress={() => onSelect("")}>
+              <HStack className="items-center justify-between px-6 py-3">
+                <Text className="text-md text-white flex-1 pr-4">
+                  {anyLabel}
+                </Text>
+                {!selectedValue && <Check size={20} color={emerald} />}
+              </HStack>
+            </FadeOutScaleDown>
+          ) : null
         }
         renderItem={({ item }) => (
           <FadeOutScaleDown onPress={() => onSelect(item.value)}>

@@ -3,6 +3,7 @@ import {
   openDatabaseAsync,
   type SQLiteDatabase,
 } from "expo-sqlite";
+import { getAuthScope } from "@/config/authScope";
 import { localTrackId } from "@/services/local/keys";
 import { currentAuthScope } from "@/stores/auth";
 import { logError } from "@/utils/log";
@@ -31,54 +32,164 @@ const currentScope = currentAuthScope;
 // old name (see migrateLocalLibraryDatabases in services/storageScopeMigration).
 const dbNameForScope = (scope: string): string => `local-library-${scope}.db`;
 
-// Open handle, memoized per scope. We keep the *promise* so a burst of callers
-// in the same scope shares one open, and a scope change chains the previous
-// handle's close before opening the new file.
-let current: { scope: string; db: Promise<SQLiteDatabase> } | null = null;
+// The scope a cleared session derives — no server id, no username. Computed from
+// the real formula rather than spelled out, so it can't drift from it.
+//
+// Every backend call into services/local is gated on `isIndexBacked()` (see
+// services/backend/dispatch.ts), which is false the moment sign-out resets the
+// server type, so nothing legitimately reaches the index without a session.
+// What can reach it is an operation that resolves the handle *again* after a
+// long await, by which time the session it belongs to is gone: a podcast feed
+// refresh is the live example (services/local/podcasts.ts `refreshChannel`
+// fetches over the network, then writes) and podcasts are the one section that
+// routes remote servers here too. Opening for this scope would silently create
+// an orphan database and write another server's rows into it, so refuse instead
+// — the operation is already wrong, and failing keeps it visible.
+const NO_SESSION_SCOPE = getAuthScope("", "");
+
+// Open handles, memoized per scope. We keep the *promise* so a burst of callers
+// in the same scope shares one open.
+//
+// A scope change deliberately *keeps* the previous scope's handle open rather
+// than closing it. expo-sqlite dispatches every call onto `Dispatchers.IO` — a
+// thread pool, not a serial queue — so a `closeAsync` overlapping any statement
+// still running on the same handle finalizes that statement out from under the
+// thread using it and aborts the process with a heap-corruption SIGABRT
+// (`Scudo ERROR: corrupted chunk header`, inside `sqlite3_close`). That is a
+// native abort, not a rejected promise, so no call site can defend against it.
+// Handles are one per server visited in a session — a file descriptor each — so
+// retaining them is cheap and removes the race outright. The explicit
+// close/delete paths below do close, but only once `inFlight` has drained.
+type Gate = {
+  /** Async statements currently running against the handle (see `guard`). */
+  inFlight: number;
+  /** Waiters parked until `inFlight` falls back to 0. */
+  idle: Array<() => void>;
+};
+type Handle = { db: Promise<SQLiteDatabase>; gate: Gate };
+
+const handles = new Map<string, Handle>();
+
+// The `SQLiteDatabase` methods that hand work to the native pool and resolve
+// when it finishes. Anything absent passes straight through: it either runs
+// inline (the `*Sync` variants) or — `prepareAsync` and `getEachAsync` — hands
+// out a lifetime that outlives the call and so can't be tracked by wrapping the
+// call. Don't reach for those two without first teaching `guard` about them, or
+// their statements become invisible to the drain.
+const TRACKED_METHODS = new Set([
+  "execAsync",
+  "runAsync",
+  "getAllAsync",
+  "getFirstAsync",
+  "withTransactionAsync",
+  "withExclusiveTransactionAsync",
+]);
+
+/**
+ * Wrap a handle so every async statement run through it is counted, which is
+ * what lets `closeHandle` wait for the last one before closing.
+ */
+function guard(db: SQLiteDatabase, gate: Gate): SQLiteDatabase {
+  const release = () => {
+    gate.inFlight -= 1;
+    if (gate.inFlight > 0) return;
+    for (const resume of gate.idle.splice(0)) resume();
+  };
+  return new Proxy(db, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop);
+      if (typeof value !== "function") return value;
+      // Bound to the raw handle, so a method that calls into another (a
+      // transaction running its own statements) doesn't re-enter the proxy and
+      // count itself twice.
+      const fn = (value as (...args: unknown[]) => unknown).bind(target);
+      if (!TRACKED_METHODS.has(prop as string)) return fn;
+      return (...args: unknown[]) => {
+        gate.inFlight += 1;
+        let result: Promise<unknown>;
+        try {
+          result = fn(...args) as Promise<unknown>;
+        } catch (error) {
+          release();
+          throw error;
+        }
+        return result.finally(release);
+      };
+    },
+  });
+}
+
+function openHandle(scope: string): Handle {
+  const gate: Gate = { inFlight: 0, idle: [] };
+  const db = (async () => {
+    const opened = await openDatabaseAsync(dbNameForScope(scope));
+    // WAL must be set outside any transaction; do it before migrating.
+    await opened.execAsync("PRAGMA journal_mode = WAL");
+    await migrate(opened);
+    return guard(opened, gate);
+  })();
+  return { db, gate };
+}
+
+/** Close one scope's handle, once nothing is still running against it. */
+async function closeHandle(scope: string): Promise<void> {
+  const handle = handles.get(scope);
+  if (!handle) return;
+  // Dropped from the map before the drain so a caller arriving meanwhile opens
+  // a fresh connection to the same file (WAL allows several) instead of
+  // queueing behind one that is about to go away.
+  handles.delete(scope);
+  const db = await handle.db;
+  // Waits as long as the work does — a scan holding a write transaction can
+  // take a while. Cancel the scan first if you need this to return promptly;
+  // capping the wait would just put the native abort back.
+  await drain(handle.gate);
+  await db.closeAsync();
+}
+
+function drain(gate: Gate): Promise<void> {
+  if (gate.inFlight === 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    gate.idle.push(resolve);
+  });
+}
 
 /**
  * Resolve the SQLite database for the active (server, user) scope, opening (and
  * migrating) it on first use and transparently swapping to a new file when the
  * scope changes. Always `await getLocalLibraryDb()` at call time — never cache
  * the resolved handle across an await that might span a server switch.
+ *
+ * Rejects when there is no session to scope the index to (see
+ * `NO_SESSION_SCOPE`).
  */
 export function getLocalLibraryDb(): Promise<SQLiteDatabase> {
   const scope = currentScope();
-  if (current?.scope === scope) return current.db;
+  if (scope === NO_SESSION_SCOPE) {
+    return Promise.reject(
+      new Error("[localLibrary] No signed-in session to scope the index to"),
+    );
+  }
+  const existing = handles.get(scope);
+  if (existing) return existing.db;
 
-  const previous = current;
-  current = {
-    scope,
-    db: (async () => {
-      if (previous) {
-        try {
-          const old = await previous.db;
-          await old.closeAsync();
-        } catch (error) {
-          logError("[localLibrary] Failed to close previous database", error);
-        }
-      }
-      const db = await openDatabaseAsync(dbNameForScope(scope));
-      // WAL must be set outside any transaction; do it before migrating.
-      await db.execAsync("PRAGMA journal_mode = WAL");
-      await migrate(db);
-      return db;
-    })(),
-  };
-  return current.db;
+  const handle = openHandle(scope);
+  handles.set(scope, handle);
+  // A failed open must not stay memoized, or every later call in this scope
+  // replays the same rejection instead of retrying.
+  handle.db.catch(() => {
+    if (handles.get(scope) === handle) handles.delete(scope);
+  });
+  return handle.db;
 }
 
 /**
- * Close the active scope's handle (if any). Call on sign-out so a later login
- * re-opens cleanly; safe to call when nothing is open.
+ * Close the active scope's handle (if any). Safe to call when nothing is open,
+ * and safe to call while queries are in flight — it waits for them.
  */
 export async function closeLocalLibraryDb(): Promise<void> {
-  const open = current;
-  current = null;
-  if (!open) return;
   try {
-    const db = await open.db;
-    await db.closeAsync();
+    await closeHandle(currentScope());
   } catch (error) {
     logError("[localLibrary] Failed to close database", error);
   }
@@ -88,13 +199,16 @@ export async function closeLocalLibraryDb(): Promise<void> {
  * Drop a scope's entire on-device index (and its file). Defaults to the active
  * scope; pass an explicit `scope` to target another (e.g. deleting the local
  * server while a different server is the active session — its file is keyed on
- * `LOCAL_AUTH_SCOPE`, not the active one). Only the open handle is closed, and
- * only when it belongs to the targeted scope. Re-opens lazily on the next query.
+ * `LOCAL_AUTH_SCOPE`, not the active one). Re-opens lazily on the next query.
  */
 export async function deleteLocalLibraryDb(
   scope: string = currentScope(),
 ): Promise<void> {
-  if (current?.scope === scope) await closeLocalLibraryDb();
+  try {
+    await closeHandle(scope);
+  } catch (error) {
+    logError("[localLibrary] Failed to close database", error);
+  }
   try {
     await deleteDatabaseAsync(dbNameForScope(scope));
   } catch (error) {

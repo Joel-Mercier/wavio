@@ -1,0 +1,41 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.smb'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.smb"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // smbj is Apache-2.0, unlike jcifs-ng (LGPL) — the app ships under MIT, and an
+  // LGPL component inside a Play Store binary carries relinking obligations we
+  // can't meet. It targets API 26+, which is exactly this project's minSdk.
+  //
+  // Transitively pulls slf4j-api, mbassador, asn-one and BouncyCastle
+  // (bcprov-jdk18on). BouncyCastle is the one with real weight, and smbj needs
+  // it: MD4 for NTLM and AES-CMAC/GCM for SMB3, none of which the Android JCE
+  // provides. It also loads classes reflectively, so if minification is ever
+  // enabled (`android.enableMinifyInReleaseBuilds` is false today and nothing
+  // overrides it) this needs `-keep class org.bouncycastle.** { *; }` plus
+  // `-dontwarn org.bouncycastle.**`, or SMB3 fails at runtime with no build
+  // warning. Note also that Jetifier breaks bcprov-jdk18on — it is not enabled
+  // in this project, and must not be.
+  implementation "com.hierynomus:smbj:0.14.0"
+}

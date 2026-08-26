@@ -3,18 +3,31 @@ import CryptoKit
 import ExpoModulesCore
 
 public class AudioMetadataModule: Module {
+  // `AsyncFunction` otherwise runs on one *serial* queue shared by every Expo
+  // module in the app, so a scan is serialized no matter what
+  // `FileSource.extractConcurrency` asks for and unrelated native calls queue
+  // behind each extraction. Concurrent rather than the waveform module's serial
+  // queue: reads here are latency-bound, and the JS side already caps how many
+  // are in flight. Same reasoning as the Android counterpart.
+  private let queue = DispatchQueue(
+    label: "app.wavio.audio-metadata", qos: .userInitiated, attributes: .concurrent)
+
   public func definition() -> ModuleDefinition {
     Name("AudioMetadata")
 
     AsyncFunction("getAudioMetadata") {
-      (uri: String, includeArtwork: Bool, artworkDir: String?) -> [String: Any] in
+      (uri: String, includeArtwork: Bool, artworkDir: String?,
+       headers: [String: String]?) -> [String: Any] in
       return AudioMetadataModule.extract(
-        uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir)
+        uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir,
+        headers: headers)
     }
+    .runOnQueue(queue)
   }
 
   private static func extract(
-    uri: String, includeArtwork: Bool, artworkDir: String?
+    uri: String, includeArtwork: Bool, artworkDir: String?,
+    headers: [String: String]?
   ) -> [String: Any] {
     let url: URL
     if let parsed = URL(string: uri), parsed.scheme != nil {
@@ -23,7 +36,15 @@ public class AudioMetadataModule: Module {
       url = URL(fileURLWithPath: uri)
     }
 
-    let asset = AVURLAsset(url: url)
+    // A network file share (WebDAV, or SMB via its loopback bridge) is read over
+    // HTTP and needs the share's Authorization header on the asset's own
+    // requests — AVURLAsset does its own networking, so nothing we set elsewhere
+    // reaches it.
+    var options: [String: Any] = [:]
+    if let headers, !headers.isEmpty {
+      options["AVURLAssetHTTPHeaderFieldsKey"] = headers
+    }
+    let asset = AVURLAsset(url: url, options: options)
     var result: [String: Any] = [:]
 
     let durationSeconds = CMTimeGetSeconds(asset.duration)

@@ -1,7 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import { useTranslation } from "react-i18next";
-import { SettingsActionRow } from "@/components/settings/SettingsRows";
+import {
+  SettingsActionRow,
+  SettingsToggleRow,
+} from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Heading } from "@/components/ui/heading";
@@ -13,7 +16,12 @@ import {
   useStartScan,
 } from "@/hooks/backend/useMediaLibraryScanning";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import {
+  isIndexBackedType,
+  isNetworkShareType,
+} from "@/services/backend/serverTraits";
 import { isSubsonicNotAuthorized } from "@/services/openSubsonic";
+import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useLocalLibrary from "@/stores/localLibrary";
 import { formatDistanceToNow } from "@/utils/date";
@@ -23,8 +31,15 @@ export default function MusicLibrarySection() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
-  const isLocal = useAuthBase((store) => store.serverType === "local");
+  const indexBacked = useAuthBase((store) =>
+    isIndexBackedType(store.serverType),
+  );
   const serverType = useAuthBase((store) => store.serverType);
+  // A library that is index-backed *and* reached over the network: the only kind
+  // whose scan costs bandwidth, so the only one the Wi-Fi guard applies to.
+  const networkShare = isNetworkShareType(serverType);
+  const scanOnWifiOnly = useApp((store) => store.scanOnWifiOnly);
+  const setScanOnWifiOnly = useApp((store) => store.setScanOnWifiOnly);
   const hasNavidromeNative = useAuthBase((store) => store.hasNavidromeNative);
   const isAdmin = useAuthBase((store) => store.isAdmin);
   // Navidrome restricts startScan to admins (code 50 otherwise). When native
@@ -40,7 +55,7 @@ export default function MusicLibrarySection() {
     // Local mode: re-open the full-screen indexing gate, which runs a forced
     // full re-extraction (with live progress) rather than the background
     // incremental scan — so new tag fields land on already-indexed files.
-    if (isLocal) {
+    if (indexBacked) {
       useLocalLibrary.getState().requestRescan(true);
       return;
     }
@@ -86,7 +101,17 @@ export default function MusicLibrarySection() {
           onPress={handleMediaLibraryScanPress}
           disabled={scanRequiresAdmin}
         />
-        {!isLocal && (
+        {networkShare && (
+          <SettingsToggleRow
+            label={t("app.settings.musicLibrarySettings.scanOnWifiOnlyLabel")}
+            description={t(
+              "app.settings.musicLibrarySettings.scanOnWifiOnlyDescription",
+            )}
+            value={scanOnWifiOnly}
+            onToggle={setScanOnWifiOnly}
+          />
+        )}
+        {!indexBacked && (
           <HStack className="items-center gap-x-4 py-4 justify-between">
             <VStack className="gap-y-2 w-3/5">
               <Heading className="text-white font-normal" size="md">

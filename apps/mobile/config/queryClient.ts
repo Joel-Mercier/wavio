@@ -11,6 +11,7 @@ import {
   scopedQueryCacheKey,
   storage,
 } from "@/config/storage";
+import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import {
   isNetworkNoise,
   type ReportBackend,
@@ -24,6 +25,8 @@ function activeBackend(): ReportBackend {
   const { serverType } = useAuthBase.getState();
   if (serverType === "jellyfin") return "jellyfin";
   if (serverType === "local") return "local";
+  if (serverType === "webdav") return "webdav";
+  if (serverType === "smb") return "smb";
   return "subsonic";
 }
 
@@ -37,7 +40,7 @@ function activeBackend(): ReportBackend {
 // queryClient's eval path.
 function kickReachabilityProbeIfUnreachable(networkNoise: boolean): void {
   if (!networkNoise) return;
-  if (activeBackend() === "local") return;
+  if (!hasNetworkServerType(useAuthBase.getState().serverType)) return;
   void (
     require("@/services/network") as typeof import("@/services/network")
   ).probeServer();
