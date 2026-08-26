@@ -9,7 +9,9 @@ import { Uniwind } from "uniwind";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import PlaylistEditSongListItem from "@/components/playlists/PlaylistEditSongListItem";
+import PlaylistEditSongListItem, {
+  PLAYLIST_EDIT_ITEM_HEIGHT,
+} from "@/components/playlists/PlaylistEditSongListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -33,6 +35,11 @@ import { goBackOrHome } from "@/utils/navigation";
 import { orderPlaylistEntries } from "@/utils/playlistOrder";
 import { cn } from "@/utils/tailwind";
 
+// The rows carry a uid assigned once when the order is seeded: a positional key
+// would change for every row between the two positions on each drop, forcing
+// FlashList to throw away their recycled state (and reload their artwork).
+type OrderedEntry = { uid: string; entry: Child };
+
 export default function ReorderPlaylistScreen() {
   const [white, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
@@ -40,8 +47,8 @@ export default function ReorderPlaylistScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [order, setOrder] = useState<Child[]>([]);
-  const [initialOrder, setInitialOrder] = useState<Child[]>([]);
+  const [order, setOrder] = useState<OrderedEntry[]>([]);
+  const [initialOrder, setInitialOrder] = useState<OrderedEntry[]>([]);
   const [removedItems, setRemovedItems] = useState<Set<Child>>(new Set());
   const isWideLayout = useApp((s) => s.isWideLayout);
   const screenBottomPadding = useScreenBottomPadding();
@@ -63,7 +70,7 @@ export default function ReorderPlaylistScreen() {
       if (order.length > 0) {
         setPlaylistTrackOrder(
           id,
-          order.map((item) => item.id),
+          order.map((item) => item.entry.id),
         );
       }
 
@@ -112,15 +119,13 @@ export default function ReorderPlaylistScreen() {
   });
 
   const renderItem = (
-    item: Child,
-    index: number,
+    item: OrderedEntry,
+    _index: number,
     isActive: boolean,
-    beginDrag: () => void,
   ) => {
     return (
       <PlaylistEditSongListItem
-        item={item}
-        beginDrag={beginDrag}
+        item={item.entry}
         isActive={isActive}
         handleRemoveFromPlaylistPress={() =>
           handleRemoveFromPlaylistPress(item)
@@ -138,13 +143,13 @@ export default function ReorderPlaylistScreen() {
     setOrder(copy);
   };
 
-  const handleRemoveFromPlaylistPress = (track: Child) => {
+  const handleRemoveFromPlaylistPress = (item: OrderedEntry) => {
     setRemovedItems((prev) => {
       const next = new Set(prev);
-      next.add(track);
+      next.add(item.entry);
       return next;
     });
-    setOrder((prev) => prev.filter((item) => item !== track));
+    setOrder((prev) => prev.filter((entry) => entry.uid !== item.uid));
   };
 
   // Always the playlist's own order (server order + the saved manual overlay),
@@ -153,18 +158,18 @@ export default function ReorderPlaylistScreen() {
   // overwrite the manual order on save.
   useEffect(() => {
     if (playlistData?.playlist) {
-      const sorted = orderPlaylistEntries(
+      const keyed = orderPlaylistEntries(
         playlistData.playlist.entry || [],
         getPlaylistTrackOrder(id),
-      );
-      setOrder(sorted);
-      setInitialOrder(sorted);
+      ).map((entry, index) => ({ uid: `${entry.id}-${index}`, entry }));
+      setOrder(keyed);
+      setInitialOrder(keyed);
     }
   }, [playlistData, id, getPlaylistTrackOrder]);
 
   const hasOrderChanged = useMemo(() => {
     if (order.length !== initialOrder.length) return true;
-    return order.some((item, index) => item.id !== initialOrder[index]?.id);
+    return order.some((item, index) => item.uid !== initialOrder[index]?.uid);
   }, [order, initialOrder]);
 
   const canSave = hasOrderChanged || removedItems.size > 0;
@@ -221,9 +226,9 @@ export default function ReorderPlaylistScreen() {
       {!error && (!isLoading || playlistData) && (
         <DraggableFlashList
           data={order}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
+          keyExtractor={(item) => item.uid}
           renderItem={renderItem}
-          itemHeight={70}
+          itemHeight={PLAYLIST_EDIT_ITEM_HEIGHT}
           onSort={handleListSort}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{

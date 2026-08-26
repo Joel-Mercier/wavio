@@ -671,13 +671,15 @@ export default function PlayerScreen() {
                 </Animated.View>
               )}
             </Box>
-            {lyricsSource !== "off" &&
-              // The slot stays reserved while the inline view is up — including
-              // while the next track's lyrics are still loading, when
-              // hasSyncedLyrics is briefly false: letting it collapse would
-              // re-measure coverArea and resize the cover mid-fade.
-              (showInlineLyrics || hasSyncedLyrics) &&
-              (showInlineLyrics ? (
+            {/* The slot is reserved on every lyrics-capable track, whether or
+                not this one has lyrics: letting it collapse would re-measure
+                coverArea and resize the cover — a visible jump when lyrics
+                land, when a track has none, or mid-fade while the next track's
+                are still loading. */}
+            {!isRadio &&
+              !isPodcast &&
+              lyricsSource !== "off" &&
+              (showInlineLyrics || !hasSyncedLyrics ? (
                 <Box className="h-12" />
               ) : (
                 <CurrentLyricLine

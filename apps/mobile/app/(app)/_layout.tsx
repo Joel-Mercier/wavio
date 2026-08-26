@@ -12,6 +12,7 @@ import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
 import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerSheet";
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
+import TidarrDownloadsWatcher from "@/components/downloaders/tidarr/TidarrDownloadsWatcher";
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
 import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
@@ -79,6 +80,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import useSoulSync from "@/stores/soulsync";
+import useTidarr from "@/stores/tidarr";
 import useTrackCache from "@/stores/trackCache";
 import { logError } from "@/utils/log";
 
@@ -184,6 +186,7 @@ export default function AppLayout() {
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
         useSoulSync.getState().__reset();
+        useTidarr.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
         // Stop the drain loop before wiping the queue, so an in-flight batch
@@ -249,6 +252,7 @@ export default function AppLayout() {
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
     useSoulSync.persist.rehydrate();
+    useTidarr.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
     useAudioMuse.persist.rehydrate();
     useListenBrainz.persist.onFinishHydration(() => {
@@ -384,6 +388,7 @@ export default function AppLayout() {
       <IncompleteScanNotice />
       <PlaybackNoticeToast />
       <LidarrDownloadsWatcher />
+      <TidarrDownloadsWatcher />
       <DownloaderPickerSheet />
       <OfflineStarredAutoSync />
       <LibrarySyncController />

@@ -8,13 +8,21 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! Before submitting, please make sure you're running the latest version of Wavio when you encounter the bug.
+        Thanks for taking the time to fill out this bug report! Before submitting, please make sure you're running the latest version of Wavio when you encounter the bug and that no similar issue has already been reported.
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
       description: Also tell us, what did you expect to happen?
       placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: What version of Wavio are you running?
+      placeholder: Enter app version number (check main menu, version number is at the bottom)
     validations:
       required: true
   - type: dropdown

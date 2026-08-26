@@ -3,8 +3,9 @@ import { useCallback, useMemo } from "react";
 import { openDownloaderPicker } from "@/components/downloaders/DownloaderPickerSheet";
 import useLidarr from "@/stores/lidarr";
 import useSoulSync from "@/stores/soulsync";
+import useTidarr from "@/stores/tidarr";
 
-export type DownloaderId = "lidarr" | "soulsync";
+export type DownloaderId = "lidarr" | "soulsync" | "tidarr";
 
 export interface Downloader {
   id: DownloaderId;
@@ -33,6 +34,14 @@ const DOWNLOADERS: Downloader[] = [
       params: { q: query },
     }),
   },
+  {
+    id: "tidarr",
+    name: "Tidarr",
+    searchHref: (query) => ({
+      pathname: "/downloaders/tidarr/search",
+      params: { q: query },
+    }),
+  },
 ];
 
 // The single place that answers "which downloaders can this user actually add
@@ -41,14 +50,16 @@ const DOWNLOADERS: Downloader[] = [
 export function useConnectedDownloaders(): Downloader[] {
   const isLidarrConnected = useLidarr((store) => store.isConnected);
   const isSoulSyncConnected = useSoulSync((store) => store.isConnected);
+  const isTidarrConnected = useTidarr((store) => store.isConnected);
 
   return useMemo(() => {
     const isConnected: Record<DownloaderId, boolean> = {
       lidarr: isLidarrConnected,
       soulsync: isSoulSyncConnected,
+      tidarr: isTidarrConnected,
     };
     return DOWNLOADERS.filter((downloader) => isConnected[downloader.id]);
-  }, [isLidarrConnected, isSoulSyncConnected]);
+  }, [isLidarrConnected, isSoulSyncConnected, isTidarrConnected]);
 }
 
 // Sends a name off to be looked up. With one downloader connected there is

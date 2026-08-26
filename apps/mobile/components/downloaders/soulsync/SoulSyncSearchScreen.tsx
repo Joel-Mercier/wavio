@@ -3,7 +3,7 @@ import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -41,6 +41,12 @@ type Row =
 // API's 60 req/min budget. No filter means every kind, as in the library.
 type SearchFilter = "tracks" | "artists";
 
+const keyExtractor = (item: Row) => item.id;
+
+// Three row shapes share the list; without this they also share one recycling
+// pool, so a header cell gets reused as a track row.
+const getItemType = (item: Row) => item.kind;
+
 export default function SoulSyncSearchScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -62,7 +68,7 @@ export default function SoulSyncSearchScreen() {
   const debounce = useDebounce(400);
   const listRef = useRef<FlashListRef<Row>>(null);
 
-  const { data, isLoading, error } = useSoulSyncSearch(debouncedTerm);
+  const { data, isFetching, error } = useSoulSyncSearch(debouncedTerm);
   // One poll for every request the rows below start, so the API's per-minute
   // budget doesn't scale with the number of requested tracks.
   useTrackRequestPoller();
@@ -106,6 +112,20 @@ export default function SoulSyncSearchScreen() {
     );
   }, [data, filter, t]);
 
+  const renderItem = useCallback(({ item }: { item: Row }) => {
+    if (item.kind === "header") {
+      return (
+        <Heading className="text-white px-6 pt-4 pb-1" size="md">
+          {item.label}
+        </Heading>
+      );
+    }
+    if (item.kind === "track") {
+      return <SoulSyncTrackRow track={item.track} />;
+    }
+    return <SoulSyncArtistRow artist={item.artist} source={item.source} />;
+  }, []);
+
   // Toggling a filter or editing the query swaps the result set; without this
   // the FlashList keeps its old offset and lands mid-list, hiding the new top
   // matches.
@@ -123,6 +143,9 @@ export default function SoulSyncSearchScreen() {
   };
 
   const handleClear = () => {
+    // The in-flight debounce would otherwise land after the clear and put the
+    // results of the wiped term back on screen.
+    debounce.cancel();
     setTerm("");
     setDebouncedTerm("");
   };
@@ -203,27 +226,14 @@ export default function SoulSyncSearchScreen() {
       <FlashList
         ref={listRef}
         data={rows}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }: { item: Row }) => {
-          if (item.kind === "header") {
-            return (
-              <Heading className="text-white px-6 pt-4 pb-1" size="md">
-                {item.label}
-              </Heading>
-            );
-          }
-          if (item.kind === "track") {
-            return <SoulSyncTrackRow track={item.track} />;
-          }
-          return (
-            <SoulSyncArtistRow artist={item.artist} source={item.source} />
-          );
-        }}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        renderItem={renderItem}
         ListHeaderComponent={error ? <ErrorDisplay error={error} /> : null}
         ListEmptyComponent={
           // Without the error check a failed search would render the header's
           // error and "no results" underneath it, one contradicting the other.
-          hasQuery && !isLoading && !error ? (
+          hasQuery && !isFetching && !error ? (
             <EmptyDisplay />
           ) : !hasQuery ? (
             <VStack className="items-center px-10 py-16">
@@ -234,7 +244,7 @@ export default function SoulSyncSearchScreen() {
           ) : null
         }
         ListFooterComponent={
-          hasQuery && isLoading ? (
+          hasQuery && isFetching ? (
             <Box className="py-6">
               <ActivityIndicator color={emerald500} />
             </Box>

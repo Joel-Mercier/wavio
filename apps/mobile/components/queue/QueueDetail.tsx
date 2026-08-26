@@ -57,6 +57,12 @@ import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
+// Rows carry a uid assigned once on entering edit mode: a positional key would
+// change for every row between the two positions on each drop (throwing away
+// FlashList's recycled cells), and the queue can hold the same track twice, so
+// the track id alone is not unique either.
+type EditRow = { uid: string; track: QueueTrack };
+
 type QueueRow =
   | { kind: "header"; key: string; label: string }
   | { kind: "track"; key: string; track: QueueTrack; index: number };
@@ -113,7 +119,7 @@ export default function QueueDetail() {
     "queue",
   );
   const [editMode, setEditMode] = useState(false);
-  const [localOrder, setLocalOrder] = useState<QueueTrack[]>([]);
+  const [localOrder, setLocalOrder] = useState<EditRow[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
 
@@ -210,14 +216,22 @@ export default function QueueDetail() {
   // Only the tracks after the current one are reorderable; the played history
   // and the currently playing track keep their position.
   const handleEnterEdit = () => {
-    setLocalOrder(queue.slice(hasCurrent ? currentIndex + 1 : 0));
+    setLocalOrder(
+      queue
+        .slice(hasCurrent ? currentIndex + 1 : 0)
+        .map((track, index) => ({ uid: `${track.id}:${index}`, track })),
+    );
     setEditMode(true);
   };
 
   const handleExitEdit = () => {
     const before = hasCurrent ? queue.slice(0, currentIndex) : [];
     const head = currentTrack ? [currentTrack] : [];
-    const nextQueue = [...before, ...head, ...localOrder];
+    const nextQueue = [
+      ...before,
+      ...head,
+      ...localOrder.map((row) => row.track),
+    ];
     const orderChanged =
       nextQueue.length !== queue.length ||
       nextQueue.some((t, i) => t.id !== queue[i]?.id);
@@ -244,8 +258,8 @@ export default function QueueDetail() {
     });
   };
 
-  const handleRemoveFromQueue = (id: string) => {
-    setLocalOrder((prev) => prev.filter((t) => t.id !== id));
+  const handleRemoveFromQueue = (uid: string) => {
+    setLocalOrder((prev) => prev.filter((row) => row.uid !== uid));
   };
 
   // The Trash action follows the active tab: each list owns its own clear.
@@ -467,7 +481,6 @@ export default function QueueDetail() {
                   </Heading>
                   <QueueEditTrackItem
                     item={currentTrack}
-                    beginDrag={() => {}}
                     isActive={false}
                     isPlaying
                     onRemovePress={() => {}}
@@ -486,20 +499,22 @@ export default function QueueDetail() {
               )}
               <DraggableFlashList
                 data={localOrder}
-                keyExtractor={(item, index) => `${item.id}:${index}`}
+                keyExtractor={(item) => item.uid}
                 itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
                 onSort={handleListSort}
                 contentContainerStyle={{
                   paddingBottom: screenBottomPadding,
                 }}
                 showsVerticalScrollIndicator={false}
-                renderItem={(item, _index, isActive, beginDrag) => (
+                // Rows are only re-rendered when the playing track moves on;
+                // a primitive keeps FlashList's identity check meaningful.
+                extraData={playingTrackId}
+                renderItem={(item, _index, isActive) => (
                   <QueueEditTrackItem
-                    item={item}
-                    beginDrag={beginDrag}
+                    item={item.track}
                     isActive={isActive}
-                    isPlaying={item.id === playingTrackId}
-                    onRemovePress={() => handleRemoveFromQueue(item.id)}
+                    isPlaying={item.track.id === playingTrackId}
+                    onRemovePress={() => handleRemoveFromQueue(item.uid)}
                   />
                 )}
               />

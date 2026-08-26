@@ -46,6 +46,7 @@ import useBookmarksBase from "@/stores/bookmarks";
 import { useLidarrBase } from "@/stores/lidarr";
 import useLrclibPicksBase from "@/stores/lrclibPicks";
 import { useSoulSyncBase } from "@/stores/soulsync";
+import { useTidarrBase } from "@/stores/tidarr";
 import { useTrackCacheBase } from "@/stores/trackCache";
 
 // What app/(app)/_layout.tsx does when the active (server, user) scope changes.
@@ -54,6 +55,7 @@ const switchScope = (to: string) => {
   withScopedWritesSuspended(() => {
     useLidarrBase.getState().__reset();
     useSoulSyncBase.getState().__reset();
+    useTidarrBase.getState().__reset();
     useBookmarksBase.getState().__reset();
     useLrclibPicksBase.getState().__reset();
     useAudioMuseBase.getState().__reset();
@@ -61,6 +63,7 @@ const switchScope = (to: string) => {
   });
   useLidarrBase.persist.rehydrate();
   useSoulSyncBase.persist.rehydrate();
+  useTidarrBase.persist.rehydrate();
   useBookmarksBase.persist.rehydrate();
   useLrclibPicksBase.persist.rehydrate();
   useAudioMuseBase.persist.rehydrate();
@@ -83,6 +86,10 @@ describe("scoped stores across a server switch", () => {
       .getState()
       .setConfig({ serverUrl: "http://soulsync.a", apiKey: "SS_KEY_A" });
     useSoulSyncBase.getState().setConnected(true);
+    useTidarrBase
+      .getState()
+      .setConfig({ serverUrl: "http://tidarr.a", apiKey: "TD_KEY_A" });
+    useTidarrBase.getState().setConnected(true);
     useBookmarksBase.getState().addBookmark("track-a", 42);
     useLrclibPicksBase.getState().setPick("track-a", lrclibRecord(1));
     useAudioMuseBase
@@ -104,6 +111,8 @@ describe("scoped stores across a server switch", () => {
     expect(useLidarrBase.getState().isConnected).toBe(false);
     expect(useSoulSyncBase.getState().serverUrl).toBe("");
     expect(useSoulSyncBase.getState().isConnected).toBe(false);
+    expect(useTidarrBase.getState().serverUrl).toBe("");
+    expect(useTidarrBase.getState().isConnected).toBe(false);
     expect(useBookmarksBase.getState().bookmarks).toEqual({});
     expect(useLrclibPicksBase.getState().picks).toEqual({});
     expect(useAudioMuseBase.getState().serverUrl).toBe("");
@@ -123,6 +132,9 @@ describe("scoped stores across a server switch", () => {
     expect(useSoulSyncBase.getState().serverUrl).toBe("http://soulsync.a");
     expect(useSoulSyncBase.getState().apiKey).toBe("SS_KEY_A");
     expect(useSoulSyncBase.getState().isConnected).toBe(true);
+    expect(useTidarrBase.getState().serverUrl).toBe("http://tidarr.a");
+    expect(useTidarrBase.getState().apiKey).toBe("TD_KEY_A");
+    expect(useTidarrBase.getState().isConnected).toBe(true);
     expect(useAudioMuseBase.getState().serverUrl).toBe("http://audiomuse.a");
     expect(useAudioMuseBase.getState().apiToken).toBe("TOKEN_A");
     expect(useBookmarksBase.getState().bookmarks["track-a"]).toEqual([42]);
@@ -138,5 +150,6 @@ describe("scoped stores across a server switch", () => {
     expect(useLrclibPicksBase.getState().picks["track-b"]?.id).toBe(2);
     expect(useLidarrBase.getState().serverUrl).toBe("");
     expect(useSoulSyncBase.getState().serverUrl).toBe("");
+    expect(useTidarrBase.getState().serverUrl).toBe("");
   });
 });

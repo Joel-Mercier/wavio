@@ -12,6 +12,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import useLidarr from "@/stores/lidarr";
 import useSoulSync from "@/stores/soulsync";
+import useTidarr from "@/stores/tidarr";
 import { cn } from "@/utils/tailwind";
 
 function DownloaderRow({
@@ -69,6 +70,7 @@ export default function DownloadersSection() {
   const { t } = useTranslation();
   const isLidarrConnected = useLidarr((store) => store.isConnected);
   const isSoulSyncConnected = useSoulSync((store) => store.isConnected);
+  const isTidarrConnected = useTidarr((store) => store.isConnected);
 
   return (
     <SettingsScreenScaffold title={t("app.settings.menu.downloaders.title")}>
@@ -87,6 +89,12 @@ export default function DownloadersSection() {
           description={t("app.settings.downloaders.soulsync.description")}
           href="/downloaders/soulsync"
           isConnected={isSoulSyncConnected}
+        />
+        <DownloaderRow
+          title={t("app.settings.downloaders.tidarr.title")}
+          description={t("app.settings.downloaders.tidarr.description")}
+          href="/downloaders/tidarr"
+          isConnected={isTidarrConnected}
         />
       </VStack>
     </SettingsScreenScaffold>

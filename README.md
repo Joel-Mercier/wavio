@@ -38,6 +38,15 @@ Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) archite
 
 APK installs need an extra step to show up in Android Auto (see below), so the Play Store install is the recommended one.
 
+### Latest version per channel
+
+| Channel | Latest version |
+| --- | --- |
+| [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest) | 1.2.0 |
+| [Google Play Store](https://play.google.com/store/apps/details?id=com.jmercier.wavio) | 1.2.0 |
+
+The Play Store version is usually a release or two behind GitHub. Every Play Store submission goes through Google's review process, which can usually take two weeks, whereas a GitHub release is published as soon as the APKs are built. If you want the newest features and fixes as early as possible, grab the APK from the releases page; if you'd rather have Android Auto working out of the box, stick with the Play Store.
+
 ### Use Android Auto with a APK install
 
 Android Auto doesn't detect Wavio automatically if you installed the app via APK on Github, Android Auto detects only Play Store apps automatically. To see Wavio with a APK install on Android Auto : 

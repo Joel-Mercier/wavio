@@ -1,13 +1,12 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
-import Menu from "lucide-react-native/dist/esm/icons/menu.mjs";
+import GripVertical from "lucide-react-native/dist/esm/icons/grip-vertical.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { QueueTrack } from "@/stores/queue";
@@ -15,7 +14,6 @@ import { cn } from "@/utils/tailwind";
 
 interface QueueEditTrackItemProps {
   item: QueueTrack;
-  beginDrag: () => void;
   isActive: boolean;
   isPlaying: boolean;
   onRemovePress: () => void;
@@ -24,7 +22,6 @@ interface QueueEditTrackItemProps {
 
 export default function QueueEditTrackItem({
   item,
-  beginDrag,
   isActive,
   isPlaying,
   onRemovePress,
@@ -35,8 +32,7 @@ export default function QueueEditTrackItem({
     "--color-white",
   ]) as string[];
   return (
-    <Pressable
-      onLongPress={pinned ? undefined : beginDrag}
+    <Box
       className={cn("flex-row items-center justify-between py-2", {
         "bg-primary-600": isActive,
       })}
@@ -77,12 +73,10 @@ export default function QueueEditTrackItem({
         </VStack>
       </HStack>
       {pinned ? (
-        <Box className="w-6" />
+        <Box className="w-[18px]" />
       ) : (
-        <FadeOutScaleDown onPress={beginDrag}>
-          <Menu size={24} color={gray400} />
-        </FadeOutScaleDown>
+        <GripVertical size={18} color={gray400} />
       )}
-    </Pressable>
+    </Box>
   );
 }

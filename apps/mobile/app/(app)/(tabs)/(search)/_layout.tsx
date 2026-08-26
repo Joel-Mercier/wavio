@@ -34,6 +34,11 @@ export default function SearchLayout() {
       <Stack.Screen name="downloaders/soulsync/search" />
       <Stack.Screen name="downloaders/soulsync/downloads" />
       <Stack.Screen name="downloaders/soulsync/watchlist" />
+      <Stack.Screen name="downloaders/tidarr/index" />
+      <Stack.Screen name="downloaders/tidarr/search" />
+      <Stack.Screen name="downloaders/tidarr/downloads" />
+      <Stack.Screen name="downloaders/tidarr/artist/[id]" />
+      <Stack.Screen name="downloaders/tidarr/album/[id]" />
       <Stack.Screen name="trusted-certificates" />
       <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="pending-changes" />

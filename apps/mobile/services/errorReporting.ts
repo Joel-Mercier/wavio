@@ -64,6 +64,7 @@ export type ReportApi =
   | "lrclib"
   | "lidarr"
   | "soulsync"
+  | "tidarr"
   | "musicbrainz"
   | "audiomuse"
   | "listenbrainz"

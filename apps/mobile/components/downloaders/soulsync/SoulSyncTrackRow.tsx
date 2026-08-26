@@ -1,6 +1,7 @@
 import CircleCheck from "lucide-react-native/dist/esm/icons/circle-check.mjs";
 import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";
@@ -17,7 +18,7 @@ import {
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import type { SoulSyncTrack } from "@/services/soulsync/types";
 
-export default function SoulSyncTrackRow({ track }: { track: SoulSyncTrack }) {
+function SoulSyncTrackRow({ track }: { track: SoulSyncTrack }) {
   const { t } = useTranslation();
   const { showErrorToast } = useSettingsToast();
   const [white, emerald500, red500] = Uniwind.getCSSVariable([
@@ -103,3 +104,7 @@ export default function SoulSyncTrackRow({ track }: { track: SoulSyncTrack }) {
     </VStack>
   );
 }
+
+// Rows re-render on every keystroke in the search field otherwise: the
+// query state lives on the screen above them.
+export default memo(SoulSyncTrackRow);

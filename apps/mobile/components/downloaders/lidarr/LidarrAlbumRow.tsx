@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -10,7 +11,7 @@ import { VStack } from "@/components/ui/vstack";
 import { albumCoverUrl } from "@/services/lidarr/images";
 import type { LidarrAlbum } from "@/services/lidarr/types";
 
-export default function LidarrAlbumRow({ album }: { album: LidarrAlbum }) {
+function LidarrAlbumRow({ album }: { album: LidarrAlbum }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -50,3 +51,7 @@ export default function LidarrAlbumRow({ album }: { album: LidarrAlbum }) {
     </FadeOutScaleDown>
   );
 }
+
+// Rows re-render on every keystroke in the search field otherwise: the
+// query state lives on the screen above them.
+export default memo(LidarrAlbumRow);

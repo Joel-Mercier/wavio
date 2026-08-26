@@ -1,11 +1,11 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { KeyboardController } from "react-native-keyboard-controller";
@@ -29,6 +29,21 @@ import type { LidarrSearchResult } from "@/services/lidarr/types";
 import useLidarr from "@/stores/lidarr";
 import { goBackOrHome } from "@/utils/navigation";
 
+const keyExtractor = (item: LidarrSearchResult) =>
+  `${item.id}-${item.foreignId}`;
+
+// Albums and artists render different row shapes; without this they share one
+// recycling pool and an artist cell gets reused as an album row.
+const getItemType = (item: LidarrSearchResult) =>
+  item.album ? "album" : "artist";
+
+const renderItem = ({ item }: { item: LidarrSearchResult }) =>
+  item.album ? (
+    <LidarrAlbumRow album={item.album} />
+  ) : item.artist ? (
+    <LidarrArtistRow artist={item.artist} />
+  ) : null;
+
 export default function DiscoveryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -42,6 +57,7 @@ export default function DiscoveryScreen() {
   const isConnected = useLidarr((store) => store.isConnected);
 
   const filtersSheetRef = useRef<BottomSheetModal>(null);
+  const listRef = useRef<FlashListRef<LidarrSearchResult>>(null);
   // Seeded when another screen sends a name here to look up (e.g. a similar
   // artist the library doesn't hold), so the results are already on screen.
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -49,7 +65,14 @@ export default function DiscoveryScreen() {
   const [debouncedTerm, setDebouncedTerm] = useState(q ?? "");
   const debounce = useDebounce(400);
 
-  const { data, isLoading, error } = useLidarrSearch(debouncedTerm);
+  const { data, isFetching, error } = useLidarrSearch(debouncedTerm);
+
+  // Previous results now stay on screen while the new ones load, so without
+  // this the FlashList keeps its old offset and lands mid-list once they swap,
+  // hiding the new top matches.
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [debouncedTerm]);
 
   if (!isConnected) {
     return <Redirect href="/downloaders/lidarr" />;
@@ -61,6 +84,9 @@ export default function DiscoveryScreen() {
   };
 
   const handleClear = () => {
+    // The in-flight debounce would otherwise land after the clear and put the
+    // results of the wiped term back on screen.
+    debounce.cancel();
     setTerm("");
     setDebouncedTerm("");
   };
@@ -116,18 +142,16 @@ export default function DiscoveryScreen() {
       </Box>
 
       <FlashList
+        ref={listRef}
         data={results}
-        keyExtractor={(item) => `${item.id}-${item.foreignId}`}
-        renderItem={({ item }: { item: LidarrSearchResult }) =>
-          item.album ? (
-            <LidarrAlbumRow album={item.album} />
-          ) : item.artist ? (
-            <LidarrArtistRow artist={item.artist} />
-          ) : null
-        }
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        renderItem={renderItem}
         ListHeaderComponent={error ? <ErrorDisplay error={error} /> : null}
         ListEmptyComponent={
-          hasQuery && !isLoading ? (
+          // Without the error check a failed search would render the header's
+          // error and "no results" underneath it, one contradicting the other.
+          hasQuery && !isFetching && !error ? (
             <EmptyDisplay />
           ) : !hasQuery ? (
             <VStack className="items-center px-10 py-16">
@@ -138,7 +162,7 @@ export default function DiscoveryScreen() {
           ) : null
         }
         ListFooterComponent={
-          hasQuery && isLoading ? (
+          hasQuery && isFetching ? (
             <Box className="py-6">
               <ActivityIndicator color={emerald500} />
             </Box>

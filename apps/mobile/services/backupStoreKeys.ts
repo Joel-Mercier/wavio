@@ -35,6 +35,7 @@ export const SCOPED_STORE_NAMES = [
   "librarySyncStore",
   "lidarrStore",
   "soulsyncStore",
+  "tidarrStore",
   "musicBrainzStore",
   "audioMuseStore",
   "listenBrainzStore",
