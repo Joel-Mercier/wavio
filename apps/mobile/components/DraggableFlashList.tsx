@@ -6,6 +6,7 @@ import {
 import {
   createContext,
   forwardRef,
+  isValidElement,
   type PropsWithChildren,
   type ReactElement,
   useCallback,
@@ -182,6 +183,7 @@ function DraggableFlashList<T>({
   drawDistance,
   maintainVisibleContentPosition,
   scrollEnabled,
+  ListHeaderComponent,
   ...listProps
 }: DraggableFlashListProps<T>) {
   // The order lives in the caller: committing it here as well would mean two
@@ -196,6 +198,9 @@ function DraggableFlashList<T>({
   const itemHeightValue = useSharedValue(itemHeight);
   const maxIndex = useSharedValue(Math.max(0, data.length - 1));
   const layoutHeight = useSharedValue(0);
+  // The header scrolls with the rows, so every touch/offset below has to be
+  // converted into row space by taking its height back out.
+  const headerHeight = useSharedValue(0);
   // Where the auto-scroll believes the list is: `scrollOffset` only catches up
   // once native reports the scroll back, a frame or more behind the drag.
   const scrollTarget = useSharedValue(0);
@@ -212,6 +217,10 @@ function DraggableFlashList<T>({
   useEffect(() => {
     maxIndex.value = Math.max(0, data.length - 1);
   }, [data.length, maxIndex]);
+
+  useEffect(() => {
+    if (!ListHeaderComponent) headerHeight.value = 0;
+  }, [ListHeaderComponent, headerHeight]);
 
   const dragContext = useMemo<DragState>(
     () => ({
@@ -277,7 +286,8 @@ function DraggableFlashList<T>({
     // The reorder is committed from the completion callback: applying it up
     // front would relayout the list underneath the still-animating row.
     dragPosition.value = withTiming(
-      toIndex * itemHeightValue.value +
+      headerHeight.value +
+        toIndex * itemHeightValue.value +
         itemHeightValue.value / 2 -
         scrollTarget.value,
       { duration: DROP_ANIMATION_DURATION },
@@ -292,6 +302,7 @@ function DraggableFlashList<T>({
     isDropping,
     maxIndex,
     itemHeightValue,
+    headerHeight,
     scrollTarget,
     autoScrollVelocity,
     dragPosition,
@@ -310,7 +321,9 @@ function DraggableFlashList<T>({
       }
       const maxOffset = Math.max(
         0,
-        itemHeightValue.value * (maxIndex.value + 1) - layoutHeight.value,
+        headerHeight.value +
+          itemHeightValue.value * (maxIndex.value + 1) -
+          layoutHeight.value,
       );
       const next = Math.min(
         maxOffset,
@@ -323,7 +336,12 @@ function DraggableFlashList<T>({
       // has to follow the scroll rather than the pan.
       insertIndex.value = Math.min(
         maxIndex.value,
-        Math.max(0, (next + dragPosition.value) / itemHeightValue.value - 0.5),
+        Math.max(
+          0,
+          (next + dragPosition.value - headerHeight.value) /
+            itemHeightValue.value -
+            0.5,
+        ),
       );
     }, [
       autoScrollVelocity,
@@ -332,6 +350,7 @@ function DraggableFlashList<T>({
       itemHeightValue,
       maxIndex,
       layoutHeight,
+      headerHeight,
       insertIndex,
       dragPosition,
       listRef,
@@ -349,6 +368,29 @@ function DraggableFlashList<T>({
     },
     [layoutHeight],
   );
+
+  const onHeaderLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      headerHeight.value = event.nativeEvent.layout.height;
+    },
+    [headerHeight],
+  );
+
+  // Wrapped rather than forwarded so its height can be measured. Kept an
+  // element rather than a component: a fresh component *type* on every content
+  // change would remount the whole header instead of reconciling it.
+  const headerComponent = useMemo(() => {
+    if (!ListHeaderComponent) return undefined;
+    return (
+      <View onLayout={onHeaderLayout}>
+        {isValidElement(ListHeaderComponent) ? (
+          ListHeaderComponent
+        ) : (
+          <ListHeaderComponent />
+        )}
+      </View>
+    );
+  }, [ListHeaderComponent, onHeaderLayout]);
 
   // Every callback reads shared values only, so the config — and with it the
   // registered gesture — stays identical across renders.
@@ -391,7 +433,9 @@ function DraggableFlashList<T>({
           dragPosition.value = y;
           insertIndex.value = Math.max(
             0,
-            (scrollTarget.value + y) / itemHeightValue.value - 0.5,
+            (scrollTarget.value + y - headerHeight.value) /
+              itemHeightValue.value -
+              0.5,
           );
         },
         onUpdate: (event: { y: number }) => {
@@ -406,7 +450,12 @@ function DraggableFlashList<T>({
           dragPosition.value = y;
           insertIndex.value = Math.min(
             maxIndex.value,
-            Math.max(0, (scrollTarget.value + y) / itemHeightValue.value - 0.5),
+            Math.max(
+              0,
+              (scrollTarget.value + y - headerHeight.value) /
+                itemHeightValue.value -
+                0.5,
+            ),
           );
 
           // Measured on the raw touch so the speed keeps rising as the finger
@@ -435,6 +484,7 @@ function DraggableFlashList<T>({
         itemHeightValue,
         maxIndex,
         layoutHeight,
+        headerHeight,
         scrollOffset,
         scrollTarget,
         touchStartX,
@@ -464,11 +514,14 @@ function DraggableFlashList<T>({
           "worklet";
           if (activeIndex.value >= 0 || layoutHeight.value <= 0) return;
           const offset = scrollOffset.value;
+          const rowY = offset + event.y - headerHeight.value;
+          // A press on the header belongs to no row.
+          if (rowY < 0) return;
           // A fixed row height is what lets the pressed row be resolved by
           // arithmetic, including for rows FlashList never mounted.
           const index = Math.min(
             maxIndex.value,
-            Math.max(0, Math.floor((offset + event.y) / itemHeightValue.value)),
+            Math.max(0, Math.floor(rowY / itemHeightValue.value)),
           );
           const half = itemHeightValue.value / 2;
           scrollTarget.value = offset;
@@ -491,6 +544,7 @@ function DraggableFlashList<T>({
         itemHeightValue,
         maxIndex,
         layoutHeight,
+        headerHeight,
         scrollOffset,
         scrollTarget,
         dragPosition,
@@ -528,6 +582,7 @@ function DraggableFlashList<T>({
             ref={listRef}
             data={data}
             renderItem={renderListItem}
+            ListHeaderComponent={headerComponent}
             CellRendererComponent={ItemWrapper}
             // FlashList keeps the visible row pinned while data changes, which
             // makes a reorder shove the list around (documented known issue).

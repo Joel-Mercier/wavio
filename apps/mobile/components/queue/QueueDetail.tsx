@@ -57,6 +57,8 @@ import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
 
+const noop = () => {};
+
 // Rows carry a uid assigned once on entering edit mode: a positional key would
 // change for every row between the two positions on each drop (throwing away
 // FlashList's recycled cells), and the queue can hold the same track twice, so
@@ -261,6 +263,38 @@ export default function QueueDetail() {
   const handleRemoveFromQueue = (uid: string) => {
     setLocalOrder((prev) => prev.filter((row) => row.uid !== uid));
   };
+
+  // Rendered as the list header so the pinned track scrolls away with the rows.
+  const editHeader = useMemo(() => {
+    if (!currentTrack) return undefined;
+    return (
+      <>
+        <Heading
+          size="sm"
+          className="text-gray-300 mt-6 mb-2"
+          numberOfLines={1}
+        >
+          {t("app.queue.nowPlaying")}
+        </Heading>
+        <QueueEditTrackItem
+          item={currentTrack}
+          isActive={false}
+          isPlaying
+          onRemovePress={noop}
+          pinned
+        />
+        {localOrder.length > 0 && (
+          <Heading
+            size="sm"
+            className="text-gray-300 mt-6 mb-2"
+            numberOfLines={1}
+          >
+            {t("app.queue.nextInQueue")}
+          </Heading>
+        )}
+      </>
+    );
+  }, [currentTrack, localOrder.length, t]);
 
   // The Trash action follows the active tab: each list owns its own clear.
   const isHistoryTab = activeTab === "recentlyPlayed";
@@ -469,56 +503,28 @@ export default function QueueDetail() {
               </Text>
             </VStack>
           ) : editMode ? (
-            <VStack className="flex-1">
-              {currentTrack && (
-                <>
-                  <Heading
-                    size="sm"
-                    className="text-gray-300 mt-6 mb-2"
-                    numberOfLines={1}
-                  >
-                    {t("app.queue.nowPlaying")}
-                  </Heading>
-                  <QueueEditTrackItem
-                    item={currentTrack}
-                    isActive={false}
-                    isPlaying
-                    onRemovePress={() => {}}
-                    pinned
-                  />
-                  {localOrder.length > 0 && (
-                    <Heading
-                      size="sm"
-                      className="text-gray-300 mt-6 mb-2"
-                      numberOfLines={1}
-                    >
-                      {t("app.queue.nextInQueue")}
-                    </Heading>
-                  )}
-                </>
+            <DraggableFlashList
+              data={localOrder}
+              keyExtractor={(item) => item.uid}
+              itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
+              onSort={handleListSort}
+              ListHeaderComponent={editHeader}
+              contentContainerStyle={{
+                paddingBottom: screenBottomPadding,
+              }}
+              showsVerticalScrollIndicator={false}
+              // Rows are only re-rendered when the playing track moves on;
+              // a primitive keeps FlashList's identity check meaningful.
+              extraData={playingTrackId}
+              renderItem={(item, _index, isActive) => (
+                <QueueEditTrackItem
+                  item={item.track}
+                  isActive={isActive}
+                  isPlaying={item.track.id === playingTrackId}
+                  onRemovePress={() => handleRemoveFromQueue(item.uid)}
+                />
               )}
-              <DraggableFlashList
-                data={localOrder}
-                keyExtractor={(item) => item.uid}
-                itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
-                onSort={handleListSort}
-                contentContainerStyle={{
-                  paddingBottom: screenBottomPadding,
-                }}
-                showsVerticalScrollIndicator={false}
-                // Rows are only re-rendered when the playing track moves on;
-                // a primitive keeps FlashList's identity check meaningful.
-                extraData={playingTrackId}
-                renderItem={(item, _index, isActive) => (
-                  <QueueEditTrackItem
-                    item={item.track}
-                    isActive={isActive}
-                    isPlaying={item.track.id === playingTrackId}
-                    onRemovePress={() => handleRemoveFromQueue(item.uid)}
-                  />
-                )}
-              />
-            </VStack>
+            />
           ) : (
             <FlashList
               data={queueRows}
