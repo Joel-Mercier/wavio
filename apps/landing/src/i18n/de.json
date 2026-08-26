@@ -26,9 +26,9 @@
 		"lead": "Ein Open-Source Android Musikplayer für Navidrome, Jellyfin und OpenSubsonic Server oder eine lokale Mediathek. Entwickelt für alle, die ihre Musiksammlung selbst besitzen und möchten, dass sie sich wie zu Hause anfühlt."
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
+		"getItOn": "JETZT HOLEN",
 		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"githubRelease": "Auf GitHub herunterladen"
 	},
 	"highlightsLabel": "Das erwartet Dich",
 	"highlights": [
@@ -107,34 +107,34 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "Wird angeschlossen an",
+		"headingPre": "Bring den Rest von",
+		"headingEm": "dein Regal.",
+		"sub": "Wavio lässt sich mit den Diensten verbinden, die Sie bereits nutzen. Ihre Tags, Ihre Wiedergabelisten, Ihre Downloads und Ihre Empfehlungen – all das können Sie verwalten, ohne die App verlassen zu müssen.",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "Metadaten",
+				"desc": "Korrigieren Sie die Tags eines lokalen Albums, ohne die App zu verlassen. Überprüfen Sie jede Änderung, bevor sie auf die Festplatte geschrieben wird, oder legen Sie einen Zuverlässigkeitsschwellenwert fest und lassen Sie Wavio nur die Änderungen übernehmen, bei denen es sich sicher ist."
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "Hörverlauf",
+				"desc": "Erfasse, was du hörst, und erhalte dann die entsprechenden Hörstatistiken sowie die daraus erstellten Playlists „Daily Jams“, „Weekly Jams“ und „Weekly Exploration“."
 			},
 			"lidarr": {
 				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"desc": "Suche ein Album und sende es über die App an Lidarr. Verfolge den Download auf dem Bildschirm „Downloads“ und spiele es ab, sobald es in deiner Bibliothek verfügbar ist."
 			},
 			"soulsync": {
 				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"desc": "Lade einzelne Titel direkt in deine Musikbibliothek herunter – mit Echtzeit-Fortschrittsanzeige und einem vollständigen Download-Verlauf neben deinen anderen Downloads."
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "Empfehlungen",
+				"desc": "Klangliche Ähnlichkeiten in Ihrer eigenen Bibliothek. Beschreiben Sie eine Stimmung und erhalten Sie eine Playlist, erstellen Sie anhand Ihrer Wiedergabedaten einen Fingerabdruck oder beginnen Sie mit einem Song und lassen Sie sich davon leiten."
 			},
 			"octo-fiesta": {
 				"role": "Streaming",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "Spiele einen Titel ab, den dein Server nicht im Bestand hat. Octo-Fiesta ruft ihn im Handumdrehen aus deiner Navidrome- oder OpenSubsonic-Bibliothek ab, sodass die Lücke automatisch geschlossen wird."
 			}
 		}
 	},
@@ -152,6 +152,7 @@
 		"tagline": "Ein Open-Source-Musikplayer für Android. Kompatibel mit Navidrome, Jellyfin, OpenSubsonic und lokalen Mediatheken.",
 		"product": "Produkt",
 		"features": "Funktionen",
+		"integrations": "Integrationen",
 		"download": "Download",
 		"changelog": "Changelog",
 		"openSource": "Open-Source",

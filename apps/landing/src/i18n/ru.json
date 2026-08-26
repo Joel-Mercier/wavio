@@ -26,9 +26,9 @@
 		"lead": "Android-плеер для серверов Navidrome, Jellyfin, OpenSubsonic или локальной медиатеки. Создан для тех, кто владеет своей музыкой и хочет, чтобы плеер ощущался как родной."
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
+		"getItOn": "ПОЛУЧИ ЭТО",
 		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"githubRelease": "Скачайте на GitHub"
 	},
 	"highlightsLabel": "Что ты получаешь",
 	"highlights": [
@@ -107,34 +107,34 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "Подключается к",
+		"headingPre": "Добавьте остальную часть",
+		"headingEm": "ваша стойка.",
+		"sub": "Wavio интегрируется с сервисами, которыми вы уже пользуетесь. Ваши теги, списки прослушивания, загрузки и рекомендации — всем этим можно управлять, не выходя из приложения.",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "Метаданные",
+				"desc": "Исправляйте теги в локальном альбоме, не выходя из приложения. Проверяйте каждое изменение перед его записью на диск или установите порог достоверности и позвольте Wavio применять те теги, в которых оно уверено."
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "История прослушиваний",
+				"desc": "Добавляйте в Scrobble то, что слушаете, а затем получайте в виде статистики прослушивания, а также ежедневных, еженедельных плейлистов и плейлистов «Еженедельное открытие», сформированных на их основе."
 			},
 			"lidarr": {
-				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"role": "Загрузки",
+				"desc": "Найдите альбом и отправьте его Lidarr прямо из приложения. Отслеживайте ход загрузки на экране «Загрузки» и включите альбом, как только он появится в вашей медиатеке."
 			},
 			"soulsync": {
-				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"role": "Загрузки",
+				"desc": "Добавляйте отдельные треки прямо в свою музыкальную библиотеку — при этом вы сможете отслеживать ход загрузки в режиме реального времени и просматривать полную историю загрузок наряду с данными других пользователей, использующих эту программу."
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "Рекомендации",
+				"desc": "Звуковое сходство в вашей собственной библиотеке. Опишите настроение и получите плейлист, создайте «отпечаток» на основе того, что вы слушаете, или начните с одной песни и следуйте за тем, куда она вас приведет."
 			},
 			"octo-fiesta": {
 				"role": "Стриминг",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "Воспроизведите песню, которой нет на вашем сервере. Octo-Fiesta мгновенно загрузит её из вашей библиотеки Navidrome или OpenSubsonic, и пауза заполнится сама собой."
 			}
 		}
 	},
@@ -152,6 +152,7 @@
 		"tagline": "Музыкальный Android-плеер с открытым кодом. Совместим с Navidrome, Jellyfin, OpenSubsonic и локальными медиатеками.",
 		"product": "Продукт",
 		"features": "Возможности",
+		"integrations": "Интеграции",
 		"download": "Скачать",
 		"changelog": "История изменений",
 		"openSource": "Открытый исходный код",

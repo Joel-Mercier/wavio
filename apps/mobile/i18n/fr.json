@@ -1013,10 +1013,10 @@
 							"listens_other": "{{formattedCount}} écoutes",
 							"artistCount_one": "{{count}} artiste",
 							"artistCount_other": "{{count}} artistes",
-							"bucketA11y_one": "{{label}}: {{count}} listen",
-							"bucketA11y_other": "{{label}}: {{count}} listens",
-							"heatmapCellA11y_one": "{{row}} at {{hour}}:00 UTC, {{count}} listen",
-							"heatmapCellA11y_other": "{{row}} at {{hour}}:00 UTC, {{count}} listens"
+							"bucketA11y_one": "{{label}}: {{count}} écoute",
+							"bucketA11y_other": "{{label}}: {{count}} écoutes",
+							"heatmapCellA11y_one": "{{row}} à {{hour}}h 00 UTC, {{count}} écoute",
+							"heatmapCellA11y_other": "{{row}} à {{hour}}:00 UTC, {{count}} écoutes"
 						},
 						"createdForYou": {
 							"poweredBy": "Propulsé par ListenBrainz",
@@ -1270,6 +1270,8 @@
 					"scanMusicLibraryLabel": "Scanner la bibliothèque musicale",
 					"scanMusicLibraryDescription": "Initie un nouveau scan de la bibliothèque musicale sur votre serveur",
 					"scanMusicLibraryAction": "Scanner",
+					"scanOnWifiOnlyLabel": "Scan on Wi-Fi only",
+					"scanOnWifiOnlyDescription": "A first scan reads tags from every file on the share, which can use a lot of mobile data.",
 					"scanMusicLibrarySuccessDescription": "Scan commencé",
 					"scanMusicLibraryErrorDescription": "Une erreur s'est produite lors du démarrage d'un scan",
 					"scanMusicLibraryAdminRequiredDescription": "Le démarrage d'un scan nécessite des droits d'administrateur sur votre serveur",
@@ -1462,21 +1464,18 @@
 				},
 				"podcastSettings": {
 					"title": "Podcasts",
-					"configurePodcastsLabel": "Configurer les podcasts",
-					"configurePodcastsDescription": "Configurez vos podcasts pour les diffuser depuis l'application",
-					"configurePodcastsAction": "Configurer",
+					"configurePodcastsDescription": "Connect a Taddy account to discover and stream podcasts from the app.",
 					"configurePodcastsSuccessMessage": "Podcasts configurés",
 					"configurePodcastsErrorMessage": "Une erreur s'est produite lors de la configuration des podcasts",
-					"podcastConfigFormTitle": "Configurer les podcasts",
-					"podcastConfigFormDescription": "Saisissez votre ID utilisateur et votre clé API pour configurer vos podcasts",
+					"testAndSaveAction": "Tester et enregistrer",
 					"userId": "ID utilisateur",
 					"userIdPlaceholder": "Entrer votre ID utilisateur",
 					"apiKey": "Clé API",
 					"apiKeyPlaceholder": "Entrer votre clé API",
-					"languagePlaceholder": "Sélectionnez votre langue",
-					"countryPlaceholder": "Sélectionnez votre pays",
-					"apiStatusLabel": "Statut de l'API",
-					"apiStatusDescription": "Indique le statut de l'API de vos podcasts",
+					"countryLabel": "Pays",
+					"countryDescription": "Country used to tailor podcast recommendations and charts.",
+					"languageLabel": "Langue",
+					"languageDescription": "Language used to tailor podcast recommendations and charts.",
 					"statuses": {
 						"active": "Actif",
 						"inactive": "Inactif"
@@ -1485,9 +1484,7 @@
 					"removePodcastConfigConfirmLabel": "Supprimer la configuration des podcasts",
 					"removePodcastConfigConfirmDescription": "Supprimer la configuration de vos podcasts vous fera perdrez l'accès à vos podcasts. Êtes-vous sûr de vouloir continuer ?",
 					"removePodcastConfigSuccessMessage": "Configuration des podcasts supprimée",
-					"getApiKeyLabel": "Obtenir une clé API Taddy",
-					"getApiKeyDescription": "Créez un compte sur taddy.org pour obtenir l'ID utilisateur et la clé API nécessaires.",
-					"getApiKeyAction": "taddy.org/developers/podcast-api"
+					"getApiKeyAction": "Get a Taddy user ID and API key on taddy.org"
 				}
 			},
 			"internetRadioStations": {
@@ -1692,6 +1689,9 @@
 			},
 			"player": {
 				"title": "En cours de lecture",
+				"notices": {
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+				},
 				"original": "Original",
 				"playingFrom": {
 					"album": "Lecture depuis l'album",
@@ -1989,14 +1989,29 @@
 			},
 			"localIndexing": {
 				"title": "Construction de votre bibliothèque",
+				"notificationText": "Reading your music files. You can keep using your phone.",
 				"listing": "Lecture des fichiers de vos dossiers…",
 				"indexing": "Extraction des métadonnées…",
 				"pruning": "Nettoyage…",
 				"finishing": "Presque terminé…",
 				"countLabel": "{{processed}} sur {{total}} pistes",
 				"errorTitle": "Impossible de construire votre bibliothèque",
+				"errors": {
+					"meteredNetwork": "Scanning is set to Wi-Fi only, and you're on mobile data. Connect to Wi-Fi, or turn off the Wi-Fi-only setting in Settings → Music library.",
+					"auth": "Your username or password was rejected. Check the credentials saved for this server.",
+					"notFound": "The music folder couldn't be found. Check the folder path saved for this server.",
+					"unreachable": "Couldn't reach the server. Check that it's switched on and that you're on the same network.",
+					"notSupported": "The server answered, but not in a way Wavio understands. Check the server address.",
+					"server": "The server reported an error while listing your files.",
+					"generic": "Something went wrong while building your library."
+				},
 				"retry": "Réessayer",
-				"continue": "Continuer quand même"
+				"continue": "Continuer quand même",
+				"stop": "Stop scanning",
+				"folderCountLabel_one": "{{count}} folder scanned",
+				"folderCountLabel_other": "{{count}} folders scanned",
+				"partialScanWarning_one": "{{count}} folder couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable.",
+				"partialScanWarning_other": "{{count}} folders couldn't be read, so your library may be incomplete. Nothing was removed — try scanning again when the server is reachable."
 			},
 			"serverSwitch": {
 				"title": "Changement de serveur",
@@ -2014,7 +2029,10 @@
 				"serverTypeNavidrome": "Navidrome",
 				"serverTypeOpenSubsonic": "OpenSubsonic",
 				"serverTypeJellyfin": "Jellyfin",
-				"serverTypeLocal": "Bibliothèque locale",
+				"serverTypeLibrary": "My library",
+				"serverTypeWebdav": "WebDAV share",
+				"serverTypeSmb": "SMB share",
+				"libraryTabLocal": "Cet appareil",
 				"urlPlaceholder": "Entrer l'URL du serveur",
 				"fallbackUrlPlaceholder": "URL du serveur de repli (facultatif)",
 				"usernamePlaceholder": "Entrer le nom d'utilisateur",
@@ -2037,6 +2055,18 @@
 				"localNoPaths": "Ajoutez au moins un dossier pour continuer",
 				"localRemovePath": "Supprimer le dossier",
 				"localSetupHelp": "Comment fonctionne la bibliothèque locale ?",
+				"libraryPathPlaceholder": "Music folder on the share (optional)",
+				"libraryPathHint": "Leave empty to scan the whole share. Example: /Music",
+				"webdavNotAShare": "That address answered, but it isn't a WebDAV share. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavMethodBlocked": "That server refused the WebDAV request. WebDAV may be switched off, or a reverse proxy in front of it may be blocking PROPFIND requests.",
+				"webdavPathNotFound": "That address answered, but there's nothing at that path. Check the URL — some servers need a path like /remote.php/dav/files/username",
+				"webdavRedirected": "That address redirected somewhere else, which usually means a sign-in page is in front of the share. Point Wavio straight at the WebDAV URL.",
+				"smbUrlPlaceholder": "host/ShareName",
+				"smbFallbackUrlPlaceholder": "Fallback host/ShareName (optional)",
+				"smbUrlInvalid": "Enter the share as smb://host/ShareName — for example smb://192.168.1.10/Music",
+				"smbShareNotFound": "Connected, but there's no share called \"{{share}}\" on that host. Check the share name.",
+				"smbUnreachable": "Couldn't reach that host on port {{port}}. Check the address, and that the share uses SMB2 or newer — SMB1 isn't supported.",
+				"smbDialectUnsupported": "That host refused the connection because it requires SMB 3. On iPhone and iPad, Wavio speaks SMB 2.1 — allow SMB 2 on the share to connect.",
 				"localInfoTitle": "Bibliothèque locale",
 				"localInfoFormatsTitle": "Formats pris en charge",
 				"localInfoFormats": "Wavio analyse les dossiers que vous sélectionnez à la recherche de fichiers MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA et AIFF.",
