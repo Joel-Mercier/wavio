@@ -60,7 +60,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 
 ## Features
 
-- Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library
+- Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library (local files, SMB share or WebDAV share)
 - Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random, most played tracks, playlists, decades, genres, artist spotlights and internet radio stations sections
 - Customize your home feed experience by toggling sections
 - Artist screen with albums, songs, liked songs, and similar artists
@@ -70,7 +70,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Recent searches history
 - Library screen with starred playlists, albums, and artists
 - Liked songs screen
-- Player screen with audio controls, navigation gestures, transcoding info and current lyric line
+- Player screen with audio controls, navigation gestures, transcoding info and lyrics
 - Optional waveform seek bar, showing the track's waveform instead of a plain progress bar. Waveforms are analyzed once and cached, never over cellular, with a setting to clear the cache
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
@@ -91,7 +91,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Profile screen with user playlists
 - Edit profile screen with account info and password change
 - Synced lyrics support and retrieval through lrclib.net. Navidrome word-by-word karoake style lyrics support with multiple voices, pronunciation and translation support.
-- Downloaders section with [Lidarr](https://lidarr.audio/) and [SoulSync](https://ssync.net/) integration. Search and add content to your music library directly from the app. See downloads progress and history.
+- Downloaders section with [Lidarr](https://lidarr.audio/) [SoulSync](https://ssync.net/), and [Tidarr](https://github.com/cstaelen/tidarr) integrations. Search and add content to your music library directly from the app. See downloads progress and history.
 - [MusicBrainz](https://musicbrainz.org/) integration for local libraries, tag directly from the app using the MusicBrainz api, write to file or write to app data only option, review workflow, tags to replace selection, auto apply toggle, customizable confidence threshold for auto apply
 - [ListenBrainz](https://listenbrainz.org/) integration for scrobbling, listening stats and daily jams, weekly jams and weekly exploration playlists.
 - Bookmarks support. Easy access to a song or podcast favorite parts
