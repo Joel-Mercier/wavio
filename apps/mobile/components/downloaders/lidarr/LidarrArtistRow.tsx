@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -9,7 +10,7 @@ import { VStack } from "@/components/ui/vstack";
 import { artistImageUrl } from "@/services/lidarr/images";
 import type { LidarrArtist } from "@/services/lidarr/types";
 
-export default function LidarrArtistRow({ artist }: { artist: LidarrArtist }) {
+function LidarrArtistRow({ artist }: { artist: LidarrArtist }) {
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -49,3 +50,7 @@ export default function LidarrArtistRow({ artist }: { artist: LidarrArtist }) {
     </FadeOutScaleDown>
   );
 }
+
+// Rows re-render on every keystroke in the search field otherwise: the
+// query state lives on the screen above them.
+export default memo(LidarrArtistRow);

@@ -1,5 +1,6 @@
 import Eye from "lucide-react-native/dist/esm/icons/eye.mjs";
 import EyeOff from "lucide-react-native/dist/esm/icons/eye-off.mjs";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";
@@ -18,7 +19,7 @@ import { useSettingsToast } from "@/hooks/useSettingsToast";
 import type { SoulSyncArtist } from "@/services/soulsync/types";
 import { watchlistArtistIds } from "@/services/soulsync/watchlist";
 
-export default function SoulSyncArtistRow({
+function SoulSyncArtistRow({
   artist,
   source,
 }: {
@@ -107,3 +108,7 @@ export default function SoulSyncArtistRow({
     </HStack>
   );
 }
+
+// Rows re-render on every keystroke in the search field otherwise: the
+// query state lives on the screen above them.
+export default memo(SoulSyncArtistRow);
