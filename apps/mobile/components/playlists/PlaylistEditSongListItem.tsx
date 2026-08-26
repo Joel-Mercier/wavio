@@ -1,29 +1,28 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
-import Menu from "lucide-react-native/dist/esm/icons/menu.mjs";
+import GripVertical from "lucide-react-native/dist/esm/icons/grip-vertical.mjs";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
+export const PLAYLIST_EDIT_ITEM_HEIGHT = 70;
+
 interface PlaylistEditSongListItemProps {
   item: Child;
-  beginDrag: () => void;
   isActive: boolean;
   handleRemoveFromPlaylistPress: () => void;
 }
 
 export default function PlaylistEditSongListItem({
   item,
-  beginDrag,
   isActive,
   handleRemoveFromPlaylistPress,
 }: PlaylistEditSongListItemProps) {
@@ -32,11 +31,11 @@ export default function PlaylistEditSongListItem({
     "--color-white",
   ]) as string[];
   return (
-    <Pressable
-      onLongPress={beginDrag}
+    <Box
       className={cn("flex-row items-center justify-between px-6 py-4", {
         "bg-primary-600": isActive,
       })}
+      style={{ height: PLAYLIST_EDIT_ITEM_HEIGHT }}
     >
       <HStack className="items-center flex-1">
         <FadeOutScaleDown
@@ -68,9 +67,7 @@ export default function PlaylistEditSongListItem({
           <Text className="text-primary-100 text-sm">{item.artist}</Text>
         </VStack>
       </HStack>
-      <FadeOutScaleDown onPress={beginDrag}>
-        <Menu size={24} color={gray400} />
-      </FadeOutScaleDown>
-    </Pressable>
+      <GripVertical size={18} color={gray400} />
+    </Box>
   );
 }

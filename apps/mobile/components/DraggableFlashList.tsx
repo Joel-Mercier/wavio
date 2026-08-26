@@ -4,51 +4,100 @@ import {
   type FlashListRef,
 } from "@shopify/flash-list";
 import {
+  createContext,
   forwardRef,
   type PropsWithChildren,
   type ReactElement,
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
-import { type LayoutChangeEvent, View, type ViewStyle } from "react-native";
+import {
+  type LayoutChangeEvent,
+  type StyleProp,
+  View,
+  type ViewStyle,
+} from "react-native";
 import {
   GestureDetector,
   GestureStateManager,
+  type GestureTouchEvent,
   ScrollView,
+  useLongPressGesture,
   usePanGesture,
+  useSimultaneousGestures,
 } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
+  makeMutable,
   type SharedValue,
+  scrollTo,
   useAnimatedReaction,
-  useAnimatedScrollHandler,
+  useAnimatedRef,
   useAnimatedStyle,
+  useFrameCallback,
+  useScrollOffset,
   useSharedValue,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import useStableCallback from "@/hooks/useStableCallback";
+import { selectionHaptic } from "@/services/haptics";
 
 const AnimatedCellContainer = Animated.createAnimatedComponent(View);
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
+const AUTO_SCROLL_THRESHOLD = 100;
+// Per-frame increments, not a velocity ramp: the scroll runs on the UI thread
+// but FlashList still produces cells on the JS one, so outrunning it by much
+// slides the viewport into rows that were never rendered.
+const AUTO_SCROLL_MIN_STEP = 2;
+const AUTO_SCROLL_MAX_STEP = 10;
+// Roughly 1.5s of pre-rendered runway at the top speed above, against the ~0.7s
+// Android's default 250 leaves.
+const DRAG_DRAW_DISTANCE = 900;
+const DRAG_ACTIVATION_DURATION = 220;
+const DRAG_ACTIVATION_MAX_DISTANCE = 24;
+const DROP_ANIMATION_DURATION = 180;
+const SHIFT_ANIMATION = { duration: 200, easing: Easing.out(Easing.ease) };
 
-type ItemWrapperProps = PropsWithChildren<{
-  index: number;
+function autoScrollStep(depth: number) {
+  "worklet";
+  const ratio = Math.min(1, depth / AUTO_SCROLL_THRESHOLD);
+  return (
+    AUTO_SCROLL_MIN_STEP + (AUTO_SCROLL_MAX_STEP - AUTO_SCROLL_MIN_STEP) * ratio
+  );
+}
+
+type DragState = {
   activeIndex: SharedValue<number>;
   insertIndex: SharedValue<number>;
   hiddenSlot: SharedValue<number>;
-  itemHeight: number;
-  style?: ViewStyle;
+  itemHeight: SharedValue<number>;
+};
+
+// Cells read the drag state through context so `CellRendererComponent` can stay
+// a stable module-scope component: FlashList compares it by reference and uses
+// it as the cell's element type, so a new identity remounts every mounted cell.
+const DragContext = createContext<DragState>({
+  activeIndex: makeMutable(-1),
+  insertIndex: makeMutable(-1),
+  hiddenSlot: makeMutable(-1),
+  itemHeight: makeMutable(0),
+});
+
+type CellProps = PropsWithChildren<{
+  index: number;
+  style?: StyleProp<ViewStyle>;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }>;
 
-const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
-  const { itemHeight, insertIndex, activeIndex, hiddenSlot, index } = props;
+const ItemWrapper = forwardRef<View, CellProps>((props, ref) => {
+  const { index } = props;
+  const { activeIndex, insertIndex, hiddenSlot, itemHeight } =
+    useContext(DragContext);
 
   const position = useSharedValue(0);
 
@@ -56,35 +105,52 @@ const ItemWrapper = forwardRef<View, ItemWrapperProps>((props, ref) => {
     () => {
       const insert = insertIndex.value;
       const active = activeIndex.value;
-      if (insert < 0 || active < 0) return 0;
-      if (index > active && index <= insert + 0.5) return -itemHeight;
-      if (index < active && index >= insert - 0.5) return itemHeight;
-      return 0;
+      let offset = 0;
+      if (insert >= 0 && active >= 0) {
+        if (index > active && index <= insert + 0.5) offset = -itemHeight.value;
+        else if (index < active && index >= insert - 0.5)
+          offset = itemHeight.value;
+      }
+      return { index, offset };
     },
-    (target, prev) => {
-      if (target === prev) return;
-      position.value = withSpring(target);
+    (current, previous) => {
+      if (
+        previous !== null &&
+        previous.index === current.index &&
+        previous.offset === current.offset
+      ) {
+        return;
+      }
+      // Land immediately when the cell was just recycled onto another row (so it
+      // never animates from the previous row's offset) and when the drag just
+      // ended (the reordered data lands in the same commit, so the shifted rows
+      // are already where they belong).
+      if (
+        previous === null ||
+        previous.index !== current.index ||
+        activeIndex.value < 0
+      ) {
+        position.value = current.offset;
+        return;
+      }
+      position.value = withTiming(current.offset, SHIFT_ANIMATION);
     },
-    [index, itemHeight],
+    [index],
   );
 
   const animatedStyle = useAnimatedStyle(() => {
     if (hiddenSlot.value === index) {
-      return {
-        opacity: 0,
-        transform: [{ translateY: 0 }],
-      };
+      return { opacity: 0, transform: [{ translateY: 0 }] };
     }
-    return {
-      opacity: 1,
-      transform: [{ translateY: position.value }],
-    };
+    return { opacity: 1, transform: [{ translateY: position.value }] };
   }, [index]);
 
   return (
-    <AnimatedCellContainer ref={ref} {...props} style={props.style}>
-      <Animated.View style={animatedStyle}>{props.children}</Animated.View>
-    </AnimatedCellContainer>
+    <AnimatedCellContainer
+      ref={ref}
+      {...props}
+      style={[props.style, animatedStyle]}
+    />
   );
 });
 
@@ -103,323 +169,377 @@ type DraggableFlashListProps<T> = Omit<
     isActive: boolean,
     beginDrag: () => void,
   ) => ReactElement;
-  autoScrollSpeed?: number;
   keyExtractor: (item: T, index: number) => string;
 };
 
-type Layout = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+const noop = () => {};
 
-const AUTO_SCROLL_THRESHOLD = 100;
-const AUTO_SCROLL_SPEED = 3;
-
-function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
-  const { itemHeight, autoScrollSpeed = AUTO_SCROLL_SPEED } = props;
-
-  const [data, setData] = useState(props.data);
-  const [draggedSnapshot, setDraggedSnapshot] = useState<{
-    item: T;
-    index: number;
-  } | null>(null);
-  const optimisticDataRef = useRef<T[] | null>(null);
-  const pendingResetRef = useRef(false);
-  const { keyExtractor } = props;
-
-  useEffect(() => {
-    const expected = optimisticDataRef.current;
-    if (expected && expected.length === props.data.length) {
-      let same = true;
-      for (let i = 0; i < expected.length; i++) {
-        if (keyExtractor(expected[i], i) !== keyExtractor(props.data[i], i)) {
-          same = false;
-          break;
-        }
-      }
-      if (same) {
-        optimisticDataRef.current = null;
-        return;
-      }
-    }
-    optimisticDataRef.current = null;
-    setData(props.data);
-  }, [props.data, keyExtractor]);
-
-  const [layout, setLayout] = useState<Layout | null>(null);
-  const scrollViewRef = useRef<FlashListRef<T>>(null);
+function DraggableFlashList<T>({
+  data,
+  itemHeight,
+  onSort,
+  renderItem,
+  drawDistance,
+  maintainVisibleContentPosition,
+  scrollEnabled,
+  ...listProps
+}: DraggableFlashListProps<T>) {
+  // The order lives in the caller: committing it here as well would mean two
+  // sources of truth reordering at slightly different times on drop.
+  const [drag, setDrag] = useState<{ index: number; item: T } | null>(null);
+  const listRef = useAnimatedRef<FlashListRef<T>>();
+  const scrollOffset = useScrollOffset(listRef);
 
   const activeIndex = useSharedValue(-1);
-  const [activeIndexState, setActiveIndexState] = useState(-1);
-  const [isDragging, setIsDragging] = useState(false);
   const insertIndex = useSharedValue(-1);
   const hiddenSlot = useSharedValue(-1);
-
-  const scrollOffset = useSharedValue(0);
+  const itemHeightValue = useSharedValue(itemHeight);
+  const maxIndex = useSharedValue(Math.max(0, data.length - 1));
+  const layoutHeight = useSharedValue(0);
+  // Where the auto-scroll believes the list is: `scrollOffset` only catches up
+  // once native reports the scroll back, a frame or more behind the drag.
+  const scrollTarget = useSharedValue(0);
   const autoScrollVelocity = useSharedValue(0);
-  const autoScrollAcceleration = useSharedValue(1);
-  const scrollIntervalRef = useRef<NodeJS.Timeout | number | null>(null);
-  const fromIndexRef = useRef<number>(-1);
-  const toIndexRef = useRef<number>(-1);
-
   const dragPosition = useSharedValue(0);
-  const dragScrollOffset = useSharedValue(0);
-  const dragOffset = useSharedValue(0);
+  const touchStartX = useSharedValue(0);
+  const touchStartY = useSharedValue(0);
+  const isDropping = useSharedValue(false);
 
-  useLayoutEffect(() => {
-    if (!pendingResetRef.current) return;
-    pendingResetRef.current = false;
-    activeIndex.value = -1;
-    insertIndex.value = -1;
-  }, [data, activeIndex, insertIndex]);
+  useEffect(() => {
+    itemHeightValue.value = itemHeight;
+  }, [itemHeight, itemHeightValue]);
 
-  const endDrag = useCallback(
-    (fromIndex: number, toIndex: number) => {
-      const endAnimationDuration = 180;
-      const changed = fromIndex !== toIndex;
+  useEffect(() => {
+    maxIndex.value = Math.max(0, data.length - 1);
+  }, [data.length, maxIndex]);
 
-      dragPosition.value = withTiming(
-        toIndex * itemHeight + itemHeight / 2 - scrollOffset.value,
-        { duration: endAnimationDuration },
-      );
-
-      if (changed) {
-        const copy = [...data];
-        const removed = copy.splice(fromIndex, 1);
-        if (removed[0]) {
-          copy.splice(toIndex, 0, removed[0]);
-          optimisticDataRef.current = copy;
-          pendingResetRef.current = true;
-          hiddenSlot.value = toIndex;
-          setData(copy);
-        }
-      } else {
-        activeIndex.value = -1;
-        insertIndex.value = -1;
-      }
-
-      autoScrollVelocity.value = 0;
-      autoScrollAcceleration.value = 1;
-      fromIndexRef.current = fromIndex;
-      toIndexRef.current = toIndex;
-
-      if (changed && props.onSort) {
-        props.onSort(fromIndex, toIndex);
-      }
-
-      setTimeout(() => {
-        setIsDragging(false);
-        setActiveIndexState(-1);
-        setDraggedSnapshot(null);
-        hiddenSlot.value = -1;
-        dragOffset.value = 0;
-        dragPosition.value = -1;
-        dragScrollOffset.value = 0;
-      }, endAnimationDuration);
-    },
-    [
-      data,
-      itemHeight,
-      props,
-      scrollOffset,
-      dragPosition,
-      dragOffset,
-      dragScrollOffset,
+  const dragContext = useMemo<DragState>(
+    () => ({
       activeIndex,
       insertIndex,
       hiddenSlot,
-      autoScrollVelocity,
-      autoScrollAcceleration,
-    ],
+      itemHeight: itemHeightValue,
+    }),
+    [activeIndex, insertIndex, hiddenSlot, itemHeightValue],
   );
 
-  const beginDrag = useCallback(
-    (index: number) => {
-      activeIndex.value = index;
-      hiddenSlot.value = index;
-      setActiveIndexState(index);
-      const item = data[index];
-      if (item !== undefined) {
-        setDraggedSnapshot({ item, index });
+  // Cleared here rather than in `commitDrag` so the rows snap back to zero in
+  // the very commit that renders the reordered data.
+  useLayoutEffect(() => {
+    if (drag !== null) return;
+    activeIndex.value = -1;
+    insertIndex.value = -1;
+    hiddenSlot.value = -1;
+    isDropping.value = false;
+  }, [drag, activeIndex, insertIndex, hiddenSlot, isDropping]);
+
+  const beginDrag = useStableCallback((index: number) => {
+    const item = data[index];
+    if (item === undefined) {
+      activeIndex.value = -1;
+      insertIndex.value = -1;
+      return;
+    }
+    activeIndex.value = index;
+    // Hiding the in-list row before its overlay exists would leave a one-frame
+    // hole where the row is simply gone.
+    hiddenSlot.value = index;
+    selectionHaptic();
+    setDrag({ index, item });
+  });
+
+  const commitDrag = useStableCallback((fromIndex: number, toIndex: number) => {
+    dragPosition.value = 0;
+    autoScrollVelocity.value = 0;
+    // Also cleared by the effect below, but that only runs when `drag` actually
+    // changes — a drag released before its overlay mounted would leave the
+    // guard latched and block every later drop.
+    isDropping.value = false;
+    setDrag(null);
+    const target = Math.min(toIndex, Math.max(0, data.length - 1));
+    if (fromIndex !== target) onSort?.(fromIndex, target);
+  });
+
+  const isDragging = drag !== null;
+
+  // Reachable from both the pan (finger lifted mid-drag) and the long press
+  // (held and released without ever moving), so it has to be idempotent.
+  const endDrag = useCallback(() => {
+    "worklet";
+    if (activeIndex.value < 0 || isDropping.value) return;
+    isDropping.value = true;
+    const fromIndex = activeIndex.value;
+    const toIndex = Math.min(
+      maxIndex.value,
+      Math.max(0, Math.round(insertIndex.value)),
+    );
+    autoScrollVelocity.value = 0;
+    // The reorder is committed from the completion callback: applying it up
+    // front would relayout the list underneath the still-animating row.
+    dragPosition.value = withTiming(
+      toIndex * itemHeightValue.value +
+        itemHeightValue.value / 2 -
+        scrollTarget.value,
+      { duration: DROP_ANIMATION_DURATION },
+      () => {
+        "worklet";
+        scheduleOnRN(commitDrag, fromIndex, toIndex);
+      },
+    );
+  }, [
+    activeIndex,
+    insertIndex,
+    isDropping,
+    maxIndex,
+    itemHeightValue,
+    scrollTarget,
+    autoScrollVelocity,
+    dragPosition,
+    commitDrag,
+  ]);
+
+  // Memoised because `useFrameCallback` re-registers whenever the callback
+  // changes identity, which would otherwise be every render of the list.
+  const autoScroll = useFrameCallback(
+    useCallback(() => {
+      "worklet";
+      const velocity = autoScrollVelocity.value;
+      if (velocity === 0) {
+        scrollTarget.value = scrollOffset.value;
+        return;
       }
-      setIsDragging(true);
-    },
-    [activeIndex, hiddenSlot, data],
+      const maxOffset = Math.max(
+        0,
+        itemHeightValue.value * (maxIndex.value + 1) - layoutHeight.value,
+      );
+      const next = Math.min(
+        maxOffset,
+        Math.max(0, scrollTarget.value + velocity),
+      );
+      if (next === scrollTarget.value) return;
+      scrollTarget.value = next;
+      scrollTo(listRef, 0, next, false);
+      // The finger stands still while the content slides under it, so the gap
+      // has to follow the scroll rather than the pan.
+      insertIndex.value = Math.min(
+        maxIndex.value,
+        Math.max(0, (next + dragPosition.value) / itemHeightValue.value - 0.5),
+      );
+    }, [
+      autoScrollVelocity,
+      scrollTarget,
+      scrollOffset,
+      itemHeightValue,
+      maxIndex,
+      layoutHeight,
+      insertIndex,
+      dragPosition,
+      listRef,
+    ]),
+    false,
   );
 
   useEffect(() => {
-    if (isDragging) {
-      if (!scrollIntervalRef.current) {
-        scrollIntervalRef.current = setInterval(() => {
-          if (!scrollViewRef.current || autoScrollVelocity.value === 0) return;
-          scrollViewRef.current.scrollToOffset({
-            offset: Math.max(
-              0,
-              scrollOffset.value +
-                autoScrollVelocity.value *
-                  autoScrollSpeed *
-                  autoScrollAcceleration.value,
-            ),
-            animated: false,
-          });
-          autoScrollAcceleration.value = Math.min(
-            6,
-            autoScrollAcceleration.value + 0.01,
-          );
-        }, 16);
-      }
-    } else {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    }
+    autoScroll.setActive(isDragging);
+  }, [isDragging, autoScroll]);
 
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    };
-  }, [
-    isDragging,
-    autoScrollVelocity,
-    autoScrollSpeed,
-    autoScrollAcceleration,
-    scrollOffset,
-  ]);
-
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    scrollOffset.value = event.contentOffset.y;
-  });
-
-  const onLayout = useCallback((evt: LayoutChangeEvent) => {
-    setLayout(evt.nativeEvent.layout);
-  }, []);
-
-  const panGesture = usePanGesture({
-    manualActivation: true,
-    enabled: layout !== null,
-    shouldCancelWhenOutside: false,
-    onTouchesMove: (evt) => {
-      "worklet";
-      if (isDragging || activeIndexState >= 0 || activeIndex.value >= 0) {
-        GestureStateManager.activate(evt.handlerTag);
-      } else {
-        GestureStateManager.deactivate(evt.handlerTag);
-      }
+  const onLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      layoutHeight.value = event.nativeEvent.layout.height;
     },
-    onBegin: (evt) => {
-      "worklet";
-      if (activeIndex.value >= 0) return;
-      let panAbsValue = Math.max(itemHeight / 2, evt.y);
-      if (layout?.height) {
-        panAbsValue = Math.min(layout.height - itemHeight / 2, panAbsValue);
-      }
-      dragPosition.value = panAbsValue;
-      dragScrollOffset.value = scrollOffset.value;
-      dragOffset.value = dragPosition.value;
-      insertIndex.value = Math.max(
-        0,
-        (scrollOffset.value + dragPosition.value) / itemHeight - 0.5,
-      );
-    },
-    onUpdate: (evt) => {
-      "worklet";
-      if (activeIndex.value < 0) return;
-      let panAbsValue = Math.max(itemHeight / 2, evt.y);
-      if (layout?.height) {
-        panAbsValue = Math.min(layout.height - itemHeight / 2, panAbsValue);
-      }
-      dragPosition.value = panAbsValue;
-      insertIndex.value = Math.max(
-        0,
-        (scrollOffset.value + dragPosition.value) / itemHeight - 0.5,
-      );
-
-      if (layout) {
-        if (dragPosition.value >= layout.height - AUTO_SCROLL_THRESHOLD) {
-          autoScrollVelocity.value = autoScrollSpeed;
-        } else if (dragPosition.value < AUTO_SCROLL_THRESHOLD) {
-          autoScrollVelocity.value = -autoScrollSpeed;
-        } else {
-          autoScrollAcceleration.value = 0;
-          autoScrollVelocity.value = 0;
-        }
-      } else {
-        autoScrollAcceleration.value = 0;
-        autoScrollVelocity.value = 0;
-      }
-    },
-    onDeactivate: () => {
-      "worklet";
-      if (activeIndex.value < 0) return;
-      const fromIndex = activeIndex.value;
-      const toIndex = Math.round(insertIndex.value);
-      scheduleOnRN(endDrag, fromIndex, toIndex);
-    },
-  });
-
-  const extraData = useMemo(
-    () => ({
-      isDragging,
-    }),
-    [isDragging],
+    [layoutHeight],
   );
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: T; index: number }) => {
-      return props.renderItem(
-        item,
-        index,
-        isDragging && activeIndexState === index,
-        () => beginDrag(index),
-      );
-    },
-    [props, isDragging, activeIndexState, beginDrag],
-  );
-
-  const draggingAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: dragPosition.value - itemHeight / 2,
+  // Every callback reads shared values only, so the config — and with it the
+  // registered gesture — stays identical across renders.
+  const panGesture = usePanGesture(
+    useMemo(
+      () => ({
+        manualActivation: true,
+        shouldCancelWhenOutside: false,
+        onTouchesMove: (event: GestureTouchEvent) => {
+          "worklet";
+          if (activeIndex.value >= 0) {
+            GestureStateManager.activate(event.handlerTag);
+            return;
+          }
+          // Failing the pan is what frees the list to scroll, but it is
+          // irreversible: fail it on the first pixel of jitter and the long
+          // press that follows would arm a drag no touch could ever move.
+          const touch = event.allTouches[0];
+          if (touch === undefined) return;
+          const dx = touch.x - touchStartX.value;
+          const dy = touch.y - touchStartY.value;
+          if (
+            dx * dx + dy * dy >
+            DRAG_ACTIVATION_MAX_DISTANCE * DRAG_ACTIVATION_MAX_DISTANCE
+          ) {
+            GestureStateManager.deactivate(event.handlerTag);
+          }
         },
+        onBegin: (event: { x: number; y: number }) => {
+          "worklet";
+          if (activeIndex.value >= 0 || layoutHeight.value <= 0) return;
+          const half = itemHeightValue.value / 2;
+          const y = Math.min(
+            layoutHeight.value - half,
+            Math.max(half, event.y),
+          );
+          touchStartX.value = event.x;
+          touchStartY.value = event.y;
+          scrollTarget.value = scrollOffset.value;
+          dragPosition.value = y;
+          insertIndex.value = Math.max(
+            0,
+            (scrollTarget.value + y) / itemHeightValue.value - 0.5,
+          );
+        },
+        onUpdate: (event: { y: number }) => {
+          "worklet";
+          if (activeIndex.value < 0 || layoutHeight.value <= 0) return;
+          if (isDropping.value) return;
+          const half = itemHeightValue.value / 2;
+          const y = Math.min(
+            layoutHeight.value - half,
+            Math.max(half, event.y),
+          );
+          dragPosition.value = y;
+          insertIndex.value = Math.min(
+            maxIndex.value,
+            Math.max(0, (scrollTarget.value + y) / itemHeightValue.value - 0.5),
+          );
+
+          // Measured on the raw touch so the speed keeps rising as the finger
+          // pushes past the edge, and drops to zero the moment it eases out.
+          const below = event.y - (layoutHeight.value - AUTO_SCROLL_THRESHOLD);
+          const above = AUTO_SCROLL_THRESHOLD - event.y;
+          if (below > 0) {
+            autoScrollVelocity.value = autoScrollStep(below);
+          } else if (above > 0) {
+            autoScrollVelocity.value = -autoScrollStep(above);
+          } else {
+            autoScrollVelocity.value = 0;
+          }
+        },
+        // `onFinalize` rather than `onDeactivate`: it also covers the drag that
+        // was armed and released without the pan ever going active.
+        onFinalize: () => {
+          "worklet";
+          endDrag();
+        },
+      }),
+      [
+        activeIndex,
+        insertIndex,
+        isDropping,
+        itemHeightValue,
+        maxIndex,
+        layoutHeight,
+        scrollOffset,
+        scrollTarget,
+        touchStartX,
+        touchStartY,
+        autoScrollVelocity,
+        dragPosition,
+        endDrag,
       ],
-    };
-  }, [itemHeight, dragPosition]);
+    ),
+  );
+
+  // Read out of the gesture before the worklet below: a worklet closure captures
+  // whole objects, and serializing `panGesture` freezes it, leaving RNGH unable
+  // to attach the composition's relations to it.
+  const panHandlerTag = panGesture.handlerTag;
+
+  // Arming the drag from the UI thread is what makes the first frames of the
+  // gesture usable: `activeIndex` and the pan's activation both land on the
+  // thread the pan reads them from, with no JS round trip in between.
+  const longPressGesture = useLongPressGesture(
+    useMemo(
+      () => ({
+        minDuration: DRAG_ACTIVATION_DURATION,
+        maxDistance: DRAG_ACTIVATION_MAX_DISTANCE,
+        shouldCancelWhenOutside: false,
+        onActivate: (event: { y: number }) => {
+          "worklet";
+          if (activeIndex.value >= 0 || layoutHeight.value <= 0) return;
+          const offset = scrollOffset.value;
+          // A fixed row height is what lets the pressed row be resolved by
+          // arithmetic, including for rows FlashList never mounted.
+          const index = Math.min(
+            maxIndex.value,
+            Math.max(0, Math.floor((offset + event.y) / itemHeightValue.value)),
+          );
+          const half = itemHeightValue.value / 2;
+          scrollTarget.value = offset;
+          activeIndex.value = index;
+          insertIndex.value = index;
+          dragPosition.value = Math.min(
+            layoutHeight.value - half,
+            Math.max(half, event.y),
+          );
+          // The long press itself cancels once the finger travels past
+          // `maxDistance`, so the pan — which outlives it — owns the drag from
+          // here, including the drop.
+          GestureStateManager.activate(panHandlerTag);
+          scheduleOnRN(beginDrag, index);
+        },
+      }),
+      [
+        activeIndex,
+        insertIndex,
+        itemHeightValue,
+        maxIndex,
+        layoutHeight,
+        scrollOffset,
+        scrollTarget,
+        dragPosition,
+        beginDrag,
+        panHandlerTag,
+      ],
+    ),
+  );
+
+  const gesture = useSimultaneousGestures(longPressGesture, panGesture);
+
+  // The active row is hidden in place and redrawn by the overlay below, so the
+  // in-list copy never needs the active styling — keeping it out means grabbing
+  // and dropping a row re-renders no cell at all.
+  const renderListItem = useStableCallback(
+    ({ item, index }: { item: T; index: number }) =>
+      renderItem(item, index, false, () => beginDrag(index)),
+  );
+
+  const draggingAnimatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [
+        { translateY: dragPosition.value - itemHeightValue.value / 2 },
+      ],
+    }),
+    [],
+  );
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View
-        onLayout={onLayout}
-        style={{
-          flex: 1,
-        }}
-      >
-        <AnimatedFlashList
-          {...props}
-          ref={scrollViewRef}
-          data={data}
-          renderItem={renderItem}
-          CellRendererComponent={(rowProps) => (
-            <ItemWrapper
-              {...rowProps}
-              activeIndex={activeIndex}
-              insertIndex={insertIndex}
-              hiddenSlot={hiddenSlot}
-              itemHeight={itemHeight}
-            />
-          )}
-          scrollEnabled={(props.scrollEnabled ?? true) && !isDragging}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          extraData={extraData}
-          renderScrollComponent={ScrollView}
-        />
-        {isDragging && draggedSnapshot && (
+    <GestureDetector gesture={gesture}>
+      <Animated.View onLayout={onLayout} style={{ flex: 1 }}>
+        <DragContext.Provider value={dragContext}>
+          <FlashList
+            {...listProps}
+            ref={listRef}
+            data={data}
+            renderItem={renderListItem}
+            CellRendererComponent={ItemWrapper}
+            // FlashList keeps the visible row pinned while data changes, which
+            // makes a reorder shove the list around (documented known issue).
+            maintainVisibleContentPosition={
+              maintainVisibleContentPosition ?? { disabled: true }
+            }
+            scrollEnabled={(scrollEnabled ?? true) && !isDragging}
+            drawDistance={isDragging ? DRAG_DRAW_DISTANCE : drawDistance}
+            renderScrollComponent={ScrollView}
+          />
+        </DragContext.Provider>
+        {drag && (
           <Animated.View
             pointerEvents="none"
             style={[
@@ -432,12 +552,7 @@ function DraggableFlashList<T>(props: DraggableFlashListProps<T>) {
               draggingAnimatedStyle,
             ]}
           >
-            {props.renderItem(
-              draggedSnapshot.item,
-              draggedSnapshot.index,
-              true,
-              () => {},
-            )}
+            {renderItem(drag.item, drag.index, true, noop)}
           </Animated.View>
         )}
       </Animated.View>
