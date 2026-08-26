@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: OpenSubsonic, Navidrome and Jellyfin. It alos supports a local music library on the device's file system. Podcast features use the Taddy API. Radio stations are supported via the Radio Browser API.
+Wavio is a React Native / Expo music streaming client for Android (iOS WIP) that talks to multiple server types: OpenSubsonic, Navidrome and Jellyfin. It alos supports a local music library on the device's file system, SMB and WebDAV. Podcast features use the Taddy API. Radio stations are supported via the Radio Browser API.
 
 ## Monorepo layout
 
