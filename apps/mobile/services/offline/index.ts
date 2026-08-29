@@ -3,6 +3,11 @@
 // Connectivity/reachability is a separate concern — see services/network.ts.
 
 export {
+  ArtworkCacheService,
+  artworkCacheService,
+  cacheArtworkForTracks,
+} from "./artworkCacheService";
+export {
   collectionArtistCredits,
   collectionCreditsArtist,
   offlineCollectionToAlbum,

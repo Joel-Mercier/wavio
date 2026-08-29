@@ -1,16 +1,20 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Paths } from "expo-file-system";
 import { getArtists } from "@/services/backend/browsing";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import { search3 } from "@/services/backend/searching";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
-import { isTlsTrustFailure } from "@/services/errorReporting";
 import {
-  getConnectionType,
   getIsEffectivelyOnline,
   subscribeConnectionType,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import {
+  artworkCacheService,
+  getArtworkProgress,
+  subscribePendingArtwork,
+} from "@/services/offline/artworkCacheService";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
+import { isExternalDownloadLocation } from "@/services/offline/downloadDestination";
 import {
   DELETE_CHUNK,
   type DeleteProgress,
@@ -22,38 +26,27 @@ import {
   advanceCursor,
   albumToAutoCollection,
   buildArtistArtworkAliases,
-  buildTrackArtworkAliases,
   groupSongIdsByAlbum,
   hasUnseenAutoTracks,
-  isArtworkStale,
   isSongEnumerationComplete,
   isSyncStale,
   MIN_FREE_DISK_BYTES,
+  MIN_FREE_STAGING_BYTES,
   nextSongCalibration,
   planServerDeletions,
+  planTrackArtwork,
   playlistToAutoCollection,
   QUEUE_LOW_WATER,
   RETRY_BACKOFF_STEPS_MS,
-  referencedArtworkIds,
   refreshedOfflineTrack,
   SONG_PAGE_SIZE,
   shouldWriteAutoCollection,
   songEnumerationBaseline,
 } from "@/services/offline/librarySyncPlan";
-import { requestHeadersForUrl } from "@/services/serverHeaders";
-import { useAppBase } from "@/stores/app";
-import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import { useAuthBase } from "@/stores/auth";
 import useLibrarySync, { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOffline, { type OfflineCollection } from "@/stores/offline";
-import { artworkUrl } from "@/utils/artwork";
-import { artworkCacheKey } from "@/utils/artworkCacheKey";
 import { logError } from "@/utils/log";
-
-const ARTWORK_SIZE = 600;
-// Covers are small next to audio files, so they can run wider than the track
-// download queue without starving it.
-const ARTWORK_CONCURRENCY = 4;
-const ARTWORK_ATTEMPTS = 3;
 
 // Subsonic error code 10: "required parameter is missing" — what a
 // pre-OpenSubsonic server answers to the empty-query search3 the crawl relies
@@ -83,26 +76,6 @@ const notifySyncCompleted = (result: LibrarySyncCompletedResult) => {
   for (const cb of completedListeners) cb(result);
 };
 
-// Covers queued or in flight. Kept out of the persisted crawl state — it
-// changes thousands of times per pass, and re-serializing the crawl cursor
-// (which holds the pass's seen-id inventory) on each would be wasteful. The
-// crawl reaching "complete" doesn't mean the library is fully usable offline:
-// artwork downloads trail it, so the settings row keeps reporting "syncing"
-// until this hits zero.
-let artworkProgress = { pending: 0, total: 0 };
-const pendingArtworkListeners = new Set<() => void>();
-
-export function subscribePendingArtwork(cb: () => void): () => void {
-  pendingArtworkListeners.add(cb);
-  return () => {
-    pendingArtworkListeners.delete(cb);
-  };
-}
-
-// One stable object identity per value, so useSyncExternalStore doesn't loop.
-export const getArtworkProgress = (): { pending: number; total: number } =>
-  artworkProgress;
-
 // Progressive whole-library crawl for extended offline mode. Enumerates the
 // active server through the backend dispatch layer (so Subsonic/Navidrome and
 // Jellyfin both work) and feeds the existing offlineDownloadService queue:
@@ -125,39 +98,22 @@ export class LibrarySyncService {
   private generation = 0;
   private running = false;
   private pendingKick = false;
-  private artworkQueue: string[] = [];
-  // Ids either queued or in flight — the queue alone can't dedupe an id whose
-  // download already started (shifted off), and a stale cover fetched twice
-  // concurrently would orphan one of the two timestamped files.
-  private artworkPending: Set<string> = new Set();
-  private artworkActive = 0;
-  // Attempts per cover in the current pass. A cover that fails is retried a
-  // couple of times rather than dropped until the next pass — a handful of
-  // covers lost to a transient blip is exactly what leaves scattered rows on
-  // their fallback icon once the device goes offline.
-  private artworkAttempts: Map<string, number> = new Map();
-  // Set when a cover fetch fails the TLS handshake. Every other cover comes from
-  // the same host, so they would all fail identically — retrying the pass just
-  // burns ARTWORK_ATTEMPTS per cover on every backfill. Cleared by reset() and
-  // by startIfNeeded(), so re-trusting the certificate resumes artwork on the
-  // next app foreground / reconnection rather than needing a server switch.
-  private artworkTrustBlocked = false;
   // Backoff state for transient step failures — reset on any successful step.
   private failureCount = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   private constructor() {
     subscribeEffectiveOnline(() => {
-      if (getIsEffectivelyOnline()) {
-        this.startIfNeeded();
-        this.processArtworkQueue();
-      }
+      if (getIsEffectivelyOnline()) this.startIfNeeded();
     });
     subscribeConnectionType((type) => {
-      if (type === "wifi") {
-        this.kick();
-        this.processArtworkQueue();
-      }
+      if (type === "wifi") this.kick();
+    });
+    // The artwork cache is a separate service now, so the completion check has
+    // to be driven from its progress rather than from inside its drain: a
+    // library whose covers are still coming down isn't fully cached yet.
+    subscribePendingArtwork(() => {
+      if (getArtworkProgress().pending === 0) this.maybeNotifyFullyCached();
     });
     // Fetch the next songs page as the download queue drains below the low
     // water mark; a drain after the crawl completed may also mean the library
@@ -182,30 +138,21 @@ export class LibrarySyncService {
   // reconnection). Starts a fresh pass when idle, restarts a stale completed
   // pass (delta resync), otherwise resumes from the persisted cursor.
   startIfNeeded(): void {
-    // An index-backed backend has no server API to crawl and its covers are
-    // already file:// URIs on disk — feeding one to downloadFileAsync throws
-    // "URI is not absolute". The crawl loop guards this via canProceed(), but
-    // backfillArtworkQueue() below runs before it, so gate here too.
+    // An index-backed backend has no server API to crawl, so there is nothing
+    // to start; the crawl loop guards this via canProceed() too.
     const { url, username, serverType } = useAuthBase.getState();
     if (!url || !username || isIndexBackedType(serverType)) return;
     const sync = useLibrarySync.getState();
     if (!sync.extendedOfflineModeEnabled) return;
-    // Give artwork one more chance per entry: the certificate may have been
-    // trusted since the block. Still untrusted just re-blocks on the first
-    // cover, which costs one failed handshake rather than the whole backfill.
     // Runs before the phase branch so a completed pass — where the backfill is
-    // the only thing that still fetches covers — recovers too.
-    this.artworkTrustBlocked = false;
+    // the only thing that still fetches covers — picks artwork back up too.
+    artworkCacheService.resume();
     if (sync.phase === "idle") {
       this.beginPass();
     } else if (sync.phase === "complete") {
-      if (!isSyncStale(sync.lastSyncCompletedAt, Date.now())) {
-        this.backfillArtworkQueue();
-        return;
-      }
+      if (!isSyncStale(sync.lastSyncCompletedAt, Date.now())) return;
       this.beginPass();
     }
-    this.backfillArtworkQueue();
     this.kick();
   }
 
@@ -213,11 +160,6 @@ export class LibrarySyncService {
   // by the app layout's scope-change effect.
   reset(): void {
     this.generation++;
-    this.artworkQueue = [];
-    this.artworkPending.clear();
-    this.artworkAttempts.clear();
-    this.artworkTrustBlocked = false;
-    this.syncPendingArtwork();
     this.failureCount = 0;
     if (this.retryTimer) {
       clearTimeout(this.retryTimer);
@@ -229,9 +171,16 @@ export class LibrarySyncService {
   // keeping user-saved collections/tracks (and auto tracks they reference).
   async disable(onProgress?: DeleteProgress): Promise<void> {
     this.reset();
+    // Drops covers still in flight before the prune below, so one can't land
+    // after it and sit on disk unreferenced. The artwork queue is shared with
+    // manual downloads and can't be filtered by source, so this takes a
+    // user-saved collection's pending covers with it — hence the backfill once
+    // the prune is done, which re-derives whatever user content still needs.
+    artworkCacheService.reset();
     useLibrarySync.getState().__reset();
     offlineDownloadService.removeQueuedAutoDownloads();
     await this.removeAutoContent(onProgress);
+    artworkCacheService.resume();
   }
 
   // After "clear all downloads": the downloaded state is gone, so a still
@@ -262,7 +211,7 @@ export class LibrarySyncService {
       offlineStore.addDownloadedCollection(
         playlistToAutoCollection(withSongs, existing),
       );
-      this.enqueueArtwork(withSongs.coverArt);
+      artworkCacheService.enqueue(withSongs.coverArt);
       const entries = withSongs.entry ?? [];
       // A pass in flight reconciles against its seen inventory when it
       // completes — record this playlist and its songs so the refresh isn't
@@ -323,7 +272,7 @@ export class LibrarySyncService {
     if (sync.passStartDownloadedCount === null) return;
     // Covers still downloading means the library isn't fully usable offline
     // yet; the artwork drain re-runs this check.
-    if (artworkProgress.pending > 0) return;
+    if (getArtworkProgress().pending > 0) return;
     const offlineStore = useOffline.getState();
     if (
       offlineStore.downloadQueue.some(
@@ -371,33 +320,11 @@ export class LibrarySyncService {
       }
     }
     onProgress?.(total, total);
-    const { serverId, username } = useAuthBase.getState();
-    if (serverId && username) {
-      try {
-        const artworkDir = this.artworkDir();
-        if (artworkDir.exists) artworkDir.delete();
-      } catch (error) {
-        logError("Library sync: error removing cached artwork:", error);
-      }
-    }
-    useOffline.getState().clearArtworkCache();
-  }
-
-  private syncPendingArtwork(): void {
-    const pending = this.artworkQueue.length + this.artworkActive;
-    // The denominator is the high-water mark of the current burst, so the
-    // settings row can show "caching artwork 120/900"; it resets once the
-    // queue drains so the next burst counts from zero.
-    const total = pending === 0 ? 0 : Math.max(artworkProgress.total, pending);
-    if (
-      pending === artworkProgress.pending &&
-      total === artworkProgress.total
-    ) {
-      return;
-    }
-    artworkProgress = { pending, total };
-    for (const cb of pendingArtworkListeners) cb();
-    if (pending === 0) this.maybeNotifyFullyCached();
+    // Prune rather than wipe: the artwork cache is no longer the crawl's alone.
+    // A cover the user's own saved collections and tracks still reference has to
+    // survive toggling extended offline off — the exact parallel of the
+    // referencedByUser guard on tracks above.
+    artworkCacheService.pruneOrphaned();
   }
 
   private kick(): void {
@@ -440,7 +367,21 @@ export class LibrarySyncService {
         ) {
           return;
         }
-        if (Paths.availableDiskSpace < MIN_FREE_DISK_BYTES) {
+        // Paths.availableDiskSpace measures internal storage. With downloads
+        // pointed at a user-picked folder — very possibly an SD card — that
+        // number describes the wrong volume for the library itself, and holding
+        // the crawl to the full floor would report "disk full" about a disk the
+        // files aren't going to. It isn't irrelevant either: every one of those
+        // downloads still stages a full copy in app storage before the move, so
+        // internal space that can't hold a track stalls the queue just as hard,
+        // only as a cascade of failures instead of a clean stop. There's no
+        // free-space API for a SAF tree, so the external threshold covers the
+        // staging copy alone and a genuinely full card surfaces as a download
+        // failure.
+        const minFreeBytes = isExternalDownloadLocation()
+          ? MIN_FREE_STAGING_BYTES
+          : MIN_FREE_DISK_BYTES;
+        if (Paths.availableDiskSpace < minFreeBytes) {
           if (sync.lastError !== "diskFull") {
             sync.setCrawl({ lastError: "diskFull" });
           }
@@ -538,7 +479,7 @@ export class LibrarySyncService {
       if (shouldWriteAutoCollection(existing)) {
         collections.push(albumToAutoCollection(album, existing));
       }
-      this.enqueueArtwork(album.coverArt);
+      artworkCacheService.enqueue(album.coverArt);
     }
     offlineStore.addDownloadedCollections(collections);
     if (__DEV__ && albumOffset === 0) {
@@ -585,7 +526,7 @@ export class LibrarySyncService {
         (index) => index.artist ?? [],
       );
       for (const artist of artists) {
-        this.enqueueArtwork(artist.coverArt);
+        artworkCacheService.enqueue(artist.coverArt);
       }
       const aliases = buildArtistArtworkAliases(artists);
       useOffline.getState().addArtworkAliases(aliases);
@@ -635,11 +576,18 @@ export class LibrarySyncService {
       return refreshed ? [refreshed] : [];
     });
     offlineStore.addDownloadedTracks(refreshedTracks);
-    const songAliases = buildTrackArtworkAliases(
+    const { aliases: songAliases, covers: songCovers } = planTrackArtwork(
       songs,
       offlineStore.downloadedCollections,
+      offlineStore.artworkAliases,
     );
     offlineStore.addArtworkAliases(songAliases);
+    // Almost always covers the albums phase already enqueued (enqueue dedupes on
+    // the cache), so this is really about the songs it didn't: one whose album
+    // the crawl hasn't reached, or isn't registering at all.
+    for (const coverArt of songCovers) {
+      artworkCacheService.enqueue(coverArt);
+    }
     if (__DEV__ && songOffset === 0) {
       console.log("[librarySync] songs", {
         count: songs.length,
@@ -755,7 +703,7 @@ export class LibrarySyncService {
           playlistToAutoCollection(withSongs, existing),
         );
       }
-      this.enqueueArtwork(withSongs.coverArt);
+      artworkCacheService.enqueue(withSongs.coverArt);
       const entries = withSongs.entry ?? [];
       // Playlist entries also prove their songs still exist server-side (a
       // song added mid-crawl can miss the songs-phase pages).
@@ -763,9 +711,17 @@ export class LibrarySyncService {
         "song",
         entries.map((entry) => entry.id),
       );
-      offlineStore.addArtworkAliases(
-        buildTrackArtworkAliases(entries, offlineStore.downloadedCollections),
+      // A playlist's member albums usually aren't registered collections, so its
+      // entries group onto one cover per album rather than the playlist's own.
+      const entryArtwork = planTrackArtwork(
+        entries,
+        offlineStore.downloadedCollections,
+        offlineStore.artworkAliases,
       );
+      offlineStore.addArtworkAliases(entryArtwork.aliases);
+      for (const coverArt of entryArtwork.covers) {
+        artworkCacheService.enqueue(coverArt);
+      }
       offlineDownloadService.enqueueTracks(entries, "auto");
     }
     useLibrarySync.getState().setCrawl({
@@ -834,181 +790,7 @@ export class LibrarySyncService {
         .map((queued) => queued.id),
     );
     offlineDownloadService.removeQueuedAutoDownloads(staleQueuedIds);
-    this.pruneOrphanedArtwork();
-  }
-
-  // Drops cached covers no longer referenced by any collection (their album,
-  // playlist or artist was deleted server-side), then the aliases that pointed
-  // at them.
-  private pruneOrphanedArtwork(): void {
-    const offlineStore = useOffline.getState();
-    const referenced = referencedArtworkIds(
-      Object.values(offlineStore.downloadedCollections),
-      offlineStore.artworkAliases,
-    );
-    const orphaned = Object.entries(offlineStore.artworkCache).filter(
-      ([coverArt]) => !referenced.has(coverArt),
-    );
-    if (orphaned.length > 0) {
-      for (const [, uri] of orphaned) {
-        try {
-          const file = new File(uri);
-          if (file.exists) file.delete();
-        } catch {}
-      }
-      offlineStore.removeCachedArtwork(orphaned.map(([coverArt]) => coverArt));
-    }
-    useOffline.getState().pruneArtworkAliases();
-  }
-
-  private artworkDir(): Directory {
-    return new Directory(
-      Paths.document,
-      "offline",
-      currentAuthScope(),
-      "artwork",
-    );
-  }
-
-  // Covers are cached once per unique coverArt id (album/playlist level, not
-  // per track) so offline screens keep their artwork — see the fallback in
-  // utils/artwork.ts. The queue is in-memory; backfillArtworkQueue re-derives
-  // missing covers from the registered collections after a restart.
-  private enqueueArtwork(coverArt?: string): void {
-    if (!coverArt) return;
-    // Accepting covers the drain refuses to touch would leave artworkProgress
-    // stuck on a "caching artwork x/y" row that never advances for the rest of
-    // the session, since the crawl keeps enqueuing long after the block.
-    if (this.artworkTrustBlocked) return;
-    const { artworkCache, artworkCachedAt } = useOffline.getState();
-    const key = artworkCacheKey(coverArt);
-    // A fresh cache entry is kept; a stale one is re-fetched so covers
-    // replaced on the server propagate even when the coverArt id is stable
-    // (Jellyfin item GUIDs never change when the image does).
-    if (
-      artworkCache[key] &&
-      !isArtworkStale(artworkCachedAt[key], Date.now())
-    ) {
-      return;
-    }
-    if (this.artworkPending.has(key)) return;
-    this.artworkPending.add(key);
-    this.artworkQueue.push(coverArt);
-    this.syncPendingArtwork();
-    this.processArtworkQueue();
-  }
-
-  private backfillArtworkQueue(): void {
-    if (!getIsEffectivelyOnline()) return;
-    for (const collection of Object.values(
-      useOffline.getState().downloadedCollections,
-    )) {
-      if (collection.source === "auto") {
-        this.enqueueArtwork(collection.coverArt);
-      }
-    }
-  }
-
-  private processArtworkQueue(): void {
-    const { downloadsWifiOnly } = useAppBase.getState();
-    if (downloadsWifiOnly && getConnectionType() !== "wifi") return;
-    if (this.artworkTrustBlocked) return;
-    while (this.artworkActive < ARTWORK_CONCURRENCY) {
-      const coverArt = this.artworkQueue.shift();
-      if (!coverArt) return;
-      const generation = this.generation;
-      this.artworkActive++;
-      void this.downloadArtwork(coverArt, generation).then((ok) => {
-        this.artworkActive--;
-        const key = artworkCacheKey(coverArt);
-        // An untrusted certificate blocks every cover on this host equally, so
-        // abandon the pass instead of re-queueing each one until it exhausts its
-        // attempts. Covers already on disk stay; the rest wait for a reset().
-        if (this.artworkTrustBlocked) {
-          this.artworkQueue = [];
-          this.artworkPending.clear();
-          this.artworkAttempts.clear();
-          this.syncPendingArtwork();
-          return;
-        }
-        const attempts = (this.artworkAttempts.get(key) ?? 0) + 1;
-        if (
-          !ok &&
-          generation === this.generation &&
-          attempts < ARTWORK_ATTEMPTS
-        ) {
-          this.artworkAttempts.set(key, attempts);
-          this.artworkQueue.push(coverArt);
-        } else {
-          this.artworkAttempts.delete(key);
-          this.artworkPending.delete(key);
-        }
-        this.syncPendingArtwork();
-        this.processArtworkQueue();
-      });
-    }
-  }
-
-  // Resolves true when the cover is on disk (or the attempt is moot), false
-  // when it should be retried.
-  private async downloadArtwork(
-    coverArt: string,
-    generation: number,
-  ): Promise<boolean> {
-    try {
-      const { serverId, username } = useAuthBase.getState();
-      if (!serverId || !username) return true;
-      const dir = this.artworkDir();
-      dir.create({ idempotent: true, intermediates: true });
-      // Timestamped filename: a refreshed cover must get a NEW file:// URI,
-      // else expo-image's URI-keyed cache keeps showing the old bytes.
-      const key = artworkCacheKey(coverArt);
-      const fileName = `${key.replace(/[^a-zA-Z0-9._-]/g, "_")}_${Date.now()}.jpg`;
-      const previous = useOffline.getState().artworkCache[key];
-      const source = artworkUrl(coverArt, ARTWORK_SIZE);
-      const result = await File.downloadFileAsync(
-        source,
-        new File(dir, fileName),
-        { idempotent: true, headers: requestHeadersForUrl(source) },
-      );
-      if (generation !== this.generation) {
-        try {
-          result.delete();
-        } catch {}
-        return true;
-      }
-      if (!result.exists) return false;
-      useOffline.getState().addCachedArtwork(key, result.uri);
-      if (previous && previous !== result.uri) {
-        try {
-          const previousFile = new File(previous);
-          if (previousFile.exists) previousFile.delete();
-        } catch {}
-      }
-      return true;
-    } catch (error) {
-      // An untrusted server certificate is not a per-cover failure: it fails the
-      // handshake for every cover on this host. Flag it so processArtworkQueue
-      // abandons the pass rather than logging one line per cover forever.
-      if (isTlsTrustFailure(error)) {
-        // A cover still in flight against the previous server must not block
-        // the incoming one — nothing but reset()/startIfNeeded() clears this.
-        if (generation !== this.generation) return true;
-        this.artworkTrustBlocked = true;
-        if (__DEV__) {
-          console.log(
-            "Library sync: artwork paused — the server's certificate isn't trusted",
-          );
-        }
-        return false;
-      }
-      // Artwork is decorative — a failure is retried in-pass and then on the
-      // next backfill, never surfaced as a sync error.
-      if (__DEV__) {
-        console.log(`Library sync: artwork ${coverArt} download failed`, error);
-      }
-      return false;
-    }
+    artworkCacheService.pruneOrphaned();
   }
 }
 

@@ -39,7 +39,11 @@ import {
   stopListenBrainzScrobbler,
 } from "@/services/listenBrainz/scrobbler";
 import { probeServer, resetServerReachable } from "@/services/network";
-import { librarySyncService, offlineDownloadService } from "@/services/offline";
+import {
+  artworkCacheService,
+  librarySyncService,
+  offlineDownloadService,
+} from "@/services/offline";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -177,6 +181,7 @@ export default function AppLayout() {
         resetPlayerForScopeChange();
         useOffline.getState().__reset();
         librarySyncService.reset();
+        artworkCacheService.reset();
         useLibrarySync.getState().__reset();
         resetOfflineMutationReplay();
         useOfflineMutations.getState().__reset();
@@ -241,6 +246,12 @@ export default function AppLayout() {
     // scope's sign-out) instead of waiting for a connectivity change to
     // incidentally kick the queue.
     offlineDownloadService.resume();
+    // Same reasoning, and it has to be here rather than in a component effect:
+    // the artwork queue is in-memory only, so what an app kill lost is re-derived
+    // from the collections, tracks and queue this rehydrate just restored — a
+    // child component's effect flushes before this one and would only ever see
+    // an empty store.
+    artworkCacheService.resume();
     useTrackCache.persist.rehydrate();
     // Same reasoning as the resume() above: rehydration is synchronous, so the
     // restored queue is visible here and prefetching picks up where an app kill

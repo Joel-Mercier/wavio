@@ -84,6 +84,7 @@ const mockDeviceOnline = jest.fn(() => true);
 jest.mock("@/services/network", () => ({
   getIsOnline: () => mockDeviceOnline(),
   getServerReachable: () => mockIsOnline(),
+  getIsEffectivelyOnline: () => mockDeviceOnline() && mockIsOnline(),
   probeServer: jest.fn(),
 }));
 
@@ -125,7 +126,7 @@ const resetQueue = (
 const setDownloaded = (ids: string[]) =>
   useOffline.setState({
     downloadedTracks: Object.fromEntries(
-      ids.map((id) => [id, { id, localUri: `file://${id}`, size: 1 }]),
+      ids.map((id) => [id, { id, path: `file://${id}`, size: 1 }]),
     ),
   } as never);
 

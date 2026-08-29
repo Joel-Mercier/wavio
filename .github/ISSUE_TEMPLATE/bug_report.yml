@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! Before submitting, please make sure you're running the latest version of Wavio when you encounter the bug and that no similar issue has already been reported.
+        Thanks for taking the time to fill out this bug report! Before submitting, please make sure you're running the latest version of Wavio when you encounter the bug and that no similar issue has already been reported. Double check versions if you use the Play Store version it's usually behind the latest release.
   - type: textarea
     id: what-happened
     attributes:

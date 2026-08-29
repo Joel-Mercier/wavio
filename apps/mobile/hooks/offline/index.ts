@@ -12,10 +12,15 @@ export {
   useCollectionDownload,
 } from "./useCollectionDownload";
 export {
+  type PickDownloadLocationResult,
+  useDownloadLocation,
+} from "./useDownloadLocation";
+export {
   useDownloadedCollections,
   useDownloadedTracksCount,
   useDownloadedTracksList,
   useDownloadProgress,
+  useDownloadSizeByVolume,
   useOfflineDownloads,
   useOfflineModeEnabled,
   useTotalDownloadSize,

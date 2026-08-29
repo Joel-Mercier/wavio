@@ -97,6 +97,7 @@ jest.mock("@/services/endlessRadio", () => ({
 jest.mock("@/services/network", () => ({
   getIsOnline: () => true,
   getServerReachable: () => true,
+  getIsEffectivelyOnline: () => true,
   probeServer: jest.fn(),
 }));
 

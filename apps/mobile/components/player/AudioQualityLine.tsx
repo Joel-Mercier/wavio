@@ -27,6 +27,7 @@ import { Text } from "@/components/ui/text";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useConnectionType } from "@/hooks/useIsOnline";
 import { trackTranscodeInfo } from "@/services/backend/streaming";
+import { downloadedFileSuffix } from "@/services/offline/fileNaming";
 import useApp from "@/stores/app";
 import useOffline from "@/stores/offline";
 import type { QueueTrack } from "@/stores/queue";
@@ -214,7 +215,7 @@ export default function AudioQualityLine({
   const onDisk = downloaded
     ? {
         file: {
-          suffix: downloaded.path.split(".").pop(),
+          suffix: downloadedFileSuffix(downloaded),
           bytes: downloaded.size,
         },
         source: {

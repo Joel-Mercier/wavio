@@ -3,7 +3,6 @@ import {
   advanceCursor,
   albumToAutoCollection,
   buildArtistArtworkAliases,
-  buildTrackArtworkAliases,
   groupSongIdsByAlbum,
   hasUnseenAutoTracks,
   isArtworkStale,
@@ -11,6 +10,7 @@ import {
   isSyncStale,
   nextSongCalibration,
   planServerDeletions,
+  planTrackArtwork,
   playlistToAutoCollection,
   RESYNC_INTERVAL_MS,
   referencedArtworkIds,
@@ -820,7 +820,7 @@ describe("isArtworkStale", () => {
   });
 });
 
-describe("buildTrackArtworkAliases", () => {
+describe("planTrackArtwork", () => {
   const collections = {
     a1: makeCollection({ id: "a1", coverArt: "al-a1" }),
     a2: makeCollection({ id: "a2", coverArt: undefined }),
@@ -831,13 +831,41 @@ describe("buildTrackArtworkAliases", () => {
       { ...makeSong("s1", "a1"), coverArt: "mf-s1" },
       { ...makeSong("s2", "a1"), coverArt: "mf-s2" },
     ];
-    expect(buildTrackArtworkAliases(songs, collections)).toEqual({
-      "mf-s1": "al-a1",
-      "mf-s2": "al-a1",
+    expect(planTrackArtwork(songs, collections)).toEqual({
+      aliases: { "mf-s1": "al-a1", "mf-s2": "al-a1" },
+      covers: ["al-a1"],
     });
   });
 
-  it("skips tracks with no album, no cover, an uncached album cover, or an identical id", () => {
+  // A playlist's member albums are usually not registered collections, and on
+  // Navidrome every track carries its own `mf-*` id — so without grouping this
+  // is one 600px download per track of the same album.
+  it("collapses an unregistered album onto its first member's cover", () => {
+    const songs = [
+      { ...makeSong("s1", "unsaved"), coverArt: "mf-s1" },
+      { ...makeSong("s2", "unsaved"), coverArt: "mf-s2" },
+      { ...makeSong("s3", "unsaved"), coverArt: "mf-s3" },
+    ];
+    expect(planTrackArtwork(songs, {})).toEqual({
+      aliases: { "mf-s2": "mf-s1", "mf-s3": "mf-s1" },
+      covers: ["mf-s1"],
+    });
+  });
+
+  // Saving the same playlist twice must not fetch a second copy of the cover an
+  // earlier batch already cached.
+  it("reuses the target an earlier batch aliased the album onto", () => {
+    const songs = [
+      { ...makeSong("s2", "unsaved"), coverArt: "mf-s2" },
+      { ...makeSong("s3", "unsaved"), coverArt: "mf-s3" },
+    ];
+    expect(planTrackArtwork(songs, {}, { "mf-s2": "mf-s1" })).toEqual({
+      aliases: { "mf-s2": "mf-s1", "mf-s3": "mf-s1" },
+      covers: [],
+    });
+  });
+
+  it("aliases nothing for tracks with no album, no cover, or an identical id, but still fetches their covers", () => {
     const songs = [
       { ...makeSong("s1"), coverArt: "mf-s1" },
       makeSong("s2", "a1"),
@@ -845,7 +873,10 @@ describe("buildTrackArtworkAliases", () => {
       { ...makeSong("s4", "a1"), coverArt: "al-a1" },
       { ...makeSong("s5", "missing"), coverArt: "mf-s5" },
     ];
-    expect(buildTrackArtworkAliases(songs, collections)).toEqual({});
+    expect(planTrackArtwork(songs, collections)).toEqual({
+      aliases: {},
+      covers: ["al-a1", "mf-s1", "mf-s3", "mf-s5"],
+    });
   });
 });
 
@@ -862,6 +893,9 @@ describe("buildArtistArtworkAliases", () => {
 });
 
 describe("referencedArtworkIds", () => {
+  const downloadedTrack = (id: string, coverArt?: string): OfflineTrack =>
+    ({ id, coverArt }) as OfflineTrack;
+
   it("keeps collection covers and the covers of their credited artists", () => {
     const referenced = referencedArtworkIds(
       [
@@ -876,6 +910,7 @@ describe("referencedArtworkIds", () => {
           ],
         }),
       ],
+      [],
       { "ar-1": "ar-cover-1" },
     );
     expect(referenced).toEqual(
@@ -884,8 +919,31 @@ describe("referencedArtworkIds", () => {
   });
 
   it("drops the cover of an artist whose albums are all gone", () => {
-    const referenced = referencedArtworkIds([], { "ar-1": "ar-cover-1" });
+    const referenced = referencedArtworkIds([], [], { "ar-1": "ar-cover-1" });
     expect(referenced.has("ar-cover-1")).toBe(false);
+  });
+
+  it("keeps the cover of a standalone downloaded track", () => {
+    const referenced = referencedArtworkIds(
+      [],
+      [downloadedTrack("s1", "mf-s1")],
+      {},
+    );
+    expect(referenced.has("mf-s1")).toBe(true);
+  });
+
+  it("resolves an aliased track cover to the album cover actually on disk", () => {
+    const referenced = referencedArtworkIds(
+      [],
+      [downloadedTrack("s1", "mf-s1_1752710400")],
+      { "mf-s1": "al-a1" },
+    );
+    expect(referenced).toEqual(new Set(["al-a1"]));
+  });
+
+  it("drops the cover of a track that is no longer downloaded", () => {
+    const referenced = referencedArtworkIds([], [], {});
+    expect(referenced.has("mf-s1")).toBe(false);
   });
 });
 
