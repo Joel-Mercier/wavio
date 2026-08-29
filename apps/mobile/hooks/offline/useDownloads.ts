@@ -4,6 +4,7 @@ import {
   librarySyncService,
   offlineDownloadService,
 } from "@/services/offline";
+import { downloadedFileIsOnPrimaryVolume } from "@/services/offline/downloadDestination";
 import type { Child } from "@/services/openSubsonic/types";
 import type { OfflineTrack } from "@/stores/offline";
 import useOffline from "@/stores/offline";
@@ -146,6 +147,23 @@ export const useTotalDownloadSize = () => {
     () => Object.values(downloadedTracks).reduce((sum, t) => sum + t.size, 0),
     [downloadedTracks],
   );
+};
+
+// Downloaded bytes split by whether they sit on the volume `Paths` measures.
+// Read from each record's path, not from the download-location setting: that
+// setting only governs new downloads, so a library can straddle both and the
+// setting says nothing about where the existing files are.
+export const useDownloadSizeByVolume = () => {
+  const downloadedTracks = useOffline((s) => s.downloadedTracks);
+  return useMemo(() => {
+    let onVolume = 0;
+    let offVolume = 0;
+    for (const track of Object.values(downloadedTracks)) {
+      if (downloadedFileIsOnPrimaryVolume(track.path)) onVolume += track.size;
+      else offVolume += track.size;
+    }
+    return { onVolume, offVolume };
+  }, [downloadedTracks]);
 };
 
 // Per-id reactive progress — scoped to one trackId so a row only re-renders when

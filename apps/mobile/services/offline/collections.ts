@@ -1,3 +1,4 @@
+import { downloadedFileSuffix } from "@/services/offline/fileNaming";
 import type {
   AlbumWithSongsID3,
   Child,
@@ -71,7 +72,7 @@ export function offlineTrackToChild(track: OfflineTrack): Child {
     coverArt: track.coverArt,
     duration: track.duration,
     size: track.size,
-    suffix: track.path.split(".").pop(),
+    suffix: downloadedFileSuffix(track),
     track: track.track,
     discNumber: track.discNumber,
     displayAlbumArtist: track.albumArtist,

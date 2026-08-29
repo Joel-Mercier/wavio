@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { offlineDownloadService } from "@/services/offline";
+import {
+  artworkCacheService,
+  cacheArtworkForTracks,
+} from "@/services/offline/artworkCacheService";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 
@@ -24,6 +28,15 @@ export type DownloadCollectionMeta = {
   artists?: { id: string; name: string }[];
   year?: number;
 };
+
+// Runs at both registration points, and only once the collection is in the
+// store: the collection's own cover is what the offline Library row renders,
+// and the tracks resolve through it (an album's) or through their own album's
+// (a playlist spanning several).
+function cacheCollectionArtwork(meta: DownloadCollectionMeta, songs: Child[]) {
+  artworkCacheService.enqueue(meta.coverArt);
+  cacheArtworkForTracks(songs);
+}
 
 // Drives the "Save for offline listening" / "Remove downloads" action on album
 // and playlist detail sheets, plus the header badge. Reactive over the offline
@@ -75,6 +88,7 @@ export function useCollectionDownload(
       songCount: songs.length,
       savedAt: new Date().toISOString(),
     });
+    cacheCollectionArtwork(meta, songs);
   }, [meta, isRegistered, status, songs]);
 
   const saveAll = useCallback(async () => {
@@ -92,6 +106,7 @@ export function useCollectionDownload(
         songCount: songs.length,
         savedAt: new Date().toISOString(),
       });
+      cacheCollectionArtwork(meta, songs);
     }
     const pending = songs.filter((song) => !(song.id in downloadedTracks));
     await offlineDownloadService.downloadTracks(pending);
@@ -111,6 +126,7 @@ export function useCollectionDownload(
         offlineDownloadService.removeDownloadedTrack(song.id);
       }
     }
+    artworkCacheService.pruneOrphaned();
   }, [songs, downloadedTracks, meta]);
 
   return { total, downloadedCount, status, saveAll, removeAll };

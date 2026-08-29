@@ -24,11 +24,13 @@ import {
   ensureArtworkCached,
 } from "@/services/lockScreenArtwork";
 import {
+  getIsEffectivelyOnline,
   getIsOnline,
   getServerReachable,
   probeServer,
   USER_AGENT,
 } from "@/services/network";
+import { downloadedFileIsReadable } from "@/services/offline/downloadDestination";
 import type {
   AlbumID3,
   AlbumList2,
@@ -88,6 +90,7 @@ import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
 import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
+import { resolveOfflineTrackArtwork } from "@/utils/artwork";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 // Native engine calls (pause/seek/lock-screen/…) can throw while the
@@ -573,7 +576,11 @@ function resolveTrackUrl(
   if (track.isRadio && track.url)
     return { url: track.url, isOffline: false, transcoded: false };
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
-  if (downloaded && !mustStreamOverOffline(track.id))
+  if (
+    downloaded &&
+    !mustStreamOverOffline(track.id) &&
+    downloadedFileIsReadable(downloaded.path)
+  )
     return { url: downloaded.path, isOffline: true, transcoded: false };
   // Then the prefetch cache (issue #163). Strictly after downloads: a download is
   // user-owned and permanent, a cache entry is speculative and evictable, so the
@@ -603,7 +610,8 @@ function isPlayableNow(track: QueueTrack): boolean {
   // play, and claiming otherwise strands the skip-to-playable scan on a track
   // whose only remaining source is a server it may not be able to reach.
   const playsOffDisk = !mustStreamOverOffline(track.id);
-  if (playsOffDisk && useOffline.getState().isTrackDownloaded(track.id))
+  const downloaded = useOffline.getState().getDownloadedTrack(track.id);
+  if (playsOffDisk && downloaded && downloadedFileIsReadable(downloaded.path))
     return true;
   // A prefetched copy is on disk right now, which is the whole point of the
   // cache: driving into a dead zone keeps playing instead of stalling, and the
@@ -688,6 +696,25 @@ function toLockScreenMetadata(track: QueueTrack, artworkUrl?: string) {
   };
 }
 
+// The cover for the OS controls, resolved the way the UI resolves it
+// (hooks/useTrackArtwork) rather than read off the track. `track.artwork` is
+// baked at enqueue time by childToTrack, so offline it is a server URL that
+// can't be fetched — and it names the *track's* cover id, which nothing else in
+// the app ever requests, so neither the mirror below nor expo-image is holding
+// it. Offline this hands back the file:// the library sync cached instead.
+function lockScreenArtworkUrl(track: QueueTrack): string | undefined {
+  if (getIsEffectivelyOnline()) return track.artwork || undefined;
+  const { artworkCache, artworkAliases, downloadedCollections } =
+    useOffline.getState();
+  return (
+    resolveOfflineTrackArtwork(track, {
+      artworkCache,
+      artworkAliases,
+      downloadedCollections,
+    }) || undefined
+  );
+}
+
 // Mirror the cover locally and hand the OS controls the file, replacing whatever
 // artwork the initial metadata carried. See services/lockScreenArtwork.ts for
 // why the native fetch can't be authenticated.
@@ -708,7 +735,7 @@ async function upgradeLockScreenArtwork(
 }
 
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
-  const remoteArtwork = track.artwork || undefined;
+  const remoteArtwork = lockScreenArtworkUrl(track);
   const cached = cachedArtworkUri(remoteArtwork);
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
   // would actually load — with custom headers configured the native fetch is

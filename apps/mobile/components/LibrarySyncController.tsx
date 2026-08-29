@@ -12,7 +12,7 @@ import {
   runIdMigrationCheck,
   subscribeIdMigrationCompleted,
 } from "@/services/navidromeIdMigration";
-import { librarySyncService } from "@/services/offline";
+import { artworkCacheService, librarySyncService } from "@/services/offline";
 import { subscribeLibrarySyncCompleted } from "@/services/offline/librarySyncService";
 import useLibrarySync from "@/stores/librarySync";
 
@@ -48,6 +48,7 @@ export default function LibrarySyncController() {
     const onChange = (status: AppStateStatus) => {
       if (status !== "active") return;
       if (enabled) librarySyncService.startIfNeeded();
+      artworkCacheService.resume();
       void runIdMigrationCheck();
     };
     const sub = AppState.addEventListener("change", onChange);

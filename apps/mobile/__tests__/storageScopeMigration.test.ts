@@ -471,6 +471,26 @@ describe("remapOfflineTrackPaths", () => {
     expect(remapOfflineTrackPaths(wrap({}), OLD, NEW)).toBeNull();
     expect(remapOfflineTrackPaths(undefined, OLD, NEW)).toBeNull();
   });
+
+  // A download written to a folder the user picked lives outside the scoped
+  // directory this migration moves, and its layout isn't keyed by scope at all —
+  // so renumbering a server's id must leave those paths exactly as they are.
+  // Rewriting them would point every track at a document that doesn't exist.
+  it("leaves a path in a user-picked folder untouched", () => {
+    const saf =
+      "content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FArtist%2FAlbum%2F05%20-%20Song.mp3";
+    const raw = wrap({
+      downloadedTracks: {
+        t1: { path: `file:///doc/offline/${OLD}/t1.mp3` },
+        t2: { path: saf },
+      },
+    });
+    const remapped = remapOfflineTrackPaths(raw, OLD, NEW);
+    expect(remapped).not.toBeNull();
+    const tracks = JSON.parse(remapped as string).state.downloadedTracks;
+    expect(tracks.t1.path).toBe(`file:///doc/offline/${NEW}/t1.mp3`);
+    expect(tracks.t2.path).toBe(saf);
+  });
 });
 
 describe("resolveAuthServerId", () => {

@@ -40,6 +40,12 @@ export type OfflineTrack = {
   // source). Absent on downloads made before this existed.
   sourceSuffix?: string;
   sourceBitRate?: number;
+  // The container the saved file actually is, recorded at download time. Used to
+  // be derived by taking the extension off `path`, which stops being reliable
+  // once a download can live in a user-picked folder: a SAF `content://` URI is
+  // a provider document id, not a file path. Absent on downloads made before
+  // this existed, which fall back to the old parse (see downloadedFileSuffix).
+  fileSuffix?: string;
   metadata?: Record<string, unknown>;
 };
 
@@ -129,7 +135,7 @@ interface OfflineStore {
   addCachedArtwork: (coverArtId: string, path: string) => void;
   removeCachedArtwork: (coverArtIds: string[]) => void;
   addArtworkAliases: (aliases: Record<string, string>) => void;
-  pruneArtworkAliases: () => void;
+  pruneArtworkAliases: (pendingTargets?: ReadonlySet<string>) => void;
   clearArtworkCache: () => void;
 
   isTrackDownloaded: (trackId: string) => boolean;
@@ -247,15 +253,23 @@ const useOfflineBase = create<OfflineStore>()(
 
       // An alias is only ever a pointer at a cached cover, so one whose target
       // is gone (its album was deleted server-side) goes with it.
-      pruneArtworkAliases: () => {
+      //
+      // `pendingTargets` is the artwork queue's in-flight set: aliases are
+      // written the instant a save starts, while the cover they point at is
+      // still queued, so a prune firing in that window would drop every alias of
+      // the save in progress — leaving those tracks on the fallback icon and
+      // making the next backfill fetch one cover per *track* instead of one per
+      // album. Same window `pruneOrphaned` protects the cover file itself in.
+      pruneArtworkAliases: (pendingTargets) => {
         set((state) => {
           const artworkAliases: Record<string, string> = {};
           let removed = 0;
           for (const [coverArtId, target] of Object.entries(
             state.artworkAliases,
           )) {
-            if (state.artworkCache[target]) artworkAliases[coverArtId] = target;
-            else removed++;
+            if (state.artworkCache[target] || pendingTargets?.has(target)) {
+              artworkAliases[coverArtId] = target;
+            } else removed++;
           }
           return removed > 0 ? { artworkAliases } : state;
         });

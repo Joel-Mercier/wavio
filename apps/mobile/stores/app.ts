@@ -179,6 +179,15 @@ interface AppStore {
   setDownloadFormat: (downloadFormat: StreamFormat) => void;
   downloadMaxBitRate: number | null;
   setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => void;
+  // Android-only: a Storage Access Framework tree URI the user picked as the
+  // destination for offline downloads, or null for the app's private storage.
+  // iOS can't persist access to a folder outside the app container (the picker
+  // grants session-only access and expo-file-system takes no security-scoped
+  // bookmark), so the setting is never offered there and stays null.
+  // Changing it only affects *new* downloads: OfflineTrack.path is absolute, so
+  // already-downloaded tracks keep playing from wherever they were written.
+  downloadLocationUri: string | null;
+  setDownloadLocationUri: (downloadLocationUri: string | null) => void;
   // Prefetch cache (issue #163). Speculative copies of upcoming queue tracks,
   // fetched with the *streaming* settings above so a cached track sounds exactly
   // like the stream it replaces. Unrelated to offline downloads, which are
@@ -383,6 +392,10 @@ export const useAppBase = create<AppStore>()(
       downloadMaxBitRate: null,
       setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => {
         set({ downloadMaxBitRate });
+      },
+      downloadLocationUri: null,
+      setDownloadLocationUri: (downloadLocationUri: string | null) => {
+        set({ downloadLocationUri });
       },
       trackCacheEnabled: true,
       setTrackCacheEnabled: (trackCacheEnabled: boolean) => {

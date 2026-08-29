@@ -6,7 +6,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getPersistedCacheSize } from "@/config/queryClient";
-import { useTotalDownloadSize } from "@/hooks/offline";
+import { useDownloadSizeByVolume } from "@/hooks/offline";
 import { useLocalLibrarySize } from "@/hooks/useLocalLibrarySize";
 import { filesAreOnDeviceType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
@@ -32,7 +32,14 @@ export default function StorageOverview({
 }: StorageOverviewProps) {
   const { t } = useTranslation();
   const filesOnDevice = useAuthBase((s) => filesAreOnDeviceType(s.serverType));
-  const downloadsBytes = useTotalDownloadSize();
+  // Downloads sent to a user-picked folder may not even be on the volume
+  // Paths.totalDiskSpace measures (an SD card is the whole point of the
+  // setting), so those bytes can't be subtracted from it. Split per record
+  // rather than by the setting, which only governs *new* downloads: a library
+  // written before a folder was picked is still sitting on this volume, and one
+  // written to a folder on the device itself never left it.
+  const { onVolume: downloadsBytes, offVolume: offVolumeBytes } =
+    useDownloadSizeByVolume();
   const libraryBytes = useLocalLibrarySize();
   // Reactive, unlike the persisted-query-cache reading below: the prefetch cache
   // grows and evicts on its own while this screen is open.
@@ -48,26 +55,34 @@ export default function StorageOverview({
     // A library whose files are already on the device has no Wavio downloads;
     // the imported files are the app-attributable chunk of used disk instead,
     // so carve them out of "other".
-    const firstSegment: Segment = filesOnDevice
+    const firstSegment: Segment | null = filesOnDevice
       ? {
           key: "library",
           label: t("app.settings.storageSettings.importedLibrary"),
           bytes: libraryBytes,
           color: "bg-emerald-500",
         }
-      : {
-          key: "downloads",
-          label: t("app.settings.storageSettings.downloads"),
-          bytes: downloadsBytes,
-          color: "bg-emerald-500",
-        };
+      : // Nothing on this volume to show, and bytes elsewhere that a "0 B"
+        // row would misrepresent.
+        downloadsBytes === 0 && offVolumeBytes > 0
+        ? null
+        : {
+            key: "downloads",
+            label: t("app.settings.storageSettings.downloads"),
+            bytes: downloadsBytes,
+            color: "bg-emerald-500",
+          };
     const otherBytes = Math.max(
       0,
-      total - available - firstSegment.bytes - cacheBytes - prefetchBytes,
+      total -
+        available -
+        (firstSegment?.bytes ?? 0) -
+        cacheBytes -
+        prefetchBytes,
     );
 
     const segments: Segment[] = [
-      firstSegment,
+      ...(firstSegment ? [firstSegment] : []),
       {
         key: "cache",
         label: t("app.settings.storageSettings.cache"),
@@ -96,6 +111,7 @@ export default function StorageOverview({
     return { total, segments };
   }, [
     downloadsBytes,
+    offVolumeBytes,
     libraryBytes,
     prefetchBytes,
     filesOnDevice,

@@ -22,6 +22,12 @@ export const QUEUE_LOW_WATER = 50;
 
 export const MIN_FREE_DISK_BYTES = 500 * 1024 * 1024;
 
+// The floor when downloads are bound for a user-picked folder. Nothing but the
+// staging copy of the track being written lands in app storage then, so the
+// full reserve above would stall a crawl that has an SD card's worth of room —
+// but the staging write still has to fit somewhere.
+export const MIN_FREE_STAGING_BYTES = 200 * 1024 * 1024;
+
 // A completed pass is re-run (from offset 0) once it's older than this,
 // re-checked on every foreground/reconnect — the server is the source of
 // truth, so additions, edits and deletions should reflect shortly after
@@ -283,27 +289,77 @@ export function playlistToAutoCollection(
   };
 }
 
-// Covers are cached once per album/playlist/artist, never per track — a
-// library's worth of per-file covers would be thousands of downloads of the
-// same images. Track cover ids therefore need an alias onto the album cover
-// that was actually cached; the two differ on most backends (Navidrome's
-// `mf-*` vs `al-*`), so without it every track row falls back to its icon
-// offline. Songs whose album isn't registered (orphans) get no alias.
-export function buildTrackArtworkAliases(
+export type TrackArtworkPlan = {
+  // Track cover id (keyed) -> the cover id actually cached for it.
+  aliases: Record<string, string>;
+  // The raw cover ids to fetch, one per album rather than one per track.
+  covers: string[];
+};
+
+// Covers are cached once per album, never per track — a library's worth of
+// per-file covers would be thousands of downloads of the same images. Track
+// cover ids therefore need an alias onto the cover that was actually cached;
+// the two differ on most backends (Navidrome's `mf-*` vs `al-*`), so without it
+// every track row falls back to its icon offline.
+//
+// Which cover an album collapses onto, in order:
+//  1. the registered collection's own cover — the album/playlist screens render
+//     that exact id, so sharing its file is free;
+//  2. a target an earlier batch already aliased these tracks onto, so saving the
+//     same playlist twice doesn't fetch a second copy (a surviving alias implies
+//     its target is cached or still queued — pruneArtworkAliases drops the rest);
+//  3. the first member track's own cover.
+//
+// (3) is what keeps a playlist save proportional to its albums rather than its
+// tracks: its member albums usually aren't registered collections, and on
+// Navidrome every track carries a unique `mf-<id>_<token>`, so aliasing on the
+// cover id alone would dedupe nothing and fetch one 600px image per track.
+//
+// A song with no album id can't be grouped, so it fetches its own cover.
+export function planTrackArtwork(
   songs: Child[],
   collections: Record<string, OfflineCollection>,
-): Record<string, string> {
+  existingAliases: Record<string, string> = {},
+): TrackArtworkPlan {
   const aliases: Record<string, string> = {};
+  // albumId -> the cover key its tracks alias onto.
+  const targetKeys = new Map<string, string>();
+  // Only the targets this batch has to fetch: an album resolved through (1) or
+  // (2) already has its cover cached or enqueued by whoever registered it.
+  const covers = new Set<string>();
+
   for (const song of songs) {
-    if (!song.coverArt || !song.albumId) continue;
+    if (!song.coverArt || !song.albumId || targetKeys.has(song.albumId)) {
+      continue;
+    }
     const albumCoverArt = collections[song.albumId]?.coverArt;
-    if (!albumCoverArt) continue;
+    if (albumCoverArt) {
+      targetKeys.set(song.albumId, artworkCacheKey(albumCoverArt));
+      covers.add(albumCoverArt);
+      continue;
+    }
+    const existing = existingAliases[artworkCacheKey(song.coverArt)];
+    if (existing) targetKeys.set(song.albumId, existing);
+  }
+
+  for (const song of songs) {
+    if (!song.coverArt) continue;
     const from = artworkCacheKey(song.coverArt);
-    const to = artworkCacheKey(albumCoverArt);
+    if (!song.albumId) {
+      covers.add(song.coverArt);
+      continue;
+    }
+    let to = targetKeys.get(song.albumId);
+    if (!to) {
+      targetKeys.set(song.albumId, from);
+      covers.add(song.coverArt);
+      to = from;
+    }
     if (from === to) continue;
     aliases[from] = to;
   }
-  return aliases;
+
+  return { aliases, covers: [...covers] };
 }
 
 // Artist avatars are rendered from the artist's cover id in some places
@@ -324,15 +380,29 @@ export function buildArtistArtworkAliases(
   return aliases;
 }
 
-// Cover ids that must survive a prune: every collection's own cover, plus the
-// cover of every artist still credited on a registered album. Aliases are
-// pointers, so an artist stays cached exactly as long as one of their albums
-// does — no separate artist inventory to reconcile.
+// Cover ids that must survive a prune: every collection's own cover, the cover
+// of every downloaded track, plus the cover of every artist still credited on a
+// registered album. Aliases are pointers, so an artist stays cached exactly as
+// long as one of their albums does — no separate artist inventory to reconcile.
+//
+// Tracks count on their own, not only through their collection: a standalone
+// track download (or a podcast episode) has its own cover on disk and belongs to
+// no collection, so a collection-only inventory would orphan it on the first
+// prune. A track whose cover is aliased onto its album's resolves to that album
+// cover, which is the file actually cached.
 export function referencedArtworkIds(
   collections: OfflineCollection[],
+  // Widened past OfflineTrack so a download still in flight — queued, cover
+  // already fetched, audio not landed — counts too. See pruneOrphaned.
+  tracks: readonly { coverArt?: string }[],
   artworkAliases: Record<string, string>,
 ): Set<string> {
   const referenced = new Set<string>();
+  for (const track of tracks) {
+    if (!track.coverArt) continue;
+    const key = artworkCacheKey(track.coverArt);
+    referenced.add(artworkAliases[key] ?? key);
+  }
   for (const collection of collections) {
     if (collection.coverArt) {
       referenced.add(artworkCacheKey(collection.coverArt));

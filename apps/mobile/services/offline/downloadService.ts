@@ -7,7 +7,21 @@ import {
   subscribeConnectionType,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import {
+  artworkCacheService,
+  cacheArtworkForTracks,
+} from "@/services/offline/artworkCacheService";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
+import {
+  externalRootUri,
+  forgetCachedDirectory,
+  internalArtworkDirectory,
+  internalScopedDirectory,
+  isExternalDownloadLocation,
+  pruneEmptyAlbumFolders,
+  resolveTargetDirectory,
+} from "@/services/offline/downloadDestination";
+import { albumSegments, exportFileName } from "@/services/offline/fileNaming";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
@@ -235,6 +249,11 @@ export class OfflineDownloadService {
     const offlineStore = useOffline.getState();
     const source = opts?.source ?? "user";
 
+    // Ahead of every early return below: a track already on disk from an
+    // earlier save may still be missing its cover, and a saved track without
+    // one is a fallback icon in the player and on the lock screen offline.
+    cacheArtworkForTracks([track]);
+
     if (offlineStore.isTrackDownloaded(track.id)) {
       // An explicit save of a track the library sync already cached promotes it
       // to user-owned so it survives disabling extended offline mode.
@@ -285,6 +304,9 @@ export class OfflineDownloadService {
   }
 
   async downloadTracks(tracks: Child[]): Promise<void> {
+    // Batched ahead of the per-track calls so the alias table is written once
+    // rather than once per song; the per-track calls then find nothing new.
+    cacheArtworkForTracks(tracks);
     await Promise.all(tracks.map((track) => this.downloadTrack(track)));
   }
 
@@ -582,39 +604,85 @@ export class OfflineDownloadService {
     if (!authUrl || !username) {
       throw new DownloadCancelledError("No active server");
     }
-    const scope = currentAuthScope();
-    // Files live under per-scope subdirectories so the same track id on two
-    // different servers doesn't overwrite a single shared file.
-    const offlineDir = new Directory(Paths.document, "offline", scope);
-    offlineDir.create({ idempotent: true, intermediates: true });
-
     const { url, suffix } = offlineFileInfo(track);
-    const fileName = `${track.id}.${suffix}`;
-    const filePath = new File(offlineDir, fileName);
+    // Both read once and carried through the move below: the setting can be
+    // changed and the server switched while these bytes are in flight, and
+    // resolving the destination again afterwards would drop a file staged under
+    // its export name into the id-named app-private directory, or file it under
+    // the scope that happens to be active by then.
+    const externalRoot = externalRootUri();
+    const external = externalRoot !== null;
+    const scope = currentAuthScope();
 
-    const downloadResult = await File.downloadFileAsync(url, filePath, {
-      idempotent: true,
-      headers: requestHeadersForUrl(url),
-    });
+    // `File.downloadFileAsync` resolves its destination through `javaFile`,
+    // which throws for a `content://` URI, so a download bound for a user-picked
+    // SAF folder lands in app storage first and is moved across afterwards.
+    // Staging also means the validations below run before anything appears in
+    // someone's music directory.
+    //
+    // The staged file already carries its *final* name, because moving into a
+    // directory makes SAF name the new document after the source. Each track
+    // stages in its own subdirectory so two concurrent downloads that sanitize
+    // to the same title can't collide.
+    const stagingDir = external
+      ? new Directory(
+          Paths.cache,
+          "offline-staging",
+          track.id.replace(/[^a-zA-Z0-9_-]/g, "_"),
+        )
+      : internalScopedDirectory();
+    stagingDir.create({ idempotent: true, intermediates: true });
+
+    const stagedName = external
+      ? exportFileName(track, suffix)
+      : `${track.id}.${suffix}`;
+
+    // Every abort below has to take the staging directory with it: it's a
+    // per-track subdirectory of the cache that nothing else ever revisits, so
+    // dropping only the file would leak an empty directory per aborted download.
+    const discardStaged = (file: File) => {
+      try {
+        file.delete();
+      } catch {}
+      if (!external) return;
+      try {
+        if (stagingDir.exists) stagingDir.delete();
+      } catch {}
+    };
+
+    let downloadResult = await File.downloadFileAsync(
+      url,
+      new File(stagingDir, stagedName),
+      {
+        idempotent: true,
+        headers: requestHeadersForUrl(url),
+      },
+    );
 
     if (!downloadResult.exists) {
+      discardStaged(downloadResult);
       throw new Error("Download failed - file does not exist");
     }
 
     if ((downloadResult.size ?? 0) < SUSPICIOUS_DOWNLOAD_BYTES) {
-      const head = (await downloadResult.text()).trimStart();
+      // The read itself can throw (an unreadable staged file is exactly the kind
+      // of thing that produces a suspicious size), and that path owes the
+      // staging directory just as much as a rejected body does.
+      let head: string;
+      try {
+        head = (await downloadResult.text()).trimStart();
+      } catch (error) {
+        discardStaged(downloadResult);
+        throw error;
+      }
       if (head.startsWith("{") || head.startsWith("<")) {
-        try {
-          downloadResult.delete();
-        } catch {}
+        discardStaged(downloadResult);
         throw new Error("Download failed - server returned an error response");
       }
     }
 
     if (generation !== this.generation) {
-      try {
-        downloadResult.delete();
-      } catch {}
+      discardStaged(downloadResult);
       throw new Error("Downloads cleared");
     }
 
@@ -632,10 +700,49 @@ export class OfflineDownloadService {
       source === "auto" &&
       !useLibrarySyncBase.getState().extendedOfflineModeEnabled
     ) {
-      try {
-        downloadResult.delete();
-      } catch {}
+      discardStaged(downloadResult);
       throw new AutoDownloadDiscardedError("Extended offline mode disabled");
+    }
+
+    // Read before the move: the size is what the staging file weighs, and the
+    // move itself is a stream copy across providers, not a rename.
+    const downloadedSize = downloadResult.size || track.size || 0;
+
+    if (external) {
+      const staged = downloadResult;
+      try {
+        // Moved into the *directory*, never onto a path built with
+        // `new File(dir, name)`: SAF URIs can't be path-joined, and letting the
+        // provider name the document means `move` rewrites `staged.uri` to
+        // wherever it actually landed, so the path we persist is the real one.
+        //
+        // `overwrite` is required rather than a convenience: expo-file-system
+        // checks the destination directory for a document of the same name
+        // itself and throws DestinationAlreadyExists before SAF is ever asked,
+        // so without it re-downloading a track fails every attempt and feeds the
+        // circuit breaker. The destination is scoped per (server, user), so a
+        // collision is this session's own earlier copy of the same recording
+        // (same artist, album, number and title) — never another server's file,
+        // and never one of the user's own that happened to be in the folder
+        // already. Replacing it is what re-downloading should mean.
+        await staged.move(
+          await resolveTargetDirectory(track, externalRoot, scope),
+          { overwrite: true },
+        );
+      } catch (error) {
+        // A cached folder URI only goes bad because the folder went away
+        // underneath us; keeping it would make every retry fail identically.
+        forgetCachedDirectory(track, externalRoot, scope);
+        try {
+          if (staged.exists) staged.delete();
+        } catch {}
+        throw error;
+      } finally {
+        try {
+          if (stagingDir.exists) stagingDir.delete();
+        } catch {}
+      }
+      downloadResult = staged;
     }
 
     const offlineTrack: OfflineTrack = {
@@ -646,7 +753,7 @@ export class OfflineDownloadService {
       duration: track.duration || 0,
       coverArt: track.coverArt,
       path: downloadResult.uri,
-      size: downloadResult.size || track.size || 0,
+      size: downloadedSize,
       downloadedAt: new Date().toISOString(),
       source,
       track: track.track,
@@ -657,6 +764,7 @@ export class OfflineDownloadService {
       sortName: track.sortName,
       sourceSuffix: track.suffix,
       sourceBitRate: track.bitRate,
+      fileSuffix: suffix,
     };
 
     offlineStore.addDownloadedTrack(offlineTrack);
@@ -679,6 +787,9 @@ export class OfflineDownloadService {
       }
       offlineStore.removeDownloadedTrack(trackId);
       offlineStore.removeDownloadProgress(trackId);
+      // Fire-and-forget: an orphaned empty folder is cosmetic, and failing the
+      // removal over one would leave the store and disk disagreeing.
+      void pruneEmptyAlbumFolders(track).catch(() => {});
     } catch (error) {
       logError(`Error removing track ${trackId}:`, error);
       throw error;
@@ -709,6 +820,11 @@ export class OfflineDownloadService {
     }
 
     offlineStore.removeDownloadedCollection(collectionId);
+    // Covers the removed collection was the last reference to go with it.
+    // Deliberately not done per single-track removal: the prune walks the whole
+    // cache against every collection, so the collection-level and
+    // extended-offline-disable prunes are where it earns its cost.
+    artworkCacheService.pruneOrphaned();
   }
 
   // Clears downloads for the currently active server only. The offline store
@@ -722,6 +838,7 @@ export class OfflineDownloadService {
     // identity fields rather than letting currentAuthScope() return a degenerate
     // "_" bucket and deleting the wrong directory.
     const scope = serverId && username ? currentAuthScope() : null;
+    const external = isExternalDownloadLocation();
 
     try {
       const total = tracks.length;
@@ -747,11 +864,49 @@ export class OfflineDownloadService {
       }
       onProgress?.(total, total);
 
-      if (scope) {
-        const scopedDir = new Directory(Paths.document, "offline", scope);
+      // Only ever recursively delete a directory the app owns. With an external
+      // download location the "root" is a folder the user picked — quite
+      // possibly their whole music library — so there the per-track deletes
+      // above are the entire story, and we just tidy up the folders they
+      // emptied.
+      if (external) {
+        // Cached covers are app-private wherever the tracks went, and the store
+        // wipe below drops the index that makes them reachable — skipping them
+        // here would strand the bytes with nothing left able to name them.
+        if (scope) {
+          const artworkDir = internalArtworkDirectory(scope);
+          if (artworkDir.exists) artworkDir.delete();
+        }
+        // One pass per album, not per track: each pass costs two ContentResolver
+        // listings against a tree that may be the user's whole music library,
+        // and `pruneEmptyAlbumFolders` never suspends, so the loop has to yield
+        // by hand or a large library clears with the UI frozen.
+        //
+        // Needs the scope for the same reason the artwork sweep above does: it
+        // names the branch of the picked folder this session owns, and without
+        // one there is no branch we may delete from.
+        const pruned = new Set<string>();
+        for (const track of tracks) {
+          if (!scope) break;
+          const album = albumSegments(track).join("/");
+          if (pruned.has(album)) continue;
+          pruned.add(album);
+          try {
+            await pruneEmptyAlbumFolders(track, scope);
+          } catch {}
+          if (pruned.size % DELETE_CHUNK === 0) {
+            await yieldToEventLoop();
+          }
+        }
+      } else if (scope) {
+        const scopedDir = internalScopedDirectory(scope);
         if (scopedDir.exists) scopedDir.delete();
       }
 
+      // The artwork directory and the cache index are both gone by now, so any
+      // cover still in flight would re-register an entry pointing at a file
+      // that no longer has a home.
+      artworkCacheService.reset();
       this.generation++;
       this.activeIds.clear();
       this.attempts.clear();

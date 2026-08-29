@@ -7,7 +7,7 @@ import { useConnectionType, useIsOnline } from "@/hooks/useIsOnline";
 import {
   getArtworkProgress,
   subscribePendingArtwork,
-} from "@/services/offline/librarySyncService";
+} from "@/services/offline/artworkCacheService";
 import useApp from "@/stores/app";
 import useLibrarySync from "@/stores/librarySync";
 import useOffline from "@/stores/offline";

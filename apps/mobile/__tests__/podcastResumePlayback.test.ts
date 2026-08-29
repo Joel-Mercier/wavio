@@ -100,6 +100,7 @@ const mockDeviceOnline = jest.fn(() => true);
 jest.mock("@/services/network", () => ({
   getIsOnline: () => mockDeviceOnline(),
   getServerReachable: () => mockIsOnline(),
+  getIsEffectivelyOnline: () => mockDeviceOnline() && mockIsOnline(),
   probeServer: jest.fn(),
 }));
 jest.mock("@/config/i18n", () => ({

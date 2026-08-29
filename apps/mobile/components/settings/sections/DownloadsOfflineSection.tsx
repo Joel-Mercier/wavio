@@ -29,11 +29,13 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import {
   useDownloadedCollections,
   useDownloadedTracksCount,
+  useDownloadLocation,
   useLibrarySyncStatus,
   useOfflineDownloads,
   useTotalDownloadSize,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { folderLabel } from "@/services/local/paths";
 import { librarySyncService } from "@/services/offline";
 import { clearTrackCache } from "@/services/trackCache";
 import useApp, {
@@ -78,6 +80,55 @@ const pausedStatusKeys = {
   syncError: "app.settings.offlineSettings.extendedOfflineSyncError",
   unsupported: "app.settings.offlineSettings.extendedOfflineUnsupported",
 } as const;
+
+// Android-only. iOS's directory picker grants session-scoped access, so a folder
+// chosen there would stop resolving after a restart — see useDownloadLocation.
+type DownloadLocationError = "restricted" | "unsupported" | "unwritable";
+
+const DOWNLOAD_LOCATION_ERROR_KEYS: Record<DownloadLocationError, string> = {
+  restricted: "app.settings.offlineSettings.downloadLocationRestricted",
+  unsupported: "app.settings.offlineSettings.downloadLocationUnsupported",
+  unwritable: "app.settings.offlineSettings.downloadLocationUnwritable",
+};
+
+function DownloadLocationRow({
+  onPress,
+  error,
+}: {
+  onPress: () => void;
+  error: DownloadLocationError | null;
+}) {
+  const { t } = useTranslation();
+  const { supported, downloadLocationUri, status } = useDownloadLocation();
+  if (!supported) return null;
+
+  return (
+    <VStack>
+      <SettingsSelectRow
+        label={t("app.settings.offlineSettings.downloadLocationLabel")}
+        description={t(
+          "app.settings.offlineSettings.downloadLocationDescription",
+        )}
+        badgeText={
+          downloadLocationUri
+            ? folderLabel(downloadLocationUri)
+            : t("app.settings.offlineSettings.downloadLocationAppStorage")
+        }
+        onPress={onPress}
+      />
+      {error && (
+        <Text className="text-orange-400 text-sm pb-4">
+          {t(DOWNLOAD_LOCATION_ERROR_KEYS[error])}
+        </Text>
+      )}
+      {!error && status === "unavailable" && (
+        <Text className="text-orange-400 text-sm pb-4">
+          {t("app.settings.offlineSettings.downloadLocationUnavailable")}
+        </Text>
+      )}
+    </VStack>
+  );
+}
 
 function LibrarySyncStatusLine() {
   const { t } = useTranslation();
@@ -205,6 +256,26 @@ export default function DownloadsOfflineSection() {
   const bottomSheetDownloadBitRateModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetTrackCacheCountModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetTrackCacheBudgetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetDownloadLocationModalRef = useRef<BottomSheetModal>(null);
+  const {
+    downloadLocationUri,
+    pick: pickDownloadLocation,
+    selectAppStorage,
+  } = useDownloadLocation();
+  const [downloadLocationError, setDownloadLocationError] =
+    useState<DownloadLocationError | null>(null);
+
+  const handleDownloadLocationChoice = async (choice: "app" | "pick") => {
+    setDownloadLocationError(null);
+    if (choice === "app") {
+      selectAppStorage();
+      return;
+    }
+    const result = await pickDownloadLocation();
+    if (result !== "picked" && result !== "cancelled") {
+      setDownloadLocationError(result);
+    }
+  };
 
   const trackCacheEnabled = useApp((store) => store.trackCacheEnabled);
   const setTrackCacheEnabled = useApp((store) => store.setTrackCacheEnabled);
@@ -293,6 +364,34 @@ export default function DownloadsOfflineSection() {
             }))}
             selectedValue={trackCacheCount}
             onSelect={setTrackCacheCount}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
+            modalRef={bottomSheetDownloadLocationModalRef}
+            header={t("app.settings.offlineSettings.downloadLocationLabel")}
+            headerDescription={t(
+              "app.settings.offlineSettings.downloadLocationSheetDescription",
+            )}
+            options={[
+              {
+                value: "app" as const,
+                label: t(
+                  "app.settings.offlineSettings.downloadLocationAppStorage",
+                ),
+                description: t(
+                  "app.settings.offlineSettings.downloadLocationAppStorageDescription",
+                ),
+              },
+              {
+                value: "pick" as const,
+                label: t("app.settings.offlineSettings.downloadLocationPick"),
+                description: t(
+                  "app.settings.offlineSettings.downloadLocationPickDescription",
+                ),
+              },
+            ]}
+            selectedValue={downloadLocationUri ? "pick" : "app"}
+            onSelect={handleDownloadLocationChoice}
             dismissOnSelect
           />
           <OptionsBottomSheetModal
@@ -459,6 +558,10 @@ export default function DownloadsOfflineSection() {
             }
           />
         )}
+        <DownloadLocationRow
+          onPress={() => bottomSheetDownloadLocationModalRef.current?.present()}
+          error={downloadLocationError}
+        />
         <SettingsToggleRow
           label={t("app.settings.offlineSettings.autoSignOutLabel")}
           description={t("app.settings.offlineSettings.autoSignOutDescription")}
