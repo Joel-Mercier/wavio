@@ -128,6 +128,10 @@
 				"role": "Download",
 				"desc": "Aggiungi i singoli brani direttamente alla tua libreria musicale, con l’avanzamento in tempo reale e una cronologia completa dei download insieme a quella degli altri utenti."
 			},
+			"tidarr": {
+				"role": "Download",
+				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+			},
 			"audiomuse-ai": {
 				"role": "Raccomandazioni",
 				"desc": "Somiglianze sonore all’interno della tua libreria. Descrivi uno stato d’animo e ottieni una playlist, crea un profilo musicale basato sui brani che ascolti oppure parti da una canzone e lasciati guidare."
