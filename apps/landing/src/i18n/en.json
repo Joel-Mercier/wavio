@@ -128,6 +128,10 @@
 				"role": "Downloads",
 				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
 			},
+			"tidarr": {
+				"role": "Downloads",
+				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+			},
 			"audiomuse-ai": {
 				"role": "Recommendations",
 				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."

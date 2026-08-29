@@ -4,6 +4,7 @@ import Lidarr from "../assets/lidarr.svg";
 import ListenBrainz from "../assets/listenbrainz.svg";
 import MusicBrainz from "../assets/musicbrainz.svg";
 import SoulSync from "../assets/soulsync.webp";
+import Tidarr from "../assets/tidarr.svg";
 import { type Lang, useTranslations } from "../i18n/utils";
 import IntegrationLogo from "./IntegrationLogo.astro";
 
@@ -54,6 +55,14 @@ const integrations = [
 		host: "ssync.net",
 		tint: "#8b5cf6",
 		image: SoulSync,
+	},
+	{
+		id: "tidarr",
+		name: "Tidarr",
+		url: "https://github.com/cstaelen/tidarr",
+		host: "github.com/cstaelen",
+		tint: "#22d3ee",
+		Svg: Tidarr,
 	},
 	{
 		id: "audiomuse-ai",
