@@ -130,7 +130,7 @@
 			},
 			"tidarr": {
 				"role": "Download",
-				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+				"desc": "Sfoglia il catalogo di Tidal tramite la tua istanza di Tidarr, quindi aggiungi alla coda un brano, un album o un'intera discografia e osserva mentre viene scaricato."
 			},
 			"audiomuse-ai": {
 				"role": "Raccomandazioni",
