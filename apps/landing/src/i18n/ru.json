@@ -130,7 +130,7 @@
 			},
 			"tidarr": {
 				"role": "Загрузки",
-				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+				"desc": "Просмотрите каталог Tidal через свой экземпляр Tidarr, затем добавьте в очередь трек, альбом или всю дискографию и наблюдайте за их загрузкой."
 			},
 			"audiomuse-ai": {
 				"role": "Рекомендации",
