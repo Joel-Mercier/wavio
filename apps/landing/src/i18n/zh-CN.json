@@ -130,7 +130,7 @@
 			},
 			"tidarr": {
 				"role": "下载",
-				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+				"desc": "通过您的 Tidarr 实例浏览 Tidal 曲库，然后将一首歌曲、一张专辑或整套作品集加入播放队列，并观看其下载过程。"
 			},
 			"audiomuse-ai": {
 				"role": "建议",
