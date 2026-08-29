@@ -128,6 +128,10 @@
 				"role": "Téléchargements",
 				"desc": "Ajoutez des titres individuels directement à votre bibliothèque musicale, avec un suivi en temps réel et un historique complet des téléchargements, au même titre que vos autres logiciels de téléchargement."
 			},
+			"tidarr": {
+				"role": "Téléchargements",
+				"desc": "Parcourez le catalogue Tidal via votre instance Tidarr, puis ajoutez un morceau, un album ou une discographie complète à la file d'attente et regardez-la se télécharger."
+			},
 			"audiomuse-ai": {
 				"role": "Suggestions",
 				"desc": "Similitudes musicales au sein de votre propre bibliothèque. Décrivez une ambiance pour obtenir une playlist, créez un profil musical à partir de vos écoutes, ou partez d'un morceau et laissez-vous guider."

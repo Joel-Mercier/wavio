@@ -128,6 +128,10 @@
 				"role": "Descargas",
 				"desc": "Añade canciones sueltas directamente a tu biblioteca musical, con un seguimiento en tiempo real del progreso y un historial completo de descargas junto con tus otros programas de descarga."
 			},
+			"tidarr": {
+				"role": "Descargas",
+				"desc": "Explora el catálogo de Tidal a través de tu instancia de Tidarr, añade a la cola una canción, un álbum o toda una discografía y observa cómo se descarga."
+			},
 			"audiomuse-ai": {
 				"role": "Recomendaciones",
 				"desc": "Similitudes sonoras en tu propia biblioteca. Describe un estado de ánimo y obtén una lista de reproducción, crea una huella a partir de lo que escuchas o empieza por una canción y déjate llevar."

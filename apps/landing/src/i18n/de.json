@@ -128,6 +128,10 @@
 				"role": "Downloads",
 				"desc": "Lade einzelne Titel direkt in deine Musikbibliothek herunter – mit Echtzeit-Fortschrittsanzeige und einem vollständigen Download-Verlauf neben deinen anderen Downloads."
 			},
+			"tidarr": {
+				"role": "Downloads",
+				"desc": "Durchsuchen Sie den Tidal-Katalog über Ihre Tidarr-Instanz, fügen Sie dann einen Titel, ein Album oder eine ganze Diskografie zur Warteschlange hinzu und beobachten Sie, wie der Download erfolgt."
+			},
 			"audiomuse-ai": {
 				"role": "Empfehlungen",
 				"desc": "Klangliche Ähnlichkeiten in Ihrer eigenen Bibliothek. Beschreiben Sie eine Stimmung und erhalten Sie eine Playlist, erstellen Sie anhand Ihrer Wiedergabedaten einen Fingerabdruck oder beginnen Sie mit einem Song und lassen Sie sich davon leiten."
