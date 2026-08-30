@@ -1932,6 +1932,8 @@
 				"outputNoDevices": "В этой сети не обнаружено никаких устройств",
 				"outputUnverified": "Возможно, воспроизведение не будет поддерживаться",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Не удалось воспроизвести файл по адресу {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} минута",
 				"sleepTimerMinutes_few": "{{count}} минуты",
