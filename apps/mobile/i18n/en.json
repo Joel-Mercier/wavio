@@ -1851,6 +1851,8 @@
 				"outputNoDevices": "No devices found on this network",
 				"outputUnverified": "Might not accept playback",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {

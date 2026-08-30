@@ -19,6 +19,7 @@ import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
+import CastController from "@/components/player/CastController";
 import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
@@ -406,6 +407,7 @@ export default function AppLayout() {
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <OutputSheet />
+      <CastController />
       <UpdateGate />
     </>
   );
