@@ -1848,6 +1848,8 @@
 				"outputNoDevices": "Nessun dispositivo rilevato su questa rete",
 				"outputUnverified": "Potrebbe non supportare la riproduzione",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minuti"
