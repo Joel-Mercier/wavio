@@ -1848,6 +1848,8 @@
 				"outputNoDevices": "In diesem Netzwerk wurden keine Geräte gefunden",
 				"outputUnverified": "Die Wiedergabe wird möglicherweise nicht unterstützt",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"
