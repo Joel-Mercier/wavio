@@ -1806,6 +1806,8 @@
 				"outputNoDevices": "未在此网络上找到任何设备",
 				"outputUnverified": "可能无法播放",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "无法播放 {{name}}。",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
