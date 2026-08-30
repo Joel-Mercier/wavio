@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from "axios";
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
   mapBaseItemToPlaylist,
@@ -42,9 +43,13 @@ export const getPlaylists = async (_opts: { username?: string }) => {
 
 export const getPlaylist = async (id: string) => {
   const [meta, items, playlistMeta] = await Promise.all([
+    // A stale playlist id (deleted server-side, or restored from the persisted
+    // query cache) 404s here. The call still fails — the caller needs the
+    // metadata — but it's a data state, not an app bug.
     jellyfinApiInstance.get<BaseItemDto>(`/Users/${userId()}/Items/${id}`, {
       params: { Fields: FIELDS },
-    }),
+      notFoundIsExpected: true,
+    } as AxiosRequestConfig & { notFoundIsExpected?: boolean }),
     jellyfinApiInstance.get<JellyfinItemsResult>(`/Playlists/${id}/Items`, {
       params: {
         UserId: userId(),
@@ -52,9 +57,13 @@ export const getPlaylist = async (id: string) => {
           "DateCreated,Genres,GenreItems,UserData,ProductionYear,MediaSources,ProviderIds",
       },
     }),
-    // OpenAccess / Shares only come from the dedicated playlist endpoint.
+    // OpenAccess / Shares only come from the dedicated playlist endpoint, which
+    // older servers don't expose at all. The `.catch` resolves that to "no
+    // sharing info", so the interceptor must not report the 404 either.
     jellyfinApiInstance
-      .get<JellyfinPlaylistDto>(`/Playlists/${id}`)
+      .get<JellyfinPlaylistDto>(`/Playlists/${id}`, {
+        notFoundIsExpected: true,
+      } as AxiosRequestConfig & { notFoundIsExpected?: boolean })
       .catch(() => null),
   ]);
   const playlist: PlaylistWithSongs = mapBaseItemToPlaylistWithSongs(

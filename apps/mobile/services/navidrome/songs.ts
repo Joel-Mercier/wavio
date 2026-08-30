@@ -1,4 +1,5 @@
 import navidromeApiInstance from "@/services/navidrome";
+import { asList } from "@/services/navidrome/listBody";
 import type { NavidromeSong } from "@/services/navidrome/types";
 import type { Child, Songs } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
@@ -65,7 +66,7 @@ export const getMostPlayedSongs = async ({
   // Only surface tracks actually played (mirrors Jellyfin IsPlayed / local
   // HAVING play_count > 0). Sorted DESC, so once a page runs into unplayed
   // tracks the trimmed length also signals the end of pagination.
-  const song = (rsp.data ?? [])
+  const song = asList<NavidromeSong>(rsp.data)
     .filter((s) => (s.playCount ?? 0) > 0)
     .map(mapNavidromeSongToChild);
   return { songs: { song } };
@@ -117,5 +118,9 @@ export const getSongs = async ({
       library_id: musicFolderId,
     },
   });
-  return { songs: { song: (rsp.data ?? []).map(mapNavidromeSongToChild) } };
+  return {
+    songs: {
+      song: asList<NavidromeSong>(rsp.data).map(mapNavidromeSongToChild),
+    },
+  };
 };

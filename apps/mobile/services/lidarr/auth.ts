@@ -6,5 +6,8 @@ import type { LidarrConfig, LidarrSystemStatus } from "@/services/lidarr/types";
 export async function testConnection(
   config: LidarrConfig,
 ): Promise<LidarrSystemStatus> {
-  return lidarrRequest<LidarrSystemStatus>("/system/status", { config });
+  return lidarrRequest<LidarrSystemStatus>("/system/status", {
+    config,
+    unauthorizedIsExpected: true,
+  });
 }

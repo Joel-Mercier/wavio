@@ -46,6 +46,19 @@ function kickReachabilityProbeIfUnreachable(networkNoise: boolean): void {
   ).probeServer();
 }
 
+// The grouping key for a query that failed without being reported at its
+// service chokepoint. The first segment alone is too coarse: every Navidrome
+// native-API query shares the prefix "nd", so they all collapsed into one Issue
+// titled after whichever fired last. Two segments ("nd:playlist") separate them
+// while still keeping every id-scoped instance of one query together.
+function queryEndpoint(queryKey: readonly unknown[]): string {
+  const [first, second] = queryKey;
+  if (first == null) return "query";
+  return typeof second === "string" && second.length > 0
+    ? `${String(first)}:${second}`
+    : String(first);
+}
+
 export const queryClient = new QueryClient({
   // Safety net: any query/mutation failure not already reported at its service
   // chokepoint is reported here, tagged by the active backend. The classifier
@@ -60,7 +73,7 @@ export const queryClient = new QueryClient({
         {
           area: "api",
           backend: activeBackend(),
-          endpoint: String(query.queryKey[0] ?? "query"),
+          endpoint: queryEndpoint(query.queryKey),
         },
         networkNoise,
       );

@@ -16,6 +16,18 @@ const githubApi = axios.create({
   },
 });
 
+// GitHub throttles unauthenticated callers to 60 requests/hour *per IP*, and
+// answers over quota with 403 (429 on some paths). Carrier-grade NAT puts many
+// users behind one egress IP, so this fires for people whose own device has
+// asked once — it describes GitHub's quota, not a bug here, and there is
+// nothing to fix on our side. Exported so the caller can back off instead of
+// re-asking on the next launch, which would only spend more of the same quota.
+export function isGithubRateLimited(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  return status === 403 || status === 429;
+}
+
 // Fetches the latest published (non-draft, non-prerelease) release. Returns null
 // for a "no applicable release" outcome (repo has no releases → 404, or a shape
 // we don't recognise). A real failure (offline, network blip, rate-limited)
@@ -34,13 +46,18 @@ export async function fetchLatestRelease(): Promise<GithubRelease | null> {
     const status = axios.isAxiosError(error)
       ? error.response?.status
       : undefined;
-    reportError(error, {
-      area: "api",
-      api: "github",
-      endpoint: `/repos/${REPO}/releases/latest`,
-      status,
-      notFoundIsExpected: true,
-    });
+    // Being over GitHub's quota is not reportable (see isGithubRateLimited); it
+    // still throws, so the update check reports "couldn't check" as it would for
+    // any other failure.
+    if (!isGithubRateLimited(error)) {
+      reportError(error, {
+        area: "api",
+        api: "github",
+        endpoint: `/repos/${REPO}/releases/latest`,
+        status,
+        notFoundIsExpected: true,
+      });
+    }
     // No published releases yet — a legitimate "nothing to update to".
     if (status === 404) return null;
     throw error;

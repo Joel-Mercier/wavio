@@ -1,4 +1,5 @@
 import navidromeApiInstance from "@/services/navidrome";
+import { asList } from "@/services/navidrome/listBody";
 import type {
   NavidromeCreateUserBody,
   NavidromeUpdateUserBody,
@@ -7,7 +8,7 @@ import type {
 
 export const getUsers = async (): Promise<NavidromeUser[]> => {
   const rsp = await navidromeApiInstance.get<NavidromeUser[]>("/user");
-  return rsp.data;
+  return asList<NavidromeUser>(rsp.data);
 };
 
 export const getUser = async (id: string): Promise<NavidromeUser> => {

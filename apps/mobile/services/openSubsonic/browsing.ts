@@ -109,23 +109,30 @@ export const getPodcastEpisode = async (id: string) =>
     { id },
   );
 
+// Similar songs are optional decoration (they seed endless playback), so a
+// server with nothing similar for a track answers code 70 "data not found" —
+// a data state, like an empty folder browse.
 export const getSimilarSongs = async (
   id: string,
   { count }: { count?: number },
 ) =>
-  subsonicRequest<{ similarSongs: SimilarSongs }>("/rest/getSimilarSongs", {
-    id,
-    count,
-  });
+  subsonicRequest<{ similarSongs: SimilarSongs }>(
+    "/rest/getSimilarSongs",
+    { id, count },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 export const getSimilarSongs2 = async (
   id: string,
   { count }: { count?: number },
 ) =>
-  subsonicRequest<{ similarSongs2: SimilarSongs2 }>("/rest/getSimilarSongs2", {
-    id,
-    count,
-  });
+  subsonicRequest<{ similarSongs2: SimilarSongs2 }>(
+    "/rest/getSimilarSongs2",
+    { id, count },
+    {},
+    { notFoundIsExpected: true },
+  );
 
 // The matches come back as a top-level `sonicMatch` array, not under the
 // `sonicSimilarTracks` wrapper the name suggests, so they are lifted into the
@@ -140,6 +147,8 @@ export const getSonicSimilarTracks = async (
   const rsp = await subsonicRequest<{ sonicMatch?: SonicMatch[] }>(
     "/rest/getSonicSimilarTracks",
     { id, count },
+    {},
+    { notFoundIsExpected: true },
   );
   return okEnvelope<{ sonicSimilarTracks: SonicSimilarTracks }>({
     sonicSimilarTracks: { sonicMatch: rsp.sonicMatch ?? [] },

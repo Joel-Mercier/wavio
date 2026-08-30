@@ -1,4 +1,5 @@
 import navidromeApiInstance from "@/services/navidrome";
+import { asList } from "@/services/navidrome/listBody";
 import type { NavidromePlaylist } from "@/services/navidrome/types";
 
 export type { NavidromePlaylist } from "@/services/navidrome/types";
@@ -13,5 +14,5 @@ export const getPlaylistsByOwner = async (
       _order: "ASC",
     },
   });
-  return rsp.data;
+  return asList<NavidromePlaylist>(rsp.data);
 };

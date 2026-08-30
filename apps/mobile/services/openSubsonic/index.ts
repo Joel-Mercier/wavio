@@ -2,7 +2,7 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import i18n from "@/config/i18n";
 import { noteSubsonicAuthFailure } from "@/services/auth/credentialFailure";
 import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
-import { reportError } from "@/services/errorReporting";
+import { reportError, UNSUPPORTED_METHOD_RE } from "@/services/errorReporting";
 import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
 import { USER_AGENT } from "@/services/network";
 import { subsonicAuthParams } from "@/services/openSubsonic/auth";
@@ -86,13 +86,16 @@ function noteUnsupportedEndpoint(url: string | undefined) {
 }
 
 // Code 0 is Subsonic's generic error, so only the message separates a missing
-// method from a real failure. services/errorReporting.ts matches the same shape
-// to keep it out of Sentry.
+// method from a real failure — and each implementation phrases it its own way
+// ("Method not supported: x", "Unsupported request: x"). The regex is shared
+// with services/errorReporting.ts, which matches the same shape to keep it out
+// of Sentry: a phrasing only one of them recognises either leaks noise or leaves
+// the capability enabled forever.
 function isMethodNotSupported(error: OpenSubsonicErrorResponse) {
   return (
     error.code === 0 &&
     typeof error.message === "string" &&
-    error.message.includes("Method not supported")
+    UNSUPPORTED_METHOD_RE.test(error.message)
   );
 }
 

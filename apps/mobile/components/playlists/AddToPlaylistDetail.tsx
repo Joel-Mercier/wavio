@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -44,6 +44,7 @@ export default function AddToPlaylistDetail() {
     Record<string, string[]>
   >({});
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const submittingRef = useRef(false);
   const [duplicatePlaylistNames, setDuplicatePlaylistNames] = useState<
     string[]
   >([]);
@@ -62,6 +63,13 @@ export default function AddToPlaylistDetail() {
   };
 
   const addToSelectedPlaylists = () => {
+    // The button below stays mounted while the adds are in flight, and one tap
+    // fires one mutation per selected playlist. Without a guard a user who taps
+    // again — which they do, because nothing on screen changes until the last
+    // one resolves — multiplies the whole batch. A ref, not `isPending`: taps
+    // land faster than a re-render, so a state flag lets the first few through.
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     selectedPlaylists.map((playlistId) => {
       doUpdatePlaylist.mutate(
         {
@@ -92,6 +100,10 @@ export default function AddToPlaylistDetail() {
             });
           },
           onError: (error) => {
+            // Released only once the server has answered, so a refused add
+            // (a Jellyfin playlist this user may not edit answers 403) can be
+            // retried without re-arming the tap storm above.
+            submittingRef.current = false;
             logError(error);
             toast.show({
               placement: "top",
@@ -255,6 +267,7 @@ export default function AddToPlaylistDetail() {
           <FadeOutScaleDown
             className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
             onPress={handlePlaylistUpdatePress}
+            disabled={doUpdatePlaylist.isPending}
           >
             <Text className="text-primary-800 font-bold text-lg">
               {t("app.playlists.finished")}

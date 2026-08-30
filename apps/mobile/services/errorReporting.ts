@@ -168,10 +168,22 @@ function isServerSubsystemFailure(error: unknown): boolean {
   return SERVER_SUBSYSTEM_FAILURES.some((idiom) => message.includes(idiom));
 }
 
+/**
+ * The idioms a Subsonic server uses to say "I don't implement this endpoint",
+ * under the generic code 0. Navidrome says "Method not supported: <method>",
+ * other implementations "Unsupported request: <method>" or "not implemented".
+ * Exported because services/openSubsonic/index.ts matches the same condition to
+ * disable the capability, and the two must stay in lockstep: a phrasing only one
+ * of them recognises either leaks Sentry noise or leaves the endpoint enabled
+ * forever.
+ */
+export const UNSUPPORTED_METHOD_RE =
+  /method not supported|unsupported request|not implemented/i;
+
 // A Subsonic envelope error that says nothing about an app bug:
-// - code 0 with a "Method not supported: <method>" message — the server doesn't
-//   implement (or has disabled) that endpoint. It's the Subsonic-envelope
-//   equivalent of an HTTP 501 (already suppressed): a server-capability signal.
+// - code 0 with an UNSUPPORTED_METHOD_RE message — the server doesn't implement
+//   (or has disabled) that endpoint. It's the Subsonic-envelope equivalent of an
+//   HTTP 501 (already suppressed): a server-capability signal.
 // - code -1 "Invalid or empty response from server" — a reverse proxy answered
 //   with a non-JSON / empty body (an HTML error page) where the Subsonic JSON was
 //   expected. Environmental, same class as an unreachable origin.
@@ -190,7 +202,7 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
   if (
     code === 0 &&
     typeof message === "string" &&
-    message.includes("Method not supported")
+    UNSUPPORTED_METHOD_RE.test(message)
   ) {
     return true;
   }
@@ -211,9 +223,11 @@ function isUnsupportedOrEmptySubsonic(error: unknown): boolean {
 // - the device is out of storage (a download's ENOSPC, sqlite's "disk is full").
 //   Nothing the app can fix — the user has to free space.
 // - a socket failure: the same connectivity class `isNetworkNoise` already drops
-//   for axios, arriving through the native downloader instead.
+//   for axios, arriving through the native downloader instead. An HTTP/2
+//   `StreamResetException` belongs here too — okhttp phrases a reset stream
+//   ("stream was reset: CANCEL") differently from a reset connection.
 const NATIVE_ENVIRONMENT_RE =
-  /ENOSPC|No space left on device|disk is full|SocketTimeoutException|SocketException|UnknownHostException|ConnectException|Connection reset|connection abort/i;
+  /ENOSPC|No space left on device|disk is full|SocketTimeoutException|SocketException|UnknownHostException|ConnectException|StreamResetException|stream was reset|Connection reset|connection abort/i;
 
 function isNativeEnvironmentFailure(error: unknown): boolean {
   const message = error instanceof Error ? error.message : "";
@@ -425,6 +439,48 @@ function toError(error: unknown, ctx: ReportContext): Error {
   return new Error(String(error));
 }
 
+const UUID_SEGMENT_RE =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/**
+ * A path segment (or bare token) that identifies one record rather than one
+ * endpoint. Kept deliberately narrow — a real path segment must never match, or
+ * two different endpoints collapse into one Issue. That's why the opaque-token
+ * rule needs *both* length and a digit: `getOpenSubsonicExtensions` is 25 chars
+ * with no digit, `getSimilarSongs2` has a digit but is only 16.
+ *
+ * Exported for utils/log.ts, which normalizes ids out of its labels for the same
+ * reason.
+ */
+export function isRecordIdSegment(segment: string): boolean {
+  if (/^\d+$/.test(segment)) return true;
+  if (/^[0-9a-fA-F]{32}$/.test(segment)) return true;
+  if (UUID_SEGMENT_RE.test(segment)) return true;
+  return (
+    segment.length >= 20 &&
+    /^[A-Za-z0-9_-]+$/.test(segment) &&
+    /\d/.test(segment)
+  );
+}
+
+/**
+ * Strip record ids (and any query string) out of an endpoint so it fingerprints
+ * as the endpoint it is. `/Audio/<guid>/Lyrics` otherwise opened a fresh Sentry
+ * Issue for every track a user played. The raw value still ships untouched on
+ * `contexts.request.endpoint`, which is where it's actually readable.
+ *
+ * Only path-shaped endpoints are rewritten; query keys and labels
+ * ("navidrome login", "nd:playlist") pass through as-is.
+ */
+function fingerprintEndpoint(endpoint: string): string {
+  if (!endpoint.includes("/")) return endpoint;
+  const path = endpoint.split("?")[0];
+  return path
+    .split("/")
+    .map((segment) => (isRecordIdSegment(segment) ? "{id}" : segment))
+    .join("/");
+}
+
 /**
  * Report a service-layer failure to Sentry, unless it's expected environmental
  * noise (offline, unreachable server, cancelled request, expected 404). In
@@ -477,12 +533,15 @@ export function reportError(
       ...ctx.extra,
     });
     // Group by subsystem + source + endpoint (or status/error name) so distinct
-    // failing endpoints become distinct Issues.
+    // failing endpoints become distinct Issues — with record ids normalized out
+    // of the path, so it's one Issue per endpoint and not one per track.
     scope.setFingerprint(
       [
         ctx.area,
         ctx.backend ?? ctx.api ?? "",
-        ctx.endpoint ?? String(status ?? normalized.name),
+        ctx.endpoint
+          ? fingerprintEndpoint(ctx.endpoint)
+          : String(status ?? normalized.name),
       ].filter(Boolean),
     );
     captureException(normalized, ctx.extra ? { extra: ctx.extra } : undefined);

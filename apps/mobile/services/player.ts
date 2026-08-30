@@ -480,6 +480,25 @@ function isDecodeError(message: string): boolean {
   return /mediacodec|decoder|decode/i.test(message);
 }
 
+// media3 puts only the failure *category* in PlaybackException.message —
+// "Source error", "Unexpected runtime error", "Renderer error" — and keeps the
+// real cause in a chain expo-audio doesn't forward. Only the renderer variant
+// happens to name the codec, so isDecodeError above recognises a small minority
+// of what a server transcode could actually fix: an unparseable container and a
+// decoder that dies during init both arrive as one of these bare strings.
+// Sentry bears that out — every reported failure so far carries
+// `isDecodeError: false`, including ones whose bytes probe back as healthy audio
+// (206, audio/flac) and ones the server answered with an empty body.
+// So retry those too. It costs one request, `hasTranscodeRetried` caps it at one
+// per track, and the track has already failed to play — there is nothing left to
+// protect.
+const ENGINE_GENERIC_FAILURE_RE =
+  /source error|unexpected runtime error|renderer error/i;
+
+function canRetryAsTranscode(message: string): boolean {
+  return isDecodeError(message) || ENGINE_GENERIC_FAILURE_RE.test(message);
+}
+
 // Backends that stream a server-side transcode without a seekable length.
 // Subsonic/Navidrome (format=/maxBitRate on /stream) and Jellyfin (the universal
 // endpoint's AudioCodec/MaxStreamingBitrate); a seek within such a stream must
@@ -1035,12 +1054,18 @@ function handlePlaybackStatus(status: AudioStatus) {
       (!resolved.isOffline || canRecoverOfflineViaStream) &&
       !current.isRadio &&
       current.source !== "podcast" &&
-      isDecodeError(status.error) &&
+      canRetryAsTranscode(status.error) &&
       canTranscodeFallback() &&
       !hasTranscodeRetried(current.id)
     ) {
       noteTranscodeRetried(current.id);
       if (resolved.isOffline) noteStreamOverOffline(current.id);
+      // This failure was handled, not reported. Release the dedupe key so the
+      // retry's failure — which usually carries the very same message — still
+      // reports. Without this the fallback would silently swallow the whole
+      // signal, and `hasTranscodeRetried` already guarantees the next one falls
+      // through to the report path rather than looping.
+      lastReportedPlaybackError = null;
       reportBreadcrumb("player", "transcode-fallback", {
         trackId: current.id,
         error: status.error,

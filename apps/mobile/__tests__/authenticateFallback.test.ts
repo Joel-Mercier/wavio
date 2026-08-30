@@ -15,7 +15,9 @@ jest.mock("@/services/jellyfin/auth", () => ({
   authenticateByName: (...args: unknown[]) => mockJellyfinAuth(...args),
 }));
 jest.mock("@/services/navidrome/auth", () => ({ nativeLogin: jest.fn() }));
-jest.mock("@/services/openSubsonic", () => ({ openSubsonicErrorCodes: {} }));
+jest.mock("@/services/openSubsonic", () => ({
+  openSubsonicErrorCodes: { 70: "localized: the data was not found" },
+}));
 jest.mock("@/services/openSubsonic/auth", () => ({
   computeSubsonicToken: async () => "tok",
   encodePasswordParam: (p: string) => `enc:${p}`,
@@ -31,6 +33,9 @@ import axios from "axios";
 import {
   authenticateRemote,
   authenticateWithFallback,
+  LoginFailedError,
+  loginFailureMessage,
+  loginFailureStatus,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 
@@ -253,5 +258,108 @@ describe("Subsonic auth mechanism", () => {
     );
     expect(result.activeUrl).toBe(FALLBACK);
     expect(paramsOf(1)).toMatchObject({ p: "enc:secret" });
+  });
+});
+
+// A login the server refuses is reported to Sentry (unlike a wrong password),
+// so what the thrown error carries decides whether the Issue is readable. It
+// used to carry the *translated* message and nothing else: the Issue title was
+// whichever language the last reporter's phone was set to, and the Subsonic
+// error code never left the device.
+describe("login failure reporting", () => {
+  const pingFailed = (code?: number) => ({
+    data: {
+      "subsonic-response": {
+        status: "failed",
+        ...(code === undefined ? {} : { error: { code } }),
+      },
+    },
+  });
+
+  it("reports a rejected envelope in English, with the code, and shows the translation", async () => {
+    mockPingGet.mockResolvedValue(pingFailed(70));
+    const error = await authenticateRemote(
+      "navidrome",
+      PRIMARY,
+      "alice",
+      "secret",
+    ).catch((e) => e);
+
+    expect(error).toBeInstanceOf(LoginFailedError);
+    // What Sentry titles the Issue: stable, English, and it names the code.
+    expect(error.message).toBe("Subsonic login rejected: error code 70");
+    expect(error.subsonicCode).toBe(70);
+    // What the user reads stays localized — just no longer as `message`.
+    expect(loginFailureMessage(error)).toBe(
+      "localized: the data was not found",
+    );
+  });
+
+  it("distinguishes a response that carries no Subsonic envelope", async () => {
+    // A reverse-proxy root or a captive portal answering 200 with HTML: the
+    // wrong base path, not a server-side rejection. Same toast, different bug.
+    mockPingGet.mockResolvedValue({ data: "<html>login</html>" });
+    const error = await authenticateRemote(
+      "navidrome",
+      PRIMARY,
+      "alice",
+      "secret",
+    ).catch((e) => e);
+
+    expect(error.message).toBe(
+      "Subsonic login: response carries no subsonic-response envelope",
+    );
+    expect(error.subsonicCode).toBeUndefined();
+    expect(loginFailureMessage(error)).toBe("auth.login.loginErrorMessage");
+  });
+
+  it("still raises InvalidCredentialsError for a credential code", async () => {
+    // Which is what keeps every wrong password out of Sentry — isExpectedNoise
+    // drops it by name.
+    mockPingGet.mockResolvedValue(pingFailed(40));
+    await expect(
+      authenticateRemote("navidrome", PRIMARY, "alice", "secret"),
+    ).rejects.toMatchObject({ name: "InvalidCredentialsError" });
+  });
+
+  it("keeps a non-Subsonic setup failure English too", async () => {
+    const error = await authenticateRemote(
+      "smb",
+      "not-a-share-url",
+      "alice",
+      "secret",
+    ).catch((e) => e);
+
+    expect(error.message).toBe("SMB: unparseable share URL");
+    expect(loginFailureMessage(error)).toBe("auth.login.smbUrlInvalid");
+  });
+
+  describe("loginFailureStatus", () => {
+    it("uses the Subsonic code, since the rejection arrives over a 200", async () => {
+      mockPingGet.mockResolvedValue(pingFailed(70));
+      const error = await authenticateRemote(
+        "navidrome",
+        PRIMARY,
+        "alice",
+        "secret",
+      ).catch((e) => e);
+      expect(loginFailureStatus(error)).toBe(70);
+    });
+
+    it("uses the HTTP status when the server answered with one", () => {
+      expect(loginFailureStatus(rejected(403))).toBe(403);
+    });
+
+    it("is undefined when nothing answered", () => {
+      // An unreachable server is environmental noise; a status here would
+      // suggest a rejection that never happened.
+      expect(loginFailureStatus(unreachable())).toBeUndefined();
+      expect(loginFailureStatus(new Error("boom"))).toBeUndefined();
+    });
+  });
+
+  it("leaves every other error's message alone", () => {
+    expect(loginFailureMessage(new Error("boom"))).toBe("boom");
+    expect(loginFailureMessage("boom")).toBe("boom");
   });
 });

@@ -66,7 +66,21 @@ sentryInit({
 
   // Tie events to the shipped binary so uploaded source maps / dSYMs resolve
   // stack traces back to readable source.
-  release: `wavio@${Application.nativeApplicationVersion ?? "0.0.0"}`,
+  //
+  // This string has to match, character for character, the release the *upload*
+  // side stamps on the artifact bundle — Sentry matches on (release, dist), and
+  // a mismatch fails silently as `js_no_source` on every event, with the upload
+  // itself looking perfectly healthy. Both the Sentry Android Gradle Plugin and
+  // the Xcode build phase default to `<applicationId>@<version>+<build>`, so
+  // that is the shape to reproduce here rather than a name of our own choosing.
+  // (`wavio@1.3.0` vs the uploaded `com.jmercier.wavio@1.3.0+29` is exactly what
+  // left every 1.3.0 event unsymbolicated.)
+  //
+  // Building it from `applicationId` also gives each app variant its own
+  // release, matching the per-variant package ids in app.config.js.
+  release: `${Application.applicationId}@${
+    Application.nativeApplicationVersion ?? "0.0.0"
+  }+${Application.nativeBuildVersion ?? "0"}`,
   dist: Application.nativeBuildVersion ?? undefined,
 
   // Adds more context data to events (IP address, cookies, user, etc.)

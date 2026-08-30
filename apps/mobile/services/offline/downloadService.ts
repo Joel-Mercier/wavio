@@ -139,8 +139,11 @@ function downloadFailureKind(error: unknown): DownloadFailureKind {
   // connectivity, it's a certificate the device won't trust. Only a fresh sign-in
   // can re-trust it, so it gets its own kind, message and queue park.
   if (isTlsTrustFailure(error)) return "tls";
+  // Kept in lockstep with NATIVE_ENVIRONMENT_RE in services/errorReporting.ts.
+  // An HTTP/2 `StreamResetException: stream was reset` is the same connectivity
+  // class as a reset connection, phrased differently by okhttp.
   if (
-    /SocketTimeoutException|SocketException|UnknownHostException|ConnectException|Connection reset|connection abort/i.test(
+    /SocketTimeoutException|SocketException|UnknownHostException|ConnectException|StreamResetException|stream was reset|Connection reset|connection abort/i.test(
       message,
     )
   ) {

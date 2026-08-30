@@ -769,22 +769,23 @@ export default function PlaylistDetail() {
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
-                  {playlistDownload.status === "downloading" ? (
-                    <Download size={24} color={gray400} />
-                  ) : playlistDownload.status === "all" ? (
-                    <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
-                      <DownloadedBadge size={24} />
-                    </FadeOutScaleDown>
-                  ) : (
-                    <FadeOutScaleDown
-                      onPress={handleSaveOfflinePress}
-                      disabled={!isOnline}
-                    >
-                      <Box className="size-6 rounded-full border-2 border-gray-200 items-center justify-center">
-                        <ArrowDown size={16} color={gray200} />
-                      </Box>
-                    </FadeOutScaleDown>
-                  )}
+                  {capabilities.offlineDownload &&
+                    (playlistDownload.status === "downloading" ? (
+                      <Download size={24} color={gray400} />
+                    ) : playlistDownload.status === "all" ? (
+                      <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                        <DownloadedBadge size={24} />
+                      </FadeOutScaleDown>
+                    ) : (
+                      <FadeOutScaleDown
+                        onPress={handleSaveOfflinePress}
+                        disabled={!isOnline}
+                      >
+                        <Box className="size-6 rounded-full border-2 border-gray-200 items-center justify-center">
+                          <ArrowDown size={16} color={gray200} />
+                        </Box>
+                      </FadeOutScaleDown>
+                    ))}
                   <FadeOutScaleDown
                     testID="playlist-menu-button"
                     onPress={handlePresentModalPress}
@@ -956,38 +957,40 @@ export default function PlaylistDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
-              {playlistDownload.status === "downloading" ? (
-                <HStack className="items-center">
-                  <Download size={24} color={gray400} />
-                  <Text className="ml-4 text-lg text-gray-400">
-                    {t("app.shared.offline.savingForOffline")} (
-                    {playlistDownload.downloadedCount}/{playlistDownload.total})
-                  </Text>
-                </HStack>
-              ) : playlistDownload.status === "all" ? (
-                <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+              {capabilities.offlineDownload &&
+                (playlistDownload.status === "downloading" ? (
                   <HStack className="items-center">
-                    <X size={24} color={red500} />
-                    <Text className="ml-4 text-lg text-red-400">
-                      {t("app.shared.offline.removeOfflineDownloads")}
+                    <Download size={24} color={gray400} />
+                    <Text className="ml-4 text-lg text-gray-400">
+                      {t("app.shared.offline.savingForOffline")} (
+                      {playlistDownload.downloadedCount}/
+                      {playlistDownload.total})
                     </Text>
                   </HStack>
-                </FadeOutScaleDown>
-              ) : (
-                <FadeOutScaleDown
-                  onPress={handleSaveOfflinePress}
-                  disabled={!isOnline}
-                >
-                  <HStack className="items-center">
-                    <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                      <ArrowDown size={20} color={black} />
-                    </Box>
-                    <Text className="ml-4 text-lg text-emerald-400">
-                      {t("app.shared.offline.saveForOfflineListening")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-              )}
+                ) : playlistDownload.status === "all" ? (
+                  <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                    <HStack className="items-center">
+                      <X size={24} color={red500} />
+                      <Text className="ml-4 text-lg text-red-400">
+                        {t("app.shared.offline.removeOfflineDownloads")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                ) : (
+                  <FadeOutScaleDown
+                    onPress={handleSaveOfflinePress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                        <ArrowDown size={20} color={black} />
+                      </Box>
+                      <Text className="ml-4 text-lg text-emerald-400">
+                        {t("app.shared.offline.saveForOfflineListening")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                ))}
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
                   <Pencil size={24} color={gray200} />

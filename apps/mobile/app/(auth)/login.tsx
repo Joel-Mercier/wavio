@@ -80,6 +80,8 @@ import {
 } from "@/modules/ssl-trust";
 import {
   authenticateWithFallback,
+  loginFailureMessage,
+  loginFailureStatus,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 import {
@@ -412,9 +414,9 @@ export default function LoginScreen() {
         reportError(error, {
           area: "auth",
           endpoint: `${value.type} login`,
-          status: axios.isAxiosError(error)
-            ? error.response?.status
-            : undefined,
+          // Not just the HTTP status: a Subsonic server rejects over a 200 with
+          // an error envelope, so the code it sent is the status that matters.
+          status: loginFailureStatus(error),
           extra: {
             serverType: value.type,
             url: scrubUrl((value.url ?? "").trim()),
@@ -432,7 +434,7 @@ export default function LoginScreen() {
               <ToastDescription>
                 {axios.isAxiosError(error)
                   ? t("auth.login.loginErrorMessage")
-                  : (error as Error).message}
+                  : loginFailureMessage(error)}
               </ToastDescription>
             </Toast>
           ),

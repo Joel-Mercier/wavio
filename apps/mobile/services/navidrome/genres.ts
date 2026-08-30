@@ -1,4 +1,5 @@
 import navidromeApiInstance from "@/services/navidrome";
+import { asList } from "@/services/navidrome/listBody";
 import type { NavidromeGenre } from "@/services/navidrome/types";
 import { okEnvelope } from "@/services/openSubsonic/index";
 import type { Genres } from "@/services/openSubsonic/types";
@@ -20,7 +21,7 @@ export const getGenres = async ({
     },
   });
   const genres: Genres = {
-    genre: (rsp.data ?? []).map((g) => ({ value: g.name })),
+    genre: asList<NavidromeGenre>(rsp.data).map((g) => ({ value: g.name })),
   };
   return okEnvelope({ genres });
 };

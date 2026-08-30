@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { forgetPlaylistQueries } from "@/hooks/backend/forgetPlaylistQueries";
 import {
   createPlaylist,
   deletePlaylist,
@@ -137,6 +138,9 @@ export const useDeletePlaylist = () => {
       librarySyncService.handlePlaylistDeleted(id);
       return result;
     },
+    // Runs before the caller's own onSuccess, so the cache is clean before the
+    // navigation that would otherwise trigger a refetch.
+    onSuccess: (_result, { id }) => forgetPlaylistQueries(queryClient, id),
   });
 
   return query;
