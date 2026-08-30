@@ -1848,8 +1848,8 @@
 				"outputNoDevices": "Aucun appareil trouvé sur le réseau",
 				"outputUnverified": "La lecture pourrait ne pas fonctionner",
 				"outputChromecast": "Chromecast",
-				"outputChromecastConnected": "Connected",
-				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
+				"outputChromecastConnected": "Connecté",
+				"outputChromecastUnavailable": "Le sélecteur de périphérique Chromecast est indisponible.",
 				"outputConnectErrorMessage": "Lecture impossible sur {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minute",
 				"sleepTimerMinutes_other": "{{count}} minutes"
