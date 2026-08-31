@@ -1400,6 +1400,7 @@
 						"off": "Apagado",
 						"addToQueue": "Añadir a la cola",
 						"playNext": "Reproducir la siguiente",
+						"favorite": "Favoritos",
 						"rate": "Tasa",
 						"showInfo": "Obtener información",
 						"addToPlaylist": "Añadir a la lista de reproducción"
