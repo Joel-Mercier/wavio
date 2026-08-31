@@ -1367,6 +1367,7 @@
 						"off": "关闭",
 						"addToQueue": "加入播放队列",
 						"playNext": "下一首播放",
+						"favorite": "收藏",
 						"rate": "评分",
 						"showInfo": "查看歌曲信息",
 						"addToPlaylist": "加入歌单"
