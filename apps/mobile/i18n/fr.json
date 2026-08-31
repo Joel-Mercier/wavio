@@ -1400,6 +1400,7 @@
 						"off": "Désactivée",
 						"addToQueue": "Ajouter à la fin de la file d'attente",
 						"playNext": "Ajouter à la file d'attente",
+						"favorite": "Favoris",
 						"rate": "Noter",
 						"showInfo": "Obtenir des informations",
 						"addToPlaylist": "Ajouter à la playlist"
