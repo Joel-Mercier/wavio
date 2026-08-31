@@ -903,6 +903,11 @@ export default function PlayerScreen() {
                       size={24}
                       color={inlineLyricsEnabled ? emerald500 : "white"}
                     />
+                    {inlineLyricsEnabled && (
+                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                        <Box className="bg-emerald-500 rounded-full size-1" />
+                      </Box>
+                    )}
                   </FadeOut>
                 )}
                 <FadeOut
