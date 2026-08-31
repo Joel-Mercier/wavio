@@ -1,6 +1,7 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
@@ -24,14 +25,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsTrackAvailableOffline } from "@/hooks/offline";
 import { useIsCurrentTrack } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -53,10 +47,11 @@ const MAX_TRANSLATE = 140;
 // icons used in the track actions bottom sheet).
 const SWIPE_ACTION_ICONS: Record<
   Exclude<SwipeAction, "off">,
-  ComponentType<{ size?: number; color?: string }>
+  ComponentType<{ size?: number; color?: string; fill?: string }>
 > = {
   addToQueue: ListPlus,
   playNext: ListStart,
+  favorite: Heart,
   rate: Star,
   showInfo: Info,
   addToPlaylist: PlusCircle,
@@ -73,6 +68,9 @@ const runSwipeAction = (
       break;
     case "playNext":
       api.playNext(track);
+      break;
+    case "favorite":
+      api.toggleFavorite(track);
       break;
     case "rate":
       api.rate(track);
@@ -124,8 +122,6 @@ function TrackListItem({
   ]) as string[];
   const { t } = useTranslation();
   const isCurrentTrack = useIsCurrentTrack(track.id);
-  const doUnfavorite = useUnstar();
-  const toast = useToast();
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
@@ -179,46 +175,18 @@ function TrackListItem({
 
   const SwipeIcon =
     swipeLeftAction === "off" ? null : SWIPE_ACTION_ICONS[swipeLeftAction];
+  // Only the heart is ever filled, and only once the track is already a
+  // favorite — lucide defaults `fill` to "none", so this is inert elsewhere.
+  const swipeIconFill =
+    swipeLeftAction === "favorite" && track.starred ? black : "none";
 
   const handlePresentModalPress = () => {
     api.open(track, { index, handleRemoveFromPlaylist });
   };
 
-  const handleUnfavoritePress = () => {
-    doUnfavorite.mutate(
-      { id: track.id },
-      {
-        onSuccess: () => {
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.unfavoriteSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: () => {
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.unfavoriteErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
-  };
+  const handleFavoriteTogglePress = useCallback(() => {
+    api.toggleFavorite(track);
+  }, [api, track]);
 
   const handleTrackPress = () => {
     if (onPress) {
@@ -284,7 +252,7 @@ function TrackListItem({
         {track.starred && (
           <AnimatedHeart
             filled
-            onPress={handleUnfavoritePress}
+            onPress={handleFavoriteTogglePress}
             disabled={isUnavailableOffline}
             className="mr-3"
           />
@@ -352,7 +320,9 @@ function TrackListItem({
             revealStyle,
           ]}
         >
-          {SwipeIcon && <SwipeIcon size={24} color={black} />}
+          {SwipeIcon && (
+            <SwipeIcon size={24} color={black} fill={swipeIconFill} />
+          )}
         </Animated.View>
         <Animated.View style={foregroundStyle}>{pressable}</Animated.View>
       </Box>

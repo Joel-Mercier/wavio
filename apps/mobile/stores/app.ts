@@ -105,6 +105,7 @@ export type SwipeAction =
   | "off"
   | "addToQueue"
   | "playNext"
+  | "favorite"
   | "rate"
   | "showInfo"
   | "addToPlaylist";

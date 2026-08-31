@@ -1402,6 +1402,7 @@
 						"off": "Off",
 						"addToQueue": "Add to queue",
 						"playNext": "Play next",
+						"favorite": "Favorite",
 						"rate": "Rate",
 						"showInfo": "Get info",
 						"addToPlaylist": "Add to playlist"
