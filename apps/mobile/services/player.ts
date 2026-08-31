@@ -694,6 +694,10 @@ function findNextPlayableIndex(startIndex: number): number | null {
 // controls. Lets applyLockScreen pick the cheap metadata-only update over a
 // full (re)activation once the controls are already up.
 let lockScreenActive = false;
+// The track the controls are currently showing. Distinct from loadedTrackId
+// because a remote target (jukebox, UPnP renderer) drives the controls while
+// nothing is loaded on the local engine at all.
+let lockScreenTrackId: string | null = null;
 
 // Empty/undefined fields must be passed as undefined, not "": the native
 // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a ""
@@ -745,7 +749,7 @@ async function upgradeLockScreenArtwork(
   const local = await ensureArtworkCached(remoteUrl);
   // The download outlived the track it was for, or the controls were torn down
   // while it ran — either way this metadata is no longer the current one.
-  if (!local || loadedTrackId !== track.id || !lockScreenActive) return;
+  if (!local || lockScreenTrackId !== track.id || !lockScreenActive) return;
   try {
     p.updateLockScreenMetadata(toLockScreenMetadata(track, local));
   } catch (error) {
@@ -754,6 +758,7 @@ async function upgradeLockScreenArtwork(
 }
 
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
+  lockScreenTrackId = track.id;
   const remoteArtwork = lockScreenArtworkUrl(track);
   const cached = cachedArtworkUri(remoteArtwork);
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
@@ -801,6 +806,20 @@ function clearLockScreen(p: AudioPlayer) {
     logSwallowed("clearLockScreenControls", error);
   }
   lockScreenActive = false;
+  lockScreenTrackId = null;
+}
+
+// Put a track on the OS controls without loading anything locally. The only
+// caller is the remote-playback mirror: a jukebox or renderer owns the audio, so
+// loadTrack (the local path into applyLockScreen) never runs and the controls
+// would otherwise keep showing whatever was playing before the handover.
+export function pushLockScreenMetadata(track: QueueTrack | null) {
+  if (!track) {
+    clearLockScreen(player);
+    return;
+  }
+  if (lockScreenTrackId === track.id && lockScreenActive) return;
+  applyLockScreen(player, track);
 }
 
 function loadTrack(track: QueueTrack | null, autoplay: boolean) {
@@ -1330,6 +1349,24 @@ remoteListeners.push(
 remoteListeners.push(
   player.addListener("remoteNext", () => {
     skipNext();
+  }),
+);
+// Only emitted while a remote target owns playback — locally the OS controls
+// act on the engine directly and never reach JS. Routed through the same
+// remote-aware transport the rest of the app uses.
+remoteListeners.push(
+  player.addListener("remotePlay", () => {
+    play();
+  }),
+);
+remoteListeners.push(
+  player.addListener("remotePause", () => {
+    pause();
+  }),
+);
+remoteListeners.push(
+  player.addListener("remoteSeek", (positionMs: number) => {
+    seekTo(positionMs / 1000);
   }),
 );
 statusListeners.push(
