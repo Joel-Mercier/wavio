@@ -87,6 +87,7 @@ import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -141,6 +142,17 @@ export default function AlbumDetail() {
   // collection so a saved album stays browsable after a logout clears the React
   // Query cache.
   const data = serverData ?? offlineAlbumData;
+  // A rename or new cover on the server reaches the home shortcut from here.
+  useRefreshRecentPlay(
+    serverData?.album
+      ? {
+          id,
+          type: "album",
+          title: serverData.album.name,
+          coverArt: serverData.album.coverArt,
+        }
+      : undefined,
+  );
   const artistReachable = useIsDetailCached(
     data?.album?.artistId ? ["artist", data.album.artistId] : null,
   );

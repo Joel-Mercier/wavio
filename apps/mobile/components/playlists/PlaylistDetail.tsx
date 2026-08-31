@@ -67,6 +67,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { forgetPlaylistQueries } from "@/hooks/backend/forgetPlaylistQueries";
 import {
   useDeletePlaylist,
   usePlaylist,
@@ -84,9 +85,12 @@ import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
+import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
+import { isNotFoundError } from "@/services/notFound";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
@@ -146,15 +150,37 @@ export default function PlaylistDetail() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const { data: serverPlaylistData, isLoading, error } = usePlaylist(id);
+  // Set once this playlist is known not to exist any more, by either path.
+  const playlistGoneRef = useRef(false);
+  const {
+    data: serverPlaylistData,
+    error,
+    fetchStatus,
+  } = usePlaylist(id);
   const offlinePlaylistData = useOfflinePlaylist(id);
   // Offline (or before the server query resolves) fall back to the downloaded
   // collection so a saved playlist stays browsable after a logout clears the
   // React Query cache.
   const playlistData = serverPlaylistData ?? offlinePlaylistData;
+  // A rename or new cover on the server reaches the home shortcut from here.
+  useRefreshRecentPlay(
+    serverPlaylistData?.playlist
+      ? {
+          id,
+          type: "playlist",
+          title: serverPlaylistData.playlist.name,
+          coverArt: serverPlaylistData.playlist.coverArt,
+        }
+      : undefined,
+  );
   const owner = playlistData?.playlist?.owner;
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
-  const { data: ndPlaylist } = useSmartPlaylist(hasNavidromeNative ? id : null);
+  const isPlaylistDeleted = usePlaylists(
+    (store) => !!store.deletedPlaylists[id],
+  );
+  const { data: ndPlaylist } = useSmartPlaylist(
+    hasNavidromeNative && !isPlaylistDeleted ? id : null,
+  );
   const isSmartPlaylist = !!ndPlaylist?.rules;
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -278,10 +304,14 @@ export default function PlaylistDetail() {
 
   const handlePlaylistDeletePress = () => {
     bottomSheetModalRef.current?.dismiss();
+    // Closed here rather than in onSuccess: the error path leaves the dialog
+    // standing behind the toast otherwise.
+    setShowAlertDialog(false);
     doDeletePlaylist.mutate(
       { id },
       {
         onSuccess: () => {
+          playlistGoneRef.current = true;
           queryClient.invalidateQueries({ queryKey: ["playlists"] });
           goBackOrHome(router);
           toast.show({
@@ -369,6 +399,36 @@ export default function PlaylistDetail() {
       });
     }
   }, [playlistData?.playlist, id, addRecentPlay]);
+
+  // The playlist was deleted from another client: drop the local traces that
+  // would otherwise keep offering it (home shortcut, saved sort/order). Pruning
+  // is destructive, so it only acts on an error that reflects the query's
+  // current state: react-query keeps the previous error through a remount's
+  // `refetchOnMount` window and through the whole time a query sits paused
+  // offline, and `isOnline` flips back to true before the recovery refetch has
+  // resolved. `fetchStatus === "idle"` is the one value neither window has.
+  const isPlaylistGone =
+    isOnline && fetchStatus === "idle" && !!error && isNotFoundError(error);
+  useEffect(() => {
+    if (!isPlaylistGone) return;
+    playlistGoneRef.current = true;
+    forgetDeletedPlaylist(id, { keepIfDownloaded: true });
+  }, [isPlaylistGone, id]);
+
+  // Dropping the cached queries has to wait for this screen to go: removing
+  // them while its observers are live leaves the next render with no data and
+  // an error display where the 404 used to be. Covers both the delete above and
+  // our own successful delete. It's only a cache reclaim — the `deletedPlaylists`
+  // marker is what stops the refetch, which matters because this screen isn't
+  // always unmounted on the way out (`goBackOrHome` navigates when there's
+  // nothing to pop) and a second instance of the same id may still be stacked
+  // below.
+  useEffect(
+    () => () => {
+      if (playlistGoneRef.current) forgetPlaylistQueries(queryClient, id);
+    },
+    [id, queryClient],
+  );
 
   useEffect(() => {
     if (clipoardCopyDone) {

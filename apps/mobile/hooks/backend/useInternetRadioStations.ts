@@ -5,6 +5,7 @@ import {
   getInternetRadioStations,
   updateInternetRadioStation,
 } from "@/services/backend/internetRadioStations";
+import useRecentPlays from "@/stores/recentPlays";
 
 export const useCreateInternetRadioStation = () => {
   return useMutation({
@@ -25,6 +26,10 @@ export const useDeleteInternetRadioStation = () => {
       const { id } = params;
       return deleteInternetRadioStation(id);
     },
+    // The home shortcut stores the station under its server id, so it would
+    // otherwise outlive the station itself.
+    onSuccess: (_result, { id }) =>
+      useRecentPlays.getState().removeRecentPlay(id),
   });
 };
 

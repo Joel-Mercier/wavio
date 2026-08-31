@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { forgetPlaylistQueries } from "@/hooks/backend/forgetPlaylistQueries";
 import {
   createPlaylist,
   deletePlaylist,
@@ -7,11 +6,14 @@ import {
   getPlaylists,
   updatePlaylist,
 } from "@/services/backend/playlists";
+import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import { getIsEffectivelyOnline } from "@/services/network";
+import { isNotFoundError } from "@/services/notFound";
 import { librarySyncService } from "@/services/offline";
 import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
 import type { PlaylistWithSongs } from "@/services/openSubsonic/types";
 import type { OfflineAction } from "@/stores/offlineMutations";
+import usePlaylistsStore from "@/stores/playlists";
 
 export const usePlaylists = (
   params: { username?: string },
@@ -19,8 +21,14 @@ export const usePlaylists = (
 ) => {
   return useQuery({
     queryKey: ["playlists", params],
-    queryFn: () => {
-      return getPlaylists(params);
+    queryFn: async () => {
+      const response = await getPlaylists(params);
+      usePlaylistsStore
+        .getState()
+        .reconcileDeletedPlaylists(
+          (response?.playlists?.playlist ?? []).map((playlist) => playlist.id),
+        );
+      return response;
     },
     enabled: options?.enabled,
   });
@@ -134,25 +142,51 @@ export const useDeletePlaylist = () => {
           playlistId: id,
         });
       }
-      const result = await deletePlaylist(id);
+      // A playlist that is already gone (deleted from another client, or a
+      // second tap on a stale list) is the end state the caller asked for, not
+      // a failure — reporting it would leave the user unable to clear a
+      // shortcut pointing at something the server no longer has.
+      const result = await deletePlaylist(id).catch((error) => {
+        if (!isNotFoundError(error)) throw error;
+        return undefined;
+      });
       librarySyncService.handlePlaylistDeleted(id);
       return result;
     },
-    // Runs before the caller's own onSuccess, so the cache is clean before the
-    // navigation that would otherwise trigger a refetch.
-    onSuccess: (_result, { id }) => forgetPlaylistQueries(queryClient, id),
+    // Store-side cleanup only. Dropping the cached queries has to wait until
+    // the detail screen unmounts — removing them from under its live observers
+    // leaves the next render with no data and `refetchOnMount: "always"`, which
+    // immediately re-requests the playlist we just deleted. PlaylistDetail owns
+    // that half (see the doc block on forgetPlaylistQueries).
+    //
+    // Offline, the delete has only been queued: the playlist is still on the
+    // server, and the queued action can still be dropped (auth error, permanent
+    // 4xx, cleared queue, sign-out). Forgetting it here would strand a live
+    // playlist with no shortcut, sort or manual order, so the replay does it
+    // once the server has actually seen the delete.
+    onSuccess: (result, { id }) => {
+      if (result && "queued" in result) return;
+      forgetDeletedPlaylist(id);
+    },
   });
 
   return query;
 };
 
 export const usePlaylist = (id: string) => {
+  // A playlist already known to be gone must not be re-requested: the detail
+  // screen can stay mounted long after the deletion (it navigates away without
+  // always being popped), and a shortcut kept for its downloads reopens it on
+  // later launches. Navidrome answers a deleted playlist with a 500 on its
+  // native endpoint (WAVIO-H3).
+  const isDeleted = usePlaylistsStore((store) => !!store.deletedPlaylists[id]);
   const query = useQuery({
     queryKey: ["playlist", id],
     queryFn: () => {
       return getPlaylist(id);
     },
     refetchOnMount: "always",
+    enabled: !isDeleted,
   });
 
   return query;

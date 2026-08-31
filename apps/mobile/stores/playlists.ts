@@ -17,6 +17,10 @@ interface PlaylistsStore {
   getPlaylistTrackOrder: (playlistId: string) => string[] | undefined;
   setPlaylistTrackOrder: (playlistId: string, order: string[]) => void;
   clearPlaylistTrackOrder: (playlistId: string) => void;
+  clearPlaylistPreferences: (playlistId: string) => void;
+  deletedPlaylists: Record<string, true>;
+  markPlaylistDeleted: (playlistId: string) => void;
+  reconcileDeletedPlaylists: (existingIds: string[]) => void;
 }
 
 const usePlaylistsBase = create<PlaylistsStore>()(
@@ -55,6 +59,47 @@ const usePlaylistsBase = create<PlaylistsStore>()(
             playlistTrackOrders: rest,
           };
         });
+      },
+      // Everything this store remembers about a playlist that no longer exists.
+      // The early return is outside set() on purpose: persist writes the whole
+      // store back to MMKV on every set(), even one that changes nothing.
+      clearPlaylistPreferences: (playlistId: string) => {
+        const state = get();
+        if (
+          !(playlistId in state.playlistSorts) &&
+          !(playlistId in state.playlistTrackOrders)
+        ) {
+          return;
+        }
+        const { [playlistId]: _sort, ...playlistSorts } = state.playlistSorts;
+        const { [playlistId]: _order, ...playlistTrackOrders } =
+          state.playlistTrackOrders;
+        set({ playlistSorts, playlistTrackOrders });
+      },
+      // Ids the server no longer has. Persisted because a shortcut kept for its
+      // downloads outlives the session that discovered the deletion, and every
+      // reopen would otherwise re-request the playlist — which Navidrome's
+      // native endpoint answers with a 500 (WAVIO-H3).
+      deletedPlaylists: {},
+      markPlaylistDeleted: (playlistId: string) => {
+        const state = get();
+        if (state.deletedPlaylists[playlistId]) return;
+        set({
+          deletedPlaylists: { ...state.deletedPlaylists, [playlistId]: true },
+        });
+      },
+      // Servers that number playlists sequentially can hand a retired id to a
+      // new playlist, so a marker only holds until that id shows up in a
+      // listing again.
+      reconcileDeletedPlaylists: (existingIds: string[]) => {
+        const state = get();
+        const revived = existingIds.filter((id) => state.deletedPlaylists[id]);
+        if (!revived.length) return;
+        const deletedPlaylists = { ...state.deletedPlaylists };
+        for (const id of revived) {
+          delete deletedPlaylists[id];
+        }
+        set({ deletedPlaylists });
       },
     }),
     {

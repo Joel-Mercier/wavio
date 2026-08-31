@@ -36,7 +36,7 @@ jest.mock("@/services/navidrome/auth", () => ({
   nativeLogin: jest.fn(),
 }));
 
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { forgetPlaylistQueries } from "@/hooks/backend/forgetPlaylistQueries";
 import navidromeApiInstance from "@/services/navidrome";
 import { getAlbumList2 } from "@/services/navidrome/albums";
@@ -146,6 +146,32 @@ describe("forgetPlaylistQueries", () => {
       id: "kept",
     });
     expect(client.getQueryData(["playlists"])).toEqual([{ id: "kept" }]);
+  });
+
+  // Why PlaylistDetail defers this call to its own unmount: removing a query
+  // out from under a live observer leaves the next render of that screen with
+  // no data and `refetchOnMount: "always"`, which re-requests the playlist we
+  // just deleted — the 500 all of this exists to avoid.
+  it("refetches if called while the screen's observer is still mounted", async () => {
+    const queryFn = jest.fn().mockResolvedValue({ playlist: { id: "gone" } });
+    const options = {
+      queryKey: ["playlist", "gone"],
+      queryFn,
+      refetchOnMount: "always" as const,
+    };
+    const observer = new QueryObserver(client, options);
+    const unsubscribe = observer.subscribe(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(queryFn).toHaveBeenCalledTimes(1);
+
+    forgetPlaylistQueries(client, "gone");
+    // useQuery calls both of these on every render of the mounted screen.
+    observer.setOptions({ ...options });
+    observer.getOptimisticResult({ ...options } as never);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(queryFn).toHaveBeenCalledTimes(2);
+    unsubscribe();
   });
 
   // invalidateQueries would mark them stale and refetch — the exact request

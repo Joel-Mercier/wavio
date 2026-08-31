@@ -75,6 +75,7 @@ import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
@@ -130,6 +131,17 @@ export default function ArtistDetail() {
   // while server data is absent.
   const offlineArtistData = useOfflineArtist(id, serverData == null);
   const data = serverData ?? offlineArtistData;
+  // A rename or new cover on the server reaches the home shortcut from here.
+  useRefreshRecentPlay(
+    serverData?.artist
+      ? {
+          id,
+          type: "artist",
+          title: serverData.artist.name,
+          coverArt: serverData.artist.coverArt,
+        }
+      : undefined,
+  );
   // `includeNotPresent` keeps the recommendations the library doesn't hold:
   // they're the discovery half of the row, and ArtistCarouselRow renders them
   // as their own kind of tile rather than a link to a detail screen.

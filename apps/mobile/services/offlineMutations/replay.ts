@@ -11,12 +11,13 @@ import {
   updatePlaylist,
 } from "@/services/backend/playlists";
 import { isNetworkNoise, reportError } from "@/services/errorReporting";
+import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { isNotFoundError } from "@/services/notFound";
 import { revertQueueMirror } from "@/services/offlineMutations/optimistic";
-import { isSubsonicDataNotFound } from "@/services/openSubsonic";
 import { useAuthBase } from "@/stores/auth";
 import { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOfflineMutations, {
@@ -85,9 +86,6 @@ const subsonicCode = (error: unknown): number | undefined =>
   error && typeof error === "object"
     ? (error as { code?: number }).code
     : undefined;
-
-const isNotFoundError = (error: unknown) =>
-  isSubsonicDataNotFound(error) || httpStatus(error) === 404;
 
 const isAuthError = (error: unknown) => {
   const status = httpStatus(error);
@@ -168,6 +166,9 @@ async function executeAction(item: QueuedMutation): Promise<void> {
       } catch (error) {
         if (!isNotFoundError(error)) throw error;
       }
+      // Deferred from `useDeletePlaylist`: the shortcut and the saved sort /
+      // manual order are only safe to drop once the server has seen the delete.
+      forgetDeletedPlaylist(action.playlistId);
       return;
     }
   }
