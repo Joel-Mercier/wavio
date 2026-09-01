@@ -26,7 +26,24 @@ type ActivateOptions = {
   autoplay: boolean;
 };
 
+// Snapshot of the queue as the server last saw it, so the subscription below can
+// tell what actually moved: the playlist, the position within it, or nothing.
 let lastKnownQueueIds: string[] | null = null;
+let lastKnownIndex = 0;
+let lastKnownCurrentId: string | null = null;
+// Set while we are the ones mutating the queue (adopting server state, or moving
+// it ahead of an explicit skip), so the subscription doesn't push that change
+// straight back to the server it came from.
+let suppressQueuePush = false;
+// Non-zero while a push is in flight; the poll stands down so it can't pull a
+// pre-push index and drag the queue back onto the track the user just left.
+let pushesInFlight = 0;
+// Set while a selection has muted the server for its pre-roll, so a deactivate
+// that strands it mid-settle can still hand the server back at the user's gain.
+let mutedForPreroll = false;
+// Bumped by every selectTrack call so a superseded one can bail out of its
+// settle loop instead of fighting the newer selection.
+let selectGeneration = 0;
 let queueUnsub: (() => void) | null = null;
 let pollHandle: ReturnType<typeof setInterval> | null = null;
 
@@ -51,6 +68,28 @@ function clampIndex(index: number | undefined, length: number): number {
   return Math.max(0, Math.min(index, length - 1));
 }
 
+function captureQueueSnapshot() {
+  const state = useQueue.getState();
+  const index = state.currentIndex ?? 0;
+  lastKnownQueueIds = state.queue.map((t) => t.id);
+  lastKnownIndex = index;
+  lastKnownCurrentId = state.queue[index]?.id ?? null;
+}
+
+// Mutate the queue on the server's behalf (or ahead of a skip we issue
+// ourselves) without the subscription echoing it back. The listener fires
+// synchronously inside the store's set, so a plain flag is enough; re-snapshot
+// afterwards so the next real change is measured against what we just applied.
+function withoutQueuePush<T>(mutate: () => T): T {
+  suppressQueuePush = true;
+  try {
+    return mutate();
+  } finally {
+    suppressQueuePush = false;
+    captureQueueSnapshot();
+  }
+}
+
 async function refreshStatus() {
   try {
     const rsp = await statusJukebox();
@@ -64,11 +103,11 @@ async function refreshStatus() {
       // queue back to its first track just from opening the device sheet.
       if (useJukebox.getState().active) {
         const local = useQueue.getState().currentIndex ?? 0;
-        if (
-          typeof status.currentIndex === "number" &&
-          status.currentIndex !== local
-        ) {
-          useQueue.getState().setCurrentIndex(status.currentIndex);
+        const serverIndex = status.currentIndex;
+        if (typeof serverIndex === "number" && serverIndex !== local) {
+          withoutQueuePush(() =>
+            useQueue.getState().setCurrentIndex(serverIndex),
+          );
         }
       }
     }
@@ -81,6 +120,7 @@ async function refreshStatus() {
 // added/reordered tracks) and mirror it locally. Cheap when nothing changed:
 // only rebuilds the queue when the server's id list differs from ours.
 async function reconcileFromServer() {
+  if (pushesInFlight > 0) return;
   let playlist: JukeboxPlaylist | undefined;
   try {
     const rsp = await getJukebox();
@@ -88,6 +128,9 @@ async function reconcileFromServer() {
   } catch {
     return;
   }
+  // Re-checked after the read: a push that started while it was in flight makes
+  // this response describe the pre-push server, which would rewind the queue.
+  if (pushesInFlight > 0) return;
   if (!playlist) return;
   try {
     applyServerPlaylist(playlist);
@@ -112,29 +155,23 @@ function applyServerPlaylist(playlist: JukeboxPlaylist) {
 
   if (sameOrder) {
     const local = useQueue.getState().currentIndex ?? 0;
-    if (
-      typeof playlist.currentIndex === "number" &&
-      playlist.currentIndex !== local
-    ) {
-      useQueue.getState().setCurrentIndex(playlist.currentIndex);
+    const serverIndex = playlist.currentIndex;
+    if (typeof serverIndex === "number" && serverIndex !== local) {
+      withoutQueuePush(() => useQueue.getState().setCurrentIndex(serverIndex));
     }
     return;
   }
 
   if (serverIds.length === 0) {
-    // Track our snapshot first so the queue subscription doesn't echo the clear
-    // back to the server.
-    lastKnownQueueIds = [];
-    useQueue.getState().clearQueue();
+    withoutQueuePush(() => useQueue.getState().clearQueue());
     return;
   }
 
   const tracks = (playlist.entry ?? []).map((entry) => childToTrack(entry));
   const idx = clampIndex(playlist.currentIndex, tracks.length);
-  // Set before mutating the queue so subscribeQueue sees no change and skips
-  // pushing the just-pulled playlist straight back to the server.
-  lastKnownQueueIds = serverIds;
-  restoreServerQueue(tracks, idx, playlist.position ?? 0);
+  withoutQueuePush(() =>
+    restoreServerQueue(tracks, idx, playlist.position ?? 0),
+  );
 }
 
 function startPolling(intervalMs: number) {
@@ -149,49 +186,88 @@ function stopPolling() {
   }
 }
 
-function isReorderOf(ids: string[], prev: string[]): boolean {
-  if (ids.length !== prev.length) return false;
-  const a = ids.slice().sort();
-  const b = prev.slice().sort();
-  return a.every((id, i) => id === b[i]);
+// The tail `ids` adds on top of `prev`, or null when this isn't a pure append.
+// Worth detecting because Navidrome's `add` leaves the playing track alone,
+// where `set` is a clear + add that tears it down.
+function appendedTail(ids: string[], prev: string[]): string[] | null {
+  if (ids.length <= prev.length) return null;
+  for (let i = 0; i < prev.length; i++) {
+    if (ids[i] !== prev[i]) return null;
+  }
+  return ids.slice(prev.length);
 }
 
-// Re-upload a reordered queue and point the server back at the track that is
-// actually playing. `set` leaves the server on its old index, so without the
-// skip it would carry on with whatever track happens to land there — and the
-// status poll would then drag the local queue onto it.
-async function pushReorder(ids: string[], index: number) {
-  const wasPlaying = useJukebox.getState().status?.playing ?? false;
-  const position = Math.max(0, Math.floor(jukeboxGetCurrentTime()));
-  await setJukebox(ids);
-  await skipJukebox(index, position);
-  if (!wasPlaying) await stopJukebox();
-  await refreshStatus();
+// Mirror a local queue change onto the server. `set` is a clear + add on
+// Navidrome (core/playback/device.go): it drops the playing track and leaves the
+// index at 0, so it always has to be followed by a select — which is also the
+// only way to move the server's index when the playlist itself didn't change.
+async function pushQueue(
+  ids: string[] | null,
+  index: number,
+  offset: number,
+  autoplay: boolean,
+) {
+  return withPushShield(async () => {
+    if (ids) await setJukebox(ids);
+    await selectTrack(index, offset, autoplay);
+    await refreshStatus();
+  });
+}
+
+// Everything that moves the server's index runs inside this, so the poll above
+// stands down for the round-trip instead of reading a half-applied state.
+async function withPushShield<T>(fn: () => Promise<T>): Promise<T> {
+  pushesInFlight += 1;
+  try {
+    return await fn();
+  } finally {
+    pushesInFlight -= 1;
+  }
 }
 
 function subscribeQueue() {
   if (queueUnsub) return;
-  lastKnownQueueIds = readQueueIds();
+  captureQueueSnapshot();
   queueUnsub = useQueue.subscribe((state) => {
-    if (!useJukebox.getState().active) return;
+    if (!useJukebox.getState().active || suppressQueuePush) return;
     const ids = state.queue.map((t) => t.id);
+    const index = state.currentIndex ?? 0;
     const prev = lastKnownQueueIds ?? [];
-    const changed =
+    const listChanged =
       ids.length !== prev.length || ids.some((id, i) => id !== prev[i]);
-    if (!changed) return;
-    const reordered = isReorderOf(ids, prev);
+    // Tapping another track in a list the server already holds moves only the
+    // index — the id comparison above sees nothing, which is why selecting a
+    // track used to be a no-op the status poll then undid.
+    if (!listChanged && index === lastKnownIndex) return;
+    const previousCurrentId = lastKnownCurrentId;
+    const target = clampIndex(index, ids.length);
     lastKnownQueueIds = ids;
+    lastKnownIndex = index;
+    lastKnownCurrentId = ids[target] ?? null;
     if (ids.length === 0) {
       clearJukebox().catch(() => {});
       return;
     }
-    if (reordered) {
-      pushReorder(ids, clampIndex(state.currentIndex ?? 0, ids.length)).catch(
-        () => {},
-      );
+    const appended = listChanged ? appendedTail(ids, prev) : null;
+    const sameTrack = ids[target] === previousCurrentId;
+    if (appended && sameTrack) {
+      jukeboxAdd(appended).catch(() => {});
       return;
     }
-    setJukebox(ids).catch(() => {});
+    // The same track is still current (a reorder, a removal elsewhere): keep it
+    // playing where it is, in whatever state the server was in. A different one
+    // means the user picked it, so start from the top — and actually play it:
+    // server-driven changes come through suppressed, so this is a local play
+    // intent, and inheriting a paused jukebox would stop the track just tapped.
+    const offset = sameTrack
+      ? Math.max(0, Math.floor(jukeboxGetCurrentTime()))
+      : 0;
+    const autoplay = sameTrack
+      ? (useJukebox.getState().status?.playing ?? false)
+      : true;
+    pushQueue(listChanged ? ids : null, target, offset, autoplay).catch(
+      () => {},
+    );
   });
 }
 
@@ -199,6 +275,8 @@ function unsubscribeQueue() {
   queueUnsub?.();
   queueUnsub = null;
   lastKnownQueueIds = null;
+  lastKnownIndex = 0;
+  lastKnownCurrentId = null;
 }
 
 async function readJukeboxStatus(): Promise<JukeboxStatus | undefined> {
@@ -214,9 +292,10 @@ async function readJukeboxStatus(): Promise<JukeboxStatus | undefined> {
 // from 0:00, and a seek/stop issued before the file has loaded is silently
 // dropped. Poll until the server reports the track playing — hence loaded and
 // seekable — before re-issuing the seek or the pause.
-async function waitForPlaying(): Promise<void> {
+async function waitForPlaying(isCurrent: () => boolean): Promise<void> {
   for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
     await delay(SEEK_SETTLE_DELAY_MS);
+    if (!isCurrent()) return;
     if ((await readJukeboxStatus())?.playing) return;
   }
 }
@@ -225,9 +304,14 @@ async function waitForPlaying(): Promise<void> {
 // and confirm the reported position actually moved, retrying across the whole
 // budget so a slow-loading track still lands on the saved position instead of
 // playing on from 0:00 (a single blind reseek would be dropped mid-load).
-async function settleSeek(idx: number, offset: number): Promise<void> {
+async function settleSeek(
+  idx: number,
+  offset: number,
+  isCurrent: () => boolean,
+): Promise<void> {
   for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
     await delay(SEEK_SETTLE_DELAY_MS);
+    if (!isCurrent()) return;
     const status = await readJukeboxStatus();
     if (!status?.playing) continue;
     if ((status.position ?? 0) >= offset - SEEK_LANDED_TOLERANCE_S) return;
@@ -235,33 +319,52 @@ async function settleSeek(idx: number, offset: number): Promise<void> {
   }
 }
 
+// Point the server at a track and land it in the requested play state.
+// `skip` is the only action that moves Navidrome's playback index, and it spawns
+// a fresh mpv process whose command template carries no `--pause` — so selecting
+// a track *always* starts audio from 0:00, whatever state the jukebox was in.
+// Restoring a saved position or staying paused therefore both entail an audible
+// pre-roll from the top, and a seek/stop issued before the file has loaded is
+// silently dropped. Spawn the track muted (SetVolume happens on track creation)
+// and restore the gain once the server confirms it settled.
+async function selectTrack(index: number, offset: number, autoplay: boolean) {
+  // Only the newest selection may drive the settle loops and restore the gain:
+  // a superseded one would keep re-issuing skips for a track the user has
+  // already moved off, and un-mute the newer selection's pre-roll.
+  const generation = ++selectGeneration;
+  const isCurrent = () => selectGeneration === generation;
+  const gain = useJukebox.getState().gain;
+  const hidePreroll = offset > 0 || !autoplay;
+  await setGainJukebox(hidePreroll ? 0 : gain);
+  if (hidePreroll) mutedForPreroll = true;
+  // A newer selection (or a deactivate) that landed during that round-trip owns
+  // the server now: skipping would drag it back onto the track the user left.
+  if (!isCurrent()) return;
+  try {
+    await skipJukebox(index, 0);
+    if (offset > 0) await settleSeek(index, offset, isCurrent);
+    else if (!autoplay) await waitForPlaying(isCurrent);
+    if (!autoplay && isCurrent()) await stopJukebox();
+  } finally {
+    // Re-read instead of restoring the captured value: the settle loops run for
+    // seconds, and the volume slider may have moved in the meantime.
+    if (hidePreroll && isCurrent()) {
+      await setGainJukebox(useJukebox.getState().gain);
+      mutedForPreroll = false;
+    }
+  }
+}
+
 export async function activate(opts: ActivateOptions): Promise<void> {
   const ids = readQueueIds();
   const idx = currentIndex();
-  const gain = useJukebox.getState().gain;
   const offset = Math.max(0, Math.floor(opts.position));
   await clearJukebox();
   if (ids.length === 0) {
-    await setGainJukebox(gain);
+    await setGainJukebox(useJukebox.getState().gain);
   } else {
     await setJukebox(ids);
-    // mpv starts playing from 0:00 the moment it spawns, so seeking to the saved
-    // position or pausing both entail an audible pre-roll from the top. Spawn the
-    // track muted (SetVolume happens on track creation) and restore the gain once
-    // it has settled, so the listener never hears the 0:00 intro.
-    const hidePreroll = offset > 0 || !opts.autoplay;
-    await setGainJukebox(hidePreroll ? 0 : gain);
-    try {
-      // Selects the current track and begins playback (mpv auto-plays from 0:00).
-      await skipJukebox(idx, 0);
-      if (offset > 0) await settleSeek(idx, offset);
-      else if (!opts.autoplay) await waitForPlaying();
-      // mpv auto-started on skip; pause so activating from a paused player lands
-      // at the same spot without starting playback on the server.
-      if (!opts.autoplay) await stopJukebox();
-    } finally {
-      if (hidePreroll) await setGainJukebox(gain);
-    }
+    await selectTrack(idx, offset, opts.autoplay);
   }
   useJukebox.getState().setActive(true);
   await refreshStatus();
@@ -336,6 +439,18 @@ export async function deactivate(): Promise<{ position: number }> {
   }
   useJukebox.getState().setActive(false);
   useJukebox.getState().setStatus(null);
+  // Strand any selection still settling: its retries would restart playback on
+  // a server the user has just handed control back from. It skips its own gain
+  // restore as superseded, so hand the server back at the user's volume here.
+  selectGeneration += 1;
+  if (mutedForPreroll) {
+    mutedForPreroll = false;
+    try {
+      await setGainJukebox(useJukebox.getState().gain);
+    } catch {
+      // Same as the stop above.
+    }
+  }
   unsubscribeQueue();
   stopPolling();
   clearGainThrottle();
@@ -362,24 +477,33 @@ export async function jukeboxTogglePlayPause() {
   else await jukeboxPlay();
 }
 
+// The queue move is suppressed so the subscription doesn't push a select for it;
+// these issue their own skip, and going through the subscription would cost the
+// pre-roll mute the transport buttons don't need.
 export async function jukeboxSkipNext() {
-  useQueue.getState().next();
+  withoutQueuePush(() => useQueue.getState().next());
   const idx = useQueue.getState().currentIndex ?? 0;
-  await skipJukebox(idx, 0);
-  await refreshStatus();
+  await withPushShield(async () => {
+    await skipJukebox(idx, 0);
+    await refreshStatus();
+  });
 }
 
 export async function jukeboxSkipPrevious() {
-  useQueue.getState().previous();
+  withoutQueuePush(() => useQueue.getState().previous());
   const idx = useQueue.getState().currentIndex ?? 0;
-  await skipJukebox(idx, 0);
-  await refreshStatus();
+  await withPushShield(async () => {
+    await skipJukebox(idx, 0);
+    await refreshStatus();
+  });
 }
 
 export async function jukeboxSeekTo(seconds: number) {
   const idx = currentIndex();
-  await skipJukebox(idx, Math.max(0, Math.floor(seconds)));
-  await refreshStatus();
+  await withPushShield(async () => {
+    await skipJukebox(idx, Math.max(0, Math.floor(seconds)));
+    await refreshStatus();
+  });
 }
 
 export function jukeboxGetCurrentTime(): number {

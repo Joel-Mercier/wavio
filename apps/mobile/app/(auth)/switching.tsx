@@ -10,7 +10,10 @@ import { Heading } from "@/components/ui/heading";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { authenticateWithFallback } from "@/services/auth/authenticate";
+import {
+  authenticateWithFallback,
+  loginFailureStatus,
+} from "@/services/auth/authenticate";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
@@ -75,7 +78,9 @@ export default function SwitchingScreen() {
       reportError(err, {
         area: "auth",
         endpoint: `${server.type} login`,
-        status: axios.isAxiosError(err) ? err.response?.status : undefined,
+        // A Subsonic server rejects over a 200 with an error envelope, so the
+        // code it sent is the status worth tagging.
+        status: loginFailureStatus(err),
         extra: {
           serverType: server.type,
           url: scrubUrl(server.url),

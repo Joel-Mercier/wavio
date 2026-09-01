@@ -30,8 +30,9 @@ const mockSetJukebox = jest.fn();
 const mockSetGainJukebox = jest.fn();
 const mockStartJukebox = jest.fn();
 const mockStopJukebox = jest.fn();
+const mockAddJukebox = jest.fn();
 jest.mock("@/services/backend/jukebox", () => ({
-  addJukebox: jest.fn(),
+  addJukebox: (ids: string[]) => mockAddJukebox(ids),
   clearJukebox: () => mockClearJukebox(),
   getJukebox: () => mockGetJukebox(),
   setGainJukebox: (gain: number) => mockSetGainJukebox(gain),
@@ -69,13 +70,26 @@ const mockQueueState: MockQueue = {
   clearQueue: jest.fn(),
 };
 const mockQueueUnsub = jest.fn();
+// The real store notifies synchronously inside set(); keeping the listener lets
+// the tests drive queue changes the same way.
+let queueListener: ((state: MockQueue) => void) | null = null;
 jest.mock("@/stores/queue", () => ({
   __esModule: true,
   default: {
     getState: () => mockQueueState,
-    subscribe: jest.fn(() => mockQueueUnsub),
+    subscribe: jest.fn((listener: (state: MockQueue) => void) => {
+      queueListener = listener;
+      return mockQueueUnsub;
+    }),
   },
 }));
+
+// Apply a local queue change and notify, as the store would.
+function emitQueue(queue: { id: string }[], currentIndex: number | null) {
+  mockQueueState.queue = queue;
+  mockQueueState.currentIndex = currentIndex;
+  queueListener?.(mockQueueState);
+}
 
 import {
   activate,
@@ -119,6 +133,7 @@ beforeEach(() => {
   mockSetGainJukebox.mockReset().mockResolvedValue(undefined);
   mockStartJukebox.mockReset().mockResolvedValue(undefined);
   mockStopJukebox.mockReset().mockResolvedValue(undefined);
+  mockAddJukebox.mockReset().mockResolvedValue(undefined);
   mockRestoreServerQueue.mockReset();
   mockQueueState.queue = [];
   mockQueueState.currentIndex = 0;
@@ -126,6 +141,7 @@ beforeEach(() => {
   mockQueueState.next = jest.fn();
   mockQueueState.previous = jest.fn();
   mockQueueState.clearQueue = jest.fn();
+  queueListener = null;
   mockStatusJukebox.mockResolvedValue(status(0));
   useJukebox.setState(
     { active: false, status: null, gain: 0.5, pendingResume: false },
@@ -363,5 +379,230 @@ describe("jukebox service - gain throttling", () => {
     // No stale trailing flush afterwards.
     jest.advanceTimersByTime(300);
     expect(mockSetGainJukebox).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("jukebox service - queue subscription", () => {
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  // Bring up a session over `ids`, then forget the calls activation itself made
+  // so each test only sees what the queue change pushed.
+  async function activateWith(ids: string[], index: number) {
+    mockQueueState.queue = ids.map((id) => ({ id }));
+    mockQueueState.currentIndex = index;
+    await activate({ position: 0, autoplay: true });
+    mockSetJukebox.mockClear();
+    mockSkipJukebox.mockClear();
+    mockSetGainJukebox.mockClear();
+    mockStopJukebox.mockClear();
+    mockClearJukebox.mockClear();
+    mockAddJukebox.mockClear();
+  }
+
+  afterEach(async () => {
+    await deactivate();
+  });
+
+  test("selecting another track in the same queue skips instead of re-uploading", async () => {
+    // The reported bug: tapping track 3 of the album already playing moved only
+    // the index, which the id comparison never saw — so nothing reached the
+    // server and the status poll dragged the queue back to track 1.
+    await activateWith(["a", "b", "c"], 0);
+    emitQueue([{ id: "a" }, { id: "b" }, { id: "c" }], 2);
+    await flush();
+    expect(mockSetJukebox).not.toHaveBeenCalled();
+    expect(mockSkipJukebox).toHaveBeenCalledWith(2, 0);
+  });
+
+  test("playing a different list uploads it then selects the tapped track", async () => {
+    // `set` is a clear + add on the server, which leaves it stopped at index 0 —
+    // the follow-up skip is what actually plays what the user tapped.
+    await activateWith(["a", "b"], 0);
+    emitQueue([{ id: "x" }, { id: "y" }, { id: "z" }], 2);
+    await flush();
+    expect(mockSetJukebox).toHaveBeenCalledWith(["x", "y", "z"]);
+    expect(mockSkipJukebox).toHaveBeenCalledWith(2, 0);
+  });
+
+  test("appending adds only the tail and leaves the playing track alone", async () => {
+    await activateWith(["a", "b"], 0);
+    emitQueue([{ id: "a" }, { id: "b" }, { id: "c" }], 0);
+    await flush();
+    expect(mockAddJukebox).toHaveBeenCalledWith(["c"]);
+    expect(mockSetJukebox).not.toHaveBeenCalled();
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+  });
+
+  test("reordering re-uploads and resumes the same track at its position", async () => {
+    jest.useFakeTimers();
+    mockStatusJukebox.mockResolvedValue({
+      jukeboxStatus: {
+        currentIndex: 0,
+        gain: 0.5,
+        playing: true,
+        position: 42,
+      },
+    });
+    await activateWith(["a", "b", "c"], 0);
+    emitQueue([{ id: "b" }, { id: "c" }, { id: "a" }], 2);
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(mockSetJukebox).toHaveBeenCalledWith(["b", "c", "a"]);
+    expect(mockSkipJukebox).toHaveBeenCalledWith(2, 0);
+    // The pre-roll is muted while the track is re-seeked to where it was.
+    expect(mockSetGainJukebox).toHaveBeenNthCalledWith(1, 0);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.5);
+    jest.useRealTimers();
+  });
+
+  test("ignores a notification that moved neither the list nor the index", async () => {
+    await activateWith(["a", "b"], 0);
+    emitQueue([{ id: "a" }, { id: "b" }], 0);
+    await flush();
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+    expect(mockSetJukebox).not.toHaveBeenCalled();
+  });
+
+  test("clearing the queue clears the server playlist", async () => {
+    await activateWith(["a", "b"], 0);
+    emitQueue([], null);
+    await flush();
+    expect(mockClearJukebox).toHaveBeenCalled();
+  });
+
+  test("adopting the server's index does not push it straight back", async () => {
+    // setCurrentIndex notifies subscribers synchronously, so without the echo
+    // guard every poll that advanced the queue would fire a skip at the server
+    // it just came from.
+    await activateWith(["a", "b", "c"], 0);
+    mockQueueState.setCurrentIndex = jest.fn((index: number) => {
+      emitQueue(mockQueueState.queue, index);
+    });
+    mockStatusJukebox.mockResolvedValue(status(1));
+    await jukeboxRefreshStatus();
+    await flush();
+    expect(mockQueueState.setCurrentIndex).toHaveBeenCalledWith(1);
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+    expect(mockSetJukebox).not.toHaveBeenCalled();
+  });
+
+  test("tapping a track while the server is paused plays it", async () => {
+    // The select inherited the server's paused state, so an explicit play ended
+    // up stopping the jukebox on the track the user had just tapped.
+    jest.useFakeTimers();
+    await activateWith(["a", "b", "c"], 0);
+    useJukebox.setState(
+      { status: { currentIndex: 0, gain: 0.5, playing: false, position: 0 } },
+      false,
+    );
+    mockStatusJukebox.mockResolvedValue({
+      jukeboxStatus: { currentIndex: 2, gain: 0.5, playing: true, position: 0 },
+    });
+
+    emitQueue([{ id: "a" }, { id: "b" }, { id: "c" }], 2);
+    await jest.advanceTimersByTimeAsync(5000);
+
+    expect(mockSkipJukebox).toHaveBeenCalledWith(2, 0);
+    expect(mockStopJukebox).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  test("a selection superseded during its gain call never skips", async () => {
+    // The gain round-trip is a window in which the user can pick another track
+    // or hand playback back; resuming into the skip would drag the server onto
+    // the track they just left.
+    await activateWith(["a", "b", "c"], 0);
+    const gate: { release: () => void } = { release: () => {} };
+    mockSetGainJukebox.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          gate.release = () => resolve();
+        }),
+    );
+
+    emitQueue([{ id: "a" }, { id: "b" }, { id: "c" }], 2);
+    await flush();
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+
+    await deactivate();
+    gate.release();
+    await flush();
+
+    expect(mockSkipJukebox).not.toHaveBeenCalled();
+  });
+
+  test("restores the gain the slider ended on, not the captured one", async () => {
+    jest.useFakeTimers();
+    await activateWith(["a", "b", "c"], 0);
+    // The server sits at 0:00 while mpv loads, so the seek keeps retrying and
+    // the restore is seconds away — long enough for the slider to move.
+    mockStatusJukebox.mockResolvedValue({
+      jukeboxStatus: { currentIndex: 2, gain: 0.5, playing: true, position: 0 },
+    });
+    useJukebox.setState(
+      { status: { currentIndex: 0, gain: 0.5, playing: true, position: 42 } },
+      false,
+    );
+
+    emitQueue([{ id: "b" }, { id: "c" }, { id: "a" }], 2);
+    await jest.advanceTimersByTimeAsync(600);
+    useJukebox.getState().setGain(0.9);
+    await jest.advanceTimersByTimeAsync(5000);
+
+    expect(mockSetGainJukebox).toHaveBeenNthCalledWith(1, 0);
+    expect(mockSetGainJukebox).toHaveBeenLastCalledWith(0.9);
+    jest.useRealTimers();
+  });
+
+  test("a poll that read the server before a skip cannot rewind the queue", async () => {
+    await activateWith(["a", "b", "c"], 0);
+    const readGate: { release: () => void } = { release: () => {} };
+    mockGetJukebox.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          readGate.release = () =>
+            resolve({
+              jukeboxPlaylist: {
+                currentIndex: 0,
+                gain: 0.5,
+                playing: true,
+                position: 0,
+                entry: [{ id: "a" }, { id: "b" }, { id: "c" }],
+              },
+            });
+        }),
+    );
+    const skipGate: { release: () => void } = { release: () => {} };
+    mockSkipJukebox.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          skipGate.release = () => resolve();
+        }),
+    );
+
+    const poll = jukeboxReconcileFromServer();
+    mockQueueState.next = jest.fn(() => {
+      mockQueueState.currentIndex = 1;
+    });
+    const skip = jukeboxSkipNext();
+    await flush();
+    // The read was issued before the skip, so it still describes index 0.
+    readGate.release();
+    await poll;
+    const rewinds = mockQueueState.setCurrentIndex.mock.calls.length;
+    skipGate.release();
+    await skip;
+
+    expect(rewinds).toBe(0);
+  });
+
+  test("skipNext issues one skip, not one per path", async () => {
+    await activateWith(["a", "b"], 0);
+    mockQueueState.next = jest.fn(() => {
+      emitQueue(mockQueueState.queue, 1);
+    });
+    await jukeboxSkipNext();
+    await flush();
+    expect(mockSkipJukebox).toHaveBeenCalledTimes(1);
+    expect(mockSkipJukebox).toHaveBeenCalledWith(1, 0);
   });
 });

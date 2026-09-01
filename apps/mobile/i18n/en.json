@@ -1375,11 +1375,13 @@
 					"showEmptyHomeSectionsLabel": "Show empty sections",
 					"showEmptyHomeSectionsDescription": "Show home sections that have no content instead of hiding them",
 					"homeSectionsLabel": "Home sections",
-					"homeSectionsDescription": "Choose which sections appear on the home screen",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsCount_one": "{{count}} shown",
 					"homeSectionsCount_other": "{{count}} shown",
 					"homeSectionsSheetTitle": "Home sections",
 					"homeSectionsSheetDescription": "Turn sections off to hide them from the home screen",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "Shortcuts",
 						"moreFromArtist": "More from an artist",
@@ -1402,6 +1404,7 @@
 						"off": "Off",
 						"addToQueue": "Add to queue",
 						"playNext": "Play next",
+						"favorite": "Favorite",
 						"rate": "Rate",
 						"showInfo": "Get info",
 						"addToPlaylist": "Add to playlist"
@@ -1851,6 +1854,8 @@
 				"outputNoDevices": "No devices found on this network",
 				"outputUnverified": "Might not accept playback",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {

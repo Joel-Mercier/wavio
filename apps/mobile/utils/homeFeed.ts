@@ -167,6 +167,112 @@ export function availableHomeSections(
   );
 }
 
+const HOME_SECTION_CATALOG_KEYS: readonly HomeSectionSettingKey[] =
+  HOME_SECTION_CATALOG.map((entry) => entry.key);
+
+function dedupe(keys: readonly string[]): string[] {
+  return [...new Set(keys)];
+}
+
+/**
+ * Orders catalog entries (what the settings sheet lists) by a saved key order.
+ *
+ * Entries whose key is missing from `order` keep their catalog position at the
+ * end, which `Array.prototype.sort` being stable gives for free.
+ */
+export function orderHomeSectionEntries(
+  entries: readonly HomeSectionCatalogEntry[],
+  order: readonly string[],
+): HomeSectionCatalogEntry[] {
+  if (order.length === 0) return [...entries];
+  const rank = new Map(order.map((key, index) => [key, index]));
+  return [...entries].sort(
+    (a, b) =>
+      (rank.get(a.key) ?? Number.MAX_SAFE_INTEGER) -
+      (rank.get(b.key) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
+/**
+ * Applies a saved key order to an already-built feed.
+ *
+ * Descriptors are bucketed by their setting key, so the dynamic kinds that emit
+ * several rows under one key (moreFromArtist, songsByGenre) keep their relative
+ * order and land as one block at that key's slot. Keys missing from `order`
+ * (sections shipped after it was saved) keep their built position at the end.
+ * An empty `order` returns the feed untouched, which is what keeps the default
+ * feed's interleaving of those dynamic rows intact.
+ */
+export function orderHomeSections(
+  sections: HomeSectionDescriptor[],
+  order: readonly string[],
+): HomeSectionDescriptor[] {
+  if (order.length === 0) return sections;
+
+  const buckets = new Map<string, HomeSectionDescriptor[]>();
+  for (const section of sections) {
+    const key = homeSectionSettingKey(section);
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.push(section);
+    } else {
+      buckets.set(key, [section]);
+    }
+  }
+
+  const ordered: HomeSectionDescriptor[] = [];
+  const placed = new Set<string>();
+  for (const key of order) {
+    if (placed.has(key)) continue;
+    const bucket = buckets.get(key);
+    if (!bucket) continue;
+    placed.add(key);
+    ordered.push(...bucket);
+  }
+  for (const section of sections) {
+    if (!placed.has(homeSectionSettingKey(section))) ordered.push(section);
+  }
+  return ordered;
+}
+
+/**
+ * Moves `visibleKeys[fromIndex]` to `toIndex` and returns the new full order.
+ *
+ * `visibleKeys` is only what the settings sheet shows on the current server, so
+ * the move is replayed onto the stored order by re-inserting the key in front of
+ * the visible key that now follows it. Keys the current server can't offer stay
+ * pinned to that neighbour instead of being dropped, so editing the order on one
+ * server never scrambles it on another.
+ */
+export function reorderHomeSectionKeys(
+  stored: readonly string[],
+  visibleKeys: readonly string[],
+  fromIndex: number,
+  toIndex: number,
+): string[] {
+  // Bail before seeding: an out-of-range drop (the sheet's list shrank mid-drag)
+  // must leave an untouched order empty, or the feed would silently swap its
+  // default interleaving for the grouped layout without the user moving a thing.
+  const moved = visibleKeys[fromIndex];
+  if (moved === undefined) return [...stored];
+
+  const base = dedupe(stored.length ? stored : HOME_SECTION_CATALOG_KEYS);
+  for (const key of visibleKeys) {
+    if (!base.includes(key)) base.push(key);
+  }
+
+  const nextVisible = [...visibleKeys];
+  nextVisible.splice(fromIndex, 1);
+  const target = Math.min(Math.max(toIndex, 0), nextVisible.length);
+  nextVisible.splice(target, 0, moved);
+
+  const rest = base.filter((key) => key !== moved);
+  const anchor = nextVisible[target + 1];
+  const anchorIndex = anchor === undefined ? -1 : rest.indexOf(anchor);
+  rest.splice(anchorIndex < 0 ? rest.length : anchorIndex, 0, moved);
+  return rest;
+}
+
 export function homeSectionSettingKey(
   descriptor: HomeSectionDescriptor,
 ): HomeSectionSettingKey {
@@ -181,6 +287,7 @@ export interface BuildHomeFeedInput {
   availability: HomeSectionAvailability;
   sessionSeed: number;
   hiddenSections: readonly string[];
+  order: readonly string[];
 }
 
 function pickDecade(
@@ -208,6 +315,7 @@ export function buildHomeFeed({
   availability,
   sessionSeed,
   hiddenSections,
+  order,
 }: BuildHomeFeedInput): HomeSectionDescriptor[] {
   const { capabilities } = availability;
   const rand = mulberry32(sessionSeed || 1);
@@ -392,18 +500,19 @@ export function buildHomeFeed({
     sections.push({ id: "internetRadio", kind: "internetRadio" });
   }
 
-  // Filter after building (not by skipping pushes) so the seeded RNG consumes
-  // the same sequence regardless of hidden or unavailable sections — toggling
-  // one section, or connecting an integration, never reshuffles the other
-  // dynamic picks.
+  // Filter (and reorder) after building, not by skipping pushes, so the seeded
+  // RNG consumes the same sequence regardless of hidden or unavailable sections
+  // and of the user's order — toggling one section, connecting an integration or
+  // dragging a badge never reshuffles the other dynamic picks.
   const hidden = new Set(hiddenSections);
   const byKey = new Map(
     HOME_SECTION_CATALOG.map((entry) => [entry.key, entry]),
   );
-  return sections.filter((section) => {
+  const visible = sections.filter((section) => {
     const key = homeSectionSettingKey(section);
     if (hidden.has(key)) return false;
     const entry = byKey.get(key);
     return !entry || isHomeSectionAvailable(entry, availability);
   });
+  return orderHomeSections(visible, order);
 }

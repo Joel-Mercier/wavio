@@ -105,6 +105,7 @@ export type SwipeAction =
   | "off"
   | "addToQueue"
   | "playNext"
+  | "favorite"
   | "rate"
   | "showInfo"
   | "addToPlaylist";
@@ -123,6 +124,11 @@ interface AppStore {
   // so sections added in future releases default to visible.
   hiddenHomeSections: string[];
   setHiddenHomeSections: (hiddenHomeSections: string[]) => void;
+  // Home feed section order, as HOME_SECTION_CATALOG keys (utils/homeFeed.ts).
+  // Empty means the order buildHomeFeed produces; keys missing from a saved
+  // order (sections shipped after it was saved) keep their built position.
+  homeSectionOrder: string[];
+  setHomeSectionOrder: (homeSectionOrder: string[]) => void;
   // "off" hides lyrics entirely; "server" uses only server-embedded lyrics;
   // "all" also falls back to lrclib.net when the server has none.
   lyricsSource: "off" | "server" | "all";
@@ -285,6 +291,10 @@ export const useAppBase = create<AppStore>()(
       hiddenHomeSections: [],
       setHiddenHomeSections: (hiddenHomeSections: string[]) => {
         set({ hiddenHomeSections });
+      },
+      homeSectionOrder: [],
+      setHomeSectionOrder: (homeSectionOrder: string[]) => {
+        set({ homeSectionOrder });
       },
       lyricsSource: "all",
       setLyricsSource: (lyricsSource: "off" | "server" | "all") => {

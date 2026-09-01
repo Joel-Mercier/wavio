@@ -75,8 +75,12 @@ jest.mock("@/services/jellyfin/mappers", () => ({
   COMMON_FIELDS: "",
 }));
 
+import axios from "axios";
 import { getAlbumList2 as backendGetAlbumList2 } from "@/services/backend/lists";
-import { getAlbumList2 as jellyfinGetAlbumList2 } from "@/services/jellyfin/lists";
+import {
+  __resetLatestUnsupported,
+  getAlbumList2 as jellyfinGetAlbumList2,
+} from "@/services/jellyfin/lists";
 import { getAlbumList2 as localGetAlbumList2 } from "@/services/local/lists";
 import { getAlbumList2 as navidromeGetAlbumList2 } from "@/services/navidrome/albums";
 import { getAlbumList2 as subsonicGetAlbumList2 } from "@/services/openSubsonic/lists";
@@ -87,6 +91,8 @@ beforeEach(() => {
   mockJellyfinGet.mockReset();
   mockNavidromeGet.mockReset();
   mockQueryAlbums.mockReset();
+  __resetLatestUnsupported();
+  useAuthBase.setState({ serverId: "jf-1" });
 });
 
 describe("subsonic getAlbumList2", () => {
@@ -198,6 +204,87 @@ describe("jellyfin getAlbumList2", () => {
     await jellyfinGetAlbumList2("newest", {});
 
     expect(mockJellyfinGet.mock.calls[0][0]).toMatch(/\/Items\/Latest$/);
+  });
+
+  it("does not send /Items-only parameters to Latest", async () => {
+    // EnableTotalRecordCount has no meaning on a route that returns a bare
+    // array, and a strict model binder is entitled to 422 the unknown param.
+    mockJellyfinGet.mockResolvedValue({ data: [] });
+
+    await jellyfinGetAlbumList2("newest", {});
+
+    expect(
+      mockJellyfinGet.mock.calls[0][1].params.EnableTotalRecordCount,
+    ).toBeUndefined();
+  });
+
+  // The Latest route is a shortcut some Jellyfin-compatible servers refuse
+  // (one answers 422). /Items serves the same albums, so a refusal must cost
+  // the "recently added" row nothing.
+  describe("when the server refuses Latest", () => {
+    const refused = (status: number) => {
+      const err = new axios.AxiosError("Unprocessable Entity");
+      // biome-ignore lint/suspicious/noExplicitAny: minimal axios response stub
+      err.response = { status } as any;
+      return err;
+    };
+
+    it("falls back to /Items instead of failing the browse", async () => {
+      mockJellyfinGet
+        .mockRejectedValueOnce(refused(422))
+        .mockResolvedValueOnce({ data: { Items: [{ Id: "a" }] } });
+
+      const rsp = await jellyfinGetAlbumList2("newest", {});
+
+      expect(rsp.albumList2.album?.map((album) => album.id)).toEqual(["a"]);
+      expect(mockJellyfinGet.mock.calls[1][0]).toBe("/Items");
+      expect(mockJellyfinGet.mock.calls[1][1].params).toMatchObject({
+        SortBy: "DateCreated",
+        SortOrder: "Descending",
+      });
+    });
+
+    it("stops probing Latest on that server", async () => {
+      // What turned this into 57 events in 70 minutes: every home-screen mount
+      // re-asked, and React Query retried each one.
+      mockJellyfinGet
+        .mockRejectedValueOnce(refused(422))
+        .mockResolvedValue({ data: { Items: [] } });
+
+      await jellyfinGetAlbumList2("newest", {});
+      await jellyfinGetAlbumList2("newest", {});
+
+      expect(mockJellyfinGet).toHaveBeenCalledTimes(3);
+      expect(mockJellyfinGet.mock.calls[2][0]).toBe("/Items");
+    });
+
+    it("still probes a different server", async () => {
+      mockJellyfinGet
+        .mockRejectedValueOnce(refused(422))
+        .mockResolvedValueOnce({ data: { Items: [] } })
+        .mockResolvedValueOnce({ data: [] });
+      await jellyfinGetAlbumList2("newest", {});
+
+      useAuthBase.setState({ serverId: "jf-2" });
+      await jellyfinGetAlbumList2("newest", {});
+
+      expect(mockJellyfinGet.mock.calls[2][0]).toMatch(/\/Items\/Latest$/);
+    });
+
+    it("keeps using Latest when the failure was that nothing answered", async () => {
+      // A connection failure says nothing about the route, and /Items would
+      // fail identically — so it propagates rather than being remembered as a
+      // verdict the server never gave.
+      const offline = new axios.AxiosError("Network Error");
+      mockJellyfinGet.mockRejectedValueOnce(offline);
+
+      await expect(jellyfinGetAlbumList2("newest", {})).rejects.toBe(offline);
+      expect(mockJellyfinGet).toHaveBeenCalledTimes(1);
+
+      mockJellyfinGet.mockResolvedValue({ data: [] });
+      await jellyfinGetAlbumList2("newest", {});
+      expect(mockJellyfinGet.mock.calls[1][0]).toMatch(/\/Items\/Latest$/);
+    });
   });
 
   // Random has no direction to override.

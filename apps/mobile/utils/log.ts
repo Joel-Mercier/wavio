@@ -1,4 +1,8 @@
-import { isExpectedNoise, reportError } from "@/services/errorReporting";
+import {
+  isExpectedNoise,
+  isRecordIdSegment,
+  reportError,
+} from "@/services/errorReporting";
 
 // Serialize a non-Error arg for a synthesized message without producing a
 // useless "[object Object]" — the failure mode we're specifically fixing here.
@@ -47,6 +51,34 @@ export function logError(...args: unknown[]): void {
 
   reportError(normalized, {
     area: "ui",
+    endpoint: callSiteLabel(args),
     extra: context.length ? { context } : undefined,
   });
+}
+
+// Without an endpoint, reportError falls back to the error's *name* for the
+// fingerprint — so every plain `Error` logged anywhere in the UI landed in one
+// Issue titled after whichever fired last. The leading label call sites already
+// pass ("Error saving album for offline:") identifies the site well enough to
+// separate them; interpolated values are trimmed off so one label stays one
+// Issue.
+function callSiteLabel(args: unknown[]): string | undefined {
+  const label = args.find(
+    (arg): arg is string => typeof arg === "string" && arg.trim().length > 0,
+  );
+  if (!label) return undefined;
+  return label
+    .replace(/[\s:]+$/, "")
+    .trim()
+    .split(/\s+/)
+    .map((token) => (isLabelValue(token) ? "{}" : token))
+    .join(" ")
+    .slice(0, 80);
+}
+
+// Several call sites interpolate the id or path they were working on into the
+// label (`Error removing track ${trackId}:`). Left in, that would reintroduce
+// the per-record Issue explosion the label exists to fix.
+function isLabelValue(token: string): boolean {
+  return token.includes("/") || isRecordIdSegment(token.replace(/[:,]+$/, ""));
 }

@@ -94,6 +94,34 @@ describe("recentPlays store - addRecentPlay", () => {
     unsubscribe();
   });
 
+  it("refreshes metadata of an existing entry without reordering", () => {
+    get().addRecentPlay(make("a"));
+    get().addRecentPlay(make("b"));
+    get().addRecentPlay({
+      id: "a",
+      title: "renamed",
+      type: "album",
+      coverArt: "cover-2",
+    });
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["b", "a"]);
+    const refreshed = get().recentPlays.find((p) => p.id === "a");
+    expect(refreshed?.title).toBe("renamed");
+    expect(refreshed?.coverArt).toBe("cover-2");
+  });
+
+  // A radio station's artwork is scraped from its homepage, so playing it again
+  // before that resolves passes coverArt: undefined — which must not blank the
+  // shortcut (and the widget row) that already has it.
+  it("keeps stored metadata the caller left undefined", () => {
+    get().addRecentPlay({ ...make("a"), coverArt: "cover-1" });
+    const writes = mockWrites.length;
+    get().addRecentPlay({ ...make("a"), coverArt: undefined });
+    expect(get().recentPlays.find((p) => p.id === "a")?.coverArt).toBe(
+      "cover-1",
+    );
+    expect(mockWrites).toHaveLength(writes);
+  });
+
   it("pins favorites entry to the top when present", () => {
     get().addRecentPlay(make("a"));
     get().addRecentPlay(make("b"));
@@ -121,6 +149,61 @@ describe("recentPlays store - insertRecentPlayAtTop", () => {
     get().insertRecentPlayAtTop(make("a"));
     // favorites must remain pinned even though "a" was inserted on top
     expect(get().recentPlays[0].id).toBe("favorites");
+  });
+});
+
+describe("recentPlays store - refreshRecentPlay", () => {
+  it("updates an existing entry in place", () => {
+    get().addRecentPlay(make("a"));
+    get().addRecentPlay(make("b"));
+    get().refreshRecentPlay({
+      id: "a",
+      title: "renamed",
+      type: "album",
+      coverArt: "cover-2",
+    });
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["b", "a"]);
+    expect(get().recentPlays[1]).toMatchObject({
+      title: "renamed",
+      coverArt: "cover-2",
+    });
+  });
+
+  // Browsing an item that isn't a shortcut must not turn it into one.
+  it("does not add an entry that is not already there", () => {
+    get().addRecentPlay(make("a"));
+    const writes = mockWrites.length;
+    get().refreshRecentPlay(make("z"));
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["a"]);
+    expect(mockWrites).toHaveLength(writes);
+  });
+
+  it("does not write to storage when the metadata is unchanged", () => {
+    get().addRecentPlay(make("a"));
+    const writes = mockWrites.length;
+    get().refreshRecentPlay(make("a"));
+    expect(mockWrites).toHaveLength(writes);
+  });
+});
+
+describe("recentPlays store - removeRecentPlay", () => {
+  it("removes the matching entry and keeps the rest in order", () => {
+    get().addRecentPlay(make("a"));
+    get().addRecentPlay(make("b"));
+    get().addRecentPlay(make("c"));
+    get().removeRecentPlay("b");
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["c", "a"]);
+  });
+
+  // Same reason as addRecentPlay: a set() that changes nothing still rewrites
+  // storage and wakes the widget / Android Auto subscribers.
+  it("does not write to storage for an unknown id", () => {
+    get().addRecentPlay(make("a"));
+    const writes = mockWrites.length;
+    get().removeRecentPlay("nope");
+    expect(mockWrites).toHaveLength(writes);
+    get().removeRecentPlay("a");
+    expect(mockWrites.length).toBeGreaterThan(writes);
   });
 });
 

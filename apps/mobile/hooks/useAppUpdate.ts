@@ -9,6 +9,7 @@ import {
   checkForGithubUpdate,
   downloadAndInstall,
   type GithubUpdate,
+  isGithubRateLimited,
   isStoreUpdateAvailable,
   startStoreUpdate,
 } from "@/services/appUpdate";
@@ -75,7 +76,12 @@ export function useAppUpdate({ autoCheck = false } = {}) {
         }
         setUpdate(result);
         setStatus("available");
-      } catch {
+      } catch (error) {
+        // A blip leaves the throttle unstamped on purpose (above) so the next
+        // launch retries. Being over GitHub's hourly quota is the opposite case:
+        // an immediate retry is bound to fail too and spends more of the same
+        // quota, so record it as a completed check and wait out the interval.
+        if (isGithubRateLimited(error)) setLastUpdateCheckAt(Date.now());
         setStatus(manual ? "checkFailed" : "idle");
       }
     },

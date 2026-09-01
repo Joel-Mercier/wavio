@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from "axios";
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
   type JellyfinLyricsResponse,
@@ -38,8 +39,14 @@ export const getLyricsBySongId = async (
   _opts: { enhanced?: boolean } = {},
 ) => {
   try {
+    // A track with no lyrics 404s — the single most common state there is, and
+    // one this function resolves to an empty list. The interceptor runs before
+    // this catch, so without the flag every lyric-less track filed an Issue.
     const rsp = await jellyfinApiInstance.get<JellyfinLyricsResponse>(
       `/Audio/${id}/Lyrics`,
+      { notFoundIsExpected: true } as AxiosRequestConfig & {
+        notFoundIsExpected?: boolean;
+      },
     );
     const structured = mapJellyfinLyrics(rsp.data);
     return fakeEnvelope({

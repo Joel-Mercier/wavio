@@ -11,7 +11,10 @@ import Tv from "lucide-react-native/dist/esm/icons/tv.mjs";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
-import CastContext from "react-native-google-cast";
+import CastContext, {
+  useCastDevice,
+  useCastSession,
+} from "react-native-google-cast";
 import { Uniwind } from "uniwind";
 import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -88,6 +91,8 @@ export default function OutputSheet() {
   ]) as string[];
   const sheetRef = useRef<BottomSheetModal>(null);
   const capabilities = useCapabilities();
+  const castSession = useCastSession();
+  const castDevice = useCastDevice();
   const jukeboxActive = useJukebox((s) => s.active);
   const jukeboxGain = useJukebox((s) => s.gain);
   const jukeboxStatus = useJukebox((s) => s.status);
@@ -102,7 +107,8 @@ export default function OutputSheet() {
   // on-device library has no way to produce.
   const canCast = capabilities.remoteStreamableUrl;
   const showUpnp = canCast && isUpnpAvailable();
-  const playingLocally = !jukeboxActive && !upnpConnected;
+  const casting = !!castSession;
+  const playingLocally = !jukeboxActive && !upnpConnected && !casting;
 
   useEffect(() => {
     mountedSheetRef = sheetRef;
@@ -132,7 +138,11 @@ export default function OutputSheet() {
   const releaseCurrentOutput = useCallback(async () => {
     if (jukeboxActive) await takeOverLocally();
     if (upnpConnected) await upnpDisconnect();
-  }, [jukeboxActive, upnpConnected]);
+    // Ending the session hands playback back to this device through
+    // useCastSync, which restores the receiver's position locally.
+    if (castSession)
+      await CastContext.getSessionManager().endCurrentSession(true);
+  }, [castSession, jukeboxActive, upnpConnected]);
 
   const selectLocal = async () => {
     if (playingLocally) return;
@@ -180,10 +190,19 @@ export default function OutputSheet() {
     sheetRef.current?.dismiss();
   };
 
-  const openChromecastPicker = () => {
+  const openChromecastPicker = async () => {
     // Chromecast keeps its own device picker, which is also where an active
     // session is ended — so this hands off to it rather than mirroring its list.
-    CastContext.showCastDialog().catch(logError);
+    try {
+      // Resolves false rather than throwing when the dialog can't be shown —
+      // on Android that means no CastButton is attached (CastController), which
+      // is otherwise a completely silent dead tap (issue #177).
+      const shown = await CastContext.showCastDialog();
+      if (!shown) showError(t("app.player.outputChromecastUnavailable"));
+    } catch (e) {
+      logError(e);
+      showError(t("app.player.outputChromecastUnavailable"));
+    }
   };
 
   const handleSheetChange = useCallback(
@@ -338,10 +357,11 @@ export default function OutputSheet() {
             {canCast &&
               outputRow(
                 "chromecast",
-                <Cast size={20} color={gray200} />,
-                t("app.player.outputChromecast"),
-                false,
+                <Cast size={20} color={casting ? emerald500 : gray200} />,
+                castDevice?.friendlyName ?? t("app.player.outputChromecast"),
+                casting,
                 openChromecastPicker,
+                casting ? t("app.player.outputChromecastConnected") : undefined,
               )}
 
             {jukeboxActive && (

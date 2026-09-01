@@ -56,7 +56,6 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
-import { useCastSync } from "@/hooks/player/useCastSync";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -327,7 +326,6 @@ export default function PlayerScreen() {
     },
   });
 
-  useCastSync(playingTrack, isRadio);
   // Distinct tag from the /lyrics screen's: this screen stays mounted under it,
   // so a shared tag would let one screen's cleanup cancel the other's request.
   useKeepScreenAwake(
@@ -905,6 +903,11 @@ export default function PlayerScreen() {
                       size={24}
                       color={inlineLyricsEnabled ? emerald500 : "white"}
                     />
+                    {inlineLyricsEnabled && (
+                      <Box className="absolute left-0 right-0 -bottom-2 flex items-center justify-center">
+                        <Box className="bg-emerald-500 rounded-full size-1" />
+                      </Box>
+                    )}
                   </FadeOut>
                 )}
                 <FadeOut

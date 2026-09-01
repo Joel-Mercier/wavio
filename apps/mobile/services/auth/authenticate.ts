@@ -72,6 +72,43 @@ export class InvalidCredentialsError extends Error {
   }
 }
 
+// Thrown when the server refused the login for a reason that is NOT a bad
+// credential: a Subsonic envelope carrying an error code, an address that
+// answers but isn't a WebDAV share, an SMB host with no such share. Unlike
+// `InvalidCredentialsError` these are reported, so `message` is a stable English
+// diagnostic and the localized copy the user reads travels beside it.
+//
+// Throwing the translated string as `message` is what made these unreadable in
+// Sentry: the Issue title was whichever language the last reporter's phone was
+// set to, and the Subsonic error code — the one fact separating a wrong base
+// path from a genuine server-side rejection — never left the device.
+export class LoginFailedError extends Error {
+  readonly userMessage: string;
+  readonly subsonicCode?: number;
+  constructor(message: string, userMessage: string, subsonicCode?: number) {
+    super(message);
+    this.name = "LoginFailedError";
+    this.userMessage = userMessage;
+    this.subsonicCode = subsonicCode;
+  }
+}
+
+// The copy a failed login should show. Every other error still says what it
+// says; only `LoginFailedError` keeps its user-facing text out of `message`.
+export function loginFailureMessage(error: unknown): string {
+  if (error instanceof LoginFailedError) return error.userMessage;
+  return error instanceof Error ? error.message : String(error);
+}
+
+// The `status` a failed login should be reported under: the HTTP status when
+// the server answered with one, otherwise the Subsonic error code. A rejected
+// Subsonic envelope arrives over HTTP 200, so without this the tag is empty for
+// exactly the failures that need triaging.
+export function loginFailureStatus(error: unknown): number | undefined {
+  if (axios.isAxiosError(error)) return error.response?.status;
+  return error instanceof LoginFailedError ? error.subsonicCode : undefined;
+}
+
 // Longer than the reachability probe's budget: this runs once, with the user
 // watching, and an SMB handshake against a NAS waking from sleep is slow.
 const SMB_LOGIN_TIMEOUT_MS = 12000;
@@ -105,7 +142,8 @@ function translateSmbFailure(error: unknown, target: SmbTarget): Error {
     );
   }
   if (code === "ERR_SMB_NO_SHARE") {
-    return new Error(
+    return new LoginFailedError(
+      "SMB: no such share on the host",
       i18n.t("auth.login.smbShareNotFound", { share: target.share }),
     );
   }
@@ -114,7 +152,10 @@ function translateSmbFailure(error: unknown, target: SmbTarget): Error {
     // decide whether a server's fallback address is worth trying, and without it
     // an SMB share would silently never fail over.
     return Object.assign(
-      new Error(i18n.t("auth.login.smbUnreachable", { port: target.port })),
+      new LoginFailedError(
+        "SMB: host unreachable",
+        i18n.t("auth.login.smbUnreachable", { port: target.port }),
+      ),
       { code },
     );
   }
@@ -122,7 +163,10 @@ function translateSmbFailure(error: unknown, target: SmbTarget): Error {
   // mandates SMB 3 is refused where Android would connect. Different advice from
   // "check the address", hence its own code.
   if (code === "ERR_SMB_DIALECT") {
-    return new Error(i18n.t("auth.login.smbDialectUnsupported"));
+    return new LoginFailedError(
+      "SMB: host requires SMB 3, client speaks 2.x",
+      i18n.t("auth.login.smbDialectUnsupported"),
+    );
   }
   return error instanceof Error ? error : new Error(String(error));
 }
@@ -278,7 +322,10 @@ export async function authenticateRemote(
       // genuinely different fixes: a 405 means PROPFIND is being blocked (often
       // by a reverse proxy), a 404 means the base path is wrong, and a redirect
       // means a login page is standing in front of the share.
-      throw new Error(i18n.t(webdavSetupHint(response.status)));
+      throw new LoginFailedError(
+        `WebDAV: PROPFIND on the share root answered ${response.status}, not a 207 multistatus`,
+        i18n.t(webdavSetupHint(response.status)),
+      );
     }
     return { serverType: "webdav" };
   }
@@ -290,7 +337,10 @@ export async function authenticateRemote(
     // "no share by that name" and "nothing answered" need very different advice.
     const target = parseSmbUrl(trimmedUrl);
     if (!target) {
-      throw new Error(i18n.t("auth.login.smbUrlInvalid"));
+      throw new LoginFailedError(
+        "SMB: unparseable share URL",
+        i18n.t("auth.login.smbUrlInvalid"),
+      );
     }
     const { domain, user } = splitDomainUser(trimmedUsername);
     try {
@@ -358,12 +408,23 @@ export async function authenticateRemote(
   // "Cannot read property 'error' of undefined" TypeError.
   if (subsonicResponse?.status !== "ok") {
     const code = subsonicResponse?.error?.code;
-    const message =
+    const userMessage =
       (typeof code === "number" ? openSubsonicErrorCodes[code] : undefined) ??
       i18n.t("auth.login.loginErrorMessage");
-    throw isCredentialErrorCode(code)
-      ? new InvalidCredentialsError(message)
-      : new Error(message);
+    if (isCredentialErrorCode(code)) {
+      throw new InvalidCredentialsError(userMessage);
+    }
+    // Two very different failures reach here and the code is what tells them
+    // apart: a numeric one means the server rejected us and said why, while its
+    // absence means whatever answered wasn't Subsonic at all — the wrong base
+    // path, a proxy root, a captive portal.
+    throw new LoginFailedError(
+      typeof code === "number"
+        ? `Subsonic login rejected: error code ${code}`
+        : "Subsonic login: response carries no subsonic-response envelope",
+      userMessage,
+      typeof code === "number" ? code : undefined,
+    );
   }
 
   let navidrome: RemoteLoginOptions["navidrome"] = null;

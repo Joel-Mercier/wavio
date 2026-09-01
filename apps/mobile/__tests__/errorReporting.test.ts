@@ -416,6 +416,104 @@ describe("reportError classifier", () => {
     ]);
   });
 
+  // 37 Sentry Issues in one morning, one per Jellyfin track a user opened,
+  // because the item GUID went into the fingerprint verbatim.
+  it("normalizes record ids out of the fingerprint endpoint", () => {
+    const error = new axios.AxiosError("Not Found");
+    error.response = { status: 404 } as never;
+    reportError(error, {
+      area: "api",
+      backend: "jellyfin",
+      endpoint: "/Audio/f8dc4a37c9e2401bb1f0f5b03a7e9c11/Lyrics",
+    });
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "api",
+      "jellyfin",
+      "/Audio/{id}/Lyrics",
+    ]);
+  });
+
+  it.each([
+    [
+      "/Users/41f32c3c-5f9e-4b2a-9c31-8d7e6a5b4c3d/Items/Latest",
+      "/Users/{id}/Items/Latest",
+    ],
+    ["/artist/93/albums", "/artist/{id}/albums"],
+    ["/nd/playlist/uuKbYRHaz1gfCRhpIsXzcC", "/nd/playlist/{id}"],
+    ["/api/get?track_name=Dopesmoker&duration=3809", "/api/get"],
+  ])("normalizes %s", (endpoint, expected) => {
+    reportError(new Error("boom"), { area: "api", api: "lrclib", endpoint });
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "api",
+      "lrclib",
+      expected,
+    ]);
+  });
+
+  // The other half of the trade: over-eager normalization would merge endpoints
+  // that must stay apart. The raw value still ships on contexts.request either
+  // way, so grouping is the only thing at stake.
+  it.each([
+    "/rest/getOpenSubsonicExtensions",
+    "/rest/getSimilarSongs2",
+    "/Audio/{id}/Lyrics",
+  ])("leaves the real endpoint %s alone", (endpoint) => {
+    reportError(new Error("boom"), {
+      area: "api",
+      backend: "subsonic",
+      endpoint,
+    });
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "api",
+      "subsonic",
+      endpoint,
+    ]);
+  });
+
+  it("keeps a non-path endpoint label as-is", () => {
+    reportError(new Error("boom"), {
+      area: "auth",
+      endpoint: "navidrome login",
+    });
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "auth",
+      "navidrome login",
+    ]);
+  });
+
+  it("suppresses an HTTP/2 stream reset from the native downloader", () => {
+    reportError(
+      new Error(
+        "Call to function 'FileSystem.downloadFileAsync' has been rejected. → Caused by: okhttp3.internal.http2.StreamResetException: stream was reset: CANCEL",
+      ),
+      { area: "storage" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "Unsupported request: getnowplaying",
+    "getPodcasts is not implemented",
+  ])("suppresses a code-0 '%s' envelope", (message) => {
+    reportError(
+      { code: 0, message },
+      { area: "api", backend: "subsonic", endpoint: "/rest/getNowPlaying" },
+    );
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
+  it("suppresses a 403 on a call that validates a user-entered API key", () => {
+    const error = new axios.AxiosError("Forbidden");
+    error.response = { status: 403 } as never;
+    reportError(error, {
+      area: "api",
+      api: "soulsync",
+      endpoint: "/system/status",
+      unauthorizedIsExpected: true,
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+
   it("reports a given error object only once (dedupe)", () => {
     const error = new Error("once");
     reportError(error, { area: "player" });
@@ -461,6 +559,24 @@ describe("logError", () => {
     expect(reported).toBeInstanceOf(Error);
     expect(reported.message).not.toContain("[object Object]");
     expect(reported.message).toContain("some");
+  });
+
+  // Without a label every plain Error logged anywhere in the UI shared one
+  // fingerprint (["ui", "", "Error"]) and one unreadable Issue.
+  it("fingerprints on the call-site label", () => {
+    logError("Error saving album for offline:", new Error("boom"));
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "ui",
+      "Error saving album for offline",
+    ]);
+  });
+
+  it("strips an interpolated id out of the label", () => {
+    logError("Error removing track uuKbYRHaz1gfCRhpIsXzcC:", new Error("boom"));
+    expect(mockSetFingerprint).toHaveBeenCalledWith([
+      "ui",
+      "Error removing track {}",
+    ]);
   });
 
   it("suppresses a gateway 5xx passed to logError", () => {

@@ -20,6 +20,11 @@ function hashScope(scope: string): string {
 // routes (primary <-> fallback) — same user, same Sentry id.
 function applyScope(state: ReturnType<typeof useAuthBase.getState>): void {
   setTag("serverType", state.serverType);
+  // The `serverType` alone doesn't say which OpenSubsonic implementation is
+  // answering, and they differ in exactly the ways that produce Issues (which
+  // endpoints exist, how a missing method is phrased). The Subsonic response
+  // interceptor records this off every envelope.
+  setTag("serverVersion", state.serverVersion || null);
   if (!state.isAuthenticated) {
     setUser(null);
     return;

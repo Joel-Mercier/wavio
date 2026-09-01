@@ -9,7 +9,10 @@ import type {
 } from "@/services/appUpdate/types";
 import { isNewer } from "@/services/appUpdate/version";
 
-export { releasesPageUrl } from "@/services/appUpdate/github";
+export {
+  isGithubRateLimited,
+  releasesPageUrl,
+} from "@/services/appUpdate/github";
 export {
   isStoreUpdateAvailable,
   startStoreUpdate,

@@ -33,7 +33,13 @@ jest.mock("@/stores/auth", () => ({
   currentAuthScope: () => "scope",
 }));
 
-jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
+// The real UNSUPPORTED_METHOD_RE, not a copy: it is shared with
+// errorReporting's own matcher precisely so the two can't drift, and a mocked
+// copy here would hide exactly the drift the sharing exists to prevent.
+jest.mock("@/services/errorReporting", () => ({
+  ...jest.requireActual("@/services/errorReporting"),
+  reportError: jest.fn(),
+}));
 jest.mock("@/services/navidromeIdMigration/detect", () => ({
   noteServerVersion: jest.fn(),
 }));
@@ -77,6 +83,19 @@ describe("subsonicEnvelope capability downgrade", () => {
           "Method not supported: getRandomSongs",
         ),
       ),
+    ).toThrow();
+    expect(songLists()).toBe(false);
+  });
+
+  // Only Navidrome says "Method not supported". A server phrasing it its own way
+  // used to leave the capability enabled forever — and file an Issue on every
+  // screen visit that re-called the missing endpoint (Sentry WAVIO-GN et al.).
+  it.each([
+    "Unsupported request: getRandomSongs",
+    "getRandomSongs is not implemented",
+  ])("disables the capability on '%s' too", (message) => {
+    expect(() =>
+      subsonicEnvelope(failed("/rest/getRandomSongs", 0, message)),
     ).toThrow();
     expect(songLists()).toBe(false);
   });

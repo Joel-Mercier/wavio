@@ -1,3 +1,4 @@
+import axios from "axios";
 import jellyfinApiInstance from "@/services/jellyfin/index";
 import {
   mapBaseItemToAlbum,
@@ -27,6 +28,22 @@ const FIELDS =
 
 function userId(): string {
   return useAuthBase.getState().jellyfinUserId ?? "";
+}
+
+// Servers whose `/Users/{id}/Items/Latest` route answered with a refusal. Not a
+// capability — /Items serves the same list, so nothing about the app changes —
+// just a note to stop paying for the shortcut on a server that won't serve it.
+// Per session and in memory: re-probing once per launch costs one request and
+// heals by itself if the server is fixed or replaced.
+const latestUnsupported = new Set<string>();
+
+function serverKey(): string {
+  const { serverId, url } = useAuthBase.getState();
+  return serverId || url || "";
+}
+
+export function __resetLatestUnsupported(): void {
+  latestUnsupported.clear();
 }
 
 function paramsFor(
@@ -156,25 +173,51 @@ async function fetchAlbums(
   // first page, then fall back to /Items?SortBy=DateCreated for pagination.
   // ...and only for the newest-first direction the Latest endpoint serves; an
   // ascending "recently added" has to go through /Items like everything else.
-  if (type === "newest" && !opts.offset && opts.order !== "asc") {
+  // `EnableTotalRecordCount` is deliberately not sent: it belongs to /Items, not
+  // to Latest — which returns a bare array with no count to enable — and a
+  // strict model binder is entitled to reject a parameter its route never had.
+  if (
+    type === "newest" &&
+    !opts.offset &&
+    opts.order !== "asc" &&
+    !latestUnsupported.has(serverKey())
+  ) {
     const size = opts.size ?? 20;
-    const rsp = await jellyfinApiInstance.get<BaseItemDto[]>(
-      `/Users/${userId()}/Items/Latest`,
-      {
-        params: {
-          IncludeItemTypes: "Audio",
-          // Limit counts tracks before album grouping; multiply so we get
-          // approximately `size` albums back.
-          Limit: size * 4,
-          Fields: FIELDS,
-          ParentId: opts.musicFolderId,
-          ImageTypeLimit: 1,
-          EnableImageTypes: "Primary,Backdrop,Banner,Thumb",
-          EnableTotalRecordCount: false,
+    try {
+      const rsp = await jellyfinApiInstance.get<BaseItemDto[]>(
+        `/Users/${userId()}/Items/Latest`,
+        {
+          params: {
+            IncludeItemTypes: "Audio",
+            // Limit counts tracks before album grouping; multiply so we get
+            // approximately `size` albums back.
+            Limit: size * 4,
+            Fields: FIELDS,
+            ParentId: opts.musicFolderId,
+            ImageTypeLimit: 1,
+            EnableImageTypes: "Primary,Backdrop,Banner,Thumb",
+          },
         },
-      },
-    );
-    return (rsp.data ?? []).slice(0, size);
+      );
+      return (rsp.data ?? []).slice(0, size);
+    } catch (error) {
+      // The shortcut is an optimization, so a server that refuses it must not
+      // take the "recently added" row down with it — /Items below returns the
+      // same albums. Jellyfin-compatible servers do refuse it: one answers 422,
+      // and React Query retried the home screen into 57 events in 70 minutes.
+      //
+      // The refusal is still reported (the response interceptor sees it before
+      // this catch does), which is deliberate — a server that can't serve the
+      // route is worth knowing about. The memo is what makes that one event per
+      // session instead of one per home-screen mount.
+      //
+      // Only a server that *answered* disqualifies the route. A request that
+      // never got a response says nothing about it, and /Items would fail
+      // identically — so rethrow rather than probing twice and remembering a
+      // verdict the server never gave.
+      if (!axios.isAxiosError(error) || !error.response) throw error;
+      latestUnsupported.add(serverKey());
+    }
   }
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: albumParams(type, opts),

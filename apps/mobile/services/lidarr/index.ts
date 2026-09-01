@@ -38,13 +38,12 @@ export type LidarrRequestOptions = Omit<
   headers?: Record<string, string>;
   /** A 404 is a data state for this call (e.g. the record is already gone). */
   notFoundIsExpected?: boolean;
+  /**
+   * A 401/403 is a data state for this call: it validates the user-entered API
+   * key, so a rejection is a key to correct, not a bug.
+   */
+  unauthorizedIsExpected?: boolean;
 };
-
-// Ids in the path would otherwise fingerprint one Issue per record — group
-// `/artist/93` and `/artist/94` as `/artist/:id`.
-function endpointFor(path: string): string {
-  return path.replace(/\/\d+(?=\/|$)/g, "/:id");
-}
 
 // Shared request wrapper for the section files: resolves the connection config,
 // scopes the call to the /api/v1 root and unwraps the response body.
@@ -54,6 +53,7 @@ export async function lidarrRequest<T>(
     config,
     headers,
     notFoundIsExpected,
+    unauthorizedIsExpected,
     ...axiosConfig
   }: LidarrRequestOptions = {},
 ): Promise<T> {
@@ -77,8 +77,9 @@ export async function lidarrRequest<T>(
     reportError(error, {
       area: "api",
       api: "lidarr",
-      endpoint: endpointFor(path),
+      endpoint: path,
       notFoundIsExpected,
+      unauthorizedIsExpected,
     });
     throw error;
   }

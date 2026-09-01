@@ -135,18 +135,24 @@ describe("getLrclibLyrics when /api/get fails for a non-404 reason", () => {
     },
   );
 
-  it("still reports the /api/get failure it recovered from", async () => {
-    const { getLrclibLyrics } = importLyrics();
-    mockGet
-      .mockRejectedValueOnce(httpError(520))
-      .mockResolvedValue({ data: [record] });
+  // The recovery is silent: a /api/get failure the search already recovered from
+  // costs the user nothing, and reporting it filed 520s and 400s against an
+  // endpoint whose absence changes no outcome. /api/search still reports.
+  it.each([520, 500, 400])(
+    "does not report the %s it recovered from",
+    async (status) => {
+      const { getLrclibLyrics } = importLyrics();
+      mockGet
+        .mockRejectedValueOnce(httpError(status))
+        .mockResolvedValue({ data: [record] });
 
-    await getLrclibLyrics(PARAMS);
-    expect(mockReportError).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ endpoint: "/api/get" }),
-    );
-  });
+      await getLrclibLyrics(PARAMS);
+      expect(mockReportError).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ endpoint: "/api/get" }),
+      );
+    },
+  );
 
   it("does not fall through when the failure is a block", async () => {
     const { getLrclibLyrics } = importLyrics();

@@ -66,7 +66,11 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useSetRating, useStar } from "@/hooks/backend/useMediaAnnotation";
+import {
+  useSetRating,
+  useStar,
+  useUnstar,
+} from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
   useIsCollectionAvailableOffline,
@@ -102,6 +106,7 @@ export interface TrackActionsApi {
   addToPlaylist: (track: Child) => void;
   showInfo: (track: Child) => void;
   rate: (track: Child) => void;
+  toggleFavorite: (track: Child) => void;
 }
 
 const TrackActionsContext = createContext<TrackActionsApi | null>(null);
@@ -144,7 +149,11 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     getDownloadProgress,
   } = useOfflineDownloads();
 
+  // Only `mutate` is referentially stable on a mutation result, and the
+  // memoized `api` below reaches every track row through context — depend on
+  // it rather than on the mutation object, which changes on every transition.
   const doFavorite = useStar();
+  const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const doSetRating = useSetRating();
 
@@ -229,6 +238,95 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     setShowRatingModal(true);
   }, []);
 
+  const favorite = useCallback(
+    (target: Child) => {
+      doFavorite.mutate(
+        { id: target.id },
+        {
+          onSuccess: () => {
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.tracks.favoriteSuccessMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: () => {
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.tracks.favoriteErrorMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+        },
+      );
+    },
+    [doFavorite.mutate, toast, t],
+  );
+
+  const unfavorite = useCallback(
+    (target: Child) => {
+      doUnfavorite.mutate(
+        { id: target.id },
+        {
+          onSuccess: () => {
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="success">
+                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.tracks.unfavoriteSuccessMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+          onError: () => {
+            toast.show({
+              placement: "top",
+              duration: 3000,
+              render: () => (
+                <Toast action="error">
+                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                  <ToastDescription>
+                    {t("app.tracks.unfavoriteErrorMessage")}
+                  </ToastDescription>
+                </Toast>
+              ),
+            });
+          },
+        },
+      );
+    },
+    [doUnfavorite.mutate, toast, t],
+  );
+
+  const toggleFavorite = useCallback(
+    (target: Child) => {
+      if (target.starred) {
+        unfavorite(target);
+      } else {
+        favorite(target);
+      }
+    },
+    [favorite, unfavorite],
+  );
+
   const trackArtists = track?.artists?.length
     ? track.artists
     : track?.artistId
@@ -274,39 +372,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const handleFavoritePress = () => {
     if (!track) return;
-    doFavorite.mutate(
-      { id: track.id },
-      {
-        onSuccess: () => {
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.favoriteSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: () => {
-          toast.show({
-            placement: "top",
-            duration: 3000,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.favoriteErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
+    favorite(track);
   };
 
   const handlePlayNextPress = () => {
@@ -673,8 +739,16 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   };
 
   const api = useMemo<TrackActionsApi>(
-    () => ({ open, addToQueue, playNext, addToPlaylist, showInfo, rate }),
-    [open, addToQueue, playNext, addToPlaylist, showInfo, rate],
+    () => ({
+      open,
+      addToQueue,
+      playNext,
+      addToPlaylist,
+      showInfo,
+      rate,
+      toggleFavorite,
+    }),
+    [open, addToQueue, playNext, addToPlaylist, showInfo, rate, toggleFavorite],
   );
 
   return (

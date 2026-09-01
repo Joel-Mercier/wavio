@@ -1,4 +1,5 @@
 import navidromeApiInstance from "@/services/navidrome";
+import { asList } from "@/services/navidrome/listBody";
 import type { NavidromeAlbum } from "@/services/navidrome/types";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3, AlbumList2 } from "@/services/openSubsonic/types";
@@ -102,6 +103,8 @@ export const getAlbumList2 = async (
     },
   });
   return {
-    albumList2: { album: (rsp.data ?? []).map(mapNavidromeAlbumToAlbumID3) },
+    albumList2: {
+      album: asList<NavidromeAlbum>(rsp.data).map(mapNavidromeAlbumToAlbumID3),
+    },
   };
 };

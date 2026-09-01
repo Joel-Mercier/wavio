@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from "axios";
 import jellyfinApiInstance from "@/services/jellyfin";
 import { useAuthBase } from "@/stores/auth";
 
@@ -32,7 +33,11 @@ export const getListenBrainzSubmitEnabled = async (): Promise<
         JellyfinUserId?: string;
         IsListenSubmitEnabled?: boolean;
       }[];
-    }>(`/Plugins/${LISTENBRAINZ_PLUGIN_ID}/Configuration`);
+      // A 404 here *is* the answer: the ListenBrainz plugin isn't installed,
+      // which the catch below reads as "definitively not scrobbling".
+    }>(`/Plugins/${LISTENBRAINZ_PLUGIN_ID}/Configuration`, {
+      notFoundIsExpected: true,
+    } as AxiosRequestConfig & { notFoundIsExpected?: boolean });
     const configs = rsp.data?.UserConfigs;
     if (!Array.isArray(configs)) return null;
     // Jellyfin ids are hex GUIDs that the server may render dashed or not

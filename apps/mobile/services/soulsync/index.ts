@@ -70,6 +70,11 @@ export type SoulSyncRequestOptions = Omit<
   config?: SoulSyncConfig;
   /** Extra headers merged onto the auth headers. */
   headers?: Record<string, string>;
+  /**
+   * A 401/403 is a data state for this call: it validates the user-entered API
+   * key, so a rejection is a key to correct, not a bug.
+   */
+  unauthorizedIsExpected?: boolean;
 };
 
 export interface SoulSyncPagedResult<T> {
@@ -92,7 +97,12 @@ export async function soulSyncRequest<T>(
 // list endpoints that page.
 export async function soulSyncRequestPaged<T>(
   path: string,
-  { config, headers, ...axiosConfig }: SoulSyncRequestOptions = {},
+  {
+    config,
+    headers,
+    unauthorizedIsExpected,
+    ...axiosConfig
+  }: SoulSyncRequestOptions = {},
 ): Promise<SoulSyncPagedResult<T>> {
   const { serverUrl, apiKey, profileId } = resolveConfig(config);
   if (!serverUrl || !apiKey) {
@@ -116,7 +126,12 @@ export async function soulSyncRequestPaged<T>(
   } catch (error) {
     // The classifier drops offline / unreachable / cancelled noise and reports
     // only genuine HTTP failures.
-    reportError(error, { area: "api", api: "soulsync", endpoint: path });
+    reportError(error, {
+      area: "api",
+      api: "soulsync",
+      endpoint: path,
+      unauthorizedIsExpected,
+    });
     // A failure envelope arriving with a non-2xx status is still a structured
     // error; re-throw it in the same shape as the 2xx path below so callers
     // have one error type to handle.

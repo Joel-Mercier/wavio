@@ -10,6 +10,8 @@ import {
   type HomeSectionAvailability,
   homeSectionSettingKey,
   isHomeSectionAvailable,
+  orderHomeSectionEntries,
+  reorderHomeSectionKeys,
 } from "@/utils/homeFeed";
 
 const allCapabilities = Object.fromEntries(
@@ -33,13 +35,18 @@ const genres = [
   { value: "Jazz", songCount: 8, albumCount: 3 },
 ] as Genre[];
 
-const build = (hiddenSections: readonly string[] = [], listenBrainz = true) =>
+const build = (
+  hiddenSections: readonly string[] = [],
+  listenBrainz = true,
+  order: readonly string[] = [],
+) =>
   buildHomeFeed({
     seedAlbums,
     genres,
     availability: availability(listenBrainz),
     sessionSeed: 42,
     hiddenSections,
+    order,
   });
 
 describe("buildHomeFeed hidden sections", () => {
@@ -174,6 +181,7 @@ const buildWith = (capabilities: BackendCapabilities) =>
     availability: { ...availability(), capabilities },
     sessionSeed: 42,
     hiddenSections: [],
+    order: [],
   });
 
 const dynamicPicks = (sections: ReturnType<typeof buildWith>) =>
@@ -212,5 +220,174 @@ describe("buildHomeFeed song sections per backend", () => {
     const on = getCapabilities("navidrome");
     const off = { ...on, songLists: false };
     expect(dynamicPicks(buildWith(off))).toEqual(dynamicPicks(buildWith(on)));
+  });
+});
+
+const CATALOG_KEYS = HOME_SECTION_CATALOG.map((entry) => entry.key);
+
+describe("buildHomeFeed section order", () => {
+  const sorted = (ids: string[]) => [...ids].sort();
+  const picks = (ids: string[]) =>
+    ids.filter(
+      (id) =>
+        id.startsWith("moreFromArtist:") ||
+        id.startsWith("albumsByDecade:") ||
+        id.startsWith("albumsByGenre:"),
+    );
+
+  it("leaves the feed untouched when no order is saved", () => {
+    expect(build([], true, []).map((s) => s.id)).toEqual(
+      build().map((s) => s.id),
+    );
+  });
+
+  it("puts a section where the order says", () => {
+    const order = [
+      "internetRadio",
+      ...CATALOG_KEYS.filter((key) => key !== "internetRadio"),
+    ];
+    const ids = build([], true, order).map((s) => s.id);
+    expect(ids[0]).toBe("internetRadio");
+    expect(sorted(ids)).toEqual(sorted(build().map((s) => s.id)));
+  });
+
+  it("groups the repeated dynamic rows at their key's slot, in built order", () => {
+    const builtArtistRows = build()
+      .map((s) => s.id)
+      .filter((id) => id.startsWith("moreFromArtist:"));
+    expect(builtArtistRows.length).toBeGreaterThan(1);
+
+    const ids = build([], true, CATALOG_KEYS).map((s) => s.id);
+    const first = ids.indexOf(builtArtistRows[0]);
+    expect(ids.slice(first, first + builtArtistRows.length)).toEqual(
+      builtArtistRows,
+    );
+  });
+
+  it("orders the whole feed by the saved keys", () => {
+    const order = [...CATALOG_KEYS].reverse();
+    const keys = build([], true, order).map((section) =>
+      homeSectionSettingKey(section),
+    );
+    // Each key appears as one contiguous block, and the blocks follow `order`.
+    const blocks = keys.filter((key, index) => key !== keys[index - 1]);
+    expect(new Set(blocks).size).toBe(blocks.length);
+    expect(blocks).toEqual(order.filter((key) => blocks.includes(key)));
+  });
+
+  it("composes with hidden sections", () => {
+    const order = [
+      "internetRadio",
+      ...CATALOG_KEYS.filter((key) => key !== "internetRadio"),
+    ];
+    const ids = build(["starred", "podcasts"], true, order).map((s) => s.id);
+    expect(ids[0]).toBe("internetRadio");
+    expect(ids).not.toContain("starred");
+    expect(ids).not.toContain("podcasts");
+  });
+
+  it("does not perturb dynamic picks when the order changes", () => {
+    const ordered = build([], true, [...CATALOG_KEYS].reverse()).map(
+      (s) => s.id,
+    );
+    expect(sorted(picks(ordered))).toEqual(
+      sorted(picks(build().map((s) => s.id))),
+    );
+  });
+
+  it("ignores unknown keys and still renders sections the order omits", () => {
+    const ids = build([], true, ["notARealSection", "starred"]).map(
+      (s) => s.id,
+    );
+    expect(ids[0]).toBe("starred");
+    expect(sorted(ids)).toEqual(sorted(build().map((s) => s.id)));
+  });
+});
+
+describe("orderHomeSectionEntries", () => {
+  const entries = availableHomeSections(availability());
+
+  it("returns the catalog order when nothing is saved", () => {
+    expect(orderHomeSectionEntries(entries, []).map((e) => e.key)).toEqual(
+      entries.map((e) => e.key),
+    );
+  });
+
+  it("sorts by the saved order and appends unknown keys in catalog order", () => {
+    const keys = orderHomeSectionEntries(entries, ["starred", "podcasts"]).map(
+      (e) => e.key,
+    );
+    expect(keys.slice(0, 2)).toEqual(["starred", "podcasts"]);
+    expect(keys.slice(2)).toEqual(
+      entries
+        .map((e) => e.key)
+        .filter((key) => key !== "starred" && key !== "podcasts"),
+    );
+  });
+});
+
+describe("reorderHomeSectionKeys", () => {
+  const visible = ["a", "b", "c", "d"];
+
+  it("seeds from the catalog when no order is stored", () => {
+    const next = reorderHomeSectionKeys([], CATALOG_KEYS, 3, 0);
+    expect(next[0]).toBe(CATALOG_KEYS[3]);
+    expect([...next].sort()).toEqual([...CATALOG_KEYS].sort());
+  });
+
+  it("moves a key down", () => {
+    expect(reorderHomeSectionKeys(visible, visible, 0, 2)).toEqual([
+      "b",
+      "c",
+      "a",
+      "d",
+    ]);
+  });
+
+  it("moves a key up", () => {
+    expect(reorderHomeSectionKeys(visible, visible, 2, 0)).toEqual([
+      "c",
+      "a",
+      "b",
+      "d",
+    ]);
+  });
+
+  it("moves a key to the end", () => {
+    expect(reorderHomeSectionKeys(visible, visible, 0, 3)).toEqual([
+      "b",
+      "c",
+      "d",
+      "a",
+    ]);
+  });
+
+  it("is a no-op for an out-of-range index", () => {
+    expect(reorderHomeSectionKeys(visible, visible, 9, 0)).toEqual(visible);
+  });
+
+  it("leaves an unset order empty for an out-of-range index", () => {
+    expect(reorderHomeSectionKeys([], visible, 9, 0)).toEqual([]);
+  });
+
+  it("keeps keys unavailable on this server pinned to their neighbour", () => {
+    // "x" is stored but not shown here; it must stay right after "b".
+    const stored = ["a", "b", "x", "c", "d"];
+    expect(reorderHomeSectionKeys(stored, visible, 3, 0)).toEqual([
+      "d",
+      "a",
+      "b",
+      "x",
+      "c",
+    ]);
+  });
+
+  it("adopts visible keys the stored order has never seen", () => {
+    expect(reorderHomeSectionKeys(["a", "b"], visible, 0, 1)).toEqual([
+      "b",
+      "a",
+      "c",
+      "d",
+    ]);
   });
 });

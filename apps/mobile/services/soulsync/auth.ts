@@ -9,9 +9,17 @@ import type {
 export async function testConnection(
   config: SoulSyncConfig,
 ): Promise<SoulSyncSystemStatus> {
-  return soulSyncRequest<SoulSyncSystemStatus>("/system/status", { config });
+  return soulSyncRequest<SoulSyncSystemStatus>("/system/status", {
+    config,
+    unauthorizedIsExpected: true,
+  });
 }
 
+// Polled by hooks/soulsync/useSoulSyncStatus while a connection is configured,
+// so a stored key that was revoked (or was wrong all along) would otherwise file
+// a 403 on every poll.
 export async function fetchSystemStatus(): Promise<SoulSyncSystemStatus> {
-  return soulSyncRequest<SoulSyncSystemStatus>("/system/status");
+  return soulSyncRequest<SoulSyncSystemStatus>("/system/status", {
+    unauthorizedIsExpected: true,
+  });
 }

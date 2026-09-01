@@ -43,6 +43,20 @@ function userId(): string {
   return useAuthBase.getState().jellyfinUserId ?? "";
 }
 
+// A single item lookup by id. `notFoundIsExpected` because the id can be stale
+// (deleted item, library re-scanned, an id restored from the persisted query
+// cache): the caller still fails, but a 404 there is a data state, not an app
+// bug — and reporting it opened one Sentry Issue per item id.
+function fetchItem(id: string) {
+  return jellyfinApiInstance.get<BaseItemDto>(
+    `/Users/${userId()}/Items/${id}`,
+    {
+      params: { Fields: COMMON_FIELDS },
+      notFoundIsExpected: true,
+    } as AxiosRequestConfig & { notFoundIsExpected?: boolean },
+  );
+}
+
 async function fetchItems(
   params: Record<string, string | number | boolean | undefined>,
   // Set for an id-scoped child browse (album/artist/directory contents): a
@@ -100,10 +114,7 @@ export const getAlbum = async (id: string) => {
     },
     { notFoundIsExpected: true },
   );
-  const albumRsp = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const albumRsp = await fetchItem(id);
   const album: AlbumWithSongsID3 = mapBaseItemToAlbumWithSongs(
     albumRsp.data,
     tracks.Items ?? [],
@@ -112,10 +123,7 @@ export const getAlbum = async (id: string) => {
 };
 
 export const getAlbumInfo = async (id: string) => {
-  const item = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const item = await fetchItem(id);
   const info: AlbumInfo = { notes: item.data?.Overview };
   return fakeEnvelope({ albumInfo: info });
 };
@@ -132,10 +140,7 @@ export const getArtist = async (id: string) => {
     },
     { notFoundIsExpected: true },
   );
-  const artistRsp = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const artistRsp = await fetchItem(id);
   const artist: ArtistWithAlbumsID3 = mapBaseItemToArtistWithAlbums(
     artistRsp.data,
     albums.Items ?? [],
@@ -179,10 +184,7 @@ export const getArtistSongs = async (id: string) => {
 };
 
 export const getArtistInfo = async (id: string) => {
-  const item = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const item = await fetchItem(id);
   const info: ArtistInfo = { biography: item.data?.Overview };
   return fakeEnvelope({ artistInfo: info });
 };
@@ -196,12 +198,12 @@ export const getArtistInfo2 = async (
   { count }: { count?: number; includeNotPresent?: boolean },
 ) => {
   const [item, similar] = await Promise.all([
-    jellyfinApiInstance.get<BaseItemDto>(`/Users/${userId()}/Items/${id}`, {
-      params: { Fields: COMMON_FIELDS },
-    }),
+    fetchItem(id),
     // Best-effort: the biography is the part callers always expect, so a server
     // that can't answer the similarity query costs the row, not the whole
-    // screen.
+    // screen. `notFoundIsExpected` because that `.catch` resolves it — the
+    // interceptor would otherwise report a 404 the caller already absorbed
+    // (Sentry WAVIO-Q8).
     jellyfinApiInstance
       .get<JellyfinItemsResult>(`/Artists/${id}/Similar`, {
         params: {
@@ -209,7 +211,8 @@ export const getArtistInfo2 = async (
           Fields: COMMON_FIELDS,
           Limit: count ?? 20,
         },
-      })
+        notFoundIsExpected: true,
+      } as AxiosRequestConfig & { notFoundIsExpected?: boolean })
       .catch(() => null),
   ]);
   const info: ArtistInfo2 = {
@@ -289,10 +292,7 @@ export const getMusicDirectory = async (id: string) => {
   // aren't the filesystem parent of their albums in Jellyfin, so ParentId
   // browsing returns nothing for them — fetch albums by ArtistIds instead.
   // Albums and physical folders do parent their children, so ParentId works.
-  const itemRsp = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const itemRsp = await fetchItem(id);
   const items =
     itemRsp.data?.Type === "MusicArtist"
       ? (
@@ -330,6 +330,9 @@ export const getSimilarSongs = async (
   id: string,
   { count }: { count?: number },
 ) => {
+  // Similar songs are optional decoration (they seed endless playback), so a
+  // track the server has nothing similar for is a data state — matching the
+  // `notFoundIsExpected` on the Subsonic side's getSimilarSongs.
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
     `/Items/${id}/Similar`,
     {
@@ -338,7 +341,8 @@ export const getSimilarSongs = async (
         Fields: COMMON_FIELDS,
         Limit: count ?? 20,
       },
-    },
+      notFoundIsExpected: true,
+    } as AxiosRequestConfig & { notFoundIsExpected?: boolean },
   );
   const similar: SimilarSongs = {
     song: (rsp.data?.Items ?? []).map(mapBaseItemToChild),
@@ -392,10 +396,7 @@ export const getSonicSimilarTracks = async (
 };
 
 export const getSong = async (id: string) => {
-  const rsp = await jellyfinApiInstance.get<BaseItemDto>(
-    `/Users/${userId()}/Items/${id}`,
-    { params: { Fields: COMMON_FIELDS } },
-  );
+  const rsp = await fetchItem(id);
   const song: Child = mapBaseItemToChild(rsp.data);
   return fakeEnvelope({ song });
 };

@@ -10,6 +10,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [![Crowdin](https://badges.crowdin.net/wavio/localized.svg)](https://crowdin.com/project/wavio)
 [![License](https://img.shields.io/github/license/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/blob/main/LICENSE.txt)
 [![Latest release](https://img.shields.io/github/v/release/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/releases/latest)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O8L72659XB)
 
 [Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio)
 
@@ -19,6 +20,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - [Translations](#translations)
 - [Development](#development)
 - [Useful links](#useful-links)
+- [Donations](#donations)
 - [Gallery](#gallery)
 
 ## How to install
@@ -42,7 +44,7 @@ APK installs need an extra step to show up in Android Auto (see below), so the P
 
 | Channel | Latest version |
 | --- | --- |
-| [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest) | 1.2.0 |
+| [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest) | 1.3.0 |
 | [Google Play Store](https://play.google.com/store/apps/details?id=com.jmercier.wavio) | 1.2.0 |
 
 The Play Store version is usually a release or two behind GitHub. Every Play Store submission goes through Google's review process, which can usually take two weeks, whereas a GitHub release is published as soon as the APKs are built. If you want the newest features and fixes as early as possible, grab the APK from the releases page; if you'd rather have Android Auto working out of the box, stick with the Play Store.
@@ -277,6 +279,12 @@ Run from the repo root:
 - [Jellyfin documentation](https://jellyfin.org/docs/)
 - [Expo documentation](https://docs.expo.dev/)
 - [React Native documentation](https://reactnative.dev/)
+
+## Donations
+
+If you like the app and absolutely want to support its development, you can donate to the project on Ko-fi. I pledge to only use the funds to pay for the development of the app which means only spending it on subscriptions, hosting or hardware that directly benefits the project.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O8L72659XB)
 
 ## Gallery
 
