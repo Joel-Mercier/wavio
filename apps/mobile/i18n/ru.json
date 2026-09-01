@@ -1441,9 +1441,11 @@
 					"showEmptyHomeSectionsLabel": "Показывать пустые разделы",
 					"showEmptyHomeSectionsDescription": "Показывать разделы главного экрана без содержимого вместо того, чтобы скрывать их",
 					"homeSectionsLabel": "Разделы главного экрана",
-					"homeSectionsDescription": "Выберите, какие разделы отображать на главном экране",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsSheetTitle": "Разделы главного экрана",
 					"homeSectionsSheetDescription": "Отключите разделы, чтобы скрыть их с главного экрана",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "Ярлыки",
 						"moreFromArtist": "Больше от исполнителя",
