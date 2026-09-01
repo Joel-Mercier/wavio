@@ -13,6 +13,7 @@
   --color-accent-dim: #0a7f5c;
   --color-accent-soft: rgba(16, 185, 129, 0.12);
   --color-ink: #04140e;
+  --color-pending: #f59e0b;
 
   --font-sans: var(--font-inter), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -23,6 +24,7 @@
   --animate-hover: hover 8s ease-in-out infinite;
   --animate-chip-float: chip-float 6s ease-in-out infinite;
   --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
+  --animate-pulse-pending: pulse-pending 2.4s ease-in-out infinite;
 }
 
 @keyframes scroll {
@@ -52,6 +54,11 @@
 @keyframes pulse-glow {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.35)); }
   50% { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(16, 185, 129, 0.35)); }
+}
+/* Tighter than pulse-glow, which is tuned for the 88px logo rather than a 6px dot. */
+@keyframes pulse-pending {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.5)); }
+  50% { transform: scale(1.2); filter: drop-shadow(0 0 9px rgba(245, 158, 11, 0.9)); }
 }
 
 html, body { margin: 0; padding: 0; }

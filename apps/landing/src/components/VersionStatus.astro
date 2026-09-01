@@ -9,48 +9,54 @@ interface Props {
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 
-const channels = [
-	{ label: t.versions.playStore, version: status.play.version, pending: false },
-	...(status.pending
-		? [
-				{
-					label: t.versions.inReview,
-					version: status.pending.version,
-					pending: true,
-				},
-			]
-		: []),
-	{ label: t.versions.github, version: status.github.version, pending: false },
+/** One group per store, so a pending version always sits under the store it belongs to. */
+const stores = [
+	{
+		label: t.versions.playStore,
+		version: status.play.version,
+		pending: status.pending?.version ?? null,
+	},
+	{
+		label: t.versions.github,
+		version: status.github.version,
+		pending: null,
+	},
 ];
 ---
 
-<dl
-	class="mt-8 flex max-w-[520px] flex-wrap items-baseline gap-x-6 gap-y-2.5 border-t border-border pt-5 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.9s_backwards]"
+<div
+	class="mt-8 flex max-w-[520px] flex-wrap items-start gap-x-8 gap-y-4 border-t border-border pt-5 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.9s_backwards]"
 >
 	{
-		channels.map(({ label, version, pending }) => (
-			<div class="flex items-baseline gap-2.5">
-				<dt class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-text-3">
-					<span
-						aria-hidden="true"
-						class:list={[
-							'size-1.5 shrink-0 rounded-full',
-							pending
-								? 'animate-pulse-glow bg-accent-dim motion-reduce:animate-none'
-								: 'bg-accent',
-						]}
-					/>
-					{label}
-				</dt>
-				<dd
-					class:list={[
-						'text-[13px] font-bold tabular-nums tracking-[-0.01em]',
-						pending ? 'text-text-2' : 'text-text',
-					]}
-				>
-					{version}
-				</dd>
-			</div>
+		stores.map(({ label, version, pending }) => (
+			<dl class="flex flex-col gap-1.5">
+				<div class="flex items-baseline gap-2.5">
+					<dt class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-text-3">
+						<span
+							aria-hidden="true"
+							class="size-1.5 shrink-0 rounded-full bg-accent"
+						/>
+						{label}
+					</dt>
+					<dd class="text-[13px] font-bold tabular-nums tracking-[-0.01em] text-text">
+						{version}
+					</dd>
+				</div>
+				{pending && (
+					<div class="flex items-baseline gap-2 pl-3.5">
+						<dt class="flex items-center gap-[7px] text-[10px] font-semibold uppercase tracking-[0.12em] text-text-3">
+							<span
+								aria-hidden="true"
+								class="size-1 shrink-0 animate-pulse-pending rounded-full bg-pending motion-reduce:animate-none"
+							/>
+							{t.versions.inReview}
+						</dt>
+						<dd class="text-[11px] font-semibold tabular-nums tracking-[-0.01em] text-text-2">
+							{pending}
+						</dd>
+					</div>
+				)}
+			</dl>
 		))
 	}
-</dl>
+</div>
