@@ -1,0 +1,48 @@
+name: Store status
+
+on:
+  schedule:
+    - cron: "0 7,19 * * *"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: store-status
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # required to mint the OIDC token Google federates against
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+      # The script has no dependencies, so there is nothing to install.
+      - run: bun run store-status
+        env:
+          GOOGLE_PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/store-status
+          title: "chore: refresh store release status"
+          commit-message: "chore: refresh store release status"
+          body: |
+            Automated refresh of the README version table and the landing site's
+            `store-status.json`, from the Google Play release status API.
+          labels: automated
+          delete-branch: true

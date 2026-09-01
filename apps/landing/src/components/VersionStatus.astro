@@ -1,0 +1,56 @@
+---
+import status from "../data/store-status.json";
+import { type Lang, useTranslations } from "../i18n/utils";
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const channels = [
+	{ label: t.versions.playStore, version: status.play.version, pending: false },
+	...(status.pending
+		? [
+				{
+					label: t.versions.inReview,
+					version: status.pending.version,
+					pending: true,
+				},
+			]
+		: []),
+	{ label: t.versions.github, version: status.github.version, pending: false },
+];
+---
+
+<dl
+	class="mt-8 flex max-w-[520px] flex-wrap items-baseline gap-x-6 gap-y-2.5 border-t border-border pt-5 [animation:rise_1s_cubic-bezier(0.22,1,0.36,1)_0.9s_backwards]"
+>
+	{
+		channels.map(({ label, version, pending }) => (
+			<div class="flex items-baseline gap-2.5">
+				<dt class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-text-3">
+					<span
+						aria-hidden="true"
+						class:list={[
+							'size-1.5 shrink-0 rounded-full',
+							pending
+								? 'animate-pulse-glow bg-accent-dim motion-reduce:animate-none'
+								: 'bg-accent',
+						]}
+					/>
+					{label}
+				</dt>
+				<dd
+					class:list={[
+						'text-[13px] font-bold tabular-nums tracking-[-0.01em]',
+						pending ? 'text-text-2' : 'text-text',
+					]}
+				>
+					{version}
+				</dd>
+			</div>
+		))
+	}
+</dl>

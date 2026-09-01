@@ -30,6 +30,7 @@
     "mobile:build:android:production-apk-armv7": "bun run --cwd apps/mobile build:android:production-apk-armv7",
     "mobile:submit:android:closed": "bun run --cwd apps/mobile submit:android:closed",
     "mobile:submit:android:production": "bun run --cwd apps/mobile submit:android:production",
+    "store-status": "bun run scripts/store-status.ts",
     "landing:dev": "bun run --cwd apps/landing dev",
     "landing:build": "bun run --cwd apps/landing build",
     "landing:preview": "bun run --cwd apps/landing preview"

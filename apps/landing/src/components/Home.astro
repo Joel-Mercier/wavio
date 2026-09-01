@@ -13,6 +13,7 @@ import Layout from "../layouts/Layout.astro";
 import Footer from "./Footer.astro";
 import Integrations from "./Integrations.astro";
 import Nav from "./Nav.astro";
+import VersionStatus from "./VersionStatus.astro";
 
 interface Props {
 	lang: Lang;
@@ -115,6 +116,7 @@ const wordDelay = () =>
 						{t.cta.githubRelease}
 					</a>
 				</div>
+				<VersionStatus lang={lang} />
 			</div>
 
 			<div class="relative flex items-center justify-center [perspective:1200px]">
