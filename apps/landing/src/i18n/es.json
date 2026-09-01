@@ -30,6 +30,11 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "Consíguelo en GitHub"
 	},
+	"versions": {
+		"github": "GitHub",
+		"playStore": "Play Store",
+		"inReview": "In review"
+	},
 	"highlightsLabel": "Lo que obtienes",
 	"highlights": [
 		"Código abierto, con licencia MIT",
