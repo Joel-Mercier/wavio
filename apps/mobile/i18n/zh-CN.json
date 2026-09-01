@@ -1342,9 +1342,11 @@
 					"showEmptyHomeSectionsLabel": "显示空白板块",
 					"showEmptyHomeSectionsDescription": "显示没有内容的主页板块，而不是将其隐藏",
 					"homeSectionsLabel": "主页板块",
-					"homeSectionsDescription": "选择在主页上显示哪些板块",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsSheetTitle": "主页板块",
 					"homeSectionsSheetDescription": "关闭板块以将其从主页上隐藏",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "快捷方式",
 						"moreFromArtist": "来自某位艺术家的更多内容",
