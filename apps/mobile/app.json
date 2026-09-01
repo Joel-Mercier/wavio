@@ -29,7 +29,8 @@
         "backgroundColor": "#000000"
       },
       "package": "com.jmercier.wavio",
-      "permissions": ["android.permission.WAKE_LOCK"]
+      "permissions": ["android.permission.WAKE_LOCK"],
+      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"]
     },
     "web": {
       "bundler": "metro",
@@ -70,7 +71,7 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your files.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files.",
-          "isAccessMediaLocationEnabled": true,
+          "isAccessMediaLocationEnabled": false,
           "granularPermissions": ["audio"]
         }
       ],
@@ -78,6 +79,7 @@
         "expo-audio",
         {
           "microphonePermission": false,
+          "recordAudioAndroid": false,
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": false
         }
