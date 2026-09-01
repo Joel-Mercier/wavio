@@ -46,6 +46,7 @@ APK installs need an extra step to show up in Android Auto (see below), so the P
 | Channel | Latest version |
 | --- | --- |
 | [Google Play Store](https://play.google.com/store/apps/details?id=com.jmercier.wavio) | 1.2.0 |
+| In review on Google Play | 1.3.0 |
 | [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest) | 1.3.0 |
 <!-- store-status:end -->
 
