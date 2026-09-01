@@ -1375,9 +1375,11 @@
 					"showEmptyHomeSectionsLabel": "Leere Kategorien anzeigen",
 					"showEmptyHomeSectionsDescription": "Kategorien ohne Inhalt auf der Startseite anzeigen, anstatt sie auszublenden",
 					"homeSectionsLabel": "Startseiten-Kategorien",
-					"homeSectionsDescription": "Wählen Sie, welche Kategorien auf der Startseite angezeigt werden",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsSheetTitle": "Startseiten-Kategorien",
 					"homeSectionsSheetDescription": "Deaktivieren Sie Kategorien, um sie auf der Startseite auszublenden",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "Verknüpfungen",
 						"moreFromArtist": "Mehr von einem Künstler",
@@ -1400,6 +1402,7 @@
 						"off": "Aus",
 						"addToQueue": "Zur Warteschlange hinzufügen",
 						"playNext": "Als Nächstes wiedergeben",
+						"favorite": "Favorit",
 						"rate": "Bewertung",
 						"showInfo": "Informationen abrufen",
 						"addToPlaylist": "Zur Wiedergabeliste hinzufügen"
@@ -1848,6 +1851,8 @@
 				"outputNoDevices": "In diesem Netzwerk wurden keine Geräte gefunden",
 				"outputUnverified": "Die Wiedergabe wird möglicherweise nicht unterstützt",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"

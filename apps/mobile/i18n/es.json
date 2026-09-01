@@ -1375,9 +1375,11 @@
 					"showEmptyHomeSectionsLabel": "Mostrar secciones vacías",
 					"showEmptyHomeSectionsDescription": "Mostrar las secciones de la página de inicio que no tienen contenido, en lugar de ocultarlas",
 					"homeSectionsLabel": "Secciones de inicio",
-					"homeSectionsDescription": "Elige qué secciones aparecen en la pantalla de inicio",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsSheetTitle": "Secciones de inicio",
 					"homeSectionsSheetDescription": "Desactiva las secciones para ocultarlas de la pantalla de inicio",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "Atajos",
 						"moreFromArtist": "Más obras de un artista",
@@ -1400,6 +1402,7 @@
 						"off": "Apagado",
 						"addToQueue": "Añadir a la cola",
 						"playNext": "Reproducir la siguiente",
+						"favorite": "Favoritos",
 						"rate": "Tasa",
 						"showInfo": "Obtener información",
 						"addToPlaylist": "Añadir a la lista de reproducción"
@@ -1848,6 +1851,8 @@
 				"outputNoDevices": "No se han encontrado dispositivos en esta red",
 				"outputUnverified": "Es posible que no admita la reproducción",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connected",
+				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputConnectErrorMessage": "No se ha podido reproducir el vídeo de {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minutos"

@@ -1375,9 +1375,11 @@
 					"showEmptyHomeSectionsLabel": "Afficher les sections vides",
 					"showEmptyHomeSectionsDescription": "Afficher les sections de l'accueil sans contenu au lieu de les masquer",
 					"homeSectionsLabel": "Sections de l'accueil",
-					"homeSectionsDescription": "Choisissez les sections à afficher sur l'écran d'accueil",
+					"homeSectionsDescription": "Choose which sections appear on the home screen, and in which order",
 					"homeSectionsSheetTitle": "Sections de l'accueil",
 					"homeSectionsSheetDescription": "Désactivez des sections pour les masquer de l'écran d'accueil",
+					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
+					"homeSectionsResetOrder": "Reset order",
 					"homeSections": {
 						"recentPlays": "Raccourcis",
 						"moreFromArtist": "Plus d'un artiste",
@@ -1400,6 +1402,7 @@
 						"off": "Désactivée",
 						"addToQueue": "Ajouter à la fin de la file d'attente",
 						"playNext": "Ajouter à la file d'attente",
+						"favorite": "Favoris",
 						"rate": "Noter",
 						"showInfo": "Obtenir des informations",
 						"addToPlaylist": "Ajouter à la playlist"
@@ -1848,6 +1851,8 @@
 				"outputNoDevices": "Aucun appareil trouvé sur le réseau",
 				"outputUnverified": "La lecture pourrait ne pas fonctionner",
 				"outputChromecast": "Chromecast",
+				"outputChromecastConnected": "Connecté",
+				"outputChromecastUnavailable": "Le sélecteur de périphérique Chromecast est indisponible.",
 				"outputConnectErrorMessage": "Lecture impossible sur {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minute",
 				"sleepTimerMinutes_other": "{{count}} minutes"
