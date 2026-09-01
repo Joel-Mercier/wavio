@@ -76,6 +76,7 @@ export default function HomeScreen() {
   const availability = useHomeSectionAvailability();
   const musicFolderId = useCurrentMusicFolderId();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
+  const homeSectionOrder = useApp((store) => store.homeSectionOrder);
   const queryClient = useQueryClient();
   const [sessionSeed, setSessionSeed] = useState(() => Date.now());
   const [refreshing, setRefreshing] = useState(false);
@@ -139,6 +140,7 @@ export default function HomeScreen() {
         availability,
         sessionSeed,
         hiddenSections: hiddenHomeSections,
+        order: homeSectionOrder,
       }),
     [
       seedAlbums,
@@ -146,6 +148,7 @@ export default function HomeScreen() {
       availability,
       sessionSeed,
       hiddenHomeSections,
+      homeSectionOrder,
     ],
   );
 
