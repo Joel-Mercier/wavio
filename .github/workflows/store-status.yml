@@ -31,6 +31,9 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
           access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          # Only the access_token output is used, so don't drop a credentials
+          # file into the workspace for create-pull-request to pick up.
+          create_credentials_file: false
       # The script has no dependencies, so there is nothing to install.
       - run: bun run store-status
         env:
@@ -39,6 +42,10 @@ jobs:
       - uses: peter-evans/create-pull-request@v7
         with:
           branch: chore/store-status
+          # Never commit anything else that lands in the workspace.
+          add-paths: |
+            README.md
+            apps/landing/src/data/store-status.json
           title: "chore: refresh store release status"
           commit-message: "chore: refresh store release status"
           body: |

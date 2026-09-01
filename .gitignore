@@ -66,3 +66,6 @@ app-example
 .env.local
 
 tmp
+
+# Credentials written into the workspace by google-github-actions/auth
+gha-creds-*.json
