@@ -28,6 +28,20 @@
 				"podcasts": "播客",
 				"internetRadioStations": "网络电台",
 				"playErrorMessage": "开始播放时发生错误",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "音乐",
 					"podcasts": "播客",
@@ -262,6 +276,7 @@
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
 				"typeCompilation": "合辑",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "专辑",
 					"single": "单曲",
@@ -625,6 +640,10 @@
 			"smartPlaylist": {
 				"rule": "规则",
 				"addRule": "添加规则",
+				"addGroup": "Add rule group",
+				"deleteGroup": "Delete rule group",
+				"and": "and",
+				"or": "or",
 				"matchAll": "满足所有条件",
 				"matchAny": "满足任一条件",
 				"atLeastOneRule": "请至少添加一条规则",

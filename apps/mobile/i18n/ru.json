@@ -28,6 +28,20 @@
 				"podcasts": "Подкасты",
 				"internetRadioStations": "Интернет-радио",
 				"playErrorMessage": "Не удалось начать воспроизведение",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "Музыка",
 					"podcasts": "Подкасты",
@@ -277,6 +291,7 @@
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
 				"typeCompilation": "Сборник",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "По альбому",
 					"single": "Сингл",
@@ -655,6 +670,10 @@
 			"smartPlaylist": {
 				"rule": "Правило",
 				"addRule": "Добавить правило",
+				"addGroup": "Add rule group",
+				"deleteGroup": "Delete rule group",
+				"and": "and",
+				"or": "or",
 				"matchAll": "Соответствует всем",
 				"matchAny": "Соответствует любому",
 				"atLeastOneRule": "Добавьте хотя бы одно правило",

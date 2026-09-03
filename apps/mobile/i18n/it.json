@@ -28,6 +28,20 @@
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
 				"playErrorMessage": "Si è verificato un errore durante l'avvio della riproduzione",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "Musica",
 					"podcasts": "Podcast",
@@ -267,6 +281,7 @@
 				"addAllToFavoritesErrorMessage": "Si è verificato un errore durante l'aggiunta dei brani ai preferiti",
 				"typeAlbum": "Album",
 				"typeCompilation": "Raccolta",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Singolo",
@@ -635,6 +650,10 @@
 			"smartPlaylist": {
 				"rule": "Regola",
 				"addRule": "Aggiungi regola",
+				"addGroup": "Add rule group",
+				"deleteGroup": "Delete rule group",
+				"and": "and",
+				"or": "or",
 				"matchAll": "Seleziona tutto",
 				"matchAny": "Corrisponde a qualsiasi",
 				"atLeastOneRule": "Aggiungi almeno una regola",
