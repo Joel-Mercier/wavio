@@ -640,6 +640,10 @@
 			"smartPlaylist": {
 				"rule": "规则",
 				"addRule": "添加规则",
+				"addGroup": "Add rule group",
+				"deleteGroup": "Delete rule group",
+				"and": "and",
+				"or": "or",
 				"matchAll": "满足所有条件",
 				"matchAny": "满足任一条件",
 				"atLeastOneRule": "请至少添加一条规则",
