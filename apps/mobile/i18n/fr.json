@@ -281,6 +281,7 @@
 				"addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
 				"typeAlbum": "Album",
 				"typeCompilation": "Compilation",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Single",
