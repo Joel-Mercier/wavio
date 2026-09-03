@@ -276,6 +276,7 @@
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
 				"typeCompilation": "合辑",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "专辑",
 					"single": "单曲",
