@@ -30,16 +30,16 @@
 				"playErrorMessage": "Une erreur s'est produite lors du démarrage de la lecture",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "Personnalisez votre accueil",
+						"description": "Choisissez les sections à afficher sur l'écran d'accueil ainsi que leur ordre d'apparition"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "Personnalisez vos podcasts",
+						"description": "Sélectionnez le pays et la langue d'origine de vos recommandations"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "Personnalisez votre radio",
+						"description": "Choisissez quels tags apparaissent dans le flux"
 					}
 				},
 				"tabs": {
@@ -281,7 +281,7 @@
 				"addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
 				"typeAlbum": "Album",
 				"typeCompilation": "Compilation",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "Sans étiquette",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Single",
