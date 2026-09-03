@@ -281,6 +281,7 @@
 				"addAllToFavoritesErrorMessage": "Beim Hinzufügen von Titeln zu den Favoriten ist ein Fehler aufgetreten",
 				"typeAlbum": "Album",
 				"typeCompilation": "Zusammenstellung",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Single",
