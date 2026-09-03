@@ -28,6 +28,20 @@
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Stations de radio en ligne",
 				"playErrorMessage": "Une erreur s'est produite lors du démarrage de la lecture",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "Musique",
 					"podcasts": "Podcasts",
