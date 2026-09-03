@@ -1,7 +1,7 @@
 import * as z from "zod";
 import type {
   SmartPlaylistCriteria,
-  SmartPlaylistRule,
+  SmartPlaylistNode,
 } from "@/services/navidrome/smartPlaylists";
 import {
   supportsMultiFieldSort,
@@ -150,8 +150,40 @@ export const OPERATORS_BY_VALUE_TYPE: Record<FieldValueType, RuleOperator[]> = {
   playlist: ["inPlaylist", "notInPlaylist"],
 };
 
+export const RULE_OPERATORS: RuleOperator[] = [
+  "is",
+  "isNot",
+  "contains",
+  "notContains",
+  "startsWith",
+  "endsWith",
+  "gt",
+  "lt",
+  "inTheRange",
+  "before",
+  "after",
+  "inTheLast",
+  "notInTheLast",
+  "inPlaylist",
+  "notInPlaylist",
+  "isMissing",
+  "isPresent",
+];
+
+// Navidrome lowercases every operator and field key before matching it, so a
+// criteria authored elsewhere may carry any casing; resolve back to ours.
+export function getOperatorByKey(key: string): RuleOperator | undefined {
+  const lower = key.toLowerCase();
+  return RULE_OPERATORS.find((op) => op.toLowerCase() === lower);
+}
+
+// Playlist refs are searched too, so an inPlaylist/notInPlaylist rule read back
+// from the server resolves to its own field rather than falling through as unknown.
 export function getFieldByKey(key: string): SmartPlaylistField | undefined {
-  return SMART_PLAYLIST_FIELDS.find((f) => f.key === key);
+  const lower = key.toLowerCase();
+  return [...SMART_PLAYLIST_FIELDS, ...SMART_PLAYLIST_PLAYLIST_REFS].find(
+    (f) => f.key === lower,
+  );
 }
 
 export interface FormRule {
@@ -161,6 +193,17 @@ export interface FormRule {
   valueMax: string;
   boolValue: boolean;
   playlistId: string;
+}
+
+export interface FormRuleGroup {
+  combinator: "all" | "any";
+  rules: FormNode[];
+}
+
+export type FormNode = FormRule | FormRuleGroup;
+
+export function isRuleGroup(node: FormNode): node is FormRuleGroup {
+  return "rules" in node;
 }
 
 export interface FormSortEntry {
@@ -173,7 +216,7 @@ export interface SmartPlaylistFormState {
   comment: string;
   isPublic: boolean;
   combinator: "all" | "any";
-  rules: FormRule[];
+  rules: FormNode[];
   sorts: FormSortEntry[];
   limit: string;
 }
@@ -236,12 +279,24 @@ const ruleSchema = z
     }
   });
 
+type SchemaNode =
+  | z.infer<typeof ruleSchema>
+  | { combinator: "all" | "any"; rules: SchemaNode[] };
+
+const nodeSchema: z.ZodType<SchemaNode> = z.union([
+  ruleSchema,
+  z.object({
+    combinator: z.enum(["all", "any"]),
+    rules: z.lazy(() => z.array(nodeSchema).min(1)),
+  }),
+]);
+
 export const smartPlaylistFormSchema = z.object({
   name: z.string().trim().min(1),
   comment: z.string().optional(),
   isPublic: z.boolean(),
   combinator: z.enum(["all", "any"]),
-  rules: z.array(ruleSchema).min(1),
+  rules: z.array(nodeSchema).min(1),
   sorts: z.array(
     z.object({
       field: z.string().min(1),
@@ -286,13 +341,23 @@ function coerceRuleValue(
   } as Record<string, unknown>;
 }
 
+function serializeNodes(nodes: FormNode[]): SmartPlaylistNode[] {
+  return nodes.flatMap((node): SmartPlaylistNode[] => {
+    if (!isRuleGroup(node)) {
+      const rule = coerceRuleValue(node);
+      return rule ? [rule as SmartPlaylistNode] : [];
+    }
+    const children = serializeNodes(node.rules);
+    if (children.length === 0) return [];
+    return [node.combinator === "any" ? { any: children } : { all: children }];
+  });
+}
+
 export function toNavidromeCriteria(
   form: SmartPlaylistFormState,
   serverVersion: string | null,
 ): SmartPlaylistCriteria {
-  const rules = form.rules
-    .map(coerceRuleValue)
-    .filter((r): r is SmartPlaylistRule => r !== null);
+  const rules = serializeNodes(form.rules);
 
   const criteria: SmartPlaylistCriteria = {};
   if (form.combinator === "any") {
@@ -316,15 +381,25 @@ export function toNavidromeCriteria(
   return criteria;
 }
 
-export function fromNavidromeCriteria(
-  criteria: SmartPlaylistCriteria | null | undefined,
-): Pick<SmartPlaylistFormState, "combinator" | "rules" | "sorts" | "limit"> {
-  const combinator: "all" | "any" = criteria?.any ? "any" : "all";
-  const rawRules = combinator === "any" ? criteria?.any : criteria?.all;
-  const rules: FormRule[] = (rawRules ?? []).flatMap((rule): FormRule[] => {
-    const op = Object.keys(rule)[0] as RuleOperator | undefined;
+// Rules and nested `all`/`any` groups parse to any depth, so a criteria authored
+// elsewhere (an .nsp file, another client) round-trips instead of being dropped.
+function parseNodes(nodes: SmartPlaylistNode[]): FormNode[] {
+  return nodes.flatMap((node): FormNode[] => {
+    const key = Object.keys(node)[0];
+    if (!key) return [];
+    const conjunction = key.toLowerCase();
+    if (conjunction === "all" || conjunction === "any") {
+      const children = (node as Record<string, SmartPlaylistNode[]>)[key];
+      if (!Array.isArray(children)) return [];
+      const rules = parseNodes(children);
+      // A group left with nothing we can model is dropped like an unknown rule:
+      // kept, it would serialize back to a conjunction the server rejects.
+      if (rules.length === 0) return [];
+      return [{ combinator: conjunction, rules }];
+    }
+    const op = getOperatorByKey(key);
     if (!op) return [];
-    const payload = (rule as Record<string, Record<string, unknown>>)[op];
+    const payload = (node as Record<string, Record<string, unknown>>)[key];
     if (!payload) return [];
     if (op === "inPlaylist" || op === "notInPlaylist") {
       const id = String(payload.id ?? "");
@@ -346,7 +421,7 @@ export function fromNavidromeCriteria(
     if (fieldDef.valueType === "boolean" || isTagPresenceOperator(op)) {
       return [
         {
-          field: fieldKey,
+          field: fieldDef.key,
           operator: op,
           value: "",
           valueMax: "",
@@ -358,7 +433,7 @@ export function fromNavidromeCriteria(
     if (op === "inTheRange" && Array.isArray(raw)) {
       return [
         {
-          field: fieldKey,
+          field: fieldDef.key,
           operator: op,
           value: String(raw[0] ?? ""),
           valueMax: String(raw[1] ?? ""),
@@ -369,7 +444,7 @@ export function fromNavidromeCriteria(
     }
     return [
       {
-        field: fieldKey,
+        field: fieldDef.key,
         operator: op,
         value: String(raw ?? ""),
         valueMax: "",
@@ -378,6 +453,14 @@ export function fromNavidromeCriteria(
       },
     ];
   });
+}
+
+export function fromNavidromeCriteria(
+  criteria: SmartPlaylistCriteria | null | undefined,
+): Pick<SmartPlaylistFormState, "combinator" | "rules" | "sorts" | "limit"> {
+  const combinator: "all" | "any" = criteria?.any ? "any" : "all";
+  const rawRules = combinator === "any" ? criteria?.any : criteria?.all;
+  const rules = parseNodes(rawRules ?? []);
 
   const sortFields = (criteria?.sort ?? "")
     .split(",")
@@ -398,6 +481,10 @@ export function fromNavidromeCriteria(
     sorts,
     limit: criteria?.limit ? String(criteria.limit) : "",
   };
+}
+
+export function defaultRuleGroup(): FormRuleGroup {
+  return { combinator: "any", rules: [defaultRule()] };
 }
 
 export function defaultRule(): FormRule {

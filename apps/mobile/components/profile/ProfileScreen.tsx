@@ -1,5 +1,4 @@
 import { FlashList } from "@shopify/flash-list";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -16,6 +15,7 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ScreenHeaderGradient from "@/components/ScreenHeaderGradient";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -72,10 +72,7 @@ function PlaylistRow({ playlist }: { playlist: Playlist }) {
 }
 
 export default function ProfileScreen() {
-  const [blue500, white] = Uniwind.getCSSVariable([
-    "--color-blue-500",
-    "--color-white",
-  ]) as string[];
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
   const router = useRouter();
@@ -152,9 +149,9 @@ export default function ProfileScreen() {
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient colors={[blue500, "#000"]} locations={[0, 0.7]}>
+        <ScreenHeaderGradient opaque>
           <HStack
-            className="items-center justify-between pb-4 px-6 bg-black/25"
+            className="items-center justify-between pb-4 px-6"
             style={{ paddingTop: insets.top + 16 }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
@@ -171,7 +168,7 @@ export default function ProfileScreen() {
             </Heading>
             <Box className="w-10" />
           </HStack>
-        </LinearGradient>
+        </ScreenHeaderGradient>
       </AnimatedBox>
       <AnimatedFlashList
         onScroll={scrollHandler}
@@ -181,15 +178,8 @@ export default function ProfileScreen() {
         )}
         ListHeaderComponent={
           <>
-            <LinearGradient
-              colors={[blue500, "#000000"]}
-              className="h-64"
-              style={{ height: 256 }}
-            >
-              <Box
-                className="bg-black/25 flex-1"
-                style={{ paddingTop: insets.top }}
-              >
+            <ScreenHeaderGradient height={256}>
+              <Box className="flex-1" style={{ paddingTop: insets.top }}>
                 <VStack className="mt-6 px-6 h-full">
                   <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
                     <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
@@ -229,7 +219,7 @@ export default function ProfileScreen() {
                   )}
                 </VStack>
               </Box>
-            </LinearGradient>
+            </ScreenHeaderGradient>
             <VStack className="px-6 mt-6 mb-2">
               <Heading size="lg" className="text-white">
                 {t("app.profile.playlists")}

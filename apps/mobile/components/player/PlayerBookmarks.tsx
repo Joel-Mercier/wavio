@@ -51,7 +51,7 @@ export default function PlayerBookmarks() {
                   onPress={() => seekTo(position)}
                   onLongPress={() => removeBookmark(track.id, position)}
                 >
-                  <Badge className="rounded-full bg-gray-800 px-3 py-1 flex-row items-center gap-x-1">
+                  <Badge className="rounded-full bg-primary-500 px-3 py-1 flex-row items-center gap-x-1">
                     <Bookmark size={12} color="#10b981" fill="#10b981" />
                     <BadgeText className="normal-case text-md text-white">
                       {formatSeconds(position)}

@@ -760,7 +760,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           <Box className="p-6 w-full mb-12">
             <VStack className="gap-y-6">
               {trackArtists.map((artist) => (
@@ -789,7 +792,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <FadeOutScaleDown
@@ -819,7 +825,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           {track && (
             <Box className="p-6 w-full mb-12">
               <HStack className="items-center">

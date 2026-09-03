@@ -9,9 +9,16 @@ import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
 import List from "lucide-react-native/dist/esm/icons/list.mjs";
 import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useWindowDimensions } from "react-native";
+import { type LayoutChangeEvent, useWindowDimensions } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
@@ -31,6 +38,10 @@ import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleto
 import SortOptionsSheet, {
   useSortFieldLabel,
 } from "@/components/SortOptionsSheet";
+import TabHeaderGradient, {
+  TabHeaderGradientBackdrop,
+  tabHeaderTintAt,
+} from "@/components/TabHeaderGradient";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -78,6 +89,23 @@ import { parseSortType, sortItems } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as typeof FlashList;
+const AnimatedBox = Animated.createAnimatedComponent(Box);
+
+// Space left above the filter row once it's pinned at the top, matching the
+// search screen: the header stops collapsing this many px short of the title's
+// full height (the title has faded out by then, so it reads as plain padding).
+const PINNED_TOP_GAP = 16;
+
+// Depth of the filter row below the safe-area top, used to blend its edge fades
+// into the header gradient rather than into black. Taken at the midpoint of the
+// header's collapse travel (~103px expanded, ~31px pinned) so neither extreme is
+// off by more than a few RGB units — the alternative, animating the gradient's
+// colors, is not worth it for a 24px sliver.
+const FILTER_ROW_DEPTH = 67;
 
 // The list mixes artists, albums, playlists, podcasts, radio stations and
 // folders, so only these two fields mean anything across every row.
@@ -430,12 +458,56 @@ export default function LibraryScreen() {
     (e) => e && !isNetworkNoise(e),
   );
 
+  const titleHeight = useSharedValue(0);
+  // Direction-aware collapse: track how far the title is collapsed (0..max) by
+  // accumulating scroll deltas, so scrolling up anywhere reveals it again
+  // instead of only when the list returns to the top.
+  const collapsed = useSharedValue(0);
+  const lastOffset = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    const y = event.contentOffset.y;
+    const max = Math.max(titleHeight.value - PINNED_TOP_GAP, 0);
+    const diff = y - lastOffset.value;
+    lastOffset.value = y;
+    collapsed.value = Math.min(Math.max(collapsed.value + diff, 0), max);
+  });
+  const headerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -collapsed.value }],
+  }));
+  // Fade the avatar/title out as it collapses so it doesn't stay visible behind
+  // the status bar in the edge-to-edge layout.
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      collapsed.value,
+      [0, Math.max(titleHeight.value - PINNED_TOP_GAP, 1)],
+      [1, 0],
+      Extrapolation.CLAMP,
+    ),
+  }));
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const handleHeaderLayout = (event: LayoutChangeEvent) => {
+    setHeaderHeight(event.nativeEvent.layout.height);
+  };
+  const handleTitleLayout = (event: LayoutChangeEvent) => {
+    titleHeight.value = event.nativeEvent.layout.height;
+  };
+
   // Changing the sort or filter swaps the list contents; without this the
   // FlashList keeps its old offset and can land mid-list or at the bottom. Reset
-  // to the top so the new ordering / filtered set starts in view.
+  // to the top so the new ordering / filtered set starts in view. Toggling the
+  // layout remounts the list instead (its `key` changes) and it comes back at
+  // offset 0 without emitting a scroll event, so the header has to be brought
+  // back by hand in both cases or it stays collapsed over content at the top.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [sort, filter]);
+    collapsed.value = 0;
+    lastOffset.value = 0;
+  }, [sort, filter, layout, gridColumns, collapsed, lastOffset]);
+
+  const [fadeTint, fadeTintTransparent] = tabHeaderTintAt(
+    FILTER_ROW_DEPTH,
+    insets.top,
+  );
 
   // Toggling a filter reorders the badges, so a row the user had scrolled to
   // the end no longer holds what they were looking at — bring it back to the
@@ -446,44 +518,56 @@ export default function LibraryScreen() {
 
   return (
     <Box className="h-full">
+      <TabHeaderGradient />
       <>
-        <Box className="px-6" style={{ paddingTop: insets.top }}>
-          <HStack
-            className={cn("items-center justify-between", {
-              "mt-6": !isWideLayout,
-            })}
+        <AnimatedBox
+          onLayout={handleHeaderLayout}
+          className="absolute top-0 left-0 right-0 z-10"
+          style={[{ paddingTop: insets.top }, headerStyle]}
+        >
+          <TabHeaderGradientBackdrop offsetY={collapsed} />
+          {/* Vertical spacing lives on this wrapper as padding (not margin) so
+              its onLayout height is the exact distance the header collapses,
+              letting the filter row pin at the top. The title fades as it
+              collapses; the filters and the sort/layout row stay put. */}
+          <AnimatedBox
+            onLayout={handleTitleLayout}
+            style={titleStyle}
+            className={cn("px-6 pb-6", { "pt-6": !isWideLayout })}
           >
-            <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown
-                testID="open-drawer-button"
-                onPress={() => setShowDrawer(true)}
-              >
-                <Avatar className="border-emerald-500 border-2 w-10 h-10">
-                  <AvatarFallbackText className="font-body ">
-                    {username}
-                  </AvatarFallbackText>
-                </Avatar>
-              </FadeOutScaleDown>
-              <Heading className="text-white" size="2xl">
-                {t("app.library.title")}
-              </Heading>
+            <HStack className="items-center justify-between">
+              <HStack className="items-center gap-x-4">
+                <FadeOutScaleDown
+                  testID="open-drawer-button"
+                  onPress={() => setShowDrawer(true)}
+                >
+                  <Avatar className="border-emerald-500 border-2 w-10 h-10">
+                    <AvatarFallbackText className="font-body ">
+                      {username}
+                    </AvatarFallbackText>
+                  </Avatar>
+                </FadeOutScaleDown>
+                <Heading className="text-white" size="2xl">
+                  {t("app.library.title")}
+                </Heading>
+              </HStack>
+              <HStack className="items-center gap-x-4">
+                <FadeOutScaleDown
+                  testID="library-search-button"
+                  onPress={handleSearchPress}
+                >
+                  <Search color={white} />
+                </FadeOutScaleDown>
+                <FadeOutScaleDown
+                  testID="library-create-button"
+                  onPress={handlePresentModalPress}
+                >
+                  <Plus color={white} />
+                </FadeOutScaleDown>
+              </HStack>
             </HStack>
-            <HStack className="items-center gap-x-4">
-              <FadeOutScaleDown
-                testID="library-search-button"
-                onPress={handleSearchPress}
-              >
-                <Search color={white} />
-              </FadeOutScaleDown>
-              <FadeOutScaleDown
-                testID="library-create-button"
-                onPress={handlePresentModalPress}
-              >
-                <Plus color={white} />
-              </FadeOutScaleDown>
-            </HStack>
-          </HStack>
-          <Box className="relative -mx-6 my-6">
+          </AnimatedBox>
+          <Box className="relative mb-6">
             <ScrollView
               ref={filterScrollRef}
               horizontal
@@ -497,7 +581,7 @@ export default function LibraryScreen() {
                   onPress={() => handleFilterPress(option)}
                 >
                   <Badge
-                    className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                    className={cn("rounded-full bg-primary-500 px-4 py-1", {
                       "bg-emerald-500 text-primary-800":
                         filter.includes(option),
                       "mr-2": index < orderedFilters.length - 1,
@@ -511,7 +595,7 @@ export default function LibraryScreen() {
               ))}
             </ScrollView>
             <LinearGradient
-              colors={["#000000", "transparent"]}
+              colors={[fadeTint, fadeTintTransparent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               pointerEvents="none"
@@ -524,7 +608,7 @@ export default function LibraryScreen() {
               }}
             />
             <LinearGradient
-              colors={["transparent", "#000000"]}
+              colors={[fadeTintTransparent, fadeTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               pointerEvents="none"
@@ -537,34 +621,39 @@ export default function LibraryScreen() {
               }}
             />
           </Box>
-        </Box>
-        <HStack className="px-6 pb-4 items-center justify-between">
-          <FadeOutScaleDown onPress={handlePresentSortModalPress}>
-            <HStack className="items-center gap-x-2">
-              {sort.endsWith("Desc") ? (
-                <ArrowDown size={16} color={white} />
+          <HStack className="px-6 pb-4 items-center justify-between">
+            <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+              <HStack className="items-center gap-x-2">
+                {sort.endsWith("Desc") ? (
+                  <ArrowDown size={16} color={white} />
+                ) : (
+                  <ArrowUp size={16} color={white} />
+                )}
+                <Text className="text-white font-bold">
+                  {sortFieldLabel(parseSortType(sort).field)}
+                </Text>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={handleLayoutPress}>
+              {layout === "list" ? (
+                <LayoutGrid size={16} color={white} />
               ) : (
-                <ArrowUp size={16} color={white} />
+                <List size={16} color={white} />
               )}
-              <Text className="text-white font-bold">
-                {sortFieldLabel(parseSortType(sort).field)}
-              </Text>
-            </HStack>
-          </FadeOutScaleDown>
-          <FadeOutScaleDown onPress={handleLayoutPress}>
-            {layout === "list" ? (
-              <LayoutGrid size={16} color={white} />
-            ) : (
-              <List size={16} color={white} />
-            )}
-          </FadeOutScaleDown>
-        </HStack>
+            </FadeOutScaleDown>
+          </HStack>
+        </AnimatedBox>
         {/* {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />} */}
-        {error && <ErrorDisplay error={error} />}
+        {error && (
+          <Box style={{ paddingTop: headerHeight }}>
+            <ErrorDisplay error={error} />
+          </Box>
+        )}
       </>
       {!error && (
-        <FlashList
+        <AnimatedFlashList
           ref={listRef}
+          onScroll={scrollHandler}
           key={`library-${layout}-${gridColumns}`}
           data={
             (isLoading ? loadingData(16) : (data ?? [])) as Array<
@@ -587,6 +676,9 @@ export default function LibraryScreen() {
             refetchStarred();
             refetchMusicFolders();
           }}
+          // The header overlays the list, so drop the spinner below it rather
+          // than behind it.
+          progressViewOffset={headerHeight}
           renderItem={({ item, extraData }) => {
             const { layout: itemLayout } = extraData as {
               layout: LibraryLayout;
@@ -606,6 +698,7 @@ export default function LibraryScreen() {
             // padding to 16 so the outer edge stays at 24 and every column has
             // equal width. List rows keep the full 24.
             paddingHorizontal: layout === "grid" ? 16 : 24,
+            paddingTop: headerHeight,
             paddingBottom: screenBottomPadding,
           }}
           showsVerticalScrollIndicator={false}

@@ -9,7 +9,7 @@ import {
   withStyleContext,
 } from "@gluestack-ui/utils/nativewind-utils";
 import React from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { withUniwind } from "uniwind";
 import {
   Actionsheet,
@@ -30,10 +30,56 @@ const SelectTriggerWrapper = React.forwardRef<
   React.ComponentRef<typeof Pressable>,
   React.ComponentProps<typeof Pressable>
 >(function SelectTriggerWrapper({ ...props }, ref) {
-  // The inner TextInput sets `pointerEvents="none"`, but Android only honours
-  // that on view groups — so it swallowed every tap and only the chevron
-  // opened the sheet. `box-only` makes the trigger itself the touch target.
+  // The creator sets `pointerEvents="none"` on the inner label, but Android
+  // only honours that on view groups — so it swallowed every tap and only the
+  // chevron opened the sheet. `box-only` makes the trigger the touch target.
   return <Pressable pointerEvents="box-only" {...props} ref={ref} />;
+});
+
+// A Text, not a TextInput: a read-only TextInput scrolls a value wider than the
+// trigger to its caret, so a long label (a server name, a sort field) showed
+// only its tail. Text truncates from the right and keeps the start visible.
+const SelectInputText = React.forwardRef<
+  React.ComponentRef<typeof Text>,
+  React.ComponentProps<typeof Text> & {
+    value?: string;
+    placeholder?: string;
+    placeholderTextColor?: string;
+    editable?: boolean;
+    onChangeText?: (text: string) => void;
+    tabIndex?: number;
+  }
+>(function SelectInputText(
+  {
+    value,
+    placeholder,
+    placeholderTextColor,
+    editable: _editable,
+    onChangeText: _onChangeText,
+    tabIndex: _tabIndex,
+    style,
+    ...props
+  },
+  ref,
+) {
+  const showsPlaceholder = !value;
+  return (
+    <Text
+      ref={ref}
+      numberOfLines={1}
+      style={[
+        showsPlaceholder
+          ? placeholderTextColor
+            ? { color: placeholderTextColor }
+            : { opacity: 0.5 }
+          : null,
+        style,
+      ]}
+      {...props}
+    >
+      {showsPlaceholder ? placeholder : value}
+    </Text>
+  );
 });
 
 const selectIconStyle = tva({
@@ -75,7 +121,7 @@ const selectTriggerStyle = tva({
 });
 
 const selectInputStyle = tva({
-  base: "px-3 placeholder:text-foreground/50 web:w-full h-full text-foreground/90 pointer-events-none web:outline-none ios:leading-[0px] py-0",
+  base: "flex-1 px-3 text-foreground/90",
   parentVariants: {
     size: {
       xl: "text-xl",
@@ -97,7 +143,7 @@ const UISelect = createSelect(
   {
     Root: View,
     Trigger: withStyleContext(SelectTriggerWrapper),
-    Input: TextInput,
+    Input: SelectInputText,
     Icon: StyledIcon,
   },
   {

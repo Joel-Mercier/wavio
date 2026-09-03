@@ -239,6 +239,8 @@ export default function InternetRadioStationsSearchScreen() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       />
 
       <CenteredBottomSheetModal
@@ -302,7 +304,7 @@ export default function InternetRadioStationsSearchScreen() {
                       onPress={() => handleToggleTag(tag.name)}
                     >
                       <Badge
-                        className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                        className={cn("rounded-full bg-primary-500 px-4 py-1", {
                           "bg-emerald-500": selected,
                         })}
                       >

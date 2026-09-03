@@ -89,7 +89,9 @@ export default function HomeSection({
           </HStack>
           {seeAllHref && !isLoading && !error && !isEmpty && (
             <FadeOutScaleDown href={seeAllHref}>
-              <Text className="text-primary-100">{t("app.shared.seeAll")}</Text>
+              <Text className="text-gray-400 font-semibold">
+                {t("app.shared.seeAll")}
+              </Text>
             </FadeOutScaleDown>
           )}
         </HStack>

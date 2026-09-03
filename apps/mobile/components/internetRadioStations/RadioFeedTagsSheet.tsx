@@ -75,7 +75,7 @@ export default function RadioFeedTagsSheet({
                     onPress={() => handleToggleTag(tag)}
                   >
                     <Badge
-                      className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                      className={cn("rounded-full bg-primary-500 px-4 py-1", {
                         "bg-emerald-500": selected,
                       })}
                     >

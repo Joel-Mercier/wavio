@@ -34,9 +34,17 @@ export type SmartPlaylistRule = {
   [op in SmartPlaylistOperator]?: Record<string, SmartPlaylistRuleValue>;
 };
 
+// Navidrome nests conjunctions to any depth (a rule slot accepts an `all`/`any`
+// group as well as an operator), supported since v0.47.0.
+export type SmartPlaylistRuleGroup =
+  | { all: SmartPlaylistNode[] }
+  | { any: SmartPlaylistNode[] };
+
+export type SmartPlaylistNode = SmartPlaylistRule | SmartPlaylistRuleGroup;
+
 export interface SmartPlaylistCriteria {
-  all?: SmartPlaylistRule[];
-  any?: SmartPlaylistRule[];
+  all?: SmartPlaylistNode[];
+  any?: SmartPlaylistNode[];
   sort?: string;
   order?: string;
   limit?: number;

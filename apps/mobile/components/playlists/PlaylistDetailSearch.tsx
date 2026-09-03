@@ -4,8 +4,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import Fuse, { type FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { KeyboardController } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -91,7 +92,16 @@ export default function PlaylistDetailSearch() {
   }, [playlistData, activeSort, query, id, getPlaylistTrackOrder]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);
-  const handleTrackPress = useTrackListPress(trackList);
+  const playTrack = useTrackListPress(trackList);
+  // Picking a result ends the search, so drop the keyboard: while the IME is up
+  // it swallows the Android back press and the screen looks stuck.
+  const handleTrackPress = useCallback(
+    (index: number, track: Child) => {
+      KeyboardController.dismiss();
+      playTrack(index, track);
+    },
+    [playTrack],
+  );
 
   return (
     <Box className="h-full">
@@ -158,6 +168,8 @@ export default function PlaylistDetailSearch() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
       />
     </Box>
   );

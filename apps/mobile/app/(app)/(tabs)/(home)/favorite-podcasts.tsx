@@ -9,6 +9,7 @@ import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
 import ServerPodcastEpisodeListItem from "@/components/podcasts/ServerPodcastEpisodeListItem";
 import ServerPodcastRow from "@/components/podcasts/ServerPodcastRow";
+import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
@@ -146,6 +147,7 @@ export default function FavoritePodcastsScreen() {
 
   return (
     <Box className="h-full">
+      <TabHeaderGradient />
       <HomeTabsNav active="favoritePodcasts" />
       {podcastsEnabled || capabilities.podcasts ? (
         <FlashList

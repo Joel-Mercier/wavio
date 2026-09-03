@@ -210,7 +210,7 @@ export default function SearchResultsScreen() {
           >
             <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                   "bg-emerald-500 text-primary-800": filter.includes("albums"),
                 })}
               >
@@ -221,7 +221,7 @@ export default function SearchResultsScreen() {
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                   "bg-emerald-500 text-primary-800": filter.includes("artists"),
                 })}
               >
@@ -232,7 +232,7 @@ export default function SearchResultsScreen() {
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={() => handleFilterPress("songs")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+                className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                   "bg-emerald-500 text-primary-800": filter.includes("songs"),
                 })}
               >

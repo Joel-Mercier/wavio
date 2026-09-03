@@ -209,7 +209,7 @@ export default function PathEndpointSheet({
               <FadeOutScaleDown key={value} onPress={() => setMode(value)}>
                 <Badge
                   className={cn(
-                    "rounded-full bg-gray-800 px-4 py-1",
+                    "rounded-full bg-primary-500 px-4 py-1",
                     activeMode === value && "bg-emerald-500",
                   )}
                 >
@@ -247,6 +247,7 @@ export default function PathEndpointSheet({
         data={rows}
         keyExtractor={(row) => row.key}
         renderScrollComponent={renderScrollComponent}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <FadeOutScaleDown onPress={() => handleRowPress(item)}>
             <HStack className="items-center px-6 py-3 gap-x-3">

@@ -21,6 +21,8 @@ export function gte(version: SemVer | null, target: SemVer): boolean {
   return compareVersion(version, target) >= 0;
 }
 
+// Nested all/any rule groups need no gate of their own: they landed with the
+// criteria API rewrite in v0.47.0, below the floor for smart playlists at all.
 export const SMART_PLAYLIST_MIN_VERSION: SemVer = [0, 49, 0];
 export const MULTI_FIELD_SORT_MIN_VERSION: SemVer = [0, 53, 0];
 // v0.62.0 added ReplayGain criteria fields (rgalbumgain/...) and the

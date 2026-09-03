@@ -69,8 +69,7 @@ const formatList = (
     .join(", ");
 
 export default function InternetRadioStationDetail() {
-  const [blue500, white, gray800, primary100, black] = Uniwind.getCSSVariable([
-    "--color-blue-500",
+  const [white, gray800, primary100, black] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-800",
     "--color-primary-100",
@@ -366,7 +365,10 @@ export default function InternetRadioStationDetail() {
           backgroundColor: "#b3b3b3",
         }}
       >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback

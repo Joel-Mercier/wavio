@@ -210,6 +210,7 @@ export default function LibrarySearchScreen() {
                   onChangeText={field.handleChange}
                   onBlur={field.handleBlur}
                   enterKeyHint="search"
+                  autoFocus
                 />
                 <InputSlot className="pr-3" onPress={handleSearchClearPress}>
                   <InputIcon as={X} size="xl" />
@@ -225,10 +226,11 @@ export default function LibrarySearchScreen() {
           showsHorizontalScrollIndicator={false}
           className="grow-0"
           contentContainerStyle={{ paddingHorizontal: 24 }}
+          keyboardShouldPersistTaps="handled"
         >
           <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
             <Badge
-              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+              className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                 "bg-emerald-500": filter.includes("albums"),
               })}
             >
@@ -239,7 +241,7 @@ export default function LibrarySearchScreen() {
           </FadeOutScaleDown>
           <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
             <Badge
-              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+              className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                 "bg-emerald-500": filter.includes("artists"),
               })}
             >
@@ -250,7 +252,7 @@ export default function LibrarySearchScreen() {
           </FadeOutScaleDown>
           <FadeOutScaleDown onPress={() => handleFilterPress("playlists")}>
             <Badge
-              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+              className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                 "bg-emerald-500": filter.includes("playlists"),
               })}
             >
@@ -261,7 +263,7 @@ export default function LibrarySearchScreen() {
           </FadeOutScaleDown>
           <FadeOutScaleDown onPress={() => handleFilterPress("radioStations")}>
             <Badge
-              className={cn("rounded-full bg-gray-800 px-4 py-1 mr-2", {
+              className={cn("rounded-full bg-primary-500 px-4 py-1 mr-2", {
                 "bg-emerald-500": filter.includes("radioStations"),
               })}
             >
@@ -272,7 +274,7 @@ export default function LibrarySearchScreen() {
           </FadeOutScaleDown>
           <FadeOutScaleDown onPress={() => handleFilterPress("folders")}>
             <Badge
-              className={cn("rounded-full bg-gray-800 px-4 py-1", {
+              className={cn("rounded-full bg-primary-500 px-4 py-1", {
                 "bg-emerald-500": filter.includes("folders"),
               })}
             >
@@ -372,6 +374,8 @@ export default function LibrarySearchScreen() {
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,
           }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         />
       )}
     </Box>

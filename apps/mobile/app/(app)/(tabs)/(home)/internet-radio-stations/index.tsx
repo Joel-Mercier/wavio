@@ -5,6 +5,7 @@ import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import CustomizeHomeCard from "@/components/home/CustomizeHomeCard";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoriteRadioStationListItem from "@/components/internetRadioStations/FavoriteRadioStationListItem";
 import {
@@ -12,6 +13,7 @@ import {
   serverToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
 import RadioStationRow from "@/components/internetRadioStations/RadioStationRow";
+import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
@@ -81,6 +83,7 @@ export default function InternetRadioStationsScreen() {
 
   return (
     <Box className="flex-1 h-full">
+      <TabHeaderGradient />
       <HomeTabsNav active="internetRadioStations" />
       <ScrollView
         contentContainerStyle={{
@@ -95,7 +98,7 @@ export default function InternetRadioStationsScreen() {
                 href={"/(app)/(tabs)/(home)/internet-radio-stations/search"}
                 className="flex-1"
               >
-                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-500 items-center">
                   <Search
                     size={20}
                     color={"rgb(128, 128, 128)"}
@@ -196,6 +199,7 @@ export default function InternetRadioStationsScreen() {
             {feedTags.map((tag) => (
               <TagRow key={tag} tag={tag} />
             ))}
+            <CustomizeHomeCard target="radio" />
           </>
         )}
       </ScrollView>
