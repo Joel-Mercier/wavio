@@ -28,6 +28,20 @@
 				"podcasts": "Подкасты",
 				"internetRadioStations": "Интернет-радио",
 				"playErrorMessage": "Не удалось начать воспроизведение",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "Музыка",
 					"podcasts": "Подкасты",
