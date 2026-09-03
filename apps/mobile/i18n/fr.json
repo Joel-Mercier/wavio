@@ -650,6 +650,10 @@
 			"smartPlaylist": {
 				"rule": "Règle",
 				"addRule": "Ajouter une règle",
+				"addGroup": "Add rule group",
+				"deleteGroup": "Delete rule group",
+				"and": "and",
+				"or": "or",
 				"matchAll": "Toutes les règles",
 				"matchAny": "Une des règles",
 				"atLeastOneRule": "Ajoutez au moins une règle",
