@@ -73,6 +73,7 @@ export default function SelectBottomSheet({
         data={filtered}
         keyExtractor={(item) => item.value}
         renderScrollComponent={renderScrollComponent}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
         renderItem={({ item }) => (
           <FadeOutScaleDown

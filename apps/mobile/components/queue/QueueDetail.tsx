@@ -618,7 +618,10 @@ export default function QueueDetail() {
         backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
-        <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center mb-6">
               <Timer size={24} color={gray200} />

@@ -247,6 +247,7 @@ export default function PathEndpointSheet({
         data={rows}
         keyExtractor={(row) => row.key}
         renderScrollComponent={renderScrollComponent}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <FadeOutScaleDown onPress={() => handleRowPress(item)}>
             <HStack className="items-center px-6 py-3 gap-x-3">

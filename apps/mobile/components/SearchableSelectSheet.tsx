@@ -66,6 +66,7 @@ export default function SearchableSelectSheet({
         data={filtered}
         keyExtractor={(item) => item.value}
         renderScrollComponent={renderScrollComponent}
+        showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           anyLabel ? (
             <FadeOutScaleDown onPress={() => onSelect("")}>

@@ -412,6 +412,7 @@ const ActionsheetScrollView = React.forwardRef<
         class: className,
       })}
       ref={ref}
+      showsVerticalScrollIndicator={false}
       {...props}
     />
   );

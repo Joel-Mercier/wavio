@@ -39,7 +39,7 @@ import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import {
-  type FormRule,
+  type FormNode,
   type FormSortEntry,
   fromNavidromeCriteria,
   toNavidromeCriteria,
@@ -70,7 +70,7 @@ export default function EditSmartPlaylistScreen() {
   const doUpdate = useUpdateSmartPlaylist();
 
   const [combinator, setCombinator] = useState<"all" | "any">("all");
-  const [rules, setRules] = useState<FormRule[]>([]);
+  const [rules, setRules] = useState<FormNode[]>([]);
   const [sorts, setSorts] = useState<FormSortEntry[]>([]);
   const [limit, setLimit] = useState<string>("");
   const [hydrated, setHydrated] = useState(false);
@@ -94,7 +94,21 @@ export default function EditSmartPlaylistScreen() {
     validators: { onChange: metadataSchema },
     onSubmit: async ({ value }) => {
       if (!id) return;
-      if (rules.length === 0) {
+      const criteria = toNavidromeCriteria(
+        {
+          name: value.name,
+          comment: value.comment,
+          isPublic: value.isPublic,
+          combinator,
+          rules,
+          sorts,
+          limit,
+        },
+        serverVersion,
+      );
+      // Guard on what actually ships: rules the server can't model are dropped
+      // while serializing, and Navidrome rejects an empty top-level conjunction.
+      if ((criteria.all ?? criteria.any ?? []).length === 0) {
         toast.show({
           placement: "top",
           duration: 3000,
@@ -109,18 +123,6 @@ export default function EditSmartPlaylistScreen() {
         });
         return;
       }
-      const criteria = toNavidromeCriteria(
-        {
-          name: value.name,
-          comment: value.comment,
-          isPublic: value.isPublic,
-          combinator,
-          rules,
-          sorts,
-          limit,
-        },
-        serverVersion,
-      );
       doUpdate.mutate(
         {
           id,

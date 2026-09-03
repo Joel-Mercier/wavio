@@ -53,7 +53,10 @@ export default function OptionsBottomSheetModal<
         backgroundColor: "#b3b3b3",
       }}
     >
-      <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ alignItems: "center" }}
+      >
         <Box className="p-6 w-full mb-12">
           {header && (
             <VStack className="gap-y-2">

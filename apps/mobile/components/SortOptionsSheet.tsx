@@ -104,7 +104,10 @@ export default function SortOptionsSheet<F extends string>({
         backgroundColor: "#b3b3b3",
       }}
     >
-      <BottomSheetScrollView contentContainerStyle={{ alignItems: "center" }}>
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ alignItems: "center" }}
+      >
         <Box className="p-6 w-full mb-12">
           <VStack className="mt-6 gap-y-8">
             {fields.map((field) => (
