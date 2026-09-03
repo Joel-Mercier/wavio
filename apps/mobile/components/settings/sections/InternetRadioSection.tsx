@@ -9,8 +9,10 @@ import {
   SettingsToggleRow,
 } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
+import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { useRadioCountries } from "@/hooks/radioBrowser/useRadioBrowser";
+import { useHighlightedSetting } from "@/hooks/useHighlightedSetting";
 import useApp from "@/stores/app";
 
 export default function InternetRadioSection() {
@@ -20,6 +22,12 @@ export default function InternetRadioSection() {
   ]) as string[];
   const bottomSheetRadioCountryModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetRadioTagsModalRef = useRef<BottomSheetModal>(null);
+  // The radio tab's footer card deep-links here pointing at the feed tags row.
+  const {
+    scrollRef,
+    highlighted: highlightFeedTags,
+    onLayout: handleFeedTagsLayout,
+  } = useHighlightedSetting("feedTags");
 
   const internetRadioCountryCode = useApp(
     (store) => store.internetRadioCountryCode,
@@ -54,6 +62,7 @@ export default function InternetRadioSection() {
   return (
     <SettingsScreenScaffold
       title={t("app.settings.menu.radio.title")}
+      scrollRef={scrollRef}
       overlays={
         <>
           <SearchableSelectSheet
@@ -92,17 +101,21 @@ export default function InternetRadioSection() {
           disabled={!radioBrowserEnabled}
           onPress={() => bottomSheetRadioCountryModalRef.current?.present()}
         />
-        <SettingsSelectRow
-          label={t("app.settings.internetRadioStationsSettings.tagsLabel")}
-          description={t(
-            "app.settings.internetRadioStationsSettings.tagsDescription",
-          )}
-          badgeText={t("app.settings.internetRadioStationsSettings.tagsCount", {
-            count: internetRadioFeedTags.length,
-          })}
-          disabled={!radioBrowserEnabled}
-          onPress={() => bottomSheetRadioTagsModalRef.current?.present()}
-        />
+        <Box onLayout={handleFeedTagsLayout}>
+          <SettingsSelectRow
+            label={t("app.settings.internetRadioStationsSettings.tagsLabel")}
+            description={t(
+              "app.settings.internetRadioStationsSettings.tagsDescription",
+            )}
+            badgeText={t(
+              "app.settings.internetRadioStationsSettings.tagsCount",
+              { count: internetRadioFeedTags.length },
+            )}
+            disabled={!radioBrowserEnabled}
+            highlighted={highlightFeedTags}
+            onPress={() => bottomSheetRadioTagsModalRef.current?.present()}
+          />
+        </Box>
       </VStack>
     </SettingsScreenScaffold>
   );

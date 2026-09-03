@@ -199,7 +199,7 @@ export default function SoulSyncSearchScreen() {
           <HStack className="gap-x-2 mt-4">
             <FadeOutScaleDown onPress={() => handleFilterPress("tracks")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                className={cn("rounded-full bg-primary-500 px-4 py-1", {
                   "bg-emerald-500": filter.includes("tracks"),
                 })}
               >
@@ -210,7 +210,7 @@ export default function SoulSyncSearchScreen() {
             </FadeOutScaleDown>
             <FadeOutScaleDown onPress={() => handleFilterPress("artists")}>
               <Badge
-                className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                className={cn("rounded-full bg-primary-500 px-4 py-1", {
                   "bg-emerald-500": filter.includes("artists"),
                 })}
               >
@@ -252,6 +252,7 @@ export default function SoulSyncSearchScreen() {
         }
         contentContainerStyle={{ paddingBottom: screenBottomPadding }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       />
     </Box>

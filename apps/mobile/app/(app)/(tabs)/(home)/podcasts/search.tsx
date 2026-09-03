@@ -300,6 +300,8 @@ export default function PodcastsSearchScreen() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       />
 
       <CenteredBottomSheetModal

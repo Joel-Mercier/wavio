@@ -69,8 +69,7 @@ const formatList = (
     .join(", ");
 
 export default function InternetRadioStationDetail() {
-  const [blue500, white, gray800, primary100, black] = Uniwind.getCSSVariable([
-    "--color-blue-500",
+  const [white, gray800, primary100, black] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-800",
     "--color-primary-100",

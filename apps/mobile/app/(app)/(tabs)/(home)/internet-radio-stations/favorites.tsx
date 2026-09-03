@@ -5,6 +5,7 @@ import HomeTabsNav from "@/components/home/HomeTabsNav";
 import InternetRadioStationListItem, {
   favoriteToItem,
 } from "@/components/internetRadioStations/InternetRadioStationListItem";
+import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import {
@@ -23,6 +24,7 @@ export default function FavoriteInternetRadioStationsScreen() {
 
   return (
     <Box className="h-full">
+      <TabHeaderGradient />
       <HomeTabsNav active="internetRadioStationsFavorites" />
       <FlashList
         data={favoriteRadioStations}

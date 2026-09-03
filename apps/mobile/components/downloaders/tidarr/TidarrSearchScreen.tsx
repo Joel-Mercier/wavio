@@ -244,7 +244,7 @@ export default function TidarrSearchScreen() {
                 onPress={() => handleFilterPress(kind)}
               >
                 <Badge
-                  className={cn("rounded-full bg-gray-800 px-4 py-1", {
+                  className={cn("rounded-full bg-primary-500 px-4 py-1", {
                     "bg-emerald-500": filter.includes(kind),
                   })}
                 >
@@ -287,6 +287,7 @@ export default function TidarrSearchScreen() {
         }
         contentContainerStyle={{ paddingBottom: screenBottomPadding }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       />
     </Box>

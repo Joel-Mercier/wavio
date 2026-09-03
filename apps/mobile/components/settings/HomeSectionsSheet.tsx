@@ -106,7 +106,7 @@ export default function HomeSectionsSheet({
     return (
       <FadeOutScaleDown onPress={() => handleToggleSection(entry.key)}>
         <Badge
-          className={cn("rounded-full bg-gray-800 px-4 py-1", {
+          className={cn("rounded-full bg-primary-500 px-4 py-1", {
             "bg-emerald-500": position !== undefined,
           })}
         >

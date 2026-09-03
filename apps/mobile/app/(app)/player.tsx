@@ -75,6 +75,7 @@ import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { formatAudioQuality } from "@/utils/audioQuality";
+import { HEADER_TINT_COLOR } from "@/utils/headerGradient";
 import { hasLyricContent, isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
@@ -117,9 +118,8 @@ function CoverSlot({
 }
 
 export default function PlayerScreen() {
-  const [black, blue500, emerald500, gray800] = Uniwind.getCSSVariable([
+  const [black, emerald500, gray800] = Uniwind.getCSSVariable([
     "--color-black",
-    "--color-blue-500",
     "--color-emerald-500",
     "--color-gray-800",
   ]) as string[];
@@ -194,7 +194,7 @@ export default function PlayerScreen() {
       ? colors.primary
       : colors?.muted === black
         ? colors?.darkVibrant
-        : colors?.muted) || blue500;
+        : colors?.muted) || HEADER_TINT_COLOR;
   const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
   const removeFavoritePodcast = usePodcasts(
     (store) => store.removeFavoritePodcast,

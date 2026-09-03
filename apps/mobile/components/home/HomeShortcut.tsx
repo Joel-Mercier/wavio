@@ -76,7 +76,7 @@ function HomeShortcut({ recentPlay }: HomeShortcutProps) {
 
   return (
     <FadeOutScaleDown href={href} className="w-1/2">
-      <HStack className="items-center rounded-md bg-primary-600 overflow-hidden">
+      <HStack className="items-center rounded-md bg-primary-500 overflow-hidden">
         <ImageWithFallback
           size="none"
           source={

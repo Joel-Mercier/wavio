@@ -209,7 +209,7 @@ export default function PathEndpointSheet({
               <FadeOutScaleDown key={value} onPress={() => setMode(value)}>
                 <Badge
                   className={cn(
-                    "rounded-full bg-gray-800 px-4 py-1",
+                    "rounded-full bg-primary-500 px-4 py-1",
                     activeMode === value && "bg-emerald-500",
                   )}
                 >

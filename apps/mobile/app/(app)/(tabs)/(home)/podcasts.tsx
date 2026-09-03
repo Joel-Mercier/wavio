@@ -5,11 +5,13 @@ import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import CustomizeHomeCard from "@/components/home/CustomizeHomeCard";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
 import FavoritePodcastListItem from "@/components/podcasts/FavoritePodcastListItem";
 import PodcastSeriesRow from "@/components/podcasts/PodcastSeriesRow";
 import ResumeListeningRow from "@/components/podcasts/ResumeListeningRow";
 import ServerPodcastRow from "@/components/podcasts/ServerPodcastRow";
+import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
@@ -95,6 +97,7 @@ export default function PodcastsScreen() {
 
   return (
     <Box className="flex-1 h-full">
+      <TabHeaderGradient />
       <HomeTabsNav active="podcasts" />
       <ScrollView
         contentContainerStyle={{
@@ -109,7 +112,7 @@ export default function PodcastsScreen() {
                 href={"/(app)/(tabs)/(home)/podcasts/search"}
                 className="flex-1"
               >
-                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-600 items-center">
+                <HStack className="px-4 gap-x-4 h-10 rounded-lg bg-primary-500 items-center">
                   <Search
                     size={20}
                     color={"rgb(128, 128, 128)"}
@@ -218,6 +221,7 @@ export default function PodcastsScreen() {
                 skeletonKey="popular-content"
               />
             )}
+            <CustomizeHomeCard target="podcasts" />
           </>
         ) : capabilities.podcasts ? (
           // Taddy unconfigured but the backend self-hosts podcasts: keep the

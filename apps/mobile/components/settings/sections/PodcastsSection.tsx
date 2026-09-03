@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useRemainingApiRequests } from "@/hooks/taddyPodcasts/useSystem";
+import { useHighlightedSetting } from "@/hooks/useHighlightedSetting";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { TaddyError } from "@/services/taddyPodcasts/index";
 import { validateTaddyCredentials } from "@/services/taddyPodcasts/system";
@@ -49,6 +50,13 @@ export default function PodcastsSection() {
   ]) as string[];
   const bottomSheetCountryModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
+  // The podcasts tab's footer card deep-links here pointing at the country /
+  // language rows, which are what its recommendations are drawn from.
+  const {
+    scrollRef,
+    highlighted: highlightRecommendations,
+    onLayout: handleRecommendationsLayout,
+  } = useHighlightedSetting("recommendations");
 
   const taddyPodcastsApiKey = usePodcasts((store) => store.taddyPodcastsApiKey);
   const taddyPodcastsUserId = usePodcasts((store) => store.taddyPodcastsUserId);
@@ -128,6 +136,7 @@ export default function PodcastsSection() {
   return (
     <SettingsScreenScaffold
       title={t("app.settings.menu.podcasts.title")}
+      scrollRef={scrollRef}
       overlays={
         <>
           <SearchableSelectSheet
@@ -293,13 +302,16 @@ export default function PodcastsSection() {
 
         <Box className="h-px bg-primary-500 my-2" />
 
-        <SettingsSelectRow
-          label={t("app.settings.podcastSettings.countryLabel")}
-          description={t("app.settings.podcastSettings.countryDescription")}
-          badgeText={enumLabel(taddyPodcastsCountry)}
-          disabled={!isConfigured}
-          onPress={() => bottomSheetCountryModalRef.current?.present()}
-        />
+        <Box onLayout={handleRecommendationsLayout}>
+          <SettingsSelectRow
+            label={t("app.settings.podcastSettings.countryLabel")}
+            description={t("app.settings.podcastSettings.countryDescription")}
+            badgeText={enumLabel(taddyPodcastsCountry)}
+            disabled={!isConfigured}
+            highlighted={highlightRecommendations}
+            onPress={() => bottomSheetCountryModalRef.current?.present()}
+          />
+        </Box>
         <SettingsSelectRow
           label={t("app.settings.podcastSettings.languageLabel")}
           description={t("app.settings.podcastSettings.languageDescription")}

@@ -152,11 +152,7 @@ export default function PlaylistDetail() {
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   // Set once this playlist is known not to exist any more, by either path.
   const playlistGoneRef = useRef(false);
-  const {
-    data: serverPlaylistData,
-    error,
-    fetchStatus,
-  } = usePlaylist(id);
+  const { data: serverPlaylistData, error, fetchStatus } = usePlaylist(id);
   const offlinePlaylistData = useOfflinePlaylist(id);
   // Offline (or before the server query resolves) fall back to the downloaded
   // collection so a saved playlist stays browsable after a logout clears the

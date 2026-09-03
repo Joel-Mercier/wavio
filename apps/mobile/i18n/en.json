@@ -28,6 +28,20 @@
 				"podcasts": "Podcasts",
 				"internetRadioStations": "Internet radio stations",
 				"playErrorMessage": "An error occurred while starting playback",
+				"customize": {
+					"music": {
+						"title": "Customize your home",
+						"description": "Choose which sections appear, and in which order"
+					},
+					"podcasts": {
+						"title": "Customize your podcasts",
+						"description": "Choose the country and language your recommendations come from"
+					},
+					"radio": {
+						"title": "Customize your radio",
+						"description": "Choose which tags appear in the feed"
+					}
+				},
 				"tabs": {
 					"music": "Music",
 					"podcasts": "Podcasts",

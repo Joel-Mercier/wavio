@@ -1,5 +1,4 @@
 import { FlashList } from "@shopify/flash-list";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
@@ -20,6 +19,7 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ScreenHeaderGradient from "@/components/ScreenHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -40,10 +40,7 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
-  const [blue500, white] = Uniwind.getCSSVariable([
-    "--color-blue-500",
-    "--color-white",
-  ]) as string[];
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
@@ -91,9 +88,9 @@ export default function GenreScreen() {
         className="w-full z-10 absolute top-0 left-0 right-0"
         style={[headerStyle]}
       >
-        <LinearGradient colors={[blue500, "#000"]} locations={[0, 0.7]}>
+        <ScreenHeaderGradient opaque>
           <HStack
-            className="items-center justify-between pb-4 px-6 bg-black/25"
+            className="items-center justify-between pb-4 px-6"
             style={{ paddingTop: insets.top + 16 }}
           >
             <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
@@ -118,7 +115,7 @@ export default function GenreScreen() {
               </Box>
             </FadeOutScaleDown>
           </HStack>
-        </LinearGradient>
+        </ScreenHeaderGradient>
       </AnimatedBox>
       <AnimatedFlashList
         key={`genre-albums-${layout}-${gridColumns}`}
@@ -141,15 +138,8 @@ export default function GenreScreen() {
           )
         }
         ListHeaderComponent={
-          <LinearGradient
-            colors={[blue500, "#000000"]}
-            className="h-48"
-            style={{ height: 192 }}
-          >
-            <Box
-              className="bg-black/25 flex-1"
-              style={{ paddingTop: insets.top }}
-            >
+          <ScreenHeaderGradient height={192}>
+            <Box className="flex-1" style={{ paddingTop: insets.top }}>
               <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
                 <HStack className="items-center justify-between w-full">
                   <Pressable onPress={() => goBackOrHome(router)}>
@@ -188,7 +178,7 @@ export default function GenreScreen() {
               </VStack>
               {error && <ErrorDisplay error={error} />}
             </Box>
-          </LinearGradient>
+          </ScreenHeaderGradient>
         }
         ListEmptyComponent={<EmptyDisplay />}
         // The hero header is full-bleed; cancel the grid container padding on it

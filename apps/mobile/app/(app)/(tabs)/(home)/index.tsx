@@ -2,6 +2,7 @@ import { FlashList, type ViewToken } from "@shopify/flash-list";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import CustomizeHomeCard from "@/components/home/CustomizeHomeCard";
 import {
   createEnabledSectionsStore,
   EnabledSectionsProvider,
@@ -22,6 +23,7 @@ import {
   SongsByGenreSection,
 } from "@/components/home/sections/SongCarouselSection";
 import StarredSection from "@/components/home/sections/StarredSection";
+import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
@@ -66,6 +68,8 @@ const HOME_REFRESH_KEYS = [
   // each cost ~60 backend searches, which is not what a pull on Home asks for.
   ["listenbrainz", "createdFor"],
 ] as const;
+
+const musicCustomizeCard = <CustomizeHomeCard target="music" />;
 
 const keyExtractor = (item: HomeSectionDescriptor) => item.id;
 const getItemType = (item: HomeSectionDescriptor) => item.kind;
@@ -295,6 +299,7 @@ export default function HomeScreen() {
 
   return (
     <Box className="flex-1">
+      <TabHeaderGradient />
       <HomeTabsNav active="music" />
       <EnabledSectionsProvider store={enabledSections}>
         <FlashList
@@ -305,6 +310,7 @@ export default function HomeScreen() {
           onViewableItemsChanged={handleViewableItemsChanged}
           viewabilityConfig={VIEWABILITY_CONFIG}
           drawDistance={500}
+          ListFooterComponent={musicCustomizeCard}
           onRefresh={handleRefresh}
           refreshing={refreshing}
           showsVerticalScrollIndicator={false}

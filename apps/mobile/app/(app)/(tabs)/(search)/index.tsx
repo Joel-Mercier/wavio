@@ -24,6 +24,9 @@ import SortOptionsSheet, {
 } from "@/components/SortOptionsSheet";
 import GenreListItem from "@/components/search/GenreListItem";
 import GenreListItemSkeleton from "@/components/search/GenreListItemSkeleton";
+import TabHeaderGradient, {
+  TabHeaderGradientBackdrop,
+} from "@/components/TabHeaderGradient";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -159,11 +162,13 @@ export default function SearchScreen() {
 
   return (
     <Box className="h-full">
+      <TabHeaderGradient />
       <AnimatedBox
         onLayout={handleHeaderLayout}
-        className="absolute top-0 left-0 right-0 z-10 bg-background"
+        className="absolute top-0 left-0 right-0 z-10"
         style={[{ paddingTop: insets.top }, headerStyle]}
       >
+        <TabHeaderGradientBackdrop offsetY={collapsed} />
         {/* Vertical spacing lives on this wrapper as padding (not margin) so its
             onLayout height is the exact distance the header collapses, letting
             the search bar pin at the top. The title fades as it collapses. */}

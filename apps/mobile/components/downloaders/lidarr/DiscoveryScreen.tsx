@@ -170,6 +170,7 @@ export default function DiscoveryScreen() {
         }
         contentContainerStyle={{ paddingBottom: screenBottomPadding }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       />
 

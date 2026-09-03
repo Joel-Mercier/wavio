@@ -10,12 +10,14 @@ import {
   SettingsToggleRow,
 } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
+import { Box } from "@/components/ui/box";
 import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { LanguageNames, SupportedLanguages } from "@/config/i18n";
+import { useHighlightedSetting } from "@/hooks/useHighlightedSetting";
 import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
 import useApp, { type SwipeAction } from "@/stores/app";
 import { availableHomeSections } from "@/utils/homeFeed";
@@ -33,6 +35,13 @@ const swipeActionOptions: SwipeAction[] = [
 export default function AppearanceSection() {
   const { t } = useTranslation();
   const availability = useHomeSectionAvailability();
+  // The home feed's footer card deep-links here pointing at the sections row.
+  const {
+    scrollRef,
+    highlighted: highlightHomeSections,
+    onLayout: handleHomeSectionsLayout,
+  } = useHighlightedSetting("homeSections");
+
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSwipeActionModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetHomeSectionsModalRef = useRef<BottomSheetModal>(null);
@@ -63,6 +72,7 @@ export default function AppearanceSection() {
   return (
     <SettingsScreenScaffold
       title={t("app.settings.menu.appearance.title")}
+      scrollRef={scrollRef}
       overlays={
         <>
           <OptionsBottomSheetModal
@@ -128,16 +138,19 @@ export default function AppearanceSection() {
           value={showEmptyHomeSections}
           onToggle={(value) => setShowEmptyHomeSections(value)}
         />
-        <SettingsSelectRow
-          label={t("app.settings.displaySettings.homeSectionsLabel")}
-          description={t(
-            "app.settings.displaySettings.homeSectionsDescription",
-          )}
-          badgeText={t("app.settings.displaySettings.homeSectionsCount", {
-            count: visibleHomeSectionCount,
-          })}
-          onPress={() => bottomSheetHomeSectionsModalRef.current?.present()}
-        />
+        <Box onLayout={handleHomeSectionsLayout}>
+          <SettingsSelectRow
+            label={t("app.settings.displaySettings.homeSectionsLabel")}
+            description={t(
+              "app.settings.displaySettings.homeSectionsDescription",
+            )}
+            badgeText={t("app.settings.displaySettings.homeSectionsCount", {
+              count: visibleHomeSectionCount,
+            })}
+            highlighted={highlightHomeSections}
+            onPress={() => bottomSheetHomeSectionsModalRef.current?.present()}
+          />
+        </Box>
         <SettingsSelectRow
           label={t("app.settings.displaySettings.swipeActionLabel")}
           description={t("app.settings.displaySettings.swipeActionDescription")}

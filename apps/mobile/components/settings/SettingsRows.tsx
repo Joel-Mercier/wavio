@@ -1,14 +1,36 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import type { LayoutChangeEvent } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Badge, BadgeText } from "@/components/ui/badge";
+import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { cn } from "@/utils/tailwind";
+
+// A highlighted row holds its backdrop long enough to be noticed after the
+// scroll settles, then fades it out so the screen returns to its normal look.
+const HIGHLIGHT_HOLD_MS = 1200;
+const HIGHLIGHT_FADE_MS = 600;
+// The backdrop bleeds past the row's text so it reads as a band, not a box
+// hugging the labels.
+const HIGHLIGHT_BACKDROP = {
+  position: "absolute",
+  left: -12,
+  right: -12,
+  top: 4,
+  bottom: 4,
+  borderRadius: 12,
+} as const;
 
 export function SettingsSectionTitle({
   title,
@@ -166,33 +188,65 @@ export function SettingsSelectRow({
   badgeText,
   onPress,
   disabled = false,
+  highlighted = false,
 }: {
   label: string;
   description: string;
   badgeText: string;
   onPress: () => void;
   disabled?: boolean;
+  // Set when the screen was opened to point at this row: it flashes a backdrop
+  // that fades away, so the row the caller meant is obvious on arrival.
+  highlighted?: boolean;
 }) {
+  const [primary600] = Uniwind.getCSSVariable([
+    "--color-primary-600",
+  ]) as string[];
+  const highlight = useSharedValue(highlighted ? 1 : 0);
+
+  useEffect(() => {
+    if (!highlighted) return;
+    highlight.value = 1;
+    highlight.value = withDelay(
+      HIGHLIGHT_HOLD_MS,
+      withTiming(0, { duration: HIGHLIGHT_FADE_MS }),
+    );
+  }, [highlighted, highlight]);
+
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: highlight.value,
+  }));
+
   return (
     <FadeOutScaleDown onPress={onPress} disabled={disabled}>
-      <HStack className="items-center gap-x-4 py-4 justify-between">
-        <VStack className="gap-y-2 w-1/2">
-          <Heading className="text-white font-normal" size="md">
-            {label}
-          </Heading>
-          <Text className="text-primary-100 text-sm">{description}</Text>
-        </VStack>
-        <Badge
-          className="rounded-full normal-case py-1 px-3 bg-emerald-100"
-          size="lg"
-          variant="solid"
-          action="success"
-        >
-          <BadgeText className="normal-case text-center text-emerald-700">
-            {badgeText}
-          </BadgeText>
-        </Badge>
-      </HStack>
+      <Box>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            HIGHLIGHT_BACKDROP,
+            { backgroundColor: primary600 },
+            highlightStyle,
+          ]}
+        />
+        <HStack className="items-center gap-x-4 py-4 justify-between">
+          <VStack className="gap-y-2 w-1/2">
+            <Heading className="text-white font-normal" size="md">
+              {label}
+            </Heading>
+            <Text className="text-primary-100 text-sm">{description}</Text>
+          </VStack>
+          <Badge
+            className="rounded-full normal-case py-1 px-3 bg-emerald-100"
+            size="lg"
+            variant="solid"
+            action="success"
+          >
+            <BadgeText className="normal-case text-center text-emerald-700">
+              {badgeText}
+            </BadgeText>
+          </Badge>
+        </HStack>
+      </Box>
     </FadeOutScaleDown>
   );
 }

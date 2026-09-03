@@ -9,6 +9,7 @@ import type {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { tabHeaderTintAt } from "@/components/TabHeaderGradient";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { HStack } from "@/components/ui/hstack";
@@ -28,6 +29,10 @@ interface HomeTabsNavProps {
   active: ActiveTab;
 }
 
+// Depth of the chip row below the safe-area top (my-6 margin + half the row),
+// so its edge fades blend into the header gradient instead of into black.
+const CHIP_ROW_DEPTH = 40;
+
 // Persist horizontal scroll across screen navigations within the home tab.
 let persistedScrollX = 0;
 
@@ -43,6 +48,11 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     persistedScrollX = e.nativeEvent.contentOffset.x;
   };
+
+  const [fadeTint, fadeTintTransparent] = tabHeaderTintAt(
+    CHIP_ROW_DEPTH,
+    insets.top,
+  );
 
   const showPodcastsSplit =
     active === "podcasts" || active === "favoritePodcasts";
@@ -83,7 +93,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
               onPress={() => router.navigate("/(app)/(tabs)/(home)")}
             >
               <Badge
-                className={`rounded-full ${active === "music" ? "bg-emerald-500" : "bg-gray-800"} px-4 py-1 mr-2`}
+                className={`rounded-full ${active === "music" ? "bg-emerald-500" : "bg-primary-500"} px-4 py-1 mr-2`}
               >
                 <BadgeText className="normal-case text-md text-white">
                   {t("app.home.tabs.music")}
@@ -109,7 +119,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                   }
                 >
                   <Badge
-                    className={`rounded-full rounded-l-none ${active === "favoritePodcasts" ? "bg-emerald-600" : "bg-gray-800"} text-primary-800 px-4 py-1 mr-2`}
+                    className={`rounded-full rounded-l-none ${active === "favoritePodcasts" ? "bg-emerald-600" : "bg-primary-500"} text-primary-800 px-4 py-1 mr-2`}
                   >
                     <BadgeText className="normal-case text-md text-white">
                       {t("app.home.tabs.favoritePodcasts")}
@@ -121,7 +131,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
               <FadeOutScaleDown
                 onPress={() => router.navigate("/(app)/(tabs)/(home)/podcasts")}
               >
-                <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
+                <Badge className="rounded-full bg-primary-500 px-4 py-1 mr-2">
                   <BadgeText className="normal-case text-md text-white">
                     {t("app.home.tabs.podcasts")}
                   </BadgeText>
@@ -151,7 +161,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                   }
                 >
                   <Badge
-                    className={`rounded-full rounded-l-none ${active === "internetRadioStationsFavorites" ? "bg-emerald-600" : "bg-gray-800"} text-primary-800 px-4 py-1 mr-2`}
+                    className={`rounded-full rounded-l-none ${active === "internetRadioStationsFavorites" ? "bg-emerald-600" : "bg-primary-500"} text-primary-800 px-4 py-1 mr-2`}
                   >
                     <BadgeText className="normal-case text-md text-white">
                       {t("app.home.tabs.radioFavorites")}
@@ -168,7 +178,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                   )
                 }
               >
-                <Badge className="rounded-full bg-gray-800 px-4 py-1 mr-2">
+                <Badge className="rounded-full bg-primary-500 px-4 py-1 mr-2">
                   <BadgeText className="normal-case text-md text-white">
                     {t("app.home.tabs.internetRadioStations")}
                   </BadgeText>
@@ -178,7 +188,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
           </HStack>
         </ScrollView>
         <LinearGradient
-          colors={["#000000", "transparent"]}
+          colors={[fadeTint, fadeTintTransparent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           pointerEvents="none"
@@ -191,7 +201,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
           }}
         />
         <LinearGradient
-          colors={["transparent", "#000000"]}
+          colors={[fadeTintTransparent, fadeTint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           pointerEvents="none"

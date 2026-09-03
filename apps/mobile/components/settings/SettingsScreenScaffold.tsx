@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
+import type { ScrollView as RNScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -16,12 +17,15 @@ export default function SettingsScreenScaffold({
   title,
   children,
   overlays,
+  scrollRef,
 }: {
   title: string;
   children: ReactNode;
   // Dialogs and bottom sheets that must render outside the ScrollView (at the
   // root Box level) so they overlay the whole screen.
   overlays?: ReactNode;
+  // Lets a section scroll itself to one of its rows (deep link into a setting).
+  scrollRef?: RefObject<RNScrollView | null>;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -44,6 +48,7 @@ export default function SettingsScreenScaffold({
           <Box className="w-6" />
         </HStack>
         <ScrollView
+          ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,

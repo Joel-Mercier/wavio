@@ -3,12 +3,8 @@ import {
   BottomSheetModal,
   type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
-import { forwardRef, useCallback, useRef } from "react";
-import {
-  BackHandler,
-  type NativeEventSubscription,
-  useWindowDimensions,
-} from "react-native";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
+import { BackHandler, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface CenteredBottomSheetModalProps extends BottomSheetModalProps {
@@ -75,30 +71,34 @@ const CenteredBottomSheetModal = forwardRef<
     // every sheet built on this wrapper is back-dismissible without each call
     // site wiring its own handler. Composes with any consumer `onChange`.
     const modalRef = useRef<BottomSheetModal | null>(null);
-    const backHandlerSubscriptionRef = useRef<NativeEventSubscription | null>(
-      null,
-    );
+    const isVisibleRef = useRef(false);
     const handleChange = useCallback<
       NonNullable<BottomSheetModalProps["onChange"]>
     >(
       (index, position, type) => {
-        const isVisible = index >= 0;
-        if (isVisible && !backHandlerSubscriptionRef.current) {
-          backHandlerSubscriptionRef.current = BackHandler.addEventListener(
-            "hardwareBackPress",
-            () => {
-              modalRef.current?.dismiss();
-              return true;
-            },
-          );
-        } else if (!isVisible) {
-          backHandlerSubscriptionRef.current?.remove();
-          backHandlerSubscriptionRef.current = null;
-        }
+        isVisibleRef.current = index >= 0;
         onChange?.(index, position, type);
       },
       [onChange],
     );
+
+    // The listener is registered for the component's whole lifetime and gates on
+    // the ref, rather than being added and removed as the sheet opens and
+    // closes. RN runs back handlers in reverse registration order, so this one
+    // is consulted before react-navigation's: a subscription that outlived its
+    // sheet — or that claimed a press it could not act on — silently kills back
+    // navigation app-wide. Declining the press is the only safe default.
+    useEffect(() => {
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          if (!isVisibleRef.current || !modalRef.current) return false;
+          modalRef.current.dismiss();
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, []);
 
     const setRefs = useCallback(
       (instance: BottomSheetModal | null) => {

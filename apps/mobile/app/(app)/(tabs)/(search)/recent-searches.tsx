@@ -202,6 +202,7 @@ export default function RecentSearchesScreen() {
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       />
     </Box>
   );
