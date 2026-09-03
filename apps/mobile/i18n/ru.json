@@ -291,6 +291,7 @@
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
 				"typeCompilation": "Сборник",
+				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "По альбому",
 					"single": "Сингл",
