@@ -4,14 +4,19 @@ import {
   artworkCacheService,
   cacheArtworkForTracks,
 } from "@/services/offline/artworkCacheService";
+import {
+  type CollectionDownloadDrift,
+  collectionDownloadStatus,
+  collectionDrift,
+  collectionRemovalIds,
+} from "@/services/offline/collectionDownloadPlan";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
 
-export type CollectionDownloadStatus =
-  | "none" // nothing downloaded yet
-  | "downloading" // at least one track in flight
-  | "partial" // some (but not all) downloaded, none in flight
-  | "all"; // every track downloaded
+export type {
+  CollectionDownloadDrift,
+  CollectionDownloadStatus,
+} from "@/services/offline/collectionDownloadPlan";
 
 // Metadata persisted alongside the downloaded tracks so the collection can be
 // listed (and reopened) in the Library while offline, even when the server list
@@ -43,35 +48,50 @@ function cacheCollectionArtwork(meta: DownloadCollectionMeta, songs: Child[]) {
 // store so the row label and badge update as the queue drains. When `meta` is
 // provided, the collection is also persisted so it shows up in the offline
 // Library.
+//
+// Once a collection is registered, **its saved track list is what "downloaded"
+// means** — not whatever the server is currently serving. A smart playlist
+// sorted at random re-draws its members on every read (Navidrome evaluates
+// `ORDER BY random() LIMIT n` afresh once its refresh delay lapses), so a
+// status derived from the live list would flip to "partial" on every refetch
+// and invite a re-save that downloads a near-entirely new set. Drift against
+// the server is surfaced explicitly instead, through `drift` and
+// `updateToServer`, so re-downloading is always something the user asked for.
 export function useCollectionDownload(
   songs: Child[] | undefined,
   meta?: DownloadCollectionMeta,
 ) {
   const downloadedTracks = useOffline((s) => s.downloadedTracks);
   const downloadProgress = useOffline((s) => s.downloadProgress);
-
-  const { total, downloadedCount, status } = useMemo(() => {
-    const ids = songs?.map((song) => song.id) ?? [];
-    const total = ids.length;
-    const downloadedCount = ids.filter((id) => id in downloadedTracks).length;
-    const downloadingCount = ids.filter((id) => {
-      const progress = downloadProgress[id];
-      return (
-        progress?.status === "downloading" || progress?.status === "pending"
-      );
-    }).length;
-
-    let status: CollectionDownloadStatus = "none";
-    if (total > 0 && downloadedCount === total) status = "all";
-    else if (downloadingCount > 0) status = "downloading";
-    else if (downloadedCount > 0) status = "partial";
-
-    return { total, downloadedCount, status };
-  }, [songs, downloadedTracks, downloadProgress]);
-
-  const isRegistered = useOffline((s) =>
-    meta ? meta.id in s.downloadedCollections : true,
+  const collection = useOffline((s) =>
+    meta ? s.downloadedCollections[meta.id] : undefined,
   );
+
+  const liveIds = useMemo(() => songs?.map((song) => song.id), [songs]);
+
+  // The saved list wins once there is one; before the first save there is
+  // nothing but the live list to measure against.
+  const trackedIds = collection?.trackIds ?? liveIds;
+
+  const { total, downloadedCount, status } = useMemo(
+    () =>
+      collectionDownloadStatus(
+        trackedIds ?? [],
+        downloadedTracks,
+        downloadProgress,
+      ),
+    [trackedIds, downloadedTracks, downloadProgress],
+  );
+
+  // Only meaningful with both lists in hand: `songs` is undefined while the
+  // query loads, and while offline it may be paused entirely — neither is
+  // evidence that the server dropped anything.
+  const drift = useMemo<CollectionDownloadDrift>(
+    () => collectionDrift(collection?.trackIds, liveIds),
+    [collection?.trackIds, liveIds],
+  );
+
+  const isRegistered = !!collection || !meta;
 
   // Heal collections downloaded before the registration moved ahead of the
   // download: their tracks are on disk but no store entry was ever written, so
@@ -91,8 +111,45 @@ export function useCollectionDownload(
     cacheCollectionArtwork(meta, songs);
   }, [meta, isRegistered, status, songs]);
 
+  // Adopts the server's current membership: downloads what was added, deletes
+  // what was dropped, and repoints the saved list at it. The only path that
+  // replaces a registered collection's track list, so a track can never be
+  // orphaned by an overwrite.
+  const updateToServer = useCallback(async () => {
+    if (!meta || !collection || !songs || !liveIds) return;
+    const live = new Set(liveIds);
+    const removed = collection.trackIds.filter((id) => !live.has(id));
+    // Spread the existing collection first so `source` survives: an auto copy
+    // written by the library sync must stay auto, or disabling extended offline
+    // mode would no longer clean it up.
+    useOffline.getState().addDownloadedCollection({
+      ...collection,
+      ...meta,
+      trackIds: liveIds,
+      songCount: liveIds.length,
+      savedAt: new Date().toISOString(),
+    });
+    cacheCollectionArtwork(meta, songs);
+    if (removed.length) {
+      offlineDownloadService.removeTracksNotReferencedElsewhere(
+        meta.id,
+        removed,
+      );
+      artworkCacheService.pruneOrphaned();
+    }
+    const pending = songs.filter((song) => !(song.id in downloadedTracks));
+    await offlineDownloadService.downloadTracks(pending);
+  }, [meta, collection, songs, liveIds, downloadedTracks]);
+
   const saveAll = useCallback(async () => {
     if (!songs?.length) return;
+    // A re-save of an already registered collection is an update, and has to go
+    // through the same path: overwriting `trackIds` with the live list here
+    // would leave whatever left the collection on disk, referenced by nothing —
+    // `removeAll` unions the saved and live lists, so it would never reach them
+    // either. Reachable from both the header badge and the sheet row, which
+    // still offer "save" while the status is `partial`.
+    if (collection) return updateToServer();
     // Register the collection before the tracks download, not after:
     // `downloadTracks` resolves only once every track has landed and rejects if
     // one of them fails, so registering afterwards left the collection out of
@@ -110,13 +167,18 @@ export function useCollectionDownload(
     }
     const pending = songs.filter((song) => !(song.id in downloadedTracks));
     await offlineDownloadService.downloadTracks(pending);
-  }, [songs, downloadedTracks, meta]);
+  }, [songs, downloadedTracks, meta, collection, updateToServer]);
 
   const removeAll = useCallback(async () => {
     if (meta) {
+      // Union of both lists, not just the live one: a collection whose
+      // membership drifted (or drifted before this hook tracked it) still owns
+      // the tracks it downloaded under its previous membership, and passing
+      // only the current list would strand them on disk with nothing left
+      // referencing them.
       offlineDownloadService.removeCollection(
         meta.id,
-        songs?.map((song) => song.id) ?? [],
+        collectionRemovalIds(collection?.trackIds, liveIds),
       );
       return;
     }
@@ -127,7 +189,15 @@ export function useCollectionDownload(
       }
     }
     artworkCacheService.pruneOrphaned();
-  }, [songs, downloadedTracks, meta]);
+  }, [songs, downloadedTracks, meta, collection, liveIds]);
 
-  return { total, downloadedCount, status, saveAll, removeAll };
+  return {
+    total,
+    downloadedCount,
+    status,
+    drift,
+    saveAll,
+    updateToServer,
+    removeAll,
+  };
 }

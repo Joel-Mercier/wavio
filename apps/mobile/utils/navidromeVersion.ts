@@ -28,6 +28,9 @@ export const MULTI_FIELD_SORT_MIN_VERSION: SemVer = [0, 53, 0];
 // v0.62.0 added ReplayGain criteria fields (rgalbumgain/...) and the
 // isMissing/isPresent tag-presence operators to smart playlists.
 export const V062_MIN_VERSION: SemVer = [0, 62, 0];
+// v0.64.0 added the per-playlist `refreshDelay` criteria key (navidrome#5790),
+// which pins how long a smart playlist keeps its evaluated track list.
+export const V064_MIN_VERSION: SemVer = [0, 64, 0];
 
 export function supportsSmartPlaylists(
   raw: string | null | undefined,
@@ -51,4 +54,8 @@ export function supportsTagPresenceOperators(
   raw: string | null | undefined,
 ): boolean {
   return gte(parseServerVersion(raw), V062_MIN_VERSION);
+}
+
+export function supportsRefreshDelay(raw: string | null | undefined): boolean {
+  return gte(parseServerVersion(raw), V064_MIN_VERSION);
 }

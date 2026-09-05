@@ -156,7 +156,11 @@ const resetStores = () => {
   usePlayHistory.setState({ history: [] });
   useActivity.setState({ activity: [] });
   useBookmarks.setState({ bookmarks: {} });
-  usePlaylists.setState({ playlistSorts: {}, playlistTrackOrders: {} });
+  usePlaylists.setState({
+    playlistSorts: {},
+    playlistTrackOrders: {},
+    smartPlaylistSnapshots: {},
+  });
   useRecentPlays.setState({ recentPlays: [] });
   useRecentSearches.setState({ recentSearches: [] });
   useRadioStations.setState({ favoriteRadioStations: [] });
@@ -683,6 +687,22 @@ describe("applyCanonicalIdRemap", () => {
       NEW_SONG,
       STABLE_ARTIST,
     ]);
+  });
+
+  // Both ends of a snapshot link are playlist ids, so a link left half-remapped
+  // would point a live smart playlist at an id the server has retired.
+  it("remaps both sides of a smart playlist snapshot link", async () => {
+    usePlaylists.setState({
+      smartPlaylistSnapshots: {
+        [OLD_SONG]: OLD_SONG_2,
+        [STABLE_ARTIST]: OLD_NANOID,
+      },
+    });
+    await applyCanonicalIdRemap();
+    expect(usePlaylists.getState().smartPlaylistSnapshots).toEqual({
+      [NEW_SONG]: NEW_SONG_2,
+      [STABLE_ARTIST]: NEW_NANOID,
+    });
   });
 
   it("remaps recent plays but leaves the synthetic favorites shortcut", async () => {

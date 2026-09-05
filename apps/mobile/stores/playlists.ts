@@ -21,6 +21,12 @@ interface PlaylistsStore {
   deletedPlaylists: Record<string, true>;
   markPlaylistDeleted: (playlistId: string) => void;
   reconcileDeletedPlaylists: (existingIds: string[]) => void;
+  // Smart playlist id → the static playlist holding a frozen copy of its
+  // tracks. Both sides are server playlist ids.
+  smartPlaylistSnapshots: Record<string, string>;
+  setSmartPlaylistSnapshot: (smartId: string, snapshotId: string) => void;
+  clearSmartPlaylistSnapshot: (smartId: string) => void;
+  clearSnapshotLinksTo: (snapshotId: string) => void;
 }
 
 const usePlaylistsBase = create<PlaylistsStore>()(
@@ -65,16 +71,27 @@ const usePlaylistsBase = create<PlaylistsStore>()(
       // store back to MMKV on every set(), even one that changes nothing.
       clearPlaylistPreferences: (playlistId: string) => {
         const state = get();
+        // A snapshot link names two playlists, so the gone id can be on either
+        // side of it: the smart playlist that owns the link, or the static copy
+        // it points at.
+        const staleLinks = Object.entries(state.smartPlaylistSnapshots).filter(
+          ([smartId, snapshotId]) =>
+            smartId === playlistId || snapshotId === playlistId,
+        );
         if (
           !(playlistId in state.playlistSorts) &&
-          !(playlistId in state.playlistTrackOrders)
+          !(playlistId in state.playlistTrackOrders) &&
+          staleLinks.length === 0
         ) {
           return;
         }
         const { [playlistId]: _sort, ...playlistSorts } = state.playlistSorts;
         const { [playlistId]: _order, ...playlistTrackOrders } =
           state.playlistTrackOrders;
-        set({ playlistSorts, playlistTrackOrders });
+        const smartPlaylistSnapshots = { ...state.smartPlaylistSnapshots };
+        for (const [smartId] of staleLinks)
+          delete smartPlaylistSnapshots[smartId];
+        set({ playlistSorts, playlistTrackOrders, smartPlaylistSnapshots });
       },
       // Ids the server no longer has. Persisted because a shortcut kept for its
       // downloads outlives the session that discovered the deletion, and every
@@ -91,6 +108,10 @@ const usePlaylistsBase = create<PlaylistsStore>()(
       // Servers that number playlists sequentially can hand a retired id to a
       // new playlist, so a marker only holds until that id shows up in a
       // listing again.
+      //
+      // Only ever a positive assertion. `getPlaylists` takes a `username`
+      // filter (ProfileScreen passes one), so an absent id means "not in this
+      // listing", not "gone from the server" — never prune anything here.
       reconcileDeletedPlaylists: (existingIds: string[]) => {
         const state = get();
         const revived = existingIds.filter((id) => state.deletedPlaylists[id]);
@@ -100,6 +121,34 @@ const usePlaylistsBase = create<PlaylistsStore>()(
           delete deletedPlaylists[id];
         }
         set({ deletedPlaylists });
+      },
+      smartPlaylistSnapshots: {},
+      setSmartPlaylistSnapshot: (smartId: string, snapshotId: string) => {
+        set((state) => ({
+          smartPlaylistSnapshots: {
+            ...state.smartPlaylistSnapshots,
+            [smartId]: snapshotId,
+          },
+        }));
+      },
+      clearSmartPlaylistSnapshot: (smartId: string) => {
+        const state = get();
+        if (!(smartId in state.smartPlaylistSnapshots)) return;
+        const { [smartId]: _snapshot, ...smartPlaylistSnapshots } =
+          state.smartPlaylistSnapshots;
+        set({ smartPlaylistSnapshots });
+      },
+      // The other side of the link: the static copy is gone, so the link is
+      // dead whatever became of the smart playlist that owns it.
+      clearSnapshotLinksTo: (snapshotId: string) => {
+        const state = get();
+        const owners = Object.keys(state.smartPlaylistSnapshots).filter(
+          (smartId) => state.smartPlaylistSnapshots[smartId] === snapshotId,
+        );
+        if (owners.length === 0) return;
+        const smartPlaylistSnapshots = { ...state.smartPlaylistSnapshots };
+        for (const smartId of owners) delete smartPlaylistSnapshots[smartId];
+        set({ smartPlaylistSnapshots });
       },
     }),
     {

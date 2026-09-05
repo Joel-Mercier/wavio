@@ -179,6 +179,13 @@ function collectIds(): Set<string> {
     add(key);
     for (const trackId of order) add(trackId);
   }
+  // Both sides are playlist ids, unlike the maps above where only the key is.
+  for (const [smartId, snapshotId] of Object.entries(
+    playlists.smartPlaylistSnapshots,
+  )) {
+    add(smartId);
+    add(snapshotId);
+  }
 
   for (const entry of useRecentPlays.getState().recentPlays) {
     if (isRemappableRecentPlay(entry)) add(entry.id);
@@ -404,6 +411,11 @@ function applyRemap(remap: Remap): void {
         remap(key),
         order.map(remap),
       ]),
+    ),
+    smartPlaylistSnapshots: Object.fromEntries(
+      Object.entries(playlists.smartPlaylistSnapshots).map(
+        ([smartId, snapshotId]) => [remap(smartId), remap(snapshotId)],
+      ),
     ),
   });
 

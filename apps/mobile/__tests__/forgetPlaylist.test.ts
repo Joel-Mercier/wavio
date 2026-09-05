@@ -53,7 +53,12 @@ const collection = (id: string): OfflineCollection => ({
 beforeEach(() => {
   useRecentPlays.setState({ recentPlays: [] }, false);
   usePlaylists.setState(
-    { playlistSorts: {}, playlistTrackOrders: {}, deletedPlaylists: {} },
+    {
+      playlistSorts: {},
+      playlistTrackOrders: {},
+      deletedPlaylists: {},
+      smartPlaylistSnapshots: {},
+    },
     false,
   );
   useOffline.setState({ downloadedCollections: {} }, false);
@@ -145,6 +150,52 @@ describe("forgetDeletedPlaylist", () => {
       p1: true,
       p2: true,
     });
+  });
+
+  // A link names a second playlist, so `keepIfDownloaded` — which exists to
+  // preserve how the surviving offline copy is rendered — must not preserve a
+  // pointer to a static copy the server no longer has.
+  it("drops a snapshot link whose static copy was deleted, even on the keep path", () => {
+    usePlaylists.getState().setSmartPlaylistSnapshot("smart", "snap");
+    useOffline.setState({
+      downloadedCollections: { snap: collection("snap") },
+    });
+
+    forgetDeletedPlaylist("snap", { keepIfDownloaded: true });
+
+    expect(usePlaylists.getState().smartPlaylistSnapshots).toEqual({});
+  });
+
+  // The mirror case: only the snapshot side is matched, so a link whose smart
+  // side went away survives. It buys nothing while the id stays deleted — the
+  // detail screen stops treating the playlist as smart — but the deletion
+  // marker can be lifted later, and the link has to outlive it.
+  it("keeps a snapshot link owned by a deleted-but-downloaded smart playlist", () => {
+    usePlaylists.getState().setSmartPlaylistSnapshot("smart", "snap");
+    useOffline.setState({
+      downloadedCollections: { smart: collection("smart") },
+    });
+
+    forgetDeletedPlaylist("smart", { keepIfDownloaded: true });
+
+    expect(usePlaylists.getState().smartPlaylistSnapshots).toEqual({
+      smart: "snap",
+    });
+  });
+
+  it("drops a link from either side once nothing keeps the id", () => {
+    usePlaylists.getState().setSmartPlaylistSnapshot("smart", "snap");
+    usePlaylists.getState().setSmartPlaylistSnapshot("other", "otherSnap");
+
+    forgetDeletedPlaylist("snap");
+
+    expect(usePlaylists.getState().smartPlaylistSnapshots).toEqual({
+      other: "otherSnap",
+    });
+
+    forgetDeletedPlaylist("other");
+
+    expect(usePlaylists.getState().smartPlaylistSnapshots).toEqual({});
   });
 
   it("lifts the marker when the id shows up in a listing again", () => {

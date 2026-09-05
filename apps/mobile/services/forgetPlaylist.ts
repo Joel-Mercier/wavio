@@ -23,6 +23,19 @@ import useRecentPlays from "@/stores/recentPlays";
  * so its shortcut — and the sort / manual order the offline copy is rendered
  * with — still work and must survive. An explicit in-app delete passes it as
  * false: the user asked for the entry to go.
+ *
+ * A snapshot link is the exception it doesn't cover. Preferences describe how
+ * the surviving offline copy is rendered, but a link names a *second* playlist:
+ * once the static copy is gone, "Open static copy" leads nowhere and the entry
+ * has to go even on the keep path.
+ *
+ * The mirror case is deliberately left, and `clearSnapshotLinksTo` matches the
+ * snapshot side only so it survives. Not because it stays usable in the
+ * meantime — a deleted id disables `useSmartPlaylist`, so the detail screen
+ * stops seeing the playlist as smart and drops the static-copy actions
+ * altogether — but because `reconcileDeletedPlaylists` lifts the marker if the
+ * id turns up in a listing again, and the link has to still be there when it
+ * does.
  */
 export function forgetDeletedPlaylist(
   id: string,
@@ -30,6 +43,7 @@ export function forgetDeletedPlaylist(
 ): void {
   usePlaylists.getState().markPlaylistDeleted(id);
   if (keepIfDownloaded && useOffline.getState().downloadedCollections[id]) {
+    usePlaylists.getState().clearSnapshotLinksTo(id);
     return;
   }
   usePlaylists.getState().clearPlaylistPreferences(id);

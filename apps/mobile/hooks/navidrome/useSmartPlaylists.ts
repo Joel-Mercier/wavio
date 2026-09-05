@@ -17,6 +17,10 @@ export const useSmartPlaylist = (id: string | null | undefined) => {
     queryKey: playlistDetailKey(id ?? ""),
     queryFn: () => getSmartPlaylist(id as string),
     enabled: !!id,
+    // The criteria blob is round-tripped verbatim on save, so editing off a
+    // persisted cache entry would write back rules that are minutes stale and
+    // silently drop keys authored elsewhere in the meantime.
+    refetchOnMount: "always",
   });
 };
 

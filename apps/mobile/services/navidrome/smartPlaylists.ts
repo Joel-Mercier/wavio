@@ -48,6 +48,18 @@ export interface SmartPlaylistCriteria {
   sort?: string;
   order?: string;
   limit?: number;
+  // Go duration with Navidrome's `d`/`w` extensions ("12h", "1d", "1w",
+  // "1d12h"), added in v0.64.0. Absent = the server's global
+  // SmartPlaylistRefreshDelay (5s by default), i.e. re-evaluated on every read.
+  refreshDelay?: string;
+  // Criteria keys the rule editor doesn't model but must not destroy on save:
+  // Navidrome re-serializes the whole criteria blob, so anything we omit from
+  // an update is gone from the playlist. Named for documentation only — the
+  // serializer carries them, and any key added by a future server, through the
+  // index signature rather than by name.
+  limitPercent?: number;
+  offset?: number;
+  [key: string]: unknown;
 }
 
 export interface SmartPlaylistBody {

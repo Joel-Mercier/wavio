@@ -211,6 +211,26 @@ export interface FormSortEntry {
   direction: "asc" | "desc";
 }
 
+// Presets offered for `refreshDelay`, in the duration syntax Navidrome parses
+// (`utils.ParseDuration` extends Go durations with `d` = 24h and `w` = 168h).
+// "" means "don't send the key", i.e. fall back to the server's global delay.
+export const REFRESH_DELAY_PRESETS = [
+  "",
+  "1h",
+  "6h",
+  "12h",
+  "1d",
+  "1w",
+] as const;
+
+// Everything in a criteria blob the editor doesn't model, kept opaque and
+// round-tripped verbatim: the server rewrites the whole blob from what we send,
+// so a key we drop is gone from the playlist. Naming nothing means a key a
+// future Navidrome adds survives an edit without a change here — today that
+// covers `limitPercent` and `offset` authored in an .nsp file or Navidrome's
+// own UI.
+export type SmartPlaylistPassthrough = Record<string, unknown>;
+
 export interface SmartPlaylistFormState {
   name: string;
   comment: string;
@@ -219,6 +239,8 @@ export interface SmartPlaylistFormState {
   rules: FormNode[];
   sorts: FormSortEntry[];
   limit: string;
+  refreshDelay: string;
+  passthrough?: SmartPlaylistPassthrough;
 }
 
 const ruleSchema = z
@@ -304,6 +326,7 @@ export const smartPlaylistFormSchema = z.object({
     }),
   ),
   limit: z.string().optional(),
+  refreshDelay: z.string().optional(),
 });
 
 function coerceRuleValue(
@@ -359,7 +382,11 @@ export function toNavidromeCriteria(
 ): SmartPlaylistCriteria {
   const rules = serializeNodes(form.rules);
 
-  const criteria: SmartPlaylistCriteria = {};
+  // Seeded with the unmodeled keys first, so the ones the editor owns always win
+  // over a stale copy of themselves. Ungated on the server version: a server too
+  // old to understand a key never sent it back in the first place, and dropping
+  // one we did read is the data loss this guards against.
+  const criteria: SmartPlaylistCriteria = { ...form.passthrough };
   if (form.combinator === "any") {
     criteria.any = rules;
   } else {
@@ -376,6 +403,14 @@ export function toNavidromeCriteria(
   if (form.limit && form.limit.trim().length > 0) {
     const limit = Number(form.limit);
     if (!Number.isNaN(limit) && limit > 0) criteria.limit = Math.floor(limit);
+  }
+
+  // Not gated on the server version either: `supportsRefreshDelay` decides
+  // whether the *editor* offers the control, but a value we read back has to
+  // survive a save regardless — including when the version string is unknown on
+  // a server new enough to have sent one.
+  if (form.refreshDelay) {
+    criteria.refreshDelay = form.refreshDelay;
   }
 
   return criteria;
@@ -457,7 +492,10 @@ function parseNodes(nodes: SmartPlaylistNode[]): FormNode[] {
 
 export function fromNavidromeCriteria(
   criteria: SmartPlaylistCriteria | null | undefined,
-): Pick<SmartPlaylistFormState, "combinator" | "rules" | "sorts" | "limit"> {
+): Pick<
+  SmartPlaylistFormState,
+  "combinator" | "rules" | "sorts" | "limit" | "refreshDelay" | "passthrough"
+> {
   const combinator: "all" | "any" = criteria?.any ? "any" : "all";
   const rawRules = combinator === "any" ? criteria?.any : criteria?.all;
   const rules = parseNodes(rawRules ?? []);
@@ -475,11 +513,23 @@ export function fromNavidromeCriteria(
     direction: (orderFields[i] === "desc" ? "desc" : "asc") as "asc" | "desc",
   }));
 
+  const {
+    all: _all,
+    any: _any,
+    sort: _sort,
+    order: _order,
+    limit: _limit,
+    refreshDelay: _refreshDelay,
+    ...passthrough
+  } = criteria ?? ({} as SmartPlaylistCriteria);
+
   return {
     combinator,
     rules,
     sorts,
     limit: criteria?.limit ? String(criteria.limit) : "",
+    refreshDelay: criteria?.refreshDelay ?? "",
+    passthrough,
   };
 }
 
