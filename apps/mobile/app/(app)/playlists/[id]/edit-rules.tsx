@@ -42,6 +42,7 @@ import {
   type FormNode,
   type FormSortEntry,
   fromNavidromeCriteria,
+  type SmartPlaylistPassthrough,
   toNavidromeCriteria,
 } from "@/utils/smartPlaylist";
 
@@ -66,24 +67,16 @@ export default function EditSmartPlaylistScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const serverVersion = useAuth((s) => s.serverVersion);
-  const { data, isLoading, error } = useSmartPlaylist(id);
+  const { data, isFetching, error } = useSmartPlaylist(id);
   const doUpdate = useUpdateSmartPlaylist();
 
   const [combinator, setCombinator] = useState<"all" | "any">("all");
   const [rules, setRules] = useState<FormNode[]>([]);
   const [sorts, setSorts] = useState<FormSortEntry[]>([]);
   const [limit, setLimit] = useState<string>("");
+  const [refreshDelay, setRefreshDelay] = useState<string>("");
+  const [passthrough, setPassthrough] = useState<SmartPlaylistPassthrough>({});
   const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (!data || hydrated) return;
-    const fromCriteria = fromNavidromeCriteria(data.rules);
-    setCombinator(fromCriteria.combinator);
-    setRules(fromCriteria.rules);
-    setSorts(fromCriteria.sorts);
-    setLimit(fromCriteria.limit);
-    setHydrated(true);
-  }, [data, hydrated]);
 
   const form = useForm({
     defaultValues: {
@@ -103,6 +96,8 @@ export default function EditSmartPlaylistScreen() {
           rules,
           sorts,
           limit,
+          refreshDelay,
+          passthrough,
         },
         serverVersion,
       );
@@ -169,6 +164,28 @@ export default function EditSmartPlaylistScreen() {
     },
   });
 
+  // React Query serves the persisted cache synchronously while the mount
+  // refetch is still in flight, and a save re-serializes the whole criteria
+  // blob — so hydrating off that first render would write back stale rules.
+  // `defaultValues` are read once too: on a cold mount they are empty and only
+  // this reset seeds them.
+  useEffect(() => {
+    if (!data || isFetching || hydrated) return;
+    const fromCriteria = fromNavidromeCriteria(data.rules);
+    setCombinator(fromCriteria.combinator);
+    setRules(fromCriteria.rules);
+    setSorts(fromCriteria.sorts);
+    setLimit(fromCriteria.limit);
+    setRefreshDelay(fromCriteria.refreshDelay);
+    setPassthrough(fromCriteria.passthrough ?? {});
+    form.reset({
+      name: data.name,
+      comment: data.comment ?? "",
+      isPublic: data.public ?? false,
+    });
+    setHydrated(true);
+  }, [data, isFetching, hydrated, form]);
+
   return (
     <Box className="h-full flex-1 bg-black">
       <Box className="px-6 pb-4 bg-black">
@@ -193,7 +210,7 @@ export default function EditSmartPlaylistScreen() {
       </Box>
       {error ? (
         <ErrorDisplay error={error as Error} />
-      ) : isLoading && !hydrated ? (
+      ) : !hydrated ? (
         <Box className="flex-1 items-center justify-center">
           <Spinner color={emerald500} />
         </Box>
@@ -276,6 +293,8 @@ export default function EditSmartPlaylistScreen() {
               onSortsChange={setSorts}
               limit={limit}
               onLimitChange={setLimit}
+              refreshDelay={refreshDelay}
+              onRefreshDelayChange={setRefreshDelay}
               serverVersion={serverVersion}
             />
           </VStack>

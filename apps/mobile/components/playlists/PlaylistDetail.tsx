@@ -10,6 +10,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
+import Camera from "lucide-react-native/dist/esm/icons/camera.mjs";
 import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
 import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
@@ -20,6 +21,8 @@ import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
+import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
+import RotateCw from "lucide-react-native/dist/esm/icons/rotate-cw.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
@@ -42,6 +45,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import SaveGeneratedPlaylistDialog from "@/components/playlists/SaveGeneratedPlaylistDialog";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
   useSortFieldLabel,
@@ -93,6 +97,7 @@ import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import { isNotFoundError } from "@/services/notFound";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { refreshSnapshot } from "@/services/playlistSnapshot";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
 import usePlaylists, { type PlaylistSortType } from "@/stores/playlists";
@@ -140,6 +145,9 @@ export default function PlaylistDetail() {
     (store) => store.getPlaylistTrackOrder,
   );
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
+  const [showSnapshotDialog, setShowSnapshotDialog] = useState<boolean>(false);
+  const [isRefreshingSnapshot, setIsRefreshingSnapshot] =
+    useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const isWideLayout = useApp((s) => s.isWideLayout);
@@ -158,6 +166,11 @@ export default function PlaylistDetail() {
   // collection so a saved playlist stays browsable after a logout clears the
   // React Query cache.
   const playlistData = serverPlaylistData ?? offlinePlaylistData;
+  // Server-only, deliberately: the offline fallback lists just the tracks that
+  // made it to disk, so anything that treats a list as "what the server holds"
+  // — download drift, snapshot writes — would read a pending or failed download
+  // as a track the server dropped, and then act on it.
+  const serverEntries = serverPlaylistData?.playlist?.entry;
   // A rename or new cover on the server reaches the home shortcut from here.
   useRefreshRecentPlay(
     serverPlaylistData?.playlist
@@ -173,6 +186,13 @@ export default function PlaylistDetail() {
   const hasNavidromeNative = useAuth((s) => s.hasNavidromeNative);
   const isPlaylistDeleted = usePlaylists(
     (store) => !!store.deletedPlaylists[id],
+  );
+  const snapshotId = usePlaylists((store) => store.smartPlaylistSnapshots[id]);
+  const setSmartPlaylistSnapshot = usePlaylists(
+    (store) => store.setSmartPlaylistSnapshot,
+  );
+  const clearSmartPlaylistSnapshot = usePlaylists(
+    (store) => store.clearSmartPlaylistSnapshot,
   );
   const { data: ndPlaylist } = useSmartPlaylist(
     hasNavidromeNative && !isPlaylistDeleted ? id : null,
@@ -249,6 +269,80 @@ export default function PlaylistDetail() {
   const handlePlaylistReorderPress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/reorder`);
+  };
+
+  const handleSaveSnapshotPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    setShowSnapshotDialog(true);
+  };
+
+  const handleSnapshotSaved = (playlistId: string) => {
+    setSmartPlaylistSnapshot(id, playlistId);
+  };
+
+  const handleOpenSnapshotPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (snapshotId) router.navigate(`/playlists/${snapshotId}`);
+  };
+
+  const handleRefreshSnapshotPress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    if (!snapshotId || !serverEntries) {
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.playlists.staticCopyError")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+      return;
+    }
+    setIsRefreshingSnapshot(true);
+    try {
+      await refreshSnapshot(
+        snapshotId,
+        serverEntries.map((entry) => entry.id),
+      );
+      queryClient.invalidateQueries({ queryKey: ["playlist", snapshotId] });
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.playlists.staticCopySuccess")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      logError("Error refreshing playlist snapshot:", error);
+      // The copy is gone (deleted on the server or from another client) — drop
+      // the link so the action offers to create a new one instead of failing
+      // forever.
+      if (isNotFoundError(error)) clearSmartPlaylistSnapshot(id);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.playlists.staticCopyError")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } finally {
+      setIsRefreshingSnapshot(false);
+    }
   };
 
   const handleEditRulesPress = () => {
@@ -581,10 +675,7 @@ export default function PlaylistDetail() {
         : undefined,
     [id, playlistData?.playlist],
   );
-  const playlistDownload = useCollectionDownload(
-    playlistData?.playlist?.entry,
-    playlistMeta,
-  );
+  const playlistDownload = useCollectionDownload(serverEntries, playlistMeta);
 
   const handleSaveOfflinePress = async () => {
     bottomSheetModalRef.current?.dismiss();
@@ -612,6 +703,39 @@ export default function PlaylistDetail() {
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
               {t("app.shared.offline.saveErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleUpdateOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await playlistDownload.updateToServer();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.updateSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      logError("Error updating playlist offline downloads:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.updateErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -1003,6 +1127,42 @@ export default function PlaylistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              {isSmartPlaylist && !snapshotId && (
+                <FadeOutScaleDown
+                  onPress={handleSaveSnapshotPress}
+                  disabled={!isOnline || !playlistData?.playlist?.entry?.length}
+                >
+                  <HStack className="items-center">
+                    <Camera size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.playlists.saveAsStaticPlaylist")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {isSmartPlaylist && !!snapshotId && (
+                <>
+                  <FadeOutScaleDown
+                    onPress={handleRefreshSnapshotPress}
+                    disabled={!isOnline || isRefreshingSnapshot}
+                  >
+                    <HStack className="items-center">
+                      <RotateCw size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.playlists.refreshStaticCopy")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                  <FadeOutScaleDown onPress={handleOpenSnapshotPress}>
+                    <HStack className="items-center">
+                      <ListMusic size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.playlists.openStaticCopy")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                </>
+              )}
               <FadeOutScaleDown onPress={handlePlayNextPress}>
                 <HStack className="items-center">
                   <ListStart size={24} color={gray200} />
@@ -1019,6 +1179,26 @@ export default function PlaylistDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
+              {capabilities.offlineDownload &&
+                playlistDownload.status !== "none" &&
+                playlistDownload.drift.added.length +
+                  playlistDownload.drift.removed.length >
+                  0 && (
+                  <FadeOutScaleDown
+                    onPress={handleUpdateOfflinePress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <RefreshCw size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.shared.offline.updateDownloads", {
+                          added: playlistDownload.drift.added.length,
+                          removed: playlistDownload.drift.removed.length,
+                        })}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
               {capabilities.offlineDownload &&
                 (playlistDownload.status === "downloading" ? (
                   <HStack className="items-center">
@@ -1097,6 +1277,16 @@ export default function PlaylistDetail() {
         sort={activeSort}
         onSelect={handleSortSelect}
         labels={sortLabels}
+      />
+      <SaveGeneratedPlaylistDialog
+        isOpen={showSnapshotDialog}
+        onClose={() => setShowSnapshotDialog(false)}
+        trackIds={(serverEntries ?? []).map((entry) => entry.id)}
+        defaultName={t("app.playlists.staticCopyName", {
+          name: playlistData?.playlist?.name ?? "",
+        })}
+        target="backend"
+        onSaved={handleSnapshotSaved}
       />
       <AlertDialog
         isOpen={showAlertDialog}

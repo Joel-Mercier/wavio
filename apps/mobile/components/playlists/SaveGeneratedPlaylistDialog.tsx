@@ -19,7 +19,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { createAudioMusePlaylist } from "@/services/audioMuse/playlists";
-import { createPlaylist } from "@/services/backend/playlists";
+import { createSnapshot } from "@/services/playlistSnapshot";
 import useAudioMuse from "@/stores/audioMuse";
 
 // Two writers produce the same playlist by different routes: the app creates it
@@ -48,6 +48,7 @@ export default function SaveGeneratedPlaylistDialog({
   trackIds,
   defaultName = "",
   target: targetProp,
+  onSaved,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -55,6 +56,11 @@ export default function SaveGeneratedPlaylistDialog({
   defaultName?: string;
   /** Forces the writer, for callers the AudioMuse preference doesn't govern. */
   target?: SavePlaylistTarget;
+  /**
+   * The id of the playlist the app just created. Not called for the AudioMuse
+   * writer, which creates the playlist server-side and reports no id back.
+   */
+  onSaved?: (playlistId: string) => void;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -81,7 +87,9 @@ export default function SaveGeneratedPlaylistDialog({
       if (target === "audiomuse") {
         await createAudioMusePlaylist(trimmed, trackIds);
       } else {
-        await createPlaylist(trimmed, trackIds);
+        // Chunked: a generated playlist can hold more track ids than a single
+        // Subsonic GET can carry on its query string.
+        onSaved?.(await createSnapshot(trimmed, trackIds));
       }
       // Either writer lands the playlist on the server, so the app's list is
       // stale whichever one ran.

@@ -799,19 +799,25 @@ export class OfflineDownloadService {
     }
   }
 
-  // Removes a saved collection (playlist/album) and its tracks, but keeps any
-  // track still referenced by another saved collection so removing one playlist
-  // doesn't delete songs shared with another.
-  removeCollection(collectionId: string, trackIds: string[]): void {
-    const offlineStore = useOffline.getState();
+  // Deletes the given tracks on behalf of `collectionId`, keeping any that
+  // another saved collection still references so dropping one playlist doesn't
+  // delete songs shared with another. Used both when a collection goes away
+  // entirely and when its membership shrinks (a smart playlist re-evaluated
+  // server-side, an edited playlist).
+  removeTracksNotReferencedElsewhere(
+    collectionId: string,
+    trackIds: string[],
+  ): void {
     const referencedElsewhere = trackIdsReferencedByCollections(
-      Object.values(offlineStore.downloadedCollections).filter(
+      Object.values(useOffline.getState().downloadedCollections).filter(
         (collection) => collection.id !== collectionId,
       ),
     );
 
+    const orphaned: string[] = [];
     for (const trackId of trackIds) {
       if (referencedElsewhere.has(trackId)) continue;
+      orphaned.push(trackId);
       try {
         this.removeDownloadedTrack(trackId);
       } catch (error) {
@@ -821,8 +827,42 @@ export class OfflineDownloadService {
         );
       }
     }
+    this.cancelQueuedDownloads(orphaned);
+  }
 
-    offlineStore.removeDownloadedCollection(collectionId);
+  // Deleting the files isn't enough when the collection shrinks mid-download:
+  // a track still waiting in the queue has nothing on disk for
+  // `removeDownloadedTrack` to delete (it returns early), so it would finish
+  // downloading afterwards and land in `downloadedTracks` with no collection
+  // referencing it — an orphan only "clear all downloads" ever removes.
+  // Tracks already in flight are left to finish, the same way
+  // `removeQueuedAutoDownloads` does: they can't be cancelled.
+  private cancelQueuedDownloads(trackIds: string[]): void {
+    const offlineStore = useOffline.getState();
+    const queued = new Set(offlineStore.downloadQueue.map((t) => t.id));
+    const cancellable = trackIds.filter(
+      (trackId) => queued.has(trackId) && !this.activeIds.has(trackId),
+    );
+    if (cancellable.length === 0) return;
+
+    offlineStore.removeManyFromDownloadQueue(cancellable);
+    for (const trackId of cancellable) {
+      this.attempts.delete(trackId);
+      const resolvers = this.resolvers.get(trackId);
+      this.resolvers.delete(trackId);
+      resolvers?.reject(
+        new DownloadCancelledError("Track left the saved collection"),
+      );
+    }
+  }
+
+  // Removes a saved collection (playlist/album) and its tracks, but keeps any
+  // track still referenced by another saved collection so removing one playlist
+  // doesn't delete songs shared with another.
+  removeCollection(collectionId: string, trackIds: string[]): void {
+    this.removeTracksNotReferencedElsewhere(collectionId, trackIds);
+
+    useOffline.getState().removeDownloadedCollection(collectionId);
     // Covers the removed collection was the last reference to go with it.
     // Deliberately not done per single-track removal: the prune walks the whole
     // cache against every collection, so the collection-level and

@@ -67,6 +67,7 @@ export default function NewSmartPlaylistScreen() {
   const [rules, setRules] = useState<FormNode[]>([defaultRule()]);
   const [sorts, setSorts] = useState<FormSortEntry[]>([]);
   const [limit, setLimit] = useState<string>("");
+  const [refreshDelay, setRefreshDelay] = useState<string>("");
 
   const form = useForm({
     defaultValues: { name: "", comment: "", isPublic: false },
@@ -81,6 +82,7 @@ export default function NewSmartPlaylistScreen() {
           rules,
           sorts,
           limit,
+          refreshDelay,
         },
         serverVersion,
       );
@@ -249,6 +251,8 @@ export default function NewSmartPlaylistScreen() {
             onSortsChange={setSorts}
             limit={limit}
             onLimitChange={setLimit}
+            refreshDelay={refreshDelay}
+            onRefreshDelayChange={setRefreshDelay}
             serverVersion={serverVersion}
           />
         </VStack>

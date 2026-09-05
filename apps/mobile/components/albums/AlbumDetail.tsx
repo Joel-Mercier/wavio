@@ -19,6 +19,7 @@ import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertic
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
+import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
 import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import User from "lucide-react-native/dist/esm/icons/user.mjs";
@@ -449,6 +450,9 @@ export default function AlbumDetail() {
 
   const isPlaying = useIsPlaying();
   const albumTracks = data?.album?.song;
+  // See PlaylistDetail: drift has to be measured against the server's list, not
+  // the downloaded-only fallback.
+  const serverAlbumTracks = serverData?.album?.song;
   const hasPlayableTracks = useHasPlayableTracks(albumTracks);
   const albumSource = useMemo<QueueSource>(
     () =>
@@ -483,7 +487,7 @@ export default function AlbumDetail() {
         : undefined,
     [id, data?.album],
   );
-  const albumDownload = useCollectionDownload(albumTracks, albumMeta);
+  const albumDownload = useCollectionDownload(serverAlbumTracks, albumMeta);
 
   const handleSaveOfflinePress = async () => {
     bottomSheetModalRef.current?.dismiss();
@@ -511,6 +515,39 @@ export default function AlbumDetail() {
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
             <ToastDescription>
               {t("app.shared.offline.saveErrorMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    }
+  };
+
+  const handleUpdateOfflinePress = async () => {
+    bottomSheetModalRef.current?.dismiss();
+    try {
+      await albumDownload.updateToServer();
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="success">
+            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.updateSuccessMessage")}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      logError("Error updating album offline downloads:", error);
+      toast.show({
+        placement: "top",
+        duration: 3000,
+        render: () => (
+          <Toast action="error">
+            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.shared.offline.updateErrorMessage")}
             </ToastDescription>
           </Toast>
         ),
@@ -1148,6 +1185,26 @@ export default function AlbumDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
+              {capabilities.offlineDownload &&
+                albumDownload.status !== "none" &&
+                albumDownload.drift.added.length +
+                  albumDownload.drift.removed.length >
+                  0 && (
+                  <FadeOutScaleDown
+                    onPress={handleUpdateOfflinePress}
+                    disabled={!isOnline}
+                  >
+                    <HStack className="items-center">
+                      <RefreshCw size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.shared.offline.updateDownloads", {
+                          added: albumDownload.drift.added.length,
+                          removed: albumDownload.drift.removed.length,
+                        })}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
               {capabilities.offlineDownload &&
                 (albumDownload.status === "downloading" ? (
                   <HStack className="items-center">
