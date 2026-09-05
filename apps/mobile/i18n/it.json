@@ -23,23 +23,23 @@
 				"songsByGenre": "{{genre}} canzoni",
 				"albumsByGenre": "{{genre}} album",
 				"albumsByDecade": "Album degli anni ' {{decade}}",
-				"moreFromArtist": "Altro di {{artist}}",
+				"moreFromArtist": "Altro da {{artist}}",
 				"moreFrom": "Altro di",
 				"podcasts": "Podcast",
 				"internetRadioStations": "Web Radio",
 				"playErrorMessage": "Si è verificato un errore durante l'avvio della riproduzione",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "Personalizza la tua Home",
+						"description": "Scegli quali sezioni visualizzare, e in che ordine"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "Personalizza i tuoi podcast",
+						"description": "Scegli il paese e la lingua con cui richiedere i tuoi suggerimenti"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "Personalizza la tua radio",
+						"description": "Scegli quali tag visualizzare nel feed"
 					}
 				},
 				"tabs": {
@@ -281,7 +281,7 @@
 				"addAllToFavoritesErrorMessage": "Si è verificato un errore durante l'aggiunta dei brani ai preferiti",
 				"typeAlbum": "Album",
 				"typeCompilation": "Raccolta",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "Senza tag",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Singolo",
@@ -650,10 +650,10 @@
 			"smartPlaylist": {
 				"rule": "Regola",
 				"addRule": "Aggiungi regola",
-				"addGroup": "Add rule group",
-				"deleteGroup": "Delete rule group",
-				"and": "and",
-				"or": "or",
+				"addGroup": "Aggiungi gruppo di regole",
+				"deleteGroup": "Elimina gruppo di regole",
+				"and": "e",
+				"or": "o",
 				"matchAll": "Seleziona tutto",
 				"matchAny": "Corrisponde a qualsiasi",
 				"atLeastOneRule": "Aggiungi almeno una regola",
@@ -1016,7 +1016,7 @@
 							"hourAxis": "Ora del giorno (UTC, secondo i dati registrati da ListenBrainz)",
 							"musicByDecade": "Musica per decennio",
 							"musicByDecadeDescription": "Quando è stata pubblicata la canzone che hai ascoltato — non quando l'hai ascoltata.",
-							"decade": "{{decade}}s",
+							"decade": "'{{decade}}",
 							"artistEvolution": "L'evoluzione dell'artista",
 							"artistEvolutionDescription": "I tuoi artisti più ascoltati nel corso del tempo. Ogni colonna rappresenta un giorno, un mese o un anno, a seconda del periodo selezionato.",
 							"artistOrigins": "Origini dell'artista",
@@ -1976,8 +1976,8 @@
 				"notAvailableOfflineMessage": "Non disponibile offline. Scaricalo per ascoltarlo senza connessione.",
 				"advancedSettings": "Impostazioni avanzate",
 				"fallbackUrlHelp": "Viene utilizzato quando l'URL principale non è raggiungibile. Deve puntare allo stesso server.",
-				"plainPasswordAuth": "Legacy password authentication",
-				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
+				"plainPasswordAuth": "Autenticazione password legacy",
+				"plainPasswordAuthHelp": "In ogni richiesta invia la tua password invece di un token. Abilita questa opzione solo se il login funziona ma l'app continua a disconnetterti.",
 				"cancel": "Annulla",
 				"close": "Chiudi",
 				"create": "Crea",
