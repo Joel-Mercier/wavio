@@ -5,11 +5,11 @@ import { HStack } from "@/components/ui/hstack";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import type { TopStatItem } from "@/services/listenBrainz/statsMappers";
+import type { TopStatItem } from "@/services/scrobbling/stats";
 
-// Rows are not tappable: these entities live in ListenBrainz's own catalogue
-// and nothing here resolves them to something the active music server can play,
-// so a press would have nowhere to go.
+// Rows are not tappable: these entities live in the scrobbling service's own
+// catalogue and nothing here resolves them to something the active music server
+// can play, so a press would have nowhere to go.
 export default function StatTopList({
   items,
   showArtwork = false,

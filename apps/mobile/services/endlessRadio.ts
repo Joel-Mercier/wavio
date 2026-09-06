@@ -12,7 +12,13 @@ export async function fetchEndlessExtension(
   let songs: Child[] = [];
 
   try {
-    songs = await fetchSimilarSongs(seed.id, FETCH_COUNT);
+    // The seed's own metadata is passed alongside the id because the Last.fm
+    // tier identifies a track by name, not by the active server's id.
+    songs = await fetchSimilarSongs(seed.id, FETCH_COUNT, {
+      title: seed.title,
+      artist: seed.artist,
+      musicBrainzId: (seed as { musicBrainzId?: string }).musicBrainzId,
+    });
   } catch {
     songs = [];
   }
@@ -38,7 +44,13 @@ export async function fetchEndlessExtension(
   if (songs.length === 0) return [];
 
   const existingIds = new Set(useQueue.getState().queue.map((t) => t.id));
-  return songs
-    .filter((s) => !existingIds.has(s.id))
-    .map((s) => childToTrack(s));
+  return (
+    songs
+      .filter((s) => !existingIds.has(s.id))
+      // Marked as picked by the app rather than by the listener. Last.fm's
+      // track.scrobble takes this as `chosenByUser` and weights its
+      // recommendations with it, defaulting to "the user chose this" — so an
+      // untagged endless-radio play quietly overstates the listener's intent.
+      .map((s) => ({ ...childToTrack(s), autoQueued: true }))
+  );
 }

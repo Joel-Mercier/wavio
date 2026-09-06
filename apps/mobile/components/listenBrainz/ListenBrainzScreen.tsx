@@ -11,6 +11,7 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import UrlInputField from "@/components/forms/UrlInputField";
+import SettingsNotice from "@/components/settings/SettingsNotice";
 import {
   SettingsActionRow,
   SettingsSectionTitle,
@@ -303,13 +304,11 @@ export default function ListenBrainzScreen() {
             />
 
             {serverIsScrobbling === true && (
-              <Box className="border border-amber-500 bg-amber-500/10 rounded-md p-4">
-                <Text className="text-amber-300 text-sm">
-                  {t(
-                    "app.settings.integrations.listenbrainz.scrobbling.serverWarning",
-                  )}
-                </Text>
-              </Box>
+              <SettingsNotice
+                message={t(
+                  "app.settings.integrations.listenbrainz.scrobbling.serverWarning",
+                )}
+              />
             )}
 
             <SettingsToggleRow

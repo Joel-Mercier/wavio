@@ -39,6 +39,7 @@ export const SCOPED_STORE_NAMES = [
   "musicBrainzStore",
   "audioMuseStore",
   "listenBrainzStore",
+  "lastFmStore",
   "lrclibPicksStore",
   "trackCacheStore",
 ] as const;
@@ -50,6 +51,12 @@ export const SCOPED_STORE_NAMES = [
 // restored queue draining alongside the original device's is collapsed server
 // side rather than double-counted — and restoring the token/settings is the
 // whole point of backing the integration up.
+//
+// The Last.fm store travels for the same reason, with one caveat worth knowing:
+// Last.fm dedupes on (user, artist, track, timestamp) rather than on a submission
+// id, so a restored queue draining alongside the original device's collapses only
+// where the metadata matches exactly. The scrobbler's own 14-day cutoff bounds
+// how much of a restored queue can still be submitted at all.
 //
 // Scoped stores that must NOT travel in a backup file. The first two hold state
 // that is only true of the device that wrote it: the offline-mutations queue is

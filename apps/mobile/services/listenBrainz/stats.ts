@@ -32,24 +32,14 @@ import type {
   TopReleasesPayload,
 } from "@/services/listenBrainz/types";
 import { requireUserName } from "@/services/listenBrainz/user";
+import type { StatsResult } from "@/services/scrobbling/stats";
 
 // How many rows each "top" list asks for. The screen shows a glanceable top
 // slice, not a browsable chart, so this stays well under the API's own cap.
 export const TOP_STATS_COUNT = 10;
 
-/**
- * A statistic that may not exist yet.
- *
- * ListenBrainz computes these in a batch job, and until it has run for a given
- * user *and* range the endpoint answers `204 No Content`. That is a routine
- * state, not a failure and not an empty result — a heavily-used account still
- * gets a 204 for `week` while `year` returns data — so it is modelled
- * explicitly rather than collapsed into `null`, which callers would inevitably
- * render as "no listens".
- */
-export type StatsResult<T> =
-  | { state: "ready"; data: T; lastUpdated: number | null }
-  | { state: "notComputed" };
+/** Re-exported under its original name; the shape is shared with Last.fm. */
+export type { StatsResult };
 
 const NOT_COMPUTED = { state: "notComputed" } as const;
 

@@ -241,7 +241,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const favorite = useCallback(
     (target: Child) => {
       doFavorite.mutate(
-        { id: target.id },
+        { id: target.id, song: target },
         {
           onSuccess: () => {
             toast.show({
@@ -280,7 +280,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const unfavorite = useCallback(
     (target: Child) => {
       doUnfavorite.mutate(
-        { id: target.id },
+        { id: target.id, song: target },
         {
           onSuccess: () => {
             toast.show({
@@ -480,7 +480,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     bottomSheetModalRef.current?.dismiss();
     router.navigate({
       pathname: "/tracks/[id]/similar",
-      params: { id: track.id, title: track.title },
+      params: { id: track.id, title: track.title, artist: track.artist },
     });
   };
 

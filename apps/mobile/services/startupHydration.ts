@@ -4,10 +4,12 @@ import i18n, {
   SupportedLanguages,
   type TSupportedLanguages,
 } from "@/config/i18n";
+import { initLastFmScrobbler } from "@/services/lastFm/scrobbler";
 import { initListenBrainzScrobbler } from "@/services/listenBrainz/scrobbler";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import useLastFm from "@/stores/lastFm";
 import useListenBrainz from "@/stores/listenBrainz";
 import useOffline from "@/stores/offline";
 import useQueue from "@/stores/queue";
@@ -72,6 +74,9 @@ export function hydratePlaybackStores(): Promise<void> {
     // app/ mounts here to hydrate this store or start the drain loop.
     Promise.resolve(useListenBrainz.persist.rehydrate()).then(() => {
       initListenBrainzScrobbler();
+    }),
+    Promise.resolve(useLastFm.persist.rehydrate()).then(() => {
+      initLastFmScrobbler();
     }),
   ]).then(() => undefined);
   return scopedHydration;

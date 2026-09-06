@@ -19,6 +19,7 @@ import {
   getVideoInfo,
   getVideos,
 } from "@/services/backend/browsing";
+import type { LastFmSeed } from "@/services/lastFm/recommendations";
 import { fetchSimilarSongs } from "@/services/similarSongs";
 import { fetchTopSongs } from "@/services/topSongs";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
@@ -214,16 +215,25 @@ export const useSimilarSongs2 = (id: string, params: { count?: number }) => {
 };
 
 // Returns a flat Child[] of similar songs, preferring the sonicSimilarity
-// extension when available (see services/similarSongs.ts). The extension flag is
-// part of the query key so results refetch when switching to a server with a
-// different capability.
-export const useSimilarTracks = (id: string, params: { count?: number }) => {
+// extension when available and falling back to Last.fm (see
+// services/similarSongs.ts). The extension flag is part of the query key so
+// results refetch when switching to a server with a different capability.
+//
+// `seed` is the track's own name/artist, needed only by the Last.fm tier, which
+// identifies a track by name rather than by server id. It is not in the key: the
+// id already pins which track this is, and a caller that happens to know the
+// artist must not get a second cache entry for the same row.
+export const useSimilarTracks = (
+  id: string,
+  params: { count?: number },
+  seed?: LastFmSeed,
+) => {
   const hasSonicSimilarity = useServerExtensionsBase((s) =>
     s.hasExtension("sonicSimilarity"),
   );
   return useQuery({
     queryKey: ["similarTracks", id, params, hasSonicSimilarity],
-    queryFn: () => fetchSimilarSongs(id, params.count),
+    queryFn: () => fetchSimilarSongs(id, params.count, seed),
     enabled: !!id,
   });
 };

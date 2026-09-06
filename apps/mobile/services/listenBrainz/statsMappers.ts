@@ -10,20 +10,15 @@ import type {
   TopRecordingsPayload,
   TopReleasesPayload,
 } from "@/services/listenBrainz/types";
+import type { TopStatItem } from "@/services/scrobbling/stats";
 
 // View models for the stats screen. Deliberately shaped for rendering rather
 // than mirroring the wire: the three "top" endpoints differ only in which field
 // names carry the title and subtitle, so they collapse into one row type and
 // one list component.
 
-export type TopStatItem = {
-  key: string;
-  rank: number;
-  title: string;
-  subtitle?: string;
-  listenCount: number;
-  artworkUrl?: string;
-};
+/** Re-exported under its original name; the shape is shared with Last.fm. */
+export type { TopStatItem };
 
 /**
  * A bar of the activity chart.

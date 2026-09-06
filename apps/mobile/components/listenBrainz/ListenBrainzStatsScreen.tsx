@@ -18,10 +18,10 @@ import GenreActivityHeatmap, {
 import ListeningActivityChart, {
   ListeningActivityChartSkeleton,
 } from "@/components/listenBrainz/ListeningActivityChart";
-import StatsSection from "@/components/listenBrainz/StatsSection";
+import StatsSection from "@/components/scrobbling/StatsSection";
 import StatTopList, {
   StatTopListSkeleton,
-} from "@/components/listenBrainz/StatTopList";
+} from "@/components/scrobbling/StatTopList";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import TabBar from "@/components/TabBar";
 import { Heading } from "@/components/ui/heading";
@@ -67,6 +67,20 @@ export default function ListenBrainzStatsScreen() {
   const genreActivity = useListenBrainzGenreActivity(range);
   const artistEvolution = useListenBrainzArtistEvolution(range);
   const artistCountries = useListenBrainzArtistCountries(range);
+
+  // Built once and shared by every section below: nine copies of the same four
+  // lookups would be noise, and they don't vary by section.
+  const labels = useMemo(
+    () => ({
+      unreachable: t(`${KEY}.unreachable`),
+      noData: t(`${KEY}.noListens`),
+      notComputed: {
+        title: t(`${KEY}.notComputed`),
+        description: t(`${KEY}.notComputedDescription`),
+      },
+    }),
+    [t],
+  );
 
   const tabs = useMemo(
     () =>
@@ -139,6 +153,7 @@ export default function ListenBrainzStatsScreen() {
         />
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.topArtists`)}
           query={topArtists}
           isEmpty={(items) => items.length === 0}
@@ -148,6 +163,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.topAlbums`)}
           query={topReleases}
           isEmpty={(items) => items.length === 0}
@@ -157,6 +173,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.topTracks`)}
           query={topRecordings}
           isEmpty={(items) => items.length === 0}
@@ -166,6 +183,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.listeningActivity`)}
           query={listeningActivity}
           isEmpty={(buckets) => buckets.length === 0}
@@ -177,6 +195,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.dailyActivity`)}
           description={t(`${KEY}.dailyActivityDescription`)}
           query={dailyActivity}
@@ -187,6 +206,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.genreActivity`)}
           description={t(`${KEY}.genreActivityDescription`)}
           query={genreActivity}
@@ -197,6 +217,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.musicByDecade`)}
           description={t(`${KEY}.musicByDecadeDescription`)}
           query={eraActivity}
@@ -207,6 +228,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.artistEvolution`)}
           description={t(`${KEY}.artistEvolutionDescription`)}
           query={artistEvolution}
@@ -219,6 +241,7 @@ export default function ListenBrainzStatsScreen() {
         </StatsSection>
 
         <StatsSection
+          labels={labels}
           title={t(`${KEY}.artistOrigins`)}
           query={artistCountries}
           isEmpty={(countries) => countries.length === 0}

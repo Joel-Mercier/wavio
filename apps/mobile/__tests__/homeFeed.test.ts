@@ -18,9 +18,12 @@ const allCapabilities = Object.fromEntries(
   Object.keys(getCapabilities("navidrome")).map((key) => [key, true]),
 ) as BackendCapabilities;
 
-const availability = (listenBrainz = true): HomeSectionAvailability => ({
+const availability = (
+  listenBrainz = true,
+  lastFm = listenBrainz,
+): HomeSectionAvailability => ({
   capabilities: allCapabilities,
-  integrations: { listenBrainz },
+  integrations: { listenBrainz, lastFm },
 });
 
 const seedAlbums = Array.from({ length: 12 }, (_, i) => ({
@@ -37,13 +40,13 @@ const genres = [
 
 const build = (
   hiddenSections: readonly string[] = [],
-  listenBrainz = true,
+  integrations = true,
   order: readonly string[] = [],
 ) =>
   buildHomeFeed({
     seedAlbums,
     genres,
-    availability: availability(listenBrainz),
+    availability: availability(integrations),
     sessionSeed: 42,
     hiddenSections,
     order,
@@ -111,9 +114,32 @@ describe("integration-gated sections", () => {
     );
   });
 
+  it("includes the Last.fm section only when it is connected", () => {
+    expect(build().map((s) => s.id)).toContain("lastFmBecauseYouListened");
+    expect(build([], false).map((s) => s.id)).not.toContain(
+      "lastFmBecauseYouListened",
+    );
+  });
+
+  it("gates the two integrations independently", () => {
+    const ids = buildHomeFeed({
+      seedAlbums,
+      genres,
+      availability: availability(false, true),
+      sessionSeed: 42,
+      hiddenSections: [],
+      order: [],
+    }).map((s) => s.id);
+    expect(ids).toContain("lastFmBecauseYouListened");
+    expect(ids).not.toContain("listenBrainzCreatedForYou");
+  });
+
   it("can be hidden by the user while connected", () => {
     expect(build(["listenBrainzCreatedForYou"]).map((s) => s.id)).not.toContain(
       "listenBrainzCreatedForYou",
+    );
+    expect(build(["lastFmBecauseYouListened"]).map((s) => s.id)).not.toContain(
+      "lastFmBecauseYouListened",
     );
   });
 
@@ -124,7 +150,11 @@ describe("integration-gated sections", () => {
     const connected = build().map((s) => s.id);
     const disconnected = build([], false).map((s) => s.id);
     expect(disconnected).toEqual(
-      connected.filter((id) => id !== "listenBrainzCreatedForYou"),
+      connected.filter(
+        (id) =>
+          id !== "listenBrainzCreatedForYou" &&
+          id !== "lastFmBecauseYouListened",
+      ),
     );
   });
 });
@@ -157,7 +187,7 @@ describe("isHomeSectionAvailable", () => {
     expect(
       isHomeSectionAvailable(entry, {
         capabilities,
-        integrations: { listenBrainz: true },
+        integrations: { listenBrainz: true, lastFm: true },
       }),
     ).toBe(expected);
   });
@@ -165,9 +195,10 @@ describe("isHomeSectionAvailable", () => {
   it("drops an unmet integration from the catalog listing", () => {
     const keys = availableHomeSections(availability(false)).map((e) => e.key);
     expect(keys).not.toContain("listenBrainzCreatedForYou");
-    expect(availableHomeSections(availability()).map((e) => e.key)).toContain(
-      "listenBrainzCreatedForYou",
-    );
+    expect(keys).not.toContain("lastFmBecauseYouListened");
+    const connected = availableHomeSections(availability()).map((e) => e.key);
+    expect(connected).toContain("listenBrainzCreatedForYou");
+    expect(connected).toContain("lastFmBecauseYouListened");
   });
 });
 

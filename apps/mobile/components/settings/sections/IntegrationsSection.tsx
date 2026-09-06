@@ -14,6 +14,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import useAudioMuse from "@/stores/audioMuse";
 import { useAuthBase } from "@/stores/auth";
+import useLastFm from "@/stores/lastFm";
 import useListenBrainz from "@/stores/listenBrainz";
 import useMusicBrainz from "@/stores/musicbrainz";
 import { cn } from "@/utils/tailwind";
@@ -80,6 +81,7 @@ export default function IntegrationsSection() {
   const lastScanAt = useMusicBrainz((store) => store.lastScanAt);
   const isAudioMuseConnected = useAudioMuse((store) => store.isConnected);
   const listenBrainzUserName = useListenBrainz((store) => store.userName);
+  const lastFmUserName = useLastFm((store) => store.userName);
 
   return (
     <SettingsScreenScaffold title={t("app.settings.menu.integrations.title")}>
@@ -111,6 +113,13 @@ export default function IntegrationsSection() {
           description={t("app.settings.integrations.listenbrainz.description")}
           href="/integrations/listenbrainz"
           isConfigured={listenBrainzUserName !== null}
+        />
+        {/* Offered on every backend for the same reason as ListenBrainz above. */}
+        <IntegrationRow
+          title={t("app.settings.integrations.lastfm.title")}
+          description={t("app.settings.integrations.lastfm.description")}
+          href="/integrations/lastfm"
+          isConfigured={lastFmUserName !== null}
         />
       </VStack>
     </SettingsScreenScaffold>

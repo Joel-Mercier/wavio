@@ -33,12 +33,23 @@ jest.mock("@/stores/listenBrainz", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("listenBrainz") } },
 }));
+jest.mock("@/stores/lastFm", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate: mockRehydrate("lastFm") } },
+}));
 
 const mockInitScrobbler = jest.fn(() => {
   mockOrder.push("scrobblerInit");
 });
 jest.mock("@/services/listenBrainz/scrobbler", () => ({
   initListenBrainzScrobbler: mockInitScrobbler,
+}));
+
+const mockInitLastFmScrobbler = jest.fn(() => {
+  mockOrder.push("lastFmScrobblerInit");
+});
+jest.mock("@/services/lastFm/scrobbler", () => ({
+  initLastFmScrobbler: mockInitLastFmScrobbler,
 }));
 
 let mockIsAuthenticated = true;
@@ -91,6 +102,8 @@ describe("hydratePlaybackStores", () => {
     await load().hydratePlaybackStores();
     expect(mockOrder[0]).toBe("migration");
     expect(mockOrder.slice(1).sort()).toEqual([
+      "lastFm",
+      "lastFmScrobblerInit",
       "listenBrainz",
       "offline",
       "queue",
@@ -99,11 +112,14 @@ describe("hydratePlaybackStores", () => {
     ]);
   });
 
-  test("starts the ListenBrainz drain loop only after its store has hydrated", async () => {
+  test("starts each drain loop only after its own store has hydrated", async () => {
     // Playback in the car scrobbles like anywhere else, and nothing under app/
-    // mounts here to do this wiring. Starting the loop before hydration would
+    // mounts here to do this wiring. Starting a loop before hydration would
     // drain an empty queue and miss whatever the last session left behind.
     await load().hydratePlaybackStores();
+    expect(mockOrder.indexOf("lastFmScrobblerInit")).toBeGreaterThan(
+      mockOrder.indexOf("lastFm"),
+    );
     expect(mockOrder.indexOf("scrobblerInit")).toBeGreaterThan(
       mockOrder.indexOf("listenBrainz"),
     );

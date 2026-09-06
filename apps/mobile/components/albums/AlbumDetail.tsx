@@ -416,7 +416,7 @@ export default function AlbumDetail() {
     if (!songs || songs.length === 0) return;
     try {
       for (const song of songs) {
-        await doFavorite.mutateAsync({ id: song.id });
+        await doFavorite.mutateAsync({ id: song.id, song });
       }
       queryClient.invalidateQueries({ queryKey: ["starred2"] });
       toast.show({

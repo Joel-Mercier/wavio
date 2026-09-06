@@ -5,6 +5,7 @@ import {
   star,
   unstar,
 } from "@/services/backend/mediaAnnotation";
+import { enqueueLove } from "@/services/lastFm/scrobbler";
 import { getIsEffectivelyOnline } from "@/services/network";
 import {
   enqueueOfflineMutation,
@@ -100,25 +101,45 @@ export const useSetRating = () => {
   return query;
 };
 
-const toStarTarget = (params: {
+type StarParams = {
   id?: string;
   albumId?: string;
   artistId?: string;
-}): StarTarget => {
+  /**
+   * The song's own metadata, for the scrobbling integrations that identify a
+   * track by name rather than by server id. Optional because album/artist stars
+   * have no Last.fm equivalent, and because a caller that doesn't have it is
+   * still allowed to star.
+   */
+  song?: { title?: string; artist?: string };
+};
+
+const toStarTarget = (params: StarParams): StarTarget => {
   if (params.albumId) return { kind: "album", id: params.albumId };
   if (params.artistId) return { kind: "artist", id: params.artistId };
   return { kind: "song", id: params.id as string };
+};
+
+/**
+ * Mirrors a favourite to Last.fm.
+ *
+ * Deliberately runs even when the star itself was only queued offline: the love
+ * queue drains on *device* connectivity, whereas a star is queued whenever the
+ * music server is unreachable — which on a LAN server or a local library is a
+ * different thing entirely. Waiting for the star to land would silently drop
+ * loves in exactly the setup this integration is most useful for.
+ */
+const relayLove = (params: StarParams, loved: boolean) => {
+  if (!params.id || params.albumId || params.artistId) return;
+  if (!params.song?.title || !params.song?.artist) return;
+  enqueueLove(params.song.artist, params.song.title, loved);
 };
 
 export const useStar = () => {
   const queryClient = useQueryClient();
   const query = useMutation({
     networkMode: "always",
-    mutationFn: async (params: {
-      id?: string;
-      albumId?: string;
-      artistId?: string;
-    }) => {
+    mutationFn: async (params: StarParams) => {
       if (!params.id && !params.albumId && !params.artistId) {
         throw new Error("star requires an id, albumId or artistId");
       }
@@ -132,6 +153,7 @@ export const useStar = () => {
       return star(params);
     },
     onSuccess: (data, params) => {
+      relayLove(params, true);
       if (isQueuedResult(data)) return;
       if (params.id && !params.albumId && !params.artistId) {
         useQueue
@@ -149,11 +171,7 @@ export const useUnstar = () => {
   const queryClient = useQueryClient();
   const query = useMutation({
     networkMode: "always",
-    mutationFn: async (params: {
-      id?: string;
-      albumId?: string;
-      artistId?: string;
-    }) => {
+    mutationFn: async (params: StarParams) => {
       if (!params.id && !params.albumId && !params.artistId) {
         throw new Error("unstar requires an id, albumId or artistId");
       }
@@ -167,6 +185,7 @@ export const useUnstar = () => {
       return unstar(params);
     },
     onSuccess: (data, params) => {
+      relayLove(params, false);
       if (isQueuedResult(data)) return;
       if (params.id && !params.albumId && !params.artistId) {
         useQueue.getState().updateTrack(params.id, { starred: undefined });

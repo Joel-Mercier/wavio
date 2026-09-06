@@ -5,7 +5,6 @@ import type { Href } from "expo-router";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import TriangleAlert from "lucide-react-native/dist/esm/icons/triangle-alert.mjs";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -19,6 +18,7 @@ import FieldError, {
 import UrlInputField from "@/components/forms/UrlInputField";
 import SelectBottomSheet from "@/components/SelectBottomSheet";
 import SelectFieldRow from "@/components/SelectFieldRow";
+import SettingsNotice from "@/components/settings/SettingsNotice";
 import { SettingsToggleRow } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Badge, BadgeText } from "@/components/ui/badge";
@@ -87,10 +87,9 @@ function TidarrLinkRow({
 export default function TidarrConfigScreen() {
   const { t } = useTranslation();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
-  const [white, primary50, amber400] = Uniwind.getCSSVariable([
+  const [white, primary50] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-primary-50",
-    "--color-amber-400",
   ]) as string[];
 
   const storedServerUrl = useTidarr((store) => store.serverUrl);
@@ -295,12 +294,9 @@ export default function TidarrConfigScreen() {
         </HStack>
 
         {isConnected && settings?.noToken && (
-          <HStack className="items-start gap-x-3 rounded-md bg-primary-600 p-4">
-            <TriangleAlert size={20} color={amber400} />
-            <Text className="text-primary-50 text-sm flex-1">
-              {t("app.settings.downloaders.tidarr.tidalNotLinked")}
-            </Text>
-          </HStack>
+          <SettingsNotice
+            message={t("app.settings.downloaders.tidarr.tidalNotLinked")}
+          />
         )}
 
         {isConnected && (
