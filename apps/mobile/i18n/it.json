@@ -18,6 +18,8 @@
 				"randomSongs": "Tracce casuali",
 				"artists": "Artisti",
 				"createdForYou": "Creato per te",
+				"becauseYouListened": "Perché hai ascoltato {{artist}}",
+				"becauseYouListenedFallback": "Consigliati per te",
 				"yourPlaylists": "Le tue playlist",
 				"starred": "I tuoi preferiti",
 				"songsByGenre": "{{genre}} canzoni",
@@ -339,6 +341,12 @@
 				"reorder": "Riorganizza questa playlist",
 				"edit": "Modifica questa playlist",
 				"editRules": "Modifica le regole delle playlist intelligenti",
+				"saveAsStaticPlaylist": "Salva come playlist statica",
+				"refreshStaticCopy": "Aggiorna copia statica",
+				"openStaticCopy": "Apri copia statica",
+				"staticCopyName": "{{name}} (snapshot)",
+				"staticCopySuccess": "Copia statica aggiornata",
+				"staticCopyError": "Si è verificato un errore durante l'aggiornamento della copia statica",
 				"delete": "Elimina questa playlist",
 				"share": "Condividi",
 				"playNext": "Riproduci il prossimo",
@@ -666,6 +674,16 @@
 				"addSort": "Aggiungi ordinamento",
 				"limit": "Limite",
 				"limitPlaceholder": "Numero massimo di tracce",
+				"refreshDelay": "Ritardo di aggiornamento",
+				"refreshDelayHint": "Per quanto tempo la playlist mantiene gli stessi brani prima che il server ne selezioni una nuova serie. Richiede Navidrome 0.64 o successivo.",
+				"refreshDelayOptions": {
+					"default": "Impostazioni predefinite del server",
+					"1h": "Ogni ora",
+					"6h": "Ogni 6 ore",
+					"12h": "Ogni 12 ore",
+					"1d": "Ogni giorno",
+					"1w": "Ogni settimana"
+				},
 				"direction": {
 					"asc": "Asc",
 					"desc": "Descrizione"
@@ -1055,6 +1073,97 @@
 							"queued_one": "{{count}} brano aggiunto alla coda",
 							"queued_other": "{{count}} brani aggiunti alla coda"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Invia la musica che ascolti al tuo profilo Last.fm",
+						"attribution": "Realizzato con AudioScrobbler",
+						"attributionHint": "AudioScrobbler è il nome dell'API di Last.fm che Wavio utilizza per accedere al tuo account.",
+						"auth": {
+							"signedInAs": "Acceduto come {{userName}}",
+							"browserHint": "Cliccando su \"Connetti\" si aprirà Last.fm nel tuo browser. Approva Wavio da lì, poi torna a questa schermata, poiché Last.fm non può reindirizzarti automaticamente.",
+							"connectAction": "Connettiti",
+							"reconnectAction": "Riconnettere",
+							"disconnectAction": "Disconnetti",
+							"connected": "Collegato come {{userName}}",
+							"notAuthorized": "Wavio non è stato approvato su Last.fm. Tocca \"Connetti\" e concedi l'accesso per completare l'operazione.",
+							"failed": "Impossibile connettersi a Last.fm. Controlla la connessione e riprova.",
+							"disconnected": "Last.fm disconnesso",
+							"sessionExpired": "Last.fm non accetta più questo accesso, il che di solito significa che è stato revocato. Riconnettiti per continuare a scrobblare. I brani registrati nel frattempo vengono conservati e inviati non appena ti riconnetti.",
+							"noCredentials": "Questa versione di Wavio è stata realizzata senza le credenziali dell'API di Last.fm, pertanto non è in grado di connettersi a Last.fm.",
+							"manageAccessAction": "Gestisci l'accesso di Wavio su last.fm"
+						},
+						"scrobbling": {
+							"title": "Scrobbling",
+							"serverWarning": "Il tuo server musicale sta già inviando i tuoi ascolti a Last.fm. Se attivi anche questa opzione, ogni ascolto verrà conteggiato due volte.",
+							"enabledLabel": "Aggiungi i miei brani alla cronologia",
+							"enabledDescription": "Un brano viene inviato dopo averne ascoltato metà o dopo quattro minuti, a seconda di quale delle due condizioni si verifichi per prima. Gli ascolti effettuati offline vengono inviati alla prima connessione disponibile.",
+							"nowPlayingLabel": "Mostra a cosa sto giocando",
+							"nowPlayingDescription": "Aggiorna la voce “scrobbling in corso” sul tuo profilo Last.fm mentre viene riprodotto un brano."
+						},
+						"loves": {
+							"title": "Brani preferiti",
+							"syncLabel": "Adoro le mie canzoni preferite",
+							"syncDescription": "Aggiungere un brano ai preferiti equivale a \"amarlo\" su Last.fm, mentre rimuoverlo significa \"smettere di amarlo\". Questo vale solo per i brani, poiché Last.fm non prevede un'equivalente funzione per gli album o gli artisti. Aggiungere un intero album ai preferiti comporta l'assegnazione di un \"amore\" per ogni traccia, quindi potrebbe volerci un po' di tempo prima che il conteggio si aggiorni.",
+							"recentTitle": "Preferiti di recente",
+							"empty": "Non hai ancora aggiunto nulla ai preferiti su Last.fm.",
+							"loadFailed": "Non è stato possibile leggere i tuoi brani preferiti da Last.fm.",
+							"importLabel": "Aggiungi ai preferiti",
+							"importDescription": "Cerca nella tua libreria tutto ciò che hai aggiunto ai preferiti su Last.fm e aggiunge ai preferiti ciò che trova. Non rimuove mai nulla dai preferiti e viene eseguito una sola volta, quindi ciò che aggiungerai ai preferiti in seguito non verrà aggiunto automaticamente.",
+							"importAction": "Importa",
+							"importingAction": "Importazione di \"… \"",
+							"importOfflineDescription": "L'importazione richiede sia Last.fm che il tuo server musicale, quindi non è disponibile quando sei offline.",
+							"importProgressMatching": "Cercali nella tua libreria…",
+							"importNothingNew": "Tutti i brani presenti nella tua libreria che ti piacciono su Last.fm erano già tra i tuoi preferiti.",
+							"importFailed": "Non è stato possibile importare i tuoi brani preferiti. Controlla la connessione e riprova.",
+							"totalCount_one": "{{count}} brano aggiunto ai preferiti su Last.fm.",
+							"totalCount_other": "{{count}} brani aggiunti ai preferiti su Last.fm.",
+							"importProgressFetching_one": "Leggi i tuoi brani preferiti… {{done}} di {{count}}",
+							"importProgressFetching_other": "Leggi i tuoi brani preferiti… {{done}} di {{count}}",
+							"importProgressStarring_one": "Aggiungi ai preferiti… {{done}} di {{count}}",
+							"importProgressStarring_other": "Aggiungi ai preferiti… {{done}} di {{count}}",
+							"importAdded_one": "Hai aggiunto il brano \" {{count}} \" ai tuoi preferiti.",
+							"importAdded_other": "Hai aggiunto i brani di {{count}} ai tuoi preferiti.",
+							"importMissing_one": "{{count}} Il brano che ti piace non è presente nella tua libreria.",
+							"importMissing_other": "{{count}} I brani preferiti non sono presenti nella tua libreria.",
+							"importFailedCount_one": "{{count}} Non è stato possibile salvare il preferito.",
+							"importFailedCount_other": "{{count}} Non è stato possibile salvare i preferiti.",
+							"importTruncated_one": "È stato selezionato solo il tuo {{count}} amore più recente.",
+							"importTruncated_other": "Sono stati selezionati solo i tuoi {{count}} preferiti più recenti."
+						},
+						"recommendations": {
+							"poweredBy": "Realizzato con Last.fm"
+						},
+						"stats": {
+							"title": "Il tuo Last.fm",
+							"entryLabel": "Statistiche",
+							"entryDescription": "I tuoi artisti, album e brani preferiti, e ciò che hai scrobblato di recente.",
+							"since": "Scrobbling in corso dal {{date}}",
+							"ranges": {
+								"7day": "Settimana",
+								"1month": "Mese",
+								"12month": "Anno",
+								"overall": "Di tutti i tempi"
+							},
+							"topArtists": "Artisti di spicco",
+							"topAlbums": "I migliori album",
+							"topTracks": "Brani più ascoltati",
+							"recentTracks": "Aggiunti di recente",
+							"recentTracksDescription": "I tuoi ultimi scrobble, indipendentemente dal periodo selezionato sopra.",
+							"nowPlaying": "Ora",
+							"unreachable": "Impossibile connettersi a Last.fm.",
+							"noData": "In questo periodo non è stato ancora registrato nulla.",
+							"scrobbles_one": "{{formattedCount}} scrobble",
+							"scrobbles_other": "{{formattedCount}} scrobble"
+						},
+						"queue": {
+							"pendingLabel": "In attesa di essere inviato",
+							"pendingDescriptionEmpty": "È stato inviato tutto ciò a cui hai giocato.",
+							"syncAction": "Invia ora",
+							"syncingAction": "Invio di \"… \"",
+							"pendingDescription_one": "{{count}} Il brano non è ancora disponibile su Last.fm.",
+							"pendingDescription_other": "{{count}} I brani non sono ancora disponibili su Last.fm."
+						}
 					}
 				},
 				"downloaders": {
@@ -1404,7 +1513,8 @@
 						"moreFromArtist": "Altro da un artista",
 						"songsByGenre": "Brani per genere",
 						"albumsByGenre": "Album per genere",
-						"albumsByDecade": "Album per decennio"
+						"albumsByDecade": "Album per decennio",
+						"becauseYouListened": "Perché hai ascoltato “… ”"
 					},
 					"lyricsSourceLabel": "Testi delle canzoni",
 					"lyricsSourceDescription": "Scegli da dove provengono i testi sincronizzati oppure disattivalo.",
@@ -2006,6 +2116,9 @@
 					"saveForOfflineListening": "Salva per l'ascolto offline",
 					"savingForOffline": "Salvataggio per la modalità offline",
 					"removeOfflineDownloads": "Elimina i download offline",
+					"updateDownloads": "Aggiorna download (+{{added}} / -{{removed}})",
+					"updateSuccessMessage": "Download aggiornati",
+					"updateErrorMessage": "Si è verificato un errore durante l'aggiornamento dei download",
 					"saveSuccessMessage": "Salvato per l'ascolto offline",
 					"saveErrorMessage": "Si è verificato un errore durante il salvataggio per l'ascolto offline",
 					"removeSuccessMessage": "Rimosso dai download offline",

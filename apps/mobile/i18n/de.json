@@ -18,6 +18,8 @@
 				"randomSongs": "Zufällige Titel",
 				"artists": "Interpreten",
 				"createdForYou": "Speziell für Sie entwickelt",
+				"becauseYouListened": "Weil du darauf gehört hast, {{artist}}",
+				"becauseYouListenedFallback": "Empfehlungen für Sie",
 				"yourPlaylists": "Deine Wiedergabelisten",
 				"starred": "Deine Favoriten",
 				"songsByGenre": "{{genre}}-Titel",
@@ -30,16 +32,16 @@
 				"playErrorMessage": "Beim Starten der Wiedergabe ist ein Fehler aufgetreten.",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "Gestalten Sie Ihr Zuhause ganz nach Ihren Wünschen",
+						"description": "Wählen Sie aus, welche Abschnitte angezeigt werden sollen und in welcher Reihenfolge"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "Passen Sie Ihre Podcasts individuell an",
+						"description": "Wählen Sie das Land und die Sprache aus, aus denen Ihre Empfehlungen stammen"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "Passen Sie Ihr Radio an",
+						"description": "Wählen Sie aus, welche Tags im Feed angezeigt werden sollen"
 					}
 				},
 				"tabs": {
@@ -281,7 +283,7 @@
 				"addAllToFavoritesErrorMessage": "Beim Hinzufügen von Titeln zu den Favoriten ist ein Fehler aufgetreten",
 				"typeAlbum": "Album",
 				"typeCompilation": "Zusammenstellung",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "Ohne Tag",
 				"releaseTypes": {
 					"album": "Album",
 					"single": "Single",
@@ -339,6 +341,12 @@
 				"reorder": "Diese Wiedergabeliste neu sortieren",
 				"edit": "Diese Wiedergabeliste bearbeiten",
 				"editRules": "Regeln für intelligente Wiedergabelisten bearbeiten",
+				"saveAsStaticPlaylist": "Als statische Wiedergabeliste speichern",
+				"refreshStaticCopy": "Statischen Text aktualisieren",
+				"openStaticCopy": "Statische Kopie öffnen",
+				"staticCopyName": "{{name}} (Momentaufnahme)",
+				"staticCopySuccess": "Statischer Text aktualisiert",
+				"staticCopyError": "Beim Aktualisieren der statischen Kopie ist ein Fehler aufgetreten",
 				"delete": "Diese Wiedergabeliste löschen",
 				"share": "Teilen",
 				"playNext": "Als Nächstes abspielen",
@@ -650,10 +658,10 @@
 			"smartPlaylist": {
 				"rule": "Regel",
 				"addRule": "Regel hinzufügen",
-				"addGroup": "Add rule group",
-				"deleteGroup": "Delete rule group",
-				"and": "and",
-				"or": "or",
+				"addGroup": "Regelgruppe hinzufügen",
+				"deleteGroup": "Regelgruppe löschen",
+				"and": "und",
+				"or": "oder",
 				"matchAll": "Entspricht allen",
 				"matchAny": "Entspricht beliebigen",
 				"atLeastOneRule": "Fügen Sie mindestens eine Regel hinzu",
@@ -666,6 +674,16 @@
 				"addSort": "Sortierung hinzufügen",
 				"limit": "Grenzwert",
 				"limitPlaceholder": "Maximale Anzahl von Titeln",
+				"refreshDelay": "Aktualisierungsverzögerung",
+				"refreshDelayHint": "Wie lange die Wiedergabeliste dieselben Titel enthält, bevor der Server eine neue Auswahl zusammenstellt. Erfordert Navidrome 0.64 oder höher.",
+				"refreshDelayOptions": {
+					"default": "Server-Standard",
+					"1h": "Jede Stunde",
+					"6h": "Alle 6 Stunden",
+					"12h": "Alle 12 Stunden",
+					"1d": "Jeden Tag",
+					"1w": "Jede Woche"
+				},
 				"direction": {
 					"asc": "Aufsteigend",
 					"desc": "Absteigend"
@@ -1055,6 +1073,97 @@
 							"queued_one": "{{count}} Titel zur Warteschlange hinzugefügt",
 							"queued_other": "{{count}} Zur Warteschlange hinzugefügte Titel"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Sende die Musik, die du hörst, an dein Last.fm-Profil",
+						"attribution": "Unterstützt von AudioScrobbler",
+						"attributionHint": "„AudioScrobbler“ ist der Name der API von Last.fm, über die Wavio auf dein Konto zugreift.",
+						"auth": {
+							"signedInAs": "Angemeldet als {{userName}}",
+							"browserHint": "Wenn Sie auf „Verbinden“ klicken, wird Last.fm in Ihrem Browser geöffnet. Erlauben Sie dort Wavio den Zugriff und kehren Sie anschließend zu diesem Bildschirm zurück, da Last.fm Sie nicht automatisch zurückleiten kann.",
+							"connectAction": "Verbinden",
+							"reconnectAction": "Erneut verbinden",
+							"disconnectAction": "Trennen",
+							"connected": "Angemeldet als {{userName}}",
+							"notAuthorized": "Wavio wurde auf Last.fm nicht genehmigt. Tippe auf „Verbinden“ und erteile den Zugriff, um den Vorgang abzuschließen.",
+							"failed": "Last.fm konnte nicht erreicht werden. Bitte überprüfe deine Verbindung und versuche es erneut.",
+							"disconnected": "Last.fm-Verbindung unterbrochen",
+							"sessionExpired": "Last.fm akzeptiert diese Anmeldung nicht mehr, was in der Regel bedeutet, dass sie widerrufen wurde. Stelle die Verbindung erneut her, um das Scrobbeln fortzusetzen. Die in der Zwischenzeit aufgezeichneten Wiedergaben bleiben erhalten und werden gesendet, sobald du die Verbindung wiederhergestellt hast.",
+							"noCredentials": "Diese Version von Wavio wurde ohne Anmeldedaten für die Last.fm-API erstellt, sodass keine Verbindung zu Last.fm hergestellt werden kann.",
+							"manageAccessAction": "Wavios Zugriffsrechte auf last.fm verwalten"
+						},
+						"scrobbling": {
+							"title": "Scrobbeln",
+							"serverWarning": "Dein Musikserver übermittelt deine Wiedergaben bereits an Last.fm. Wenn du diese Funktion zusätzlich aktivierst, wird jede Wiedergabe doppelt gezählt.",
+							"enabledLabel": "Meine Wiedergaben scrobbeln",
+							"enabledDescription": "Ein Titel wird übermittelt, sobald Sie die Hälfte davon gehört haben oder vier Minuten verstrichen sind – je nachdem, was zuerst eintritt. Offline abgespielte Titel werden übermittelt, sobald Sie wieder eine Verbindung haben.",
+							"nowPlayingLabel": "Zeige, was ich gerade spiele",
+							"nowPlayingDescription": "Aktualisiert den Eintrag „Scrobbeln gerade“ in deinem Last.fm-Profil, während ein Titel abgespielt wird."
+						},
+						"loves": {
+							"title": "Lieblingssongs",
+							"syncLabel": "Ich liebe meine Lieblingslieder",
+							"syncDescription": "Wenn du einen Titel zu deinen Favoriten hinzufügst, wird er auch auf Last.fm mit einem „Like“ versehen; wenn du ihn entfernst, wird das „Like“ zurückgenommen. Dies gilt nur für Titel, da es auf Last.fm keine entsprechende Funktion für Alben oder Interpreten gibt. Wenn du ein ganzes Album zu deinen Favoriten hinzufügst, wird für jeden Titel ein „Like“ vergeben, sodass es einen Moment dauern kann, bis die Zählung auf dem neuesten Stand ist.",
+							"recentTitle": "Zuletzt beliebt",
+							"empty": "Du hast auf Last.fm noch nichts mit „Gefällt mir“ markiert.",
+							"loadFailed": "Deine Lieblingssongs von Last.fm konnten nicht gelesen werden.",
+							"importLabel": "Als Favoriten importieren",
+							"importDescription": "Die Funktion sucht in deiner Bibliothek nach allem, was dir auf Last.fm gefallen hat, und fügt die gefundenen Titel zu deinen Favoriten hinzu. Sie entfernt niemals einen Favoriten und wird nur einmal ausgeführt, sodass Titel, die dir später gefallen, nicht automatisch hinzugefügt werden.",
+							"importAction": "Importieren",
+							"importingAction": "… importieren",
+							"importOfflineDescription": "Für den Import sind sowohl Last.fm als auch Ihr Musikserver erforderlich, daher ist diese Funktion nicht verfügbar, wenn Sie offline sind.",
+							"importProgressMatching": "Suchst du sie in deiner Bibliothek?…",
+							"importNothingNew": "Alles, was dir auf Last.fm gefällt und sich in deiner Bibliothek befindet, war bereits ein Favorit.",
+							"importFailed": "Deine Lieblingssongs konnten nicht importiert werden. Überprüfe deine Verbindung und versuche es erneut.",
+							"totalCount_one": "{{count}} Titel, der auf Last.fm mit „Gefällt mir“ markiert wurde.",
+							"totalCount_other": "{{count}} Auf Last.fm geliebte Titel.",
+							"importProgressFetching_one": "Deine Lieblingssongs anhören… {{done}} von {{count}}",
+							"importProgressFetching_other": "Deine Lieblingssongs anhören… {{done}} von {{count}}",
+							"importProgressStarring_one": "Zu den Favoriten hinzufügen… {{done}} von {{count}}",
+							"importProgressStarring_other": "Zu den Favoriten hinzufügen… {{done}} von {{count}}",
+							"importAdded_one": "Der Song „ {{count}} “ wurde zu deinen Favoriten hinzugefügt.",
+							"importAdded_other": "Die Songs von „ {{count}} “ wurden zu deinen Favoriten hinzugefügt.",
+							"importMissing_one": "{{count}} Der geliebte Titel ist nicht in deiner Bibliothek enthalten.",
+							"importMissing_other": "{{count}} Die als „Gefällt mir“ markierten Titel befinden sich nicht in deiner Bibliothek.",
+							"importFailedCount_one": "{{count}} Das Lesezeichen konnte nicht gespeichert werden.",
+							"importFailedCount_other": "{{count}} Die Favoriten konnten nicht gespeichert werden.",
+							"importTruncated_one": "Es wurde nur deine {{count}} neueste Liebe überprüft.",
+							"importTruncated_other": "Es wurden nur deine {{count}} neuesten Favoriten berücksichtigt."
+						},
+						"recommendations": {
+							"poweredBy": "Unterstützt von Last.fm"
+						},
+						"stats": {
+							"title": "Dein Last.fm",
+							"entryLabel": "Statistiken",
+							"entryDescription": "Deine beliebtesten Künstler, Alben und Titel sowie das, was du in letzter Zeit gescrobbelt hast.",
+							"since": "Scrobbling seit {{date}}",
+							"ranges": {
+								"7day": "Woche",
+								"1month": "Monat",
+								"12month": "Jahr",
+								"overall": "Seit jeher"
+							},
+							"topArtists": "Top-Künstler",
+							"topAlbums": "Top-Alben",
+							"topTracks": "Top-Songs",
+							"recentTracks": "Kürzlich gescrobbelt",
+							"recentTracksDescription": "Deine neuesten Scrobbles für den oben ausgewählten Zeitraum.",
+							"nowPlaying": "Nun",
+							"unreachable": "Last.fm konnte nicht aufgerufen werden.",
+							"noData": "In diesem Zeitraum wurde noch nichts gescrobbelt.",
+							"scrobbles_one": "{{formattedCount}} Scrobbeln",
+							"scrobbles_other": "{{formattedCount}} Scrobbles"
+						},
+						"queue": {
+							"pendingLabel": "Wartet auf den Versand",
+							"pendingDescriptionEmpty": "Alles, was du gespielt hast, wurde gesendet.",
+							"syncAction": "Jetzt senden",
+							"syncingAction": "… versenden",
+							"pendingDescription_one": "{{count}} Der Titel ist noch nicht bei Last.fm verfügbar.",
+							"pendingDescription_other": "{{count}} Die Wiedergaben sind noch nicht bei Last.fm eingegangen."
+						}
 					}
 				},
 				"downloaders": {
@@ -1404,7 +1513,8 @@
 						"moreFromArtist": "Mehr von einem Künstler",
 						"songsByGenre": "Songs nach Genre",
 						"albumsByGenre": "Alben nach Genre",
-						"albumsByDecade": "Alben nach Jahrzehnt"
+						"albumsByDecade": "Alben nach Jahrzehnt",
+						"becauseYouListened": "Weil du dir „… “ angehört hast"
 					},
 					"lyricsSourceLabel": "Songtext",
 					"lyricsSourceDescription": "Auswählen, woher die synchronisierten Liedtexte stammen sollen, oder diese deaktivieren.",
@@ -2006,6 +2116,9 @@
 					"saveForOfflineListening": "Zum Offline-Anhören speichern",
 					"savingForOffline": "Offline speichern",
 					"removeOfflineDownloads": "Offline-Downloads entfernen",
+					"updateDownloads": "Update-Downloads (+{{added}} / -{{removed}})",
+					"updateSuccessMessage": "Downloads aktualisiert",
+					"updateErrorMessage": "Beim Aktualisieren der Downloads ist ein Fehler aufgetreten.",
 					"saveSuccessMessage": "Zum Offline-Anhören gespeichert",
 					"saveErrorMessage": "Beim Speichern für die Offline-Wiedergabe ist ein Fehler aufgetreten",
 					"removeSuccessMessage": "Aus den Offline-Downloads entfernt",

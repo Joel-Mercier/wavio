@@ -18,6 +18,8 @@
 				"randomSongs": "Случайные треки",
 				"artists": "Исполнители",
 				"createdForYou": "Создано специально для вас",
+				"becauseYouListened": "Потому что ты прислушался к {{artist}}",
+				"becauseYouListenedFallback": "Рекомендуем вам",
 				"yourPlaylists": "Твои плейлисты",
 				"starred": "Твое избранное",
 				"songsByGenre": "{{genre}} треки",
@@ -30,16 +32,16 @@
 				"playErrorMessage": "Не удалось начать воспроизведение",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "Оформите свой дом по своему вкусу",
+						"description": "Выберите, какие разделы будут отображаться и в каком порядке"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "Настройте свои подкасты",
+						"description": "Выберите страну и язык, на которых будут отображаться рекомендации"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "Настройте своё радио",
+						"description": "Выберите, какие теги будут отображаться в ленте"
 					}
 				},
 				"tabs": {
@@ -291,7 +293,7 @@
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
 				"typeCompilation": "Сборник",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "Без тегов",
 				"releaseTypes": {
 					"album": "По альбому",
 					"single": "Сингл",
@@ -351,6 +353,12 @@
 				"reorder": "Изменить порядок песен",
 				"edit": "Редактировать плейлист",
 				"editRules": "Изменить смарт-правила",
+				"saveAsStaticPlaylist": "Сохранить как статический плейлист",
+				"refreshStaticCopy": "Обновить статический текст",
+				"openStaticCopy": "Открыть статическую копию",
+				"staticCopyName": "{{name}} (снимок экрана)",
+				"staticCopySuccess": "Обновлен текст статической части",
+				"staticCopyError": "При обновлении статической копии произошла ошибка",
 				"delete": "Удалить плейлист",
 				"share": "Поделиться",
 				"playNext": "Включить следующим",
@@ -670,10 +678,10 @@
 			"smartPlaylist": {
 				"rule": "Правило",
 				"addRule": "Добавить правило",
-				"addGroup": "Add rule group",
-				"deleteGroup": "Delete rule group",
-				"and": "and",
-				"or": "or",
+				"addGroup": "Добавить группу правил",
+				"deleteGroup": "Удалить группу правил",
+				"and": "и",
+				"or": "или",
 				"matchAll": "Соответствует всем",
 				"matchAny": "Соответствует любому",
 				"atLeastOneRule": "Добавьте хотя бы одно правило",
@@ -686,6 +694,16 @@
 				"addSort": "Добавить сортировку",
 				"limit": "Лимит",
 				"limitPlaceholder": "Макс. количество треков",
+				"refreshDelay": "Задержка обновления",
+				"refreshDelayHint": "Время, в течение которого в плейлисте остаются одни и те же треки, прежде чем сервер подберет новый набор. Требуется Navidrome версии 0.64 или более поздней.",
+				"refreshDelayOptions": {
+					"default": "Настройки сервера по умолчанию",
+					"1h": "Каждый час",
+					"6h": "Каждые 6 часов",
+					"12h": "Каждые 12 часов",
+					"1d": "Каждый день",
+					"1w": "Каждую неделю"
+				},
 				"direction": {
 					"asc": "По возрастанию",
 					"desc": "По убыванию"
@@ -1097,6 +1115,115 @@
 							"queued_many": "{{count}} песни, добавленные в очередь",
 							"queued_other": "{{count}} песни, добавленные в очередь"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Отправляйте музыку, которую вы слушаете, в свой профиль на Last.fm",
+						"attribution": "На базе AudioScrobbler",
+						"attributionHint": "AudioScrobbler — это название API-интерфейса Last.fm, который Wavio использует для доступа к вашей учетной записи.",
+						"auth": {
+							"signedInAs": "Вошел под именем {{userName}}",
+							"browserHint": "При нажатии кнопки «Подключиться» в браузере откроется сайт Last.fm. Подтвердите там доступ для Wavio, а затем вернитесь на этот экран, так как Last.fm не может автоматически перенаправить вас обратно.",
+							"connectAction": "Подключиться",
+							"reconnectAction": "Восстановить соединение",
+							"disconnectAction": "Отключить",
+							"connected": "Подключено как {{userName}}",
+							"notAuthorized": "Wavio не был одобрен на Last.fm. Нажмите «Подключиться» и предоставьте доступ, чтобы завершить процесс.",
+							"failed": "Не удалось подключиться к Last.fm. Проверьте подключение и попробуйте ещё раз.",
+							"disconnected": "Last.fm отключено",
+							"sessionExpired": "Last.fm больше не принимает этот логин, что, как правило, означает, что он был аннулирован. Подключитесь заново, чтобы продолжить скробблинг. Записи прослушиваний, сделанные за это время, сохраняются и будут отправлены, как только вы это сделаете.",
+							"noCredentials": "Эта версия Wavio была создана без учетных данных для API Last.fm, поэтому она не может подключиться к Last.fm.",
+							"manageAccessAction": "Управление доступом Wavio на last.fm"
+						},
+						"scrobbling": {
+							"title": "Скробблинг",
+							"serverWarning": "Ваш музыкальный сервер уже отправляет данные о прослушивании на Last.fm. Если включить эту функцию, каждое прослушивание будет учитываться дважды.",
+							"enabledLabel": "Добавьте мои прослушивания в Scrobble",
+							"enabledDescription": "Трек считается отправленным, как только вы прослушаете половину его длительности или четыре минуты — в зависимости от того, что наступит раньше. Прослушивания в автономном режиме отправляются при следующем подключении к сети.",
+							"nowPlayingLabel": "Показать, во что я играю",
+							"nowPlayingDescription": "Обновляет запись «Скробблинг в процессе» в вашем профиле на Last.fm во время воспроизведения трека."
+						},
+						"loves": {
+							"title": "Понравившиеся треки",
+							"syncLabel": "Люблю свои любимые песни",
+							"syncDescription": "Добавление песни в избранное означает, что вы «полюбили» её на Last.fm, а удаление — что «перестали любить». Это касается только песен, поскольку на Last.fm нет аналога для альбомов или исполнителей. Добавление всего альбома в избранное приводит к тому, что за каждый трек начисляется одно «полюбил», поэтому обновление данных может занять некоторое время.",
+							"recentTitle": "Недавно понравилось",
+							"empty": "Вы ещё ничто не отметили как «нравится» на Last.fm.",
+							"loadFailed": "Не удалось прочитать ваши любимые треки с Last.fm.",
+							"importLabel": "Импортировать в избранное",
+							"importDescription": "Программа ищет в вашей медиабиблиотеке все, что вам понравилось на Last.fm, и добавляет найденные треки в избранное. Она никогда не удаляет треки из избранного и запускается только один раз, поэтому все, что вам понравится позже, не будет добавляться автоматически.",
+							"importAction": "Импорт",
+							"importingAction": "Импорт файла «… »",
+							"importOfflineDescription": "Для импорта требуются как Last.fm, так и ваш музыкальный сервер, поэтому эта функция недоступна в автономном режиме.",
+							"importProgressMatching": "Поищите их в своей библиотеке…",
+							"importNothingNew": "Все, что вам нравится на Last.fm из вашей медиатеки, уже было добавлено в избранное.",
+							"importFailed": "Не удалось импортировать ваши любимые треки. Проверьте подключение и попробуйте ещё раз.",
+							"totalCount_one": "{{count}} трек, получивший отметку «Нравится» на Last.fm.",
+							"totalCount_few": "{{count}} треки, которые понравились на Last.fm.",
+							"totalCount_many": "{{count}} треки, которые понравились на Last.fm.",
+							"totalCount_other": "{{count}} треки, которые понравились на Last.fm.",
+							"importProgressFetching_one": "Прослушивание ваших любимых треков… {{done}} из {{count}}",
+							"importProgressFetching_few": "Прослушивание ваших любимых треков… {{done}} из {{count}}",
+							"importProgressFetching_many": "Прослушивание ваших любимых треков… {{done}} из {{count}}",
+							"importProgressFetching_other": "Прослушивание ваших любимых треков… {{done}} из {{count}}",
+							"importProgressStarring_one": "Добавить в избранное… {{done}} из {{count}}",
+							"importProgressStarring_few": "Добавить в избранное… {{done}} из {{count}}",
+							"importProgressStarring_many": "Добавить в избранное… {{done}} из {{count}}",
+							"importProgressStarring_other": "Добавить в избранное… {{done}} из {{count}}",
+							"importAdded_one": "Добавлена песня « {{count}} » в избранное.",
+							"importAdded_few": "Добавлены песни с сайта {{count}} в избранное.",
+							"importAdded_many": "Добавлены песни с сайта {{count}} в избранное.",
+							"importAdded_other": "Добавлены песни с сайта {{count}} в избранное.",
+							"importMissing_one": "{{count}} Понравившаяся композиция отсутствует в вашей медиатеке.",
+							"importMissing_few": "{{count}} Понравившиеся треки отсутствуют в вашей медиатеке.",
+							"importMissing_many": "{{count}} Понравившиеся треки отсутствуют в вашей медиатеке.",
+							"importMissing_other": "{{count}} Понравившиеся треки отсутствуют в вашей медиатеке.",
+							"importFailedCount_one": "{{count}} Не удалось сохранить избранное.",
+							"importFailedCount_few": "{{count}} Избранное не удалось сохранить.",
+							"importFailedCount_many": "{{count}} Избранное не удалось сохранить.",
+							"importFailedCount_other": "{{count}} Избранное не удалось сохранить.",
+							"importTruncated_one": "Была отмечена только ваша {{count}} самая последняя любовь.",
+							"importTruncated_few": "Были проверены только ваши последние «лайки» на сайте {{count}}.",
+							"importTruncated_many": "Были проверены только ваши {{count}} последние лайки.",
+							"importTruncated_other": "Были проверены только ваши последние любимые записи на сайте {{count}}."
+						},
+						"recommendations": {
+							"poweredBy": "На базе Last.fm"
+						},
+						"stats": {
+							"title": "Ваш Last.fm",
+							"entryLabel": "Статистика",
+							"entryDescription": "Ваши любимые исполнители, альбомы и треки, а также то, что вы добавили в скроббл в последнее время.",
+							"since": "Скроблинг ведется с {{date}}",
+							"ranges": {
+								"7day": "Неделя",
+								"1month": "Месяц",
+								"12month": "Год",
+								"overall": "За всю историю"
+							},
+							"topArtists": "Лучшие артисты",
+							"topAlbums": "Лучшие альбомы",
+							"topTracks": "Популярные треки",
+							"recentTracks": "Недавно добавленные в скроббл",
+							"recentTracksDescription": "Ваши последние записи в Scrobble за период, выбранный выше.",
+							"nowPlaying": "Сейчас",
+							"unreachable": "Не удалось подключиться к Last.fm.",
+							"noData": "За этот период пока ничего не было добавлено в Scrobble.",
+							"scrobbles_one": "{{formattedCount}} скробблировать",
+							"scrobbles_few": "{{formattedCount}} скробблы",
+							"scrobbles_many": "{{formattedCount}} скробблы",
+							"scrobbles_other": "{{formattedCount}} скробблы"
+						},
+						"queue": {
+							"pendingLabel": "Ожидает отправки",
+							"pendingDescriptionEmpty": "Все игры, в которые вы играли, были отправлены.",
+							"syncAction": "Отправить сейчас",
+							"syncingAction": "Отправка письма…",
+							"pendingDescription_one": "{{count}} Эта композиция пока не появилась на Last.fm.",
+							"pendingDescription_few": "{{count}} прослушивания пока не появились на Last.fm.",
+							"pendingDescription_many": "{{count}} прослушивания пока не появились на Last.fm.",
+							"pendingDescription_other": "{{count}} прослушивания пока не поступили на Last.fm."
+						}
 					}
 				},
 				"downloaders": {
@@ -1470,7 +1597,8 @@
 						"moreFromArtist": "Больше от исполнителя",
 						"songsByGenre": "Песни по жанру",
 						"albumsByGenre": "Альбомы по жанру",
-						"albumsByDecade": "Альбомы по десятилетиям"
+						"albumsByDecade": "Альбомы по десятилетиям",
+						"becauseYouListened": "Потому что вы слушали «… »"
 					},
 					"lyricsSourceLabel": "Текста песен",
 					"lyricsSourceDescription": "Выберите источник синхронизированных текстов или отключи их.",
@@ -2100,6 +2228,9 @@
 					"saveForOfflineListening": "Сохранить для офлайн-прослушивания",
 					"savingForOffline": "Сохранение для офлайн-прослушивания",
 					"removeOfflineDownloads": "Удалить загрузки",
+					"updateDownloads": "Обновления для скачивания (+{{added}} / -{{removed}})",
+					"updateSuccessMessage": "Обновлены файлы для скачивания",
+					"updateErrorMessage": "При обновлении списка загрузок произошла ошибка",
 					"saveSuccessMessage": "Сохранено для офлайн-прослушивания",
 					"saveErrorMessage": "Произошла ошибка при сохранении для офлайн-прослушивания",
 					"removeSuccessMessage": "Удалено из загрузок",

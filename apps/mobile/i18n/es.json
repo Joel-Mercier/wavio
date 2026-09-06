@@ -18,6 +18,8 @@
 				"randomSongs": "Canciones al azar",
 				"artists": "Artistas",
 				"createdForYou": "Creado para ti",
+				"becauseYouListened": "Porque has escuchado {{artist}}",
+				"becauseYouListenedFallback": "Recomendaciones para ti",
 				"yourPlaylists": "Tus listas de reproducción",
 				"starred": "Tus favoritos",
 				"songsByGenre": "{{genre}} canciones",
@@ -30,16 +32,16 @@
 				"playErrorMessage": "Se ha producido un error al iniciar la reproducción",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "Personaliza tu hogar",
+						"description": "Elige qué secciones aparecen y en qué orden"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "Personaliza tus podcasts",
+						"description": "Elige el país y el idioma de tus recomendaciones"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "Personaliza tu radio",
+						"description": "Elige qué etiquetas aparecen en el feed"
 					}
 				},
 				"tabs": {
@@ -281,7 +283,7 @@
 				"addAllToFavoritesErrorMessage": "Se ha producido un error al añadir canciones a los favoritos",
 				"typeAlbum": "Álbum",
 				"typeCompilation": "Recopilación",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "Sin etiquetar",
 				"releaseTypes": {
 					"album": "Álbum",
 					"single": "Single",
@@ -339,6 +341,12 @@
 				"reorder": "Reordenar esta lista de reproducción",
 				"edit": "Editar esta lista de reproducción",
 				"editRules": "Editar reglas de listas de reproducción inteligentes",
+				"saveAsStaticPlaylist": "Guardar como lista de reproducción estática",
+				"refreshStaticCopy": "Actualizar el texto estático",
+				"openStaticCopy": "Abrir copia estática",
+				"staticCopyName": "{{name}} (instantánea)",
+				"staticCopySuccess": "Se ha actualizado el texto estático",
+				"staticCopyError": "Se ha producido un error al actualizar la copia estática",
 				"delete": "Eliminar esta lista de reproducción",
 				"share": "Compartir",
 				"playNext": "Reproducir siguiente",
@@ -650,10 +658,10 @@
 			"smartPlaylist": {
 				"rule": "Regla",
 				"addRule": "Añadir regla",
-				"addGroup": "Add rule group",
-				"deleteGroup": "Delete rule group",
-				"and": "and",
-				"or": "or",
+				"addGroup": "Añadir grupo de reglas",
+				"deleteGroup": "Eliminar grupo de reglas",
+				"and": "y",
+				"or": "o",
 				"matchAll": "Coincidir con todos",
 				"matchAny": "Coincida con cualquier",
 				"atLeastOneRule": "Añade al menos una regla",
@@ -666,6 +674,16 @@
 				"addSort": "Añadir ordenación",
 				"limit": "Límite",
 				"limitPlaceholder": "Número máximo de pistas",
+				"refreshDelay": "Retardo de actualización",
+				"refreshDelayHint": "Tiempo durante el cual la lista de reproducción mantiene las mismas canciones antes de que el servidor seleccione un nuevo conjunto. Requiere Navidrome 0.64 o una versión posterior.",
+				"refreshDelayOptions": {
+					"default": "Configuración predeterminada del servidor",
+					"1h": "Cada hora",
+					"6h": "Cada 6 horas",
+					"12h": "Cada 12 horas",
+					"1d": "Todos los días",
+					"1w": "Cada semana"
+				},
 				"direction": {
 					"asc": "Asc",
 					"desc": "Descripción"
@@ -1055,6 +1073,97 @@
 							"queued_one": "{{count}} canción añadida a la lista de reproducción",
 							"queued_other": "{{count}} canciones añadidas a la cola"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Envía la música que escuchas a tu perfil de Last.fm",
+						"attribution": "Con tecnología de AudioScrobbler",
+						"attributionHint": "AudioScrobbler es el nombre de la API de Last.fm, que Wavio utiliza para acceder a tu cuenta.",
+						"auth": {
+							"signedInAs": "Iniciado sesión como {{userName}}",
+							"browserHint": "Al hacer clic en «Conectar», se abrirá Last.fm en tu navegador. Acepta Wavio allí y, a continuación, vuelve a esta pantalla, ya que Last.fm no puede redirigirte automáticamente.",
+							"connectAction": "Conectar",
+							"reconnectAction": "Volver a conectarse",
+							"disconnectAction": "Desconectar",
+							"connected": "Conectado como {{userName}}",
+							"notAuthorized": "Wavio no ha sido autorizado en Last.fm. Pulsa en «Conectar» y concede el acceso para finalizar el proceso.",
+							"failed": "No se ha podido conectar a Last.fm. Comprueba tu conexión e inténtalo de nuevo.",
+							"disconnected": "Last.fm se ha desconectado",
+							"sessionExpired": "Last.fm ya no acepta este inicio de sesión, lo que suele significar que ha sido revocado. Vuelve a conectarte para seguir registrando reproducciones. Las reproducciones registradas mientras tanto se conservan y se enviarán en cuanto lo hagas.",
+							"noCredentials": "Esta versión de Wavio se ha creado sin credenciales de la API de Last.fm, por lo que no puede conectarse a Last.fm.",
+							"manageAccessAction": "Gestionar el acceso de Wavio en last.fm"
+						},
+						"scrobbling": {
+							"title": "Scrobbling",
+							"serverWarning": "Tu servidor de música ya está enviando tus reproducciones a Last.fm. Si activas también esta opción, cada reproducción se contará dos veces.",
+							"enabledLabel": "Añadir mis reproducciones",
+							"enabledDescription": "Una canción se envía una vez que hayas escuchado la mitad o cuatro minutos, lo que ocurra primero. Las reproducciones realizadas sin conexión se envían la próxima vez que te conectes.",
+							"nowPlayingLabel": "Mostrar a qué estoy jugando",
+							"nowPlayingDescription": "Actualiza la entrada «scrobbling now» de tu perfil de Last.fm mientras se reproduce una canción."
+						},
+						"loves": {
+							"title": "Canciones favoritas",
+							"syncLabel": "Me encantan mis canciones favoritas",
+							"syncDescription": "Añadir una canción a tus favoritos equivale a darle un «me gusta» en Last.fm, y eliminarla equivale a quitarle ese «me gusta». Esto solo se aplica a las canciones, ya que Last.fm no tiene un equivalente para álbumes o artistas. Añadir un álbum completo a favoritos envía un «me gusta» por cada tema, por lo que puede tardar un momento en actualizarse.",
+							"recentTitle": "Lo último que me ha gustado",
+							"empty": "Todavía no has marcado como «Me gusta» nada en Last.fm.",
+							"loadFailed": "No se han podido leer tus canciones favoritas de Last.fm.",
+							"importLabel": "Importar como favoritos",
+							"importDescription": "Busca en tu biblioteca todo lo que te ha gustado en Last.fm y añade a favoritos lo que encuentre. Nunca elimina ningún favorito y solo se ejecuta una vez, por lo que lo que te guste más adelante no se añadirá automáticamente.",
+							"importAction": "Importar",
+							"importingAction": "Importación de «… »",
+							"importOfflineDescription": "Para importar se necesitan tanto Last.fm como tu servidor de música, por lo que esta función no está disponible cuando no tienes conexión a Internet.",
+							"importProgressMatching": "¿Los buscas en tu biblioteca…",
+							"importNothingNew": "Todo lo que te gusta de Last.fm y que está en tu biblioteca ya era uno de tus favoritos.",
+							"importFailed": "No se han podido importar tus canciones favoritas. Comprueba tu conexión e inténtalo de nuevo.",
+							"totalCount_one": "{{count}} canción a la que le han dado a «Me gusta» en Last.fm.",
+							"totalCount_other": "{{count}} canciones que te han gustado en Last.fm.",
+							"importProgressFetching_one": "Escuchar tus canciones favoritas… {{done}} de {{count}}",
+							"importProgressFetching_other": "Escuchando tus canciones favoritas… {{done}} de {{count}}",
+							"importProgressStarring_one": "Añadir a favoritos… {{done}} de {{count}}",
+							"importProgressStarring_other": "Añadir a favoritos… {{done}} de {{count}}",
+							"importAdded_one": "Has añadido la canción « {{count}} » a tus favoritos.",
+							"importAdded_other": "Has añadido las canciones de « {{count}} » a tus favoritos.",
+							"importMissing_one": "{{count}} La canción que te gusta no está en tu biblioteca.",
+							"importMissing_other": "{{count}} Las canciones que te gustan no están en tu biblioteca.",
+							"importFailedCount_one": "{{count}} No se ha podido guardar el favorito.",
+							"importFailedCount_other": "{{count}} No se han podido guardar los favoritos.",
+							"importTruncated_one": "Solo se ha comprobado tu {{count}} último amor.",
+							"importTruncated_other": "Solo se han tenido en cuenta tus últimos «Me gusta» en {{count}}."
+						},
+						"recommendations": {
+							"poweredBy": "Con tecnología de Last.fm"
+						},
+						"stats": {
+							"title": "Tu Last.fm",
+							"entryLabel": "Estadísticas",
+							"entryDescription": "Tus artistas, álbumes y canciones favoritos, y lo que has scrobbleado últimamente.",
+							"since": "Scrobbleo desde {{date}}",
+							"ranges": {
+								"7day": "Semana",
+								"1month": "Mes",
+								"12month": "Año",
+								"overall": "De todos los tiempos"
+							},
+							"topArtists": "Artistas destacados",
+							"topAlbums": "Álbumes más vendidos",
+							"topTracks": "Canciones más populares",
+							"recentTracks": "Añadidos recientemente",
+							"recentTracksDescription": "Tus últimas entradas de scrobble, sea cual sea el periodo seleccionado más arriba.",
+							"nowPlaying": "Ahora",
+							"unreachable": "No se ha podido conectar con Last.fm.",
+							"noData": "Todavía no se ha registrado nada en este periodo.",
+							"scrobbles_one": "{{formattedCount}} scrobble",
+							"scrobbles_other": "{{formattedCount}} scrobbles"
+						},
+						"queue": {
+							"pendingLabel": "A la espera de ser enviado",
+							"pendingDescriptionEmpty": "Se ha enviado todo lo que has jugado.",
+							"syncAction": "Enviar ahora",
+							"syncingAction": "Envío de…",
+							"pendingDescription_one": "{{count}} La canción aún no está disponible en Last.fm.",
+							"pendingDescription_other": "{{count}} Las reproducciones aún no han llegado a Last.fm."
+						}
 					}
 				},
 				"downloaders": {
@@ -1404,7 +1513,8 @@
 						"moreFromArtist": "Más obras de un artista",
 						"songsByGenre": "Canciones por género",
 						"albumsByGenre": "Álbumes por género",
-						"albumsByDecade": "Álbumes por década"
+						"albumsByDecade": "Álbumes por década",
+						"becauseYouListened": "Porque has escuchado «… »"
 					},
 					"lyricsSourceLabel": "Letra de la canción",
 					"lyricsSourceDescription": "Elige de dónde proceden las letras sincronizadas o desactívalas.",
@@ -2006,6 +2116,9 @@
 					"saveForOfflineListening": "Guardar para escuchar sin conexión",
 					"savingForOffline": "Guardar para ver sin conexión",
 					"removeOfflineDownloads": "Eliminar descargas sin conexión",
+					"updateDownloads": "Actualización de descargas (+{{added}} / -{{removed}})",
+					"updateSuccessMessage": "Se han actualizado las descargas",
+					"updateErrorMessage": "Se ha producido un error al actualizar las descargas",
 					"saveSuccessMessage": "Guardado para escuchar sin conexión",
 					"saveErrorMessage": "Se ha producido un error al guardar el contenido para escucharlo sin conexión",
 					"removeSuccessMessage": "Eliminado de las descargas sin conexión",
