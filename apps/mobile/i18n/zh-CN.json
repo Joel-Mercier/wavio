@@ -18,6 +18,8 @@
 				"randomSongs": "随机歌曲",
 				"artists": "艺人",
 				"createdForYou": "专为您打造",
+				"becauseYouListened": "Because you listened to {{artist}}",
+				"becauseYouListenedFallback": "Recommended for you",
 				"yourPlaylists": "歌单",
 				"starred": "收藏",
 				"songsByGenre": "{{genre}} 歌曲",
@@ -1050,6 +1052,88 @@
 							"saveOnlyMatched_other": "只有您资料库中标记为“ {{count}} ”的曲目才会被保存。",
 							"queued_other": "{{count}} 已添加到播放列表中的歌曲"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Send the music you play to your Last.fm profile",
+						"attribution": "Powered by AudioScrobbler",
+						"attributionHint": "AudioScrobbler is the name of Last.fm's API, which Wavio uses to reach your account.",
+						"auth": {
+							"signedInAs": "登录用户： {{userName}}",
+							"browserHint": "Connecting opens Last.fm in your browser. Approve Wavio there, then come back to this screen, because Last.fm can't send you back automatically.",
+							"connectAction": "连接",
+							"reconnectAction": "Reconnect",
+							"disconnectAction": "Disconnect",
+							"connected": "以……身份登录 {{userName}}",
+							"notAuthorized": "Wavio wasn't approved on Last.fm. Tap Connect and grant access to finish.",
+							"failed": "Couldn't reach Last.fm. Check your connection and try again.",
+							"disconnected": "Last.fm disconnected",
+							"sessionExpired": "Last.fm no longer accepts this sign-in, which usually means it was revoked. Reconnect to keep scrobbling. Plays recorded in the meantime are kept and sent once you do.",
+							"noCredentials": "This build of Wavio was made without Last.fm API credentials, so it can't connect to Last.fm.",
+							"manageAccessAction": "Manage Wavio's access on last.fm"
+						},
+						"scrobbling": {
+							"title": "音乐记录",
+							"serverWarning": "Your music server is already sending your plays to Last.fm. Turning this on as well will count every play twice.",
+							"enabledLabel": "将我的播放记录同步到Scrobble",
+							"enabledDescription": "当您收听完一首歌曲的一半或四分钟（以先达到者为准）后，该歌曲即被提交。离线收听的记录将在您下次连接网络时自动上传。",
+							"nowPlayingLabel": "显示我正在玩的游戏",
+							"nowPlayingDescription": "Updates the “scrobbling now” entry on your Last.fm profile while a track plays."
+						},
+						"loves": {
+							"title": "Loved tracks",
+							"syncLabel": "Love my favourite songs",
+							"syncDescription": "Adding a song to your favourites also loves it on Last.fm, and removing it unloves it. Only songs, as Last.fm has no equivalent for albums or artists. Favouriting a whole album sends one love per track, so it can take a moment to catch up.",
+							"recentTitle": "Recently loved",
+							"empty": "You haven't loved anything on Last.fm yet.",
+							"loadFailed": "Couldn't read your loved tracks from Last.fm.",
+							"importLabel": "Import as favourites",
+							"importDescription": "Looks for everything you've loved on Last.fm in your library and favourites what it finds. It never removes a favourite, and it runs once, so anything you love later won't come across on its own.",
+							"importAction": "Import",
+							"importingAction": "Importing…",
+							"importOfflineDescription": "Importing needs both Last.fm and your music server, so it isn't available while you're offline.",
+							"importProgressMatching": "Looking for them in your library…",
+							"importNothingNew": "Everything Last.fm has you loving that's in your library was already a favourite.",
+							"importFailed": "Couldn't import your loved tracks. Check your connection and try again.",
+							"totalCount_other": "{{count}} tracks loved on Last.fm.",
+							"importProgressFetching_other": "Reading your loved tracks… {{done}} of {{count}}",
+							"importProgressStarring_other": "Adding to your favourites… {{done}} of {{count}}",
+							"importAdded_other": "Added {{count}} songs to your favourites.",
+							"importMissing_other": "{{count}} loved tracks aren't in your library.",
+							"importFailedCount_other": "{{count}} favourites couldn't be saved.",
+							"importTruncated_other": "Only your {{count}} most recent loves were checked."
+						},
+						"recommendations": {
+							"poweredBy": "Powered by Last.fm"
+						},
+						"stats": {
+							"title": "Your Last.fm",
+							"entryLabel": "Statistics",
+							"entryDescription": "Your top artists, albums and tracks, and what you've scrobbled lately.",
+							"since": "Scrobbling since {{date}}",
+							"ranges": {
+								"7day": "周",
+								"1month": "月份",
+								"12month": "发行年份",
+								"overall": "有史以来"
+							},
+							"topArtists": "顶级艺术家",
+							"topAlbums": "热门专辑",
+							"topTracks": "热门歌曲",
+							"recentTracks": "Recently scrobbled",
+							"recentTracksDescription": "Your latest scrobbles, whichever period is selected above.",
+							"nowPlaying": "Now",
+							"unreachable": "Couldn't reach Last.fm.",
+							"noData": "Nothing scrobbled in this period yet.",
+							"scrobbles_other": "{{formattedCount}} scrobbles"
+						},
+						"queue": {
+							"pendingLabel": "等待发送",
+							"pendingDescriptionEmpty": "您玩过的所有游戏都已发送。",
+							"syncAction": "立即发送",
+							"syncingAction": "发送…",
+							"pendingDescription_other": "{{count}} plays haven't reached Last.fm yet."
+						}
 					}
 				},
 				"downloaders": {
@@ -1387,7 +1471,8 @@
 						"moreFromArtist": "来自某位艺术家的更多内容",
 						"songsByGenre": "按流派划分的歌曲",
 						"albumsByGenre": "按流派划分的专辑",
-						"albumsByDecade": "按年代划分的专辑"
+						"albumsByDecade": "按年代划分的专辑",
+						"becauseYouListened": "Because you listened to…"
 					},
 					"lyricsSourceLabel": "歌词",
 					"lyricsSourceDescription": "选择同步歌词的来源，或将其关闭。",
