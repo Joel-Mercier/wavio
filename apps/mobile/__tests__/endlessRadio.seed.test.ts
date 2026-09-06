@@ -69,7 +69,7 @@ describe("fetchEndlessExtension", () => {
 
     await expect(
       fetchEndlessExtension(seed({ artistId: "ar-1" })),
-    ).resolves.toEqual([{ id: "s1" }]);
+    ).resolves.toEqual([{ id: "s1", autoQueued: true }]);
     expect(mockFetchTopSongs).not.toHaveBeenCalled();
   });
 
@@ -78,8 +78,19 @@ describe("fetchEndlessExtension", () => {
     mockFetchSimilarSongs.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
 
     await expect(fetchEndlessExtension(seed({}))).resolves.toEqual([
-      { id: "s2" },
+      { id: "s2", autoQueued: true },
     ]);
+  });
+
+  it("marks what it appends as chosen by the app, not the listener", async () => {
+    // Last.fm's track.scrobble defaults chosenByUser to 1, so an unmarked
+    // endless-radio play would tell Last.fm the listener picked it and skew
+    // their recommendations. services/lastFm/payload.ts reads this flag.
+    mockFetchSimilarSongs.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
+
+    const tracks = await fetchEndlessExtension(seed({}));
+    expect(tracks).toHaveLength(2);
+    expect(tracks.every((t) => t.autoQueued === true)).toBe(true);
   });
 
   it("returns nothing when the seed has no artist at all", async () => {

@@ -183,7 +183,7 @@ export default function FloatingPlayer() {
     const trackId = playingTrack.id;
     const starredAt = new Date().toISOString();
     doFavorite.mutate(
-      { id: trackId },
+      { id: trackId, song: playingTrack },
       {
         onSuccess: () => {
           const starredTrack = { ...playingTrack, starred: starredAt };
@@ -248,7 +248,7 @@ export default function FloatingPlayer() {
     if (!playingTrack?.id) return;
     const trackId = playingTrack.id;
     doUnfavorite.mutate(
-      { id: trackId },
+      { id: trackId, song: playingTrack },
       {
         onSuccess: () => {
           queryClient.setQueriesData<{

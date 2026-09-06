@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import StatTopList, {
   StatTopListSkeleton,
-} from "@/components/listenBrainz/StatTopList";
+} from "@/components/scrobbling/StatTopList";
 import type { CountryStat } from "@/services/listenBrainz/statsMappers";
 import { countryName } from "@/utils/countries";
 

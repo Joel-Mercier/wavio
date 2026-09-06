@@ -68,6 +68,7 @@ export type ReportApi =
   | "musicbrainz"
   | "audiomuse"
   | "listenbrainz"
+  | "lastfm"
   | "github";
 
 export type ReportContext = {

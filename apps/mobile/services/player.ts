@@ -13,6 +13,10 @@ import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import {
+  enqueueScrobble as enqueueLastFmScrobble,
+  submitNowPlaying as submitNowPlayingToLastFm,
+} from "@/services/lastFm/scrobbler";
+import {
   enqueueListen,
   isSubmittableDuration,
   submissionThresholdSeconds,
@@ -153,11 +157,16 @@ let submittedScrobbleId: string | null = null;
 // the play.
 let earlyScrobbledId: string | null = null;
 let scrobbleStartedAt: number | null = null;
-// ListenBrainz submits on its own schedule (half the track / 4 minutes), which
-// is much later than the server scrobble at COUNT_PLAY_AFTER_SECONDS — so it
-// needs its own "already submitted this track" marker rather than sharing
-// `submittedScrobbleId`.
+// ListenBrainz and Last.fm submit on their own schedule (half the track / 4
+// minutes), which is much later than the server scrobble at
+// COUNT_PLAY_AFTER_SECONDS — so they need their own "already submitted this
+// track" marker rather than sharing `submittedScrobbleId`.
+//
+// One marker per provider, not one shared between them: they are enabled
+// independently, and a single marker would let whichever ran first suppress the
+// other for the rest of the track.
 let listenBrainzSubmittedId: string | null = null;
+let lastFmSubmittedId: string | null = null;
 // Tracks the last observed playing flag so the status listener can detect the
 // play→pause edge for playbackReport's "paused" report.
 let wasPlaying = false;
@@ -180,9 +189,11 @@ function reportNowPlaying(track: QueueTrack) {
     useActivity.getState().recordPlay(track, useQueue.getState().source);
   }
   if (!isScrobblable(track)) return;
-  // Independent of the server's now-playing: ListenBrainz has its own, and a
-  // user may be scrobbling there while the server does nothing.
+  // Independent of the server's now-playing: ListenBrainz and Last.fm have their
+  // own, and a user may be scrobbling there while the server does nothing. Each
+  // is a no-op unless that integration is connected and enabled.
   submitNowPlayingToListenBrainz(track);
+  submitNowPlayingToLastFm(track);
   // On playbackReport-capable servers the server scrobbles from our state
   // reports, so we emit "starting" instead of the classic now-playing scrobble.
   if (playbackReportEnabled()) {
@@ -302,21 +313,27 @@ function notePlayCounted(track: QueueTrack) {
 // skip before this window doesn't count (nor scrobble to Last.fm/ListenBrainz).
 const COUNT_PLAY_AFTER_SECONDS = 5;
 
-// ListenBrainz asks for a listen once half the track (or four minutes) has been
-// heard, which is deliberately much later than COUNT_PLAY_AFTER_SECONDS above:
-// that early mark exists to reorder the server's "recently played" quickly, and
-// submitting it to ListenBrainz would over-report skipped tracks. Queued rather
-// than sent, so it survives being offline.
+// ListenBrainz and Last.fm both ask for a play once half the track (or four
+// minutes) has been heard, which is deliberately much later than
+// COUNT_PLAY_AFTER_SECONDS above: that early mark exists to reorder the server's
+// "recently played" quickly, and submitting it to either would over-report
+// skipped tracks. Queued rather than sent, so it survives being offline.
 function maybeSubmitListen(
   current: QueueTrack,
   position: number,
   duration: number,
 ) {
-  if (listenBrainzSubmittedId === current.id) return;
   if (!isSubmittableDuration(duration)) return;
   if (position < submissionThresholdSeconds(duration)) return;
-  listenBrainzSubmittedId = current.id;
-  enqueueListen(current, scrobbleStartedAt ?? Date.now());
+  const startedAt = scrobbleStartedAt ?? Date.now();
+  if (listenBrainzSubmittedId !== current.id) {
+    listenBrainzSubmittedId = current.id;
+    enqueueListen(current, startedAt);
+  }
+  if (lastFmSubmittedId !== current.id) {
+    lastFmSubmittedId = current.id;
+    enqueueLastFmScrobble(current, startedAt);
+  }
 }
 
 function maybeSubmitScrobble(status: AudioStatus) {
@@ -400,6 +417,7 @@ function resetScrobbleState() {
   earlyScrobbledId = null;
   scrobbleStartedAt = null;
   listenBrainzSubmittedId = null;
+  lastFmSubmittedId = null;
 }
 
 // A counted play bumps Navidrome's play_date/play_count, which reorders the

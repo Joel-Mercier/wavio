@@ -80,6 +80,11 @@ export type BackendCapabilities = {
   // asking", not "will always get an answer" — see services/listenBrainz/
   // serverState.ts, which treats an unanswered probe as unknown.
   serverScrobbleLinkStatus: boolean;
+  // The same question for Last.fm. Separate from the flag above because the
+  // two are configured independently: a Navidrome can be linked to one, the
+  // other, both or neither, and Jellyfin needs a different plugin installed
+  // for each. See services/lastFm/serverState.ts.
+  serverLastFmLinkStatus: boolean;
   // A search query is matched against more than the track title, so a
   // `"<artist> <title>"` query can find a song. True on the Subsonic family
   // (the query runs over title/album/artist) and on the local library (whose
@@ -127,6 +132,7 @@ const SUBSONIC: BackendCapabilities = {
   // Plain Subsonic/OpenSubsonic exposes no way to read a server-side scrobble
   // agent's state, so the app can only offer the user a manual switch.
   serverScrobbleLinkStatus: false,
+  serverLastFmLinkStatus: false,
   multiFieldSearch: true,
 };
 
@@ -136,6 +142,9 @@ const NAVIDROME: BackendCapabilities = {
   // GET /api/listenbrainz/link on the native API reports whether the user has
   // linked a ListenBrainz token server-side.
   serverScrobbleLinkStatus: true,
+  // GET /api/lastfm/link is its exact counterpart, and is what Navidrome's own
+  // web UI reads to drive its Last.fm scrobbling toggle.
+  serverLastFmLinkStatus: true,
   // Navidrome's native REST API can sort songs by play count even though the
   // Subsonic surface can't — served via services/navidrome/songs.ts.
   mostPlayedTracks: true,
@@ -187,6 +196,8 @@ const JELLYFIN: BackendCapabilities = {
   // jellyfin-plugin-listenbrainz keeps per-user scrobble settings in its plugin
   // configuration, readable only by an admin session.
   serverScrobbleLinkStatus: true,
+  // jellyfin-plugin-lastfm does the same, under either of two plugin ids.
+  serverLastFmLinkStatus: true,
   // `SearchTerm` matches the item name only, so anything but the bare title
   // comes back empty.
   multiFieldSearch: false,
@@ -235,6 +246,7 @@ const LOCAL: BackendCapabilities = {
   // No server at all, so nothing else could be scrobbling these plays — which
   // is exactly why the local library benefits most from app-side scrobbling.
   serverScrobbleLinkStatus: false,
+  serverLastFmLinkStatus: false,
   multiFieldSearch: true,
 };
 

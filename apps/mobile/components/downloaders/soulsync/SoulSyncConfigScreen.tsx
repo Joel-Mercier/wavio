@@ -5,7 +5,6 @@ import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
 import Eye from "lucide-react-native/dist/esm/icons/eye.mjs";
 import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import TriangleAlert from "lucide-react-native/dist/esm/icons/triangle-alert.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
@@ -17,6 +16,7 @@ import FieldError, {
   showFieldError,
 } from "@/components/forms/FieldError";
 import UrlInputField from "@/components/forms/UrlInputField";
+import SettingsNotice from "@/components/settings/SettingsNotice";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
@@ -76,10 +76,9 @@ function SoulSyncLinkRow({
 export default function SoulSyncConfigScreen() {
   const { t } = useTranslation();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
-  const [white, primary50, amber400] = Uniwind.getCSSVariable([
+  const [white, primary50] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-primary-50",
-    "--color-amber-400",
   ]) as string[];
 
   const storedServerUrl = useSoulSync((store) => store.serverUrl);
@@ -255,12 +254,9 @@ export default function SoulSyncConfigScreen() {
         </HStack>
 
         {isConnected && status && !status.services?.soulseek && (
-          <HStack className="items-start gap-x-3 rounded-md bg-primary-600 p-4">
-            <TriangleAlert size={20} color={amber400} />
-            <Text className="text-primary-50 text-sm flex-1">
-              {t("app.settings.downloaders.soulsync.soulseekOffline")}
-            </Text>
-          </HStack>
+          <SettingsNotice
+            message={t("app.settings.downloaders.soulsync.soulseekOffline")}
+          />
         )}
 
         <Box className="h-px bg-primary-500 my-2" />

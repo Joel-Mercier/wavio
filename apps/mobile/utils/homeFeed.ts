@@ -43,7 +43,8 @@ export type HomeSectionDescriptor =
   | { id: string; kind: "starred" }
   | { id: string; kind: "podcasts" }
   | { id: string; kind: "internetRadio" }
-  | { id: string; kind: "listenBrainzCreatedForYou" };
+  | { id: string; kind: "listenBrainzCreatedForYou" }
+  | { id: string; kind: "lastFmBecauseYouListened" };
 
 /**
  * A third-party account, rather than a server feature, that a section needs.
@@ -52,7 +53,7 @@ export type HomeSectionDescriptor =
  * question: capabilities describe what the music server can do, integrations
  * whether the user has connected something else entirely.
  */
-export type HomeSectionIntegration = "listenBrainz";
+export type HomeSectionIntegration = "listenBrainz" | "lastFm";
 
 // One entry per user-toggleable section, in feed order. `key` is the stable
 // value persisted in stores/app.ts hiddenHomeSections; dynamic kinds
@@ -75,6 +76,11 @@ const HOME_SECTION_CATALOG_ENTRIES = [
     key: "listenBrainzCreatedForYou",
     labelKey: "app.home.createdForYou",
     integration: "listenBrainz",
+  },
+  {
+    key: "lastFmBecauseYouListened",
+    labelKey: "app.settings.displaySettings.homeSections.becauseYouListened",
+    integration: "lastFm",
   },
   {
     key: "songsByGenre",
@@ -381,6 +387,10 @@ export function buildHomeFeed({
   sections.push({
     id: "listenBrainzCreatedForYou",
     kind: "listenBrainzCreatedForYou",
+  });
+  sections.push({
+    id: "lastFmBecauseYouListened",
+    kind: "lastFmBecauseYouListened",
   });
 
   // Genres from Navidrome's per-library endpoint carry no counts; treat them as

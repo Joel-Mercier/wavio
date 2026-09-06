@@ -61,8 +61,19 @@ export default function SimilarSongsScreen() {
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
-  const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
-  const { data: songs, isLoading, error } = useSimilarTracks(id, { count: 50 });
+  const { id, title, artist } = useLocalSearchParams<{
+    id: string;
+    title?: string;
+    artist?: string;
+  }>();
+  // Carried in the route params rather than refetched: the Last.fm tier needs
+  // the artist name, and the sheet that opened this screen already had it.
+  const seed = useMemo(() => ({ title, artist }), [title, artist]);
+  const {
+    data: songs,
+    isLoading,
+    error,
+  } = useSimilarTracks(id, { count: 50 }, seed);
   const heading = t("app.tracks.similarSongsTitle", { title: title ?? "" });
   const similarSource = useMemo<QueueSource>(
     () => ({ type: "similar", name: title ?? "" }),

@@ -4,41 +4,18 @@ import type {
   ListenAdditionalInfo,
   ListenTrackMetadata,
 } from "@/services/listenBrainz/types";
+import {
+  isScrobblableTrack,
+  type ScrobblableTrack,
+} from "@/services/scrobbling/eligibility";
 import type { QueuedListen } from "@/stores/listenBrainz";
 import type { QueueTrack } from "@/stores/queue";
 
 const CLIENT_NAME = "Wavio";
 
-// What childToTrack (utils/childToTrack.ts) puts on a queue track, plus the
-// radio/podcast markers the submission gate reads. QueueTrack itself is an open
-// record, so this narrows it to the fields that matter here.
-type ScrobblableTrack = QueueTrack & {
-  musicBrainzId?: string;
-  track?: number;
-  isRadio?: boolean;
-  isUntitled?: boolean;
-  source?: string;
-};
-
-/**
- * Whether a track can be honestly described to ListenBrainz.
- *
- * Podcasts aren't music. Internet radio is excluded because the queue entry
- * describes the *station*, not whatever it happens to be playing, so submitting
- * it would file hours of listening under a single fake "track". And
- * `childToTrack` substitutes an empty artist and a localised "Unknown" title for
- * untagged files — submitting those would write junk into a listening history
- * that is meant to last, so they're skipped rather than guessed at. The title
- * check reads `isUntitled` rather than the title itself, because the
- * substituted placeholder is a perfectly non-empty string.
- */
-export function isSubmittableToListenBrainz(track: QueueTrack): boolean {
-  const candidate = track as ScrobblableTrack;
-  if (candidate.source === "podcast") return false;
-  if (candidate.isRadio) return false;
-  if (candidate.isUntitled) return false;
-  return Boolean(track.title?.trim()) && Boolean(track.artist?.trim());
-}
+// The rule is identical on Last.fm, so it lives in services/scrobbling. Kept
+// exported under the old name because the tests and existing call sites use it.
+export { isScrobblableTrack as isSubmittableToListenBrainz } from "@/services/scrobbling/eligibility";
 
 /**
  * Narrows a queue track down to the fields the ListenBrainz queue persists.
@@ -48,7 +25,7 @@ export function toQueuedListen(
   track: QueueTrack,
   listenedAt: number,
 ): Omit<QueuedListen, "id" | "retryCount"> | null {
-  if (!isSubmittableToListenBrainz(track)) return null;
+  if (!isScrobblableTrack(track)) return null;
   const candidate = track as ScrobblableTrack;
   return {
     listenedAt,

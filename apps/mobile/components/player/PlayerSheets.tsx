@@ -272,7 +272,11 @@ export default function PlayerSheets({
     actionsSheetRef.current?.dismiss();
     router.replace({
       pathname: "/tracks/[id]/similar",
-      params: { id: playingTrack.id, title: playingTrack.title ?? "" },
+      params: {
+        id: playingTrack.id,
+        title: playingTrack.title ?? "",
+        artist: playingTrack.artist ?? "",
+      },
     });
   };
 

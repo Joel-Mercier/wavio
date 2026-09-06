@@ -373,7 +373,7 @@ export default function PlayerScreen() {
     if (!playingTrack?.id) return;
     const trackId = playingTrack.id;
     doFavorite.mutate(
-      { id: trackId },
+      { id: trackId, song: playingTrack },
       {
         onSuccess: () => {
           toast.show({
@@ -411,7 +411,7 @@ export default function PlayerScreen() {
     if (!playingTrack?.id) return;
     const trackId = playingTrack.id;
     doUnfavorite.mutate(
-      { id: trackId },
+      { id: trackId, song: playingTrack },
       {
         onSuccess: () => {
           toast.show({

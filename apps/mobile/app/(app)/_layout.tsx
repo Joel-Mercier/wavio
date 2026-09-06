@@ -35,6 +35,11 @@ import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import {
+  initLastFmScrobbler,
+  resetLastFmScrobbler,
+  stopLastFmScrobbler,
+} from "@/services/lastFm/scrobbler";
+import {
   initListenBrainzScrobbler,
   resetListenBrainzScrobbler,
   stopListenBrainzScrobbler,
@@ -70,6 +75,7 @@ import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useLastFm from "@/stores/lastFm";
 import useLibrarySync from "@/stores/librarySync";
 import useLidarr from "@/stores/lidarr";
 import useListenBrainz from "@/stores/listenBrainz";
@@ -199,6 +205,8 @@ export default function AppLayout() {
         // can't remove listens from the incoming scope's freshly hydrated queue.
         resetListenBrainzScrobbler();
         useListenBrainz.getState().__reset();
+        resetLastFmScrobbler();
+        useLastFm.getState().__reset();
         // The cache files live under the *outgoing* scope's directory and are
         // re-derivable, so the index is simply dropped rather than migrated.
         // Any download still writing carries the old scope's ids, hence the
@@ -271,6 +279,10 @@ export default function AppLayout() {
       initListenBrainzScrobbler();
     });
     useListenBrainz.persist.rehydrate();
+    useLastFm.persist.onFinishHydration(() => {
+      initLastFmScrobbler();
+    });
+    useLastFm.persist.rehydrate();
     useOfflineMutations.persist.onFinishHydration(() => {
       initOfflineMutationReplay();
     });
@@ -325,6 +337,7 @@ export default function AppLayout() {
     stopPlayQueueSync();
     stopOfflineMutationReplay();
     stopListenBrainzScrobbler();
+    stopLastFmScrobbler();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {

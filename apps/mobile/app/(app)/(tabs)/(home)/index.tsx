@@ -11,6 +11,7 @@ import HomeTabsNav from "@/components/home/HomeTabsNav";
 import AlbumCarouselSection from "@/components/home/sections/AlbumCarouselSection";
 import ArtistAlbumsSection from "@/components/home/sections/ArtistAlbumsSection";
 import ArtistCarouselSection from "@/components/home/sections/ArtistCarouselSection";
+import BecauseYouListenedSection from "@/components/home/sections/BecauseYouListenedSection";
 import CreatedForYouSection from "@/components/home/sections/CreatedForYouSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
 import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
@@ -281,6 +282,13 @@ export default function HomeScreen() {
           );
         case "listenBrainzCreatedForYou":
           return <CreatedForYouSection sectionIndex={index} />;
+        case "lastFmBecauseYouListened":
+          return (
+            <BecauseYouListenedSection
+              sectionIndex={index}
+              sessionSeed={sessionSeed}
+            />
+          );
         case "starred":
           return <StarredSection sectionIndex={index} />;
         case "podcasts":

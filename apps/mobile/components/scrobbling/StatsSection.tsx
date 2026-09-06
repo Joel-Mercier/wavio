@@ -2,13 +2,12 @@ import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
 import WifiOff from "lucide-react-native/dist/esm/icons/wifi-off.mjs";
 import type { ComponentType, ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { isNetworkNoise } from "@/services/errorReporting";
-import type { StatsResult } from "@/services/listenBrainz/stats";
+import type { StatsResult } from "@/services/scrobbling/stats";
 
 // Inline rather than the shared ErrorDisplay: that one fills its parent and
 // offers a "back to home" button, which makes sense for a whole screen but not
@@ -36,8 +35,22 @@ function Notice({
 }
 
 /**
- * One titled section of the stats screen, owning the four states a statistic
- * can be in.
+ * The already-translated strings a section needs for its non-data states.
+ *
+ * Passed in rather than read from a fixed i18n namespace so the same section can
+ * serve both scrobbling services: their copy differs, and each one's strings are
+ * already translated where they are. `notComputed` is optional because only
+ * ListenBrainz has that state — Last.fm computes on read.
+ */
+export type StatsSectionLabels = {
+  unreachable: string;
+  noData: string;
+  notComputed?: { title: string; description: string };
+};
+
+/**
+ * One titled section of a stats screen, owning the four states a statistic can
+ * be in.
  *
  * The one that matters is `notComputed`: ListenBrainz answers `204 No Content`
  * until its batch job has run for this user and range, and that happens
@@ -47,6 +60,7 @@ function Notice({
 export default function StatsSection<T>({
   title,
   description,
+  labels,
   query,
   isEmpty,
   skeleton,
@@ -56,6 +70,7 @@ export default function StatsSection<T>({
   // For sections whose axes aren't self-evident, or that read differently from
   // how the range picker above them suggests.
   description?: string;
+  labels: StatsSectionLabels;
   query: {
     isPending: boolean;
     // `unknown`, as react-query types it — a queryFn can reject with anything.
@@ -66,36 +81,37 @@ export default function StatsSection<T>({
   skeleton: ReactNode;
   children: (data: T) => ReactNode;
 }) {
-  const { t } = useTranslation();
-  const key = "app.settings.integrations.listenbrainz.stats";
-
   const body = () => {
     if (query.isPending) return skeleton;
     if (query.error) {
       return isNetworkNoise(query.error) ? (
-        <Notice icon={WifiOff} title={t(`${key}.unreachable`)} />
+        <Notice icon={WifiOff} title={labels.unreachable} />
       ) : (
         <Notice
           icon={CircleX}
           title={
             query.error instanceof Error
               ? query.error.message
-              : t(`${key}.unreachable`)
+              : labels.unreachable
           }
         />
       );
     }
     if (!query.data || query.data.state === "notComputed") {
-      return (
+      // A service with no batch job (Last.fm) leaves `notComputed` unset, so
+      // the missing data reads as "nothing to show" rather than "not ready yet".
+      return labels.notComputed ? (
         <Notice
           icon={Clock}
-          title={t(`${key}.notComputed`)}
-          description={t(`${key}.notComputedDescription`)}
+          title={labels.notComputed.title}
+          description={labels.notComputed.description}
         />
+      ) : (
+        <Notice icon={Clock} title={labels.noData} />
       );
     }
     if (isEmpty(query.data.data)) {
-      return <Notice icon={Clock} title={t(`${key}.noListens`)} />;
+      return <Notice icon={Clock} title={labels.noData} />;
     }
     return children(query.data.data);
   };

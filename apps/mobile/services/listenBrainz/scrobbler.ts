@@ -7,6 +7,13 @@ import {
 } from "@/services/listenBrainz/client";
 import { toListen, toQueuedListen } from "@/services/listenBrainz/payload";
 import { getIsOnline, subscribeIsOnline } from "@/services/network";
+
+// The submission rule is identical on Last.fm, so it lives in one place.
+export {
+  isSubmittableDuration,
+  submissionThresholdSeconds,
+} from "@/services/scrobbling/eligibility";
+
 import {
   isListenBrainzConnected,
   isListenBrainzScrobblingEnabled,
@@ -14,14 +21,6 @@ import {
   useListenBrainzBase,
 } from "@/stores/listenBrainz";
 import type { QueueTrack } from "@/stores/queue";
-
-// ListenBrainz counts a play once the listener has heard half the track, or
-// four minutes, whichever comes first.
-// https://listenbrainz.readthedocs.io/en/latest/users/api/core.html
-const MAX_SUBMIT_THRESHOLD_SECONDS = 240;
-// Tracks shorter than this are never submitted, matching the long-standing
-// Last.fm/ListenBrainz convention (and the app's own server-scrobble guard).
-const MIN_TRACK_DURATION_SECONDS = 30;
 
 // Only transient failures (5xx, 429, network) consume an attempt — a permanent
 // 4xx drops the batch immediately — so this cap has to outlast a real outage,
@@ -39,18 +38,6 @@ let drainRequested = false;
 let generation = 0;
 let backoffTimer: ReturnType<typeof setTimeout> | null = null;
 let backoffLevel = 0;
-
-/**
- * The position, in seconds, at which a track of this duration becomes a
- * submittable listen. Exported for the player and for tests.
- */
-export function submissionThresholdSeconds(duration: number): number {
-  return Math.min(duration / 2, MAX_SUBMIT_THRESHOLD_SECONDS);
-}
-
-export function isSubmittableDuration(duration: number): boolean {
-  return duration >= MIN_TRACK_DURATION_SECONDS;
-}
 
 const clearBackoffTimer = () => {
   if (backoffTimer) {
