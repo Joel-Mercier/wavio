@@ -127,7 +127,7 @@
 			},
 			"lastfm": {
 				"role": "Historique d'écoute",
-				"desc": "Scrobble every play and read your own charts without leaving the app. Loved tracks stay in step with your favourites, and similar artists turn into recommendations of what to listen to next."
+				"desc": "Enregistrez chaque écoute et consultez vos propres classements sans quitter l'application. Les morceaux que vous adorez rejoignent votre liste de favoris, et les artistes similaires vous sont proposés comme suggestions d'écoute."
 			},
 			"lidarr": {
 				"role": "Téléchargements",
