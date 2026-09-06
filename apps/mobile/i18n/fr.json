@@ -18,6 +18,8 @@
 				"randomSongs": "Morceaux aléatoires",
 				"artists": "Artistes",
 				"createdForYou": "Conçu pour vous",
+				"becauseYouListened": "Because you listened to {{artist}}",
+				"becauseYouListenedFallback": "Recommended for you",
 				"yourPlaylists": "Vos playlists",
 				"starred": "Vos favoris",
 				"songsByGenre": "Morceaux {{genre}}",
@@ -1071,6 +1073,97 @@
 							"queued_one": "{{count}} titre ajouté à la file d'attente",
 							"queued_other": "{{count}} titres ajoutés à la file d'attente"
 						}
+					},
+					"lastfm": {
+						"title": "Last.fm",
+						"description": "Send the music you play to your Last.fm profile",
+						"attribution": "Powered by AudioScrobbler",
+						"attributionHint": "AudioScrobbler is the name of Last.fm's API, which Wavio uses to reach your account.",
+						"auth": {
+							"signedInAs": "Connecté en tant que {{username}}",
+							"browserHint": "Connecting opens Last.fm in your browser. Approve Wavio there, then come back to this screen, because Last.fm can't send you back automatically.",
+							"connectAction": "Connexion",
+							"reconnectAction": "Reconnect",
+							"disconnectAction": "Disconnect",
+							"connected": "Connecté en tant que {{userName}}",
+							"notAuthorized": "Wavio wasn't approved on Last.fm. Tap Connect and grant access to finish.",
+							"failed": "Couldn't reach Last.fm. Check your connection and try again.",
+							"disconnected": "Last.fm disconnected",
+							"sessionExpired": "Last.fm no longer accepts this sign-in, which usually means it was revoked. Reconnect to keep scrobbling. Plays recorded in the meantime are kept and sent once you do.",
+							"noCredentials": "This build of Wavio was made without Last.fm API credentials, so it can't connect to Last.fm.",
+							"manageAccessAction": "Manage Wavio's access on last.fm"
+						},
+						"scrobbling": {
+							"title": "Scrobbling",
+							"serverWarning": "Your music server is already sending your plays to Last.fm. Turning this on as well will count every play twice.",
+							"enabledLabel": "Enregistrer mes écoutes",
+							"enabledDescription": "Un morceau est envoyé dès que vous en avez écouté la moitié ou quatre minutes, selon la première éventualité. Les écoutes effectuées hors ligne sont envoyées dès que vous vous reconnectez.",
+							"nowPlayingLabel": "Afficher ce que j'écoute",
+							"nowPlayingDescription": "Updates the “scrobbling now” entry on your Last.fm profile while a track plays."
+						},
+						"loves": {
+							"title": "Loved tracks",
+							"syncLabel": "Love my favourite songs",
+							"syncDescription": "Adding a song to your favourites also loves it on Last.fm, and removing it unloves it. Only songs, as Last.fm has no equivalent for albums or artists. Favouriting a whole album sends one love per track, so it can take a moment to catch up.",
+							"recentTitle": "Recently loved",
+							"empty": "You haven't loved anything on Last.fm yet.",
+							"loadFailed": "Couldn't read your loved tracks from Last.fm.",
+							"importLabel": "Import as favourites",
+							"importDescription": "Looks for everything you've loved on Last.fm in your library and favourites what it finds. It never removes a favourite, and it runs once, so anything you love later won't come across on its own.",
+							"importAction": "Import",
+							"importingAction": "Importing…",
+							"importOfflineDescription": "Importing needs both Last.fm and your music server, so it isn't available while you're offline.",
+							"importProgressMatching": "Looking for them in your library…",
+							"importNothingNew": "Everything Last.fm has you loving that's in your library was already a favourite.",
+							"importFailed": "Couldn't import your loved tracks. Check your connection and try again.",
+							"totalCount_one": "{{count}} track loved on Last.fm.",
+							"totalCount_other": "{{count}} tracks loved on Last.fm.",
+							"importProgressFetching_one": "Reading your loved tracks… {{done}} of {{count}}",
+							"importProgressFetching_other": "Reading your loved tracks… {{done}} of {{count}}",
+							"importProgressStarring_one": "Adding to your favourites… {{done}} of {{count}}",
+							"importProgressStarring_other": "Adding to your favourites… {{done}} of {{count}}",
+							"importAdded_one": "Added {{count}} song to your favourites.",
+							"importAdded_other": "Added {{count}} songs to your favourites.",
+							"importMissing_one": "{{count}} loved track isn't in your library.",
+							"importMissing_other": "{{count}} loved tracks aren't in your library.",
+							"importFailedCount_one": "{{count}} favourite couldn't be saved.",
+							"importFailedCount_other": "{{count}} favourites couldn't be saved.",
+							"importTruncated_one": "Only your {{count}} most recent love was checked.",
+							"importTruncated_other": "Only your {{count}} most recent loves were checked."
+						},
+						"recommendations": {
+							"poweredBy": "Powered by Last.fm"
+						},
+						"stats": {
+							"title": "Your Last.fm",
+							"entryLabel": "Statistics",
+							"entryDescription": "Your top artists, albums and tracks, and what you've scrobbled lately.",
+							"since": "Scrobbling since {{date}}",
+							"ranges": {
+								"7day": "Semaine",
+								"1month": "Mois",
+								"12month": "Année",
+								"overall": "Tout"
+							},
+							"topArtists": "Top artistes",
+							"topAlbums": "Top albums",
+							"topTracks": "Top titres",
+							"recentTracks": "Recently scrobbled",
+							"recentTracksDescription": "Your latest scrobbles, whichever period is selected above.",
+							"nowPlaying": "Now",
+							"unreachable": "Couldn't reach Last.fm.",
+							"noData": "Nothing scrobbled in this period yet.",
+							"scrobbles_one": "{{formattedCount}} scrobble",
+							"scrobbles_other": "{{formattedCount}} scrobbles"
+						},
+						"queue": {
+							"pendingLabel": "En attente d'envoi",
+							"pendingDescriptionEmpty": "Tout ce que vous avez joué a été envoyé.",
+							"syncAction": "Envoyer maintenant",
+							"syncingAction": "Envoi...",
+							"pendingDescription_one": "{{count}} play hasn't reached Last.fm yet.",
+							"pendingDescription_other": "{{count}} plays haven't reached Last.fm yet."
+						}
 					}
 				},
 				"downloaders": {
@@ -1420,7 +1513,8 @@
 						"moreFromArtist": "Plus d'un artiste",
 						"songsByGenre": "Titres par genre",
 						"albumsByGenre": "Albums par genre",
-						"albumsByDecade": "Albums par décennie"
+						"albumsByDecade": "Albums par décennie",
+						"becauseYouListened": "Because you listened to…"
 					},
 					"lyricsSourceLabel": "Paroles",
 					"lyricsSourceDescription": "Choisissez la provenance des paroles synchronisées, ou désactivez-les.",
