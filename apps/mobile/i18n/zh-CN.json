@@ -18,8 +18,8 @@
 				"randomSongs": "随机歌曲",
 				"artists": "艺人",
 				"createdForYou": "专为您打造",
-				"becauseYouListened": "Because you listened to {{artist}}",
-				"becauseYouListenedFallback": "Recommended for you",
+				"becauseYouListened": "因为你听了 {{artist}}",
+				"becauseYouListenedFallback": "为您推荐",
 				"yourPlaylists": "歌单",
 				"starred": "收藏",
 				"songsByGenre": "{{genre}} 歌曲",
@@ -32,16 +32,16 @@
 				"playErrorMessage": "开始播放时发生错误",
 				"customize": {
 					"music": {
-						"title": "Customize your home",
-						"description": "Choose which sections appear, and in which order"
+						"title": "打造专属家居",
+						"description": "选择要显示的章节以及它们的显示顺序"
 					},
 					"podcasts": {
-						"title": "Customize your podcasts",
-						"description": "Choose the country and language your recommendations come from"
+						"title": "自定义您的播客",
+						"description": "请选择推荐信息的来源国家和语言"
 					},
 					"radio": {
-						"title": "Customize your radio",
-						"description": "Choose which tags appear in the feed"
+						"title": "自定义您的收音机",
+						"description": "选择要在信息流中显示哪些标签"
 					}
 				},
 				"tabs": {
@@ -278,7 +278,7 @@
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
 				"typeCompilation": "合辑",
-				"releaseTypeUntagged": "Untagged",
+				"releaseTypeUntagged": "未标记",
 				"releaseTypes": {
 					"album": "专辑",
 					"single": "单曲",
@@ -335,12 +335,12 @@
 				"reorder": "重新排序",
 				"edit": "编辑歌单",
 				"editRules": "编辑规则",
-				"saveAsStaticPlaylist": "Save as static playlist",
-				"refreshStaticCopy": "Refresh static copy",
-				"openStaticCopy": "Open static copy",
-				"staticCopyName": "{{name}} (snapshot)",
-				"staticCopySuccess": "Static copy updated",
-				"staticCopyError": "An error occurred while updating the static copy",
+				"saveAsStaticPlaylist": "保存为静态播放列表",
+				"refreshStaticCopy": "刷新静态内容",
+				"openStaticCopy": "打开静态副本",
+				"staticCopyName": "{{name}} (快照)",
+				"staticCopySuccess": "静态文案已更新",
+				"staticCopyError": "更新静态副本时发生错误",
 				"delete": "删除歌单",
 				"share": "分享",
 				"playNext": "下一首播放",
@@ -648,10 +648,10 @@
 			"smartPlaylist": {
 				"rule": "规则",
 				"addRule": "添加规则",
-				"addGroup": "Add rule group",
-				"deleteGroup": "Delete rule group",
-				"and": "and",
-				"or": "or",
+				"addGroup": "添加规则组",
+				"deleteGroup": "删除规则组",
+				"and": "以及",
+				"or": "或",
 				"matchAll": "满足所有条件",
 				"matchAny": "满足任一条件",
 				"atLeastOneRule": "请至少添加一条规则",
@@ -664,15 +664,15 @@
 				"addSort": "添加排序",
 				"limit": "数量限制",
 				"limitPlaceholder": "最大曲目数",
-				"refreshDelay": "Refresh delay",
-				"refreshDelayHint": "How long the playlist keeps the same tracks before the server picks a new set. Requires Navidrome 0.64 or later.",
+				"refreshDelay": "刷新延迟",
+				"refreshDelayHint": "播放列表在服务器选择新曲目组合之前，会保持同一组曲目多长时间。需要 Navidrome 0.64 或更高版本。",
 				"refreshDelayOptions": {
 					"default": "服务器默认设置",
-					"1h": "Every hour",
-					"6h": "Every 6 hours",
-					"12h": "Every 12 hours",
-					"1d": "Every day",
-					"1w": "Every week"
+					"1h": "每小时",
+					"6h": "每6小时",
+					"12h": "每12小时",
+					"1d": "每天",
+					"1w": "每周"
 				},
 				"direction": {
 					"asc": "升序",
@@ -1055,62 +1055,62 @@
 					},
 					"lastfm": {
 						"title": "Last.fm",
-						"description": "Send the music you play to your Last.fm profile",
-						"attribution": "Powered by AudioScrobbler",
-						"attributionHint": "AudioScrobbler is the name of Last.fm's API, which Wavio uses to reach your account.",
+						"description": "将你播放的音乐发送至你的 Last.fm 个人主页",
+						"attribution": "由 AudioScrobbler 提供支持",
+						"attributionHint": "AudioScrobbler 是 Last.fm 的 API 名称，Wavio 通过该 API 访问您的账户。",
 						"auth": {
 							"signedInAs": "登录用户： {{userName}}",
-							"browserHint": "Connecting opens Last.fm in your browser. Approve Wavio there, then come back to this screen, because Last.fm can't send you back automatically.",
+							"browserHint": "点击“连接”将在您的浏览器中打开 Last.fm。请在那里授权 Wavio，然后返回此页面，因为 Last.fm 无法自动将您带回此处。",
 							"connectAction": "连接",
-							"reconnectAction": "Reconnect",
-							"disconnectAction": "Disconnect",
+							"reconnectAction": "重新连接",
+							"disconnectAction": "断开连接",
 							"connected": "以……身份登录 {{userName}}",
-							"notAuthorized": "Wavio wasn't approved on Last.fm. Tap Connect and grant access to finish.",
-							"failed": "Couldn't reach Last.fm. Check your connection and try again.",
-							"disconnected": "Last.fm disconnected",
-							"sessionExpired": "Last.fm no longer accepts this sign-in, which usually means it was revoked. Reconnect to keep scrobbling. Plays recorded in the meantime are kept and sent once you do.",
-							"noCredentials": "This build of Wavio was made without Last.fm API credentials, so it can't connect to Last.fm.",
-							"manageAccessAction": "Manage Wavio's access on last.fm"
+							"notAuthorized": "Wavio 尚未获得 Last.fm 的批准。请点击“连接”并授予访问权限以完成操作。",
+							"failed": "无法连接到 Last.fm。请检查网络连接，然后重试。",
+							"disconnected": "Last.fm 已断开连接",
+							"sessionExpired": "Last.fm 不再接受此登录方式，这通常意味着该登录权限已被撤销。请重新连接以继续记录播放记录。在此期间记录的播放数据将被保留，并在您重新连接后一并发送。",
+							"noCredentials": "此版本的 Wavio 是在未使用 Last.fm API 凭据的情况下构建的，因此无法连接到 Last.fm。",
+							"manageAccessAction": "管理 Wavio 在 last.fm 上的访问权限"
 						},
 						"scrobbling": {
 							"title": "音乐记录",
-							"serverWarning": "Your music server is already sending your plays to Last.fm. Turning this on as well will count every play twice.",
+							"serverWarning": "您的音乐服务器已经在将您的播放记录发送至 Last.fm。如果同时启用此功能，每次播放将被计数两次。",
 							"enabledLabel": "将我的播放记录同步到Scrobble",
 							"enabledDescription": "当您收听完一首歌曲的一半或四分钟（以先达到者为准）后，该歌曲即被提交。离线收听的记录将在您下次连接网络时自动上传。",
 							"nowPlayingLabel": "显示我正在玩的游戏",
-							"nowPlayingDescription": "Updates the “scrobbling now” entry on your Last.fm profile while a track plays."
+							"nowPlayingDescription": "在歌曲播放时，更新您 Last.fm 个人资料中的“正在记录”条目。"
 						},
 						"loves": {
-							"title": "Loved tracks",
-							"syncLabel": "Love my favourite songs",
-							"syncDescription": "Adding a song to your favourites also loves it on Last.fm, and removing it unloves it. Only songs, as Last.fm has no equivalent for albums or artists. Favouriting a whole album sends one love per track, so it can take a moment to catch up.",
-							"recentTitle": "Recently loved",
-							"empty": "You haven't loved anything on Last.fm yet.",
-							"loadFailed": "Couldn't read your loved tracks from Last.fm.",
-							"importLabel": "Import as favourites",
-							"importDescription": "Looks for everything you've loved on Last.fm in your library and favourites what it finds. It never removes a favourite, and it runs once, so anything you love later won't come across on its own.",
-							"importAction": "Import",
-							"importingAction": "Importing…",
-							"importOfflineDescription": "Importing needs both Last.fm and your music server, so it isn't available while you're offline.",
-							"importProgressMatching": "Looking for them in your library…",
-							"importNothingNew": "Everything Last.fm has you loving that's in your library was already a favourite.",
-							"importFailed": "Couldn't import your loved tracks. Check your connection and try again.",
-							"totalCount_other": "{{count}} tracks loved on Last.fm.",
-							"importProgressFetching_other": "Reading your loved tracks… {{done}} of {{count}}",
-							"importProgressStarring_other": "Adding to your favourites… {{done}} of {{count}}",
-							"importAdded_other": "Added {{count}} songs to your favourites.",
-							"importMissing_other": "{{count}} loved tracks aren't in your library.",
-							"importFailedCount_other": "{{count}} favourites couldn't be saved.",
-							"importTruncated_other": "Only your {{count}} most recent loves were checked."
+							"title": "喜欢的歌曲",
+							"syncLabel": "我爱我最喜欢的歌",
+							"syncDescription": "将一首歌曲添加到收藏夹，即表示在 Last.fm 上为其点赞；将其从收藏夹中移除，则表示取消点赞。仅限歌曲，因为 Last.fm 没有针对专辑或艺人的类似功能。将整张专辑加入收藏时，每首曲目都会计为一次点赞，因此系统可能需要片刻时间来同步数据。",
+							"recentTitle": "最近喜欢",
+							"empty": "你目前在 Last.fm 上还没有点过“喜欢”。",
+							"loadFailed": "无法读取您在 Last.fm 上的收藏曲目。",
+							"importLabel": "导入为收藏",
+							"importDescription": "该工具会在你的音乐库中搜索你在 Last.fm 上喜欢过的所有歌曲，并将找到的歌曲添加到收藏夹。它绝不会移除任何收藏项，且仅运行一次，因此你日后喜欢的歌曲不会自动被纳入其中。",
+							"importAction": "导入",
+							"importingAction": "导入…",
+							"importOfflineDescription": "导入功能需要同时连接 Last.fm 和您的音乐服务器，因此离线时无法使用。",
+							"importProgressMatching": "在您的图书馆中查找这些书籍…",
+							"importNothingNew": "Last.fm 推荐给你的、且已收录在你的音乐库中的所有歌曲，原本就是你喜欢的。",
+							"importFailed": "无法导入您喜爱的歌曲。请检查网络连接，然后重试。",
+							"totalCount_other": "{{count}} 在 Last.fm 上点赞过的歌曲。",
+							"importProgressFetching_other": "阅读您喜爱的曲目… {{done}} 中的 {{count}}",
+							"importProgressStarring_other": "将… {{done}} 添加到收藏夹 {{count}}",
+							"importAdded_other": "已将 {{count}} 的歌曲添加到您的收藏中。",
+							"importMissing_other": "{{count}} 您收藏的歌曲不在您的资料库中。",
+							"importFailedCount_other": "{{count}} 无法保存收藏夹。",
+							"importTruncated_other": "仅检查了您在 {{count}} 上的最新“喜欢”记录。"
 						},
 						"recommendations": {
-							"poweredBy": "Powered by Last.fm"
+							"poweredBy": "由 Last.fm 提供支持"
 						},
 						"stats": {
-							"title": "Your Last.fm",
-							"entryLabel": "Statistics",
-							"entryDescription": "Your top artists, albums and tracks, and what you've scrobbled lately.",
-							"since": "Scrobbling since {{date}}",
+							"title": "您的 Last.fm",
+							"entryLabel": "统计数据",
+							"entryDescription": "您最喜欢的艺人、专辑和歌曲，以及您最近“scrobbled”的内容。",
+							"since": "自...以来一直在记录播放记录 {{date}}",
 							"ranges": {
 								"7day": "周",
 								"1month": "月份",
@@ -1120,11 +1120,11 @@
 							"topArtists": "顶级艺术家",
 							"topAlbums": "热门专辑",
 							"topTracks": "热门歌曲",
-							"recentTracks": "Recently scrobbled",
-							"recentTracksDescription": "Your latest scrobbles, whichever period is selected above.",
-							"nowPlaying": "Now",
-							"unreachable": "Couldn't reach Last.fm.",
-							"noData": "Nothing scrobbled in this period yet.",
+							"recentTracks": "最近添加的歌曲",
+							"recentTracksDescription": "您最近的播放记录（无论上方选择了哪个时间段）。",
+							"nowPlaying": "现在",
+							"unreachable": "无法连接到 Last.fm。",
+							"noData": "在此期间尚未记录任何播放记录。",
 							"scrobbles_other": "{{formattedCount}} scrobbles"
 						},
 						"queue": {
@@ -1132,7 +1132,7 @@
 							"pendingDescriptionEmpty": "您玩过的所有游戏都已发送。",
 							"syncAction": "立即发送",
 							"syncingAction": "发送…",
-							"pendingDescription_other": "{{count}} plays haven't reached Last.fm yet."
+							"pendingDescription_other": "{{count}} 这些歌曲尚未在Last.fm上架。"
 						}
 					}
 				},
@@ -1472,7 +1472,7 @@
 						"songsByGenre": "按流派划分的歌曲",
 						"albumsByGenre": "按流派划分的专辑",
 						"albumsByDecade": "按年代划分的专辑",
-						"becauseYouListened": "Because you listened to…"
+						"becauseYouListened": "因为你收听了…"
 					},
 					"lyricsSourceLabel": "歌词",
 					"lyricsSourceDescription": "选择同步歌词的来源，或将其关闭。",
@@ -2060,9 +2060,9 @@
 					"saveForOfflineListening": "保存到离线收听",
 					"savingForOffline": "正在保存到离线",
 					"removeOfflineDownloads": "移除离线下载",
-					"updateDownloads": "Update downloads (+{{added}} / -{{removed}})",
-					"updateSuccessMessage": "Downloads updated",
-					"updateErrorMessage": "An error occurred while updating downloads",
+					"updateDownloads": "更新下载量（+{{added}} / -{{removed}}）",
+					"updateSuccessMessage": "下载内容已更新",
+					"updateErrorMessage": "更新下载时发生错误",
 					"saveSuccessMessage": "已保存到离线收听",
 					"saveErrorMessage": "保存到离线收听时发生错误",
 					"removeSuccessMessage": "已移除离线下载",
