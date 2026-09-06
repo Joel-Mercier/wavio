@@ -99,6 +99,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Downloaders section with [Lidarr](https://lidarr.audio/), [SoulSync](https://ssync.net/), and [Tidarr](https://github.com/cstaelen/tidarr) integrations. Search and add content to your music library directly from the app. See downloads progress and history.
 - [MusicBrainz](https://musicbrainz.org/) integration for local libraries, tag directly from the app using the MusicBrainz api, write to file or write to app data only option, review workflow, tags to replace selection, auto apply toggle, customizable confidence threshold for auto apply
 - [ListenBrainz](https://listenbrainz.org/) integration for scrobbling, listening stats and daily jams, weekly jams and weekly exploration playlists.
+- [Last.fm](https://www.last.fm/) integration for scrobbling, stats, loved tracks sync and artist recommandations.
 - Bookmarks support. Easy access to a song or podcast favorite parts
 - Customizable swipe gestures for tracks
 - Landscape mode support
