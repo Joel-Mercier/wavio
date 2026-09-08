@@ -26,10 +26,12 @@ jest.mock("@/stores/auth", () => ({
 jest.mock("@/services/openSubsonic", () => ({
   isSubsonicDataNotFound: (error: unknown) =>
     (error as { code?: number } | null)?.code === 70,
+  isSubsonicNotAuthorized: (error: unknown) =>
+    (error as { code?: number } | null)?.code === 50,
 }));
 
 import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
-import { isNotFoundError } from "@/services/notFound";
+import { isNotFoundError, isPermanentWriteRefusal } from "@/services/notFound";
 import useOffline, { type OfflineCollection } from "@/stores/offline";
 import usePlaylists from "@/stores/playlists";
 import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
@@ -79,6 +81,42 @@ describe("isNotFoundError", () => {
     ).toBe(false);
     expect(isNotFoundError(new Error("boom"))).toBe(false);
     expect(isNotFoundError(undefined)).toBe(false);
+  });
+});
+
+// Callers that drop remembered state on failure — the actions sheet's one-tap
+// playlist shortcut — must tell a refusal apart from a blip, or a timeout costs
+// the user the shortcut for the rest of the session.
+describe("isPermanentWriteRefusal", () => {
+  it("matches a missing target and a forbidden one", () => {
+    expect(isPermanentWriteRefusal({ code: 70 })).toBe(true);
+    expect(isPermanentWriteRefusal({ code: 50 })).toBe(true);
+    expect(
+      isPermanentWriteRefusal({
+        isAxiosError: true,
+        response: { status: 404 },
+      }),
+    ).toBe(true);
+    expect(
+      isPermanentWriteRefusal({
+        isAxiosError: true,
+        response: { status: 403 },
+      }),
+    ).toBe(true);
+  });
+
+  it("ignores failures a retry could survive", () => {
+    expect(
+      isPermanentWriteRefusal({
+        isAxiosError: true,
+        response: { status: 500 },
+      }),
+    ).toBe(false);
+    expect(
+      isPermanentWriteRefusal({ isAxiosError: true, code: "ECONNABORTED" }),
+    ).toBe(false);
+    expect(isPermanentWriteRefusal(new Error("boom"))).toBe(false);
+    expect(isPermanentWriteRefusal(undefined)).toBe(false);
   });
 });
 

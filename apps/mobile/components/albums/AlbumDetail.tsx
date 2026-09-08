@@ -17,6 +17,7 @@ import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
@@ -95,6 +96,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import useTrackSelection from "@/stores/trackSelection";
 import type { AlbumListRow } from "@/utils/albumDiscRows";
 import { buildAlbumListRows } from "@/utils/albumDiscRows";
 import { artworkUrl } from "@/utils/artwork";
@@ -359,6 +361,13 @@ export default function AlbumDetail() {
         </Toast>
       ),
     });
+  };
+
+  // Opened with nothing selected: the sheet acts on the album as a whole, so
+  // the point of this row is to start picking rows, not to seed one.
+  const handleSelectMultiplePress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    useTrackSelection.getState().enter();
   };
 
   const handleSharePress = () => {
@@ -1262,6 +1271,18 @@ export default function AlbumDetail() {
                   <ListPlus size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.addToQueue")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                testID="album-select-multiple-button"
+                onPress={handleSelectMultiplePress}
+                disabled={!albumTracks?.length}
+              >
+                <HStack className="items-center">
+                  <ListChecks size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.selectTracks")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

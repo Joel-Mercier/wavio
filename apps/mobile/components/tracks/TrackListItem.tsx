@@ -1,4 +1,6 @@
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Circle from "lucide-react-native/dist/esm/icons/circle.mjs";
+import CircleCheck from "lucide-react-native/dist/esm/icons/circle-check.mjs";
 import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
@@ -33,6 +35,7 @@ import { selectionHaptic } from "@/services/haptics";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import useApp, { type SwipeAction } from "@/stores/app";
+import useTrackSelection from "@/stores/trackSelection";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { cn } from "@/utils/tailwind";
@@ -126,9 +129,19 @@ function TrackListItem({
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
   const api = useTrackActions();
+  // Two narrow selectors rather than one object: entering selection re-renders
+  // every visible row once, but toggling a row after that must re-render only
+  // the row that changed.
+  const selectionActive = useTrackSelection((state) => state.active);
+  const isSelected = useTrackSelection(
+    (state) => !!state.selectedIds[track.id],
+  );
   const swipeLeftAction = useApp((state) => state.swipeLeftAction);
   const swipeEnabled =
-    swipeLeftAction !== "off" && !disableSwipe && !isUnavailableOffline;
+    swipeLeftAction !== "off" &&
+    !disableSwipe &&
+    !isUnavailableOffline &&
+    !selectionActive;
 
   const translateX = useSharedValue(0);
   const crossedThreshold = useSharedValue(false);
@@ -189,6 +202,10 @@ function TrackListItem({
   }, [api, track]);
 
   const handleTrackPress = () => {
+    if (selectionActive) {
+      useTrackSelection.getState().toggle(track);
+      return;
+    }
     if (onPress) {
       onPress(index, track);
     } else {
@@ -197,6 +214,18 @@ function TrackListItem({
     if (onPlayCallback) {
       onPlayCallback();
     }
+  };
+
+  // Reaching the actions sheet without having to hit the ⋮ target (issue #195).
+  // No offline gate needed: the Pressable is already `disabled` for unavailable
+  // rows, and RN suppresses long-press along with press.
+  const handleTrackLongPress = () => {
+    if (selectionActive) {
+      useTrackSelection.getState().toggle(track);
+      return;
+    }
+    void selectionHaptic();
+    handlePresentModalPress();
   };
 
   const rowBody = (
@@ -257,14 +286,27 @@ function TrackListItem({
             className="mr-3"
           />
         )}
-        <FadeOutScaleDown
-          testID="track-menu-button"
-          onPress={handlePresentModalPress}
-          disabled={isUnavailableOffline}
-          disabledOpacity={0.8}
-        >
-          <EllipsisVertical color={gray300} />
-        </FadeOutScaleDown>
+        {selectionActive ? (
+          // Not pressable: the whole row toggles in selection mode, so a
+          // separate tap target here would only be a smaller way to do the
+          // same thing.
+          <Box testID="track-selection-indicator">
+            {isSelected ? (
+              <CircleCheck size={24} color={emerald500} />
+            ) : (
+              <Circle size={24} color={gray300} />
+            )}
+          </Box>
+        ) : (
+          <FadeOutScaleDown
+            testID="track-menu-button"
+            onPress={handlePresentModalPress}
+            disabled={isUnavailableOffline}
+            disabledOpacity={0.8}
+          >
+            <EllipsisVertical color={gray300} />
+          </FadeOutScaleDown>
+        )}
       </HStack>
     </>
   );
@@ -272,6 +314,7 @@ function TrackListItem({
   const pressable = (
     <Pressable
       onPress={isUnavailableOffline ? undefined : handleTrackPress}
+      onLongPress={isUnavailableOffline ? undefined : handleTrackLongPress}
       disabled={isUnavailableOffline}
     >
       <HStack
@@ -289,9 +332,19 @@ function TrackListItem({
   if (!swipeEnabled) {
     return (
       <Box
-        className={cn("mb-4", {
-          "mt-6": index === 0 && !disableFirstItemMargin,
-        })}
+        className={cn(
+          // In selection mode the row's spacing moves from a margin to padding
+          // so the highlight below can own the gap: a scanned list of dense
+          // rows needs more than a 24px glyph on the far edge to read at a
+          // glance, and a highlight that stops at the text leaves the rows
+          // looking cramped. Split evenly, so the row keeps the height it had
+          // and the list doesn't jump on entering selection.
+          selectionActive ? "py-2" : "mb-4",
+          { "mt-6": index === 0 && !disableFirstItemMargin },
+          // Full-bleed and square-cornered: consecutive selected rows read as
+          // one block rather than as a column of separate chips.
+          { "bg-primary-600/40": isSelected },
+        )}
       >
         {pressable}
       </Box>

@@ -3,21 +3,18 @@ import {
   getPlaylist,
   updatePlaylist,
 } from "@/services/backend/playlists";
+import { chunk } from "@/utils/chunk";
 
 // Track ids travel on the query string: `subsonicRequest` issues a GET, and
 // `createPlaylist`/`updatePlaylist` serialize `songId`/`songIdToAdd` as one
 // repeated param each. A 500-track playlist of 22-char Navidrome ids is ~14 KB
 // of URL, well past the 8 KB request line most reverse proxies allow, so every
 // write here is chunked.
+//
+// Both backends' `updatePlaylist` chunk `songIdToAdd` themselves now, but the
+// chunking stays here too: `createPlaylist` — which the first chunk below goes
+// through — does not.
 export const SNAPSHOT_CHUNK_SIZE = 100;
-
-export function chunk<T>(items: T[], size = SNAPSHOT_CHUNK_SIZE): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size));
-  }
-  return chunks;
-}
 
 /**
  * Freezes a track list into a new regular playlist and returns its id.
@@ -31,7 +28,7 @@ export async function createSnapshot(
   name: string,
   trackIds: string[],
 ): Promise<string> {
-  const [first, ...rest] = chunk(trackIds);
+  const [first, ...rest] = chunk(trackIds, SNAPSHOT_CHUNK_SIZE);
   const created = await createPlaylist(name, first ?? []);
   const id = created.playlist?.id;
   if (!id) throw new Error("Playlist was created without an id");
@@ -60,7 +57,7 @@ export async function refreshSnapshot(
   // through leaves a playlist with duplicates — recoverable by refreshing
   // again — where removing first would leave an empty one, destroying the
   // frozen copy the snapshot exists to keep.
-  for (const songIdToAdd of chunk(trackIds)) {
+  for (const songIdToAdd of chunk(trackIds, SNAPSHOT_CHUNK_SIZE)) {
     await updatePlaylist(snapshotId, { songIdToAdd });
   }
 
@@ -71,7 +68,7 @@ export async function refreshSnapshot(
   const indices = Array.from({ length: currentCount }, (_, i) =>
     String(currentCount - 1 - i),
   );
-  for (const songIndexToRemove of chunk(indices)) {
+  for (const songIndexToRemove of chunk(indices, SNAPSHOT_CHUNK_SIZE)) {
     await updatePlaylist(snapshotId, { songIndexToRemove });
   }
 }

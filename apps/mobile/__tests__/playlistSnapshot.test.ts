@@ -1,9 +1,9 @@
 import {
-  chunk,
   createSnapshot,
   refreshSnapshot,
   SNAPSHOT_CHUNK_SIZE,
 } from "@/services/playlistSnapshot";
+import { chunk } from "@/utils/chunk";
 
 const mockCreatePlaylist = jest.fn();
 const mockUpdatePlaylist = jest.fn();
