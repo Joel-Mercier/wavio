@@ -258,6 +258,7 @@
 				"addToPlaylist": "加入歌单",
 				"playNext": "下一首播放",
 				"addToQueue": "加入播放队列",
+				"selectTracks": "Select tracks",
 				"goToArtist": "前往艺人页",
 				"rate": "评分",
 				"share": "分享",
@@ -345,6 +346,7 @@
 				"share": "分享",
 				"playNext": "下一首播放",
 				"addToQueue": "加入播放队列",
+				"selectTracks": "Select tracks",
 				"deletePlaylistConfirmTitle": "确认删除该歌单？",
 				"deletePlaylistConfirmDescription": "删除后该歌单将被永久移除，此操作不可撤销。",
 				"deletePlaylistSuccessMessage": "歌单已删除",
@@ -354,6 +356,8 @@
 				"removeTrackSuccessMessage": "曲目已从歌单移除",
 				"removeTrackErrorMessage": "曲目从歌单移除时发生错误",
 				"addToPlaylistTitle": "加入歌单",
+				"recentPlaylists": "最近",
+				"allPlaylists": "All playlists",
 				"newPlaylist": "新建歌单",
 				"finished": "完成",
 				"duplicateTitle": "已在歌单中",
@@ -363,6 +367,7 @@
 				"searchPlaceholder": "在歌单中搜索",
 				"addTrackSuccessMessage_other": "已全部加入歌单",
 				"addTrackErrorMessage_other": "全部加入歌单时发生错误",
+				"addTrackPartialErrorMessage_other": "The songs weren't added to {{playlists}}. The other playlists were updated.",
 				"duplicateDescription_other": "{{playlists}} 中已包含其中部分歌曲，仍要加入吗？"
 			},
 			"podcasts": {
@@ -1777,6 +1782,14 @@
 				"addToFavorites": "加入收藏",
 				"addToPlaylist": "加入歌单",
 				"addToAnotherPlaylist": "加入其他歌单",
+				"addToLastPlaylist": "Add to “{{name}}”",
+				"alreadyInPlaylistMessage": "Already in “{{name}}”",
+				"selectMultiple": "Select multiple",
+				"selection": {
+					"selectAll": "Select all",
+					"deselectAll": "Deselect all",
+					"selectedCount_other": "已选 {{count}} 项"
+				},
 				"removeFromPlaylist": "从歌单中移除",
 				"playNext": "下一首播放",
 				"addToQueue": "加入播放队列",
