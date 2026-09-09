@@ -93,6 +93,7 @@
     "fuse.js": "^7.5.0",
     "html-entities": "^2.6.0",
     "i18next": "^26.4.0",
+    "ignore": "^7.0.8",
     "intl-pluralrules": "^2.0.1",
     "lucide-react-native": "1.33.0",
     "pinyin-pro": "^3.29.3",

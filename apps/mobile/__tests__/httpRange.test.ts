@@ -90,7 +90,7 @@ describe("httpRangeReader", () => {
     expect(mockGet.mock.calls[1][1].headers.Authorization).toBe("second");
   });
 
-  it("accepts only 200 and 206", async () => {
+  it("accepts only 200, 206 and 416", async () => {
     mockGet.mockResolvedValue({ status: 206, data: bytes(1).buffer });
     const reader = httpRangeReader({
       url: "http://host/a.flac",
@@ -101,8 +101,52 @@ describe("httpRangeReader", () => {
     const { validateStatus } = mockGet.mock.calls[0][1];
     expect(validateStatus(200)).toBe(true);
     expect(validateStatus(206)).toBe(true);
-    expect(validateStatus(416)).toBe(false);
+    expect(validateStatus(416)).toBe(true);
     expect(validateStatus(404)).toBe(false);
+  });
+
+  // Every range starts past the end of a zero-byte file, which is what an empty
+  // `.ignore` marker is. That's "no bytes here", not a broken link — throwing
+  // would make the scanner treat a hidden folder as an unreadable one.
+  it("reads a 416 with a zero total as zero bytes", async () => {
+    mockGet.mockResolvedValue({
+      status: 416,
+      data: new ArrayBuffer(0),
+      headers: { "content-range": "bytes */0" },
+    });
+    const reader = httpRangeReader({
+      url: "http://host/.ignore",
+      timeoutMs: 100,
+    });
+
+    expect(await reader.read(0, 1024)).toEqual(new Uint8Array(0));
+  });
+
+  // The other reason a 416 arrives: the file is real, but the server refused an
+  // over-long `last-byte-pos` instead of clamping it. Reading that as empty
+  // would turn a pattern list into a whole-folder marker, so it has to fail.
+  it("throws on a 416 whose total says the file is not empty", async () => {
+    mockGet.mockResolvedValue({
+      status: 416,
+      data: new ArrayBuffer(0),
+      headers: { "content-range": "bytes */120" },
+    });
+    const reader = httpRangeReader({
+      url: "http://host/.ignore",
+      timeoutMs: 100,
+    });
+
+    await expect(reader.read(0, 65536)).rejects.toThrow("416");
+  });
+
+  it("throws on a 416 with no length to go on", async () => {
+    mockGet.mockResolvedValue({ status: 416, data: new ArrayBuffer(0) });
+    const reader = httpRangeReader({
+      url: "http://host/.ignore",
+      timeoutMs: 100,
+    });
+
+    await expect(reader.read(0, 65536)).rejects.toThrow("416");
   });
 
   it("is stateless, so close costs nothing", () => {

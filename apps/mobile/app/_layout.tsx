@@ -37,7 +37,6 @@ import {
 } from "react-native-reanimated";
 import { persistOptions, queryClient } from "@/config/queryClient";
 import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
-import { resumeIncompleteScan } from "@/services/local/mediaLibraryScanning";
 import {
   getIsEffectivelyOnline,
   initConnectionType,
@@ -136,13 +135,9 @@ function onAppStateChange(status: AppStateStatus) {
     // The iOS loopback proxy may have been torn down while backgrounded; make
     // sure the cached proxy info is current before streaming resumes.
     void refreshSslProxyOnForeground();
-    // A scan that couldn't reach part of the library (or was killed while
-    // backgrounded) leaves the index partial and silent — the prune guard means
-    // nothing vanishes, so there's no symptom to notice. Foregrounding is the
-    // natural moment to try again: the network has usually changed, and the
-    // incremental skip makes a re-run cheap. No-ops unless the last scan
-    // actually ended incomplete.
-    resumeIncompleteScan();
+    // Foregrounding also re-walks an index-backed library, but that lives in
+    // components/local/LibraryAutoScanController — it needs an authenticated
+    // session and a hydrated store, neither of which exists this far up.
   }
 }
 

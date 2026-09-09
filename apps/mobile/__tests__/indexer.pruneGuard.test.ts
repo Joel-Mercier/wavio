@@ -12,6 +12,7 @@
 const mockRun = jest.fn();
 const mockDb = {
   getAllAsync: jest.fn(),
+  getFirstAsync: jest.fn(),
   runAsync: (...args: unknown[]) => {
     mockRun(...args);
     return Promise.resolve();
@@ -21,10 +22,15 @@ const mockDb = {
 
 jest.mock("@/services/local/db", () => ({
   getLocalLibraryDb: () => Promise.resolve(mockDb),
+  libraryScope: () => "scope",
 }));
 
 jest.mock("@/services/local/tagOverrides", () => ({
   reapplyOverridesAfterIndexing: () => Promise.resolve(),
+}));
+
+jest.mock("@/services/local/artworkRefs", () => ({
+  persistedArtworkNames: () => new Set<string>(),
 }));
 
 jest.mock("@/modules/audio-metadata", () => ({
@@ -42,10 +48,18 @@ jest.mock("@/services/serverHeaders", () => ({
 
 jest.mock("expo-file-system", () => ({
   Paths: { document: "file:///doc" },
+  FileMode: { ReadOnly: "r" },
+  File: class {
+    exists = false;
+    delete() {}
+  },
   Directory: class {
     exists = true;
-    uri = "file:///doc/local-artwork";
+    uri = "file:///doc/local-artwork/scope";
     create() {}
+    list() {
+      return [];
+    }
   },
 }));
 
@@ -54,6 +68,7 @@ jest.mock("expo-file-system", () => ({
 const mockSource = {
   kind: "webdav" as const,
   extractConcurrency: 4,
+  listConcurrency: 4,
   tree: new Map<string, { name: string; isDirectory: boolean }[]>(),
   fail: new Set<string>(),
   rootThrows: false,
@@ -177,6 +192,7 @@ describe("scanLibrary prune guard", () => {
     });
 
     expect(result.cancelled).toBe(true);
+    expect(result.incomplete).toBe(true);
     expect(deletedIds()).toEqual([]);
   });
 });

@@ -23,6 +23,19 @@ export function useSettingsToast() {
     });
   };
 
+  const showInfoToast = (description: string) => {
+    toast.show({
+      placement: "top",
+      duration: 3000,
+      render: () => (
+        <Toast action="info">
+          <ToastTitle>{t("app.shared.toastInfoTitle")}</ToastTitle>
+          <ToastDescription>{description}</ToastDescription>
+        </Toast>
+      ),
+    });
+  };
+
   const showErrorToast = (description: string) => {
     toast.show({
       placement: "top",
@@ -36,5 +49,5 @@ export function useSettingsToast() {
     });
   };
 
-  return { showSuccessToast, showErrorToast };
+  return { showSuccessToast, showInfoToast, showErrorToast };
 }

@@ -1,8 +1,15 @@
 import type { TrackRow } from "@/services/local/db";
-import { localAlbumId, localArtistId } from "@/services/local/keys";
+import {
+  localAlbumId,
+  localArtistId,
+  parseLocalArtistId,
+} from "@/services/local/keys";
 import { unknownAlbumLabel, unknownArtistLabel } from "@/services/local/labels";
 import { mapRowToChild } from "@/services/local/mappers";
-import { searchTracks } from "@/services/local/repository";
+import {
+  queryArtistArtByKeys,
+  searchTracks,
+} from "@/services/local/repository";
 import { localEnvelope } from "@/services/local/unsupported";
 import type {
   AlbumID3,
@@ -58,6 +65,28 @@ function rollUp(rows: TrackRow[], opts: SearchOpts) {
   };
 }
 
+/**
+ * Upgrade the rolled-up artists' covers to their real `artist.jpg` where the
+ * library has one, in place.
+ *
+ * `rollUp` can only reach for the matching *track's* artwork, which leaves
+ * search showing an album cover for an artist every other list shows a portrait
+ * for. Resolved here rather than inside `rollUp` because it costs a second
+ * query, and only for the handful of artists that survived the cap.
+ */
+async function applyArtistArt(artists: ArtistID3[]): Promise<void> {
+  const keyed = artists.flatMap((artist) => {
+    const key = parseLocalArtistId(artist.id);
+    return key == null ? [] : [{ artist, key }];
+  });
+  if (keyed.length === 0) return;
+  const art = await queryArtistArtByKeys(keyed.map((entry) => entry.key));
+  for (const { artist, key } of keyed) {
+    const cover = art.get(key);
+    if (cover) artist.coverArt = cover;
+  }
+}
+
 export const search3 = async (query: string, opts: SearchOpts = {}) => {
   const rows = await searchTracks(
     query,
@@ -65,6 +94,7 @@ export const search3 = async (query: string, opts: SearchOpts = {}) => {
     opts.songOffset ?? 0,
   );
   const { albums, artists } = rollUp(rows, opts);
+  await applyArtistArt(artists);
   const searchResult3: SearchResult3 = {
     album: albums,
     artist: artists,

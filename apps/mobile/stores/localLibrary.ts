@@ -83,9 +83,25 @@ interface LocalLibraryStore {
   // list). Nothing was pruned, but the result is partial and the user should be
   // told rather than shown a quietly smaller library. Consumed once and cleared.
   incompleteScanNotice: boolean;
+  // A scan just hid more folders than the user has been told about. Unlike the
+  // partial-scan warning this one *did* remove tracks (and their tag
+  // corrections), and the markers are not always deliberate — Android apps drop
+  // `.nomedia` into Ringtones and thumbnail caches, `.ignore` is also ripgrep's
+  // config file — so the first scan that acts on one has to say so.
+  hiddenFoldersNotice: boolean;
+  // How many hidden folders that warning last reported, persisted so a steady
+  // state stays quiet and only a new marker speaks up. Drops back down when
+  // folders are unhidden, so re-hiding them warns again.
+  notifiedIgnoredDirectories: number;
 
   setStatus: (status: ScanStatus) => void;
-  setScanFinished: (result: ScanResult) => void;
+  /**
+   * @param silent Don't raise the one-shot partial-scan warning. Set by the
+   *   automatic sync: that warning exists to explain a result the user just
+   *   asked for, and a share with one permanently unreadable folder would
+   *   otherwise toast on every timer tick.
+   */
+  setScanFinished: (result: ScanResult, silent?: boolean) => void;
   setReady: () => void;
   /**
    * Clear the last-scan stamp so the full-screen indexing gate
@@ -97,6 +113,8 @@ interface LocalLibraryStore {
   requestRescan: (force?: boolean) => void;
   /** Dismiss the one-shot partial-scan warning once it's been shown. */
   clearIncompleteScanNotice: () => void;
+  /** Dismiss the one-shot hidden-folders warning once it's been shown. */
+  clearHiddenFoldersNotice: () => void;
   star: (target: StarTarget) => void;
   unstar: (target: StarTarget) => void;
   /** Set a 1–5 rating for a local id; a rating of 0 clears it (Subsonic). */
@@ -122,6 +140,8 @@ const initialState = {
   ready: false,
   forceNextScan: false,
   incompleteScanNotice: false,
+  hiddenFoldersNotice: false,
+  notifiedIgnoredDirectories: 0,
 };
 
 const useLocalLibraryBase = create<LocalLibraryStore>()(
@@ -149,8 +169,8 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
         });
       },
 
-      setScanFinished: (result) => {
-        set({
+      setScanFinished: (result, silent = false) => {
+        set((s) => ({
           status: idleStatus,
           lastScanAt: Date.now(),
           lastScanResult: result,
@@ -159,12 +179,34 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           // instant `lastScanAt` is stamped — it never gets to say anything.
           // One-shot and ephemeral: the warning is about what just happened, and
           // re-announcing it on every cold start would be noise.
-          incompleteScanNotice: result.incomplete,
-        });
+          incompleteScanNotice: result.incomplete && !silent,
+          // Only a *rise* is news. A library that has always had one `.nomedia`
+          // in it shouldn't nag after every scan; a folder that just went
+          // missing should be traceable to the marker that took it.
+          //
+          // `silent` suppresses it for the same reason it suppresses the
+          // partial-scan warning: an automatic sync the user never asked for
+          // has no context to hang a toast on. The count only advances when the
+          // rise was actually reported, so the next visible scan still says it.
+          //
+          // A silent scan may still lower it, though, and has to: the watermark
+          // is "what the user has been told", and folders that are no longer
+          // hidden were never told about. Left pinned high, unhiding a folder
+          // and hiding it again during auto-sync would pass in silence.
+          hiddenFoldersNotice:
+            !silent && result.ignoredDirectories > s.notifiedIgnoredDirectories,
+          notifiedIgnoredDirectories: silent
+            ? Math.min(s.notifiedIgnoredDirectories, result.ignoredDirectories)
+            : result.ignoredDirectories,
+        }));
       },
 
       clearIncompleteScanNotice: () => {
         set({ incompleteScanNotice: false });
+      },
+
+      clearHiddenFoldersNotice: () => {
+        set({ hiddenFoldersNotice: false });
       },
 
       clearLocalLibraryData: () => {
@@ -175,6 +217,7 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           favoriteAlbums: {},
           favoriteArtists: {},
           ratings: {},
+          notifiedIgnoredDirectories: 0,
         });
       },
 
@@ -233,6 +276,7 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
         favoriteAlbums: state.favoriteAlbums,
         favoriteArtists: state.favoriteArtists,
         ratings: state.ratings,
+        notifiedIgnoredDirectories: state.notifiedIgnoredDirectories,
       }),
     },
   ),

@@ -221,6 +221,29 @@ interface AppStore {
   // spending someone's data plan is not a decision the app gets to make.
   scanOnWifiOnly: boolean;
   setScanOnWifiOnly: (enabled: boolean) => void;
+  // Re-walk an index-backed library by itself, so files added or removed on a
+  // share show up without anyone pressing anything. Cheap by construction: the
+  // indexer skips every file whose size and mtime are unchanged, so a sync that
+  // finds nothing costs one directory listing per folder and no file reads at
+  // all. On by default for that reason — the alternative is a library that
+  // silently drifts out of date until the user thinks to rescan.
+  autoLibrarySync: boolean;
+  setAutoLibrarySync: (enabled: boolean) => void;
+  // Floor on how often the automatic sync above may run, in minutes. It's a
+  // throttle rather than a schedule: the triggers are foregrounding and
+  // reconnecting, and this is what stops a task-switch from re-walking a large
+  // share every time.
+  autoLibrarySyncIntervalMinutes: number;
+  setAutoLibrarySyncIntervalMinutes: (minutes: number) => void;
+  // Filenames the scanner accepts as a folder's cover / artist image, most
+  // preferred first, as stems without an extension (see
+  // services/local/artNames.ts). Empty means "use the defaults" rather than "no
+  // sidecar art", so a name added to the defaults in a later release still
+  // reaches someone who never opened the editor.
+  albumArtNames: string[];
+  setAlbumArtNames: (names: string[]) => void;
+  artistArtNames: string[];
+  setArtistArtNames: (names: string[]) => void;
   replayGainMode: "off" | "track" | "album";
   setReplayGainMode: (mode: "off" | "track" | "album") => void;
   replayGainPreampDb: number;
@@ -430,6 +453,22 @@ export const useAppBase = create<AppStore>()(
       scanOnWifiOnly: true,
       setScanOnWifiOnly: (enabled: boolean) => {
         set({ scanOnWifiOnly: enabled });
+      },
+      autoLibrarySync: true,
+      setAutoLibrarySync: (enabled: boolean) => {
+        set({ autoLibrarySync: enabled });
+      },
+      autoLibrarySyncIntervalMinutes: 30,
+      setAutoLibrarySyncIntervalMinutes: (minutes: number) => {
+        set({ autoLibrarySyncIntervalMinutes: minutes });
+      },
+      albumArtNames: [],
+      setAlbumArtNames: (albumArtNames: string[]) => {
+        set({ albumArtNames });
+      },
+      artistArtNames: [],
+      setArtistArtNames: (artistArtNames: string[]) => {
+        set({ artistArtNames });
       },
       replayGainMode: "off",
       setReplayGainMode: (replayGainMode: "off" | "track" | "album") => {

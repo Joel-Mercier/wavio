@@ -21,6 +21,15 @@ const SCHEMA_VERSION = 6;
 
 const currentScope = currentAuthScope;
 
+/**
+ * The scope this library's data belongs to — the same key that names its
+ * database file. Re-exported here (rather than letting callers reach for
+ * `currentAuthScope` themselves) so everything the local library keeps on disk
+ * is scoped by one definition: the index, and the artwork directory the indexer
+ * writes into.
+ */
+export const libraryScope = (): string => currentScope();
+
 // `getAuthScope` sanitizes to [A-Za-z0-9_], so the scope is a safe filename
 // fragment.
 //
@@ -500,11 +509,58 @@ UPDATE tracks SET
   )
 WHERE id = ?`;
 
+// Sidecar cover art discovered by the scanner's walk: the `cover.jpg` /
+// `front.png` beside an album's tracks and the `artist.jpg` above them (see
+// services/local/folderArt.ts). Kept in their own tables rather than written
+// onto `tracks` because the scan is incremental — an unchanged file is never
+// re-extracted (see indexer.scanLibrary), so a cover dropped into a folder that
+// is otherwise untouched would not surface until a forced full rescan.
+//
+// `dir` joins against `tracks.dir` — the canonical URI of the directory the
+// scanner listed a track in, not a string sliced off its path (see the
+// `ensureColumn` for it in `migrate`). `source_path` is the image the row was
+// mirrored from, which need not sit in `dir` itself: a multi-disc release takes
+// its album root's cover. `source_key` is the size/mtime token that lets the
+// next scan skip a folder whose image hasn't changed without fetching a byte.
+const SCHEMA_V7 = `
+CREATE TABLE IF NOT EXISTS folder_art (
+  dir          TEXT PRIMARY KEY NOT NULL,
+  artwork_path TEXT NOT NULL,
+  artwork_mime TEXT,
+  source_path  TEXT,
+  source_key   TEXT,
+  updated_at   INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS artist_art (
+  artist_key   TEXT PRIMARY KEY NOT NULL,
+  artwork_path TEXT NOT NULL,
+  artwork_mime TEXT,
+  source_path  TEXT,
+  source_key   TEXT,
+  updated_at   INTEGER NOT NULL
+);
+`;
+
 // Every read goes through this view instead of `tracks`, so a correction is
 // applied in exactly one place and shows up everywhere — browse, search, player,
 // Android Auto, the widget — without any call site knowing overrides exist. A
 // null override column falls back to the scanned tag, so a partial match only
 // replaces the fields it actually resolved.
+//
+// Artwork resolves three-deep: an explicit correction (a Cover Art Archive cover
+// the user asked for) beats the folder's sidecar image, which beats the picture
+// embedded in the file. Sidecar-over-embedded is what Navidrome
+// (`cover.*, folder.*, front.*, embedded`) and Jellyfin ("external images take
+// precedence over embedded metadata") both do, and it is also what makes an
+// album whose tracks disagree deterministic — `MAX(artwork_path)` in the album
+// rollup picks arbitrarily among per-track values, but every track in a folder
+// shares one sidecar. `artwork_mime` follows the same chain as far as it can: it
+// used to be read straight off `tracks`, which described the embedded picture
+// even when the sidecar had replaced it. The override is not in the mime chain
+// because `track_tag_overrides` has no mime column to put there — a corrected
+// cover comes from the Cover Art Archive and is always a JPEG, so the stored
+// value being the underlying picture's is exactly as approximate as it was
+// before, and adding a column nothing writes would not improve it.
 //
 // Writes still target `tracks` directly (SQLite views are read-only) — the
 // indexer is unaffected.
@@ -538,8 +594,9 @@ SELECT
   COALESCE(o.disc_number, t.disc_number)   AS disc_number,
   t.disc_total, t.duration_ms, t.bitrate, t.sample_rate,
   t.is_compilation, t.suffix,
-  COALESCE(o.artwork_path, t.artwork_path)  AS artwork_path,
-  t.artwork_mime, t.lyrics,
+  COALESCE(o.artwork_path, fa.artwork_path, t.artwork_path) AS artwork_path,
+  COALESCE(fa.artwork_mime, t.artwork_mime) AS artwork_mime,
+  t.lyrics,
   COALESCE(o.music_brainz_id, t.music_brainz_id) AS music_brainz_id,
   COALESCE(o.artists_json, t.artists_json) AS artists_json,
   t.replay_gain_json, t.release_types_json,
@@ -547,7 +604,8 @@ SELECT
   t.resolved_artist_key                    AS artist_key,
   t.indexed_at
 FROM tracks t
-LEFT JOIN track_tag_overrides o ON o.track_id = t.id;
+LEFT JOIN track_tag_overrides o ON o.track_id = t.id
+LEFT JOIN folder_art fa ON fa.dir = t.dir;
 `;
 
 /** Add `column` to `table` if it isn't already there. SQLite has no
@@ -594,6 +652,16 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await ensureColumn(db, "podcast_channels", "author", "TEXT");
   // Added after album_tag_matches shipped (still v5).
   await ensureColumn(db, "album_tag_matches", "reason", "TEXT");
+  // `dir` is the canonical URI of the directory a track was listed in, recorded
+  // by the walk rather than sliced off `uri` — a SAF `content://` document URI
+  // percent-encodes its separators, so string surgery yields one bogus prefix
+  // for the whole tree. It is the join key for sidecar artwork, and the scanner
+  // backfills it for tracks it skips so an existing index doesn't have to be
+  // re-extracted before covers appear.
+  await ensureColumn(db, "tracks", "dir", "TEXT");
+  await db.execAsync(
+    "CREATE INDEX IF NOT EXISTS idx_tracks_dir ON tracks(dir)",
+  );
   // v6: the grouping keys the view reads. Added before the view is created,
   // since CREATE VIEW resolves its column references immediately and would
   // fail on a database that doesn't have them yet.
@@ -601,7 +669,9 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await ensureColumn(db, "tracks", "resolved_artist_key", "TEXT");
 
   await db.execAsync(SCHEMA_V6);
-  // Last: the view reads from `track_tag_overrides` and from the columns above.
+  await db.execAsync(SCHEMA_V7);
+  // Last: the view reads from `track_tag_overrides`, `folder_art` and the
+  // columns above.
   await db.execAsync(SCHEMA_TRACKS_VIEW);
 
   const row = await db.getFirstAsync<{ user_version: number }>(

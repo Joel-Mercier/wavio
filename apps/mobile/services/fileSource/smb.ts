@@ -34,6 +34,14 @@ import type { ByteReader, FileSource, RemoteEntry } from "./types";
 // pool.
 const EXTRACT_CONCURRENCY = 6;
 
+// Must stay equal to `LIST_THREADS` in modules/smb/android/.../SmbModule.kt:
+// `AsyncFunction("list")` submits onto that fixed pool, so a fifth in-flight
+// listing just parks in its queue and buys nothing. Saturating that pool is
+// safe only because `probe`/`disconnect` run on their own executor there — a
+// probe queued behind four 20s listings would time out and be read as the
+// server going unreachable.
+const LIST_CONCURRENCY = 4;
+
 // Applies to the SMB operation behind a call, not to the loopback hop. Matches
 // the WebDAV source so a wedged share fails a folder rather than the whole scan.
 const REQUEST_TIMEOUT_MS = 20000;
@@ -88,6 +96,7 @@ const toEntry = (
 export const smbFileSource: FileSource = {
   kind: "smb",
   extractConcurrency: EXTRACT_CONCURRENCY,
+  listConcurrency: LIST_CONCURRENCY,
 
   normalizeRoot(root: string): string {
     return normalizeSmbRoot(root);

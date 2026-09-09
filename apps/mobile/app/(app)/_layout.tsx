@@ -16,6 +16,7 @@ import TidarrDownloadsWatcher from "@/components/downloaders/tidarr/TidarrDownlo
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
 import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
+import LibraryAutoScanController from "@/components/local/LibraryAutoScanController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
@@ -426,6 +427,7 @@ export default function AppLayout() {
       <DownloaderPickerSheet />
       <OfflineStarredAutoSync />
       <LibrarySyncController />
+      <LibraryAutoScanController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <OutputSheet />

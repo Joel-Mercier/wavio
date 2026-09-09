@@ -87,6 +87,9 @@ describe("localLibrary store — rescan control", () => {
       cancelled: false,
       incomplete: false,
       unreadable: 0,
+      ignoredDirectories: 0,
+      sidecarCovers: 0,
+      artChanged: 0,
     });
     expect(get().lastScanAt).toBeDefined();
     get().requestRescan();
@@ -109,8 +112,90 @@ describe("localLibrary store — rescan control", () => {
       cancelled: false,
       incomplete: false,
       unreadable: 0,
+      ignoredDirectories: 0,
+      sidecarCovers: 0,
+      artChanged: 0,
     });
     expect(get().forceNextScan).toBe(false);
+  });
+});
+
+describe("localLibrary store — hidden-folders notice", () => {
+  const finish = (ignoredDirectories: number, silent = false) =>
+    get().setScanFinished(
+      {
+        indexed: 0,
+        skipped: 0,
+        removed: 0,
+        failed: 0,
+        cancelled: false,
+        incomplete: false,
+        unreadable: 0,
+        ignoredDirectories,
+        sidecarCovers: 0,
+        artChanged: 0,
+      },
+      silent,
+    );
+
+  it("warns on the scan that first hides a folder", () => {
+    finish(2);
+    expect(get().hiddenFoldersNotice).toBe(true);
+  });
+
+  it("stays quiet once the same folders are hidden again", () => {
+    finish(2);
+    get().clearHiddenFoldersNotice();
+    finish(2);
+    expect(get().hiddenFoldersNotice).toBe(false);
+  });
+
+  it("warns again when a further folder is hidden", () => {
+    finish(2);
+    get().clearHiddenFoldersNotice();
+    finish(3);
+    expect(get().hiddenFoldersNotice).toBe(true);
+  });
+
+  // Unhiding lowers the bar, so re-adding a marker later is news again rather
+  // than sitting silently under a high-water mark.
+  it("warns again after a folder is unhidden and re-hidden", () => {
+    finish(2);
+    get().clearHiddenFoldersNotice();
+    finish(0);
+    finish(1);
+    expect(get().hiddenFoldersNotice).toBe(true);
+  });
+
+  // The unhiding is the part auto-sync is most likely to observe: with the
+  // setting on, the user's own scans are rare, so a silent scan that sees the
+  // marker gone has to lower the bar or the re-hiding never gets reported.
+  it("warns again when the unhiding was only seen by a silent scan", () => {
+    finish(2);
+    get().clearHiddenFoldersNotice();
+    finish(0, true);
+    finish(1);
+    expect(get().hiddenFoldersNotice).toBe(true);
+  });
+
+  it("never warns for a library with no ignore files", () => {
+    finish(0);
+    expect(get().hiddenFoldersNotice).toBe(false);
+  });
+
+  // A background sync has no context for a toast — the same reason it suppresses
+  // the partial-scan warning.
+  it("stays quiet for a silent scan", () => {
+    finish(2, true);
+    expect(get().hiddenFoldersNotice).toBe(false);
+  });
+
+  // ...and the rise is still news the next time the user does ask for a scan,
+  // because a silence never counts as having reported it.
+  it("still warns on the next visible scan after a silent one hid a folder", () => {
+    finish(2, true);
+    finish(2);
+    expect(get().hiddenFoldersNotice).toBe(true);
   });
 });
 
@@ -128,6 +213,9 @@ describe("localLibrary store — clearLocalLibraryData (server deletion)", () =>
       cancelled: false,
       incomplete: false,
       unreadable: 0,
+      ignoredDirectories: 0,
+      sidecarCovers: 0,
+      artChanged: 0,
     });
 
     get().clearLocalLibraryData();
