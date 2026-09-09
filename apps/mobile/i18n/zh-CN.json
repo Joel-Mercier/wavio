@@ -1446,6 +1446,15 @@
 					"scanMusicLibraryAction": "扫描",
 					"scanOnWifiOnlyLabel": "仅限通过 Wi-Fi 扫描",
 					"scanOnWifiOnlyDescription": "首次扫描会读取共享文件夹中每个文件的标签，这可能会消耗大量移动数据。",
+					"coverArtLabel": "Cover art in folders",
+					"coverArtDescription": "When a track has no cover of its own, Wavio uses an image file sitting next to it, such as cover.jpg, folder.png or artist.jpg. A folder image also takes precedence over a cover embedded in the file, so you can change an album's artwork without retagging it. An album folder with no image can inherit one from the folder above when everything under it belongs to the same album, which is what makes CD1 / CD2 layouts work. JPEG, PNG, WebP and GIF are supported.",
+					"albumArtNamesLabel": "Album cover filenames",
+					"artistArtNamesLabel": "Artist image filenames",
+					"artNamesPreview": "In order of preference: {{names}}. Leave empty to use the defaults.",
+					"artNamesUsingDefaults": "Using the default filenames. Separate your own with commas, most preferred first. No file extension needed.",
+					"artNamesSaveAction": "保存",
+					"ignoreFilesLabel": "Hiding folders from scans",
+					"ignoreFilesDescription": "Put a file named .ignore or .ndignore in a folder to keep it out of your library. Leave it empty to hide the folder and everything in it, or fill it with .gitignore-style patterns such as *.wav to hide only some files. A .nomedia file always hides the whole folder, whatever you write in it. Changes take effect on the next scan.",
 					"scanMusicLibrarySuccessDescription": "扫描已启动",
 					"scanMusicLibraryErrorDescription": "启动扫描时发生错误",
 					"scanMusicLibraryAdminRequiredDescription": "启动扫描需要您服务器上的管理员权限",
@@ -1455,6 +1464,25 @@
 					"scanStatuses": {
 						"idle": "空闲",
 						"scanning": "扫描中"
+					},
+					"scanStatusNeverDescription": "Your library hasn't been synced yet.",
+					"syncNowLabel": "立即同步",
+					"syncNowDescription": "Looks for files added, changed or removed since the last sync. Only what changed is read, so this is usually quick.",
+					"syncNowAction": "Sync",
+					"syncNowSuccessDescription": "Syncing your library in the background",
+					"fullRescanLabel": "Full rescan",
+					"fullRescanDescription": "Reads the tags of every file again, even ones that haven't changed. Slow on a large library, so use it when tags look wrong or out of date.",
+					"fullRescanAction": "Rescan",
+					"autoSyncLabel": "Keep library in sync",
+					"autoSyncDescription": "Sync automatically when you come back to Wavio, so files added or removed show up on their own.",
+					"autoSyncIntervalLabel": "Sync no more often than",
+					"autoSyncIntervalDescription": "How long to wait before syncing again. A shorter wait picks up changes sooner; a longer one is kinder to a large library.",
+					"autoSyncIntervalOptions": {
+						"15": "Every 15 minutes",
+						"30": "Every 30 minutes",
+						"60": "每小时",
+						"360": "每6小时",
+						"1440": "Once a day"
 					}
 				},
 				"displaySettings": {
@@ -2101,6 +2129,7 @@
 				"noDataOffline": "离线时无可用内容",
 				"toastSuccessTitle": "成功",
 				"toastErrorTitle": "错误",
+				"toastInfoTitle": "Heads up",
 				"rateSuccessMessage": "已评分",
 				"rateErrorMessage": "评分时发生错误",
 				"shareUrlCopiedMessage": "分享链接已复制到剪贴板",
@@ -2158,12 +2187,14 @@
 				"notificationText": "正在读取您的音乐文件。您可以继续使用手机。",
 				"listing": "正在扫描文件...",
 				"indexing": "正在提取元数据...",
+				"artwork": "Fetching cover art…",
 				"pruning": "正在清理...",
 				"finishing": "即将完成...",
 				"countLabel": "{{processed}}/{{total}} 首曲目",
 				"errorTitle": "无法构建音乐库",
 				"errors": {
 					"meteredNetwork": "扫描功能已设置为“仅限 Wi-Fi”，而您当前正在使用移动数据。请连接 Wi-Fi，或在“设置”→“音乐库”中关闭“仅限 Wi-Fi”设置。",
+					"noFolders": "No music folders are set up for this library. Add one in Settings → Music library.",
 					"auth": "您的用户名或密码被拒绝。请检查为该服务器保存的登录凭据。",
 					"notFound": "找不到“音乐”文件夹。请检查为该服务器保存的文件夹路径。",
 					"unreachable": "无法连接到服务器。请检查服务器是否已开启，并确认您是否处于同一网络中。",
@@ -2175,7 +2206,8 @@
 				"continue": "继续",
 				"stop": "停止扫描",
 				"folderCountLabel_other": "{{count}} 已扫描的文件夹",
-				"partialScanWarning_other": "{{count}} 无法读取文件夹，因此您的库可能不完整。没有任何内容被删除——请在服务器可访问时尝试重新扫描。"
+				"partialScanWarning_other": "{{count}} 无法读取文件夹，因此您的库可能不完整。没有任何内容被删除——请在服务器可访问时尝试重新扫描。",
+				"hiddenFoldersNotice_other": "{{count}} folders are hidden by an .ignore, .ndignore or .nomedia file and were left out of your library. Delete those files and scan again to bring them back."
 			},
 			"serverSwitch": {
 				"title": "切换服务器",
