@@ -38,9 +38,9 @@ interface MovingTextProps {
 
 export default function MovingText({
   children,
-  initialDelay = 2000,
+  initialDelay = 2500,
   endDelay = 1500,
-  pixelsPerSecond = 40,
+  pixelsPerSecond = 25,
   gap = 24,
   fadeWidth = 24,
 }: MovingTextProps) {

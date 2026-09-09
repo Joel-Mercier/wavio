@@ -15,6 +15,7 @@ import {
   isClientCertPickerAvailable,
   isSslTrustAvailable,
 } from "@/modules/ssl-trust";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 /**
  * mTLS client-certificate picker for the server forms. Launches the Android
@@ -55,7 +56,7 @@ export default function ClientCertificateField({
       // a certificate.
       toast.show({
         placement: "top",
-        duration: 4000,
+        duration: TOAST_DURATION.long,
         render: () => (
           <Toast action="info">
             <ToastTitle>{t("auth.clientCertificate.noneTitle")}</ToastTitle>
@@ -68,7 +69,7 @@ export default function ClientCertificateField({
     } catch (error) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

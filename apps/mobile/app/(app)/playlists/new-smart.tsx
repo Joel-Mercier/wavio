@@ -40,6 +40,7 @@ import {
   type FormSortEntry,
   toNavidromeCriteria,
 } from "@/utils/smartPlaylist";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const metadataSchema = z.object({
   name: z.string().trim().min(1),
@@ -91,7 +92,7 @@ export default function NewSmartPlaylistScreen() {
       if ((criteria.all ?? criteria.any ?? []).length === 0) {
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="error">
               <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -115,7 +116,7 @@ export default function NewSmartPlaylistScreen() {
             goBackOrHome(router);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -130,7 +131,7 @@ export default function NewSmartPlaylistScreen() {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

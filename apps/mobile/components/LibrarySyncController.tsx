@@ -15,6 +15,7 @@ import {
 import { artworkCacheService, librarySyncService } from "@/services/offline";
 import { subscribeLibrarySyncCompleted } from "@/services/offline/librarySyncService";
 import useLibrarySync from "@/stores/librarySync";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Mounted once at the app root (like OfflineStarredAutoSync). Nudges the
 // extended-offline library sync whenever it might have work to do: toggle-on,
@@ -60,7 +61,7 @@ export default function LibrarySyncController() {
       subscribeIdMigrationCompleted(({ remappedCount }) => {
         toast.show({
           placement: "top",
-          duration: 6000,
+          duration: TOAST_DURATION.veryLong,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -81,7 +82,7 @@ export default function LibrarySyncController() {
       subscribeLibrarySyncCompleted(({ downloadedCount }) => {
         toast.show({
           placement: "top",
-          duration: 4000,
+          duration: TOAST_DURATION.long,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

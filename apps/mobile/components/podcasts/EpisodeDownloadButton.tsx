@@ -17,6 +17,7 @@ import {
 import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
 import { offlineDownloadService } from "@/services/offline";
 import type { PodcastEpisode } from "@/services/openSubsonic/types";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 interface EpisodeDownloadButtonProps {
   episode: PodcastEpisode;
@@ -63,7 +64,7 @@ export default function EpisodeDownloadButton({
     } catch {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

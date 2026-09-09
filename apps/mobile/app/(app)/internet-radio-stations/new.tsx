@@ -30,6 +30,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useCreateInternetRadioStation } from "@/hooks/backend/useInternetRadioStations";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const newInternetRadioStationSchema = z.object({
   name: z.string().trim().min(1),
@@ -68,7 +69,7 @@ export default function NewInternetRadioStationScreen() {
             router.navigate("/(app)/(tabs)/(home)");
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -83,7 +84,7 @@ export default function NewInternetRadioStationScreen() {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

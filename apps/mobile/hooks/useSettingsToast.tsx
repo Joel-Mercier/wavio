@@ -5,6 +5,7 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export function useSettingsToast() {
   const { t } = useTranslation();
@@ -13,7 +14,7 @@ export function useSettingsToast() {
   const showSuccessToast = (description: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -26,7 +27,7 @@ export function useSettingsToast() {
   const showInfoToast = (description: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="info">
           <ToastTitle>{t("app.shared.toastInfoTitle")}</ToastTitle>
@@ -39,7 +40,7 @@ export function useSettingsToast() {
   const showErrorToast = (description: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="error">
           <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

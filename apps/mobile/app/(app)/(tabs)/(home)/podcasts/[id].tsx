@@ -58,6 +58,7 @@ import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { taddyEpisodeToTrack } from "@/utils/podcastEpisodeToTrack";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -162,7 +163,7 @@ export default function PodcastScreen() {
     addFavoritePodcast(podcast.podcastSeries);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -180,7 +181,7 @@ export default function PodcastScreen() {
     removeFavoritePodcast(podcast.podcastSeries.uuid);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -259,7 +260,7 @@ export default function PodcastScreen() {
       logError(error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

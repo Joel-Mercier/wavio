@@ -45,6 +45,7 @@ import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const ROLE_FIELDS = [
   "adminRole",
@@ -282,7 +283,7 @@ export default function EditProfileScreen() {
         }
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -297,7 +298,7 @@ export default function EditProfileScreen() {
         logError(error);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="error">
               <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

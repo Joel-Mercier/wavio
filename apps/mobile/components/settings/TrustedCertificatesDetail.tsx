@@ -30,6 +30,7 @@ import useApp from "@/stores/app";
 import { formatDistanceToNow } from "@/utils/date";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export default function TrustedCertificatesDetail() {
   const { t } = useTranslation();
@@ -54,7 +55,7 @@ export default function TrustedCertificatesDetail() {
   const showSuccessToast = (description: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

@@ -48,6 +48,7 @@ import type {
 import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -123,7 +124,7 @@ export default function PodcastSeriesScreen() {
     addFavoritePodcast(podcastSeries as PodcastSeries);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -139,7 +140,7 @@ export default function PodcastSeriesScreen() {
     removeFavoritePodcast(podcastSeries.id);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

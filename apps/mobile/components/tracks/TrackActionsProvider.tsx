@@ -96,6 +96,7 @@ import useTrackSelection from "@/stores/trackSelection";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export interface TrackActionsContextValue {
   index?: number;
@@ -200,7 +201,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       if (added === 0) return;
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -220,7 +221,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       if (added === 0) return;
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -262,7 +263,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onSuccess: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -276,7 +277,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -301,7 +302,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onSuccess: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -315,7 +316,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -398,7 +399,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -417,7 +418,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -441,7 +442,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           bottomSheetShareModalRef.current?.present();
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -455,7 +456,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -494,7 +495,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (cached?.playlist.entry?.some((entry) => entry.id === track.id)) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="info">
             <ToastTitle>{t("app.playlists.duplicateTitle")}</ToastTitle>
@@ -519,7 +520,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           usePlaylistTargets.getState().recordTargets([quickTarget]);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -542,7 +543,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           }
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -632,7 +633,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await saveTrackToDevice(track);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -646,7 +647,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -679,7 +680,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           setShowRatingModal(false);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -694,7 +695,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -727,7 +728,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         setClipoardCopyDone(true);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -742,7 +743,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -777,7 +778,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await downloadTrack(track);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -791,7 +792,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error downloading track for offline:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -811,7 +812,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await removeDownloadedTrack(track.id);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -825,7 +826,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error removing offline download:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

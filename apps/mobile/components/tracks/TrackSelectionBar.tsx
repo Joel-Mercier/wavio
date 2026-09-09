@@ -33,6 +33,7 @@ import useQueue from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { childToTrack } from "@/utils/childToTrack";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Gap between the bar and whatever chrome sits below it.
 const CHROME_GAP = 8;
@@ -180,7 +181,7 @@ export default function TrackSelectionBar() {
   const showQueueToast = (message: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

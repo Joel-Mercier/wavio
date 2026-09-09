@@ -53,6 +53,7 @@ import useQueue from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { invalidateKeys } from "@/utils/invalidateKeys";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 // Width of the landscape left tab bar column; the player docks to its bottom.
@@ -149,7 +150,7 @@ export default function FloatingPlayer() {
     addFavoritePodcast(podcastSeries);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -166,7 +167,7 @@ export default function FloatingPlayer() {
     removeFavoritePodcast(podcastSeries.uuid);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -215,7 +216,7 @@ export default function FloatingPlayer() {
           ]);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -229,7 +230,7 @@ export default function FloatingPlayer() {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -278,7 +279,7 @@ export default function FloatingPlayer() {
           ]);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -292,7 +293,7 @@ export default function FloatingPlayer() {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

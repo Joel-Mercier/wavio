@@ -353,10 +353,13 @@ export default function LibraryListItem({
   // scrape again.
   const href = useMemo<Href>(() => {
     if (radioImage && typeof type.url === "object") {
+      // Narrow before spreading: spreading the Href union itself makes TS
+      // compare ~1000 route variants on both sides and bail with TS2859.
+      const url = type.url as { params?: Record<string, unknown> };
       return {
-        ...type.url,
-        params: { ...type.url.params, imageUrl: radioImage },
-      } as Href;
+        ...url,
+        params: { ...url.params, imageUrl: radioImage },
+      } as unknown as Href;
     }
     return type.url;
   }, [type.url, radioImage]);

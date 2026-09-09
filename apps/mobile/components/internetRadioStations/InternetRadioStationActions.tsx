@@ -41,6 +41,7 @@ import {
   useUpdateInternetRadioStation,
 } from "@/hooks/backend/useInternetRadioStations";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const updateInternetRadioStationSchema = z.object({
   name: z.string().min(1),
@@ -102,7 +103,7 @@ export default function InternetRadioStationActions({
             setShowEditDialog(false);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -118,7 +119,7 @@ export default function InternetRadioStationActions({
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -170,7 +171,7 @@ export default function InternetRadioStationActions({
           onDeleted?.();
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -186,7 +187,7 @@ export default function InternetRadioStationActions({
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

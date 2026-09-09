@@ -34,6 +34,7 @@ import useApp from "@/stores/app";
 import usePlaylistTargets from "@/stores/playlistTargets";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // The list is a flat union so the "Recent" and "All playlists" captions scroll
 // with it, the way the queue screen groups its sections.
@@ -148,7 +149,7 @@ export default function AddToPlaylistDetail() {
         .filter((name) => name.length > 0);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastDescription>
@@ -172,7 +173,7 @@ export default function AddToPlaylistDetail() {
     goBackOrHome(router);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastDescription>

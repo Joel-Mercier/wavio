@@ -51,6 +51,7 @@ import {
   isPlayablePodcastEpisode,
   podcastEpisodeToTrack,
 } from "@/utils/podcastEpisodeToTrack";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedImage = Animated.createAnimatedComponent(ImageWithFallback);
@@ -165,7 +166,7 @@ export default function ServerPodcastEpisodeScreen() {
     if (!playTracks(tracks, start)) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

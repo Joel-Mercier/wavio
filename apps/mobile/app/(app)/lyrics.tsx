@@ -44,6 +44,7 @@ import useJukebox from "@/stores/jukebox";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const ICON_HIT_SLOP = { top: 16, bottom: 16, left: 16, right: 16 };
 
@@ -130,7 +131,7 @@ export default function LyricsScreen() {
             shareSheetRef.current?.present();
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -144,7 +145,7 @@ export default function LyricsScreen() {
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

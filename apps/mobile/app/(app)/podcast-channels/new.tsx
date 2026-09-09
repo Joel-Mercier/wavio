@@ -31,6 +31,7 @@ import { useCreatePodcastChannel } from "@/hooks/backend/usePodcasts";
 import { InvalidFeedError } from "@/services/podcastFeed";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const newPodcastChannelSchema = z.object({
   url: z.url().trim(),
@@ -64,7 +65,7 @@ export default function NewPodcastChannelScreen() {
             router.navigate("/(app)/(tabs)/(home)/podcasts");
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -83,7 +84,7 @@ export default function NewPodcastChannelScreen() {
                 : t("app.podcasts.newChannelErrorMessage");
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

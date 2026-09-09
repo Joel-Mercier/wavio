@@ -59,6 +59,7 @@ import {
   sortItems,
 } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 import {
   OFFLINE_TRACK_SORT_FIELDS,
   OFFLINE_TRACK_SORT_SPECS,
@@ -158,7 +159,7 @@ export default function OfflineDownloadsDetail() {
       );
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -171,7 +172,7 @@ export default function OfflineDownloadsDetail() {
     } catch {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -193,7 +194,7 @@ export default function OfflineDownloadsDetail() {
       await removeDownloadedTrack(trackId);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -206,7 +207,7 @@ export default function OfflineDownloadsDetail() {
     } catch {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

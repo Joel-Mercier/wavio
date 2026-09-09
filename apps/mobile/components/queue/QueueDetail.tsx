@@ -53,6 +53,7 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
@@ -186,7 +187,7 @@ export default function QueueDetail() {
       if (await startTrackRadio(childToTrack(track))) return;
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -308,7 +309,7 @@ export default function QueueDetail() {
     setShowClearConfirm(false);
     toast.show({
       placement: "top",
-      duration: 2000,
+      duration: TOAST_DURATION.short,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

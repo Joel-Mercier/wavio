@@ -32,6 +32,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import usePodcasts from "@/stores/podcasts";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export interface PodcastEpisodeActionsTarget {
   uuid: string;
@@ -116,7 +117,7 @@ export function PodcastEpisodeActionsProvider({
     addFavoritePodcast(series);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -134,7 +135,7 @@ export function PodcastEpisodeActionsProvider({
     removeFavoritePodcast(series.uuid);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
