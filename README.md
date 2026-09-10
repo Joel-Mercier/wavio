@@ -32,9 +32,10 @@ If you enjoy the app please leave a review on the Google Play Store to help us g
 <a href="https://play.google.com/store/apps/details?id=com.jmercier.wavio">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/google-play-badge.svg" alt="Get it on Google Play" height="80">
 </a>
+<a href="https://github.com/Joel-Mercier/wavio/releases/latest">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/github-badge.png" alt="Get it on Github" height="80">
+</a>
 </p>
-
-Alternatively, you can install the APK from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
 
 Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architectures (x86, x86_64) are not provided.
 
