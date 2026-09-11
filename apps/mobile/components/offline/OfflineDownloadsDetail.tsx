@@ -7,7 +7,7 @@ import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -259,7 +259,7 @@ export default function OfflineDownloadsDetail() {
             onPress={isEmpty ? undefined : () => setShowClearConfirm(true)}
           >
             <HStack className="items-center gap-x-2">
-              <Trash2
+              <Trash
                 size={16}
                 color={isEmpty ? iconDisabledColor : iconActiveColor}
               />

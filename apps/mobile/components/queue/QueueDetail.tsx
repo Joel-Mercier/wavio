@@ -10,7 +10,7 @@ import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -413,7 +413,7 @@ export default function QueueDetail() {
                 onPress={clearDisabled ? undefined : handleClearPress}
               >
                 <HStack className="items-center gap-x-2">
-                  <Trash2
+                  <Trash
                     size={16}
                     color={clearDisabled ? iconDisabledColor : iconActiveColor}
                   />

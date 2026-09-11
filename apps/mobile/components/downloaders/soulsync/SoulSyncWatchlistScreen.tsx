@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";
@@ -130,7 +130,7 @@ export default function SoulSyncWatchlistScreen() {
                     onPress={() => handleRemove(artistId)}
                     disabled={remove.isPending}
                   >
-                    <Trash2 size={20} color={red500} />
+                    <Trash size={20} color={red500} />
                   </FadeOutScaleDown>
                 )}
               </HStack>

@@ -6,7 +6,7 @@ import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListX from "lucide-react-native/dist/esm/icons/list-x.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -35,7 +35,7 @@ const actionIcon = (action: OfflineAction) => {
     case "playlistEdit":
       return Pencil;
     case "playlistDelete":
-      return Trash2;
+      return Trash;
   }
 };
 

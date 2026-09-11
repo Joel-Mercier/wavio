@@ -36,12 +36,12 @@
     "landing:preview": "bun run --cwd apps/landing preview"
   },
   "patchedDependencies": {
-    "expo-audio@57.0.4": "patches/expo-audio@57.0.4.patch",
-    "zod@4.4.3": "patches/zod@4.4.3.patch",
+    "expo-audio@57.0.5": "patches/expo-audio@57.0.5.patch",
+    "zod@4.6.2": "patches/zod@4.6.2.patch",
     "expo-navigation-bar@57.0.2": "patches/expo-navigation-bar@57.0.2.patch",
-    "lucide-react-native@1.33.0": "patches/lucide-react-native@1.33.0.patch",
-    "expo-font@57.0.1": "patches/expo-font@57.0.1.patch",
-    "expo-file-system@57.0.5": "patches/expo-file-system@57.0.5.patch"
+    "lucide-react-native@1.45.0": "patches/lucide-react-native@1.45.0.patch",
+    "expo-font@57.0.4": "patches/expo-font@57.0.4.patch",
+    "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch"
   },
   "dependencies": {
     "eas-cli": "^20.2.0",

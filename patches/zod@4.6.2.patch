@@ -1,0 +1,24 @@
+diff --git a/v4/classic/external.js b/v4/classic/external.js
+index 435be167fc6c2c2276f9c0236526b22b2eed3f05..af256c99086a5633acb0879dfcc48e430138683c 100644
+--- a/v4/classic/external.js
++++ b/v4/classic/external.js
+@@ -10,7 +10,6 @@ export { fromJSONSchema } from "./from-json-schema.js";
+ export { deepPartial } from "./deep-partial.js";
+ // Types and values both, from one module — re-exporting the types from core would collide.
+ export { input, output } from "./in-out.js";
+-export * as locales from "../locales/index.js";
+ // iso must be exported from top-level https://github.com/colinhacks/zod/issues/4491
+ export { ZodISODateTime, ZodISODate, ZodISOTime, ZodISODuration } from "./iso.js";
+ export * as iso from "./iso.js";
+diff --git a/v4/core/index.js b/v4/core/index.js
+index f5bc49efd057a69b43ee57658cf1ad2a53d457ac..110a254fbca654cb3919ddb1260a733d8c97735c 100644
+--- a/v4/core/index.js
++++ b/v4/core/index.js
+@@ -8,7 +8,6 @@ export * from "./versions.js";
+ export * as util from "./util.js";
+ export { toZod } from "./util.js";
+ export * as regexes from "./regexes.js";
+-export * as locales from "../locales/index.js";
+ export * from "./registries.js";
+ export * from "./doc.js";
+ export * from "./compile.js";
