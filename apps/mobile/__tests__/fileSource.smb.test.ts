@@ -77,6 +77,12 @@ describe("smbFileSource", () => {
     expect(smbFileSource.extractConcurrency).toBe(6);
   });
 
+  it("lists no wider than the native module's thread pool", () => {
+    // Must track LIST_THREADS in modules/smb/android/.../SmbModule.kt — a fifth
+    // concurrent listing would just queue behind that pool.
+    expect(smbFileSource.listConcurrency).toBe(4);
+  });
+
   describe("target resolution", () => {
     it("splits the share out of the URL and the domain out of the username", async () => {
       mockNative.list.mockResolvedValue([]);

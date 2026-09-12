@@ -34,6 +34,7 @@ import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { orderPlaylistEntries } from "@/utils/playlistOrder";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // The rows carry a uid assigned once when the order is seeded: a positional key
 // would change for every row between the two positions on each drop, forcing
@@ -87,7 +88,7 @@ export default function ReorderPlaylistScreen() {
             router.navigate(`/playlists/${id}`);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -102,7 +103,7 @@ export default function ReorderPlaylistScreen() {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

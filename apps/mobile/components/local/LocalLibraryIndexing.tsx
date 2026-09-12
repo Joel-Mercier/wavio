@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { scanErrorKey, scanStepKey } from "@/components/local/scanStep";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
@@ -14,12 +15,12 @@ import {
   cancelScan,
   runLibraryReconcileScan,
 } from "@/services/local/mediaLibraryScanning";
-import useLocalLibrary, { type ScanStatus } from "@/stores/localLibrary";
+import useLocalLibrary from "@/stores/localLibrary";
 
 // Full-screen first-login gate for the local-library backend. Kicks off the
 // on-device scan (services/local/indexer.ts) once the store is ready, and shows
 // a spinner with the indexer's live step (reading files → extracting metadata →
-// cleaning up). When the scan finishes, `setScanFinished` stamps `lastScanAt`,
+// fetching cover art → cleaning up). When the scan finishes, `setScanFinished` stamps `lastScanAt`,
 // the gate in app/(app)/_layout.tsx closes and the app renders on Home.
 
 // Zeroed result used to dismiss the gate when the user skips past a scan error.
@@ -31,32 +32,10 @@ const EMPTY_RESULT: ScanResult = {
   cancelled: false,
   incomplete: false,
   unreadable: 0,
+  ignoredDirectories: 0,
+  sidecarCovers: 0,
+  artChanged: 0,
 };
-
-// Maps the indexer's phase to the i18n key for the step shown under the spinner.
-const STEP_KEY: Record<ScanStatus["phase"], string> = {
-  idle: "app.localIndexing.listing",
-  listing: "app.localIndexing.listing",
-  indexing: "app.localIndexing.indexing",
-  pruning: "app.localIndexing.pruning",
-  done: "app.localIndexing.finishing",
-};
-
-// Why the scan failed, in words. Anything not listed here falls back to
-// `errors.generic`, which is also what carries `errorDetail` — so an
-// unclassified failure still says something useful instead of leaking a raw
-// AxiosError message, which is what this screen used to render.
-const ERROR_KEY: Record<string, string> = {
-  ERR_SCAN_METERED_NETWORK: "app.localIndexing.errors.meteredNetwork",
-  ERR_FS_AUTH: "app.localIndexing.errors.auth",
-  ERR_FS_NOT_FOUND: "app.localIndexing.errors.notFound",
-  ERR_FS_UNREACHABLE: "app.localIndexing.errors.unreachable",
-  ERR_FS_NOT_SUPPORTED: "app.localIndexing.errors.notSupported",
-  ERR_FS_SERVER: "app.localIndexing.errors.server",
-};
-
-const errorKey = (code: string | undefined): string =>
-  (code && ERROR_KEY[code]) || "app.localIndexing.errors.generic";
 
 export default function LocalLibraryIndexing() {
   const { t } = useTranslation();
@@ -120,7 +99,7 @@ export default function LocalLibraryIndexing() {
               {t("app.localIndexing.errorTitle")}
             </Heading>
             <Text className="text-primary-100 text-sm text-center">
-              {t(errorKey(status.errorCode))}
+              {t(scanErrorKey(status.errorCode))}
             </Text>
             {status.errorDetail ? (
               <Text className="text-primary-400 text-xs text-center">
@@ -148,7 +127,7 @@ export default function LocalLibraryIndexing() {
               {t("app.localIndexing.title")}
             </Heading>
             <Text className="text-primary-100 text-sm text-center">
-              {t(STEP_KEY[status.phase])}
+              {t(scanStepKey(status.phase))}
             </Text>
             {status.phase === "indexing" && status.total > 0 ? (
               <Text className="text-primary-300 text-xs">

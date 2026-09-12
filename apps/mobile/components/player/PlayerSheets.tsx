@@ -73,6 +73,7 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Live label for the "set bookmark at" action. Isolated in its own component so
 // only this row re-renders on the ~4 Hz progress tick (it's only mounted while
@@ -199,7 +200,7 @@ export default function PlayerSheets({
     useBookmarks.getState().addBookmark(playingTrack.id, getCurrentTime());
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -309,7 +310,7 @@ export default function PlayerSheets({
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -328,7 +329,7 @@ export default function PlayerSheets({
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -436,7 +437,7 @@ export default function PlayerSheets({
       logError(error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -470,7 +471,7 @@ export default function PlayerSheets({
           bottomSheetShareModalRef.current?.present();
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -484,7 +485,7 @@ export default function PlayerSheets({
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -509,7 +510,7 @@ export default function PlayerSheets({
       await saveTrackToDevice(playingTrack);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -523,7 +524,7 @@ export default function PlayerSheets({
       logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

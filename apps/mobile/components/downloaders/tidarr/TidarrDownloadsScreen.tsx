@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import RotateCcw from "lucide-react-native/dist/esm/icons/rotate-ccw.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";
@@ -118,7 +118,7 @@ export default function TidarrDownloadsScreen() {
                     {clear.isPending ? (
                       <Spinner size="small" />
                     ) : (
-                      <Trash2 size={16} color={emerald500} />
+                      <Trash size={16} color={emerald500} />
                     )}
                     <Text className="text-emerald-400 text-sm">
                       {t("app.settings.downloaders.tidarr.clearFinishedAction")}

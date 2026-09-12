@@ -105,6 +105,7 @@ import useServers, {
   type ServerType,
   type ServerUser,
 } from "@/stores/servers";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 function ServerSelectRow({
   server,
@@ -233,7 +234,7 @@ export default function LoginScreen() {
           if (paths.length === 0) {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -292,7 +293,7 @@ export default function LoginScreen() {
           if (smbAddresses.some((address) => !parseSmbUrl(address))) {
             toast.show({
               placement: "top",
-              duration: 5000,
+              duration: TOAST_DURATION.longer,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -386,7 +387,7 @@ export default function LoginScreen() {
         }
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -427,7 +428,7 @@ export default function LoginScreen() {
         });
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="error">
               <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

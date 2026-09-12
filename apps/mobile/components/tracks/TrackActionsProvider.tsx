@@ -16,6 +16,7 @@ import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
 import Info from "lucide-react-native/dist/esm/icons/info.mjs";
+import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
@@ -71,6 +72,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
+import { useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
   useIsCollectionAvailableOffline,
@@ -80,16 +82,21 @@ import {
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { isTlsTrustFailure } from "@/services/errorReporting";
-import type { Child } from "@/services/openSubsonic/types";
+import { isPermanentWriteRefusal } from "@/services/notFound";
+import type { Child, PlaylistWithSongs } from "@/services/openSubsonic/types";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useAudioMuse, {
   selectSimilarTracksAvailable,
   selectSongPathAvailable,
 } from "@/stores/audioMuse";
+import usePlaylistsStore from "@/stores/playlists";
+import usePlaylistTargets from "@/stores/playlistTargets";
 import useQueue from "@/stores/queue";
+import useTrackSelection from "@/stores/trackSelection";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export interface TrackActionsContextValue {
   index?: number;
@@ -156,6 +163,16 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
   const doSetRating = useSetRating();
+  const doUpdatePlaylist = useUpdatePlaylist();
+
+  // The playlist this session last added to (stores/playlistTargets.ts), used
+  // for the one-tap row below. Filtered against the known-deleted set so a
+  // playlist removed since is not offered.
+  const lastTarget = usePlaylistTargets((state) => state.recentTargets[0]);
+  const isLastTargetDeleted = usePlaylistsStore((state) =>
+    lastTarget ? !!state.deletedPlaylists[lastTarget.id] : false,
+  );
+  const quickTarget = lastTarget && !isLastTargetDeleted ? lastTarget : null;
 
   const [track, setTrack] = useState<Child | null>(null);
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
@@ -184,7 +201,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       if (added === 0) return;
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -204,7 +221,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       if (added === 0) return;
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -246,7 +263,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onSuccess: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -260,7 +277,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -285,7 +302,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onSuccess: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -299,7 +316,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           onError: () => {
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -382,7 +399,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -401,7 +418,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -425,7 +442,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           bottomSheetShareModalRef.current?.present();
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -439,7 +456,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -461,6 +478,90 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       pathname: "/playlists/add-to-playlist",
       params: { ids: [track.id] },
     });
+  };
+
+  // The whole point of this row is to skip the add-to-playlist screen, so it
+  // deliberately does no `fetchQuery`: the duplicate check reads whatever copy
+  // of the playlist react-query already has and simply doesn't fire when there
+  // is none. A duplicate slipping through is a far smaller cost than a network
+  // round trip on the one action that exists to be instant.
+  const handleQuickAddToPlaylistPress = () => {
+    if (!track || !quickTarget) return;
+    bottomSheetModalRef.current?.dismiss();
+    const cached = queryClient.getQueryData<{ playlist: PlaylistWithSongs }>([
+      "playlist",
+      quickTarget.id,
+    ]);
+    if (cached?.playlist.entry?.some((entry) => entry.id === track.id)) {
+      toast.show({
+        placement: "top",
+        duration: TOAST_DURATION.default,
+        render: () => (
+          <Toast action="info">
+            <ToastTitle>{t("app.playlists.duplicateTitle")}</ToastTitle>
+            <ToastDescription>
+              {t("app.tracks.alreadyInPlaylistMessage", {
+                name: quickTarget.name,
+              })}
+            </ToastDescription>
+          </Toast>
+        ),
+      });
+      return;
+    }
+    doUpdatePlaylist.mutate(
+      { id: quickTarget.id, songIdToAdd: [track.id] },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ["playlist", quickTarget.id],
+          });
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
+          usePlaylistTargets.getState().recordTargets([quickTarget]);
+          toast.show({
+            placement: "top",
+            duration: TOAST_DURATION.default,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.playlists.addTrackSuccessMessage", { count: 1 })}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: (error) => {
+          logError(error);
+          // A playlist that refuses the add (deleted, or one this Jellyfin user
+          // may not edit) must stop being offered as the shortcut — but only
+          // that: a timeout or a 5xx says nothing about the playlist, and
+          // dropping the row for the rest of the session on a wifi blip costs
+          // the user the whole add-to-playlist screen to get it back.
+          if (isPermanentWriteRefusal(error)) {
+            usePlaylistTargets.getState().forget(quickTarget.id);
+          }
+          toast.show({
+            placement: "top",
+            duration: TOAST_DURATION.default,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.playlists.addTrackErrorMessage", { count: 1 })}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
+  const handleSelectMultiplePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    useTrackSelection.getState().enter(track);
   };
 
   const handleRemoveFromPlaylistPress = () => {
@@ -532,7 +633,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await saveTrackToDevice(track);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -546,7 +647,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error downloading track to device:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -579,7 +680,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           setShowRatingModal(false);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -594,7 +695,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -627,7 +728,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         setClipoardCopyDone(true);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -642,7 +743,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -677,7 +778,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await downloadTrack(track);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -691,7 +792,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error downloading track for offline:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -711,7 +812,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       await removeDownloadedTrack(track.id);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -725,7 +826,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
       logError("Error removing offline download:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -868,6 +969,24 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                {quickTarget && (
+                  <FadeOutScaleDown
+                    testID="track-quick-add-to-playlist-button"
+                    onPress={handleQuickAddToPlaylistPress}
+                  >
+                    <HStack className="items-center">
+                      <PlusCircle size={24} color={gray200} />
+                      <Text
+                        className="ml-4 text-lg text-gray-200 flex-1"
+                        numberOfLines={1}
+                      >
+                        {t("app.tracks.addToLastPlaylist", {
+                          name: quickTarget.name,
+                        })}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleAddToPlaylistPress}>
                   <HStack className="items-center">
                     <PlusCircle size={24} color={gray200} />
@@ -927,6 +1046,17 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     <ListPlus size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.tracks.addToQueue")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown
+                  testID="track-select-multiple-button"
+                  onPress={handleSelectMultiplePress}
+                >
+                  <HStack className="items-center">
+                    <ListChecks size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.tracks.selectMultiple")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>

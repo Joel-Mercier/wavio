@@ -71,6 +71,7 @@ import useServers, {
 } from "@/stores/servers";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export default function ServersDetail() {
   const { t } = useTranslation();
@@ -141,7 +142,7 @@ export default function ServersDetail() {
         if (paths.length === 0) {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -176,7 +177,7 @@ export default function ServersDetail() {
         if (smbAddresses.some((address) => !parseSmbUrl(address))) {
           toast.show({
             placement: "top",
-            duration: 5000,
+            duration: TOAST_DURATION.longer,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -214,7 +215,7 @@ export default function ServersDetail() {
       form.reset();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

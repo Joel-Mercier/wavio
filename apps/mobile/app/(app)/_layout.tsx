@@ -16,6 +16,7 @@ import TidarrDownloadsWatcher from "@/components/downloaders/tidarr/TidarrDownlo
 import FloatingPlayer from "@/components/FloatingPlayer";
 import LibrarySyncController from "@/components/LibrarySyncController";
 import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
+import LibraryAutoScanController from "@/components/local/LibraryAutoScanController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
@@ -24,6 +25,7 @@ import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
+import TrackSelectionBar from "@/components/tracks/TrackSelectionBar";
 import UpdateGate from "@/components/update/UpdateGate";
 import {
   persistOptions,
@@ -86,6 +88,7 @@ import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
 import usePlayHistory from "@/stores/playHistory";
 import usePlaylists from "@/stores/playlists";
+import usePlaylistTargets from "@/stores/playlistTargets";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
@@ -93,6 +96,7 @@ import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import useSoulSync from "@/stores/soulsync";
 import useTidarr from "@/stores/tidarr";
 import useTrackCache from "@/stores/trackCache";
+import useTrackSelection from "@/stores/trackSelection";
 import { logError } from "@/utils/log";
 
 // Module-level so it survives AppLayout unmount/remount during the
@@ -215,6 +219,11 @@ export default function AppLayout() {
         useTrackCache.getState().__reset();
         if (outgoingScope) clearTrackCacheForScope(outgoingScope);
         useServerExtensionsBase.getState().reset();
+        // Neither is persisted, so this only clears the in-memory copies — a
+        // selection or a "recent playlist" shortcut still holding the outgoing
+        // server's ids.
+        useTrackSelection.getState().__reset();
+        usePlaylistTargets.getState().__reset();
       });
       // Clear the previous server's reachability state so the new server starts
       // optimistic; the probe below confirms it.
@@ -408,6 +417,7 @@ export default function AppLayout() {
           </Stack>
         </AppErrorBoundary>
         <FloatingPlayer />
+        <TrackSelectionBar />
       </AppDrawer>
       <OfflineMutationsSync />
       <IncompleteScanNotice />
@@ -417,6 +427,7 @@ export default function AppLayout() {
       <DownloaderPickerSheet />
       <OfflineStarredAutoSync />
       <LibrarySyncController />
+      <LibraryAutoScanController />
       <ServerExtensionsSync />
       <JukeboxResumeDialog />
       <OutputSheet />

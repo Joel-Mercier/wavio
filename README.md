@@ -11,8 +11,9 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [![License](https://img.shields.io/github/license/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/blob/main/LICENSE.txt)
 [![Latest release](https://img.shields.io/github/v/release/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/releases/latest)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O8L72659XB)
+<a href="https://crowdin.com/?utm_term=click-badge-add-on"><img src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" height="28"></a>
 
-[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio)
+[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
 
 ## Table of contents
 - [How to install](#how-to-install)
@@ -32,9 +33,10 @@ If you enjoy the app please leave a review on the Google Play Store to help us g
 <a href="https://play.google.com/store/apps/details?id=com.jmercier.wavio">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/google-play-badge.svg" alt="Get it on Google Play" height="80">
 </a>
+<a href="https://github.com/Joel-Mercier/wavio/releases/latest">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/github-badge.png" alt="Get it on Github" height="80">
+</a>
 </p>
-
-Alternatively, you can install the APK from the [releases page](https://github.com/Joel-Mercier/wavio/releases).
 
 Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architectures (x86, x86_64) are not provided.
 

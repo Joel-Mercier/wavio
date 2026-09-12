@@ -36,6 +36,7 @@ import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { taddyEpisodeToTrack } from "@/utils/podcastEpisodeToTrack";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 interface PodcastListItemProps {
   podcast: PodcastEpisode;
@@ -146,7 +147,7 @@ export default function PodcastListItem({
       logError(error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

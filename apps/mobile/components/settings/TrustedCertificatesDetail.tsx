@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,6 +30,7 @@ import useApp from "@/stores/app";
 import { formatDistanceToNow } from "@/utils/date";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export default function TrustedCertificatesDetail() {
   const { t } = useTranslation();
@@ -54,7 +55,7 @@ export default function TrustedCertificatesDetail() {
   const showSuccessToast = (description: string) => {
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -140,7 +141,7 @@ export default function TrustedCertificatesDetail() {
                     onPress={() => setRemoveTarget(cert)}
                     className="items-center justify-center p-3 border border-red-500 rounded-full"
                   >
-                    <Trash2 size={18} color="white" />
+                    <Trash size={18} color="white" />
                   </FadeOutScaleDown>
                 </HStack>
               ))}

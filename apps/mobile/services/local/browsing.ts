@@ -134,7 +134,15 @@ export const getMusicDirectory = async (id: string) => {
 export const getArtist = async (id: string) => {
   const key = parseLocalArtistId(id);
   if (key == null) throw new LocalUnsupportedError(`artist id "${id}"`);
-  const albumRows = await queryArtistAlbumsByKey(key);
+  // The aggregate row alongside the albums, for its cover alone: it resolves a
+  // real `artist.jpg` ahead of an album cover (see queryArtists), which is what
+  // the artist list and every carousel already show. Reading the first album's
+  // cover here instead would make this screen — the one place an artist image is
+  // the whole header — the only one that ignores it.
+  const [artistRow, albumRows] = await Promise.all([
+    queryArtistByKey(key),
+    queryArtistAlbumsByKey(key),
+  ]);
   const albums = albumRows.map(mapAggToAlbum);
   const artist: ArtistWithAlbumsID3 = {
     id,
@@ -143,7 +151,7 @@ export const getArtist = async (id: string) => {
       albumRows[0]?.artist ??
       unknownArtistLabel(),
     albumCount: albums.length,
-    coverArt: albumRows[0]?.cover ?? undefined,
+    coverArt: artistRow?.cover ?? albumRows[0]?.cover ?? undefined,
     album: albums,
   };
   return localEnvelope({ artist });

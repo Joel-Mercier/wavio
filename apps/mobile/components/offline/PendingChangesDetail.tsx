@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Trash2 from "lucide-react-native/dist/esm/icons/trash-2.mjs";
+import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -129,7 +129,7 @@ export default function PendingChangesDetail() {
             onPress={isEmpty ? undefined : () => setShowClearConfirm(true)}
           >
             <HStack className="items-center gap-x-2">
-              <Trash2 size={16} color={isEmpty ? gray500 : white} />
+              <Trash size={16} color={isEmpty ? gray500 : white} />
               <Text className="text-white font-bold">
                 {t("app.pendingChanges.clearAll")}
               </Text>

@@ -80,7 +80,7 @@ index 44dd86d624d0065081dbae4073d0f1a272f643a0..1d533d217c18843ed20dc2d095f5db25
        .readTimeout(60, TimeUnit.SECONDS)
        .writeTimeout(60, TimeUnit.SECONDS)
 diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
-index d58a1320c85b1129c6e965784a0785674747b79b..bd22c2bce0e5dbfe1d86469bb3e6ec8381295c77 100644
+index 90e9a68228ad2fa4327134374b772055b05c9ffa..192e2bfc50f75ba1bb12ef5242c54171828e26df 100644
 --- a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
 +++ b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
 @@ -69,7 +69,13 @@ class UploadTaskResult : Record {

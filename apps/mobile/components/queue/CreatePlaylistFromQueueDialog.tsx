@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/toast";
 import { useCreatePlaylist } from "@/hooks/backend/usePlaylists";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 interface CreatePlaylistFromQueueDialogProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export default function CreatePlaylistFromQueueDialog({
             onClose();
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -85,7 +86,7 @@ export default function CreatePlaylistFromQueueDialog({
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

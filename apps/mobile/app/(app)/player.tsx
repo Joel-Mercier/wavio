@@ -78,6 +78,7 @@ import { formatAudioQuality } from "@/utils/audioQuality";
 import { HEADER_TINT_COLOR } from "@/utils/headerGradient";
 import { hasLyricContent, isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -378,7 +379,7 @@ export default function PlayerScreen() {
         onSuccess: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -392,7 +393,7 @@ export default function PlayerScreen() {
         onError: (error) => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -416,7 +417,7 @@ export default function PlayerScreen() {
         onSuccess: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -430,7 +431,7 @@ export default function PlayerScreen() {
         onError: (error) => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -453,7 +454,7 @@ export default function PlayerScreen() {
       await doSetRating.mutateAsync({ id: playingTrack.id, rating });
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -466,7 +467,7 @@ export default function PlayerScreen() {
     } catch (error) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -486,7 +487,7 @@ export default function PlayerScreen() {
     addFavoritePodcast(podcastSeries);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -504,7 +505,7 @@ export default function PlayerScreen() {
     removeFavoritePodcast(podcastSeries.uuid);
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

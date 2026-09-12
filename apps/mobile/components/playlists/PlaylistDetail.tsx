@@ -16,6 +16,7 @@ import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.m
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
+import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
 import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
@@ -103,6 +104,7 @@ import useAuth from "@/stores/auth";
 import usePlaylists, { type PlaylistSortType } from "@/stores/playlists";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import useTrackSelection from "@/stores/trackSelection";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDuration } from "@/utils/date";
@@ -110,6 +112,7 @@ import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { playlistTracks } from "@/utils/playlistOrder";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 import type { TrackSortField } from "@/utils/trackSort";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
@@ -290,7 +293,7 @@ export default function PlaylistDetail() {
     if (!snapshotId || !serverEntries) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -312,7 +315,7 @@ export default function PlaylistDetail() {
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -330,7 +333,7 @@ export default function PlaylistDetail() {
       if (isNotFoundError(error)) clearSmartPlaylistSnapshot(id);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -359,7 +362,7 @@ export default function PlaylistDetail() {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -380,7 +383,7 @@ export default function PlaylistDetail() {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -390,6 +393,13 @@ export default function PlaylistDetail() {
         </Toast>
       ),
     });
+  };
+
+  // Opened with nothing selected: the sheet acts on the playlist as a whole, so
+  // the point of this row is to start picking rows, not to seed one.
+  const handleSelectMultiplePress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    useTrackSelection.getState().enter();
   };
 
   const handlePlaylistDeletePress = () => {
@@ -406,7 +416,7 @@ export default function PlaylistDetail() {
           goBackOrHome(router);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -421,7 +431,7 @@ export default function PlaylistDetail() {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -448,7 +458,7 @@ export default function PlaylistDetail() {
 
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -462,7 +472,7 @@ export default function PlaylistDetail() {
         onError: (error) => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -538,7 +548,7 @@ export default function PlaylistDetail() {
         setClipoardCopyDone(true);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -553,7 +563,7 @@ export default function PlaylistDetail() {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -604,7 +614,7 @@ export default function PlaylistDetail() {
             queryClient.invalidateQueries({ queryKey: ["playlists"] });
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -619,7 +629,7 @@ export default function PlaylistDetail() {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -683,7 +693,7 @@ export default function PlaylistDetail() {
       await playlistDownload.saveAll();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -697,7 +707,7 @@ export default function PlaylistDetail() {
       logError("Error saving playlist for offline:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -716,7 +726,7 @@ export default function PlaylistDetail() {
       await playlistDownload.updateToServer();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -730,7 +740,7 @@ export default function PlaylistDetail() {
       logError("Error updating playlist offline downloads:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -749,7 +759,7 @@ export default function PlaylistDetail() {
       await playlistDownload.removeAll();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -763,7 +773,7 @@ export default function PlaylistDetail() {
       logError("Error removing playlist offline downloads:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -1176,6 +1186,18 @@ export default function PlaylistDetail() {
                   <ListPlus size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.playlists.addToQueue")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                testID="playlist-select-multiple-button"
+                onPress={handleSelectMultiplePress}
+                disabled={!data?.length}
+              >
+                <HStack className="items-center">
+                  <ListChecks size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.playlists.selectTracks")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

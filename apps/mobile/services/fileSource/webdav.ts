@@ -27,6 +27,13 @@ import {
 // into a queue of timeouts.
 const EXTRACT_CONCURRENCY = 12;
 
+// Listings are latency-bound and their answers are small, so the walk overlaps
+// them — the listing phase is otherwise one round trip at a time and is the slow
+// half of a scan on a share. Kept under the extraction pool all the same: past
+// roughly this many it is the server's workers rather than the round trip that
+// bounds throughput, and overshooting costs a 20s timeout per folder.
+const LIST_CONCURRENCY = 8;
+
 // Directory listings are cheap but not free; a first scan of a deep library is
 // thousands of them. Well under the 15s the shared axios instances use, so a
 // wedged share fails a folder rather than the whole scan.
@@ -124,6 +131,7 @@ async function propfind(path: string, depth: "0" | "1"): Promise<string> {
 export const webdavFileSource: FileSource = {
   kind: "webdav",
   extractConcurrency: EXTRACT_CONCURRENCY,
+  listConcurrency: LIST_CONCURRENCY,
 
   // The configured library sub-path, as an address. An empty value scans the
   // whole share root.

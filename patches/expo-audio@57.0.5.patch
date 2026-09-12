@@ -1,6 +1,3 @@
-diff --git a/node_modules/expo-audio/.bun-tag-199f56dd6f7f9643 b/.bun-tag-199f56dd6f7f9643
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
 index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7587f29be 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
@@ -190,10 +187,10 @@ index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381
  
  enum class InterruptionMode(val value: String) : Enumerable {
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f15f128d31 100644
+index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0dc32e87cd 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-@@ -6,36 +6,44 @@ import android.app.NotificationManager
+@@ -6,36 +6,45 @@ import android.app.NotificationManager
  import android.app.PendingIntent
  import android.content.Context
  import android.content.Intent
@@ -209,6 +206,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
 +import android.os.Looper
  import androidx.annotation.OptIn
  import androidx.core.app.NotificationCompat
++import androidx.core.content.ContextCompat
 +import androidx.media3.common.C
  import androidx.media3.common.ForwardingPlayer
 +import androidx.media3.common.MediaItem
@@ -241,7 +239,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
  
  @OptIn(UnstableApi::class)
  class AudioControlsService : MediaSessionService() {
-@@ -43,6 +51,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -43,6 +52,12 @@ class AudioControlsService : MediaSessionService() {
    private val binder = AudioPlaybackServiceBinder(this)
    private var mediaSession: MediaSession? = null
    private var sessionMetadataPlayer: MetadataInjectingPlayer? = null
@@ -254,8 +252,30 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
    private var currentMetadata: Metadata? = null
    private var currentPlayer: AudioPlayer? = null
    private var currentOptions: AudioLockScreenOptions? = null
-@@ -73,23 +87,30 @@ class AudioControlsService : MediaSessionService() {
-       return super.onStartCommand(intent, flags, startId)
+@@ -50,6 +65,14 @@ class AudioControlsService : MediaSessionService() {
+   private var currentArtworkUrl: URL? = null
+   private var currentArtwork: Bitmap? = null
+   private var artworkLoadJob: Job? = null
++  // Set when the user swiped the task away: the session is gone but the player
++  // stays registered, so the next play rebuilds it without JS having to
++  // notice. See onTaskRemoved.
++  private var sessionSuspended = false
++  // Tracks our own startForeground/stopForeground calls. media3 only tracks the
++  // promotions its MediaNotificationManager makes, and onUpdateNotification is
++  // overridden here, so its view (isPlaybackOngoing) is always "not foreground".
++  private var isForeground = false
+   private val notificationId: Int
+     get() = currentPlayer?.hashCode() ?: CHANNEL_ID.hashCode()
+ 
+@@ -69,37 +92,68 @@ class AudioControlsService : MediaSessionService() {
+     val currentPlayerRef = currentPlayer?.ref
+     val context = appContext
+     if (currentPlayerRef == null || context == null) {
+-      stopForeground(STOP_FOREGROUND_REMOVE)
+-      return super.onStartCommand(intent, flags, startId)
++      demoteFromForeground(removeNotification = true)
++      super.onStartCommand(intent, flags, startId)
++      return START_NOT_STICKY
      }
  
 +    // While a remote device owns playback the ExoPlayer holds nothing, so these
@@ -292,7 +312,113 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
        }
      }
  
-@@ -192,6 +213,18 @@ class AudioControlsService : MediaSessionService() {
+     postOrStartForegroundNotification(startInForeground = false)
+-    return super.onStartCommand(intent, flags, startId)
++    super.onStartCommand(intent, flags, startId)
++    // Not sticky: a service the system resurrects after killing the process has
++    // no JS and no player to serve, only a placeholder notification it can't
++    // even promote from the background.
++    return START_NOT_STICKY
+   }
+ 
++  // Runs inside onStartCommand, so the service is already started.
+   private fun ensureForegroundNotification() {
+-    val notification = buildNotification() ?: buildPlaceholderNotification()
++    promoteToForeground(
++      buildNotification() ?: buildPlaceholderNotification(),
++      "Failed to promote the expo-audio playback service to foreground",
++      ensureStarted = false
++    )
++  }
++
++  private fun promoteToForeground(
++    notification: Notification,
++    failureMessage: String,
++    ensureStarted: Boolean = true
++  ) {
+     try {
++      // A bound service may call startForeground, but only a *started* one
++      // receives onTaskRemoved and outlives its binding — and stopSelf (ours or
++      // the system's background-service reaper) silently clears that state.
++      // Re-request it on every promotion, as media3's notification manager does.
++      if (ensureStarted && !isForeground) {
++        ContextCompat.startForegroundService(this, Intent(this, AudioControlsService::class.java))
++      }
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+         startForeground(
+           notificationId,
+@@ -109,12 +163,58 @@ class AudioControlsService : MediaSessionService() {
+       } else {
+         startForeground(notificationId, notification)
+       }
++      isForeground = true
+     } catch (e: Exception) {
+-      appContext?.jsLogger?.error(
+-        getPlaybackServiceErrorMessage("Failed to promote the expo-audio playback service to foreground"),
+-        e
+-      )
++      appContext?.jsLogger?.error(getPlaybackServiceErrorMessage(failureMessage), e)
++    }
++  }
++
++  private fun demoteFromForeground(removeNotification: Boolean) {
++    stopForeground(if (removeNotification) STOP_FOREGROUND_REMOVE else STOP_FOREGROUND_DETACH)
++    isForeground = false
++  }
++
++  // Cleared before the release, not after: releasing delivers the service
++  // controller's onDisconnected — and with it onUpdateNotification — inline,
++  // and the identity check there has to see the session as already gone.
++  private fun releaseSession() {
++    val session = mediaSession ?: return
++    mediaSession = null
++    sessionMetadataPlayer = null
++    session.release()
++  }
++
++  /**
++   * The user swiped the app away from recents. Android leaves a process alone
++   * while it runs a foreground service, so without this the service — and its
++   * notification, and the "active app" entry in the shade — outlive the app.
++   * Stop playback and drop everything the user can see, but keep the player
++   * registered: JS is still alive, still believes the lock-screen controls are
++   * up, and its next play rebuilds the session.
++   */
++  override fun onTaskRemoved(rootIntent: Intent?) {
++    val player = currentPlayer
++    if (player == null) {
++      demoteFromForeground(removeNotification = true)
++      hideNotification()
++      stopSelf()
++      return
+     }
++    sessionSuspended = true
++    artworkLoadJob?.cancel()
++    artworkLoadJob = null
++    // Cleared with the job, or the rebuild would skip the reload as a repeat
++    // and show whatever bitmap the cancelled load left behind.
++    currentArtworkUrl = null
++    releaseSession()
++    demoteFromForeground(removeNotification = true)
++    hideNotification()
++    (remotePlayer ?: player.ref).pause()
++  }
++
++  private fun resumeSuspendedSession() {
++    val player = currentPlayer ?: return
++    setPlayerOptions(player, currentMetadata, currentOptions)
+   }
+ 
+   private fun buildPlaceholderNotification(): Notification =
+@@ -173,6 +273,7 @@ class AudioControlsService : MediaSessionService() {
+ 
+   private fun buildNotification(): Notification? {
+     val session = mediaSession ?: return null
++    currentPlayer ?: return null
+ 
+     val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+       .setSmallIcon(androidx.media3.session.R.drawable.media3_icon_circular_play)
+@@ -192,6 +293,18 @@ class AudioControlsService : MediaSessionService() {
        val compactViewIndices = mutableListOf<Int>()
        var currentIndex = 0
  
@@ -311,7 +437,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
        if (currentOptions?.showSeekBackward == true) {
          builder.addAction(
            NotificationCompat.Action(
-@@ -227,6 +260,18 @@ class AudioControlsService : MediaSessionService() {
+@@ -227,6 +340,18 @@ class AudioControlsService : MediaSessionService() {
            )
          )
          compactViewIndices.add(currentIndex)
@@ -330,7 +456,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
        }
  
        style.setShowActionsInCompactView(*compactViewIndices.toIntArray())
-@@ -240,14 +285,38 @@ class AudioControlsService : MediaSessionService() {
+@@ -240,14 +365,38 @@ class AudioControlsService : MediaSessionService() {
      val session = mediaSession ?: return
      val mediaButtons = mutableListOf<CommandButton>()
  
@@ -371,7 +497,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
            .build()
        )
      }
-@@ -263,17 +332,25 @@ class AudioControlsService : MediaSessionService() {
+@@ -263,17 +412,25 @@ class AudioControlsService : MediaSessionService() {
      )
  
      // Add seek forward button if enabled
@@ -399,7 +525,57 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
      session.setCustomLayout(mediaButtons)
      session.setMediaButtonPreferences(mediaButtons)
    }
-@@ -321,16 +398,76 @@ class AudioControlsService : MediaSessionService() {
+@@ -295,42 +452,109 @@ class AudioControlsService : MediaSessionService() {
+     val notification = buildNotification() ?: return
+ 
+     if (startInForeground) {
+-      try {
+-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+-          startForeground(
+-            notificationId,
+-            notification,
+-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+-          )
+-        } else {
+-          startForeground(notificationId, notification)
+-        }
+-      } catch (e: Exception) {
+-        appContext?.jsLogger?.error(
+-          getPlaybackServiceErrorMessage("Failed to start the expo-audio foreground service for lock screen controls"),
+-          e
+-        )
+-      }
++      promoteToForeground(
++        notification,
++        "Failed to start the expo-audio foreground service for lock screen controls"
++      )
+     } else {
+       notificationManager.notify(notificationId, notification)
+     }
+   }
+ 
++  /**
++   * media3 decides here whether the service still needs to be in the
++   * foreground: while the user is engaged with playback and for its
++   * foreground-service timeout after they pause. Once it says no, drop the
++   * promotion but keep the notification, as its own notification manager does;
++   * otherwise a paused player pins the service — and an "active app" entry in
++   * the shade — for as long as the process lives.
++   */
+   override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+-    postOrStartForegroundNotification(startInForegroundRequired)
++    // A session this service has already replaced still reports its
++    // disconnection here; it must not demote the one that took over.
++    if (session !== mediaSession) return
++    if (startInForegroundRequired) {
++      postOrStartForegroundNotification(startInForeground = true)
++      return
++    }
++    // Inline, like the promotion above: media3 calls this on the main thread,
++    // and posting the demotion would let a "required" that follows in the same
++    // drain run first, leaving a playing service demoted until its next event.
++    postOrStartForegroundNotificationNow(startInForeground = false)
++    demoteFromForeground(removeNotification = false)
    }
  
    private fun resolveSessionPlayer(player: AudioPlayer, options: AudioLockScreenOptions?): Player {
@@ -484,15 +660,18 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
        }
      }
    }
-@@ -364,6 +501,7 @@ class AudioControlsService : MediaSessionService() {
+@@ -362,8 +586,8 @@ class AudioControlsService : MediaSessionService() {
+     player?.isActiveForLockScreen = true
+ 
      if (player != null) {
-       mediaSession?.release()
-       sessionMetadataPlayer = null
+-      mediaSession?.release()
+-      sessionMetadataPlayer = null
++      releaseSession()
 +      remotePlayer = null
  
        appContext?.mainQueue?.launch {
          val context = appContext?.reactContext ?: return@launch
-@@ -371,7 +509,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -371,7 +595,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -506,7 +685,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
            .build()
  
          // Replace the basic media session with a session connected to our playback service.
-@@ -388,6 +531,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -388,6 +617,8 @@ class AudioControlsService : MediaSessionService() {
  
          addPlayerListener(player)
  
@@ -515,19 +694,61 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
          // Initial update now that session exists
          postOrStartForegroundNotification(startInForeground = false)
        }
-@@ -412,6 +557,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -397,7 +628,17 @@ class AudioControlsService : MediaSessionService() {
+   }
+ 
+   private fun updateMetadataInternal(player: AudioPlayer, metadata: Metadata?) {
+-    if (player != currentPlayer || metadata == currentMetadata) {
++    if (player != currentPlayer) {
++      return
++    }
++    // Stashed for the rebuild rather than triggering it: JS refreshes metadata
++    // on its own (a late artwork upgrade, a track change while paused), and
++    // none of that should bring a swiped-away notification back — only play.
++    if (sessionSuspended) {
++      currentMetadata = metadata
++      return
++    }
++    if (metadata == currentMetadata) {
+       return
+     }
+     currentMetadata = metadata
+@@ -412,14 +653,19 @@ class AudioControlsService : MediaSessionService() {
  
    private fun clearSessionInternal() {
      currentPlayer?.isActiveForLockScreen = false
 +    remotePlaybackActive = false
 +    remotePlayer = null
      removePlayerListener()
++    // stopForeground only removes a notification the service still owns; one
++    // detached by a paused-timeout demotion would otherwise outlive the session.
++    // Cancelled while currentPlayer still names the id it was posted under.
++    hideNotification()
      currentPlayer = null
      currentMetadata = null
-@@ -446,13 +593,19 @@ class AudioControlsService : MediaSessionService() {
+-    mediaSession?.release()
+-    mediaSession = null
+-    sessionMetadataPlayer = null
++    releaseSession()
++    sessionSuspended = false
+     currentPlayer?.assignBasicMediaSession()
+-    stopForeground(STOP_FOREGROUND_REMOVE)
++    demoteFromForeground(removeNotification = true)
+   }
  
-       mediaSession?.release()
-       sessionMetadataPlayer = null
+   override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+@@ -440,19 +686,25 @@ class AudioControlsService : MediaSessionService() {
+     metadata: Metadata?,
+     options: AudioLockScreenOptions?
+   ) {
++    sessionSuspended = false
+     if (player == currentPlayer) {
+       currentMetadata = metadata
+       currentOptions = options
+ 
+-      mediaSession?.release()
+-      sessionMetadataPlayer = null
++      releaseSession()
 +      remotePlayer = null
        appContext?.mainQueue?.launch {
          val context = appContext?.reactContext ?: return@launch
@@ -545,7 +766,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
            .build()
  
          player.mediaSession.release()
-@@ -462,7 +615,9 @@ class AudioControlsService : MediaSessionService() {
+@@ -462,7 +714,9 @@ class AudioControlsService : MediaSessionService() {
          mediaSession = session
          sessionMetadataPlayer = sessionPlayer
  
@@ -556,7 +777,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
          postOrStartForegroundNotification(startInForeground = false)
        }
  
-@@ -482,6 +637,75 @@ class AudioControlsService : MediaSessionService() {
+@@ -482,6 +736,84 @@ class AudioControlsService : MediaSessionService() {
      clearSessionInternal()
    }
  
@@ -578,6 +799,15 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
 +    // to the same queue, so a push issued right after it would otherwise arrive
 +    // before there is a player to receive it.
 +    appContext?.mainQueue?.launch {
++      // The ExoPlayer listener that resumes a suspended session never fires
++      // while a remote device plays, so the remote's own play has to. The
++      // rebuild is queued behind this push; re-queue the push behind it.
++      if (sessionSuspended) {
++        if (!playing) return@launch
++        resumeSuspendedSession()
++        if (!sessionSuspended) updateRemotePlaybackState(playing, positionMs, durationMs)
++        return@launch
++      }
 +      val remote = remotePlayer ?: return@launch
 +      val controlsChanged = remote.controlsWouldChange(playing, positionMs, durationMs)
 +      remote.applyState(playing, positionMs, durationMs)
@@ -632,16 +862,46 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..eeaad30b6ad88137c210092350f656f1
    private fun loadArtworkFromUrl(url: URL, callback: (Bitmap?) -> Unit) {
      if (url != currentArtworkUrl) {
        currentArtworkUrl = url
-@@ -516,6 +740,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -516,9 +848,9 @@ class AudioControlsService : MediaSessionService() {
      artworkLoadJob?.cancel()
      artworkLoadJob = null
      scope.cancel()
+-    mediaSession?.release()
+-    mediaSession = null
+-    sessionMetadataPlayer = null
 +    remotePlaybackActive = false
 +    remotePlayer = null
-     mediaSession?.release()
-     mediaSession = null
-     sessionMetadataPlayer = null
-@@ -558,7 +784,150 @@ class AudioControlsService : MediaSessionService() {
++    releaseSession()
+     currentPlayer = null
+     currentMetadata = null
+     currentOptions = null
+@@ -530,6 +862,10 @@ class AudioControlsService : MediaSessionService() {
+   private fun addPlayerListener(player: AudioPlayer) {
+     val listener = object : Player.Listener {
+       override fun onIsPlayingChanged(isPlaying: Boolean) {
++        if (sessionSuspended) {
++          if (isPlaying) resumeSuspendedSession()
++          return
++        }
+         updateSessionCustomLayout(isPlaying)
+         postOrStartForegroundNotification(startInForeground = false)
+       }
+@@ -542,10 +878,13 @@ class AudioControlsService : MediaSessionService() {
+     player.ref.addListener(listener)
+   }
+ 
++  // Captured now: by the time the removal runs, clearSessionInternal has
++  // already dropped currentPlayer and the listener would leak onto the player.
+   private fun removePlayerListener() {
++    val player = currentPlayer ?: return
+     appContext?.mainQueue?.launch {
+       val listener = playbackListener ?: return@launch
+-      currentPlayer?.ref?.removeListener(listener)
++      player.ref.removeListener(listener)
+       playbackListener = null
+     }
+   }
+@@ -558,7 +897,150 @@ class AudioControlsService : MediaSessionService() {
  
      const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
      const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
@@ -849,10 +1109,32 @@ index 839aaef12d7699ea1a89037b31849775daa079f4..9f5420f76b164ecdadab86a3f7f19a73
      return super.onCustomCommand(session, controller, command, args)
    }
 diff --git a/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt b/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
-index 18203a364d17dcf3de95d22a20175308e3363889..0cbd9bb1ba694c92f02abdef6bef0db22d047161 100644
+index 18203a364d17dcf3de95d22a20175308e3363889..0d517150e1f02c1418a92abc483ffecd5f2c0feb 100644
 --- a/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/service/MetadataInjectingPlayer.kt
-@@ -45,6 +45,11 @@ internal class MetadataInjectingPlayer(
+@@ -3,10 +3,21 @@ package expo.modules.audio.service
+ import android.os.Handler
+ import android.os.Looper
+ import androidx.core.net.toUri
++import androidx.media3.common.AudioAttributes
++import androidx.media3.common.DeviceInfo
+ import androidx.media3.common.FlagSet
+ import androidx.media3.common.ForwardingPlayer
++import androidx.media3.common.MediaItem
+ import androidx.media3.common.MediaMetadata
++import androidx.media3.common.PlaybackException
++import androidx.media3.common.PlaybackParameters
+ import androidx.media3.common.Player
++import androidx.media3.common.Timeline
++import androidx.media3.common.TrackSelectionParameters
++import androidx.media3.common.Tracks
++import androidx.media3.common.VideoSize
++import androidx.media3.common.text.Cue
++import androidx.media3.common.text.CueGroup
+ import androidx.media3.common.util.UnstableApi
+ import expo.modules.audio.Metadata
+ import java.util.IdentityHashMap
+@@ -45,6 +56,11 @@ internal class MetadataInjectingPlayer(
        .setAlbumTitle(metadata?.albumTitle)
        .setArtworkUri(metadata?.artworkUrl?.toString()?.toUri())
        .setArtworkData(null, null)
@@ -864,6 +1146,131 @@ index 18203a364d17dcf3de95d22a20175308e3363889..0cbd9bb1ba694c92f02abdef6bef0db2
        .build()
    }
  
+@@ -79,9 +95,13 @@ internal class MetadataInjectingPlayer(
+     }
+   }
+ 
++  // Every callback is forwarded by hand. `Player.Listener by listener` compiles to
++  // forwarders for the two overrides only: Kotlin does not delegate Java default
++  // methods, so play/pause/state callbacks silently hit the interface's no-ops
++  // and the MediaSession registered through this wrapper never sees them.
+   private inner class MetadataForwardingListener(
+     private val listener: Player.Listener
+-  ) : Player.Listener by listener {
++  ) : Player.Listener {
+     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+       listener.onMediaMetadataChanged(this@MetadataInjectingPlayer.mediaMetadata)
+     }
+@@ -89,5 +109,109 @@ internal class MetadataInjectingPlayer(
+     override fun onEvents(player: Player, events: Player.Events) {
+       listener.onEvents(this@MetadataInjectingPlayer, events)
+     }
++
++    override fun onTimelineChanged(timeline: Timeline, reason: Int) =
++      listener.onTimelineChanged(timeline, reason)
++
++    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) =
++      listener.onMediaItemTransition(mediaItem, reason)
++
++    override fun onTracksChanged(tracks: Tracks) = listener.onTracksChanged(tracks)
++
++    override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) =
++      listener.onPlaylistMetadataChanged(mediaMetadata)
++
++    override fun onIsLoadingChanged(isLoading: Boolean) = listener.onIsLoadingChanged(isLoading)
++
++    @Deprecated("Deprecated in media3", ReplaceWith("onIsLoadingChanged"))
++    @Suppress("DEPRECATION")
++    override fun onLoadingChanged(isLoading: Boolean) = listener.onLoadingChanged(isLoading)
++
++    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) =
++      listener.onAvailableCommandsChanged(availableCommands)
++
++    override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) =
++      listener.onTrackSelectionParametersChanged(parameters)
++
++    @Deprecated("Deprecated in media3", ReplaceWith("onPlaybackStateChanged"))
++    @Suppress("DEPRECATION")
++    override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) =
++      listener.onPlayerStateChanged(playWhenReady, playbackState)
++
++    override fun onPlaybackStateChanged(playbackState: Int) =
++      listener.onPlaybackStateChanged(playbackState)
++
++    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) =
++      listener.onPlayWhenReadyChanged(playWhenReady, reason)
++
++    override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) =
++      listener.onPlaybackSuppressionReasonChanged(playbackSuppressionReason)
++
++    override fun onIsPlayingChanged(isPlaying: Boolean) = listener.onIsPlayingChanged(isPlaying)
++
++    override fun onRepeatModeChanged(repeatMode: Int) = listener.onRepeatModeChanged(repeatMode)
++
++    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) =
++      listener.onShuffleModeEnabledChanged(shuffleModeEnabled)
++
++    override fun onPlayerError(error: PlaybackException) = listener.onPlayerError(error)
++
++    override fun onPlayerErrorChanged(error: PlaybackException?) =
++      listener.onPlayerErrorChanged(error)
++
++    @Deprecated("Deprecated in media3")
++    @Suppress("DEPRECATION")
++    override fun onPositionDiscontinuity(reason: Int) = listener.onPositionDiscontinuity(reason)
++
++    override fun onPositionDiscontinuity(
++      oldPosition: Player.PositionInfo,
++      newPosition: Player.PositionInfo,
++      reason: Int
++    ) = listener.onPositionDiscontinuity(oldPosition, newPosition, reason)
++
++    override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) =
++      listener.onPlaybackParametersChanged(playbackParameters)
++
++    override fun onSeekBackIncrementChanged(seekBackIncrementMs: Long) =
++      listener.onSeekBackIncrementChanged(seekBackIncrementMs)
++
++    override fun onSeekForwardIncrementChanged(seekForwardIncrementMs: Long) =
++      listener.onSeekForwardIncrementChanged(seekForwardIncrementMs)
++
++    override fun onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs: Long) =
++      listener.onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs)
++
++    override fun onAudioSessionIdChanged(audioSessionId: Int) =
++      listener.onAudioSessionIdChanged(audioSessionId)
++
++    override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) =
++      listener.onAudioAttributesChanged(audioAttributes)
++
++    override fun onVolumeChanged(volume: Float) = listener.onVolumeChanged(volume)
++
++    override fun onSkipSilenceEnabledChanged(skipSilenceEnabled: Boolean) =
++      listener.onSkipSilenceEnabledChanged(skipSilenceEnabled)
++
++    override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) =
++      listener.onDeviceInfoChanged(deviceInfo)
++
++    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) =
++      listener.onDeviceVolumeChanged(volume, muted)
++
++    override fun onVideoSizeChanged(videoSize: VideoSize) = listener.onVideoSizeChanged(videoSize)
++
++    override fun onSurfaceSizeChanged(width: Int, height: Int) =
++      listener.onSurfaceSizeChanged(width, height)
++
++    override fun onRenderedFirstFrame() = listener.onRenderedFirstFrame()
++
++    @Deprecated("Deprecated in media3")
++    @Suppress("DEPRECATION")
++    override fun onCues(cues: List<Cue>) = listener.onCues(cues)
++
++    override fun onCues(cueGroup: CueGroup) = listener.onCues(cueGroup)
++
++    override fun onMetadata(metadata: androidx.media3.common.Metadata) =
++      listener.onMetadata(metadata)
+   }
+ }
 diff --git a/build/Audio.types.d.ts b/build/Audio.types.d.ts
 index 25604783649fe9b64f6655172f08471a5efcbf45..da73354dac3220b01cb9af6ab10e3ddc2fe05edf 100644
 --- a/build/Audio.types.d.ts
@@ -1000,7 +1407,7 @@ index d26560627c2dfa97370440ad28304617f3f9f0f7..931f8fcb197fab749a0cc69468059229
          await player.seekTo(
            seconds: seconds,
 diff --git a/ios/AudioPlayer.swift b/ios/AudioPlayer.swift
-index 074294321e872bb53c0b2d41044dac3c612f14f0..e84c1b5de2b98d41b5c22b4e43fbb69857d8febf 100644
+index 074294321e872bb53c0b2d41044dac3c612f14f0..50fae6dd9a81b7d0a86aeaa8c37a160433deb943 100644
 --- a/ios/AudioPlayer.swift
 +++ b/ios/AudioPlayer.swift
 @@ -4,6 +4,35 @@ import Combine

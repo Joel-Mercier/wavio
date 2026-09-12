@@ -7,6 +7,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { subscribeDrainResult } from "@/services/offlineMutations/replay";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Mounted once at the app root. Surfaces replay failures of offline-queued
 // mutations as a toast, since the replay service can't render UI itself.
@@ -19,7 +20,7 @@ export default function OfflineMutationsSync() {
       subscribeDrainResult(({ dropped }) => {
         toast.show({
           placement: "top",
-          duration: 4000,
+          duration: TOAST_DURATION.long,
           render: () => (
             <Toast action="error">
               <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

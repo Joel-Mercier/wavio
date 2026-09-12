@@ -68,6 +68,7 @@ import {
   isPlayablePodcastEpisode,
   podcastEpisodeToTrack,
 } from "@/utils/podcastEpisodeToTrack";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -188,7 +189,7 @@ export default function ServerPodcastChannelScreen() {
     }
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -220,7 +221,7 @@ export default function ServerPodcastChannelScreen() {
     if (!playTracks(tracks, start)) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -244,7 +245,7 @@ export default function ServerPodcastChannelScreen() {
           goBackOrHome(router);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -258,7 +259,7 @@ export default function ServerPodcastChannelScreen() {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -281,7 +282,7 @@ export default function ServerPodcastChannelScreen() {
           queryClient.invalidateQueries({ queryKey: ["podcasts"] });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -295,7 +296,7 @@ export default function ServerPodcastChannelScreen() {
         onError: () => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

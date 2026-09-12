@@ -56,6 +56,7 @@ import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // A device that answered discovery but never got as far as a re-scan can take a
 // moment to appear, so the sheet scans again shortly after opening rather than
@@ -121,7 +122,7 @@ export default function OutputSheet() {
     (message: string) => {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

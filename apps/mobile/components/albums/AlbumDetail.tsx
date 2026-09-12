@@ -17,6 +17,7 @@ import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
 import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
@@ -95,6 +96,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import useTrackSelection from "@/stores/trackSelection";
 import type { AlbumListRow } from "@/utils/albumDiscRows";
 import { buildAlbumListRows } from "@/utils/albumDiscRows";
 import { artworkUrl } from "@/utils/artwork";
@@ -104,6 +106,7 @@ import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { formatReleaseTypes } from "@/utils/releaseTypes";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList,
@@ -230,7 +233,7 @@ export default function AlbumDetail() {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -251,7 +254,7 @@ export default function AlbumDetail() {
           });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -283,7 +286,7 @@ export default function AlbumDetail() {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -304,7 +307,7 @@ export default function AlbumDetail() {
           });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -328,7 +331,7 @@ export default function AlbumDetail() {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -349,7 +352,7 @@ export default function AlbumDetail() {
     if (added === 0) return;
     toast.show({
       placement: "top",
-      duration: 3000,
+      duration: TOAST_DURATION.default,
       render: () => (
         <Toast action="success">
           <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -359,6 +362,13 @@ export default function AlbumDetail() {
         </Toast>
       ),
     });
+  };
+
+  // Opened with nothing selected: the sheet acts on the album as a whole, so
+  // the point of this row is to start picking rows, not to seed one.
+  const handleSelectMultiplePress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    useTrackSelection.getState().enter();
   };
 
   const handleSharePress = () => {
@@ -373,7 +383,7 @@ export default function AlbumDetail() {
 
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -387,7 +397,7 @@ export default function AlbumDetail() {
         onError: (error) => {
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -421,7 +431,7 @@ export default function AlbumDetail() {
       queryClient.invalidateQueries({ queryKey: ["starred2"] });
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -435,7 +445,7 @@ export default function AlbumDetail() {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -495,7 +505,7 @@ export default function AlbumDetail() {
       await albumDownload.saveAll();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -509,7 +519,7 @@ export default function AlbumDetail() {
       logError("Error saving album for offline:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -528,7 +538,7 @@ export default function AlbumDetail() {
       await albumDownload.updateToServer();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -542,7 +552,7 @@ export default function AlbumDetail() {
       logError("Error updating album offline downloads:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -561,7 +571,7 @@ export default function AlbumDetail() {
       await albumDownload.removeAll();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -575,7 +585,7 @@ export default function AlbumDetail() {
       logError("Error removing album offline downloads:", error);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -671,7 +681,7 @@ export default function AlbumDetail() {
           setShowRatingModal(false);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -686,7 +696,7 @@ export default function AlbumDetail() {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -719,7 +729,7 @@ export default function AlbumDetail() {
         setClipoardCopyDone(true);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -734,7 +744,7 @@ export default function AlbumDetail() {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -1262,6 +1272,18 @@ export default function AlbumDetail() {
                   <ListPlus size={24} color={gray200} />
                   <Text className="ml-4 text-lg text-gray-200">
                     {t("app.albums.addToQueue")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                testID="album-select-multiple-button"
+                onPress={handleSelectMultiplePress}
+                disabled={!albumTracks?.length}
+              >
+                <HStack className="items-center">
+                  <ListChecks size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.albums.selectTracks")}
                   </Text>
                 </HStack>
               </FadeOutScaleDown>

@@ -47,6 +47,7 @@ import useRadioStations, {
 } from "@/stores/radioStations";
 import useRecentPlays from "@/stores/recentPlays";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const titleize = (value: string) =>
   value
@@ -153,7 +154,7 @@ export default function InternetRadioStationDetail() {
       removeFavoriteRadioStation(id);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -179,7 +180,7 @@ export default function InternetRadioStationDetail() {
       });
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

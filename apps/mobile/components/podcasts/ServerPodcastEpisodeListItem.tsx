@@ -15,6 +15,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { podcastEpisodeToTrack } from "@/utils/podcastEpisodeToTrack";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 interface ServerPodcastEpisodeListItemProps {
   episode: PodcastEpisode;
@@ -53,7 +54,7 @@ export default function ServerPodcastEpisodeListItem({
     if (!playTracks([track])) {
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="error">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

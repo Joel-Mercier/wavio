@@ -4,6 +4,7 @@ import com.hierynomus.msfscc.FileAttributes
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
@@ -25,6 +26,14 @@ class SmbModule : Module() {
   // threads — same reasoning as modules/audio-waveform.
   private val executor = Executors.newFixedThreadPool(LIST_THREADS) { r ->
     Thread(r, "wavio-smb").apply { isDaemon = true }
+  }
+
+  // `probe` must never queue behind the walk: a scan keeps all `LIST_THREADS`
+  // busy for a 20s-per-folder budget, while the reachability probe gives up
+  // after ~5s (PROBE_DEADLINE_MS) — enough consecutive misses mark the server
+  // unreachable and, with auto sign-out on, log the user out mid-scan.
+  private val controlExecutor = Executors.newSingleThreadExecutor { r ->
+    Thread(r, "wavio-smb-control").apply { isDaemon = true }
   }
 
   override fun definition() = ModuleDefinition {
@@ -54,7 +63,7 @@ class SmbModule : Module() {
      * "wrong password" from "no such share" from "nothing there".
      */
     AsyncFunction("probe") { target: SmbTarget, timeoutMs: Int, promise: Promise ->
-      submit(promise) {
+      submit(promise, controlExecutor) {
         SmbConnection.withShare(target, timeoutMs.toLong()) { share ->
           share.folderExists("/")
         }
@@ -63,7 +72,7 @@ class SmbModule : Module() {
 
     /** Drops the cached session — on sign-out, or a switch to another server. */
     AsyncFunction("disconnect") { promise: Promise ->
-      submit(promise) {
+      submit(promise, controlExecutor) {
         SmbBridge.stop()
         SmbConnection.reset()
         true
@@ -74,11 +83,16 @@ class SmbModule : Module() {
       SmbBridge.stop()
       SmbConnection.reset()
       executor.shutdownNow()
+      controlExecutor.shutdownNow()
     }
   }
 
-  private fun <T> submit(promise: Promise, work: () -> T) {
-    executor.execute {
+  private fun <T> submit(
+    promise: Promise,
+    on: ExecutorService = executor,
+    work: () -> T,
+  ) {
+    on.execute {
       try {
         promise.resolve(work())
       } catch (e: SmbFailure) {
@@ -118,8 +132,10 @@ class SmbModule : Module() {
     }
 
   private companion object {
-    // Directory listings during a scan run at the source's extractConcurrency;
-    // this only has to keep up with them, not exceed them.
+    // Must stay equal to `LIST_CONCURRENCY` in services/fileSource/smb.ts: the
+    // scanner's walk lists that many directories at once and each one lands on
+    // this pool, so a smaller number here silently serialises the walk and a
+    // larger one is threads that never get work.
     const val LIST_THREADS = 4
   }
 }

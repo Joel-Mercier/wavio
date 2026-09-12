@@ -81,6 +81,7 @@ import useServers, {
 } from "@/stores/servers";
 import { switchToServer } from "@/utils/switchServer";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 interface ServerListItemProps {
   server: Server;
@@ -155,7 +156,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         if (smbAddresses.some((address) => !parseSmbUrl(address))) {
           toast.show({
             placement: "top",
-            duration: 5000,
+            duration: TOAST_DURATION.longer,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -202,7 +203,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       form.reset();
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>

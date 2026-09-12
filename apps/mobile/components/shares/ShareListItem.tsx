@@ -59,6 +59,7 @@ import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const updateShareSchema = z.object({
   description: z.string().trim().optional(),
@@ -103,7 +104,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             setShowEditAlertDialog(false);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -118,7 +119,7 @@ export default function ShareListItem({ share }: { share: Share }) {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -152,7 +153,7 @@ export default function ShareListItem({ share }: { share: Share }) {
           setShowAlertDialog(false);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -167,7 +168,7 @@ export default function ShareListItem({ share }: { share: Share }) {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -199,7 +200,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       setClipoardCopyDone(true);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -213,7 +214,7 @@ export default function ShareListItem({ share }: { share: Share }) {
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

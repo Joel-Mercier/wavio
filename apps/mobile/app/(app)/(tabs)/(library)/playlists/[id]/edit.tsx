@@ -39,6 +39,7 @@ import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const editPlaylistSchema = z.object({
   name: z.string().min(1).trim(),
@@ -82,7 +83,7 @@ export default function EditPlaylistScreen() {
             router.navigate(`/playlists/${id}`);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="success">
                   <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -97,7 +98,7 @@ export default function EditPlaylistScreen() {
             logError(error);
             toast.show({
               placement: "top",
-              duration: 3000,
+              duration: TOAST_DURATION.default,
               render: () => (
                 <Toast action="error">
                   <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

@@ -477,6 +477,11 @@ export async function queryArtistAlbumsByKey(
   );
 }
 
+// An artist's image is a real `artist.jpg` when the library has one (see
+// services/local/folderArt.ts), and otherwise stays what it has always been:
+// whichever of that artist's album covers sorts highest. The fallback is
+// deliberate — without it, an artist with no dedicated image would lose the
+// picture the app shows today.
 export async function queryArtists(): Promise<ArtistAggRow[]> {
   const db = await getLocalLibraryDb();
   return db.getAllAsync<ArtistAggRow>(
@@ -484,7 +489,11 @@ export async function queryArtists(): Promise<ArtistAggRow[]> {
        artist_key,
        COALESCE(MAX(album_artist), MAX(artist)) AS name,
        COUNT(DISTINCT album_key) AS album_count,
-       MAX(artwork_path) AS cover
+       COALESCE(
+         (SELECT aa.artwork_path FROM artist_art aa
+           WHERE aa.artist_key = tracks_resolved.artist_key),
+         MAX(artwork_path)
+       ) AS cover
      FROM tracks_resolved
      WHERE artist_key != ''
      GROUP BY artist_key
@@ -501,12 +510,41 @@ export async function queryArtistByKey(
        artist_key,
        COALESCE(MAX(album_artist), MAX(artist)) AS name,
        COUNT(DISTINCT album_key) AS album_count,
-       MAX(artwork_path) AS cover
+       COALESCE(
+         (SELECT aa.artwork_path FROM artist_art aa
+           WHERE aa.artist_key = tracks_resolved.artist_key),
+         MAX(artwork_path)
+       ) AS cover
      FROM tracks_resolved
      WHERE artist_key = ?
      GROUP BY artist_key`,
     key,
   );
+}
+
+/**
+ * The `artist.jpg` each of these artists resolved to, keyed by artist key.
+ *
+ * For callers that already hold rolled-up artists and only need the image —
+ * search, which rolls its buckets out of FTS track rows rather than out of the
+ * aggregate above. Artists without one are simply absent from the map, so the
+ * caller keeps whichever album cover it had already picked.
+ */
+export async function queryArtistArtByKeys(
+  keys: string[],
+): Promise<Map<string, string>> {
+  if (keys.length === 0) return new Map();
+  const db = await getLocalLibraryDb();
+  const placeholders = keys.map(() => "?").join(", ");
+  const rows = await db.getAllAsync<{
+    artist_key: string;
+    artwork_path: string;
+  }>(
+    `SELECT artist_key, artwork_path FROM artist_art
+      WHERE artist_key IN (${placeholders})`,
+    ...keys,
+  );
+  return new Map(rows.map((row) => [row.artist_key, row.artwork_path]));
 }
 
 export async function queryGenres(): Promise<GenreRow[]> {

@@ -16,8 +16,16 @@ import type {
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
+import { chunk } from "@/utils/chunk";
 
 const FIELDS = "DateCreated,UserData,ChildCount";
+
+// Item ids travel on the query string — Jellyfin takes them comma-joined in
+// `Ids` / `EntryIds` rather than in a body — so a few hundred 32-char ids run
+// past the 8 KB request line most reverse proxies allow and the call comes back
+// 414. Matches SONG_ID_CHUNK_SIZE in the Subsonic implementation: the encodings
+// differ but both land at roughly 33 bytes an id.
+const ITEM_ID_CHUNK_SIZE = 100;
 
 function userId(): string {
   return useAuthBase.getState().jellyfinUserId ?? "";
@@ -122,10 +130,14 @@ export const updatePlaylist = async (
       ...(isPublic !== undefined ? { IsPublic: isPublic } : {}),
     });
   }
-  if (songIdToAdd?.length) {
+  // Sequential, not parallel: each request appends its ids to the end of the
+  // playlist, so the caller's track order only survives if the chunks land in
+  // order. A failure part-way leaves the earlier chunks added — a partial add
+  // the user can retry, where the unsplit request added nothing at all.
+  for (const ids of chunk(songIdToAdd ?? [], ITEM_ID_CHUNK_SIZE)) {
     await jellyfinApiInstance.post(`/Playlists/${id}/Items`, null, {
       params: {
-        Ids: songIdToAdd.join(","),
+        Ids: ids.join(","),
         UserId: userId(),
       },
     });
@@ -145,9 +157,14 @@ export const updatePlaylist = async (
           : null,
       )
       .filter((x): x is string => !!x);
-    if (ids.length) {
+    // Safe to split, unlike the Subsonic implementation's `songIndexToRemove`:
+    // the index → PlaylistItemId translation above already ran against one
+    // snapshot of the playlist, and an entry id keeps identifying the same entry
+    // however many of its neighbours are deleted first. There are no indices
+    // left to shift.
+    for (const entryIds of chunk(ids, ITEM_ID_CHUNK_SIZE)) {
       await jellyfinApiInstance.delete(`/Playlists/${id}/Items`, {
-        params: { EntryIds: ids.join(",") },
+        params: { EntryIds: entryIds.join(",") },
       });
     }
   }

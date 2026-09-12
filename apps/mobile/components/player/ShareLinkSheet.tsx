@@ -20,6 +20,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { logError } from "@/utils/log";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 export default function ShareLinkSheet({
   sheetRef,
@@ -54,7 +55,7 @@ export default function ShareLinkSheet({
         setCopyDone(true);
         toast.show({
           placement: "top",
-          duration: 3000,
+          duration: TOAST_DURATION.default,
           render: () => (
             <Toast action="success">
               <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -69,7 +70,7 @@ export default function ShareLinkSheet({
       logError(e);
       toast.show({
         placement: "top",
-        duration: 3000,
+        duration: TOAST_DURATION.default,
         render: () => (
           <Toast action="success">
             <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>

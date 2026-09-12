@@ -11,6 +11,11 @@ import type { ByteReader, FileSource, RemoteEntry } from "./types";
 // overlaps the two without flooding either.
 const EXTRACT_CONCURRENCY = 4;
 
+// `Directory.list()` below is synchronous, so listing directories "in parallel"
+// would only interleave blocking calls on the one JS thread — with the walk's
+// bookkeeping added on top. Serial is what this source actually wants.
+const LIST_CONCURRENCY = 1;
+
 const deviceReader = (path: string): ByteReader => {
   const handle = new File(path).open(FileMode.ReadOnly);
   return {
@@ -27,6 +32,7 @@ const deviceReader = (path: string): ByteReader => {
 export const deviceFileSource: FileSource = {
   kind: "device",
   extractConcurrency: EXTRACT_CONCURRENCY,
+  listConcurrency: LIST_CONCURRENCY,
 
   // SAF folders picked on Android are content:// tree URIs; bare absolute paths
   // get the file:// scheme. Anything already carrying a scheme is passed

@@ -67,6 +67,7 @@ import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
+import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -191,7 +192,7 @@ export default function LikedSongs() {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -212,7 +213,7 @@ export default function LikedSongs() {
           });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -242,7 +243,7 @@ export default function LikedSongs() {
           queryClient.invalidateQueries({ queryKey: ["starred2"] });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -263,7 +264,7 @@ export default function LikedSongs() {
           });
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
@@ -321,7 +322,7 @@ export default function LikedSongs() {
           setShowRatingModal(false);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="success">
                 <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
@@ -336,7 +337,7 @@ export default function LikedSongs() {
           logError(error);
           toast.show({
             placement: "top",
-            duration: 3000,
+            duration: TOAST_DURATION.default,
             render: () => (
               <Toast action="error">
                 <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
