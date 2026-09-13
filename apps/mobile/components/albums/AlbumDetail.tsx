@@ -347,7 +347,7 @@ export default function AlbumDetail() {
     const songs = data?.album?.song;
     if (!songs || songs.length === 0) return;
     const tracks = songs.map(childToTrack);
-    const added = useQueue.getState().enqueueEnd(tracks);
+    const added = useQueue.getState().addToQueue(tracks);
     bottomSheetModalRef.current?.dismiss();
     if (added === 0) return;
     toast.show({

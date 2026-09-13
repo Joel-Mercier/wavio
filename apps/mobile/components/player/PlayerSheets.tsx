@@ -324,7 +324,7 @@ export default function PlayerSheets({
 
   const handleAddToQueuePress = () => {
     if (!playingTrack) return;
-    const added = useQueue.getState().enqueueEnd(playingTrack);
+    const added = useQueue.getState().addToQueue(playingTrack);
     actionsSheetRef.current?.dismiss();
     if (added === 0) return;
     toast.show({

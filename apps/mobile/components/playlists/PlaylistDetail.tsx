@@ -378,7 +378,7 @@ export default function PlaylistDetail() {
     const entries = playlistData?.playlist?.entry;
     if (!entries || entries.length === 0) return;
     const tracks = entries.map(childToTrack);
-    const added = useQueue.getState().enqueueEnd(tracks);
+    const added = useQueue.getState().addToQueue(tracks);
     bottomSheetModalRef.current?.dismiss();
     if (added === 0) return;
     toast.show({

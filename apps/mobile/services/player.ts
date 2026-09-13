@@ -1755,18 +1755,18 @@ export function restoreServerQueue(
   }
 }
 
-// Append to the queue without ever starting playback. Appending is silent while
-// something is already queued, but on an empty queue enqueueEnd has to set
+// Add to the queue without ever starting playback. Adding is silent while
+// something is already queued, but on an empty queue addToQueue has to set
 // currentIndex, and the queue subscription reads that new current track as a
 // cue to play — so "Add to queue" would start playing, which is the Play
 // button's job and not what the label promises.
-// Returns how many tracks were appended, so callers can report what happened.
+// Returns how many tracks were added, so callers can report what happened.
 export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
   if (tracks.length === 0) return 0;
   if (useQueue.getState().getCurrent() == null) {
     suppressAutoplayOnce = true;
   }
-  return useQueue.getState().enqueueEnd(tracks);
+  return useQueue.getState().addToQueue(tracks);
 }
 
 // Take over playback locally from a (now stopped) remote target — a jukebox

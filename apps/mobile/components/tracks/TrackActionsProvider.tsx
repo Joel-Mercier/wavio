@@ -197,7 +197,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const addToQueue = useCallback(
     (target: Child) => {
-      const added = useQueue.getState().enqueueEnd(childToTrack(target));
+      const added = useQueue.getState().addToQueue(childToTrack(target));
       if (added === 0) return;
       toast.show({
         placement: "top",
@@ -413,7 +413,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const handleAddToQueuePress = () => {
     if (!track) return;
-    const added = useQueue.getState().enqueueEnd(childToTrack(track));
+    const added = useQueue.getState().addToQueue(childToTrack(track));
     bottomSheetModalRef.current?.dismiss();
     if (added === 0) return;
     toast.show({
