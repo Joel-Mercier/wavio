@@ -1841,7 +1841,7 @@
 				"createPlaylistAction": "Créer une playlist",
 				"clear": "Vider la file",
 				"clearConfirmTitle": "Vider la file ?",
-				"clearConfirmMessage": "Tous les morceaux seront retirés de la file et la lecture s'arrêtera",
+				"clearConfirmMessage": "Tous les titres à venir seront retirés de la file d'attente. Le titre en cours continue.",
 				"clearedMessage": "File vidée",
 				"clearHistory": "Effacer l'historique",
 				"clearHistoryConfirmTitle": "Effacer l'historique ?",
