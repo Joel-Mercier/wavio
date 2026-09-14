@@ -1967,6 +1967,8 @@
 				"jukeboxResumeMessage": "服务器上有点唱机会话正在播放。恢复控制还是在此设备播放？",
 				"jukeboxResumeResume": "恢复控制",
 				"jukeboxResumePlayHere": "在此播放",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "输出",
 				"outputSpeakersAndTvs": "音箱和电视（UPnP/DLNA）",
 				"outputScanning": "正在查找设备…",
