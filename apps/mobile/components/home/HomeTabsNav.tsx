@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -8,14 +9,20 @@ import type {
   ScrollView as RNScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { openOutputSheet } from "@/components/player/OutputSheet";
 import { tabHeaderTintAt } from "@/components/TabHeaderGradient";
 import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import useJukebox from "@/stores/jukebox";
+import useUpnp from "@/stores/upnp";
 import { cn } from "@/utils/tailwind";
 
 type ActiveTab =
@@ -44,6 +51,19 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
   const scrollRef = useRef<RNScrollView>(null);
+  const [white, emerald500] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+  ]) as string[];
+  const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
+  const jukeboxActive = useJukebox((s) => s.active);
+  const upnpConnected = useUpnp((s) => s.connected);
+  const playingRemotely = jukeboxActive || upnpConnected;
+  // Not gated on a playing track, unlike the player's own button: from here
+  // the output is picked before anything plays, and the sheet copes with an
+  // empty queue.
+  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     persistedScrollX = e.nativeEvent.contentOffset.x;
@@ -78,6 +98,15 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
           </AvatarFallbackText>
         </Avatar>
       </FadeOutScaleDown>
+      {hasOutputs && (
+        <FadeOutScaleDown
+          testID="home-output-button"
+          disabled={!isOnline}
+          onPress={openOutputSheet}
+        >
+          <Cast size={24} color={playingRemotely ? emerald500 : white} />
+        </FadeOutScaleDown>
+      )}
       <HStack className="flex-1 items-center relative">
         <ScrollView
           ref={scrollRef}

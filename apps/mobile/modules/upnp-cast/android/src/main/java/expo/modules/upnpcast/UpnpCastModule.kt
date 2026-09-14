@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
 class TrackInfo(
@@ -88,19 +89,14 @@ class UpnpCastModule : Module() {
                 "id" to address,
                 "name" to address,
                 "address" to address,
+                "location" to location,
                 "isTV" to false,
                 "verified" to false
               )
             } else if (description.isRenderer) {
               val id = description.udn ?: address
               known[id] = RendererSession(id, address, location, description)
-              mapOf(
-                "id" to id,
-                "name" to (description.friendlyName?.takeIf { it.isNotEmpty() } ?: address),
-                "address" to address,
-                "isTV" to description.isTv,
-                "verified" to true
-              )
+              deviceMap(id, address, location, description)
             } else {
               null
             }
@@ -108,6 +104,42 @@ class UpnpCastModule : Module() {
         }.awaitAll().filterNotNull()
         promise.resolve(devices)
       }
+    }
+
+    /**
+     * Re-learns a renderer from the description URL a previous session saved, so a
+     * restart can find it again without a multicast search. Only registers it as
+     * known: nothing is sent to the device beyond the description fetch, because at
+     * this point it may well be playing someone else's music.
+     *
+     * Whatever answers at that address must still identify as the same device: after
+     * a DHCP reshuffle a twin of the same model can sit there, and it is not ours.
+     */
+    AsyncFunction("describe") { deviceId: String, location: String, promise: Promise ->
+      scope.launch {
+        val description = Soap.fetch(location)?.let { DeviceDescription.parse(it, location) }
+        if (description == null || !description.isRenderer) {
+          promise.resolve(null)
+          return@launch
+        }
+        val address = URL(location).host
+        if ((description.udn ?: address) != deviceId) {
+          promise.resolve(null)
+          return@launch
+        }
+        known[deviceId] = RendererSession(deviceId, address, location, description)
+        promise.resolve(deviceMap(deviceId, address, location, description))
+      }
+    }
+
+    /** Asks a known renderer what it is doing, without becoming its controller. */
+    AsyncFunction("probe") { deviceId: String, promise: Promise ->
+      val target = known[deviceId]
+      if (target == null) {
+        promise.resolve(null)
+        return@AsyncFunction
+      }
+      scope.launch { promise.resolve(target.state()?.let { stateMap(it) }) }
     }
 
     AsyncFunction("connect") { deviceId: String, promise: Promise ->
@@ -184,20 +216,32 @@ class UpnpCastModule : Module() {
     pollJob = scope.launch {
       while (isActive) {
         val state = session?.state()
-        if (state != null) {
-          sendEvent(
-            "state",
-            mapOf(
-              "playbackState" to state.playbackState,
-              "positionMs" to state.positionMs.toDouble(),
-              "durationMs" to state.durationMs.toDouble()
-            )
-          )
-        }
+        if (state != null) sendEvent("state", stateMap(state))
         delay(POLL_INTERVAL_MS)
       }
     }
   }
+
+  private fun deviceMap(
+    id: String,
+    address: String,
+    location: String,
+    description: DeviceDescription
+  ): Map<String, Any> = mapOf(
+    "id" to id,
+    "name" to (description.friendlyName?.takeIf { it.isNotEmpty() } ?: address),
+    "address" to address,
+    "location" to location,
+    "isTV" to description.isTv,
+    "verified" to true
+  )
+
+  private fun stateMap(state: RendererSession.State): Map<String, Any> = mapOf(
+    "playbackState" to state.playbackState,
+    "positionMs" to state.positionMs.toDouble(),
+    "durationMs" to state.durationMs.toDouble(),
+    "trackUri" to state.trackUri
+  )
 
   private companion object {
     const val POLL_INTERVAL_MS = 1000L

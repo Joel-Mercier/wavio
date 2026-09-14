@@ -21,9 +21,9 @@ import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
 import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import CastController from "@/components/player/CastController";
-import JukeboxResumeDialog from "@/components/player/JukeboxResumeDialog";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
+import ResumeDialogs from "@/components/player/ResumeDialogs";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import TrackSelectionBar from "@/components/tracks/TrackSelectionBar";
 import UpdateGate from "@/components/update/UpdateGate";
@@ -71,6 +71,7 @@ import {
   discardInFlightCacheWrites,
 } from "@/services/trackCache";
 import { resumeTrackCachePrefetch } from "@/services/trackCache/prefetcher";
+import { initUpnpOnLaunch, upnpRelease } from "@/services/upnp";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
 import useAudioMuse from "@/stores/audioMuse";
@@ -97,6 +98,7 @@ import useSoulSync from "@/stores/soulsync";
 import useTidarr from "@/stores/tidarr";
 import useTrackCache from "@/stores/trackCache";
 import useTrackSelection from "@/stores/trackSelection";
+import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
 
 // Module-level so it survives AppLayout unmount/remount during the
@@ -180,6 +182,11 @@ export default function AppLayout() {
       // about to read. See withScopedWritesSuspended.
       withScopedWritesSuspended(() => {
         stopPlayQueueSync();
+        // A renderer left connected would keep receiving the incoming scope's
+        // queue. Stops it and clears the session in memory; the store write is
+        // suspended like the others, so the outgoing scope keeps its copy.
+        void upnpRelease();
+        useUpnp.getState().__reset();
         useRecentPlays.getState().__reset();
         useRecentSearches.getState().__reset();
         useActivity.getState().__reset();
@@ -259,6 +266,7 @@ export default function AppLayout() {
     // persisted). Rehydration is synchronous, so this sees the restored queue.
     rewriteQueueRoutes();
     useOffline.persist.rehydrate();
+    useUpnp.persist.rehydrate();
     // Rehydration is synchronous, so the restored queue is visible here: pick
     // up downloads interrupted by an app kill (or left queued by the previous
     // scope's sign-out) instead of waiting for a connectivity change to
@@ -312,9 +320,13 @@ export default function AppLayout() {
     useQueue.persist.onFinishHydration(() => {
       void initPlayQueueSync();
       void loadResumePositions();
-      // If a jukebox session was playing when the app was last closed, re-check
-      // the server and prompt the user to resume control.
-      void initJukeboxOnLaunch();
+      // If playback was still going elsewhere when the app was last closed — a
+      // jukebox on the server, a UPnP renderer — re-check and prompt the user to
+      // resume control. In sequence: the renderer check stands down while a
+      // jukebox session is active, which the jukebox check may have just cleared.
+      void initJukeboxOnLaunch().finally(() => {
+        void initUpnpOnLaunch();
+      });
     });
 
     // Confirm the active server is reachable (covers cold start and server
@@ -429,7 +441,7 @@ export default function AppLayout() {
       <LibrarySyncController />
       <LibraryAutoScanController />
       <ServerExtensionsSync />
-      <JukeboxResumeDialog />
+      <ResumeDialogs />
       <OutputSheet />
       <CastController />
       <UpdateGate />

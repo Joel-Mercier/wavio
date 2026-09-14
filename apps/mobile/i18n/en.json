@@ -2023,6 +2023,8 @@
 				"jukeboxResumeMessage": "A jukebox session is still playing on the server. Resume control or play on this device?",
 				"jukeboxResumeResume": "Resume control",
 				"jukeboxResumePlayHere": "Play here",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Output",
 				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
 				"outputScanning": "Looking for devices…",

@@ -24,6 +24,7 @@ export const SCOPED_STORE_NAMES = [
   "queueStore",
   "playlists",
   "jukeboxStore",
+  "upnpStore",
   "activity",
   "playHistory",
   "recentPlays",

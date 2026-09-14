@@ -6,6 +6,8 @@ export type UpnpDevice = {
   id: string;
   name: string;
   address: string;
+  /** The device description URL, which is how a session finds it again after a restart. */
+  location: string;
   /** A guess from the device's name, used only to pick an icon. */
   isTV: boolean;
   /**
@@ -45,10 +47,20 @@ export type UpnpState = {
     | string;
   positionMs: number;
   durationMs: number;
+  /** The URI the renderer says it holds; empty when it does not report one. */
+  trackUri?: string;
 };
 
 type UpnpCastNativeModule = {
   search(timeoutMs: number): Promise<UpnpDevice[]>;
+  /**
+   * Re-learns a renderer from a saved description URL without a search. Only
+   * registers it; nothing is sent to the device, so it is safe on one that may be
+   * playing someone else's music.
+   */
+  describe(deviceId: string, location: string): Promise<UpnpDevice | null>;
+  /** What a known renderer is doing, asked without becoming its controller. */
+  probe(deviceId: string): Promise<UpnpState | null>;
   connect(deviceId: string): Promise<boolean>;
   load(url: string, track: UpnpTrackInfo, autoplay: boolean): Promise<boolean>;
   play(): Promise<boolean>;

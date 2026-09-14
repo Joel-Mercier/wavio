@@ -1,6 +1,23 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { createDynamicScopedStorage } from "@/config/storage";
 import type { UpnpDevice } from "@/modules/upnp-cast";
+import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
+
+/**
+ * Enough to find the renderer again after a restart and to tell whether it is
+ * still playing what we gave it. The only persisted part of the store: a
+ * renderer holds one URI and no queue, so this is the whole of the session.
+ */
+export type UpnpPersistedSession = {
+  deviceId: string;
+  deviceName: string;
+  address: string;
+  location: string;
+  trackId: string;
+  trackUrl: string;
+};
 
 type State = {
   connected: boolean;
@@ -18,6 +35,11 @@ type State = {
   scanning: boolean;
   /** The renderer's own volume, 0..1. UPnP works in 0..100. */
   volume: number;
+  session: UpnpPersistedSession | null;
+  // True when the renderer from the last session was found still holding our
+  // track at app launch and we're prompting the user to resume control. Never
+  // persisted.
+  pendingResume: boolean;
 };
 
 type Actions = {
@@ -25,6 +47,8 @@ type Actions = {
   mergeDevices: (found: UpnpDevice[]) => void;
   setScanning: (scanning: boolean) => void;
   setVolume: (volume: number) => void;
+  setSession: (session: UpnpPersistedSession | null) => void;
+  setPendingResume: (pendingResume: boolean) => void;
   __reset: () => void;
 };
 
@@ -35,6 +59,8 @@ const initialState: State = {
   devices: [],
   scanning: false,
   volume: 0.3,
+  session: null,
+  pendingResume: false,
 };
 
 /**
@@ -64,20 +90,36 @@ function looksLikeAddress(name: string): boolean {
   return /^\d{1,3}(\.\d{1,3}){3}\b/.test(name.trim());
 }
 
-const useUpnpBase = create<State & Actions>()((set) => ({
-  ...initialState,
-  setConnected: (deviceId, deviceName) =>
-    set({ connected: deviceId != null, deviceId, deviceName }),
-  mergeDevices: (found) =>
-    set((state) => {
-      const byId = new Map(state.devices.map((device) => [device.id, device]));
-      for (const device of found) byId.set(device.id, device);
-      return { devices: dedupe([...byId.values()]) };
+const useUpnpBase = create<State & Actions>()(
+  persist(
+    (set) => ({
+      ...initialState,
+      setConnected: (deviceId, deviceName) =>
+        set({ connected: deviceId != null, deviceId, deviceName }),
+      mergeDevices: (found) =>
+        set((state) => {
+          const byId = new Map(
+            state.devices.map((device) => [device.id, device]),
+          );
+          for (const device of found) byId.set(device.id, device);
+          return { devices: dedupe([...byId.values()]) };
+        }),
+      setScanning: (scanning) => set({ scanning }),
+      setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
+      setSession: (session) => set({ session }),
+      setPendingResume: (pendingResume) => set({ pendingResume }),
+      __reset: () => set(initialState),
     }),
-  setScanning: (scanning) => set({ scanning }),
-  setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
-  __reset: () => set(initialState),
-}));
+    {
+      name: "upnpStore",
+      version: 1,
+      storage: createJSONStorage(() =>
+        createDynamicScopedStorage(currentAuthScope),
+      ),
+      partialize: (state) => ({ session: state.session }),
+    },
+  ),
+);
 
 const useUpnp = createSelectors(useUpnpBase);
 
