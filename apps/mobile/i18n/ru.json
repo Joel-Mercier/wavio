@@ -2126,6 +2126,8 @@
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
 				"jukeboxResumePlayHere": "Воспроизвести здесь",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Вывод",
 				"outputSpeakersAndTvs": "Акустические системы и телевизоры (UPnP/DLNA)",
 				"outputScanning": "Ищу устройства…",
