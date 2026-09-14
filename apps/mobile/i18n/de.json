@@ -2020,6 +2020,8 @@
 				"jukeboxResumeMessage": "Auf dem Server läuft noch eine Jukebox-Sitzung. Möchten Sie die Steuerung dieser fortsetzen oder auf diesem Gerät abspielen?",
 				"jukeboxResumeResume": "Kontrolle wiedererlangen",
 				"jukeboxResumePlayHere": "Hier abspielen",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Ausgabe",
 				"outputSpeakersAndTvs": "Lautsprecher und Fernseher (UPnP/DLNA)",
 				"outputScanning": "Auf der Suche nach Geräten…",
