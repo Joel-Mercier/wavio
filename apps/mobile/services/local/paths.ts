@@ -1,4 +1,6 @@
 import { isNetworkShareType } from "@/services/backend/serverTraits";
+import { localFolderLabel } from "@/services/fileSource/localFolders";
+import { isLocalFolderUri } from "@/services/fileSource/localFolderUris";
 import useServers from "@/stores/servers";
 
 // Roots the indexer scans, read off the active server entry. The on-device
@@ -32,10 +34,13 @@ export function foldersRemoved(previous: string[], next: string[]): boolean {
   return previous.some((f) => !nextSet.has(f));
 }
 
-// Turn an Android Storage Access Framework tree URI into a readable folder path.
-// e.g. content://com.android.externalstorage.documents/tree/primary%3AMusic%2FRock
-// -> "Music/Rock". Non-SAF entries (legacy plain paths) just drop the scheme.
+// Turn a configured root into a readable folder path. An Android Storage
+// Access Framework tree URI, e.g.
+// content://com.android.externalstorage.documents/tree/primary%3AMusic%2FRock,
+// becomes "Music/Rock"; an iOS root is named by services/fileSource/localFolders;
+// legacy plain paths just drop the scheme.
 export function folderLabel(uri: string): string {
+  if (isLocalFolderUri(uri)) return localFolderLabel(uri);
   if (!uri.startsWith("content://")) return uri.replace(/^file:\/\//, "");
   try {
     const treeIdx = uri.indexOf("/tree/");

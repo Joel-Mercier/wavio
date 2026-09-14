@@ -1,11 +1,23 @@
 import { Directory, File, FileMode } from "expo-file-system";
 import { FileSourceError } from "./errors";
+import {
+  ensureRootsResolved,
+  isLocalFolderUri,
+  parseLocalFolderUri,
+  toCanonical,
+  toFileUri,
+} from "./localFolderUris";
 import type { ByteReader, FileSource, RemoteEntry } from "./types";
 
 // The on-device file source: the behaviour the local library had before the
 // seam existed, expressed through it. Its canonical URIs are exactly the
 // `file://` / `content://` URIs expo-file-system hands out, so `tracks.uri`,
 // every track id derived from it, and `streamUrl`'s output are unchanged.
+//
+// The one exception is an iOS root, addressed as `local-folder://<rootId>/…`
+// (see ./localFolderUris.ts for why): those are swapped for the root's current
+// `file://` location on the way in, and listed entries are swapped back on the
+// way out, so nothing above this seam sees a path that moves between launches.
 
 // Each extraction is native I/O plus a JS-side raw-tag read, so a small pool
 // overlaps the two without flooding either.
@@ -29,6 +41,35 @@ const deviceReader = (path: string): ByteReader => {
   };
 };
 
+// Resolves an iOS root address to the `file://` it currently lives at. An
+// unresolved root — its folder deleted, its bookmark refused — is reported the
+// way a revoked SAF grant is: unreadable, but not proof the files are gone.
+async function resolve(path: string): Promise<string> {
+  if (!isLocalFolderUri(path)) return path;
+  await ensureRootsResolved();
+  const uri = toFileUri(path);
+  if (uri == null) {
+    throw new FileSourceError("ERR_FS_SERVER", `folder unavailable: ${path}`);
+  }
+  return uri;
+}
+
+// A listed entry that doesn't sit under its root's resolved `file://` is a
+// prefix disagreement (`/private/var` vs `/var`, an encoding mismatch) that
+// would otherwise put the moving path into `tracks.uri` and every id derived
+// from it — exactly what the root scheme exists to prevent. Refusing the listing
+// keeps that visible; the scanner counts it as an unreadable folder.
+function canonicalOf(rootId: string, fileUri: string): string {
+  const canonical = toCanonical(rootId, fileUri);
+  if (canonical == null) {
+    throw new FileSourceError(
+      "ERR_FS_SERVER",
+      `entry ${fileUri} is outside root ${rootId}`,
+    );
+  }
+  return canonical;
+}
+
 export const deviceFileSource: FileSource = {
   kind: "device",
   extractConcurrency: EXTRACT_CONCURRENCY,
@@ -41,11 +82,13 @@ export const deviceFileSource: FileSource = {
     return /^[a-z][a-z0-9+.-]*:\/\//i.test(root) ? root : `file://${root}`;
   },
 
-  exists(path: string): Promise<boolean> {
-    return Promise.resolve(new Directory(path).exists);
+  async exists(path: string): Promise<boolean> {
+    return new Directory(await resolve(path)).exists;
   },
 
-  list(path: string): Promise<RemoteEntry[]> {
+  async list(path: string): Promise<RemoteEntry[]> {
+    const resolved = await resolve(path);
+    const rootId = parseLocalFolderUri(path)?.rootId;
     // `Directory.list()` is synchronous and returns size/mtime on the entry, so
     // a device listing needs no per-file stat — the same shape a PROPFIND
     // `Depth: 1` or an SMB directory query returns.
@@ -57,7 +100,7 @@ export const deviceFileSource: FileSource = {
     // not proof the files are gone, so it maps to a code the prune won't act on.
     let entries: ReturnType<Directory["list"]>;
     try {
-      entries = new Directory(path).list();
+      entries = new Directory(resolved).list();
     } catch (error) {
       throw new FileSourceError(
         "ERR_FS_SERVER",
@@ -65,28 +108,29 @@ export const deviceFileSource: FileSource = {
         error,
       );
     }
-    return Promise.resolve(
-      entries.map((entry) => {
-        const isDirectory = !(entry instanceof File);
-        return {
-          name: entry.name,
-          isDirectory,
-          size: isDirectory ? 0 : ((entry as File).size ?? 0),
-          mtime: isDirectory ? 0 : ((entry as File).modificationTime ?? 0),
-          path: entry.uri,
-        };
-      }),
-    );
+    return entries.map((entry) => {
+      const isDirectory = !(entry instanceof File);
+      return {
+        name: entry.name,
+        isDirectory,
+        size: isDirectory ? 0 : ((entry as File).size ?? 0),
+        mtime: isDirectory ? 0 : ((entry as File).modificationTime ?? 0),
+        path: rootId == null ? entry.uri : canonicalOf(rootId, entry.uri),
+      };
+    });
   },
 
-  openReader(path: string): Promise<ByteReader> {
-    return Promise.resolve(deviceReader(path));
+  async openReader(path: string): Promise<ByteReader> {
+    return deviceReader(await resolve(path));
   },
 
   // Already a URI the player, the native metadata reader and the waveform
-  // decoder can open directly.
+  // decoder can open directly — or, for an iOS root, the `file://` it maps to.
+  // Synchronous by contract, so it reads the roots restored at startup; a root
+  // that isn't resolved yet yields the address itself, which fails to open the
+  // same way a missing file does.
   playableUrl(path: string): string {
-    return path;
+    return isLocalFolderUri(path) ? (toFileUri(path) ?? path) : path;
   },
 
   // Nothing to reach: the files are on this device.

@@ -1,4 +1,5 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, File } from "expo-file-system";
+import { appDataDir } from "@/config/appDataDir";
 import { coverArtArchiveUrl } from "@/services/musicbrainz";
 import { looksLikeImage } from "@/utils/imageBytes";
 
@@ -8,7 +9,7 @@ export { looksLikeImage };
 // (which the indexer owns and prunes) so a rescan never deletes a downloaded
 // cover, and clearing corrections never deletes extracted artwork.
 const coverDir = (): Directory =>
-  new Directory(Paths.document, "musicbrainz-artwork");
+  new Directory(appDataDir(), "musicbrainz-artwork");
 
 // A cover under this is an error page or a placeholder, not an image.
 const MIN_COVER_BYTES = 1024;

@@ -3,6 +3,7 @@ import {
   openDatabaseAsync,
   type SQLiteDatabase,
 } from "expo-sqlite";
+import { localLibraryDatabaseDirectory } from "@/config/appDataDir";
 import { getAuthScope } from "@/config/authScope";
 import { localTrackId } from "@/services/local/keys";
 import { currentAuthScope } from "@/stores/auth";
@@ -131,7 +132,11 @@ function guard(db: SQLiteDatabase, gate: Gate): SQLiteDatabase {
 function openHandle(scope: string): Handle {
   const gate: Gate = { inFlight: 0, idle: [] };
   const db = (async () => {
-    const opened = await openDatabaseAsync(dbNameForScope(scope));
+    const opened = await openDatabaseAsync(
+      dbNameForScope(scope),
+      undefined,
+      localLibraryDatabaseDirectory(),
+    );
     // WAL must be set outside any transaction; do it before migrating.
     await opened.execAsync("PRAGMA journal_mode = WAL");
     await migrate(opened);
@@ -219,7 +224,10 @@ export async function deleteLocalLibraryDb(
     logError("[localLibrary] Failed to close database", error);
   }
   try {
-    await deleteDatabaseAsync(dbNameForScope(scope));
+    await deleteDatabaseAsync(
+      dbNameForScope(scope),
+      localLibraryDatabaseDirectory(),
+    );
   } catch (error) {
     logError("[localLibrary] Failed to delete database", error);
   }

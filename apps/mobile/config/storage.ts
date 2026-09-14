@@ -1,8 +1,13 @@
+import { Platform } from "react-native";
 import { createMMKV } from "react-native-mmkv";
 import type { StateStorage } from "zustand/middleware";
+import { appDataPath } from "@/config/appDataDir";
 
+// MMKV's iOS default root is `Documents/mmkv/`, which the Files app exposes
+// (see config/appDataDir.ts); Android's default is already private.
 export const storage = createMMKV({
   id: "wavio",
+  ...(Platform.OS === "ios" ? { path: `${appDataPath()}/mmkv` } : {}),
 });
 
 export const zustandStorage: StateStorage = {

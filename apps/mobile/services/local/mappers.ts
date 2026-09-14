@@ -1,3 +1,4 @@
+import { localFolderPathLabel } from "@/services/fileSource/localFolders";
 import type {
   PodcastChannelRow,
   PodcastEpisodeRow,
@@ -78,7 +79,7 @@ export function mapRowToChild(row: TrackRow): Child {
       row.duration_ms != null ? Math.round(row.duration_ms / 1000) : undefined,
     bitRate: row.bitrate != null ? Math.round(row.bitrate / 1000) : undefined,
     samplingRate: row.sample_rate ?? undefined,
-    path: row.path ?? undefined,
+    path: row.path ? localFolderPathLabel(row.path) : undefined,
     discNumber: row.disc_number ?? undefined,
     created: new Date(row.indexed_at),
     type: "music",

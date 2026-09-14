@@ -160,4 +160,41 @@ describe("deriveTrackTags", () => {
     expect(d.artist).toBe("Pink Floyd");
     expect(d.album).toBe("The Wall");
   });
+
+  it("never reads an iOS root id as a folder name", () => {
+    // `local-folder://<rootId>/…` puts the root id where a share address has
+    // nothing; for a picked folder it's a UUID.
+    const rootId = "3f1c2a9e-5b7d-4c0e-9a1f-2d6e8b4c7a10";
+    const root = deriveTrackTags(
+      `local-folder://${rootId}/Riff Raff - Song.mp3`,
+      "Riff Raff - Song.mp3",
+      NONE,
+    );
+    expect(root.artist).toBe("Riff Raff");
+    expect(root.album).toBeUndefined();
+
+    const untitled = deriveTrackTags(
+      `local-folder://${rootId}/voice-clip.mp3`,
+      "voice-clip.mp3",
+      NONE,
+    );
+    expect(untitled.album).toBeUndefined();
+
+    const nested = deriveTrackTags(
+      `local-folder://${rootId}/Rap/01 Song.mp3`,
+      "01 Song.mp3",
+      NONE,
+    );
+    expect(nested.album).toBe("Rap");
+    expect(nested.artist).toBeUndefined();
+
+    // The relative part is sliced from a `file://` URI, so it arrives encoded.
+    const layout = deriveTrackTags(
+      "local-folder://music/Pink%20Floyd/The%20Wall/01%20Time.mp3",
+      "01 Time.mp3",
+      NONE,
+    );
+    expect(layout.artist).toBe("Pink Floyd");
+    expect(layout.album).toBe("The Wall");
+  });
 });

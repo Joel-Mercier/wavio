@@ -64,6 +64,11 @@ jest.mock("expo-file-system", () => {
 
 import { Directory, File } from "expo-file-system";
 import { deviceFileSource } from "@/services/fileSource/device";
+import {
+  __resetLocalFolderUris,
+  registerRootsRestorer,
+  setResolvedRoot,
+} from "@/services/fileSource/localFolderUris";
 
 // `entry instanceof File` is how the source tells files from directories, so the
 // fixtures have to be real instances of the mocked classes.
@@ -173,5 +178,95 @@ describe("deviceFileSource reachability", () => {
     expect(await deviceFileSource.exists("file:///nope")).toBe(false);
     mockState.existing.add("file:///yes");
     expect(await deviceFileSource.exists("file:///yes")).toBe(true);
+  });
+});
+
+// An iOS root is addressed as `local-folder://<rootId>/…` and swapped for its
+// current `file://` location only at this seam — see
+// services/fileSource/localFolderUris.ts for why the stable form matters.
+describe("deviceFileSource with an iOS folder root", () => {
+  const ROOT = "local-folder://music";
+
+  beforeEach(() => {
+    __resetLocalFolderUris();
+    setResolvedRoot("music", "file:///var/App/ABC/Documents/Music/");
+  });
+
+  it("lists through the resolved folder and hands back canonical paths", async () => {
+    mockState.listings.set("file:///var/App/ABC/Documents/Music", [
+      fileEntry(
+        "a.flac",
+        "file:///var/App/ABC/Documents/Music/a.flac",
+        4096,
+        1700000000000,
+      ),
+      dirEntry("Sub", "file:///var/App/ABC/Documents/Music/Sub/"),
+    ]);
+
+    expect(await deviceFileSource.list(ROOT)).toEqual([
+      expect.objectContaining({ name: "a.flac", path: `${ROOT}/a.flac` }),
+      expect.objectContaining({ name: "Sub", path: `${ROOT}/Sub` }),
+    ]);
+  });
+
+  it("refuses a listing whose entries don't sit under the root", async () => {
+    // A raw `file://` slipping through here would end up in `tracks.uri` and
+    // every id derived from it — the moving path the root scheme keeps out.
+    mockState.listings.set("file:///var/App/ABC/Documents/Music", [
+      fileEntry(
+        "a.flac",
+        "file:///private/var/App/ABC/Documents/Music/a.flac",
+        4096,
+        1700000000000,
+      ),
+    ]);
+
+    await expect(deviceFileSource.list(ROOT)).rejects.toMatchObject({
+      code: "ERR_FS_SERVER",
+    });
+  });
+
+  it("resolves exists, openReader and playableUrl against the current location", async () => {
+    mockState.existing.add("file:///var/App/ABC/Documents/Music");
+    expect(await deviceFileSource.exists(ROOT)).toBe(true);
+
+    const reader = await deviceFileSource.openReader(`${ROOT}/Sub/b.mp3`);
+    reader.close();
+    expect(mockState.handle).not.toBeNull();
+
+    expect(deviceFileSource.playableUrl(`${ROOT}/Sub/b.mp3`)).toBe(
+      "file:///var/App/ABC/Documents/Music/Sub/b.mp3",
+    );
+  });
+
+  it("follows the root when it moves, keeping every canonical path", async () => {
+    // The container UUID changes on every app update; ids must not.
+    setResolvedRoot("music", "file:///var/App/XYZ/Documents/Music");
+    expect(deviceFileSource.playableUrl(`${ROOT}/a.flac`)).toBe(
+      "file:///var/App/XYZ/Documents/Music/a.flac",
+    );
+  });
+
+  it("classifies an unresolved root as unreadable, never as gone", async () => {
+    // Same code a revoked SAF grant produces: the prune guard leaves the index
+    // alone.
+    await expect(
+      deviceFileSource.list("local-folder://missing"),
+    ).rejects.toMatchObject({ code: "ERR_FS_SERVER" });
+    expect(deviceFileSource.playableUrl("local-folder://missing/a.flac")).toBe(
+      "local-folder://missing/a.flac",
+    );
+  });
+
+  it("waits for the registered restore before resolving", async () => {
+    __resetLocalFolderUris();
+    let restored = false;
+    registerRootsRestorer(async () => {
+      restored = true;
+      setResolvedRoot("music", "file:///Docs/Music");
+    });
+    mockState.listings.set("file:///Docs/Music", []);
+    expect(await deviceFileSource.list(ROOT)).toEqual([]);
+    expect(restored).toBe(true);
   });
 });

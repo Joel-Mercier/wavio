@@ -11,6 +11,7 @@ import {
   GLOBAL_KEYS,
   SCOPED_STORE_NAMES,
 } from "@/services/backupStoreKeys";
+import { reloadLocalFolders } from "@/services/fileSource/localFolders";
 import {
   buildScopeRemap,
   remapOfflineTrackPaths,
@@ -18,6 +19,7 @@ import {
 import { useAppBase } from "@/stores/app";
 import useMusicFolders from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
+import useScopedFolders from "@/stores/scopedFolders";
 import { useServersBase } from "@/stores/servers";
 
 // v1 files carry URL-derived scopes; v2 carries id-derived ones (see
@@ -267,6 +269,8 @@ export async function restoreBackup(
   await useAppBase.persist.rehydrate();
   await usePodcasts.persist.rehydrate();
   await useMusicFolders.persist.rehydrate();
+  await useScopedFolders.persist.rehydrate();
+  await reloadLocalFolders();
 
   const target = readRestoredAuthTarget(backup);
   if (!target) return { serverId: null, username: null };

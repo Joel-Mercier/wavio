@@ -27,6 +27,12 @@ jest.mock("@/config/i18n", () => ({
   },
 }));
 
+// The mapper renders an iOS root address through the folder store; stub it so
+// the test doesn't pull MMKV-backed storage.
+jest.mock("@/services/fileSource/localFolders", () => ({
+  localFolderPathLabel: (uri: string) => uri,
+}));
+
 import type { TrackRow } from "@/services/local/db";
 import { mapRowToChild } from "@/services/local/mappers";
 

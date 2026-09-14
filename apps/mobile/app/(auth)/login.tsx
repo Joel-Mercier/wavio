@@ -90,6 +90,7 @@ import {
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
+import { withRequiredRoots } from "@/services/fileSource/localFolders";
 import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved, samePaths } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -210,7 +211,7 @@ export default function LoginScreen() {
       password: "",
       url: preselectedServer?.url ?? "https://",
       type: (preselectedServer?.type ?? "navidrome") as ServerType,
-      paths: (preselectedServer?.paths ?? []) as string[],
+      paths: withRequiredRoots(preselectedServer?.paths ?? []),
       libraryPath: preselectedServer?.libraryPath ?? "",
       mtlsAlias: preselectedServer?.mtlsAlias ?? "",
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
@@ -228,9 +229,9 @@ export default function LoginScreen() {
         const serverType: ServerType = value.type;
 
         if (serverType === "local") {
-          const paths = (value.paths ?? [])
-            .map((p) => p.trim())
-            .filter(Boolean);
+          const paths = withRequiredRoots(
+            (value.paths ?? []).map((p) => p.trim()).filter(Boolean),
+          );
           if (paths.length === 0) {
             toast.show({
               placement: "top",

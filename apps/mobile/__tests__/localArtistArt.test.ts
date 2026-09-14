@@ -19,6 +19,12 @@ jest.mock("@/services/local/repository", () => ({
   queryGenres: jest.fn(),
   searchTracks: jest.fn(),
 }));
+// The mapper renders an iOS root address through the folder store; stub it so
+// the test doesn't pull MMKV-backed storage.
+jest.mock("@/services/fileSource/localFolders", () => ({
+  localFolderPathLabel: (uri: string) => uri,
+}));
+
 jest.mock("@/services/local/paths", () => ({
   folderLabel: (value: string) => value,
   localFolders: () => [],

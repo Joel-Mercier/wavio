@@ -57,6 +57,7 @@ import {
   speaksHttpType,
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
+import { withRequiredRoots } from "@/services/fileSource/localFolders";
 import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useApp from "@/stores/app";
@@ -126,7 +127,7 @@ export default function ServersDetail() {
       name: "",
       url: "",
       type: "navidrome" as ServerType,
-      paths: [] as string[],
+      paths: withRequiredRoots([]),
       libraryPath: "",
       mtlsAlias: "",
       fallbackUrl: "",
@@ -138,7 +139,9 @@ export default function ServersDetail() {
     },
     onSubmit: async ({ value }) => {
       if (value.type === "local") {
-        const paths = (value.paths ?? []).map((p) => p.trim()).filter(Boolean);
+        const paths = withRequiredRoots(
+          (value.paths ?? []).map((p) => p.trim()).filter(Boolean),
+        );
         if (paths.length === 0) {
           toast.show({
             placement: "top",

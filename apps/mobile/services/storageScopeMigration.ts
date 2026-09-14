@@ -1,4 +1,5 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, File } from "expo-file-system";
+import { appDataDir, SQLITE_DIRECTORY_NAME } from "@/config/appDataDir";
 import { getAuthScope } from "@/config/authScope";
 import { storage } from "@/config/storage";
 import { isSingletonServerType } from "@/services/backend/serverTraits";
@@ -248,9 +249,9 @@ export function remapFavoriteScopes(
  */
 export function migrateOfflineDownloads(remap: ScopeRemap): void {
   for (const [from, to] of remap) {
-    const fromDir = new Directory(Paths.document, "offline", from);
+    const fromDir = new Directory(appDataDir(), "offline", from);
     if (fromDir.exists) {
-      const toDir = new Directory(Paths.document, "offline", to);
+      const toDir = new Directory(appDataDir(), "offline", to);
       // A previous interrupted run may already have moved it.
       if (!toDir.exists) fromDir.moveSync(toDir);
     }
@@ -313,7 +314,7 @@ function rewriteOfflineTrackPaths(from: string, to: string): void {
  * the database; `-shm` is rebuildable but is moved rather than orphaned.
  */
 export function migrateLocalLibraryDatabases(remap: ScopeRemap): void {
-  const sqliteDir = new Directory(Paths.document, "SQLite");
+  const sqliteDir = new Directory(appDataDir(), SQLITE_DIRECTORY_NAME);
   if (!sqliteDir.exists) return;
   for (const [from, to] of remap) {
     for (const suffix of ["-wal", "-shm", ""]) {

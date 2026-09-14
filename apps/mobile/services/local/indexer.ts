@@ -1,4 +1,5 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, File } from "expo-file-system";
+import { appDataDir } from "@/config/appDataDir";
 import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { activeFileSource } from "@/services/fileSource";
@@ -250,7 +251,7 @@ type WalkContext = {
  * scope's own directory.
  */
 export const artworkDir = (): Directory =>
-  new Directory(Paths.document, "local-artwork", libraryScope());
+  new Directory(appDataDir(), "local-artwork", libraryScope());
 
 /**
  * Scan the given source folders and reconcile the on-device index with what's

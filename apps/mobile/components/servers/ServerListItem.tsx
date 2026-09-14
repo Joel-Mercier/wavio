@@ -66,6 +66,7 @@ import {
   speaksHttpType,
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
+import { withRequiredRoots } from "@/services/fileSource/localFolders";
 import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved } from "@/services/local/paths";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
@@ -119,7 +120,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       name: server.name,
       url: server.url,
       type: server.type,
-      paths: server.paths ?? [],
+      paths: withRequiredRoots(server.paths ?? []),
       libraryPath: server.libraryPath ?? "",
       mtlsAlias: server.mtlsAlias ?? "",
       fallbackUrl: server.fallbackUrl ?? "",
@@ -131,8 +132,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
     },
     onSubmit: async ({ value }) => {
       if (value.type === "local") {
-        const removed = foldersRemoved(server.paths ?? [], value.paths ?? []);
-        editServer(server.id, { paths: value.paths });
+        const paths = withRequiredRoots(value.paths ?? []);
+        const removed = foldersRemoved(server.paths ?? [], paths);
+        editServer(server.id, { paths });
         // Folders changed: re-open the indexing gate (incremental) so added
         // folders get indexed and removed ones pruned without a manual rescan.
         // Targeted at the edited server, which need not be the signed-in one.

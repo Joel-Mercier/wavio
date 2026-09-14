@@ -10,6 +10,7 @@
 // the file path + name and the partial metadata it managed to extract.
 
 import type { AudioMetadata } from "@/modules/audio-metadata";
+import { parseLocalFolderUri } from "@/services/fileSource/localFolderUris";
 
 // Folder names that carry no artist/album meaning — download sinks, OS dirs,
 // storage volume roots. Used to reject a folder as an artist/album source (but a
@@ -60,8 +61,23 @@ const SPLIT_RE = /\s+-\s+/;
 // network share's addresses (which are the share-relative path behind that
 // prefix). Stripped before the folder heuristics run, or the scheme reads as the
 // containing folder and a file sitting at the share root gets "webdav:" for its
-// album — and, one level down, for its artist too.
+// album — and, one level down, for its artist too. An iOS root address
+// (`local-folder://<rootId>/…`) carries its root id where a share carries
+// nothing, so that segment goes with the scheme: it's a UUID for a picked
+// folder, meaningless as an album or artist. Its relative part is sliced from a
+// `file://` URI, so it's percent-encoded and decoded here — or "Pink Floyd"
+// becomes the artist "Pink%20Floyd".
 const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\/?/i;
+
+function rootRelativePath(path: string): string {
+  const parsed = parseLocalFolderUri(path);
+  if (!parsed) return path.replace(SCHEME_RE, "");
+  try {
+    return decodeURIComponent(parsed.relative);
+  } catch {
+    return parsed.relative;
+  }
+}
 
 function basename(value: string): string {
   return value.replace(EXT_RE, "").trim();
@@ -155,8 +171,9 @@ export type DerivedTags = {
 
 /**
  * Fill missing title/artist/album/track for a local file. `path` is the file's
- * absolute path or share address (`file://…`, `webdav:/…`, `smb:/…` — the scheme
- * is stripped here); `fileName` is its basename. Embedded metadata always wins;
+ * absolute path or share address (`file://…`, `webdav:/…`, `smb:/…`,
+ * `local-folder://<rootId>/…` — the scheme and root are stripped here);
+ * `fileName` is its basename. Embedded metadata always wins;
  * heuristics only fill the gaps.
  */
 export function deriveTrackTags(
@@ -166,7 +183,7 @@ export function deriveTrackTags(
 ): DerivedTags {
   const fromName = parseFileName(fileName);
 
-  const parts = path.replace(SCHEME_RE, "").split("/").filter(Boolean);
+  const parts = rootRelativePath(path).split("/").filter(Boolean);
   // parts[last] is the file itself.
   const parentName = parts.length >= 2 ? parts[parts.length - 2] : undefined;
   const grandparentName =

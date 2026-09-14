@@ -187,9 +187,10 @@ interface AppStore {
   setDownloadMaxBitRate: (downloadMaxBitRate: number | null) => void;
   // Android-only: a Storage Access Framework tree URI the user picked as the
   // destination for offline downloads, or null for the app's private storage.
-  // iOS can't persist access to a folder outside the app container (the picker
-  // grants session-only access and expo-file-system takes no security-scoped
-  // bookmark), so the setting is never offered there and stays null.
+  // On iOS the setting is never offered and stays null: expo-file-system takes
+  // no security-scoped bookmark, so a picked folder would be lost at the next
+  // launch. modules/scoped-folders now persists such bookmarks for the local
+  // library; extending it to downloads is a follow-up.
   // Changing it only affects *new* downloads: OfflineTrack.path is absolute, so
   // already-downloaded tracks keep playing from wherever they were written.
   downloadLocationUri: string | null;

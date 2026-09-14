@@ -37,6 +37,7 @@ import {
 } from "react-native-reanimated";
 import { persistOptions, queryClient } from "@/config/queryClient";
 import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
+import { restoreLocalFolders } from "@/services/fileSource/localFolders";
 import {
   getIsEffectivelyOnline,
   initConnectionType,
@@ -222,6 +223,14 @@ export default sentryWrap(function RootLayout() {
   useEffect(() => {
     applyStartupLocale(locale);
   }, [locale]);
+
+  // Re-open the iOS local-library folders before the indexing gate or a
+  // restored queue can ask for them (no-op on Android).
+  useEffect(() => {
+    restoreLocalFolders().catch((error) =>
+      logError("[app] Failed to restore local folders", error),
+    );
+  }, []);
 
   // Local-library display labels (e.g. "Unknown album") are localized at map
   // time and cached by React Query, so a runtime locale switch wouldn't update

@@ -13,6 +13,11 @@ export const GLOBAL_KEYS = [
   "podcasts",
   "musicFolders",
   "radioStations",
+  // iOS folder bookmarks. They only resolve on the device that made them, the
+  // same way the Android SAF grants inside `servers` don't travel either: on
+  // another device the root shows up unreadable in the folder list and is one
+  // tap to remove, while a same-device restore keeps the library intact.
+  "scoped-folders",
 ] as const;
 
 // Persisted stores namespaced per (server, user) via createDynamicScopedStorage

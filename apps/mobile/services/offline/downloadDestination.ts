@@ -1,5 +1,6 @@
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, File } from "expo-file-system";
 import { Platform } from "react-native";
+import { appDataDir } from "@/config/appDataDir";
 import {
   albumSegments,
   type DestinationTrack,
@@ -60,7 +61,7 @@ export function isRestrictedTreeUri(uri: string): boolean {
 // subdirectories so the same track id on two different servers doesn't
 // overwrite a single shared file.
 export function internalScopedDirectory(scope = currentAuthScope()): Directory {
-  return new Directory(Paths.document, "offline", scope);
+  return new Directory(appDataDir(), "offline", scope);
 }
 
 // Cached cover art, always app-private even when tracks are written to a folder

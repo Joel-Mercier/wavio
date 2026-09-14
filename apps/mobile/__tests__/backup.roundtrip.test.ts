@@ -57,6 +57,13 @@ jest.mock("@/stores/podcasts", () => ({
 jest.mock("@/stores/radioStations", () => ({
   useRadioStationsBase: { setState: jest.fn() },
 }));
+jest.mock("@/stores/scopedFolders", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate } },
+}));
+jest.mock("@/services/fileSource/localFolders", () => ({
+  reloadLocalFolders: () => Promise.resolve(),
+}));
 
 import { type BackupFile, buildBackup, restoreBackup } from "@/services/backup";
 import { legacyAuthScope } from "@/services/storageScopeMigration";
