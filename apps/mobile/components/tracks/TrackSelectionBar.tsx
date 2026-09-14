@@ -199,7 +199,7 @@ export default function TrackSelectionBar() {
   };
 
   const handleAddToQueuePress = () => {
-    const added = useQueue.getState().enqueueEnd(selected.map(childToTrack));
+    const added = useQueue.getState().addToQueue(selected.map(childToTrack));
     useTrackSelection.getState().exit();
     if (added === 0) return;
     showQueueToast(t("app.shared.addedToQueueMessage", { count: added }));

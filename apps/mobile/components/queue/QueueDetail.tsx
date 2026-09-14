@@ -19,6 +19,7 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DraggableFlashList from "@/components/DraggableFlashList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
+import QueueEditLaneDivider from "@/components/queue/QueueEditLaneDivider";
 import QueueEditTrackItem from "@/components/queue/QueueEditTrackItem";
 import QueuePodcastListItem from "@/components/queue/QueuePodcastListItem";
 import TabBar from "@/components/TabBar";
@@ -49,7 +50,7 @@ import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
 import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
-import useQueue, { type QueueTrack } from "@/stores/queue";
+import useQueue, { manualLaneEnd, type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
@@ -63,8 +64,14 @@ const noop = () => {};
 // Rows carry a uid assigned once on entering edit mode: a positional key would
 // change for every row between the two positions on each drop (throwing away
 // FlashList's recycled cells), and the queue can hold the same track twice, so
-// the track id alone is not unique either.
-type EditRow = { uid: string; track: QueueTrack };
+// the track id alone is not unique either. The lane boundary is a row of its
+// own so the split stays visible while dragging and moving a track across it
+// is what changes its lane, rather than a silent demotion on Done.
+type EditRow =
+  | { kind: "track"; uid: string; track: QueueTrack }
+  | { kind: "divider"; uid: "divider" };
+
+const LANE_DIVIDER: EditRow = { kind: "divider", uid: "divider" };
 
 type QueueRow =
   | { kind: "header"; key: string; label: string }
@@ -114,8 +121,9 @@ export default function QueueDetail() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const queue = useQueue((state) => state.queue);
   const currentIndex = useQueue((state) => state.currentIndex);
+  const source = useQueue((state) => state.source);
   const setQueue = useQueue((state) => state.setQueue);
-  const clearQueue = useQueue((state) => state.clearQueue);
+  const clearUpcoming = useQueue((state) => state.clearUpcoming);
   const clearHistory = usePlayHistory((state) => state.clearHistory);
 
   const [activeTab, setActiveTab] = useState<"queue" | "recentlyPlayed">(
@@ -146,8 +154,17 @@ export default function QueueDetail() {
     currentIndex != null && currentIndex >= 0 && currentIndex < queue.length;
   const playingTrackId = hasCurrent ? queue[currentIndex]?.id : undefined;
   const currentTrack = hasCurrent ? queue[currentIndex] : undefined;
+  const upcomingStart = hasCurrent ? currentIndex + 1 : 0;
+  const laneEnd = manualLaneEnd(queue, hasCurrent ? currentIndex : null);
+  const hasLane = laneEnd > upcomingStart;
+  const hasUpcoming = queue.length > upcomingStart;
+  const contextLabel = source?.name
+    ? t("app.queue.nextFrom", { name: source.name })
+    : t("app.queue.nextUp");
 
   // Tracks already played (before the current index) are hidden from the queue.
+  // What follows the current track splits into the manual lane ("Next in
+  // queue") and the context it was added on top of ("Next from …").
   const queueRows = useMemo<QueueRow[]>(() => {
     const rows: QueueRow[] = [];
     const start = hasCurrent ? currentIndex : 0;
@@ -159,18 +176,32 @@ export default function QueueDetail() {
           key: "header-now-playing",
           label: t("app.queue.nowPlaying"),
         });
-      }
-      rows.push({ kind: "track", key: `${track.id}:${index}`, track, index });
-      if (index === currentIndex && index < queue.length - 1) {
+      } else if (index === upcomingStart && hasLane) {
         rows.push({
           kind: "header",
           key: "header-next-in-queue",
           label: t("app.queue.nextInQueue"),
         });
+      } else if (index === laneEnd) {
+        rows.push({
+          kind: "header",
+          key: "header-next-from",
+          label: contextLabel,
+        });
       }
+      rows.push({ kind: "track", key: `${track.id}:${index}`, track, index });
     }
     return rows;
-  }, [queue, currentIndex, hasCurrent, t]);
+  }, [
+    queue,
+    currentIndex,
+    hasCurrent,
+    upcomingStart,
+    laneEnd,
+    hasLane,
+    contextLabel,
+    t,
+  ]);
 
   // History is its own persisted store, not a slice of the queue: playing a new
   // album replaces the queue but must not erase what came before.
@@ -219,25 +250,36 @@ export default function QueueDetail() {
   // Only the tracks after the current one are reorderable; the played history
   // and the currently playing track keep their position.
   const handleEnterEdit = () => {
-    setLocalOrder(
-      queue
-        .slice(hasCurrent ? currentIndex + 1 : 0)
-        .map((track, index) => ({ uid: `${track.id}:${index}`, track })),
-    );
+    const rows: EditRow[] = queue.slice(upcomingStart).map((track, index) => ({
+      kind: "track",
+      uid: `${track.id}:${index}`,
+      track,
+    }));
+    if (hasLane) rows.splice(laneEnd - upcomingStart, 0, LANE_DIVIDER);
+    setLocalOrder(rows);
     setEditMode(true);
   };
 
+  // Everything above the divider is the lane, everything below is context.
   const handleExitEdit = () => {
     const before = hasCurrent ? queue.slice(0, currentIndex) : [];
     const head = currentTrack ? [currentTrack] : [];
-    const nextQueue = [
-      ...before,
-      ...head,
-      ...localOrder.map((row) => row.track),
-    ];
+    const dividerAt = localOrder.findIndex((row) => row.kind === "divider");
+    const upcoming: QueueTrack[] = [];
+    localOrder.forEach((row, index) => {
+      if (row.kind !== "track") return;
+      const inLane = index < dividerAt;
+      if (inLane === Boolean(row.track.queuedManually)) {
+        upcoming.push(row.track);
+        return;
+      }
+      const { queuedManually: _, ...track } = row.track;
+      upcoming.push(inLane ? { ...track, queuedManually: true } : track);
+    });
+    const nextQueue = [...before, ...head, ...upcoming];
     const orderChanged =
       nextQueue.length !== queue.length ||
-      nextQueue.some((t, i) => t.id !== queue[i]?.id);
+      nextQueue.some((t, i) => t !== queue[i]);
     if (orderChanged) {
       setQueue(nextQueue, hasCurrent ? currentIndex : (currentIndex ?? 0));
     }
@@ -265,6 +307,8 @@ export default function QueueDetail() {
     setLocalOrder((prev) => prev.filter((row) => row.uid !== uid));
   };
 
+  const hasDivider = localOrder.some((row) => row.kind === "divider");
+
   // Rendered as the list header so the pinned track scrolls away with the rows.
   const editHeader = useMemo(() => {
     if (!currentTrack) return undefined;
@@ -290,12 +334,12 @@ export default function QueueDetail() {
             className="text-gray-300 mt-6 mb-2"
             numberOfLines={1}
           >
-            {t("app.queue.nextInQueue")}
+            {hasDivider ? t("app.queue.nextInQueue") : contextLabel}
           </Heading>
         )}
       </>
     );
-  }, [currentTrack, localOrder.length, t]);
+  }, [currentTrack, localOrder.length, hasDivider, contextLabel, t]);
 
   // The Trash action follows the active tab: each list owns its own clear.
   const isHistoryTab = activeTab === "recentlyPlayed";
@@ -304,7 +348,7 @@ export default function QueueDetail() {
     if (isHistoryTab) {
       clearHistory();
     } else {
-      clearQueue();
+      clearUpcoming();
     }
     setShowClearConfirm(false);
     toast.show({
@@ -340,7 +384,7 @@ export default function QueueDetail() {
   const handleCreatePlaylistPress = () => setShowCreatePlaylist(true);
 
   const isEmpty = queue.length === 0;
-  const clearDisabled = isHistoryTab ? history.length === 0 : isEmpty;
+  const clearDisabled = isHistoryTab ? history.length === 0 : !hasUpcoming;
   const iconActiveColor = white;
   const iconDisabledColor = gray500;
 
@@ -517,14 +561,22 @@ export default function QueueDetail() {
               // Rows are only re-rendered when the playing track moves on;
               // a primitive keeps FlashList's identity check meaningful.
               extraData={playingTrackId}
-              renderItem={(item, _index, isActive) => (
-                <QueueEditTrackItem
-                  item={item.track}
-                  isActive={isActive}
-                  isPlaying={item.track.id === playingTrackId}
-                  onRemovePress={() => handleRemoveFromQueue(item.uid)}
-                />
-              )}
+              renderItem={(item, _index, isActive) =>
+                item.kind === "divider" ? (
+                  <QueueEditLaneDivider
+                    label={contextLabel}
+                    isActive={isActive}
+                    height={QUEUE_EDIT_ITEM_HEIGHT}
+                  />
+                ) : (
+                  <QueueEditTrackItem
+                    item={item.track}
+                    isActive={isActive}
+                    isPlaying={item.track.id === playingTrackId}
+                    onRemovePress={() => handleRemoveFromQueue(item.uid)}
+                  />
+                )
+              }
             />
           ) : (
             <FlashList
@@ -584,7 +636,9 @@ export default function QueueDetail() {
             <Text className="text-primary-50" size="sm">
               {isHistoryTab
                 ? t("app.queue.clearHistoryConfirmMessage")
-                : t("app.queue.clearConfirmMessage")}
+                : hasLane
+                  ? t("app.queue.clearQueuedConfirmMessage")
+                  : t("app.queue.clearConfirmMessage")}
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">

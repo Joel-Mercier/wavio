@@ -471,7 +471,8 @@ describe("queue store - enqueue with null currentIndex", () => {
     get().enqueueNext([{ id: "x", url: "url://x" }]);
     get().enqueueEnd([{ id: "y", url: "url://y" }]);
     get().setShuffle(false);
-    expect(ids()).toEqual(["t1", "t2", "t3", "x", "y"]);
+    // The lane keeps playing next; a plain append stays at the tail.
+    expect(ids()).toEqual(["t1", "x", "t2", "t3", "y"]);
   });
 });
 
@@ -778,5 +779,243 @@ describe("queue store - size cap", () => {
     expect(get().enqueueEnd(makeTracks(CAP + 10, "n"))).toBe(CAP);
     expect(get().queue).toHaveLength(CAP);
     expect(get().currentIndex).toBe(0);
+  });
+});
+
+describe("queue store - manual lane", () => {
+  const flagged = () => get().queue.map((t) => t.queuedManually === true);
+
+  test("addToQueue plays queued tracks in the order they were added, before the context", () => {
+    get().setQueue(makeTracks(4), 0); // t1 current, t2..t4 context
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().addToQueue({ id: "b", url: "url://b" });
+    get().addToQueue({ id: "c", url: "url://c" });
+    expect(ids()).toEqual(["t1", "a", "b", "c", "t2", "t3", "t4"]);
+    expect(get().currentIndex).toBe(0);
+    expect(flagged()).toEqual([false, true, true, true, false, false, false]);
+  });
+
+  test("enqueueNext jumps ahead of the lane", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().enqueueNext({ id: "n", url: "url://n" });
+    expect(ids()).toEqual(["t1", "n", "a", "t2", "t3"]);
+  });
+
+  test("enqueueEnd still lands at the tail when a lane exists", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().enqueueEnd({ id: "r", url: "url://r" });
+    expect(ids()).toEqual(["t1", "a", "t2", "t3", "r"]);
+    expect(get().queue[4].queuedManually).toBeUndefined();
+  });
+
+  test("shuffle leaves the lane in place and randomises only the context", () => {
+    get().setQueue(makeTracks(30), 0);
+    get().setRemovePlayed(false);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+      { id: "c", url: "url://c" },
+    ]);
+    get().setShuffle(true);
+    expect(ids().slice(0, 4)).toEqual(["t1", "a", "b", "c"]);
+    const context = ids().slice(4);
+    expect([...context].sort()).toEqual(
+      makeTracks(30)
+        .slice(1)
+        .map((t) => t.id)
+        .sort(),
+    );
+    expect(context).not.toEqual(
+      makeTracks(30)
+        .slice(1)
+        .map((t) => t.id),
+    );
+    get().setShuffle(false);
+    expect(ids()).toEqual([
+      "t1",
+      "a",
+      "b",
+      "c",
+      ...makeTracks(30)
+        .slice(1)
+        .map((t) => t.id),
+    ]);
+  });
+
+  test("a lane track that has played becomes plain history", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().next();
+    expect(get().getCurrent()?.id).toBe("a");
+    get().next();
+    expect(get().getCurrent()?.id).toBe("t2");
+    expect(ids()).toEqual(["t1", "a", "t2", "t3"]);
+    expect(flagged()).toEqual([false, false, false, false]);
+    get().previous();
+    expect(get().getCurrent()?.id).toBe("a");
+  });
+
+  test("jumping past the lane unflags the skipped tracks", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().setCurrentIndex(3); // t2
+    expect(ids()).toEqual(["t1", "a", "b", "t2", "t3"]);
+    expect(flagged()).toEqual([false, false, false, false, false]);
+  });
+
+  test("clearUpcoming drops only the lane when there is one", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().clearUpcoming();
+    expect(ids()).toEqual(["t1", "t2", "t3"]);
+    expect(get().currentIndex).toBe(0);
+  });
+
+  test("clearUpcoming without a lane drops everything after the current track", () => {
+    get().setQueue(makeTracks(4), 1);
+    get().clearUpcoming();
+    expect(ids()).toEqual(["t1", "t2"]);
+    expect(get().currentIndex).toBe(1);
+    expect(get().getCurrent()?.id).toBe("t2");
+  });
+
+  test("clearUpcoming keeps the source and reconciles the shuffle snapshot", () => {
+    get().setQueue(makeTracks(5), 0, { type: "album", name: "Album" });
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().clearUpcoming();
+    expect(get().source).toEqual({ type: "album", name: "Album" });
+    expect(get().originalOrderIds).not.toContain("a");
+    get().clearUpcoming();
+    expect(ids()).toEqual(["t1"]);
+    expect(get().originalOrderIds).toEqual(["t1"]);
+  });
+
+  test("setQueue normalises interleaved flags to a single run after the cursor", () => {
+    get().setQueue(
+      [
+        { id: "p", url: "url://p", queuedManually: true },
+        { id: "c", url: "url://c" },
+        { id: "a", url: "url://a", queuedManually: true },
+        { id: "t", url: "url://t" },
+        { id: "b", url: "url://b", queuedManually: true },
+      ],
+      1,
+    );
+    expect(flagged()).toEqual([false, false, true, false, false]);
+  });
+
+  test("addToQueue on an empty queue starts a lane at the head", () => {
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    expect(ids()).toEqual(["a", "b"]);
+    expect(get().currentIndex).toBe(0);
+    get().addToQueue({ id: "c", url: "url://c" });
+    expect(ids()).toEqual(["a", "b", "c"]);
+  });
+
+  test("tracks queued while shuffled still play next once shuffle is off", () => {
+    get().setQueue(makeTracks(30), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().enqueueNext({ id: "n", url: "url://n" });
+    get().addToQueue({ id: "b", url: "url://b" });
+    expect(ids().slice(0, 4)).toEqual(["t1", "n", "a", "b"]);
+    get().setShuffle(false);
+    expect(ids()).toEqual([
+      "t1",
+      "n",
+      "a",
+      "b",
+      ...makeTracks(30)
+        .slice(1)
+        .map((t) => t.id),
+    ]);
+    expect(flagged().slice(0, 5)).toEqual([false, true, true, true, false]);
+  });
+
+  test("a lane queued while shuffled follows the cursor into history on shuffle off", () => {
+    get().setQueue(makeTracks(5), 0);
+    get().setRemovePlayed(false);
+    get().setShuffle(true);
+    get().addToQueue({ id: "a", url: "url://a" });
+    get().next();
+    get().next();
+    expect(get().getCurrent()?.id).not.toBe("a");
+    get().setShuffle(false);
+    expect(ids().slice(0, 2)).toEqual(["t1", "a"]);
+    expect(get().getCurrent()?.id).toBe(ids()[get().currentIndex ?? -1]);
+    expect(flagged()).toEqual([false, false, false, false, false, false]);
+  });
+
+  test("stepping back out of the lane demotes what is left of it", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().next();
+    expect(get().getCurrent()?.id).toBe("a");
+    get().previous();
+    expect(get().getCurrent()?.id).toBe("t1");
+    expect(flagged()).toEqual([false, false, false, false, false]);
+  });
+
+  test("a repeat-all wrap backwards never leaves a flagged lane behind", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(false);
+    get().setRepeatMode("all");
+    get().setShuffle(true);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().previous();
+    expect(get().currentIndex).toBe(4);
+    expect(flagged()).toEqual([false, false, false, false, false]);
+    get().next();
+    expect(get().currentIndex).toBe(0);
+    expect(flagged()).toEqual([false, false, false, false, false]);
+  });
+
+  test("removePlayed advancing into the lane unflags the track now playing", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().setRemovePlayed(true);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().next();
+    expect(ids()).toEqual(["a", "b", "t2", "t3"]);
+    expect(get().currentIndex).toBe(0);
+    expect(flagged()).toEqual([false, true, false, false]);
+  });
+
+  test("removing the current track unflags the lane head that slides into it", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue([
+      { id: "a", url: "url://a" },
+      { id: "b", url: "url://b" },
+    ]);
+    get().removeByIds(["t1"]);
+    expect(ids()).toEqual(["a", "b", "t2", "t3"]);
+    expect(flagged()).toEqual([false, true, false, false]);
+    get().removeAtIndices([0]);
+    expect(ids()).toEqual(["b", "t2", "t3"]);
+    expect(flagged()).toEqual([false, false, false]);
   });
 });

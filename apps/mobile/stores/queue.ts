@@ -40,6 +40,11 @@ export type QueueTrack = {
   album?: string;
   artwork?: string;
   duration?: number;
+  // Set on tracks the user put in the queue by hand ("Play next" / "Add to
+  // queue"). They form the manual lane: a single contiguous run right after
+  // the current track that plays before the rest of the context and is never
+  // shuffled — see normalizeLane for the invariant.
+  queuedManually?: true;
   // Allow extra metadata without the store needing to know its shape
   // biome-ignore lint/suspicious/noExplicitAny: allow arbitrary metadata for tracks
   [key: string]: any;
@@ -69,14 +74,21 @@ interface QueueStore {
     source?: QueueSource,
   ) => void;
   clearQueue: () => void;
+  // Drops the manual lane when there is one, otherwise everything after the
+  // current track. The current track is never touched, so playback continues.
+  clearUpcoming: () => void;
   setCurrentIndex: (index: number | null) => void;
   setRemovePlayed: (remove: boolean) => void;
   setRepeatMode: (mode: "off" | "all" | "one") => void;
   setShuffle: (enabled: boolean) => void;
 
-  // Both return how many tracks were actually inserted, so callers can report
-  // what happened instead of assuming the whole batch landed.
+  // All three return how many tracks were actually inserted, so callers can
+  // report what happened instead of assuming the whole batch landed.
+  // enqueueNext / addToQueue feed the manual lane (front / back of it);
+  // enqueueEnd appends to the context tail and is for programmatic extension
+  // (endless playback, track radio), not for a user action.
   enqueueNext: (track: QueueTrack | QueueTrack[]) => number;
+  addToQueue: (track: QueueTrack | QueueTrack[]) => number;
   enqueueEnd: (track: QueueTrack | QueueTrack[]) => number;
   playNow: (
     tracks: QueueTrack[] | QueueTrack,
@@ -168,7 +180,9 @@ function makeRoomFor(
   }
 
   // Nothing sits after the batch (an append), so take from what was queued
-  // ahead of it, working back towards the current track.
+  // ahead of it, working back towards the current track. For addToQueue that
+  // stretch is the manual lane itself, but reaching this step means the current
+  // track plus the lane alone overflow the cap — not worth a fourth rule.
   if (overflow > 0) {
     const from = Math.max((index ?? 0) + 1, batchStart - overflow);
     next.splice(from, batchStart - from);
@@ -206,10 +220,14 @@ function reshuffleForNewPass(queue: QueueTrack[]): QueueTrack[] {
 
 // Keep the pre-shuffle order in step with a queue whose contents changed:
 // dropped ids fall out, ids added while shuffled (enqueues) land at the end so
-// turning shuffle off doesn't lose them. Only meaningful while shuffle is on.
+// turning shuffle off doesn't lose them — except the manual lane, which is
+// pinned right behind the current track so it still plays next once the
+// source order is restored, not after the whole context. Only meaningful
+// while shuffle is on.
 function reconcileOriginalOrder(
   previous: string[] | null,
   queue: QueueTrack[],
+  currentIndex: number | null,
 ): string[] {
   const present = new Set(queue.map((t) => t.id));
   const order = previous ? previous.filter((id) => present.has(id)) : [];
@@ -217,7 +235,94 @@ function reconcileOriginalOrder(
   for (const track of queue) {
     if (!known.has(track.id)) order.push(track.id);
   }
-  return order;
+  const laneIds = queue
+    .slice(laneStart(currentIndex), manualLaneEnd(queue, currentIndex))
+    .map((t) => t.id);
+  if (laneIds.length === 0) return order;
+  const lane = new Set(laneIds);
+  const rest = order.filter((id) => !lane.has(id));
+  const currentId = currentIndex != null ? queue[currentIndex]?.id : undefined;
+  const at = currentId ? rest.indexOf(currentId) + 1 : 0;
+  rest.splice(at, 0, ...laneIds);
+  return rest;
+}
+
+function laneStart(currentIndex: number | null): number {
+  return currentIndex != null ? currentIndex + 1 : 0;
+}
+
+// Index just past the manual lane: the run of queuedManually tracks that
+// starts right after the current track. Equals laneStart when there is none.
+export function manualLaneEnd(
+  queue: QueueTrack[],
+  currentIndex: number | null,
+): number {
+  let end = laneStart(currentIndex);
+  while (end < queue.length && queue[end].queuedManually) end++;
+  return end;
+}
+
+// Enforces the lane invariant — flagged tracks form exactly one contiguous run
+// starting at laneStart — by unflagging every track outside it: what the cursor
+// moved past (played manual tracks become plain history) and what a reorder
+// interleaved with context tracks. Returns the same array when nothing changes
+// so callers don't trigger a persist write or an index rebuild for nothing.
+function normalizeLane(
+  queue: QueueTrack[],
+  currentIndex: number | null,
+): QueueTrack[] {
+  const start = laneStart(currentIndex);
+  const end = manualLaneEnd(queue, currentIndex);
+  let next: QueueTrack[] | null = null;
+  for (let i = 0; i < queue.length; i++) {
+    if (i >= start && i < end) continue;
+    if (!queue[i].queuedManually) continue;
+    next ??= queue.slice();
+    const { queuedManually: _, ...rest } = queue[i];
+    next[i] = rest;
+  }
+  return next ?? queue;
+}
+
+function flagManual(items: QueueTrack[]): QueueTrack[] {
+  return items.map((t) => ({ ...t, queuedManually: true as const }));
+}
+
+// Shared body of the two lane enqueues; `insertAt` picks the end of the lane.
+function insertManual(
+  set: (fn: (state: QueueStore) => Partial<QueueStore> | QueueStore) => void,
+  track: QueueTrack | QueueTrack[],
+  insertAt: (state: QueueStore) => number,
+): number {
+  let inserted = 0;
+  set((state) => {
+    const items = flagManual(
+      (Array.isArray(track) ? track : [track]).slice(
+        0,
+        enqueueLimit(state.queue.length),
+      ),
+    );
+    if (items.length === 0) return state;
+    const at = Math.min(insertAt(state), state.queue.length);
+    const merged = state.queue.slice();
+    merged.splice(at, 0, ...items);
+    const fitted = makeRoomFor(merged, state.currentIndex, at, items.length);
+    const currentIndex =
+      fitted.currentIndex ?? (fitted.queue.length > 0 ? 0 : null);
+    inserted = items.length;
+    return {
+      queue: fitted.queue,
+      currentIndex,
+      originalOrderIds: state.shuffle
+        ? reconcileOriginalOrder(
+            state.originalOrderIds,
+            fitted.queue,
+            currentIndex,
+          )
+        : null,
+    } as Partial<QueueStore>;
+  });
+  return inserted;
 }
 
 const initialQueueState = {
@@ -248,18 +353,23 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   setQueue: (tracks, startIndex = 0, source) => {
     set((state) => {
       const capped = capQueueWindow(tracks, startIndex);
-      const nextTracks = [...capped.tracks];
       const nextStart = capped.startIndex;
+      const nextIndex =
+        capped.tracks.length === 0
+          ? null
+          : nextStart != null
+            ? Math.max(0, Math.min(nextStart, capped.tracks.length - 1))
+            : 0;
+      const nextTracks = normalizeLane([...capped.tracks], nextIndex);
       return {
         queue: nextTracks,
-        currentIndex:
-          nextTracks.length === 0
-            ? null
-            : nextStart != null
-              ? Math.max(0, Math.min(nextStart, nextTracks.length - 1))
-              : 0,
+        currentIndex: nextIndex,
         originalOrderIds: state.shuffle
-          ? reconcileOriginalOrder(state.originalOrderIds, nextTracks)
+          ? reconcileOriginalOrder(
+              state.originalOrderIds,
+              nextTracks,
+              nextIndex,
+            )
           : null,
         ...(source !== undefined ? { source } : {}),
       } as Partial<QueueStore>;
@@ -277,13 +387,39 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
     });
   },
 
+  clearUpcoming: () => {
+    set((state) => {
+      const start = laneStart(state.currentIndex);
+      if (start >= state.queue.length) return state;
+      const end = manualLaneEnd(state.queue, state.currentIndex);
+      const nextQueue = [
+        ...state.queue.slice(0, start),
+        ...(end > start ? state.queue.slice(end) : []),
+      ];
+      return {
+        queue: nextQueue,
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(
+              state.originalOrderIds,
+              nextQueue,
+              state.currentIndex,
+            )
+          : null,
+      } as Partial<QueueStore>;
+    });
+  },
+
   setCurrentIndex: (index) => {
-    set((state) => ({
-      currentIndex:
+    set((state) => {
+      const nextIndex =
         index == null
           ? null
-          : Math.max(0, Math.min(index, state.queue.length - 1)),
-    }));
+          : Math.max(0, Math.min(index, state.queue.length - 1));
+      return {
+        currentIndex: nextIndex,
+        queue: normalizeLane(state.queue, nextIndex),
+      };
+    });
   },
 
   setRemovePlayed: (remove) => {
@@ -303,8 +439,9 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       if (enabled === state.shuffle) return state;
 
       if (enabled) {
-        const tailStart =
-          state.currentIndex != null ? state.currentIndex + 1 : 0;
+        // The manual lane stays put too: only the context behind it is
+        // randomised.
+        const tailStart = manualLaneEnd(state.queue, state.currentIndex);
         const tail = state.queue.slice(tailStart);
         return {
           shuffle: true,
@@ -337,51 +474,31 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         state.currentIndex != null
           ? state.queue[state.currentIndex]?.id
           : undefined;
-      const nextIndex = currentId
+      const found = currentId
         ? restored.findIndex((t) => t.id === currentId)
         : -1;
+      const nextIndex = found >= 0 ? found : state.currentIndex;
       return {
         shuffle: false,
         originalOrderIds: null,
-        queue: restored,
-        currentIndex: nextIndex >= 0 ? nextIndex : state.currentIndex,
+        queue: normalizeLane(restored, nextIndex),
+        currentIndex: nextIndex,
       } as Partial<QueueStore>;
     });
   },
 
+  // "Play next" goes to the front of the manual lane, "Add to queue" to its
+  // back — so the latter plays queued tracks in the order they were added, and
+  // both play before the context resumes, shuffle or not: the lane is never
+  // randomised into the rest of the queue.
   enqueueNext: (track) => {
-    let inserted = 0;
-    set((state) => {
-      const items = (Array.isArray(track) ? track : [track]).slice(
-        0,
-        enqueueLimit(state.queue.length),
-      );
-      if (items.length === 0) return state;
-      const insertAt =
-        state.currentIndex != null
-          ? state.currentIndex + 1
-          : state.queue.length;
-      const merged = state.queue.slice();
-      merged.splice(insertAt, 0, ...items);
-      const fitted = makeRoomFor(
-        merged,
-        state.currentIndex,
-        insertAt,
-        items.length,
-      );
-      inserted = items.length;
-      // "Play next" means next, shuffle or not — the inserted tracks are never
-      // randomised into the rest of the queue.
-      return {
-        queue: fitted.queue,
-        currentIndex:
-          fitted.currentIndex ?? (fitted.queue.length > 0 ? 0 : null),
-        originalOrderIds: state.shuffle
-          ? reconcileOriginalOrder(state.originalOrderIds, fitted.queue)
-          : null,
-      } as Partial<QueueStore>;
-    });
-    return inserted;
+    return insertManual(set, track, (state) => laneStart(state.currentIndex));
+  },
+
+  addToQueue: (track) => {
+    return insertManual(set, track, (state) =>
+      manualLaneEnd(state.queue, state.currentIndex),
+    );
   },
 
   enqueueEnd: (track) => {
@@ -400,13 +517,18 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         insertAt,
         items.length,
       );
+      const currentIndex =
+        fitted.currentIndex ?? (fitted.queue.length > 0 ? 0 : null);
       inserted = items.length;
       return {
         queue: fitted.queue,
-        currentIndex:
-          fitted.currentIndex ?? (fitted.queue.length > 0 ? 0 : null),
+        currentIndex,
         originalOrderIds: state.shuffle
-          ? reconcileOriginalOrder(state.originalOrderIds, fitted.queue)
+          ? reconcileOriginalOrder(
+              state.originalOrderIds,
+              fitted.queue,
+              currentIndex,
+            )
           : null,
       } as Partial<QueueStore>;
     });
@@ -482,10 +604,10 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         if (filtered.length === 0) nextIndex = null;
       }
       return {
-        queue: filtered,
+        queue: normalizeLane(filtered, nextIndex),
         currentIndex: nextIndex,
         originalOrderIds: state.shuffle
-          ? reconcileOriginalOrder(state.originalOrderIds, filtered)
+          ? reconcileOriginalOrder(state.originalOrderIds, filtered, nextIndex)
           : null,
       } as Partial<QueueStore>;
     });
@@ -510,10 +632,10 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         if (filtered.length === 0) nextIndex = null;
       }
       return {
-        queue: filtered,
+        queue: normalizeLane(filtered, nextIndex),
         currentIndex: nextIndex,
         originalOrderIds: state.shuffle
-          ? reconcileOriginalOrder(state.originalOrderIds, filtered)
+          ? reconcileOriginalOrder(state.originalOrderIds, filtered, nextIndex)
           : null,
       } as Partial<QueueStore>;
     });
@@ -539,7 +661,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       }
 
       return {
-        queue: nextQueue,
+        queue: normalizeLane(nextQueue, nextIndex),
         currentIndex: nextIndex,
       };
     });
@@ -548,7 +670,9 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   next: () => {
     set((state) => {
       if (state.queue.length === 0) return state;
-      if (state.currentIndex == null) return { currentIndex: 0 };
+      if (state.currentIndex == null) {
+        return { currentIndex: 0, queue: normalizeLane(state.queue, 0) };
+      }
 
       // Repeat one: stay on the same track, never remove current
       if (state.repeatMode === "one") {
@@ -566,43 +690,61 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
             originalOrderIds: null,
           };
         }
+        const nextIndex = Math.min(state.currentIndex, nextQueue.length - 1);
         return {
-          queue: nextQueue,
-          currentIndex: Math.min(state.currentIndex, nextQueue.length - 1),
+          queue: normalizeLane(nextQueue, nextIndex),
+          currentIndex: nextIndex,
           originalOrderIds: state.shuffle
-            ? reconcileOriginalOrder(state.originalOrderIds, nextQueue)
+            ? reconcileOriginalOrder(
+                state.originalOrderIds,
+                nextQueue,
+                nextIndex,
+              )
             : null,
         } as Partial<QueueStore>;
       }
 
       const candidate = state.currentIndex + 1;
-      if (candidate < state.queue.length) return { currentIndex: candidate };
+      if (candidate < state.queue.length) {
+        return {
+          currentIndex: candidate,
+          queue: normalizeLane(state.queue, candidate),
+        };
+      }
       if (state.repeatMode !== "all") return { currentIndex: null };
       // Repeat-all wrap. Shuffled, the next pass gets a fresh random order.
-      return state.shuffle
-        ? ({
-            queue: reshuffleForNewPass(state.queue),
-            currentIndex: 0,
-          } as Partial<QueueStore>)
-        : { currentIndex: 0 };
+      return {
+        currentIndex: 0,
+        queue: normalizeLane(
+          state.shuffle ? reshuffleForNewPass(state.queue) : state.queue,
+          0,
+        ),
+      } as Partial<QueueStore>;
     });
   },
 
   previous: () => {
     set((state) => {
       if (state.queue.length === 0) return state;
-      if (state.currentIndex == null) return { currentIndex: 0 };
+      if (state.currentIndex == null) {
+        return { currentIndex: 0, queue: normalizeLane(state.queue, 0) };
+      }
       if (state.repeatMode === "one") {
         return { currentIndex: state.currentIndex };
       }
 
-      const prevIndex = state.currentIndex - 1;
-      if (prevIndex >= 0) return { currentIndex: prevIndex };
-      // Wrap to end only when repeating all
-      if (state.repeatMode === "all") {
-        return { currentIndex: state.queue.length - 1 };
-      }
-      return { currentIndex: null };
+      // Stepping back out of (or over) the lane demotes what's left of it:
+      // it no longer sits right behind the current track.
+      const prevIndex =
+        state.currentIndex > 0
+          ? state.currentIndex - 1
+          : state.repeatMode === "all"
+            ? state.queue.length - 1
+            : null;
+      return {
+        currentIndex: prevIndex,
+        queue: normalizeLane(state.queue, prevIndex),
+      };
     });
   },
   getCurrent: () => {
