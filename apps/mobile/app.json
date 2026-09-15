@@ -95,6 +95,7 @@
       ],
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
+      "./plugins/withCarPlay",
       "./plugins/withWidgets",
       "./plugins/withShortcuts",
       "./plugins/withDependenciesInfo",

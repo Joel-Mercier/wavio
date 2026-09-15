@@ -1460,7 +1460,7 @@ index 33db27c3b8fb40fa9db6659a0787c6b2b503d1ab..7999534bb8889646b5edc109f0846a5b
  
  enum BitRateStrategy: String, Enumerable {
 diff --git a/ios/MediaController.swift b/ios/MediaController.swift
-index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89dcbf821f 100644
+index e977f577cd2e16b194b56537ad76b423f40d2496..3c9f58da76d958b3627bc60ecb2e64d21c3b82c7 100644
 --- a/ios/MediaController.swift
 +++ b/ios/MediaController.swift
 @@ -15,6 +15,46 @@ class MediaController {
@@ -1510,7 +1510,16 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
    func setActivePlayer(_ player: AudioPlayer?, options: LockScreenOptions? = nil) {
      performOnMain {
        self.setActivePlayerOnMain(player, options: options)
-@@ -75,6 +115,13 @@ class MediaController {
+@@ -72,9 +112,22 @@ class MediaController {
+     }
+ 
+     nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
++    // Documented as macOS-only, but CarPlay's Now Playing (and the simulator,
++    // which has no mediaserverd to infer the state from the audio session)
++    // follows it on iOS too; without it the head unit keeps the play button
++    // and a frozen position while the app is audibly playing.
++    let playing = remotePlaybackActive ? remotePlaying : player.isPlaying
++    nowPlayingInfoCenter.playbackState = playing ? .playing : .paused
    }
  
    private func applyPlaybackInfo(_ info: inout [String: Any], for player: AudioPlayer) {
@@ -1524,7 +1533,46 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
      if isLiveStream {
        info[MPNowPlayingInfoPropertyIsLiveStream] = true
        info.removeValue(forKey: MPMediaItemPropertyPlaybackDuration)
-@@ -237,6 +284,10 @@ class MediaController {
+@@ -153,6 +206,20 @@ class MediaController {
+       return
+     }
+ 
++    // A local (mirrored) cover is loaded inline so it lands in the same update
++    // that introduces the track: CarPlay derives its Now Playing backdrop when
++    // an item first appears and ignores artwork merged in afterwards.
++    if artworkUrl.isFileURL {
++      if let data = try? Data(contentsOf: artworkUrl), let image = UIImage(data: data) {
++        let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
++        cachedArtwork = artwork
++        info[MPMediaItemPropertyArtwork] = artwork
++      } else {
++        info.removeValue(forKey: MPMediaItemPropertyArtwork)
++      }
++      return
++    }
++
+     guard artworkLoadToken == nil else {
+       return
+     }
+@@ -187,6 +254,7 @@ class MediaController {
+ 
+   private func clearNowPlayingInfoOnMain() {
+     nowPlayingInfoCenter.nowPlayingInfo = nil
++    nowPlayingInfoCenter.playbackState = .stopped
+     activePlayer = nil
+     isLiveStream = false
+     resetArtworkState()
+@@ -232,11 +300,20 @@ class MediaController {
+   }
+ 
+   private func enableRemoteCommands(options: LockScreenOptions?) {
++    // Closure targets accumulate: removeTarget(self) never matched them, so
++    // every clear/activate cycle stacked another handler and a single car or
++    // lock-screen tap skipped N tracks.
++    removeRemoteCommandTargets()
++
+     remoteCommandCenter.playCommand.addTarget { [weak self] _ in
+       guard let player = self?.activePlayer else {
          return .commandFailed
        }
  
@@ -1535,7 +1583,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
        player.play(at: Float(player.currentRate > 0 ? player.currentRate : 1.0))
        return .success
      }
-@@ -246,6 +297,10 @@ class MediaController {
+@@ -246,6 +323,10 @@ class MediaController {
          return .commandFailed
        }
  
@@ -1546,7 +1594,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
        player.ref.pause()
        return .success
      }
-@@ -255,6 +310,14 @@ class MediaController {
+@@ -255,6 +336,14 @@ class MediaController {
          return .commandFailed
        }
  
@@ -1561,7 +1609,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
        if player.isPlaying {
          player.ref.pause()
        } else {
-@@ -269,6 +332,10 @@ class MediaController {
+@@ -269,6 +358,10 @@ class MediaController {
          return .commandFailed
        }
  
@@ -1572,7 +1620,7 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
        let seekTime = CMTime(seconds: event.positionTime, preferredTimescale: 1)
        player.ref.seek(to: seekTime)
  
-@@ -303,12 +370,30 @@ class MediaController {
+@@ -303,12 +396,30 @@ class MediaController {
        return .success
      }
  
@@ -1603,21 +1651,36 @@ index e977f577cd2e16b194b56537ad76b423f40d2496..bf8f13eb0ade6702399521ccf47b1f89
    }
  
    private func disableRemoteCommands() {
-@@ -318,6 +403,8 @@ class MediaController {
+@@ -318,13 +429,24 @@ class MediaController {
      remoteCommandCenter.changePlaybackPositionCommand.isEnabled = false
      remoteCommandCenter.skipForwardCommand.isEnabled = false
      remoteCommandCenter.skipBackwardCommand.isEnabled = false
 +    remoteCommandCenter.previousTrackCommand.isEnabled = false
 +    remoteCommandCenter.nextTrackCommand.isEnabled = false
  
-     // Remove event targets
-     remoteCommandCenter.playCommand.removeTarget(self)
-@@ -326,5 +413,7 @@ class MediaController {
-     remoteCommandCenter.changePlaybackPositionCommand.removeTarget(self)
-     remoteCommandCenter.skipForwardCommand.removeTarget(self)
-     remoteCommandCenter.skipBackwardCommand.removeTarget(self)
-+    remoteCommandCenter.previousTrackCommand.removeTarget(self)
-+    remoteCommandCenter.nextTrackCommand.removeTarget(self)
+-    // Remove event targets
+-    remoteCommandCenter.playCommand.removeTarget(self)
+-    remoteCommandCenter.pauseCommand.removeTarget(self)
+-    remoteCommandCenter.togglePlayPauseCommand.removeTarget(self)
+-    remoteCommandCenter.changePlaybackPositionCommand.removeTarget(self)
+-    remoteCommandCenter.skipForwardCommand.removeTarget(self)
+-    remoteCommandCenter.skipBackwardCommand.removeTarget(self)
++    removeRemoteCommandTargets()
++  }
++
++  private func removeRemoteCommandTargets() {
++    for command in [
++      remoteCommandCenter.playCommand,
++      remoteCommandCenter.pauseCommand,
++      remoteCommandCenter.togglePlayPauseCommand,
++      remoteCommandCenter.changePlaybackPositionCommand,
++      remoteCommandCenter.skipForwardCommand,
++      remoteCommandCenter.skipBackwardCommand,
++      remoteCommandCenter.previousTrackCommand,
++      remoteCommandCenter.nextTrackCommand
++    ] {
++      command.removeTarget(nil)
++    }
    }
  }
 diff --git a/src/Audio.types.ts b/src/Audio.types.ts

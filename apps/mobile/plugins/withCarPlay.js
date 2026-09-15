@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const {
+  IOSConfig,
   withDangerousMod,
   withEntitlementsPlist,
   withInfoPlist,
@@ -9,29 +10,80 @@ const {
 const CAR_SCENE_DELEGATE_NAME = "CarSceneDelegate";
 const MAIN_SCENE_DELEGATE_NAME = "MainSceneDelegate";
 
+// react-native-carplay is a plain static library with no Swift module, so its
+// header is exposed through the bridging header (see withCarPlayBridgingHeader)
+// rather than imported here. connectWithInterfaceController:window: /
+// disconnect are the library's own entry points: they flip RNCPStore's
+// `connected` flag and emit didConnect / didDisconnect to JS. The window-less
+// delegate variants are the ones CarPlay calls for audio apps — the
+// toWindow:/fromWindow: pair is reserved for navigation apps and never fires.
 const CAR_SCENE_DELEGATE_SWIFT = `import CarPlay
-import RNCarPlay
 
 @available(iOS 14.0, *)
 class CarSceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
   func templateApplicationScene(
     _ templateApplicationScene: CPTemplateApplicationScene,
-    didConnect interfaceController: CPInterfaceController,
-    to window: CPWindow
+    didConnect interfaceController: CPInterfaceController
   ) {
-    RNCPStore.shared().interfaceController = interfaceController
-    RNCPStore.shared().window = window
-    NotificationCenter.default.post(name: NSNotification.Name("RNCarPlayDidConnect"), object: nil)
+    RNCarPlay.connect(with: interfaceController, window: nil)
   }
 
   func templateApplicationScene(
     _ templateApplicationScene: CPTemplateApplicationScene,
     didDisconnectInterfaceController interfaceController: CPInterfaceController
   ) {
-    RNCPStore.shared().interfaceController = nil
-    NotificationCenter.default.post(name: NSNotification.Name("RNCarPlayDidDisconnect"), object: nil)
+    RNCarPlay.disconnect()
   }
 }
+`;
+
+const BRIDGING_HEADER_IMPORT = "#import <react-native-carplay/RNCarPlay.h>";
+
+const APPEARANCE_FIX_NAME = "CarPlayAppearanceFix";
+
+// react-native 0.86's -[RCTAppearance setColorScheme:] reads `.windows` on
+// every connected scene, and a CPTemplateApplicationScene has none — so the
+// app aborts the moment anything calls Appearance.setColorScheme() (Uniwind
+// does, on mount and on every theme change) while a CarPlay head unit is
+// attached. Fixed upstream in facebook/react-native#57876 (after 0.86.3); until
+// that lands here, and because React-Core is consumed prebuilt so a source
+// patch would never compile, the guarded loop is swizzled in at load time.
+const APPEARANCE_FIX_OBJC = `#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <objc/runtime.h>
+
+@interface ${APPEARANCE_FIX_NAME} : NSObject
+@end
+
+@implementation ${APPEARANCE_FIX_NAME}
+
++ (void)load {
+  Class cls = NSClassFromString(@"RCTAppearance");
+  SEL sel = NSSelectorFromString(@"setColorScheme:");
+  Method method = cls ? class_getInstanceMethod(cls, sel) : NULL;
+  if (!method) {
+    return;
+  }
+  IMP replacement = imp_implementationWithBlock(^(id _self, NSString *style) {
+    UIUserInterfaceStyle userInterfaceStyle = UIUserInterfaceStyleUnspecified;
+    if ([style isEqualToString:@"light"]) {
+      userInterfaceStyle = UIUserInterfaceStyleLight;
+    } else if ([style isEqualToString:@"dark"]) {
+      userInterfaceStyle = UIUserInterfaceStyleDark;
+    }
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+      if (![scene isKindOfClass:[UIWindowScene class]]) {
+        continue;
+      }
+      for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+        window.overrideUserInterfaceStyle = userInterfaceStyle;
+      }
+    }
+  });
+  method_setImplementation(method, replacement);
+}
+
+@end
 `;
 
 // Adopts the AppDelegate-created UIWindow into the new UIWindowScene so the
@@ -100,23 +152,46 @@ const withCarPlayScene = (config) =>
     return cfg;
   });
 
-const withSceneDelegateFiles = (config) =>
+// withBuildSourceFile both writes the file and links it into project.pbxproj;
+// the project lists its sources explicitly, so a file merely dropped into
+// ios/<app>/ would never compile and the scene delegate class names in the
+// manifest would resolve to nothing.
+const withSceneDelegateFiles = (config) => {
+  config = IOSConfig.XcodeProjectFile.withBuildSourceFile(config, {
+    filePath: `${CAR_SCENE_DELEGATE_NAME}.swift`,
+    contents: CAR_SCENE_DELEGATE_SWIFT,
+    overwrite: true,
+  });
+  config = IOSConfig.XcodeProjectFile.withBuildSourceFile(config, {
+    filePath: `${MAIN_SCENE_DELEGATE_NAME}.swift`,
+    contents: MAIN_SCENE_DELEGATE_SWIFT,
+    overwrite: true,
+  });
+  return IOSConfig.XcodeProjectFile.withBuildSourceFile(config, {
+    filePath: `${APPEARANCE_FIX_NAME}.m`,
+    contents: APPEARANCE_FIX_OBJC,
+    overwrite: true,
+  });
+};
+
+const withCarPlayBridgingHeader = (config) =>
   withDangerousMod(config, [
     "ios",
     async (cfg) => {
-      const projectName = cfg.modRequest.projectName;
-      if (!projectName) return cfg;
-      const dir = path.join(cfg.modRequest.platformProjectRoot, projectName);
-      fs.mkdirSync(dir, { recursive: true });
-
-      const carTarget = path.join(dir, `${CAR_SCENE_DELEGATE_NAME}.swift`);
-      if (!fs.existsSync(carTarget)) {
-        fs.writeFileSync(carTarget, CAR_SCENE_DELEGATE_SWIFT);
+      const header = path.join(
+        cfg.modRequest.platformProjectRoot,
+        cfg.modRequest.projectName,
+        `${cfg.modRequest.projectName}-Bridging-Header.h`,
+      );
+      const current = fs.existsSync(header)
+        ? fs.readFileSync(header, "utf8")
+        : "";
+      if (!current.includes(BRIDGING_HEADER_IMPORT)) {
+        fs.writeFileSync(
+          header,
+          `${current.trimEnd()}\n${BRIDGING_HEADER_IMPORT}\n`,
+        );
       }
-
-      const mainTarget = path.join(dir, `${MAIN_SCENE_DELEGATE_NAME}.swift`);
-      fs.writeFileSync(mainTarget, MAIN_SCENE_DELEGATE_SWIFT);
-
       return cfg;
     },
   ]);
@@ -125,5 +200,6 @@ module.exports = (config) => {
   config = withCarPlayEntitlement(config);
   config = withCarPlayScene(config);
   config = withSceneDelegateFiles(config);
+  config = withCarPlayBridgingHeader(config);
   return config;
 };

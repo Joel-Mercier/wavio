@@ -102,7 +102,7 @@
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.13",
     "react-native": "0.86.3",
-    "react-native-carplay": "^2.4.1-beta.0",
+    "react-native-carplay": "2.4.1-beta.0",
     "react-native-drawer-layout": "^4.2.10",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-google-cast": "^4.9.1",

@@ -14,7 +14,12 @@ import {
   CarAutoBridge,
   type NowPlayingPayload,
 } from "@/services/carAuto/bridge";
-import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
+import {
+  clearCarPlayTree,
+  isCarPlayConnected,
+  setupCarPlay,
+  updateCarPlayTree,
+} from "@/services/carAuto/carplay";
 import { handleBrowsePlay } from "@/services/carAuto/play";
 import {
   buildBrowseTree,
@@ -30,6 +35,7 @@ import {
   pause,
   play,
   seekTo,
+  setCarPlayAttached,
   skipNext,
   skipPrevious,
   togglePlayPause,
@@ -119,6 +125,26 @@ const builtNothing = () => {
   );
 };
 
+// Whether anything would consume a tree built right now. Android always
+// qualifies: the pushed tree is written to a native disk cache that a cold car
+// session shows before this runtime has even booted, so building ahead of a
+// connection is the whole point. iOS has no such cache — the tree lives in
+// carplay.ts and is applied on connect — so a build with no head unit attached
+// is just a burst of server requests plus a few hundred cover mirrors for
+// nobody, on every login and locale change.
+const carConnected = () =>
+  Platform.OS === "ios" ? isCarPlayConnected() : CarAutoBridge.available;
+
+// The session a tree's ids and cover URLs belong to. Coarser than
+// rebuildSignature() on purpose: a tree with yesterday's recent plays is still
+// this server's tree and can stand in until the rebuild lands, one from another
+// server (or from before a sign-out) cannot.
+const treeSessionKey = () => {
+  const { isAuthenticated, serverId, url, username, serverType } =
+    useAuthBase.getState();
+  return JSON.stringify([isAuthenticated, serverId, url, username, serverType]);
+};
+
 // Fingerprint of everything buildBrowseTree() reads out of local state. The
 // store subscriptions below are unselective — they fire on every set(), and
 // most of those change nothing the tree renders — while a rebuild costs a burst
@@ -196,7 +222,6 @@ async function boot() {
 }
 
 async function wire() {
-  if (Platform.OS === "ios") setupCarPlay();
   if (!CarAutoBridge.available && Platform.OS !== "ios") return;
 
   CarAutoBridge.setVerbose(__DEV__);
@@ -232,8 +257,26 @@ async function wire() {
   // a rebuild triggered by a track change), so its re-push has to prove the tree
   // it localised is still the current one.
   let treeGeneration = 0;
+  // Session the tree held by carplay.ts was built for. carplay.ts re-applies
+  // that tree on every connect, and with builds gated on a connection nothing
+  // else would refresh it while the car is away — so a session change has to
+  // drop it here, or the next connect briefly browses the previous server.
+  let carPlayTreeSession: string | null = null;
+
+  const dropStaleCarPlayTree = () => {
+    if (carPlayTreeSession === null || carPlayTreeSession === treeSessionKey())
+      return;
+    carPlayTreeSession = null;
+    // Also strands any artwork re-push still in flight for the dropped tree.
+    treeGeneration++;
+    clearCarPlayTree(
+      useAuthBase.getState().isAuthenticated ? "loading" : "signedOut",
+    );
+    log("carplay tree dropped: session changed");
+  };
 
   const rebuild = () => {
+    if (Platform.OS === "ios") dropStaleCarPlayTree();
     if (timer) clearTimeout(timer);
     timer = setTimeout(runRebuild, REBUILD_DEBOUNCE_MS);
   };
@@ -248,15 +291,24 @@ async function wire() {
       rebuildQueued = true;
       return;
     }
+    // Nothing is pinned here, so the connect callback below (or any later
+    // trigger) picks the build up from scratch.
+    if (!carConnected()) return log("rebuild skipped: no car connected");
     const { isAuthenticated, url, username, serverType } =
       useAuthBase.getState();
     // The on-device library has no url/username, so gate on the session
     // being authenticated and only require credentials for remote servers.
-    if (!isAuthenticated) return log("rebuild skipped: not authenticated");
+    if (!isAuthenticated) {
+      // Nothing was ever built to drop on a cold start while signed out, so
+      // the head unit has to be told directly.
+      if (Platform.OS === "ios") clearCarPlayTree("signedOut");
+      return log("rebuild skipped: not authenticated");
+    }
     if (hasNetworkServerType(serverType) && (!url || !username)) {
       return log("rebuild skipped: no credentials");
     }
     const signature = rebuildSignature();
+    const session = treeSessionKey();
     if (
       signature === pushedSignature &&
       Date.now() - pushedAt < REBUILD_TTL_MS
@@ -271,6 +323,12 @@ async function wire() {
         return null;
       });
       if (!build) return;
+      // A sign-out or server switch that landed while the requests were in
+      // flight already queued its own rebuild; this tree's ids and cover URLs
+      // belong to the session that is gone and must not reach the car.
+      if (treeSessionKey() !== session) {
+        return log("rebuild skipped: session changed during build");
+      }
       // Silence here would be indistinguishable from a build that never
       // finished — and this guard dropping a good tree is the one way it can be
       // wrong, so it has to say so.
@@ -288,7 +346,10 @@ async function wire() {
       }
       const generation = ++treeGeneration;
       if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
-      if (Platform.OS === "ios") updateCarPlayTree(build.tree);
+      if (Platform.OS === "ios") {
+        carPlayTreeSession = session;
+        updateCarPlayTree(build.tree);
+      }
       // Deliberately after the push and not awaited: the car gets a usable tree
       // immediately, and covers land as they're mirrored. Blocking the push on a
       // few hundred image fetches would leave a cold car session staring at an
@@ -322,6 +383,19 @@ async function wire() {
     pushedSignature = null;
     rebuild();
   });
+  // A head unit attaching is what unblocks the gate at the top of runRebuild
+  // on iOS, and the tree it applies on connect may be one this process never
+  // built yet.
+  if (Platform.OS === "ios") {
+    setupCarPlay({
+      onConnect: () => {
+        setCarPlayAttached(true);
+        rebuild();
+      },
+      onDisconnect: () => setCarPlayAttached(false),
+    });
+    setCarPlayAttached(isCarPlayConnected());
+  }
 
   rebuild();
 

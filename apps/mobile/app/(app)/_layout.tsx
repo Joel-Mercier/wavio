@@ -238,15 +238,20 @@ export default function AppLayout() {
     }
 
     // Restore the persisted React Query cache for this scope. On a server
-    // switch, clear the in-memory cache first so the previous server's data is
+    // switch, reset the in-memory cache first so the previous server's data is
     // never visible, then restore the new scope's blob (the persister's storage
     // adapter is scope-dynamic, so this reads `${scope}:wavio-rq-cache`).
+    // resetQueries, not clear(): the (app) tree is already mounted, and clear()
+    // removes the Query objects its observers are bound to — their in-flight
+    // fetches are cancelled silently, so they freeze at pending/fetching while
+    // the restore recreates entries nobody observes (Home stuck on skeletons).
+    // reset() keeps the objects, notifies observers and refetches the active
+    // ones; hydrate then only fills entries the refetch hasn't made newer.
     setCacheRestoring(true);
     void (async () => {
       try {
         if (isScopeChange) {
-          await queryClient.cancelQueries();
-          queryClient.clear();
+          void queryClient.resetQueries();
         }
         await persistQueryClientRestore({ queryClient, ...persistOptions });
       } catch (error) {

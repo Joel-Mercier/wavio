@@ -1,0 +1,104 @@
+diff --git a/ios/RNCarPlay.m b/ios/RNCarPlay.m
+index 153dbada1e6b6464a65fb24a3fd961b4ab54ade3..2fe1a772f66a7a8baf407564a9f3a9bd2cbcd91a 100644
+--- a/ios/RNCarPlay.m
++++ b/ios/RNCarPlay.m
+@@ -1376,8 +1376,12 @@ - (void)sendTemplateEventWithName:(CPTemplate *)template name:(NSString*)name {
+ 
+ - (void)sendTemplateEventWithName:(CPTemplate *)template name:(NSString*)name json:(NSDictionary*)json {
+     NSMutableDictionary *body = [[NSMutableDictionary alloc] initWithDictionary:json];
+-    NSDictionary *userInfo = [template userInfo];
+-    [body setObject:[userInfo objectForKey:@"templateId"] forKey:@"templateId"];
++    // System-owned templates (CPNowPlayingTemplate.sharedTemplate pushed by the
++    // Now Playing button) carry no userInfo; setObject:nil would throw.
++    NSString *templateId = [[template userInfo] objectForKey:@"templateId"];
++    if (templateId) {
++        [body setObject:templateId forKey:@"templateId"];
++    }
+     if (hasListeners) {
+         [self sendEventWithName:name body:body];
+     }
+diff --git a/lib/CarPlay.js b/lib/CarPlay.js
+index 595613bf406f83715b1a165fbce6c6bedfc704fe..289e465f354284d65158513fd8c1f4c1e7073846 100644
+--- a/lib/CarPlay.js
++++ b/lib/CarPlay.js
+@@ -24,7 +24,6 @@ class CarPlayInterface {
+     onDisconnectCallbacks = new Set();
+     constructor() {
+         this.emitter.addListener('didConnect', (window) => {
+-            console.log('we are connected yes!');
+             this.connected = true;
+             this.window = window;
+             this.onConnectCallbacks.forEach(callback => {
+diff --git a/lib/templates/Template.js b/lib/templates/Template.js
+index 5f6a2434df261b595ed30d9031d60dd3304a799a..650ee389ce8086dc48e833967c43b4a776bfcee6 100644
+--- a/lib/templates/Template.js
++++ b/lib/templates/Template.js
+@@ -4,7 +4,6 @@ exports.Template = void 0;
+ const react_native_1 = require("react-native");
+ const CarPlay_1 = require("../CarPlay");
+ // eslint-disable-next-line @typescript-eslint/no-var-requires
+-const resolveAssetSource = require('react-native/Libraries/Image/resolveAssetSource');
+ class Template {
+     config;
+     get type() {
+@@ -49,7 +48,6 @@ class Template {
+         }
+     }
+     updateTemplate = (config) => {
+-        console.log('LETSGO!', config, this.type);
+         CarPlay_1.CarPlay.bridge.updateTemplate(this.id, this.parseConfig({ type: this.type, ...config }));
+     };
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+@@ -62,7 +60,7 @@ class Template {
+                 }
+                 if (String(i).match(/[Ii]mage$/)) {
+                     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+-                    obj[i] = resolveAssetSource(obj[i]);
++                    obj[i] = react_native_1.Image.resolveAssetSource(obj[i]);
+                 }
+             }
+         }
+diff --git a/src/CarPlay.ts b/src/CarPlay.ts
+index be4f9623192b8c9fa75a13d6e0691287674a9e11..76f3cff94e7f36507e7e3fd40e249d496a3a0f99 100644
+--- a/src/CarPlay.ts
++++ b/src/CarPlay.ts
+@@ -161,7 +161,6 @@ export class CarPlayInterface {
+ 
+   constructor() {
+     this.emitter.addListener('didConnect', (window: WindowInformation) => {
+-      console.log('we are connected yes!');
+       this.connected = true;
+       this.window = window;
+       this.onConnectCallbacks.forEach(callback => {
+diff --git a/src/templates/Template.ts b/src/templates/Template.ts
+index d39678f4b5eb0705cfe3f093ae674d55977bd2e1..3bc639bedc01c6e25c5f09073ce33fa1a84d96e4 100644
+--- a/src/templates/Template.ts
++++ b/src/templates/Template.ts
+@@ -1,9 +1,7 @@
+-import { ImageSourcePropType, Platform } from 'react-native';
++import { Image, ImageSourcePropType, Platform } from 'react-native';
+ import { CarPlay } from '../CarPlay';
+ import { BarButton } from '../interfaces/BarButton';
+ 
+-// eslint-disable-next-line @typescript-eslint/no-var-requires
+-const resolveAssetSource = require('react-native/Libraries/Image/resolveAssetSource');
+ 
+ export interface BaseEvent {
+   /**
+@@ -139,7 +137,6 @@ export class Template<P> {
+   }
+ 
+   updateTemplate = (config: P) => {
+-    console.log('LETSGO!', config, this.type);
+     CarPlay.bridge.updateTemplate(this.id, this.parseConfig({ type: this.type, ...config }));
+   };
+ 
+@@ -153,7 +150,7 @@ export class Template<P> {
+         }
+         if (String(i).match(/[Ii]mage$/)) {
+           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+-          obj[i] = resolveAssetSource(obj[i]);
++          obj[i] = Image.resolveAssetSource(obj[i]);
+         }
+       }
+     }

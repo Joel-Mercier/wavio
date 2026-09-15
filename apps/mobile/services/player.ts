@@ -716,6 +716,43 @@ let lockScreenActive = false;
 // because a remote target (jukebox, UPnP renderer) drives the controls while
 // nothing is loaded on the local engine at all.
 let lockScreenTrackId: string | null = null;
+let lockScreenTrack: QueueTrack | null = null;
+let carPlayAttached = false;
+
+// CarPlay's Now Playing swaps previous/next for the interval skips whenever
+// those commands are enabled — the podcast layout, wrong for a music app in
+// the car. The phone's own controls show previous/next either way, so the
+// skips only go while a head unit is attached.
+function lockScreenOptions() {
+  const seek = !carPlayAttached;
+  return {
+    showSeekBackward: seek,
+    showSeekForward: seek,
+    showSkipPrevious: true,
+    showSkipNext: true,
+  };
+}
+
+// The options and the metadata shape are only read when the controls are
+// (re)activated, so a change is applied by tearing the controls down and
+// putting the same track back. Only ever called at head-unit connect/disconnect.
+export function setCarPlayAttached(attached: boolean) {
+  if (carPlayAttached === attached) return;
+  carPlayAttached = attached;
+  if (!lockScreenActive || !lockScreenTrack) return;
+  const track = lockScreenTrack;
+  clearLockScreen(player);
+  applyLockScreen(player, track);
+}
+
+// CarPlay's Now Playing has two text slots: title and subtitle. Given three
+// fields it puts the album in the subtitle and draws the artist squashed between
+// the lines, so while a head unit is attached the album is folded into the
+// artist line instead — the form iOS itself uses in Control Center.
+function lockScreenArtistLine(track: QueueTrack) {
+  if (!carPlayAttached) return track.artist || undefined;
+  return [track.artist, track.album].filter(Boolean).join(" — ") || undefined;
+}
 
 // Empty/undefined fields must be passed as undefined, not "": the native
 // expo-audio Metadata record parses `artworkUrl` into a java.net.URL, and a ""
@@ -724,8 +761,8 @@ let lockScreenTrackId: string | null = null;
 function toLockScreenMetadata(track: QueueTrack, artworkUrl?: string) {
   return {
     title: track.title || undefined,
-    artist: track.artist || undefined,
-    albumTitle: track.album || undefined,
+    artist: lockScreenArtistLine(track),
+    albumTitle: carPlayAttached ? undefined : track.album || undefined,
     artworkUrl: artworkUrl || undefined,
     // Seconds → ms. Gives the media notification an authoritative duration so it
     // doesn't rely on the player's live content duration (which is unknown for
@@ -775,8 +812,17 @@ async function upgradeLockScreenArtwork(
   }
 }
 
+// The CarPlay host pulls a track's cover lazily, by artwork identifier, through
+// a MediaRemote request back to this process, and caches a failed request for
+// as long as it lives. A request fails whenever the now-playing info no longer
+// carries that artwork, so with a head unit attached the remote URL is never
+// handed over (the native fetch would only merge the cover in later, after the
+// host has already asked) — a mirrored cover goes out in the same update as
+// the track (the native side loads a file:// inline), anything else waits for
+// the mirror.
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   lockScreenTrackId = track.id;
+  lockScreenTrack = track;
   const remoteArtwork = lockScreenArtworkUrl(track);
   const cached = cachedArtworkUri(remoteArtwork);
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
@@ -785,7 +831,7 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   // A local (file://) artwork needs no mirroring and passes straight through.
   const initialArtwork =
     cached ??
-    (remoteArtwork && customHeadersForUrl(remoteArtwork)
+    (carPlayAttached || (remoteArtwork && customHeadersForUrl(remoteArtwork))
       ? undefined
       : remoteArtwork);
   const metadata = toLockScreenMetadata(track, initialArtwork);
@@ -798,12 +844,7 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
       // updateLockScreenMetadata does not.
       p.updateLockScreenMetadata(metadata);
     } else {
-      p.setActiveForLockScreen(true, metadata, {
-        showSeekBackward: true,
-        showSeekForward: true,
-        showSkipPrevious: true,
-        showSkipNext: true,
-      });
+      p.setActiveForLockScreen(true, metadata, lockScreenOptions());
       lockScreenActive = true;
     }
   } catch (error) {
@@ -825,6 +866,7 @@ function clearLockScreen(p: AudioPlayer) {
   }
   lockScreenActive = false;
   lockScreenTrackId = null;
+  lockScreenTrack = null;
 }
 
 // Put a track on the OS controls without loading anything locally. The only

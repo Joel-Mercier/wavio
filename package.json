@@ -35,13 +35,17 @@
     "landing:build": "bun run --cwd apps/landing build",
     "landing:preview": "bun run --cwd apps/landing preview"
   },
+  "overrides": {
+    "react-native": "0.86.3"
+  },
   "patchedDependencies": {
     "expo-audio@57.0.5": "patches/expo-audio@57.0.5.patch",
     "zod@4.6.2": "patches/zod@4.6.2.patch",
     "expo-navigation-bar@57.0.2": "patches/expo-navigation-bar@57.0.2.patch",
     "lucide-react-native@1.45.0": "patches/lucide-react-native@1.45.0.patch",
     "expo-font@57.0.4": "patches/expo-font@57.0.4.patch",
-    "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch"
+    "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch",
+    "react-native-carplay@2.4.1-beta.0": "patches/react-native-carplay@2.4.1-beta.0.patch"
   },
   "dependencies": {
     "eas-cli": "^20.2.0",

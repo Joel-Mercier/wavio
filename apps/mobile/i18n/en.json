@@ -246,6 +246,9 @@
 			},
 			"carAuto": {
 				"home": "Home",
+				"loadingPlaceholder": "Loading your library…",
+				"signedOutPlaceholder": "Sign in on your iPhone",
+				"signedOutPlaceholderDetail": "Open Wavio and sign in to browse your music here",
 				"recentlyPlayed": "Recently played",
 				"recentlyAdded": "Recently added",
 				"mostPlayed": "Most played",
