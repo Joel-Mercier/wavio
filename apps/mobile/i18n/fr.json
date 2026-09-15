@@ -2020,6 +2020,8 @@
 				"jukeboxResumeMessage": "Une session jukebox est toujours en lecture sur le serveur. Reprendre le contrôle ou lire sur cet appareil ?",
 				"jukeboxResumeResume": "Reprendre le contrôle",
 				"jukeboxResumePlayHere": "Lire ici",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Sortie",
 				"outputSpeakersAndTvs": "Enceintes et téléviseurs (UPnP/DLNA)",
 				"outputScanning": "Recherche d'appareils …",
