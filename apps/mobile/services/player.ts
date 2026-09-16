@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { File } from "expo-file-system";
+import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { isNetworkShareType } from "@/services/backend/serverTraits";
@@ -719,12 +720,14 @@ let lockScreenTrackId: string | null = null;
 let lockScreenTrack: QueueTrack | null = null;
 let carPlayAttached = false;
 
-// CarPlay's Now Playing swaps previous/next for the interval skips whenever
-// those commands are enabled — the podcast layout, wrong for a music app in
-// the car. The phone's own controls show previous/next either way, so the
-// skips only go while a head unit is attached.
+// iOS Now Playing (lock screen, Control Center, CarPlay) has three transport
+// slots and fills the outer two with the interval skips whenever those commands
+// are enabled, dropping previous/next altogether — the podcast layout. Both
+// pairs can never show at once, so the skips are Android-only, where media3
+// renders them beside previous/next. On the phone iOS seeks by scrubber; in
+// the car carplay.ts adds its own ±10 s image buttons.
 function lockScreenOptions() {
-  const seek = !carPlayAttached;
+  const seek = Platform.OS === "android";
   return {
     showSeekBackward: seek,
     showSeekForward: seek,
@@ -733,9 +736,9 @@ function lockScreenOptions() {
   };
 }
 
-// The options and the metadata shape are only read when the controls are
-// (re)activated, so a change is applied by tearing the controls down and
-// putting the same track back. Only ever called at head-unit connect/disconnect.
+// The metadata shape is only read when the controls are (re)activated, so a
+// change is applied by tearing the controls down and putting the same track
+// back. Only ever called at head-unit connect/disconnect.
 export function setCarPlayAttached(attached: boolean) {
   if (carPlayAttached === attached) return;
   carPlayAttached = attached;
