@@ -4,7 +4,6 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
-import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
@@ -81,10 +80,9 @@ import {
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import { isTlsTrustFailure } from "@/services/errorReporting";
+import { useSaveTrackToDevice } from "@/hooks/useSaveTrackToDevice";
 import { isPermanentWriteRefusal } from "@/services/notFound";
 import type { Child, PlaylistWithSongs } from "@/services/openSubsonic/types";
-import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useAudioMuse, {
   selectSimilarTracksAvailable,
   selectSongPathAvailable,
@@ -147,7 +145,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const isOnline = useIsOnline();
   const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
-  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const saveToDevice = useSaveTrackToDevice();
   const {
     isTrackDownloaded,
     isTrackDownloading,
@@ -626,42 +624,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const handleDownloadPress = async () => {
     if (!track) return;
     bottomSheetModalRef.current?.dismiss();
-    if (permissionResponse?.status !== "granted") {
-      await requestPermission();
-    }
-    try {
-      await saveTrackToDevice(track);
-      toast.show({
-        placement: "top",
-        duration: TOAST_DURATION.default,
-        render: () => (
-          <Toast action="success">
-            <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-            <ToastDescription>
-              {t("app.tracks.downloadSuccessMessage")}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    } catch (error) {
-      logError("Error downloading track to device:", error);
-      toast.show({
-        placement: "top",
-        duration: TOAST_DURATION.default,
-        render: () => (
-          <Toast action="error">
-            <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-            <ToastDescription>
-              {t(
-                isTlsTrustFailure(error)
-                  ? "app.tracks.downloadErrorCertificateMessage"
-                  : "app.tracks.downloadErrorMessage",
-              )}
-            </ToastDescription>
-          </Toast>
-        ),
-      });
-    }
+    await saveToDevice(track);
   };
 
   const handleRatingPress = () => {

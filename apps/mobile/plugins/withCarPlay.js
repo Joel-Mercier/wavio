@@ -86,9 +86,16 @@ const APPEARANCE_FIX_OBJC = `#import <Foundation/Foundation.h>
 @end
 `;
 
-// Adopts the AppDelegate-created UIWindow into the new UIWindowScene so the
-// React Native root view actually renders. Required on iOS scene-based apps
-// (which we are, because CarPlay forces UIApplicationSceneManifest).
+// Hosts the React Native root view in the new UIWindowScene. The generated
+// AppDelegate builds its UIWindow with `UIWindow(frame:)` in
+// didFinishLaunching, before any scene exists; CarPlay forces a
+// UIApplicationSceneManifest, so that window has to be attached to the scene
+// here or nothing renders. Simply assigning `windowScene` to the pre-scene
+// window leaves it half-registered: on iOS 26 the system share sheet presented
+// from it sizes itself for the long screen edge and lands as a corner popover
+// (verified: a window born with `UIWindow(windowScene:)` hosting the same root
+// view controller renders the sheet normally). So the root view controller is
+// moved onto a scene-created window and the original is retired.
 const MAIN_SCENE_DELEGATE_SWIFT = `import UIKit
 
 class MainSceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -99,13 +106,20 @@ class MainSceneDelegate: UIResponder, UIWindowSceneDelegate {
     willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions
   ) {
-    guard let windowScene = scene as? UIWindowScene else { return }
-    if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
-       let appWindow = appDelegate.window {
-      appWindow.windowScene = windowScene
-      self.window = appWindow
-      appWindow.makeKeyAndVisible()
-    }
+    guard let windowScene = scene as? UIWindowScene,
+      let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+      let launchWindow = appDelegate.window
+    else { return }
+
+    let sceneWindow = UIWindow(windowScene: windowScene)
+    sceneWindow.backgroundColor = launchWindow.backgroundColor
+    let rootViewController = launchWindow.rootViewController
+    launchWindow.rootViewController = nil
+    launchWindow.isHidden = true
+    sceneWindow.rootViewController = rootViewController
+    appDelegate.window = sceneWindow
+    self.window = sceneWindow
+    sceneWindow.makeKeyAndVisible()
   }
 }
 `;
