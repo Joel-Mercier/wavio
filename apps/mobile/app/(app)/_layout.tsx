@@ -1,12 +1,19 @@
 import { persistQueryClientRestore } from "@tanstack/react-query-persist-client";
 import { Redirect, Stack } from "expo-router";
-import { type ReactNode, useCallback, useEffect } from "react";
+import {
+  type ComponentProps,
+  type ReactNode,
+  useCallback,
+  useEffect,
+} from "react";
 import {
   AppState,
   type AppStateStatus,
+  Platform,
   useWindowDimensions,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import DrawerMenu from "@/components/DrawerMenu";
@@ -149,11 +156,54 @@ function AppDrawer({ children }: { children: ReactNode }) {
   );
 }
 
+// Both screens are drawn full-screen with a drag-down dismissal, but the two
+// platforms get there differently. Android uses a native form sheet at the
+// [1.0] detent, extended behind the top inset so nothing peeks out above it
+// and the screen's own paddingTop: insets.top isn't stacked on a second gap.
+// iOS must not present natively: a formSheet is a presented view controller
+// layered above the whole RN root, so every root-hosted overlay (gorhom sheets,
+// Gluestack toasts and modals) opened from the player would render underneath
+// it and never show. A card with a vertical gesture keeps the player in the
+// same view tree as those overlays. RNScreens' full-screen vertical pan has no
+// failure relationship with anything — it recognizes alongside scroll views and
+// races the cover / slider pans — so only touches starting in the header band
+// (top inset + mt-4 + h-10 + mb-4) may begin a dismiss.
+const PLAYER_HEADER_BAND_HEIGHT = 72;
+
+function fullScreenPlayerOptions(
+  topInset: number,
+): ComponentProps<typeof Stack.Screen>["options"] {
+  if (Platform.OS === "ios") {
+    return {
+      presentation: "card",
+      animation: "fade_from_bottom",
+      animationDuration: 300,
+      gestureEnabled: true,
+      gestureDirection: "vertical",
+      fullScreenGestureEnabled: true,
+      gestureResponseDistance: {
+        bottom: topInset + PLAYER_HEADER_BAND_HEIGHT,
+      },
+    };
+  }
+  return {
+    gestureEnabled: true,
+    fullScreenGestureEnabled: true,
+    gestureDirection: "vertical",
+    animationDuration: 300,
+    animation: "fade_from_bottom",
+    presentation: "formSheet",
+    sheetAllowedDetents: [1.0],
+    sheetShouldOverflowTopInset: true,
+  };
+}
+
 export default function AppLayout() {
   const isAuthenticated = useAuth((store) => store.isAuthenticated);
   const serverType = useAuthBase((s) => s.serverType);
   const localLibReady = useLocalLibrary((s) => s.ready);
   const lastScanAt = useLocalLibrary((s) => s.lastScanAt);
+  const insets = useSafeAreaInsets();
   useMusicFolderSelection();
 
   useEffect(() => {
@@ -386,6 +436,7 @@ export default function AppLayout() {
 
   if (__DEV__)
     console.log("[app] User is authenticated, rendering (app) layout");
+  const playerOptions = fullScreenPlayerOptions(insets.top);
   return (
     <>
       <AppDrawer>
@@ -401,36 +452,8 @@ export default function AppLayout() {
             <Stack.Screen name="playlists/[id]/edit-rules" />
             <Stack.Screen name="internet-radio-stations/new" />
             <Stack.Screen name="podcast-channels/new" />
-            <Stack.Screen
-              name="player"
-              options={{
-                gestureEnabled: true,
-                fullScreenGestureEnabled: true,
-                gestureDirection: "vertical",
-                animationDuration: 300,
-                animation: "fade_from_bottom",
-                presentation: "formSheet",
-                sheetAllowedDetents: [1.0],
-                // Android: extend the sheet behind the top inset so the [1.0]
-                // detent truly covers the screen (no underlying view peeking at
-                // the top) and the screen's own paddingTop: insets.top isn't
-                // stacked on top of a second inset gap.
-                sheetShouldOverflowTopInset: true,
-              }}
-            />
-            <Stack.Screen
-              name="lyrics"
-              options={{
-                gestureEnabled: true,
-                fullScreenGestureEnabled: true,
-                gestureDirection: "vertical",
-                animationDuration: 300,
-                animation: "fade_from_bottom",
-                presentation: "formSheet",
-                sheetAllowedDetents: [1.0],
-                sheetShouldOverflowTopInset: true,
-              }}
-            />
+            <Stack.Screen name="player" options={playerOptions} />
+            <Stack.Screen name="lyrics" options={playerOptions} />
           </Stack>
         </AppErrorBoundary>
         <FloatingPlayer />
