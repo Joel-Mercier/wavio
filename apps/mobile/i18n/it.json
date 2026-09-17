@@ -81,8 +81,10 @@
 				"allTracks": "Tutti i brani",
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "Cerca nella tua libreria"
+					"inputPlaceholder": "Cerca nella tua libreria",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
@@ -2020,6 +2022,8 @@
 				"jukeboxResumeMessage": "Sul server è ancora in corso una sessione del jukebox. Vuoi riprendere il controllo o riprodurre su questo dispositivo?",
 				"jukeboxResumeResume": "Riprendere il controllo",
 				"jukeboxResumePlayHere": "Riproduci qui",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Risultato",
 				"outputSpeakersAndTvs": "Altoparlanti e TV (UPnP/DLNA)",
 				"outputScanning": "Cerchi dispositivi…",

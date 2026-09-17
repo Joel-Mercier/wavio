@@ -81,8 +81,10 @@
 				"allTracks": "所有曲目",
 				"allAlbumsSubtitle": "专辑",
 				"allArtistsSubtitle": "艺人",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "在音乐库中搜索"
+					"inputPlaceholder": "在音乐库中搜索",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
@@ -1967,6 +1969,8 @@
 				"jukeboxResumeMessage": "服务器上有点唱机会话正在播放。恢复控制还是在此设备播放？",
 				"jukeboxResumeResume": "恢复控制",
 				"jukeboxResumePlayHere": "在此播放",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "输出",
 				"outputSpeakersAndTvs": "音箱和电视（UPnP/DLNA）",
 				"outputScanning": "正在查找设备…",

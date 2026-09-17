@@ -81,8 +81,10 @@
 				"allTracks": "Toutes les pistes",
 				"allAlbumsSubtitle": "Albums",
 				"allArtistsSubtitle": "Artistes",
+				"emptyHint": "Votre bibliothèque n'affiche que les éléments que vous avez ajoutés à vos favoris (albums, artistes, podcasts, stations de radio), vos playlists et vos téléchargements. Appuyez sur le cœur à côté d'un élément pour qu'il apparaisse ici.",
 				"search": {
-					"inputPlaceholder": "Rechercher"
+					"inputPlaceholder": "Rechercher",
+					"emptyHint": "Cette recherche porte uniquement sur votre bibliothèque : albums, artistes, stations de radio et playlists ajoutés à vos favoris. Pour effectuer une recherche dans l'ensemble de votre collection, y compris les morceaux, utilisez l'onglet « Recherche »."
 				}
 			},
 			"create": {
@@ -2020,6 +2022,8 @@
 				"jukeboxResumeMessage": "Une session jukebox est toujours en lecture sur le serveur. Reprendre le contrôle ou lire sur cet appareil ?",
 				"jukeboxResumeResume": "Reprendre le contrôle",
 				"jukeboxResumePlayHere": "Lire ici",
+				"upnpResumeTitle": "Reprendre sur {{name}} ?",
+				"upnpResumeMessage": "Vous avez joué des titres sur {{name}}. Reprendre le contrôle ou jouer sur cet appareil ?",
 				"output": "Sortie",
 				"outputSpeakersAndTvs": "Enceintes et téléviseurs (UPnP/DLNA)",
 				"outputScanning": "Recherche d'appareils …",

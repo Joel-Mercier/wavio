@@ -81,8 +81,10 @@
 				"allTracks": "Все треки",
 				"allAlbumsSubtitle": "Альбомы",
 				"allArtistsSubtitle": "Исполнители",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "Поиск в медиатеке"
+					"inputPlaceholder": "Поиск в медиатеке",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
@@ -2126,6 +2128,8 @@
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
 				"jukeboxResumePlayHere": "Воспроизвести здесь",
+				"upnpResumeTitle": "Resume on {{name}}?",
+				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
 				"output": "Вывод",
 				"outputSpeakersAndTvs": "Акустические системы и телевизоры (UPnP/DLNA)",
 				"outputScanning": "Ищу устройства…",
