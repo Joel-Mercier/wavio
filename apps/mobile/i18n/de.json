@@ -81,8 +81,10 @@
 				"allTracks": "Alle Titel",
 				"allAlbumsSubtitle": "Alben",
 				"allArtistsSubtitle": "Interpreten",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "Durchsuche Deine Bibliothek"
+					"inputPlaceholder": "Durchsuche Deine Bibliothek",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
