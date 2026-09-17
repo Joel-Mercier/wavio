@@ -81,8 +81,10 @@
 				"allTracks": "所有曲目",
 				"allAlbumsSubtitle": "专辑",
 				"allArtistsSubtitle": "艺人",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "在音乐库中搜索"
+					"inputPlaceholder": "在音乐库中搜索",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
