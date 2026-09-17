@@ -8,9 +8,10 @@ import {
 
 // Which feed sections are allowed to run their queries, held outside React.
 //
-// The gate has to live here rather than in the feed's renderItem: FlashList's
-// ViewHolder memo compares renderItem by reference, so a renderItem closing
-// over an advancing index re-renders every mounted section on every scroll
+// The gate has to live here rather than in the feed's renderItem: the list
+// re-renders every mounted row when renderItem's inputs change (its identity in
+// FlashList, `extraData` in Legend List), so a renderItem closing over an
+// advancing index re-renders every mounted section on every scroll
 // viewability event — the whole visible feed, synchronously, mid-scroll. Going
 // through an external store keeps renderItem stable and wakes only the sections
 // whose own gate actually flips.

@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -86,7 +86,7 @@ export default function OfflineDownloadsDetail() {
   const totalDownloadSize = useTotalDownloadSize();
 
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const listRef = useRef<FlashListRef<OfflineTrack>>(null);
+  const listRef = useRef<LegendListRef>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [clearProgress, setClearProgress] = useState<{
@@ -318,7 +318,8 @@ export default function OfflineDownloadsDetail() {
               </Text>
             </VStack>
           ) : (
-            <FlashList
+            <LegendList
+              recycleItems
               ref={listRef}
               data={data}
               keyExtractor={(item) => item.id}

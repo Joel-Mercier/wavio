@@ -1,5 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import type { LegendListRef } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
@@ -54,9 +55,6 @@ import {
 } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 // Space left above the search bar once it's pinned at the top. The header stops
@@ -90,7 +88,7 @@ export default function SearchScreen() {
   });
 
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
-  const listRef = useRef<FlashListRef<Genre>>(null);
+  const listRef = useRef<LegendListRef>(null);
 
   const titleHeight = useSharedValue(0);
   // Direction-aware collapse: track how far the title is collapsed (0..max) by
@@ -219,7 +217,8 @@ export default function SearchScreen() {
           </FadeOutScaleDown>
         </HStack>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         ref={listRef}
         key={`genres-${numColumns}`}
         onScroll={scrollHandler}

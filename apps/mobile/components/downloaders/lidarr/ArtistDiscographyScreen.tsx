@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useEffect, useRef } from "react";
@@ -83,7 +83,8 @@ export default function ArtistDiscographyScreen() {
           {name ?? t("app.settings.downloaders.discovery.artist")}
         </Heading>
       </HStack>
-      <FlashList
+      <LegendList
+        recycleItems
         data={albums}
         keyExtractor={(item: LidarrAlbum) => item.foreignAlbumId}
         renderItem={({ item }) => <LidarrAlbumRow album={item} />}

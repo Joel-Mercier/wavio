@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -57,7 +57,7 @@ export default function DiscoveryScreen() {
   const isConnected = useLidarr((store) => store.isConnected);
 
   const filtersSheetRef = useRef<BottomSheetModal>(null);
-  const listRef = useRef<FlashListRef<LidarrSearchResult>>(null);
+  const listRef = useRef<LegendListRef>(null);
   // Seeded when another screen sends a name here to look up (e.g. a similar
   // artist the library doesn't hold), so the results are already on screen.
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -68,7 +68,7 @@ export default function DiscoveryScreen() {
   const { data, isFetching, error } = useLidarrSearch(debouncedTerm);
 
   // Previous results now stay on screen while the new ones load, so without
-  // this the FlashList keeps its old offset and lands mid-list once they swap,
+  // this the list keeps its old offset and lands mid-list once they swap,
   // hiding the new top matches.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -141,7 +141,8 @@ export default function DiscoveryScreen() {
         </Box>
       </Box>
 
-      <FlashList
+      <LegendList
+        recycleItems
         ref={listRef}
         data={results}
         keyExtractor={keyExtractor}

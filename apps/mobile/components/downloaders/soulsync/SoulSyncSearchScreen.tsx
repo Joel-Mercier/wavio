@@ -1,4 +1,4 @@
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -30,7 +30,7 @@ import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 
 // SoulSync returns tracks and artists from separate endpoints; they're
-// flattened into one list with headers so a single FlashList renders both.
+// flattened into one list with headers so a single list renders both.
 type Row =
   | { kind: "header"; id: string; label: string }
   | { kind: "track"; id: string; track: SoulSyncTrack }
@@ -66,7 +66,7 @@ export default function SoulSyncSearchScreen() {
   const [debouncedTerm, setDebouncedTerm] = useState(q ?? "");
   const [filter, setFilter] = useState<SearchFilter[]>([]);
   const debounce = useDebounce(400);
-  const listRef = useRef<FlashListRef<Row>>(null);
+  const listRef = useRef<LegendListRef>(null);
 
   const { data, isFetching, error } = useSoulSyncSearch(debouncedTerm);
   // One poll for every request the rows below start, so the API's per-minute
@@ -127,7 +127,7 @@ export default function SoulSyncSearchScreen() {
   }, []);
 
   // Toggling a filter or editing the query swaps the result set; without this
-  // the FlashList keeps its old offset and lands mid-list, hiding the new top
+  // the list keeps its old offset and lands mid-list, hiding the new top
   // matches.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -223,7 +223,8 @@ export default function SoulSyncSearchScreen() {
         </Box>
       </Box>
 
-      <FlashList
+      <LegendList
+        recycleItems
         ref={listRef}
         data={rows}
         keyExtractor={keyExtractor}

@@ -24,7 +24,7 @@ import TabBar from "@/components/TabBar";
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 
-// biome-ignore lint/suspicious/noExplicitAny: AnimatedRef must accept FlashList, ScrollView, etc.
+// biome-ignore lint/suspicious/noExplicitAny: AnimatedRef must accept LegendList, ScrollView, etc.
 type AnyAnimatedRef = AnimatedRef<any>;
 
 export interface CollapsibleSceneProps {

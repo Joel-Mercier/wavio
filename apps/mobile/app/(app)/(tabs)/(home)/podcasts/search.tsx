@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -269,7 +269,8 @@ export default function PodcastsSearchScreen() {
           </HStack>
         </Box>
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={listData as PodcastSeries[]}
         keyExtractor={(item, index) =>
           "uuid" in item ? item.uuid : `skeleton-${index}`

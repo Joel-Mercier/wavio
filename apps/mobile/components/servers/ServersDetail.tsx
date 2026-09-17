@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -281,7 +281,8 @@ export default function ServersDetail() {
             <Plus size={24} color="white" />
           </FadeOutScaleDown>
         </HStack>
-        <FlashList
+        <LegendList
+          recycleItems
           data={servers}
           renderItem={({ item }) => <ServerListItem server={item} />}
           showsVerticalScrollIndicator={false}

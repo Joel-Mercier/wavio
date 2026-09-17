@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
@@ -34,9 +34,6 @@ import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
@@ -117,7 +114,8 @@ export default function GenreScreen() {
           </HStack>
         </ScreenHeaderGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         key={`genre-albums-${layout}-${gridColumns}`}
         onScroll={scrollHandler}
         data={isLoading ? loadingData(12) : albums}

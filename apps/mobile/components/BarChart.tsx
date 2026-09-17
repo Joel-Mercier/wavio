@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { memo } from "react";
 import { useWindowDimensions } from "react-native";
 import { Box } from "@/components/ui/box";
@@ -153,7 +153,8 @@ export default function BarChart({
         height: height + AXIS_HEIGHT,
       }}
     >
-      <FlashList
+      <LegendList
+        recycleItems
         horizontal
         data={bars}
         keyExtractor={(bar) => bar.key}

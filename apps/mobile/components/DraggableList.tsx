@@ -1,11 +1,6 @@
-import {
-  FlashList,
-  type FlashListProps,
-  type FlashListRef,
-} from "@shopify/flash-list";
+import { LegendList, type LegendListProps } from "@legendapp/list/react-native";
 import {
   createContext,
-  forwardRef,
   isValidElement,
   type PropsWithChildren,
   type ReactElement,
@@ -18,9 +13,8 @@ import {
 } from "react";
 import {
   type LayoutChangeEvent,
-  type StyleProp,
+  type ScrollViewProps,
   View,
-  type ViewStyle,
 } from "react-native";
 import {
   GestureDetector,
@@ -48,11 +42,9 @@ import { scheduleOnRN } from "react-native-worklets";
 import useStableCallback from "@/hooks/useStableCallback";
 import { selectionHaptic } from "@/services/haptics";
 
-const AnimatedCellContainer = Animated.createAnimatedComponent(View);
-
 const AUTO_SCROLL_THRESHOLD = 100;
 // Per-frame increments, not a velocity ramp: the scroll runs on the UI thread
-// but FlashList still produces cells on the JS one, so outrunning it by much
+// but the list still produces rows on the JS one, so outrunning it by much
 // slides the viewport into rows that were never rendered.
 const AUTO_SCROLL_MIN_STEP = 2;
 const AUTO_SCROLL_MAX_STEP = 10;
@@ -79,9 +71,8 @@ type DragState = {
   itemHeight: SharedValue<number>;
 };
 
-// Cells read the drag state through context so `CellRendererComponent` can stay
-// a stable module-scope component: FlashList compares it by reference and uses
-// it as the cell's element type, so a new identity remounts every mounted cell.
+// Rows read the drag state through context so `ItemWrapper` stays a stable
+// module-scope component with no per-render closures.
 const DragContext = createContext<DragState>({
   activeIndex: makeMutable(-1),
   insertIndex: makeMutable(-1),
@@ -89,14 +80,9 @@ const DragContext = createContext<DragState>({
   itemHeight: makeMutable(0),
 });
 
-type CellProps = PropsWithChildren<{
-  index: number;
-  style?: StyleProp<ViewStyle>;
-  onLayout?: (event: LayoutChangeEvent) => void;
-}>;
+type ItemWrapperProps = PropsWithChildren<{ index: number }>;
 
-const ItemWrapper = forwardRef<View, CellProps>((props, ref) => {
-  const { index } = props;
+function ItemWrapper({ index, children }: ItemWrapperProps) {
   const { activeIndex, insertIndex, hiddenSlot, itemHeight } =
     useContext(DragContext);
 
@@ -122,7 +108,7 @@ const ItemWrapper = forwardRef<View, CellProps>((props, ref) => {
       ) {
         return;
       }
-      // Land immediately when the cell was just recycled onto another row (so it
+      // Land immediately when the row was just recycled onto another item (so it
       // never animates from the previous row's offset) and when the drag just
       // ended (the reordered data lands in the same commit, so the shifted rows
       // are already where they belong).
@@ -146,20 +132,12 @@ const ItemWrapper = forwardRef<View, CellProps>((props, ref) => {
     return { opacity: 1, transform: [{ translateY: position.value }] };
   }, [index]);
 
-  return (
-    <AnimatedCellContainer
-      ref={ref}
-      {...props}
-      style={[props.style, animatedStyle]}
-    />
-  );
-});
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+}
 
-ItemWrapper.displayName = "ItemWrapper";
-
-type DraggableFlashListProps<T> = Omit<
-  FlashListProps<T>,
-  "renderItem" | "data"
+type DraggableListProps<T> = Omit<
+  LegendListProps<T>,
+  "renderItem" | "data" | "children"
 > & {
   data: T[];
   itemHeight: number;
@@ -175,7 +153,13 @@ type DraggableFlashListProps<T> = Omit<
 
 const noop = () => {};
 
-function DraggableFlashList<T>({
+// Legend calls `renderScrollComponent` as a function, so the gesture-handler
+// ScrollView (a forwardRef component) cannot be passed as the value itself.
+const renderGestureScrollView = (props: ScrollViewProps) => (
+  <ScrollView {...props} />
+);
+
+function DraggableList<T>({
   data,
   itemHeight,
   onSort,
@@ -185,11 +169,12 @@ function DraggableFlashList<T>({
   scrollEnabled,
   ListHeaderComponent,
   ...listProps
-}: DraggableFlashListProps<T>) {
+}: DraggableListProps<T>) {
   // The order lives in the caller: committing it here as well would mean two
   // sources of truth reordering at slightly different times on drop.
   const [drag, setDrag] = useState<{ index: number; item: T } | null>(null);
-  const listRef = useAnimatedRef<FlashListRef<T>>();
+  // biome-ignore lint/suspicious/noExplicitAny: LegendListRef fails Reanimated's InstanceOrElement constraint, but resolves through getNativeScrollRef at runtime
+  const listRef = useAnimatedRef<any>();
   const scrollOffset = useScrollOffset(listRef);
 
   const activeIndex = useSharedValue(-1);
@@ -213,6 +198,10 @@ function DraggableFlashList<T>({
   useEffect(() => {
     itemHeightValue.value = itemHeight;
   }, [itemHeight, itemHeightValue]);
+
+  // Rows are fixed-height by contract, so the list can skip measuring them and
+  // its positions match the arithmetic every touch conversion below relies on.
+  const getFixedItemSize = useCallback(() => itemHeight, [itemHeight]);
 
   useEffect(() => {
     maxIndex.value = Math.max(0, data.length - 1);
@@ -518,7 +507,7 @@ function DraggableFlashList<T>({
           // A press on the header belongs to no row.
           if (rowY < 0) return;
           // A fixed row height is what lets the pressed row be resolved by
-          // arithmetic, including for rows FlashList never mounted.
+          // arithmetic, including for rows the list never mounted.
           const index = Math.min(
             maxIndex.value,
             Math.max(0, Math.floor(rowY / itemHeightValue.value)),
@@ -560,8 +549,11 @@ function DraggableFlashList<T>({
   // in-list copy never needs the active styling — keeping it out means grabbing
   // and dropping a row re-renders no cell at all.
   const renderListItem = useStableCallback(
-    ({ item, index }: { item: T; index: number }) =>
-      renderItem(item, index, false, () => beginDrag(index)),
+    ({ item, index }: { item: T; index: number }) => (
+      <ItemWrapper index={index}>
+        {renderItem(item, index, false, () => beginDrag(index))}
+      </ItemWrapper>
+    ),
   );
 
   const draggingAnimatedStyle = useAnimatedStyle(
@@ -577,21 +569,20 @@ function DraggableFlashList<T>({
     <GestureDetector gesture={gesture}>
       <Animated.View onLayout={onLayout} style={{ flex: 1 }}>
         <DragContext.Provider value={dragContext}>
-          <FlashList
+          <LegendList
             {...listProps}
             ref={listRef}
             data={data}
             renderItem={renderListItem}
+            recycleItems
+            getFixedItemSize={getFixedItemSize}
             ListHeaderComponent={headerComponent}
-            CellRendererComponent={ItemWrapper}
-            // FlashList keeps the visible row pinned while data changes, which
-            // makes a reorder shove the list around (documented known issue).
             maintainVisibleContentPosition={
-              maintainVisibleContentPosition ?? { disabled: true }
+              maintainVisibleContentPosition ?? false
             }
             scrollEnabled={(scrollEnabled ?? true) && !isDragging}
             drawDistance={isDragging ? DRAG_DRAW_DISTANCE : drawDistance}
-            renderScrollComponent={ScrollView}
+            renderScrollComponent={renderGestureScrollView}
           />
         </DragContext.Provider>
         {drag && (
@@ -615,4 +606,4 @@ function DraggableFlashList<T>({
   );
 }
 
-export default DraggableFlashList;
+export default DraggableList;

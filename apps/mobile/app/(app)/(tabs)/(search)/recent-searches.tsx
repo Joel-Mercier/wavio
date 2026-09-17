@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -154,19 +154,18 @@ export default function RecentSearchesScreen() {
           </form.Field>
         </HStack>
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={query.length === 0 ? recentSearches : searchData}
         keyExtractor={(item) => item.id}
         extraData={{ query }}
         renderItem={({
           item,
           index,
-          target,
           extraData,
         }: {
           item: RecentSearch | Child | ArtistID3 | AlbumID3;
           index: number;
-          target: string;
           extraData?: { query: string };
         }) => (
           <Box className={cn("px-6", { "mt-6": index === 0 })}>

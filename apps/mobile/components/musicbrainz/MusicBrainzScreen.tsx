@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -176,7 +176,8 @@ export default function MusicBrainzScreen() {
         )}
         <Box className="px-6 flex-1">
           {activeTab === "review" ? (
-            <FlashList
+            <LegendList
+              recycleItems
               data={pending}
               keyExtractor={(item) => item.albumKey}
               showsVerticalScrollIndicator={false}
@@ -184,7 +185,8 @@ export default function MusicBrainzScreen() {
               renderItem={({ item }) => <MusicBrainzReviewItem match={item} />}
             />
           ) : activeTab === "unmatched" ? (
-            <FlashList
+            <LegendList
+              recycleItems
               data={unmatched}
               keyExtractor={(item) => item.albumKey}
               showsVerticalScrollIndicator={false}

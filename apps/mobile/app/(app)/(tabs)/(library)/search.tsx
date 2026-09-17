@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -307,7 +307,8 @@ export default function LibrarySearchScreen() {
         />
       )}
       {!(playlistsError || starredError || musicFoldersError) && (
-        <FlashList
+        <LegendList
+          recycleItems
           data={
             isLoadingPlaylists || isLoadingStarred || isLoadingMusicFolders
               ? (loadingData(12) as Array<

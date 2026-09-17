@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -326,7 +326,8 @@ export default function AddToPlaylistDetail() {
           <Box className="w-10" />
         </HStack>
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={rows}
         contentContainerStyle={{
           paddingBottom: floatingPlayerTop + 96,

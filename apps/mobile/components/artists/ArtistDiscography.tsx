@@ -1,4 +1,4 @@
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -51,7 +51,7 @@ export default function ArtistDiscography() {
       : 1;
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { data, isLoading, error } = useArtist(id);
-  const listRef = useRef<FlashListRef<AlbumID3>>(null);
+  const listRef = useRef<LegendListRef>(null);
   const [releaseTypeFilter, setReleaseTypeFilter] = useState<string[]>([]);
   const albums = data?.artist?.album;
   const filterOptions = useMemo(
@@ -161,12 +161,10 @@ export default function ArtistDiscography() {
       {error ? (
         <ErrorDisplay error={error as Error} />
       ) : (
-        <FlashList
+        <LegendList
+          recycleItems
           ref={listRef}
           key={`artist-discography-${layout}-${gridColumns}`}
-          // Off by default it keeps the visible item pinned when the filtered set
-          // changes above the viewport, which overrides our scroll-to-top.
-          maintainVisibleContentPosition={{ disabled: true }}
           data={isLoading ? loadingData(3) : (visibleAlbums ?? [])}
           numColumns={gridColumns}
           extraData={layout}

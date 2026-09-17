@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import HomeTabsNav from "@/components/home/HomeTabsNav";
@@ -26,7 +26,8 @@ export default function FavoriteInternetRadioStationsScreen() {
     <Box className="h-full">
       <TabHeaderGradient />
       <HomeTabsNav active="internetRadioStationsFavorites" />
-      <FlashList
+      <LegendList
+        recycleItems
         data={favoriteRadioStations}
         renderItem={({
           item,

@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -205,7 +205,8 @@ export default function InternetRadioStationsSearchScreen() {
           </form.Field>
         </HStack>
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={listData}
         keyExtractor={(item, index) =>
           (item as RadioBrowserStation)?.stationuuid ?? `skeleton-${index}`

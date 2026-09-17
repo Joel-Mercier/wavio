@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -45,9 +45,6 @@ import { HStack } from "../ui/hstack";
 import { Pressable } from "../ui/pressable";
 import { VStack } from "../ui/vstack";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function HomeSectionDetail() {
@@ -175,7 +172,8 @@ export default function HomeSectionDetail() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         key={`home-section-${layout}-${gridColumns}`}
         onScroll={scrollHandler}
         data={isLoading ? loadingData(12) : albums}

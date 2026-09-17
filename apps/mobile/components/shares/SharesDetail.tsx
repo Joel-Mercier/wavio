@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useTranslation } from "react-i18next";
@@ -42,7 +42,8 @@ export default function SharesDetail() {
       </HStack>
       {error && <ErrorDisplay error={error} />}
       {!error && (
-        <FlashList
+        <LegendList
+          recycleItems
           data={!data ? loadingData(16) : data?.shares.share || []}
           renderItem={({ item }: { item: Share }) =>
             !data ? <ShareListItemSkeleton /> : <ShareListItem share={item} />

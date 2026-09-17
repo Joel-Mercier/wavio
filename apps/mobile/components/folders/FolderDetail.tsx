@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
@@ -138,7 +138,8 @@ export default function FolderDetail() {
       </Box>
       {error && <ErrorDisplay error={error} />}
       {!error && (
-        <FlashList
+        <LegendList
+          recycleItems
           data={isLoading ? (loadingData(12) as unknown as Entry[]) : entries}
           keyExtractor={(item, index) =>
             isLoading

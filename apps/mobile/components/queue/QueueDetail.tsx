@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
-import DraggableFlashList from "@/components/DraggableFlashList";
+import DraggableList from "@/components/DraggableList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditLaneDivider from "@/components/queue/QueueEditLaneDivider";
@@ -63,7 +63,7 @@ const noop = () => {};
 
 // Rows carry a uid assigned once on entering edit mode: a positional key would
 // change for every row between the two positions on each drop (throwing away
-// FlashList's recycled cells), and the queue can hold the same track twice, so
+// the list's recycled rows), and the queue can hold the same track twice, so
 // the track id alone is not unique either. The lane boundary is a row of its
 // own so the split stays visible while dragging and moving a track across it
 // is what changes its lane, rather than a silent demotion on Done.
@@ -525,7 +525,8 @@ export default function QueueDetail() {
                 </Text>
               </VStack>
             ) : (
-              <FlashList
+              <LegendList
+                recycleItems
                 data={historyTracks}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
@@ -548,7 +549,7 @@ export default function QueueDetail() {
               </Text>
             </VStack>
           ) : editMode ? (
-            <DraggableFlashList
+            <DraggableList
               data={localOrder}
               keyExtractor={(item) => item.uid}
               itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
@@ -559,7 +560,7 @@ export default function QueueDetail() {
               }}
               showsVerticalScrollIndicator={false}
               // Rows are only re-rendered when the playing track moves on;
-              // a primitive keeps FlashList's identity check meaningful.
+              // a primitive keeps the list's identity check meaningful.
               extraData={playingTrackId}
               renderItem={(item, _index, isActive) =>
                 item.kind === "divider" ? (
@@ -579,7 +580,8 @@ export default function QueueDetail() {
               }
             />
           ) : (
-            <FlashList
+            <LegendList
+              recycleItems
               data={queueRows}
               keyExtractor={(item) => item.key}
               getItemType={(item) => item.kind}

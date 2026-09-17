@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import type { FuseResult } from "fuse.js";
@@ -128,7 +128,8 @@ export default function FavoritesSearch() {
           </HStack>
         </Box>
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={isLoading ? loadingData(6) : (data ?? [])}
         keyExtractor={(item, index) =>
           isLoading ? `skeleton-${index}` : item.item.id

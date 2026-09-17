@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -51,9 +51,6 @@ import { goBackOrHome } from "@/utils/navigation";
 import { sortItems } from "@/utils/sort";
 import { TRACK_SORT_SPECS } from "@/utils/trackSort";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 const SKELETON_DATA = loadingData(16);
@@ -190,7 +187,8 @@ export default function FavoritesScreen() {
           </HStack>
         </ScreenHeaderGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         data={!starredData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}

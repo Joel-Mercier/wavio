@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
-import DraggableFlashList from "@/components/DraggableFlashList";
+import DraggableList from "@/components/DraggableList";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlaylistEditSongListItem, {
@@ -38,7 +38,7 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // The rows carry a uid assigned once when the order is seeded: a positional key
 // would change for every row between the two positions on each drop, forcing
-// FlashList to throw away their recycled state (and reload their artwork).
+// the list to throw away their recycled state (and reload their artwork).
 type OrderedEntry = { uid: string; entry: Child };
 
 export default function ReorderPlaylistScreen() {
@@ -225,7 +225,7 @@ export default function ReorderPlaylistScreen() {
         </Box>
       )}
       {!error && (!isLoading || playlistData) && (
-        <DraggableFlashList
+        <DraggableList
           data={order}
           keyExtractor={(item) => item.uid}
           renderItem={renderItem}

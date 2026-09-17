@@ -36,7 +36,7 @@ const ImageWithFallback = forwardRef<
   const uri = getUri(props.source);
   const [errored, setErrored] = useState(false);
 
-  // Reset on source change so recycled FlashList rows don't keep a previous
+  // Reset on source change so recycled list rows don't keep a previous
   // item's error state.
   useEffect(() => {
     setErrored(false);

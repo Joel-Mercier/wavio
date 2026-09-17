@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
@@ -36,9 +36,6 @@ import useAuth from "@/stores/auth";
 import { artworkUrl } from "@/utils/artwork";
 import { goBackOrHome } from "@/utils/navigation";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 function PlaylistRow({ playlist }: { playlist: Playlist }) {
@@ -170,7 +167,8 @@ export default function ProfileScreen() {
           </HStack>
         </ScreenHeaderGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         data={playlists}
         renderItem={({ item }: { item: Playlist }) => (

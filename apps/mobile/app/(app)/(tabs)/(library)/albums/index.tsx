@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -82,7 +82,7 @@ export default function AllAlbumsScreen() {
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
-  const listRef = useRef<FlashListRef<AlbumID3>>(null);
+  const listRef = useRef<LegendListRef>(null);
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
@@ -316,14 +316,10 @@ export default function AllAlbumsScreen() {
       </Box>
       {error && <ErrorDisplay error={error as Error} />}
       {!error && (
-        <FlashList
+        <LegendList
+          recycleItems
           ref={listRef}
           key={`all-albums-${layout}-${gridColumns}`}
-          // Off by default it keeps the visible item pinned when the filtered
-          // set changes above the viewport, which hides the new top matches on
-          // query edits and overrides our scroll-to-top. We only ever append
-          // (pagination), so position preservation isn't needed here.
-          maintainVisibleContentPosition={{ disabled: true }}
           data={isLoading ? loadingData(12) : albums}
           numColumns={gridColumns}
           extraData={layout}

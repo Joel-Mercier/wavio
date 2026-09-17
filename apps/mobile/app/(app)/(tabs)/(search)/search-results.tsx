@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useForm } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -244,7 +244,8 @@ export default function SearchResultsScreen() {
           </ScrollView>
           {error && <ErrorDisplay error={error} />}
           {!error && (
-            <FlashList
+            <LegendList
+              recycleItems
               data={
                 (isLoading ? loadingData(12) : searchData) as Array<
                   AlbumID3 | Child | ArtistID3

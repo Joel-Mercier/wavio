@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -40,9 +40,6 @@ import { VStack } from "../ui/vstack";
 import PlaylistListItem from "./PlaylistListItem";
 import PlaylistListItemSkeleton from "./PlaylistListItemSkeleton";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 const SOURCE_ID = "home-playlists";
@@ -166,7 +163,8 @@ export default function YourPlaylistsDetail() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         data={isLoading ? loadingData(12) : playlists}
         renderItem={({ item, index }: { item: Playlist; index: number }) =>

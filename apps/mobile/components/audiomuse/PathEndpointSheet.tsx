@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import Anchor from "lucide-react-native/dist/esm/icons/anchor.mjs";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -243,7 +243,8 @@ export default function PathEndpointSheet({
           />
         )}
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={rows}
         keyExtractor={(row) => row.key}
         renderScrollComponent={renderScrollComponent}

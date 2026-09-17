@@ -86,7 +86,7 @@ function slotAt(frames: Frame[], x: number, y: number): number {
   return frames.length;
 }
 
-// Per-frame increments rather than a velocity ramp, matching DraggableFlashList:
+// Per-frame increments rather than a velocity ramp, matching DraggableList:
 // the scroll runs on the UI thread and the drop target is recomputed from it, so
 // a large jump would skip over rows the caret never got to point at.
 function autoScrollVelocityFor(y: number, viewportHeight: number): number {
@@ -149,7 +149,7 @@ type SortableBadgeWrapProps<T> = {
 /**
  * Long-press drag reorder for a wrapping row of variable-width badges.
  *
- * `DraggableFlashList` can't cover this: it resolves the pressed row by
+ * `DraggableList` can't cover this: it resolves the pressed row by
  * `floor(y / itemHeight)`, which only works for a single column of fixed-height
  * rows. Everything else is the same architecture — a single gesture on the
  * container, hit testing on the UI thread, auto-scroll driven from a frame

@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { parse } from "date-fns/parse";
 import * as Clipboard from "expo-clipboard";
@@ -108,9 +108,6 @@ import { goBackOrHome } from "@/utils/navigation";
 import { formatReleaseTypes } from "@/utils/releaseTypes";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function AlbumDetail() {
@@ -784,7 +781,8 @@ export default function AlbumDetail() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         contentContainerStyle={{
           paddingBottom: screenBottomPadding,

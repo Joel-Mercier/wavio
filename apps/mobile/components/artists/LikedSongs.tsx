@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -70,10 +70,6 @@ import { goBackOrHome } from "@/utils/navigation";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
-
 export default function LikedSongs() {
   const [white, gray200, black] = Uniwind.getCSSVariable([
     "--color-white",
@@ -352,7 +348,7 @@ export default function LikedSongs() {
     );
   };
 
-  // Both sections render through a single FlashList — two vertical lists (or a
+  // Both sections render through a single list — two vertical lists (or a
   // list inside a ScrollView) would nest virtualization and render every row.
   // Songs, the "Liked Albums" divider, and albums are flattened into one typed
   // array; getItemType keeps a separate recycle pool per shape.
@@ -407,7 +403,8 @@ export default function LikedSongs() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{

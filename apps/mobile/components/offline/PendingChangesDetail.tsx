@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -144,7 +144,8 @@ export default function PendingChangesDetail() {
               </Text>
             </VStack>
           ) : (
-            <FlashList
+            <LegendList
+              recycleItems
               data={queue}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}

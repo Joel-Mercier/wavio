@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -69,10 +69,6 @@ import {
   podcastEpisodeToTrack,
 } from "@/utils/podcastEpisodeToTrack";
 import { TOAST_DURATION } from "@/utils/toastDuration";
-
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 
 const APP_BAR_ROW_HEIGHT = 56;
 const TAB_BAR_HEIGHT = 48;
@@ -372,7 +368,8 @@ export default function ServerPodcastChannelScreen() {
     ref,
     contentTopInset,
   }: CollapsibleSceneProps) => (
-    <AnimatedFlashList
+    <AnimatedLegendList
+      recycleItems
       ref={ref}
       onScroll={scrollHandler}
       scrollEventThrottle={16}

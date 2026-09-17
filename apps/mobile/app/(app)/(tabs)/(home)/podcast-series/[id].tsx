@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -49,10 +49,6 @@ import usePodcasts from "@/stores/podcasts";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { TOAST_DURATION } from "@/utils/toastDuration";
-
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 
 const APP_BAR_ROW_HEIGHT = 56;
 const TAB_BAR_HEIGHT = 48;
@@ -220,7 +216,8 @@ export default function PodcastSeriesScreen() {
     ref,
     contentTopInset,
   }: CollapsibleSceneProps) => (
-    <AnimatedFlashList
+    <AnimatedLegendList
+      recycleItems
       ref={ref}
       onScroll={scrollHandler}
       scrollEventThrottle={16}
@@ -287,7 +284,8 @@ export default function PodcastSeriesScreen() {
     ref,
     contentTopInset,
   }: CollapsibleSceneProps) => (
-    <AnimatedFlashList
+    <AnimatedLegendList
+      recycleItems
       ref={ref}
       onScroll={scrollHandler}
       scrollEventThrottle={16}

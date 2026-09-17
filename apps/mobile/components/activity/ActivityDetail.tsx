@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import { useCallback, useMemo, useState } from "react";
@@ -99,7 +99,8 @@ export default function ActivityDetail() {
             </Text>
           </VStack>
         ) : (
-          <FlashList
+          <LegendList
+            recycleItems
             data={rows}
             extraData={expanded}
             keyExtractor={(row) => row.key}

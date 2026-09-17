@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -83,7 +83,8 @@ export default function LibrariesDetail() {
       </HStack>
       {error && <ErrorDisplay error={error} />}
       {!error && (
-        <FlashList
+        <LegendList
+          recycleItems
           data={
             isLoading ? (loadingData(6) as unknown as MusicFolder[]) : folders
           }

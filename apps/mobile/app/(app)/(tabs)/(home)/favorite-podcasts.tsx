@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import type { Href } from "expo-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -150,7 +150,8 @@ export default function FavoritePodcastsScreen() {
       <TabHeaderGradient />
       <HomeTabsNav active="favoritePodcasts" />
       {podcastsEnabled || capabilities.podcasts ? (
-        <FlashList
+        <LegendList
+          recycleItems
           data={isLoading ? loadingData(16) : feedItems}
           renderItem={({
             item,

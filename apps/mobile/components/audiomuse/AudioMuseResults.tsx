@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -65,7 +65,8 @@ export default function AudioMuseResults({
         : emptyMessage;
 
   return (
-    <FlashList
+    <LegendList
+      recycleItems
       data={isLoading ? loadingData(8) : (tracks ?? [])}
       renderItem={({ item, index }) =>
         isLoading ? (

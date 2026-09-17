@@ -1,4 +1,4 @@
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import Search from "lucide-react-native/dist/esm/icons/search.mjs";
@@ -71,7 +71,7 @@ export default function TidarrSearchScreen() {
   const [debouncedTerm, setDebouncedTerm] = useState(q ?? "");
   const [filter, setFilter] = useState<SearchFilter[]>([]);
   const debounce = useDebounce(400);
-  const listRef = useRef<FlashListRef<Row>>(null);
+  const listRef = useRef<LegendListRef>(null);
 
   const { data, isFetching, error } = useTidarrSearch(debouncedTerm);
   const { data: downloadedIds } = useDownloadedIds();
@@ -168,7 +168,7 @@ export default function TidarrSearchScreen() {
   );
 
   // Toggling a filter or editing the query swaps the result set; without this
-  // the FlashList keeps its old offset and lands mid-list, hiding the new top
+  // the list keeps its old offset and lands mid-list, hiding the new top
   // matches.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -258,7 +258,8 @@ export default function TidarrSearchScreen() {
         </Box>
       </Box>
 
-      <FlashList
+      <LegendList
+        recycleItems
         ref={listRef}
         data={rows}
         keyExtractor={keyExtractor}

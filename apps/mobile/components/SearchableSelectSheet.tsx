@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import { useMemo, useState } from "react";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
@@ -62,7 +62,8 @@ export default function SearchableSelectSheet({
         </Heading>
         <SheetSearchInput onChangeText={setQuery} />
       </Box>
-      <FlashList
+      <LegendList
+        recycleItems
         data={filtered}
         keyExtractor={(item) => item.value}
         renderScrollComponent={renderScrollComponent}

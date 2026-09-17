@@ -1,4 +1,4 @@
-import { FlashList, type ViewToken } from "@shopify/flash-list";
+import { LegendList, type ViewToken } from "@legendapp/list/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -310,7 +310,8 @@ export default function HomeScreen() {
       <TabHeaderGradient />
       <HomeTabsNav active="music" />
       <EnabledSectionsProvider store={enabledSections}>
-        <FlashList
+        <LegendList
+          recycleItems
           data={sections}
           keyExtractor={keyExtractor}
           getItemType={getItemType}

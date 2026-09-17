@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
@@ -116,15 +116,12 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 import type { TrackSortField } from "@/utils/trackSort";
 import TrackListItemSkeleton from "../tracks/TrackListItemSkeleton";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 const SKELETON_DATA = loadingData(16);
 const EMPTY_DATA: Child[] = [];
 // A playlist can contain the same track more than once, so the track id alone
-// isn't unique — pair it with the row index to keep FlashList keys distinct.
+// isn't unique — pair it with the row index to keep list keys distinct.
 const keyExtractor = (item: Child, index: number) =>
   `${item.id ?? "row"}-${index}`;
 
@@ -859,7 +856,8 @@ export default function PlaylistDetail() {
           </HStack>
         </LinearGradient>
       </AnimatedBox>
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         data={!playlistData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}

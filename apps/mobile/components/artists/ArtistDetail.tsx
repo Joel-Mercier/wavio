@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -93,9 +93,6 @@ import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 // Both similar-artist rows cap alike, so the backend one borrows AudioMuse's
@@ -544,7 +541,8 @@ export default function ArtistDetail() {
         contentFit="cover"
       />
 
-      <AnimatedFlashList
+      <AnimatedLegendList
+        recycleItems
         onScroll={scrollHandler}
         data={isLoading ? loadingData(3) : albums.slice(0, 3)}
         renderItem={({ item, index }: { item: AlbumID3; index: number }) =>

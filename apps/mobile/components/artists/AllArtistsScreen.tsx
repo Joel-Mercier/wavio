@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
@@ -73,7 +73,7 @@ export default function AllArtistsScreen() {
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
-  const listRef = useRef<FlashListRef<ArtistRow>>(null);
+  const listRef = useRef<LegendListRef>(null);
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const pinnedSectionRef = useRef(false);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
@@ -295,12 +295,9 @@ export default function AllArtistsScreen() {
       {error && <ErrorDisplay error={error as Error} />}
       {!error && (
         <Box className="flex-1 relative">
-          <FlashList
+          <LegendList
+            recycleItems
             ref={listRef}
-            // Off by default it keeps the visible item pinned when the filtered
-            // set changes above the viewport, which hides the new top matches on
-            // query edits and overrides our scroll-to-top.
-            maintainVisibleContentPosition={{ disabled: true }}
             data={isLoading ? (loadingData(12) as ArtistRow[]) : listData}
             keyExtractor={(item, index) =>
               isLoading ? `skeleton-${index}` : item.id

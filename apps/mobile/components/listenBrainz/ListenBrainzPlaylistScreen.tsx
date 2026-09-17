@@ -1,4 +1,4 @@
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list/react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
@@ -83,7 +83,7 @@ export default function ListenBrainzPlaylistScreen() {
     isPaused,
   } = useLibraryResolvedTracks(mbid, tracks);
 
-  // The FlashList index counts the missing rows too, but useTrackListPress
+  // The list index counts the missing rows too, but useTrackListPress
   // indexes into the matched-only array — so each matched row has to carry the
   // position it occupies *there*, not the one it occupies on screen. Without
   // this, tapping any track after a missing one plays the wrong song.
@@ -175,7 +175,8 @@ export default function ListenBrainzPlaylistScreen() {
         <Box className="w-6" />
       </HStack>
 
-      <FlashList
+      <LegendList
+        recycleItems
         data={isLoading ? loadingData(8) : (matches ?? [])}
         keyExtractor={(item, index) =>
           isLoading ? `skeleton-${index}` : item.external.key

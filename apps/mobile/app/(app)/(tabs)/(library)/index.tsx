@@ -1,5 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import type { LegendListRef } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -90,9 +91,6 @@ import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
 
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList,
-) as unknown as typeof FlashList;
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 // Space left above the filter row once it's pinned at the top, matching the
@@ -166,21 +164,7 @@ export default function LibraryScreen() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
   const filterScrollRef = useRef<ScrollView>(null);
-  const listRef =
-    useRef<
-      FlashListRef<
-        Playlist &
-          AlbumID3 &
-          ArtistID3 &
-          Favorites &
-          LibraryPodcast &
-          LibraryFolder &
-          LibraryRadioStation &
-          LibraryAllAlbums &
-          LibraryAllArtists &
-          LibraryAllTracks
-      >
-    >(null);
+  const listRef = useRef<LegendListRef>(null);
   const musicFolderId = useCurrentMusicFolderId();
   const isOnline = useIsOnline();
   const queryClient = useQueryClient();
@@ -493,7 +477,7 @@ export default function LibraryScreen() {
   };
 
   // Changing the sort or filter swaps the list contents; without this the
-  // FlashList keeps its old offset and can land mid-list or at the bottom. Reset
+  // list keeps its old offset and can land mid-list or at the bottom. Reset
   // to the top so the new ordering / filtered set starts in view. Toggling the
   // layout remounts the list instead (its `key` changes) and it comes back at
   // offset 0 without emitting a scroll event, so the header has to be brought
@@ -651,7 +635,8 @@ export default function LibraryScreen() {
         )}
       </>
       {!error && (
-        <AnimatedFlashList
+        <AnimatedLegendList
+          recycleItems
           ref={listRef}
           onScroll={scrollHandler}
           key={`library-${layout}-${gridColumns}`}
