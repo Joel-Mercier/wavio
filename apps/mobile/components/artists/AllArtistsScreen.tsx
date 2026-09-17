@@ -2,7 +2,6 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import Fuse from "fuse.js";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
@@ -33,6 +32,7 @@ import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { ArtistID3, IndexID3 } from "@/services/openSubsonic/types";
 import { buildArtistIndex, hasCJK } from "@/services/pinyinIndex";
+import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import {
@@ -185,7 +185,7 @@ export default function AllArtistsScreen() {
   }, [debouncedQuery, activeSort]);
 
   const fuse = useMemo(
-    () => new Fuse(allArtists, { ignoreDiacritics: true, keys: ["name"] }),
+    () => createSearchIndex(allArtists, ["name"]),
     [allArtists],
   );
 

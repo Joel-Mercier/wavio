@@ -2,7 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import Fuse, { type FuseResult } from "fuse.js";
+import type { FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useState } from "react";
@@ -34,6 +34,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
+import { createSearchIndex } from "@/services/searchIndex";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -149,14 +150,7 @@ export default function LibrarySearchScreen() {
       );
     }
 
-    return new Fuse<
-      AlbumID3 &
-        Playlist &
-        ArtistID3 &
-        Favorites &
-        LibraryFolder &
-        LibraryRadioStation
-    >(
+    return createSearchIndex(
       items.flat() as Array<
         AlbumID3 &
           Playlist &
@@ -165,11 +159,7 @@ export default function LibrarySearchScreen() {
           LibraryFolder &
           LibraryRadioStation
       >,
-      {
-        includeScore: true,
-        ignoreDiacritics: true,
-        keys: ["name"],
-      },
+      ["name"],
     );
   }, [
     starredData,

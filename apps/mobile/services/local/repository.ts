@@ -1,3 +1,4 @@
+import { normalizeSearchText } from "@/services/searchText";
 import type { SortDirection } from "@/utils/sort";
 import {
   getLocalLibraryDb,
@@ -585,17 +586,25 @@ export async function searchTracks(
 
 /**
  * Build a safe FTS5 MATCH expression from free user input: split on whitespace,
- * strip FTS operators, and make each token a quoted prefix term. Returns null
- * when nothing usable remains.
+ * strip FTS operators, and make each token a quoted prefix term. A token whose
+ * normalised spelling differs (`don't` → `dont`, `Hæd` → `haed`) also tries
+ * that spelling, which the `normalized` column carries for the indexed side.
+ * Tokens are joined with an explicit AND — FTS5's implicit AND misparses
+ * parenthesised OR groups. Returns null when nothing usable remains.
  */
-function toFtsQuery(query: string): string | null {
+export function toFtsQuery(query: string): string | null {
   const tokens = query
     .trim()
     .split(/\s+/)
     .map((t) => t.replace(/["*()^:]/g, "").trim())
     .filter((t) => t.length > 0)
-    .map((t) => `"${t}"*`);
-  return tokens.length ? tokens.join(" ") : null;
+    .map((t) => {
+      const raw = `"${t}"*`;
+      const variant = normalizeSearchText(t);
+      if (!variant || variant === t.toLowerCase()) return raw;
+      return `(${raw} OR "${variant}"*)`;
+    });
+  return tokens.length ? tokens.join(" AND ") : null;
 }
 
 // --- playlists -------------------------------------------------------------

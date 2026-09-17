@@ -8,13 +8,16 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { useTrackActions } from "@/components/tracks/TrackActionsProvider";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsCurrentTrack } from "@/hooks/player";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
+import { playSongInAlbum } from "@/services/playSongInAlbum";
 import useRecentSearches from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -46,6 +49,8 @@ export default function SearchResultListItem({
   searchResult: AlbumID3 & Child & ArtistID3;
 }) {
   const { t } = useTranslation();
+  const trackActions = useTrackActions();
+  const isCurrentTrack = useIsCurrentTrack(searchResult.id);
   const type = useMemo<{
     id: "artist" | "album" | "playlist" | "song";
     label: string;
@@ -86,11 +91,6 @@ export default function SearchResultListItem({
   }, [searchResult, t]);
 
   const handlePress = () => {
-    // An offline song whose owning album couldn't be resolved would route to
-    // `/albums/undefined`; skip rather than navigate to a dead route.
-    if (type.id === "song" && !searchResult.albumId) {
-      return;
-    }
     useRecentSearches.getState().addRecentSearch({
       id: searchResult.id,
       title: searchResult.title || searchResult.name,
@@ -99,11 +99,20 @@ export default function SearchResultListItem({
       albumId: searchResult.albumId,
       artist: searchResult.artist,
     });
+    // A song plays straight away with its album queued behind it (issue #201);
+    // the album itself stays a long-press away via the track actions sheet.
+    if (type.id === "song") {
+      void playSongInAlbum(searchResult);
+      return;
+    }
     router.navigate(type.url);
   };
 
+  const handleLongPress =
+    type.id === "song" ? () => trackActions.open(searchResult) : undefined;
+
   return (
-    <FadeOutScaleDown onPress={handlePress}>
+    <FadeOutScaleDown onPress={handlePress} onLongPress={handleLongPress}>
       <HStack className="items-center justify-between mb-4">
         <HStack className="items-center">
           {searchResult.coverArt ? (
@@ -127,7 +136,12 @@ export default function SearchResultListItem({
             </Box>
           )}
           <VStack className="ml-4 flex-1">
-            <Heading className="text-white font-normal" numberOfLines={1}>
+            <Heading
+              className={cn("text-white font-normal", {
+                "text-emerald-500": type.id === "song" && isCurrentTrack,
+              })}
+              numberOfLines={1}
+            >
               {searchResult.title || searchResult.name}
             </Heading>
             <HStack className="items-center">

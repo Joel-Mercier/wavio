@@ -5,6 +5,7 @@ import {
 } from "expo-sqlite";
 import { getAuthScope } from "@/config/authScope";
 import { localTrackId } from "@/services/local/keys";
+import { searchVariants } from "@/services/searchText";
 import { currentAuthScope } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
@@ -17,7 +18,7 @@ import { logError } from "@/utils/log";
 // never mixes one account's local library into another's. The handle follows the
 // active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 const currentScope = currentAuthScope;
 
@@ -230,6 +231,19 @@ export async function deleteLocalLibraryDb(
 // Columns map onto the OpenSubsonic `Child` shape (see queries.ts) so the rest
 // of the app stays protocol-agnostic. `*_key` columns hold normalized grouping
 // keys (indexed) so album/artist rollups don't pay a per-row normalize cost.
+// `normalized` carries the extra spellings from `searchVariants` (punctuation
+// and accents folded away, one word at a time) so a query like `big` or `haed`
+// hits "B.I.G." / "Hæd"; the raw columns keep matching the original text. FTS5
+// tables can't be ALTERed, so a change here needs a rebuild in `migrate`.
+const TRACKS_FTS_SCHEMA = `CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+  id UNINDEXED,
+  title,
+  artist,
+  album,
+  album_artist,
+  normalized
+);`;
+
 const SCHEMA_V1 = `
 CREATE TABLE IF NOT EXISTS tracks (
   id            TEXT PRIMARY KEY NOT NULL,
@@ -276,13 +290,7 @@ CREATE TABLE IF NOT EXISTS tracks (
 -- blocks run on every open, so a CREATE here and a DROP there would rebuild and
 -- discard the whole index every time the database is opened.
 
-CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
-  id UNINDEXED,
-  title,
-  artist,
-  album,
-  album_artist
-);
+${TRACKS_FTS_SCHEMA}
 `;
 
 // User-created playlists live on-device too (the local backend has no server to
@@ -727,6 +735,34 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
               WHERE o.track_id = tracks.id),
             artist_key
           )`);
+    }
+    if (version > 0 && version < 7) {
+      // v7: the FTS table gained the `normalized` column. FTS5 has no ALTER, so
+      // rebuild it from `tracks_resolved` — the view already applies tag
+      // overrides, so no file has to be re-read. A row loop rather than a
+      // set-based INSERT…SELECT because the variants need Unicode
+      // normalisation SQLite doesn't have.
+      await txn.execAsync("DROP TABLE IF EXISTS tracks_fts");
+      await txn.execAsync(TRACKS_FTS_SCHEMA);
+      const rows = await txn.getAllAsync<{
+        id: string;
+        title: string | null;
+        artist: string | null;
+        album: string | null;
+        album_artist: string | null;
+      }>("SELECT id, title, artist, album, album_artist FROM tracks_resolved");
+      for (const r of rows) {
+        await txn.runAsync(
+          `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          r.id,
+          r.title,
+          r.artist,
+          r.album,
+          r.album_artist,
+          searchVariants([r.title, r.artist, r.album, r.album_artist]),
+        );
+      }
     }
     await txn.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   });

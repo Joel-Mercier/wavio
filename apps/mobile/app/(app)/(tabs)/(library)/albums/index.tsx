@@ -36,6 +36,7 @@ import useDebounce from "@/hooks/useDebounce";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
+import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import {
@@ -165,15 +166,22 @@ export default function AllAlbumsScreen() {
     offlineSortFields,
     DEFAULT_ALBUM_SORT,
   );
+  const offlineAlbumHaystacks = useMemo(
+    () =>
+      (offlineAlbums ?? []).map((album) => ({
+        album,
+        haystack: toSearchHaystack([album.name, album.artist]),
+      })),
+    [offlineAlbums],
+  );
   const albums = useMemo(() => {
     if (isSearching) {
       if (isOnline) return searchData?.searchResult3?.album ?? [];
-      const query = debouncedQuery.toLowerCase();
-      return (offlineAlbums ?? []).filter(
-        (album) =>
-          album.name.toLowerCase().includes(query) ||
-          (album.artist ?? "").toLowerCase().includes(query),
-      );
+      const matches = createSearchMatcher(debouncedQuery);
+      if (!matches) return offlineAlbums ?? [];
+      return offlineAlbumHaystacks
+        .filter(({ haystack }) => matches(haystack))
+        .map(({ album }) => album);
     }
     if (browseAlbums.length > 0 || isOnline) return browseAlbums;
     return offlineAlbums
@@ -185,6 +193,7 @@ export default function AllAlbumsScreen() {
     searchData,
     debouncedQuery,
     offlineAlbums,
+    offlineAlbumHaystacks,
     offlineSort,
     browseAlbums,
   ]);

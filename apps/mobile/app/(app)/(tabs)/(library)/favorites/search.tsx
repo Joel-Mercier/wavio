@@ -2,7 +2,6 @@ import { FlashList } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import type { FuseResult } from "fuse.js";
-import Fuse from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useMemo } from "react";
@@ -23,6 +22,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
+import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
@@ -78,14 +78,7 @@ export default function FavoritesSearch() {
       return result;
     }
 
-    const options = {
-      includeScore: true,
-      ignoreDiacritics: true,
-      keys: ["title"],
-    };
-    const fuse = new Fuse<Child>(newData, options);
-    const result = fuse.search(query);
-    return result;
+    return createSearchIndex(newData, ["title"]).search(query);
   }, [starredData, query, activeSort]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);
